@@ -1,19 +1,22 @@
-# SuperJob OAuth test
+# AI Career Agent — этап 2
 
-Required Render environment variables:
+Добавлено:
+- зашифрованное хранение OAuth-токенов SuperJob;
+- автоматическое обновление access token;
+- личный кабинет;
+- получение резюме пользователя;
+- поиск вакансий SuperJob и прямые ссылки.
 
-- `SUPERJOB_CLIENT_ID` — application ID
-- `SUPERJOB_CLIENT_SECRET` — rotated Secret Key
-- `SUPERJOB_REDIRECT_URI` — `https://ai-career-agent-site.onrender.com/oauth/superjob/callback`
-- `FLASK_SECRET_KEY` — a long random value
+## Новая переменная Render
 
-Do not put secrets in GitHub.
+`TOKEN_ENCRYPTION_KEY`
 
-After deployment:
+Сгенерируйте на компьютере:
 
-1. Open the website.
-2. Click **Подключить SuperJob**.
-3. Sign in on SuperJob.
-4. Confirm that the callback shows **SuperJob подключён**.
+```powershell
+py -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
+```
 
-The test does not persist access or refresh tokens.
+Вставьте результат в Render → Environment.
+
+Важно: SQLite на бесплатном Render может очищаться при перезапуске или новом деплое. Для одного тестового пользователя это подходит. Следующий производственный этап — PostgreSQL.
