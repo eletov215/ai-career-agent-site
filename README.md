@@ -1,28 +1,19 @@
-# AI Career Agent
+# SuperJob OAuth test
 
-## Local launch on Windows
+Required Render environment variables:
 
-```powershell
-py -m venv .venv
-.venv\Scripts\python.exe -m pip install -r requirements.txt
-.venv\Scripts\python.exe app.py
-```
+- `SUPERJOB_CLIENT_ID` — application ID
+- `SUPERJOB_CLIENT_SECRET` — rotated Secret Key
+- `SUPERJOB_REDIRECT_URI` — `https://ai-career-agent-site.onrender.com/oauth/superjob/callback`
+- `FLASK_SECRET_KEY` — a long random value
 
-Open:
+Do not put secrets in GitHub.
 
-- http://127.0.0.1:10000
-- http://127.0.0.1:10000/privacy
-- http://127.0.0.1:10000/oauth/superjob/callback
+After deployment:
 
-## Render deployment
+1. Open the website.
+2. Click **Подключить SuperJob**.
+3. Sign in on SuperJob.
+4. Confirm that the callback shows **SuperJob подключён**.
 
-1. Upload all files to GitHub.
-2. In Render choose New → Web Service.
-3. Connect the repository.
-4. Build command: `pip install -r requirements.txt`
-5. Start command: `gunicorn app:app`
-6. Use:
-   - Site: `https://YOUR-SERVICE.onrender.com`
-   - Callback: `https://YOUR-SERVICE.onrender.com/oauth/superjob/callback`
-
-Do not commit secrets or access tokens to GitHub.
+The test does not persist access or refresh tokens.
