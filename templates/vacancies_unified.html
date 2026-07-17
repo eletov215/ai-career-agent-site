@@ -61,7 +61,12 @@
     {% endfor %}
 
     {% if 'trudvsem' in selected_sources %}
-      <p class="muted"><a href="?search=1&refresh=1&keyword={{ keyword|urlencode }}{% for source in selected_sources %}&source={{ source }}{% endfor %}{% if remote_only %}&remote=1{% endif %}">Обновить данные «Работы России» сейчас</a></p>
+      <form method="post" action="{{ url_for('refresh_trudvsem_cache') }}" class="cache-refresh-form">
+        <input type="hidden" name="keyword" value="{{ keyword }}">
+        {% for source in selected_sources %}<input type="hidden" name="source" value="{{ source }}">{% endfor %}
+        {% if remote_only %}<input type="hidden" name="remote" value="1">{% endif %}
+        <button class="link-button" type="submit">Обновить данные «Работы России» сейчас</button>
+      </form>
     {% endif %}
 
     <div class="vacancy-list">

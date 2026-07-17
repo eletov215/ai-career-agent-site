@@ -31,3 +31,18 @@ curl -X POST \
 ```
 
 Этот endpoint можно вызывать внешним cron-сервисом раз в 30–60 минут. На бесплатном Render встроенный постоянный фоновый процесс ненадёжен, поэтому синхронизация вынесена в отдельный HTTP endpoint.
+
+## Background cache for Работа России
+
+The vacancies page never calls opendata.trudvsem.ru directly. A daemon thread
+updates the SQLite cache in small batches, while user searches read only local
+data. This prevents slow API responses from blocking navigation on Render.
+
+Optional environment variables:
+
+- `TRUDVSEM_SYNC_INTERVAL` - refresh interval in seconds, default `1800`.
+- `TRUDVSEM_SYNC_ITEMS` - maximum vacancies loaded per cycle, default `100`.
+- `TRUDVSEM_SYNC_BATCH` - API batch size, default `1` (most reliable on Render).
+
+The existing "Обновить данные" link only schedules a background refresh and
+returns immediately.

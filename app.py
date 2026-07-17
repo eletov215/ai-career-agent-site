@@ -4,6 +4,8 @@ import secrets
 import socket
 import sqlite3
 import time
+import threading
+import logging
 from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from urllib.parse import urlencode
@@ -46,11 +48,18 @@ DATA_DIR.mkdir(parents=True, exist_ok=True)
 DB_PATH = DATA_DIR / "app.db"
 VACANCY_CACHE_TTL = int(os.environ.get("VACANCY_CACHE_TTL", "1800"))
 VACANCY_PAGE_SIZE = 60
+TRUDVSEM_SYNC_INTERVAL = int(os.environ.get("TRUDVSEM_SYNC_INTERVAL", "1800"))
+TRUDVSEM_SYNC_ITEMS = int(os.environ.get("TRUDVSEM_SYNC_ITEMS", "100"))
+TRUDVSEM_SYNC_BATCH = int(os.environ.get("TRUDVSEM_SYNC_BATCH", "1"))
+TRUDVSEM_SYNC_ENABLED = os.environ.get("TRUDVSEM_SYNC_ENABLED", "1").strip().lower() not in {"0", "false", "no"}
+logger = logging.getLogger(__name__)
 
 
 def db():
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(DB_PATH, timeout=10)
     conn.row_factory = sqlite3.Row
+    conn.execute("PRAGMA journal_mode=WAL")
+    conn.execute("PRAGMA busy_timeout=10000")
     return conn
 
 
@@ -87,6 +96,91 @@ def init_db():
 init_db()
 VACANCY_STORE = VacancyStore(DB_PATH)
 VACANCY_STORE.init()
+
+TRUDVSEM_SYNC_EVENT = threading.Event()
+TRUDVSEM_SYNC_LOCK = threading.Lock()
+TRUDVSEM_SYNC_STATE = {
+    "running": False,
+    "last_started": None,
+    "last_finished": None,
+    "last_saved": 0,
+    "last_error": None,
+}
+
+
+def trudvsem_sync_status():
+    with TRUDVSEM_SYNC_LOCK:
+        return dict(TRUDVSEM_SYNC_STATE)
+
+
+def request_trudvsem_sync():
+    TRUDVSEM_SYNC_EVENT.set()
+
+
+def _run_trudvsem_sync():
+    with TRUDVSEM_SYNC_LOCK:
+        if TRUDVSEM_SYNC_STATE["running"]:
+            return
+        TRUDVSEM_SYNC_STATE.update(
+            running=True,
+            last_started=int(time.time()),
+            last_error=None,
+            last_saved=0,
+        )
+
+    saved = 0
+    error = None
+    try:
+        provider = TrudvsemProvider(
+            HH_USER_AGENT,
+            per_page=25,
+            timeout=(4, 8),
+            scan_pages=1,
+        )
+        batch_size = max(1, min(TRUDVSEM_SYNC_BATCH, 10))
+        target = max(batch_size, min(TRUDVSEM_SYNC_ITEMS, 500))
+        for offset in range(0, target, batch_size):
+            items = provider.fetch_batch(offset=offset, limit=batch_size)
+            if not items:
+                break
+            saved += VACANCY_STORE.upsert_many(items)
+            time.sleep(0.15)
+        logger.info("Trudvsem background sync completed saved=%s", saved)
+    except Exception as exc:
+        error = f"{type(exc).__name__}: {exc}"
+        logger.warning("Trudvsem background sync failed error=%s", error)
+    finally:
+        with TRUDVSEM_SYNC_LOCK:
+            TRUDVSEM_SYNC_STATE.update(
+                running=False,
+                last_finished=int(time.time()),
+                last_saved=saved,
+                last_error=error,
+            )
+
+
+def _trudvsem_sync_worker():
+    # Let Gunicorn finish booting before the first external request.
+    time.sleep(2)
+    while True:
+        age = VACANCY_STORE.source_age_seconds("trudvsem")
+        if age is None or age >= TRUDVSEM_SYNC_INTERVAL or TRUDVSEM_SYNC_EVENT.is_set():
+            TRUDVSEM_SYNC_EVENT.clear()
+            _run_trudvsem_sync()
+        TRUDVSEM_SYNC_EVENT.wait(timeout=30)
+
+
+def start_trudvsem_sync_worker():
+    thread = threading.Thread(
+        target=_trudvsem_sync_worker,
+        name="trudvsem-cache-sync",
+        daemon=True,
+    )
+    thread.start()
+
+
+if TRUDVSEM_SYNC_ENABLED:
+    start_trudvsem_sync_worker()
 
 
 def enc(value):
@@ -544,9 +638,12 @@ def vacancies():
     cache_note = None
 
     if search_requested:
-        # Работа России: first read our local database. External API is called only
-        # when the matching cache is empty/stale or the user requests refresh.
+        # Работа России is always searched locally. Network synchronization
+        # runs in a daemon thread and never blocks page navigation.
         if "trudvsem" in selected_sources:
+            if force_refresh:
+                request_trudvsem_sync()
+
             offset = page * VACANCY_PAGE_SIZE
             cached_items = VACANCY_STORE.search(
                 keyword=keyword,
@@ -561,46 +658,26 @@ def vacancies():
                 remote_only=remote_only,
             )
             cache_age = VACANCY_STORE.source_age_seconds("trudvsem")
-            cache_fresh = cache_age is not None and cache_age < VACANCY_CACHE_TTL
-            cached_source_total = VACANCY_STORE.count(
-                keyword="",
-                sources=["trudvsem"],
-                remote_only=False,
-            )
+            sync_state = trudvsem_sync_status()
 
-            # Do not call the external API again merely because this particular
-            # keyword has no matches. Refresh only when the whole source cache is
-            # empty/stale or when the user explicitly requests it.
-            if force_refresh or cached_source_total == 0 or not cache_fresh:
-                result = TrudvsemProvider(HH_USER_AGENT, per_page=25).search(
-                    keyword=keyword,
-                    page=page,
-                    remote_only=False,
-                )
-                source_results["trudvsem"] = result
-                if result.items:
-                    try:
-                        VACANCY_STORE.upsert_many(result.items)
-                    except sqlite3.Error as exc:
-                        errors.append(f"Не удалось сохранить вакансии в кэш: {exc}")
-                    cached_items = VACANCY_STORE.search(
-                        keyword=keyword,
-                        sources=["trudvsem"],
-                        remote_only=remote_only,
-                        limit=VACANCY_PAGE_SIZE,
-                        offset=offset,
-                    )
-                    cached_total = VACANCY_STORE.count(
-                        keyword=keyword,
-                        sources=["trudvsem"],
-                        remote_only=remote_only,
-                    )
-                    cache_age = 0
-                elif result.error:
-                    errors.append(result.error)
+            if sync_state["running"]:
+                cache_note = "Данные «Работы России» обновляются в фоне. Сайт продолжает работать без ожидания API."
+            elif force_refresh:
+                cache_note = "Фоновое обновление «Работы России» запущено. Новые вакансии появятся после обновления страницы."
+            elif cache_age is None:
+                request_trudvsem_sync()
+                cache_note = "Кэш пока пуст. Фоновая загрузка вакансий запущена; обнови страницу через минуту."
             else:
-                cache_note = f"Работа России загружена из кэша ({cache_age // 60} мин. назад)."
+                cache_note = f"Работа России загружена из локального кэша ({cache_age // 60} мин. назад)."
+                if sync_state.get("last_error"):
+                    cache_note += " Последнее фоновое обновление завершилось ошибкой, сохранённые вакансии доступны."
 
+            source_results["trudvsem"] = type("CachedResult", (), {
+                "total": cached_total,
+                "items": cached_items,
+                "has_next": offset + len(cached_items) < cached_total,
+                "error": None,
+            })()
             all_items.extend(cached_items)
             total += cached_total
             has_next = has_next or offset + len(cached_items) < cached_total
@@ -758,6 +835,29 @@ def debug_trudvsem():
     return report, 200
 
 
+@app.post("/trudvsem/refresh")
+def refresh_trudvsem_cache():
+    """Queue a refresh and return immediately; never wait for the API."""
+    request_trudvsem_sync()
+    keyword = request.form.get("keyword", "инженер-конструктор").strip()
+    remote = request.form.get("remote") == "1"
+    sources = request.form.getlist("source") or ["trudvsem"]
+    params = [("search", "1"), ("keyword", keyword), ("refresh", "1")]
+    params.extend(("source", source) for source in sources)
+    if remote:
+        params.append(("remote", "1"))
+    return redirect(url_for("vacancies") + "?" + urlencode(params))
+
+
+@app.get("/trudvsem/status")
+def trudvsem_status():
+    state = trudvsem_sync_status()
+    state["cache_age_seconds"] = VACANCY_STORE.source_age_seconds("trudvsem")
+    state["cached_total"] = VACANCY_STORE.count(keyword="", sources=["trudvsem"])
+    state["sync_enabled"] = TRUDVSEM_SYNC_ENABLED
+    return state, 200
+
+
 @app.post("/sync/trudvsem")
 def sync_trudvsem():
     configured_secret = os.environ.get("SYNC_SECRET", "").strip()
@@ -765,31 +865,13 @@ def sync_trudvsem():
     if not configured_secret or not secrets.compare_digest(configured_secret, supplied_secret):
         return {"ok": False, "error": "unauthorized"}, 401
 
-    keyword = (request.args.get("keyword") or "инженер-конструктор").strip()
-    try:
-        pages = min(max(int(request.args.get("pages", "2")), 1), 10)
-    except ValueError:
-        pages = 2
-
-    provider = TrudvsemProvider(HH_USER_AGENT, per_page=100)
-    saved = 0
-    errors = []
-    for page_number in range(pages):
-        result = provider.search(keyword=keyword, page=page_number, remote_only=False)
-        if result.error:
-            errors.append(result.error)
-            break
-        saved += VACANCY_STORE.upsert_many(result.items)
-        if not result.has_next:
-            break
-
+    request_trudvsem_sync()
     return {
-        "ok": not errors,
+        "ok": True,
         "source": "trudvsem",
-        "keyword": keyword,
-        "saved": saved,
-        "errors": errors,
-    }, 200 if not errors else 502
+        "message": "background sync scheduled",
+        "status": trudvsem_sync_status(),
+    }, 202
 
 
 @app.get("/superjob/vacancies")
