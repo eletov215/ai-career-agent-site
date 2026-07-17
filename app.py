@@ -101,6 +101,7 @@ VACANCY_STORE.init()
 
 TRUDVSEM_SYNC_EVENT = threading.Event()
 TRUDVSEM_SYNC_LOCK = threading.Lock()
+TRUDVSEM_SYNC_THREAD = None
 TRUDVSEM_SYNC_STATE = {
     "running": False,
     "last_started": None,
@@ -226,15 +227,51 @@ def _trudvsem_sync_worker():
             TRUDVSEM_SYNC_EVENT.clear()
             _run_trudvsem_sync()
         TRUDVSEM_SYNC_EVENT.wait(timeout=30)
+        
+def _trudvsem_sync_worker():
+    logger.info("Trudvsem sync worker started")
+    time.sleep(2)
+
+    while True:
+        age = VACANCY_STORE.source_age_seconds("trudvsem")
+
+        if (
+            age is None
+            or age >= TRUDVSEM_SYNC_INTERVAL
+            or TRUDVSEM_SYNC_EVENT.is_set()
+        ):
+            TRUDVSEM_SYNC_EVENT.clear()
+            _run_trudvsem_sync()
+
+        TRUDVSEM_SYNC_EVENT.wait(timeout=30)
 
 
 def start_trudvsem_sync_worker():
-    thread = threading.Thread(
+    global TRUDVSEM_SYNC_THREAD
+
+    if not TRUDVSEM_SYNC_ENABLED:
+        logger.info("Trudvsem sync worker disabled")
+        return
+
+    if (
+        TRUDVSEM_SYNC_THREAD is not None
+        and TRUDVSEM_SYNC_THREAD.is_alive()
+    ):
+        logger.info("Trudvsem sync worker already running")
+        return
+
+    TRUDVSEM_SYNC_THREAD = threading.Thread(
         target=_trudvsem_sync_worker,
-        name="trudvsem-cache-sync",
+        name="trudvsem-sync-worker",
         daemon=True,
     )
-    thread.start()
+
+    TRUDVSEM_SYNC_THREAD.start()
+
+    logger.info(
+        "Trudvsem sync thread launched alive=%s",
+        TRUDVSEM_SYNC_THREAD.is_alive(),
+    )
 
 
 if TRUDVSEM_SYNC_ENABLED:
