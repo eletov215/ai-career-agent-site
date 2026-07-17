@@ -562,8 +562,16 @@ def vacancies():
             )
             cache_age = VACANCY_STORE.source_age_seconds("trudvsem")
             cache_fresh = cache_age is not None and cache_age < VACANCY_CACHE_TTL
+            cached_source_total = VACANCY_STORE.count(
+                keyword="",
+                sources=["trudvsem"],
+                remote_only=False,
+            )
 
-            if force_refresh or not cached_items or not cache_fresh:
+            # Do not call the external API again merely because this particular
+            # keyword has no matches. Refresh only when the whole source cache is
+            # empty/stale or when the user explicitly requests it.
+            if force_refresh or cached_source_total == 0 or not cache_fresh:
                 result = TrudvsemProvider(HH_USER_AGENT, per_page=25).search(
                     keyword=keyword,
                     page=page,
