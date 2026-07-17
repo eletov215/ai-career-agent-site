@@ -215,18 +215,6 @@ def _run_trudvsem_sync():
             )
             if error is None:
                 TRUDVSEM_SYNC_STATE["last_success"] = finished_at
-
-
-def _trudvsem_sync_worker():
-    logger.info("Trudvsem sync worker started")
-    # Let Gunicorn finish booting before the first external request.
-    time.sleep(2)
-    while True:
-        age = VACANCY_STORE.source_age_seconds("trudvsem")
-        if age is None or age >= TRUDVSEM_SYNC_INTERVAL or TRUDVSEM_SYNC_EVENT.is_set():
-            TRUDVSEM_SYNC_EVENT.clear()
-            _run_trudvsem_sync()
-        TRUDVSEM_SYNC_EVENT.wait(timeout=30)
         
 def _trudvsem_sync_worker():
     logger.info("Trudvsem sync worker started")
@@ -248,6 +236,8 @@ def _trudvsem_sync_worker():
 
 def start_trudvsem_sync_worker():
     global TRUDVSEM_SYNC_THREAD
+    
+    logger.info("ENTER start_trudvsem_sync_worker")
 
     if not TRUDVSEM_SYNC_ENABLED:
         logger.info("Trudvsem sync worker disabled")
@@ -272,11 +262,8 @@ def start_trudvsem_sync_worker():
         "Trudvsem sync thread launched alive=%s",
         TRUDVSEM_SYNC_THREAD.is_alive(),
     )
-
-
 if TRUDVSEM_SYNC_ENABLED:
     start_trudvsem_sync_worker()
-
 
 def enc(value):
     return FERNET.encrypt(value.encode()).decode() if value else None
