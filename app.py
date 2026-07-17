@@ -144,7 +144,8 @@ def valid_token(row):
         save_account(json.loads(row["profile_json"]), token_data)
         return token_data["access_token"]
     return dec(row["access_token"])
-    
+
+
 def hh_account():
     user_id = session.get("hh_user_id")
 
@@ -217,14 +218,31 @@ def save_hh_account(profile, token_data):
 
         conn.commit()
 
+
 @app.get("/")
 def home():
-    return render_template("index.html", account=account())
+    return render_template(
+        "index.html",
+        account=account(),
+        hh_account=hh_account(),
+    )
 
 
 @app.get("/privacy")
 def privacy():
     return render_template("privacy.html")
+
+
+@app.get("/oauth/superjob/login")
+def login():
+    state = secrets.token_urlsafe(32)
+    session["oauth_state"] = state
+    params = {
+        "client_id": CLIENT_ID,
+        "redirect_uri": REDIRECT_URI,
+        "state": state,
+    }
+    return redirect(f"{AUTHORIZE_URL}?{urlencode(params)}")
 
 
 @app.get("/oauth/superjob/callback")
@@ -362,7 +380,7 @@ def hh_callback():
             },
             headers={
                 "Accept": "application/json",
-                "User-Agent": "AI Career Platform support@example.com",
+                "User-Agent": HH_USER_AGENT,
             },
             timeout=30,
         )
@@ -411,16 +429,7 @@ def hh_callback():
 
     session["hh_user_id"] = str(profile["id"])
 
-    return render_template(
-        "message.html",
-        success=True,
-        title="HeadHunter подключён",
-        message=(
-            f"Авторизация выполнена. "
-            f"Пользователь: {profile.get('first_name', '')} "
-            f"{profile.get('last_name', '')}"
-        ),
-    )
+    return redirect(url_for("dashboard"))
 @app.get("/logout")
 def logout():
     session.clear()
@@ -429,17 +438,34 @@ def logout():
 
 @app.get("/dashboard")
 def dashboard():
-    row = account()
-    if not row:
-        return redirect(url_for("login"))
-    try:
-        response = requests.get(USER_CVS_URL, headers=headers(valid_token(row)), timeout=30)
-        response.raise_for_status()
-        resumes = response.json().get("objects", [])
-        error = None
-    except (requests.RequestException, ValueError, RuntimeError) as exc:
-        resumes, error = [], str(exc)
-    return render_template("dashboard.html", account=row, resumes=resumes, error=error)
+    superjob_row = account()
+    hh_row = hh_account()
+
+    if not superjob_row and not hh_row:
+        return redirect(url_for("home"))
+
+    resumes = []
+    error = None
+
+    if superjob_row:
+        try:
+            response = requests.get(
+                USER_CVS_URL,
+                headers=headers(valid_token(superjob_row)),
+                timeout=30,
+            )
+            response.raise_for_status()
+            resumes = response.json().get("objects", [])
+        except (requests.RequestException, ValueError, RuntimeError) as exc:
+            error = str(exc)
+
+    return render_template(
+        "dashboard.html",
+        account=superjob_row,
+        hh_account=hh_row,
+        resumes=resumes,
+        error=error,
+    )
 
 
 @app.get("/vacancies")
