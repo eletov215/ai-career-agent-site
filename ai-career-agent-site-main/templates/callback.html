@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>{{ title }} — AI Career Agent</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+<main class="container">
+  <section class="status {{ 'success' if success else 'error' }}">
+    <h1>{{ title }}</h1>
+    <p>{{ message }}</p>
+    <a class="btn btn-primary" href="/">Вернуться на главную</a>
+  </section>
+</main>
+</body>
+</html>
