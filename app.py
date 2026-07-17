@@ -556,11 +556,14 @@ def hh_vacancies():
 
     try:
         response = requests.get(
-            HH_VACANCIES_URL,
-            params=params,
-            headers=hh_headers(valid_hh_token(row)),
-            timeout=30,
-        )
+    HH_VACANCIES_URL,
+    params=params,
+    headers={
+        "Accept": "application/json",
+        "User-Agent": HH_USER_AGENT,
+    },
+    timeout=30,
+)
         response.raise_for_status()
         payload = response.json()
     except requests.RequestException as exc:
