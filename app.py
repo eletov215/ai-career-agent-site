@@ -143,6 +143,7 @@ def valid_token(row):
         save_account(json.loads(row["profile_json"]), token_data)
         return token_data["access_token"]
     return dec(row["access_token"])
+    
 def hh_account():
     user_id = session.get("hh_user_id")
 
@@ -235,32 +236,72 @@ def login():
 @app.get("/oauth/superjob/callback")
 def callback():
     if request.args.get("error"):
-        return render_template("message.html", success=False, title="Авторизация отклонена", message=request.args["error"]), 400
-    expected_state = session.pop("oauth_state", None)
-received_state = request.args.get("state")
+        return render_template(
+            "message.html",
+            success=False,
+            title="Авторизация отклонена",
+            message=request.args["error"],
+        ), 400
 
-if (
-    not expected_state
-    or not received_state
-    or not secrets.compare_digest(expected_state, received_state)
-):
-        return render_template("message.html", success=False, title="Ошибка безопасности", message="Начните подключение заново."), 400
+    expected_state = session.pop("oauth_state", None)
+    received_state = request.args.get("state")
+
+    if (
+        not expected_state
+        or not received_state
+        or not secrets.compare_digest(expected_state, received_state)
+    ):
+        return render_template(
+            "message.html",
+            success=False,
+            title="Ошибка безопасности",
+            message="Начните подключение заново.",
+        ), 400
+
     code = request.args.get("code")
+
     if not code:
-        return render_template("message.html", success=False, title="Код не получен", message="SuperJob не передал код."), 400
+        return render_template(
+            "message.html",
+            success=False,
+            title="Код не получен",
+            message="SuperJob не передал код.",
+        ), 400
+
     try:
-        token_response = requests.post(TOKEN_URL, data={
-            "code": code, "client_id": CLIENT_ID, "client_secret": CLIENT_SECRET, "redirect_uri": REDIRECT_URI,
-        }, headers={"X-Api-App-Id": CLIENT_SECRET}, timeout=30)
+        token_response = requests.post(
+            TOKEN_URL,
+            data={
+                "code": code,
+                "client_id": CLIENT_ID,
+                "client_secret": CLIENT_SECRET,
+                "redirect_uri": REDIRECT_URI,
+            },
+            headers={"X-Api-App-Id": CLIENT_SECRET},
+            timeout=30,
+        )
         token_response.raise_for_status()
         token_data = token_response.json()
-        profile_response = requests.get(CURRENT_USER_URL, headers=headers(token_data["access_token"]), timeout=30)
+
+        profile_response = requests.get(
+            CURRENT_USER_URL,
+            headers=headers(token_data["access_token"]),
+            timeout=30,
+        )
         profile_response.raise_for_status()
         profile = profile_response.json()
+
     except (requests.RequestException, ValueError, KeyError) as exc:
-        return render_template("message.html", success=False, title="Ошибка подключения", message=str(exc)), 502
+        return render_template(
+            "message.html",
+            success=False,
+            title="Ошибка подключения",
+            message=str(exc),
+        ), 502
+
     save_account(profile, token_data)
     session["superjob_user_id"] = int(profile["id"])
+
     return redirect(url_for("dashboard"))
 
 @app.get("/oauth/hh/login")
