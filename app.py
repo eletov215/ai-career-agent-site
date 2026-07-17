@@ -54,6 +54,7 @@ TRUDVSEM_SYNC_ITEMS = int(os.environ.get("TRUDVSEM_SYNC_ITEMS", "300"))
 TRUDVSEM_SYNC_BATCH = int(os.environ.get("TRUDVSEM_SYNC_BATCH", "10"))
 TRUDVSEM_SYNC_ENABLED = os.environ.get("TRUDVSEM_SYNC_ENABLED", "1").strip().lower() not in {"0", "false", "no"}
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
 
 def db():
@@ -104,6 +105,7 @@ TRUDVSEM_SYNC_STATE = {
     "running": False,
     "last_started": None,
     "last_finished": None,
+    "last_success": None,
     "last_saved": 0,
     "last_error": None,
 }
@@ -115,7 +117,13 @@ def trudvsem_sync_status():
 
 
 def request_trudvsem_sync():
+    already_queued = TRUDVSEM_SYNC_EVENT.is_set()
     TRUDVSEM_SYNC_EVENT.set()
+    logger.info(
+        "Trudvsem sync requested already_queued=%s running=%s",
+        already_queued,
+        trudvsem_sync_status().get("running"),
+    )
 
 
 def _run_trudvsem_sync():
@@ -123,7 +131,7 @@ def _run_trudvsem_sync():
         if TRUDVSEM_SYNC_STATE["running"]:
             return
 
-        previous_finished = TRUDVSEM_SYNC_STATE.get("last_finished")
+        previous_success = TRUDVSEM_SYNC_STATE.get("last_success")
 
         TRUDVSEM_SYNC_STATE.update(
             running=True,
@@ -149,17 +157,31 @@ def _run_trudvsem_sync():
         # После первой синхронизации запрашиваем только изменённые вакансии.
         modified_from = None
 
-        if previous_finished:
+        if previous_success:
             modified_from = datetime.fromtimestamp(
-                previous_finished,
+                previous_success,
                 tz=timezone.utc,
             ).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+        logger.info(
+            "Trudvsem background sync started target=%s batch_size=%s modified_from=%s",
+            target,
+            batch_size,
+            modified_from,
+        )
 
         for offset in range(0, target, batch_size):
             items = provider.fetch_batch(
                 offset=offset,
                 limit=batch_size,
                 modified_from=modified_from,
+            )
+
+            logger.info(
+                "Trudvsem batch fetched offset=%s requested=%s received=%s",
+                offset,
+                batch_size,
+                len(items),
             )
 
             if not items:
@@ -183,15 +205,19 @@ def _run_trudvsem_sync():
 
     finally:
         with TRUDVSEM_SYNC_LOCK:
+            finished_at = int(time.time())
             TRUDVSEM_SYNC_STATE.update(
                 running=False,
-                last_finished=int(time.time()),
+                last_finished=finished_at,
                 last_saved=saved,
                 last_error=error,
             )
+            if error is None:
+                TRUDVSEM_SYNC_STATE["last_success"] = finished_at
 
 
 def _trudvsem_sync_worker():
+    logger.info("Trudvsem sync worker started")
     # Let Gunicorn finish booting before the first external request.
     time.sleep(2)
     while True:
@@ -644,6 +670,7 @@ def vacancies():
     remote_only = request.args.get("remote") == "1"
     search_requested = request.args.get("search") == "1"
     force_refresh = request.args.get("refresh") == "1"
+    sync_queued = request.args.get("sync") == "queued"
     try:
         page = max(int(request.args.get("page", "0") or 0), 0)
     except ValueError:
@@ -694,7 +721,7 @@ def vacancies():
 
             if sync_state["running"]:
                 cache_note = "Данные «Работы России» обновляются в фоне. Сайт продолжает работать без ожидания API."
-            elif force_refresh:
+            elif force_refresh or sync_queued:
                 cache_note = "Фоновое обновление «Работы России» запущено. Новые вакансии появятся после обновления страницы."
             elif cache_age is None:
                 request_trudvsem_sync()
@@ -874,7 +901,7 @@ def refresh_trudvsem_cache():
     keyword = request.form.get("keyword", "").strip()
     remote = request.form.get("remote") == "1"
     sources = request.form.getlist("source") or ["trudvsem"]
-    params = [("search", "1"), ("keyword", keyword), ("refresh", "1")]
+    params = [("search", "1"), ("keyword", keyword), ("sync", "queued")]
     params.extend(("source", source) for source in sources)
     if remote:
         params.append(("remote", "1"))
