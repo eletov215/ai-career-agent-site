@@ -13,6 +13,7 @@ from urllib.parse import urlencode
 import requests
 from cryptography.fernet import Fernet, InvalidToken
 from flask import Flask, redirect, render_template, request, session, url_for
+from datetime import datetime, timezone
 
 from services.hh_provider import HeadHunterProvider
 from services.superjob_provider import SuperJobProvider
@@ -51,6 +52,7 @@ VACANCY_PAGE_SIZE = 60
 TRUDVSEM_SYNC_INTERVAL = int(os.environ.get("TRUDVSEM_SYNC_INTERVAL", "1800"))
 TRUDVSEM_SYNC_ITEMS = int(os.environ.get("TRUDVSEM_SYNC_ITEMS", "300"))
 TRUDVSEM_SYNC_BATCH = int(os.environ.get("TRUDVSEM_SYNC_BATCH", "10"))
+TRUDVSEM_SYNC_OFFSET = 0
 TRUDVSEM_SYNC_ENABLED = os.environ.get("TRUDVSEM_SYNC_ENABLED", "1").strip().lower() not in {"0", "false", "no"}
 logger = logging.getLogger(__name__)
 
@@ -121,6 +123,9 @@ def _run_trudvsem_sync():
     with TRUDVSEM_SYNC_LOCK:
         if TRUDVSEM_SYNC_STATE["running"]:
             return
+
+        previous_finished = TRUDVSEM_SYNC_STATE.get("last_finished")
+
         TRUDVSEM_SYNC_STATE.update(
             running=True,
             last_started=int(time.time()),
@@ -130,6 +135,7 @@ def _run_trudvsem_sync():
 
     saved = 0
     error = None
+
     try:
         provider = TrudvsemProvider(
             HH_USER_AGENT,
@@ -137,18 +143,45 @@ def _run_trudvsem_sync():
             timeout=(4, 8),
             scan_pages=5,
         )
+
         batch_size = max(1, min(TRUDVSEM_SYNC_BATCH, 10))
         target = max(batch_size, min(TRUDVSEM_SYNC_ITEMS, 500))
+
+        # После первой синхронизации запрашиваем только изменённые вакансии.
+        modified_from = None
+
+        if previous_finished:
+            modified_from = datetime.fromtimestamp(
+                previous_finished,
+                tz=timezone.utc,
+            ).strftime("%Y-%m-%dT%H:%M:%SZ")
+
         for offset in range(0, target, batch_size):
-            items = provider.fetch_batch(offset=offset, limit=batch_size)
+            items = provider.fetch_batch(
+                offset=offset,
+                limit=batch_size,
+                modified_from=modified_from,
+            )
+
             if not items:
                 break
+
             saved += VACANCY_STORE.upsert_many(items)
             time.sleep(0.15)
-        logger.info("Trudvsem background sync completed saved=%s", saved)
+
+        logger.info(
+            "Trudvsem background sync completed saved=%s modified_from=%s",
+            saved,
+            modified_from,
+        )
+
     except Exception as exc:
         error = f"{type(exc).__name__}: {exc}"
-        logger.warning("Trudvsem background sync failed error=%s", error)
+        logger.warning(
+            "Trudvsem background sync failed error=%s",
+            error,
+        )
+
     finally:
         with TRUDVSEM_SYNC_LOCK:
             TRUDVSEM_SYNC_STATE.update(
