@@ -17,16 +17,16 @@ class TrudvsemProvider(VacancyProvider):
     title = "Работа России"
     api_url = "https://opendata.trudvsem.ru/api/v1/vacancies"
 
-    def __init__(self, user_agent: str, per_page: int = 50, timeout: tuple[int, int] = (10, 45)):
+    def __init__(self, user_agent: str, per_page: int = 50, timeout: tuple[int, int] = (4, 8)):
         self.user_agent = user_agent
         self.per_page = max(1, min(int(per_page), 100))
         self.timeout = timeout
         self.session = requests.Session()
         retry = Retry(
-            total=2,
-            connect=2,
-            read=2,
-            backoff_factor=0.8,
+            total=0,
+            connect=0,
+            read=0,
+            backoff_factor=0,
             status_forcelist=(429, 500, 502, 503, 504),
             allowed_methods=frozenset({"GET"}),
             raise_on_status=False,

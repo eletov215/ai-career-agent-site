@@ -1,6 +1,7 @@
 import json
 import os
 import secrets
+import socket
 import sqlite3
 import time
 from pathlib import Path
@@ -663,6 +664,87 @@ def vacancies():
         search_requested=search_requested,
         cache_note=cache_note,
     )
+
+
+@app.get("/debug/trudvsem")
+def debug_trudvsem():
+    """Diagnose Render -> Работа России connectivity without exposing secrets."""
+    host = "opendata.trudvsem.ru"
+    api_url = f"https://{host}/api/v1/vacancies"
+    report = {
+        "service": "Работа России",
+        "api_url": api_url,
+        "render_region": os.environ.get("RENDER_REGION") or "unknown",
+        "timestamp_unix": int(time.time()),
+    }
+
+    dns_started = time.monotonic()
+    try:
+        address_rows = socket.getaddrinfo(host, 443, type=socket.SOCK_STREAM)
+        report["dns"] = {
+            "ok": True,
+            "seconds": round(time.monotonic() - dns_started, 3),
+            "addresses": sorted({row[4][0] for row in address_rows}),
+        }
+    except OSError as exc:
+        report["dns"] = {
+            "ok": False,
+            "seconds": round(time.monotonic() - dns_started, 3),
+            "error_type": type(exc).__name__,
+            "error": str(exc),
+        }
+
+    request_started = time.monotonic()
+    try:
+        response = requests.get(
+            api_url,
+            params={"limit": 1, "offset": 0},
+            headers={
+                "User-Agent": HH_USER_AGENT,
+                "Accept": "application/json",
+                "Connection": "close",
+            },
+            timeout=(4, 8),
+        )
+        elapsed = round(time.monotonic() - request_started, 3)
+        content_type = response.headers.get("Content-Type", "")
+        preview = response.text[:1000]
+        report["https_request"] = {
+            "ok": response.ok,
+            "seconds": elapsed,
+            "status_code": response.status_code,
+            "content_type": content_type,
+            "response_bytes": len(response.content),
+            "body_preview": preview,
+        }
+    except requests.RequestException as exc:
+        report["https_request"] = {
+            "ok": False,
+            "seconds": round(time.monotonic() - request_started, 3),
+            "error_type": type(exc).__name__,
+            "error": str(exc),
+        }
+
+    ip_started = time.monotonic()
+    try:
+        ip_response = requests.get("https://api.ipify.org", timeout=(3, 5))
+        ip_response.raise_for_status()
+        report["outbound_ip"] = {
+            "ok": True,
+            "seconds": round(time.monotonic() - ip_started, 3),
+            "ip": ip_response.text.strip(),
+        }
+    except requests.RequestException as exc:
+        report["outbound_ip"] = {
+            "ok": False,
+            "seconds": round(time.monotonic() - ip_started, 3),
+            "error_type": type(exc).__name__,
+            "error": str(exc),
+        }
+
+    overall_ok = bool(report.get("dns", {}).get("ok") and report.get("https_request", {}).get("ok"))
+    report["overall_ok"] = overall_ok
+    return report, 200
 
 
 @app.post("/sync/trudvsem")
