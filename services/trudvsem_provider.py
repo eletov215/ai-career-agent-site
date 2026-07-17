@@ -17,7 +17,7 @@ class TrudvsemProvider(VacancyProvider):
     title = "Работа России"
     api_url = "https://opendata.trudvsem.ru/api/v1/vacancies"
 
-    def __init__(self, user_agent: str, per_page: int = 50, timeout: tuple[int, int] = (4, 8)):
+    def __init__(self, user_agent: str, per_page: int = 25, timeout: tuple[int, int] = (5, 25)):
         self.user_agent = user_agent
         self.per_page = max(1, min(int(per_page), 100))
         self.timeout = timeout
@@ -66,17 +66,21 @@ class TrudvsemProvider(VacancyProvider):
         remote_text = " ".join(
             [schedule, employment, self._text(raw.get("work_places"))]
         ).lower()
-        requirements = raw.get("requirements") or {}
+        requirement = raw.get("requirement") or {}
+        requirements_value = raw.get("requirements") or ""
         qualification = (
-            requirements.get("qualification", "")
-            if isinstance(requirements, dict)
+            requirement.get("qualification", "")
+            if isinstance(requirement, dict)
+            else ""
+        )
+        education = (
+            requirement.get("education", "")
+            if isinstance(requirement, dict)
             else ""
         )
         description = raw.get("duty") or raw.get("job-description") or qualification
-        requirements_text = (
-            requirements.get("qualification") or requirements.get("education") or ""
-            if isinstance(requirements, dict)
-            else requirements
+        requirements_text = " ".join(
+            part for part in (self._text(requirements_value), self._text(qualification), self._text(education)) if part
         )
         external_id = self._text(raw.get("id") or raw.get("vacancy-id"))
         url = self._text(raw.get("vac_url") or raw.get("url"))
@@ -138,74 +142,67 @@ class TrudvsemProvider(VacancyProvider):
         payload = response.json()
         if not isinstance(payload, dict):
             raise ValueError("API вернул данные в неожиданном формате")
+        api_status = str(payload.get("status") or response.status_code)
+        if api_status != "200":
+            meta = payload.get("meta") or {}
+            detail = meta.get("error") if isinstance(meta, dict) else None
+            raise ValueError(detail or f"API вернул статус {api_status}")
         return payload
 
     def search(self, *, keyword: str, page: int = 0, remote_only: bool = False) -> SearchResult:
         page = max(page, 0)
-        base_params = {
+        params: dict[str, Any] = {
             "limit": self.per_page,
             "offset": page * self.per_page,
         }
-
-        # First try server-side text search. If the public service handles that
-        # query slowly, retry without text and filter the returned page locally.
-        attempts = []
         if keyword:
-            attempts.append(({**base_params, "text": keyword}, False))
-        attempts.append((base_params, bool(keyword)))
+            params["text"] = keyword
 
-        errors: list[str] = []
-        for params, local_filter in attempts:
-            try:
-                payload = self._request(params)
-                meta = payload.get("meta") or {}
-                total = int(meta.get("total", 0) or 0) if isinstance(meta, dict) else 0
-                results = payload.get("results") or {}
-                raw_items = results.get("vacancies") if isinstance(results, dict) else []
-                if not isinstance(raw_items, list):
-                    raw_items = []
+        try:
+            payload = self._request(params)
+            meta = payload.get("meta") or {}
+            total = int(meta.get("total", 0) or 0) if isinstance(meta, dict) else 0
+            results = payload.get("results") or {}
+            raw_items = results.get("vacancies") if isinstance(results, dict) else []
+            if not isinstance(raw_items, list):
+                raw_items = []
 
-                items = [item for raw in raw_items if (item := self._normalize(raw))]
-                if local_filter:
-                    items = [item for item in items if self._matches_keyword(item, keyword)]
-                    # The API total describes all vacancies, not local matches.
-                    total = len(items)
-                if remote_only:
-                    items = [item for item in items if item.get("remote")]
-                    if local_filter:
-                        total = len(items)
+            items = [item for raw in raw_items if (item := self._normalize(raw))]
+            if remote_only:
+                items = [item for item in items if item.get("remote")]
+                total = len(items)
 
-                pages = (total + self.per_page - 1) // self.per_page if total else 0
-                return SearchResult(
-                    items=items,
-                    total=total,
-                    page=page,
-                    pages=pages,
-                    has_next=(page + 1 < pages) if not local_filter else False,
-                )
-            except (requests.Timeout, requests.ConnectionError) as exc:
-                logger.warning("Trudvsem connection failed params=%s error=%s", params, exc)
-                errors.append(f"соединение: {exc}")
-            except requests.HTTPError as exc:
-                response = exc.response
-                status = response.status_code if response is not None else None
-                body = response.text[:250] if response is not None else ""
-                logger.warning(
-                    "Trudvsem HTTP error params=%s status=%s body=%s",
-                    params,
-                    status,
-                    body,
-                )
-                errors.append(f"HTTP {status or 'ошибка'}")
-            except (ValueError, TypeError, KeyError) as exc:
-                logger.warning("Trudvsem response parse failed params=%s error=%s", params, exc)
-                errors.append(f"некорректный ответ: {exc}")
+            pages = (total + self.per_page - 1) // self.per_page if total else 0
+            return SearchResult(
+                items=items,
+                total=total,
+                page=page,
+                pages=pages,
+                has_next=(page + 1 < pages),
+            )
+        except (requests.Timeout, requests.ConnectionError) as exc:
+            logger.warning("Trudvsem connection failed params=%s error=%s", params, exc)
+            detail = f"соединение: {exc}"
+        except requests.HTTPError as exc:
+            response = exc.response
+            status = response.status_code if response is not None else None
+            body = response.text[:250] if response is not None else ""
+            logger.warning(
+                "Trudvsem HTTP error params=%s status=%s body=%s",
+                params,
+                status,
+                body,
+            )
+            detail = f"HTTP {status or 'ошибка'}"
+        except (ValueError, TypeError, KeyError) as exc:
+            logger.warning("Trudvsem response parse failed params=%s error=%s", params, exc)
+            detail = f"некорректный ответ: {exc}"
 
         return SearchResult(
             page=page,
             error=(
-                "Сервис «Работа России» временно не отвечает. "
-                "Попробуйте повторить поиск позже."
-                + (f" Технические сведения: {'; '.join(errors)}" if errors else "")
+                "Сервис «Работа России» не успел обработать поисковый запрос. "
+                "Повторите попытку или сократите поисковую фразу. "
+                f"Технические сведения: {detail}"
             ),
         )

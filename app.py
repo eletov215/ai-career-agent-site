@@ -564,14 +564,17 @@ def vacancies():
             cache_fresh = cache_age is not None and cache_age < VACANCY_CACHE_TTL
 
             if force_refresh or not cached_items or not cache_fresh:
-                result = TrudvsemProvider(HH_USER_AGENT, per_page=100).search(
+                result = TrudvsemProvider(HH_USER_AGENT, per_page=25).search(
                     keyword=keyword,
                     page=page,
                     remote_only=False,
                 )
                 source_results["trudvsem"] = result
                 if result.items:
-                    VACANCY_STORE.upsert_many(result.items)
+                    try:
+                        VACANCY_STORE.upsert_many(result.items)
+                    except sqlite3.Error as exc:
+                        errors.append(f"Не удалось сохранить вакансии в кэш: {exc}")
                     cached_items = VACANCY_STORE.search(
                         keyword=keyword,
                         sources=["trudvsem"],
