@@ -19,6 +19,7 @@ REDIRECT_URI = os.environ["SUPERJOB_REDIRECT_URI"].strip()
 HH_CLIENT_ID = os.environ["HH_CLIENT_ID"].strip()
 HH_CLIENT_SECRET = os.environ["HH_CLIENT_SECRET"].strip()
 HH_REDIRECT_URI = os.environ["HH_REDIRECT_URI"].strip()
+HH_USER_AGENT = os.environ["HH_USER_AGENT"].strip()
 
 HH_AUTHORIZE_URL = "https://hh.ru/oauth/authorize"
 HH_TOKEN_URL = "https://api.hh.ru/token"
@@ -161,7 +162,7 @@ def hh_headers(token):
     return {
         "Authorization": f"Bearer {token}",
         "Accept": "application/json",
-        "User-Agent": "AI Career Platform support@example.com",
+        "User-Agent": HH_USER_AGENT,
     }
 
 
