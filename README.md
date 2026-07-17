@@ -1,26 +1,25 @@
-# AI Career Agent — этап 2
+# AI Career Agent
 
-Добавлено:
-- зашифрованное хранение OAuth-токенов SuperJob;
-- автоматическое обновление access token;
-- личный кабинет;
-- получение резюме пользователя;
-- поиск вакансий SuperJob и прямые ссылки.
+Flask MVP with independent vacancy providers.
 
-## Новая переменная Render
+## Vacancy architecture
 
-`TOKEN_ENCRYPTION_KEY`
+- `services/trudvsem_provider.py` — official open API of «Работа России».
+- `services/superjob_provider.py` — SuperJob OAuth/API adapter.
+- `services/hh_provider.py` — HeadHunter adapter placeholder while vacancy search returns 403.
+- `/vacancies` — unified search page.
 
-Сгенерируйте на компьютере:
+The provider layer normalizes each source to one vacancy schema so new platforms can be added without rebuilding the UI.
 
-```powershell
-py -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
-```
+## Environment variables
 
-Вставьте результат в Render → Environment.
-
-Важно: SQLite на бесплатном Render может очищаться при перезапуске или новом деплое. Для одного тестового пользователя это подходит. Следующий производственный этап — PostgreSQL.
-
-## HeadHunter vacancies
-
-Added `/hh/vacancies` with vacancy search, period and remote-work filters, pagination, and automatic HH access-token refresh.
+- `FLASK_SECRET_KEY`
+- `TOKEN_ENCRYPTION_KEY`
+- `SUPERJOB_CLIENT_ID`
+- `SUPERJOB_CLIENT_SECRET`
+- `SUPERJOB_REDIRECT_URI`
+- `HH_CLIENT_ID`
+- `HH_CLIENT_SECRET`
+- `HH_REDIRECT_URI`
+- `HH_USER_AGENT`
+- optional `DATA_DIR`

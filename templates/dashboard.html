@@ -28,7 +28,7 @@
         </div>
         {% if hh_account %}
           <p class="success-text">HeadHunter подключён</p>
-          <a class="btn btn-hh" href="{{ url_for('hh_vacancies') }}">Открыть поиск HeadHunter</a>
+          <a class="btn btn-secondary" href="{{ url_for('vacancies', source='hh') }}">Статус поиска HeadHunter</a>
         {% else %}
           <a class="btn btn-hh" href="/oauth/hh/login">Подключить HeadHunter</a>
         {% endif %}
@@ -50,7 +50,7 @@
         </div>
         {% if account %}
           <p class="success-text">SuperJob подключён</p>
-          <a class="btn btn-primary" href="/vacancies">Открыть поиск SuperJob</a>
+          <a class="btn btn-primary" href="{{ url_for('vacancies', source='superjob') }}">Искать через SuperJob</a>
         {% else %}
           <a class="btn btn-secondary" href="/oauth/superjob/login">Подключить SuperJob</a>
         {% endif %}
@@ -74,10 +74,11 @@
 
     <section class="card spaced next-step">
       <div>
-        <div class="muted">Следующий этап</div>
+        <div class="muted">Новая архитектура</div>
         <h2>Единый поиск вакансий</h2>
-        <p>Далее мы добавим вакансии HeadHunter и объединим результаты двух платформ в одном списке.</p>
+        <p>Работа России доступна без подключения аккаунта. Подключённые источники SuperJob и HeadHunter сохраняются как независимые модули.</p>
       </div>
+      <a class="btn btn-primary" href="{{ url_for('vacancies') }}">Открыть единый поиск</a>
     </section>
   </div>
 </main>

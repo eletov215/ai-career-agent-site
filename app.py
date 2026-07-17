@@ -10,6 +10,10 @@ import requests
 from cryptography.fernet import Fernet, InvalidToken
 from flask import Flask, redirect, render_template, request, session, url_for
 
+from services.hh_provider import HeadHunterProvider
+from services.superjob_provider import SuperJobProvider
+from services.trudvsem_provider import TrudvsemProvider
+
 app = Flask(__name__)
 app.secret_key = os.environ["FLASK_SECRET_KEY"]
 
@@ -503,24 +507,89 @@ def dashboard():
 
 @app.get("/vacancies")
 def vacancies():
-    row = account()
-    if not row:
-        return redirect(url_for("login"))
     keyword = request.args.get("keyword", "инженер-конструктор").strip()
-    period = request.args.get("period", "7")
-    page = max(int(request.args.get("page", "0") or 0), 0)
+    remote_only = request.args.get("remote") == "1"
     try:
-        response = requests.get(VACANCIES_URL, params={
-            "keyword": keyword, "period": period, "order_field": "date", "order_direction": "desc",
-            "count": 20, "page": page,
-        }, headers=headers(valid_token(row)), timeout=30)
-        response.raise_for_status()
-        payload = response.json()
-        items, error = payload.get("objects", []), None
-    except (requests.RequestException, ValueError, RuntimeError) as exc:
-        payload, items, error = {"more": False, "total": 0}, [], str(exc)
-    return render_template("vacancies.html", vacancies=items, keyword=keyword, period=period, page=page,
-                           more=payload.get("more", False), total=payload.get("total", 0), error=error)
+        page = max(int(request.args.get("page", "0") or 0), 0)
+    except ValueError:
+        page = 0
+
+    selected_sources = request.args.getlist("source")
+    if not selected_sources:
+        selected_sources = ["trudvsem"]
+        if account():
+            selected_sources.append("superjob")
+
+    providers = {
+        "trudvsem": TrudvsemProvider(HH_USER_AGENT),
+        "hh": HeadHunterProvider(),
+    }
+    superjob_row = account()
+    if superjob_row:
+        providers["superjob"] = SuperJobProvider(
+            VACANCIES_URL,
+            headers,
+            lambda: valid_token(superjob_row),
+        )
+
+    all_items = []
+    source_results = {}
+    errors = []
+    total = 0
+    has_next = False
+
+    for source_key in selected_sources:
+        provider = providers.get(source_key)
+        if not provider:
+            if source_key == "superjob":
+                errors.append("SuperJob не подключён. Подключите аккаунт в личном кабинете.")
+            continue
+        result = provider.search(
+            keyword=keyword,
+            page=page,
+            remote_only=remote_only,
+        )
+        source_results[source_key] = result
+        all_items.extend(result.items)
+        total += result.total
+        has_next = has_next or result.has_next
+        if result.error:
+            errors.append(result.error)
+
+    # Stable ordering: vacancies with a publication date first, then by source/title.
+    all_items.sort(
+        key=lambda item: (
+            bool(item.get("published_at")),
+            str(item.get("published_at") or ""),
+            str(item.get("title") or ""),
+        ),
+        reverse=True,
+    )
+
+    source_options = [
+        {"key": "trudvsem", "title": "Работа России", "available": True},
+        {"key": "superjob", "title": "SuperJob", "available": bool(superjob_row)},
+        {"key": "hh", "title": "HeadHunter", "available": bool(hh_account()), "note": "поиск временно недоступен"},
+    ]
+
+    return render_template(
+        "vacancies_unified.html",
+        vacancies=all_items,
+        keyword=keyword,
+        remote_only=remote_only,
+        selected_sources=selected_sources,
+        source_options=source_options,
+        source_results=source_results,
+        page=page,
+        has_next=has_next,
+        total=total,
+        errors=errors,
+    )
+
+
+@app.get("/superjob/vacancies")
+def superjob_vacancies_redirect():
+    return redirect(url_for("vacancies", source="superjob"))
 
 
 @app.get("/hh/vacancies")
