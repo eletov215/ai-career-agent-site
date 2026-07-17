@@ -49,8 +49,8 @@ DB_PATH = DATA_DIR / "app.db"
 VACANCY_CACHE_TTL = int(os.environ.get("VACANCY_CACHE_TTL", "1800"))
 VACANCY_PAGE_SIZE = 60
 TRUDVSEM_SYNC_INTERVAL = int(os.environ.get("TRUDVSEM_SYNC_INTERVAL", "1800"))
-TRUDVSEM_SYNC_ITEMS = int(os.environ.get("TRUDVSEM_SYNC_ITEMS", "100"))
-TRUDVSEM_SYNC_BATCH = int(os.environ.get("TRUDVSEM_SYNC_BATCH", "1"))
+TRUDVSEM_SYNC_ITEMS = int(os.environ.get("TRUDVSEM_SYNC_ITEMS", "300"))
+TRUDVSEM_SYNC_BATCH = int(os.environ.get("TRUDVSEM_SYNC_BATCH", "10"))
 TRUDVSEM_SYNC_ENABLED = os.environ.get("TRUDVSEM_SYNC_ENABLED", "1").strip().lower() not in {"0", "false", "no"}
 logger = logging.getLogger(__name__)
 
@@ -135,7 +135,7 @@ def _run_trudvsem_sync():
             HH_USER_AGENT,
             per_page=25,
             timeout=(4, 8),
-            scan_pages=1,
+            scan_pages=5,
         )
         batch_size = max(1, min(TRUDVSEM_SYNC_BATCH, 10))
         target = max(batch_size, min(TRUDVSEM_SYNC_ITEMS, 500))
@@ -608,7 +608,7 @@ def dashboard():
 
 @app.get("/vacancies")
 def vacancies():
-    keyword = request.args.get("keyword", "инженер-конструктор").strip()
+    keyword = request.args.get("keyword", "").strip()
     remote_only = request.args.get("remote") == "1"
     search_requested = request.args.get("search") == "1"
     force_refresh = request.args.get("refresh") == "1"
@@ -839,7 +839,7 @@ def debug_trudvsem():
 def refresh_trudvsem_cache():
     """Queue a refresh and return immediately; never wait for the API."""
     request_trudvsem_sync()
-    keyword = request.form.get("keyword", "инженер-конструктор").strip()
+    keyword = request.form.get("keyword", "").strip()
     remote = request.form.get("remote") == "1"
     sources = request.form.getlist("source") or ["trudvsem"]
     params = [("search", "1"), ("keyword", keyword), ("refresh", "1")]
