@@ -5,12 +5,12 @@ from typing import Any
 
 import requests
 from requests.adapters import HTTPAdapter
-from urllib3.util.retry import Retry
+from urllib3.util.retry import RetrygetLogger(__name__)
+
 
 from .base_provider import SearchResult, VacancyProvider
 
-logger = logging.getLogger(__name__)
-
+logger = logging.
 
 class TrudvsemProvider(VacancyProvider):
     key = "trudvsem"
@@ -151,20 +151,43 @@ class TrudvsemProvider(VacancyProvider):
         return payload
 
 
-    def fetch_batch(self, *, offset: int = 0, limit: int = 1) -> list[dict[str, Any]]:
-        """Load a small API batch for the background cache worker.
+    def fetch_batch(
+    self,
+    *,
+    offset: int = 0,
+    limit: int = 1,
+    modified_from: str | None = None,
+) -> list[dict[str, Any]]:
+    """Загрузить небольшую порцию вакансий для фоновой синхронизации."""
 
-        Small batches are intentionally used because larger responses from
-        opendata.trudvsem.ru can time out on shared cloud hosting.
-        """
-        safe_limit = max(1, min(int(limit), 10))
-        safe_offset = max(0, int(offset))
-        payload = self._request({"limit": safe_limit, "offset": safe_offset})
-        results = payload.get("results") or {}
-        raw_items = results.get("vacancies") if isinstance(results, dict) else []
-        if not isinstance(raw_items, list):
-            return []
-        return [item for raw in raw_items if (item := self._normalize(raw))]
+    safe_limit = max(1, min(int(limit), 10))
+    safe_offset = max(0, int(offset))
+
+    params: dict[str, Any] = {
+        "limit": safe_limit,
+        "offset": safe_offset,
+    }
+
+    if modified_from:
+        params["modifiedFrom"] = modified_from
+
+    payload = self._request(params)
+
+    results = payload.get("results") or {}
+    raw_items = (
+        results.get("vacancies")
+        if isinstance(results, dict)
+        else []
+    )
+
+    if not isinstance(raw_items, list):
+        return []
+
+    return [
+        item
+        for raw in raw_items
+        if (item := self._normalize(raw))
+    ]
 
     def search(self, *, keyword: str, page: int = 0, remote_only: bool = False) -> SearchResult:
         """Cache-only safety guard.
