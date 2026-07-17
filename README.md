@@ -1,25 +1,33 @@
 # AI Career Agent
 
-Flask MVP with independent vacancy providers.
+Flask-приложение с OAuth-интеграциями SuperJob и HeadHunter и единым поиском вакансий.
 
-## Vacancy architecture
+## Что добавлено
 
-- `services/trudvsem_provider.py` — official open API of «Работа России».
-- `services/superjob_provider.py` — SuperJob OAuth/API adapter.
-- `services/hh_provider.py` — HeadHunter adapter placeholder while vacancy search returns 403.
-- `/vacancies` — unified search page.
+- локальная таблица `vacancies` в SQLite;
+- кэш вакансий «Работы России» на 30 минут;
+- повторные попытки и резервный HTTP/HTTPS адрес API;
+- выдача из локальной базы, если внешний API временно недоступен;
+- защищённый endpoint фоновой синхронизации `POST /sync/trudvsem`;
+- дедупликация вакансий по источнику и внешнему ID.
 
-The provider layer normalizes each source to one vacancy schema so new platforms can be added without rebuilding the UI.
+## Переменные окружения
 
-## Environment variables
+Существующие переменные OAuth остаются без изменений.
 
-- `FLASK_SECRET_KEY`
-- `TOKEN_ENCRYPTION_KEY`
-- `SUPERJOB_CLIENT_ID`
-- `SUPERJOB_CLIENT_SECRET`
-- `SUPERJOB_REDIRECT_URI`
-- `HH_CLIENT_ID`
-- `HH_CLIENT_SECRET`
-- `HH_REDIRECT_URI`
-- `HH_USER_AGENT`
-- optional `DATA_DIR`
+Дополнительно:
+
+- `VACANCY_CACHE_TTL` — время кэша в секундах, по умолчанию `1800`;
+- `SYNC_SECRET` — секрет для запуска фоновой синхронизации.
+
+## Фоновая синхронизация
+
+Пример запроса:
+
+```bash
+curl -X POST \
+  -H "X-Sync-Secret: YOUR_SECRET" \
+  "https://YOUR-SITE.onrender.com/sync/trudvsem?keyword=инженер-конструктор&pages=3"
+```
+
+Этот endpoint можно вызывать внешним cron-сервисом раз в 30–60 минут. На бесплатном Render встроенный постоянный фоновый процесс ненадёжен, поэтому синхронизация вынесена в отдельный HTTP endpoint.

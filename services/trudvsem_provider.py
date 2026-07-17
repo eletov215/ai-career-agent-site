@@ -1,21 +1,40 @@
 from __future__ import annotations
 
+import logging
 from typing import Any
 
 import requests
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 
 from .base_provider import SearchResult, VacancyProvider
+
+logger = logging.getLogger(__name__)
 
 
 class TrudvsemProvider(VacancyProvider):
     key = "trudvsem"
     title = "Работа России"
-    api_url = "https://opendata.trudvsem.ru/api/v1/vacancies"
+    api_urls = (
+        "http://opendata.trudvsem.ru/api/v1/vacancies",
+        "https://opendata.trudvsem.ru/api/v1/vacancies",
+    )
 
-    def __init__(self, user_agent: str, per_page: int = 20, timeout: int = 8):
+    def __init__(self, user_agent: str, per_page: int = 50, timeout: tuple[int, int] = (4, 14)):
         self.user_agent = user_agent
         self.per_page = per_page
         self.timeout = timeout
+        self.session = requests.Session()
+        retry = Retry(
+            total=2,
+            connect=2,
+            read=1,
+            backoff_factor=0.4,
+            status_forcelist=(429, 500, 502, 503, 504),
+            allowed_methods=frozenset({"GET"}),
+        )
+        self.session.mount("http://", HTTPAdapter(max_retries=retry))
+        self.session.mount("https://", HTTPAdapter(max_retries=retry))
 
     @staticmethod
     def _text(value: Any) -> str:
@@ -31,7 +50,6 @@ class TrudvsemProvider(VacancyProvider):
         raw = item.get("vacancy") or item
         if not isinstance(raw, dict):
             return None
-
         company = raw.get("company") or {}
         region = raw.get("region") or {}
         addresses = raw.get("addresses") or {}
@@ -43,11 +61,9 @@ class TrudvsemProvider(VacancyProvider):
             )
         elif isinstance(address, dict):
             address = address.get("location") or address.get("address")
-
         schedule = self._text(raw.get("schedule"))
         employment = self._text(raw.get("employment"))
         remote_text = " ".join([schedule, employment, self._text(raw.get("work_places"))]).lower()
-
         requirements = raw.get("requirements") or {}
         qualification = requirements.get("qualification", "") if isinstance(requirements, dict) else ""
         description = raw.get("duty") or raw.get("job-description") or qualification
@@ -55,12 +71,10 @@ class TrudvsemProvider(VacancyProvider):
             requirements.get("qualification") or requirements.get("education") or ""
             if isinstance(requirements, dict) else requirements
         )
-
         external_id = self._text(raw.get("id") or raw.get("vacancy-id"))
         url = self._text(raw.get("vac_url") or raw.get("url"))
         if not url and external_id:
             url = f"https://trudvsem.ru/vacancy/card/{external_id}"
-
         return {
             "external_id": external_id,
             "source": self.key,
@@ -86,43 +100,42 @@ class TrudvsemProvider(VacancyProvider):
             "limit": self.per_page,
             "offset": max(page, 0) * self.per_page,
         }
-        try:
-            response = requests.get(
-                self.api_url,
-                params=params,
-                headers={"User-Agent": self.user_agent, "Accept": "application/json"},
-                timeout=self.timeout,
-            )
-            response.raise_for_status()
-            payload = response.json()
-            if not isinstance(payload, dict):
-                raise ValueError("API вернул данные в неожиданном формате")
-
-            total = int((payload.get("meta") or {}).get("total", 0) or 0)
-            results = payload.get("results") or {}
-            raw_items = results.get("vacancies") if isinstance(results, dict) else []
-            if not isinstance(raw_items, list):
-                raw_items = []
-
-            items = []
-            for raw_item in raw_items:
-                normalized = self._normalize(raw_item)
-                if normalized:
-                    items.append(normalized)
-            if remote_only:
-                items = [item for item in items if item.get("remote")]
-
-            pages = (total + self.per_page - 1) // self.per_page if total else 0
-            return SearchResult(
-                items=items,
-                total=total,
-                page=page,
-                pages=pages,
-                has_next=page + 1 < pages,
-            )
-        except Exception as exc:
-            detail = ""
-            response = getattr(exc, "response", None)
-            if response is not None:
-                detail = f" Ответ сервиса: {response.text[:300]}"
-            return SearchResult(page=page, error=f"Работа России временно не отвечает: {exc}.{detail}")
+        errors: list[str] = []
+        for api_url in self.api_urls:
+            try:
+                response = self.session.get(
+                    api_url,
+                    params=params,
+                    headers={"User-Agent": self.user_agent, "Accept": "application/json"},
+                    timeout=self.timeout,
+                )
+                response.raise_for_status()
+                payload = response.json()
+                if not isinstance(payload, dict):
+                    raise ValueError("API вернул данные в неожиданном формате")
+                total = int((payload.get("meta") or {}).get("total", 0) or 0)
+                results = payload.get("results") or {}
+                raw_items = results.get("vacancies") if isinstance(results, dict) else []
+                if not isinstance(raw_items, list):
+                    raw_items = []
+                items = [item for raw in raw_items if (item := self._normalize(raw))]
+                if remote_only:
+                    items = [item for item in items if item.get("remote")]
+                pages = (total + self.per_page - 1) // self.per_page if total else 0
+                return SearchResult(
+                    items=items,
+                    total=total,
+                    page=page,
+                    pages=pages,
+                    has_next=page + 1 < pages,
+                )
+            except Exception as exc:
+                response = getattr(exc, "response", None)
+                status = getattr(response, "status_code", None)
+                body = getattr(response, "text", "")[:250] if response is not None else ""
+                logger.warning("Trudvsem request failed url=%s status=%s error=%s body=%s", api_url, status, exc, body)
+                errors.append(f"{api_url}: {exc}")
+        return SearchResult(
+            page=page,
+            error="Работа России временно не отвечает. " + " | ".join(errors),
+        )

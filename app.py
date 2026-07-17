@@ -14,6 +14,7 @@ from flask import Flask, redirect, render_template, request, session, url_for
 from services.hh_provider import HeadHunterProvider
 from services.superjob_provider import SuperJobProvider
 from services.trudvsem_provider import TrudvsemProvider
+from services.vacancy_store import VacancyStore
 
 app = Flask(__name__)
 app.secret_key = os.environ["FLASK_SECRET_KEY"]
@@ -42,6 +43,8 @@ VACANCIES_URL = "https://api.superjob.ru/2.0/vacancies/"
 DATA_DIR = Path(os.environ.get("DATA_DIR", "/tmp/ai-career-agent"))
 DATA_DIR.mkdir(parents=True, exist_ok=True)
 DB_PATH = DATA_DIR / "app.db"
+VACANCY_CACHE_TTL = int(os.environ.get("VACANCY_CACHE_TTL", "1800"))
+VACANCY_PAGE_SIZE = 60
 
 
 def db():
@@ -81,6 +84,8 @@ def init_db():
 
 
 init_db()
+VACANCY_STORE = VacancyStore(DB_PATH)
+VACANCY_STORE.init()
 
 
 def enc(value):
@@ -511,6 +516,7 @@ def vacancies():
     keyword = request.args.get("keyword", "инженер-конструктор").strip()
     remote_only = request.args.get("remote") == "1"
     search_requested = request.args.get("search") == "1"
+    force_refresh = request.args.get("refresh") == "1"
     try:
         page = max(int(request.args.get("page", "0") or 0), 0)
     except ValueError:
@@ -521,10 +527,7 @@ def vacancies():
     if not selected_sources:
         selected_sources = ["trudvsem"]
 
-    providers = {
-        "trudvsem": TrudvsemProvider(HH_USER_AGENT),
-        "hh": HeadHunterProvider(),
-    }
+    providers = {"hh": HeadHunterProvider()}
     if superjob_row:
         providers["superjob"] = SuperJobProvider(
             VACANCIES_URL,
@@ -537,40 +540,99 @@ def vacancies():
     errors = []
     total = 0
     has_next = False
+    cache_note = None
 
-    # Do not call external APIs when the page is merely opened.
-    # Search starts only after the user submits the form.
     if search_requested:
-        tasks = {}
-        with ThreadPoolExecutor(max_workers=min(len(selected_sources), 3) or 1) as executor:
-            for source_key in selected_sources:
-                provider = providers.get(source_key)
-                if not provider:
-                    if source_key == "superjob":
-                        errors.append("SuperJob не подключён. Подключите аккаунт в личном кабинете.")
-                    continue
-                future = executor.submit(
-                    provider.search,
+        # Работа России: first read our local database. External API is called only
+        # when the matching cache is empty/stale or the user requests refresh.
+        if "trudvsem" in selected_sources:
+            offset = page * VACANCY_PAGE_SIZE
+            cached_items = VACANCY_STORE.search(
+                keyword=keyword,
+                sources=["trudvsem"],
+                remote_only=remote_only,
+                limit=VACANCY_PAGE_SIZE,
+                offset=offset,
+            )
+            cached_total = VACANCY_STORE.count(
+                keyword=keyword,
+                sources=["trudvsem"],
+                remote_only=remote_only,
+            )
+            cache_age = VACANCY_STORE.source_age_seconds("trudvsem")
+            cache_fresh = cache_age is not None and cache_age < VACANCY_CACHE_TTL
+
+            if force_refresh or not cached_items or not cache_fresh:
+                result = TrudvsemProvider(HH_USER_AGENT, per_page=100).search(
                     keyword=keyword,
                     page=page,
-                    remote_only=remote_only,
+                    remote_only=False,
                 )
-                tasks[future] = source_key
-
-            for future in as_completed(tasks):
-                source_key = tasks[future]
-                try:
-                    result = future.result()
-                except Exception as exc:
-                    errors.append(f"{source_key}: {exc}")
-                    continue
-                source_results[source_key] = result
-                all_items.extend(result.items)
-                total += result.total
-                has_next = has_next or result.has_next
-                if result.error:
+                source_results["trudvsem"] = result
+                if result.items:
+                    VACANCY_STORE.upsert_many(result.items)
+                    cached_items = VACANCY_STORE.search(
+                        keyword=keyword,
+                        sources=["trudvsem"],
+                        remote_only=remote_only,
+                        limit=VACANCY_PAGE_SIZE,
+                        offset=offset,
+                    )
+                    cached_total = VACANCY_STORE.count(
+                        keyword=keyword,
+                        sources=["trudvsem"],
+                        remote_only=remote_only,
+                    )
+                    cache_age = 0
+                elif result.error:
                     errors.append(result.error)
+            else:
+                cache_note = f"Работа России загружена из кэша ({cache_age // 60} мин. назад)."
 
+            all_items.extend(cached_items)
+            total += cached_total
+            has_next = has_next or offset + len(cached_items) < cached_total
+
+        # Other providers remain direct, but run concurrently and cannot block
+        # the cached Работа России results.
+        direct_sources = [source for source in selected_sources if source != "trudvsem"]
+        tasks = {}
+        if direct_sources:
+            with ThreadPoolExecutor(max_workers=min(len(direct_sources), 2) or 1) as executor:
+                for source_key in direct_sources:
+                    provider = providers.get(source_key)
+                    if not provider:
+                        if source_key == "superjob":
+                            errors.append("SuperJob не подключён. Подключите аккаунт в личном кабинете.")
+                        continue
+                    future = executor.submit(
+                        provider.search,
+                        keyword=keyword,
+                        page=page,
+                        remote_only=remote_only,
+                    )
+                    tasks[future] = source_key
+
+                for future in as_completed(tasks):
+                    source_key = tasks[future]
+                    try:
+                        result = future.result()
+                    except Exception as exc:
+                        errors.append(f"{source_key}: {exc}")
+                        continue
+                    source_results[source_key] = result
+                    all_items.extend(result.items)
+                    total += result.total
+                    has_next = has_next or result.has_next
+                    if result.error:
+                        errors.append(result.error)
+
+        # Remove duplicates across providers and sort newest first.
+        unique_items = {}
+        for item in all_items:
+            key = (item.get("source"), item.get("external_id") or item.get("url"))
+            unique_items[key] = item
+        all_items = list(unique_items.values())
         all_items.sort(
             key=lambda item: (
                 bool(item.get("published_at")),
@@ -599,7 +661,42 @@ def vacancies():
         total=total,
         errors=errors,
         search_requested=search_requested,
+        cache_note=cache_note,
     )
+
+
+@app.post("/sync/trudvsem")
+def sync_trudvsem():
+    configured_secret = os.environ.get("SYNC_SECRET", "").strip()
+    supplied_secret = request.headers.get("X-Sync-Secret", "").strip()
+    if not configured_secret or not secrets.compare_digest(configured_secret, supplied_secret):
+        return {"ok": False, "error": "unauthorized"}, 401
+
+    keyword = (request.args.get("keyword") or "инженер-конструктор").strip()
+    try:
+        pages = min(max(int(request.args.get("pages", "2")), 1), 10)
+    except ValueError:
+        pages = 2
+
+    provider = TrudvsemProvider(HH_USER_AGENT, per_page=100)
+    saved = 0
+    errors = []
+    for page_number in range(pages):
+        result = provider.search(keyword=keyword, page=page_number, remote_only=False)
+        if result.error:
+            errors.append(result.error)
+            break
+        saved += VACANCY_STORE.upsert_many(result.items)
+        if not result.has_next:
+            break
+
+    return {
+        "ok": not errors,
+        "source": "trudvsem",
+        "keyword": keyword,
+        "saved": saved,
+        "errors": errors,
+    }, 200 if not errors else 502
 
 
 @app.get("/superjob/vacancies")
