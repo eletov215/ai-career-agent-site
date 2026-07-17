@@ -226,13 +226,6 @@ def privacy():
     return render_template("privacy.html")
 
 
-@app.get("/oauth/superjob/login")
-def login():
-    state = secrets.token_urlsafe(32)
-    session["oauth_state"] = state
-    return redirect(f"{AUTHORIZE_URL}?{urlencode({'client_id': CLIENT_ID, 'redirect_uri': REDIRECT_URI, 'state': state})}")
-
-
 @app.get("/oauth/superjob/callback")
 def callback():
     if request.args.get("error"):
