@@ -16,6 +16,13 @@ app.secret_key = os.environ["FLASK_SECRET_KEY"]
 CLIENT_ID = os.environ["SUPERJOB_CLIENT_ID"].strip()
 CLIENT_SECRET = os.environ["SUPERJOB_CLIENT_SECRET"].strip()
 REDIRECT_URI = os.environ["SUPERJOB_REDIRECT_URI"].strip()
+HH_CLIENT_ID = os.environ["HH_CLIENT_ID"].strip()
+HH_CLIENT_SECRET = os.environ["HH_CLIENT_SECRET"].strip()
+HH_REDIRECT_URI = os.environ["HH_REDIRECT_URI"].strip()
+
+HH_AUTHORIZE_URL = "https://hh.ru/oauth/authorize"
+HH_TOKEN_URL = "https://api.hh.ru/token"
+HH_ME_URL = "https://api.hh.ru/me"
 FERNET = Fernet(os.environ["TOKEN_ENCRYPTION_KEY"].strip().encode())
 
 AUTHORIZE_URL = "https://www.superjob.ru/authorize/"
@@ -49,6 +56,19 @@ def init_db():
                 profile_json TEXT NOT NULL,
                 updated_at INTEGER NOT NULL
             )
+        """)
+        conn.execute("""
+        CREATE TABLE IF NOT EXISTS hh_accounts (
+            user_id TEXT PRIMARY KEY,
+            first_name TEXT,
+            last_name TEXT,
+            email TEXT,
+            access_token TEXT NOT NULL,
+            refresh_token TEXT,
+            expires_at INTEGER,
+            profile_json TEXT NOT NULL,
+            updated_at INTEGER NOT NULL
+        )
         """)
         conn.commit()
 
@@ -123,7 +143,77 @@ def valid_token(row):
         save_account(json.loads(row["profile_json"]), token_data)
         return token_data["access_token"]
     return dec(row["access_token"])
+def hh_account():
+    user_id = session.get("hh_user_id")
 
+    if not user_id:
+        return None
+
+    with db() as conn:
+        return conn.execute(
+            "SELECT * FROM hh_accounts WHERE user_id = ?",
+            (str(user_id),),
+        ).fetchone()
+
+
+def hh_headers(token):
+    return {
+        "Authorization": f"Bearer {token}",
+        "Accept": "application/json",
+        "User-Agent": "AI Career Platform support@example.com",
+    }
+
+
+def save_hh_account(profile, token_data):
+    now = int(time.time())
+
+    expires_in = token_data.get("expires_in")
+    expires_at = now + int(expires_in) if expires_in else None
+
+    user_id = str(profile["id"])
+
+    with db() as conn:
+        conn.execute(
+            """
+            INSERT INTO hh_accounts (
+                user_id,
+                first_name,
+                last_name,
+                email,
+                access_token,
+                refresh_token,
+                expires_at,
+                profile_json,
+                updated_at
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(user_id) DO UPDATE SET
+                first_name = excluded.first_name,
+                last_name = excluded.last_name,
+                email = excluded.email,
+                access_token = excluded.access_token,
+                refresh_token = COALESCE(
+                    excluded.refresh_token,
+                    hh_accounts.refresh_token
+                ),
+                expires_at = excluded.expires_at,
+                profile_json = excluded.profile_json,
+                updated_at = excluded.updated_at
+            """,
+            (
+                user_id,
+                profile.get("first_name"),
+                profile.get("last_name"),
+                profile.get("email"),
+                enc(token_data["access_token"]),
+                enc(token_data.get("refresh_token")),
+                expires_at,
+                json.dumps(profile, ensure_ascii=False),
+                now,
+            ),
+        )
+
+        conn.commit()
 
 @app.get("/")
 def home():
@@ -146,7 +236,14 @@ def login():
 def callback():
     if request.args.get("error"):
         return render_template("message.html", success=False, title="Авторизация отклонена", message=request.args["error"]), 400
-    if not session.pop("oauth_state", None) or request.args.get("state") is None:
+    expected_state = session.pop("oauth_state", None)
+received_state = request.args.get("state")
+
+if (
+    not expected_state
+    or not received_state
+    or not secrets.compare_digest(expected_state, received_state)
+):
         return render_template("message.html", success=False, title="Ошибка безопасности", message="Начните подключение заново."), 400
     code = request.args.get("code")
     if not code:
@@ -166,7 +263,129 @@ def callback():
     session["superjob_user_id"] = int(profile["id"])
     return redirect(url_for("dashboard"))
 
+@app.get("/oauth/hh/login")
+def hh_login():
+    state = secrets.token_urlsafe(32)
+    session["hh_oauth_state"] = state
 
+    params = {
+        "response_type": "code",
+        "client_id": HH_CLIENT_ID,
+        "redirect_uri": HH_REDIRECT_URI,
+        "state": state,
+    }
+
+    return redirect(f"{HH_AUTHORIZE_URL}?{urlencode(params)}")
+
+
+@app.get("/oauth/hh/callback")
+def hh_callback():
+    error = request.args.get("error")
+
+    if error:
+        return render_template(
+            "message.html",
+            success=False,
+            title="Авторизация HH отклонена",
+            message=error,
+        ), 400
+
+    expected_state = session.pop("hh_oauth_state", None)
+    received_state = request.args.get("state")
+
+    if (
+        not expected_state
+        or not received_state
+        or not secrets.compare_digest(expected_state, received_state)
+    ):
+        return render_template(
+            "message.html",
+            success=False,
+            title="Ошибка безопасности",
+            message="Некорректный OAuth state. Начните подключение HH заново.",
+        ), 400
+
+    code = request.args.get("code")
+
+    if not code:
+        return render_template(
+            "message.html",
+            success=False,
+            title="Код не получен",
+            message="HeadHunter не передал код авторизации.",
+        ), 400
+
+    try:
+        token_response = requests.post(
+            HH_TOKEN_URL,
+            data={
+                "grant_type": "authorization_code",
+                "client_id": HH_CLIENT_ID,
+                "client_secret": HH_CLIENT_SECRET,
+                "code": code,
+                "redirect_uri": HH_REDIRECT_URI,
+            },
+            headers={
+                "Accept": "application/json",
+                "User-Agent": "AI Career Platform support@example.com",
+            },
+            timeout=30,
+        )
+
+        token_response.raise_for_status()
+        token_data = token_response.json()
+
+        access_token = token_data["access_token"]
+
+        profile_response = requests.get(
+            HH_ME_URL,
+            headers=hh_headers(access_token),
+            timeout=30,
+        )
+
+        profile_response.raise_for_status()
+        profile = profile_response.json()
+
+    except requests.RequestException as exc:
+        response_text = ""
+
+        if exc.response is not None:
+            response_text = exc.response.text[:1000]
+
+        message = f"{exc}"
+
+        if response_text:
+            message += f"\n\nОтвет HH: {response_text}"
+
+        return render_template(
+            "message.html",
+            success=False,
+            title="Ошибка подключения HH",
+            message=message,
+        ), 502
+
+    except (ValueError, KeyError) as exc:
+        return render_template(
+            "message.html",
+            success=False,
+            title="Некорректный ответ HH",
+            message=str(exc),
+        ), 502
+
+    save_hh_account(profile, token_data)
+
+    session["hh_user_id"] = str(profile["id"])
+
+    return render_template(
+        "message.html",
+        success=True,
+        title="HeadHunter подключён",
+        message=(
+            f"Авторизация выполнена. "
+            f"Пользователь: {profile.get('first_name', '')} "
+            f"{profile.get('last_name', '')}"
+        ),
+    )
 @app.get("/logout")
 def logout():
     session.clear()
