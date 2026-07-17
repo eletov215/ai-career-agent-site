@@ -24,6 +24,7 @@ HH_USER_AGENT = os.environ["HH_USER_AGENT"].strip()
 HH_AUTHORIZE_URL = "https://hh.ru/oauth/authorize"
 HH_TOKEN_URL = "https://api.hh.ru/token"
 HH_ME_URL = "https://api.hh.ru/me"
+HH_VACANCIES_URL = "https://api.hh.ru/vacancies"
 FERNET = Fernet(os.environ["TOKEN_ENCRYPTION_KEY"].strip().encode())
 
 AUTHORIZE_URL = "https://www.superjob.ru/authorize/"
@@ -217,6 +218,38 @@ def save_hh_account(profile, token_data):
         )
 
         conn.commit()
+
+
+def valid_hh_token(row):
+    """Return a valid HH access token, refreshing it shortly before expiry."""
+    expires_at = row["expires_at"]
+    if not expires_at or int(expires_at) > int(time.time()) + 120:
+        return dec(row["access_token"])
+
+    refresh_token = dec(row["refresh_token"])
+    if not refresh_token:
+        raise RuntimeError("Refresh token HH отсутствует. Подключите HeadHunter заново.")
+
+    response = requests.post(
+        HH_TOKEN_URL,
+        data={
+            "grant_type": "refresh_token",
+            "refresh_token": refresh_token,
+            "client_id": HH_CLIENT_ID,
+            "client_secret": HH_CLIENT_SECRET,
+        },
+        headers={
+            "Accept": "application/json",
+            "User-Agent": HH_USER_AGENT,
+        },
+        timeout=30,
+    )
+    response.raise_for_status()
+    token_data = response.json()
+
+    profile = json.loads(row["profile_json"])
+    save_hh_account(profile, token_data)
+    return token_data["access_token"]
 
 
 @app.get("/")
@@ -488,6 +521,69 @@ def vacancies():
         payload, items, error = {"more": False, "total": 0}, [], str(exc)
     return render_template("vacancies.html", vacancies=items, keyword=keyword, period=period, page=page,
                            more=payload.get("more", False), total=payload.get("total", 0), error=error)
+
+
+@app.get("/hh/vacancies")
+def hh_vacancies():
+    row = hh_account()
+    if not row:
+        return redirect(url_for("hh_login"))
+
+    keyword = request.args.get("keyword", "инженер-конструктор").strip()
+    period = request.args.get("period", "7").strip()
+    remote_only = request.args.get("remote") == "1"
+
+    try:
+        page = max(int(request.args.get("page", "0") or 0), 0)
+    except ValueError:
+        page = 0
+
+    if period not in {"1", "3", "7", "14", "30"}:
+        period = "7"
+
+    params = {
+        "text": keyword,
+        "period": period,
+        "page": page,
+        "per_page": 20,
+        "order_by": "publication_time",
+    }
+    if remote_only:
+        params["schedule"] = "remote"
+
+    payload = {"items": [], "found": 0, "pages": 0, "page": page}
+    error = None
+
+    try:
+        response = requests.get(
+            HH_VACANCIES_URL,
+            params=params,
+            headers=hh_headers(valid_hh_token(row)),
+            timeout=30,
+        )
+        response.raise_for_status()
+        payload = response.json()
+    except requests.RequestException as exc:
+        response_text = ""
+        if exc.response is not None:
+            response_text = exc.response.text[:1000]
+        error = str(exc)
+        if response_text:
+            error += f" Ответ HH: {response_text}"
+    except (ValueError, KeyError, RuntimeError) as exc:
+        error = str(exc)
+
+    return render_template(
+        "hh_vacancies.html",
+        vacancies=payload.get("items", []),
+        keyword=keyword,
+        period=period,
+        remote_only=remote_only,
+        page=page,
+        pages=int(payload.get("pages", 0) or 0),
+        total=int(payload.get("found", 0) or 0),
+        error=error,
+    )
 
 
 @app.get("/health")

@@ -20,3 +20,7 @@ py -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decod
 Вставьте результат в Render → Environment.
 
 Важно: SQLite на бесплатном Render может очищаться при перезапуске или новом деплое. Для одного тестового пользователя это подходит. Следующий производственный этап — PostgreSQL.
+
+## HeadHunter vacancies
+
+Added `/hh/vacancies` with vacancy search, period and remote-work filters, pagination, and automatic HH access-token refresh.

@@ -28,6 +28,7 @@
         </div>
         {% if hh_account %}
           <p class="success-text">HeadHunter подключён</p>
+          <a class="btn btn-hh" href="{{ url_for('hh_vacancies') }}">Открыть поиск HeadHunter</a>
         {% else %}
           <a class="btn btn-hh" href="/oauth/hh/login">Подключить HeadHunter</a>
         {% endif %}
