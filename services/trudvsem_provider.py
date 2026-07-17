@@ -10,11 +10,12 @@ from .base_provider import SearchResult, VacancyProvider
 class TrudvsemProvider(VacancyProvider):
     key = "trudvsem"
     title = "Работа России"
-    api_url = "http://opendata.trudvsem.ru/api/v1/vacancies"
+    api_url = "https://opendata.trudvsem.ru/api/v1/vacancies"
 
-    def __init__(self, user_agent: str, per_page: int = 20):
+    def __init__(self, user_agent: str, per_page: int = 20, timeout: int = 8):
         self.user_agent = user_agent
         self.per_page = per_page
+        self.timeout = timeout
 
     @staticmethod
     def _text(value: Any) -> str:
@@ -24,14 +25,22 @@ class TrudvsemProvider(VacancyProvider):
             return value.strip()
         return str(value).strip()
 
-    def _normalize(self, item: dict[str, Any]) -> dict[str, Any]:
+    def _normalize(self, item: Any) -> dict[str, Any] | None:
+        if not isinstance(item, dict):
+            return None
         raw = item.get("vacancy") or item
+        if not isinstance(raw, dict):
+            return None
+
         company = raw.get("company") or {}
         region = raw.get("region") or {}
         addresses = raw.get("addresses") or {}
         address = addresses.get("address") if isinstance(addresses, dict) else None
         if isinstance(address, list):
-            address = ", ".join(self._text(x.get("location") if isinstance(x, dict) else x) for x in address if x)
+            address = ", ".join(
+                self._text(x.get("location") if isinstance(x, dict) else x)
+                for x in address if x
+            )
         elif isinstance(address, dict):
             address = address.get("location") or address.get("address")
 
@@ -42,10 +51,10 @@ class TrudvsemProvider(VacancyProvider):
         requirements = raw.get("requirements") or {}
         qualification = requirements.get("qualification", "") if isinstance(requirements, dict) else ""
         description = raw.get("duty") or raw.get("job-description") or qualification
-        if isinstance(requirements, dict):
-            requirements_text = requirements.get("qualification") or requirements.get("education") or ""
-        else:
-            requirements_text = requirements
+        requirements_text = (
+            requirements.get("qualification") or requirements.get("education") or ""
+            if isinstance(requirements, dict) else requirements
+        )
 
         external_id = self._text(raw.get("id") or raw.get("vacancy-id"))
         url = self._text(raw.get("vac_url") or raw.get("url"))
@@ -75,22 +84,34 @@ class TrudvsemProvider(VacancyProvider):
         params = {
             "text": keyword,
             "limit": self.per_page,
-            "offset": max(page, 0),
+            "offset": max(page, 0) * self.per_page,
         }
         try:
             response = requests.get(
                 self.api_url,
                 params=params,
                 headers={"User-Agent": self.user_agent, "Accept": "application/json"},
-                timeout=30,
+                timeout=self.timeout,
             )
             response.raise_for_status()
             payload = response.json()
+            if not isinstance(payload, dict):
+                raise ValueError("API вернул данные в неожиданном формате")
+
             total = int((payload.get("meta") or {}).get("total", 0) or 0)
-            raw_items = ((payload.get("results") or {}).get("vacancies") or [])
-            items = [self._normalize(item) for item in raw_items]
+            results = payload.get("results") or {}
+            raw_items = results.get("vacancies") if isinstance(results, dict) else []
+            if not isinstance(raw_items, list):
+                raw_items = []
+
+            items = []
+            for raw_item in raw_items:
+                normalized = self._normalize(raw_item)
+                if normalized:
+                    items.append(normalized)
             if remote_only:
                 items = [item for item in items if item.get("remote")]
+
             pages = (total + self.per_page - 1) // self.per_page if total else 0
             return SearchResult(
                 items=items,
@@ -99,9 +120,9 @@ class TrudvsemProvider(VacancyProvider):
                 pages=pages,
                 has_next=page + 1 < pages,
             )
-        except (requests.RequestException, ValueError, TypeError) as exc:
+        except Exception as exc:
             detail = ""
             response = getattr(exc, "response", None)
             if response is not None:
-                detail = f" Ответ сервиса: {response.text[:500]}"
-            return SearchResult(page=page, error=f"Работа России: {exc}.{detail}")
+                detail = f" Ответ сервиса: {response.text[:300]}"
+            return SearchResult(page=page, error=f"Работа России временно не отвечает: {exc}.{detail}")

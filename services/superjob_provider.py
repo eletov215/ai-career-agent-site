@@ -52,7 +52,7 @@ class SuperJobProvider(VacancyProvider):
                     "page": page,
                 },
                 headers=self.header_factory(self.token_factory()),
-                timeout=30,
+                timeout=8,
             )
             response.raise_for_status()
             payload = response.json()
@@ -67,5 +67,5 @@ class SuperJobProvider(VacancyProvider):
                 pages=(total + self.per_page - 1) // self.per_page if total else 0,
                 has_next=bool(payload.get("more", False)),
             )
-        except (requests.RequestException, ValueError, RuntimeError, TypeError) as exc:
+        except Exception as exc:
             return SearchResult(page=page, error=f"SuperJob: {exc}")

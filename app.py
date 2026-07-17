@@ -4,6 +4,7 @@ import secrets
 import sqlite3
 import time
 from pathlib import Path
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from urllib.parse import urlencode
 
 import requests
@@ -489,7 +490,7 @@ def dashboard():
             response = requests.get(
                 USER_CVS_URL,
                 headers=headers(valid_token(superjob_row)),
-                timeout=30,
+                timeout=8,
             )
             response.raise_for_status()
             resumes = response.json().get("objects", [])
@@ -509,22 +510,21 @@ def dashboard():
 def vacancies():
     keyword = request.args.get("keyword", "инженер-конструктор").strip()
     remote_only = request.args.get("remote") == "1"
+    search_requested = request.args.get("search") == "1"
     try:
         page = max(int(request.args.get("page", "0") or 0), 0)
     except ValueError:
         page = 0
 
+    superjob_row = account()
     selected_sources = request.args.getlist("source")
     if not selected_sources:
         selected_sources = ["trudvsem"]
-        if account():
-            selected_sources.append("superjob")
 
     providers = {
         "trudvsem": TrudvsemProvider(HH_USER_AGENT),
         "hh": HeadHunterProvider(),
     }
-    superjob_row = account()
     if superjob_row:
         providers["superjob"] = SuperJobProvider(
             VACANCIES_URL,
@@ -538,33 +538,47 @@ def vacancies():
     total = 0
     has_next = False
 
-    for source_key in selected_sources:
-        provider = providers.get(source_key)
-        if not provider:
-            if source_key == "superjob":
-                errors.append("SuperJob не подключён. Подключите аккаунт в личном кабинете.")
-            continue
-        result = provider.search(
-            keyword=keyword,
-            page=page,
-            remote_only=remote_only,
-        )
-        source_results[source_key] = result
-        all_items.extend(result.items)
-        total += result.total
-        has_next = has_next or result.has_next
-        if result.error:
-            errors.append(result.error)
+    # Do not call external APIs when the page is merely opened.
+    # Search starts only after the user submits the form.
+    if search_requested:
+        tasks = {}
+        with ThreadPoolExecutor(max_workers=min(len(selected_sources), 3) or 1) as executor:
+            for source_key in selected_sources:
+                provider = providers.get(source_key)
+                if not provider:
+                    if source_key == "superjob":
+                        errors.append("SuperJob не подключён. Подключите аккаунт в личном кабинете.")
+                    continue
+                future = executor.submit(
+                    provider.search,
+                    keyword=keyword,
+                    page=page,
+                    remote_only=remote_only,
+                )
+                tasks[future] = source_key
 
-    # Stable ordering: vacancies with a publication date first, then by source/title.
-    all_items.sort(
-        key=lambda item: (
-            bool(item.get("published_at")),
-            str(item.get("published_at") or ""),
-            str(item.get("title") or ""),
-        ),
-        reverse=True,
-    )
+            for future in as_completed(tasks):
+                source_key = tasks[future]
+                try:
+                    result = future.result()
+                except Exception as exc:
+                    errors.append(f"{source_key}: {exc}")
+                    continue
+                source_results[source_key] = result
+                all_items.extend(result.items)
+                total += result.total
+                has_next = has_next or result.has_next
+                if result.error:
+                    errors.append(result.error)
+
+        all_items.sort(
+            key=lambda item: (
+                bool(item.get("published_at")),
+                str(item.get("published_at") or ""),
+                str(item.get("title") or ""),
+            ),
+            reverse=True,
+        )
 
     source_options = [
         {"key": "trudvsem", "title": "Работа России", "available": True},
@@ -584,6 +598,7 @@ def vacancies():
         has_next=has_next,
         total=total,
         errors=errors,
+        search_requested=search_requested,
     )
 
 

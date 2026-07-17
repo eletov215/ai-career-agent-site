@@ -12,6 +12,7 @@
     </div>
 
     <form class="unified-search" method="get">
+      <input type="hidden" name="search" value="1">
       <label class="search-keyword">
         <span>Должность или ключевые слова</span>
         <input type="text" name="keyword" value="{{ keyword }}" placeholder="Например, инженер-конструктор">
@@ -38,6 +39,7 @@
       <button class="btn btn-primary" type="submit">Найти вакансии</button>
     </form>
 
+    {% if search_requested %}
     <div class="results-heading">
       <div>
         <strong>Найдено по источникам: {{ total }}</strong>
@@ -95,12 +97,16 @@
       {% endfor %}
     </div>
 
+    {% else %}
+      <section class="card"><h2>Поиск готов</h2><p class="muted">Выберите источники и нажмите «Найти вакансии». Страница больше не ждёт внешние API при открытии.</p></section>
+    {% endif %}
+
     <div class="pagination">
       {% if page > 0 %}
-        <a class="btn btn-secondary" href="?keyword={{ keyword|urlencode }}{% for source in selected_sources %}&source={{ source }}{% endfor %}{% if remote_only %}&remote=1{% endif %}&page={{ page - 1 }}">Назад</a>
+        <a class="btn btn-secondary" href="?search=1&keyword={{ keyword|urlencode }}{% for source in selected_sources %}&source={{ source }}{% endfor %}{% if remote_only %}&remote=1{% endif %}&page={{ page - 1 }}">Назад</a>
       {% endif %}
       {% if has_next %}
-        <a class="btn btn-secondary" href="?keyword={{ keyword|urlencode }}{% for source in selected_sources %}&source={{ source }}{% endfor %}{% if remote_only %}&remote=1{% endif %}&page={{ page + 1 }}">Далее</a>
+        <a class="btn btn-secondary" href="?search=1&keyword={{ keyword|urlencode }}{% for source in selected_sources %}&source={{ source }}{% endfor %}{% if remote_only %}&remote=1{% endif %}&page={{ page + 1 }}">Далее</a>
       {% endif %}
     </div>
 
