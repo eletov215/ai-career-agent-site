@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import time
 from typing import Any
 
 import requests
@@ -18,11 +19,21 @@ class TrudvsemProvider(VacancyProvider):
     title = "Работа России"
     api_url = "https://opendata.trudvsem.ru/api/v1/vacancies"
 
-    def __init__(self, user_agent: str, per_page: int = 25, timeout: tuple[int, int] = (5, 20), scan_pages: int = 1):
+    def __init__(
+        self,
+        user_agent: str,
+        per_page: int = 25,
+        timeout: tuple[int, int] = (5, 20),
+        scan_pages: int = 1,
+        request_attempts: int = 5,
+        retry_backoff: float = 1.0,
+    ):
         self.user_agent = user_agent
         self.per_page = max(1, min(int(per_page), 100))
         self.timeout = timeout
         self.scan_pages = max(1, min(int(scan_pages), 10))
+        self.request_attempts = max(1, min(int(request_attempts), 10))
+        self.retry_backoff = max(0.1, min(float(retry_backoff), 10.0))
         self.session = requests.Session()
         retry = Retry(
             total=0,
@@ -130,26 +141,75 @@ class TrudvsemProvider(VacancyProvider):
         return all(term in haystack for term in terms)
 
     def _request(self, params: dict[str, Any]) -> dict[str, Any]:
-        response = self.session.get(
-            self.api_url,
-            params=params,
-            headers={
-                "User-Agent": self.user_agent,
-                "Accept": "application/json",
-                "Connection": "close",
-            },
-            timeout=self.timeout,
-        )
-        response.raise_for_status()
-        payload = response.json()
-        if not isinstance(payload, dict):
-            raise ValueError("API вернул данные в неожиданном формате")
-        api_status = str(payload.get("status") or response.status_code)
-        if api_status != "200":
-            meta = payload.get("meta") or {}
-            detail = meta.get("error") if isinstance(meta, dict) else None
-            raise ValueError(detail or f"API вернул статус {api_status}")
-        return payload
+        last_error: Exception | None = None
+
+        for attempt in range(1, self.request_attempts + 1):
+            try:
+                response = self.session.get(
+                    self.api_url,
+                    params=params,
+                    headers={
+                        "User-Agent": self.user_agent,
+                        "Accept": "application/json",
+                        "Connection": "close",
+                    },
+                    timeout=self.timeout,
+                )
+
+                # Повторяем только временные HTTP-ошибки. Ошибки клиента 4xx,
+                # кроме 429, должны сразу попадать в журнал и завершать запрос.
+                if response.status_code == 429 or response.status_code >= 500:
+                    response.raise_for_status()
+                if 400 <= response.status_code < 500:
+                    response.raise_for_status()
+
+                payload = response.json()
+                if not isinstance(payload, dict):
+                    raise ValueError("API вернул данные в неожиданном формате")
+
+                api_status = str(payload.get("status") or response.status_code)
+                if api_status != "200":
+                    meta = payload.get("meta") or {}
+                    detail = meta.get("error") if isinstance(meta, dict) else None
+                    raise ValueError(detail or f"API вернул статус {api_status}")
+
+                if attempt > 1:
+                    logger.info(
+                        "Trudvsem request recovered attempt=%s offset=%s limit=%s",
+                        attempt,
+                        params.get("offset"),
+                        params.get("limit"),
+                    )
+                return payload
+
+            except (requests.Timeout, requests.ConnectionError) as exc:
+                last_error = exc
+            except requests.HTTPError as exc:
+                last_error = exc
+                status_code = exc.response.status_code if exc.response is not None else None
+                if status_code not in {429, 500, 502, 503, 504}:
+                    raise
+            except requests.RequestException as exc:
+                last_error = exc
+
+            if attempt >= self.request_attempts:
+                break
+
+            delay = min(8.0, self.retry_backoff * (2 ** (attempt - 1)))
+            logger.warning(
+                "Trudvsem request failed; retrying attempt=%s/%s delay=%.1fs offset=%s limit=%s error=%s",
+                attempt,
+                self.request_attempts,
+                delay,
+                params.get("offset"),
+                params.get("limit"),
+                last_error,
+            )
+            time.sleep(delay)
+
+        if last_error is not None:
+            raise last_error
+        raise RuntimeError("Не удалось выполнить запрос к API 'Работы России'")
 
 
 

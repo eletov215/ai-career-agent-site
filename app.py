@@ -55,6 +55,8 @@ VACANCY_PAGE_SIZE = 60
 TRUDVSEM_SYNC_INTERVAL = int(os.environ.get("TRUDVSEM_SYNC_INTERVAL", "1800"))
 TRUDVSEM_SYNC_ITEMS = int(os.environ.get("TRUDVSEM_SYNC_ITEMS", "300"))
 TRUDVSEM_SYNC_BATCH = int(os.environ.get("TRUDVSEM_SYNC_BATCH", "10"))
+TRUDVSEM_REQUEST_ATTEMPTS = int(os.environ.get("TRUDVSEM_REQUEST_ATTEMPTS", "5"))
+TRUDVSEM_RETRY_BACKOFF = float(os.environ.get("TRUDVSEM_RETRY_BACKOFF", "1"))
 TRUDVSEM_SYNC_ENABLED = os.environ.get("TRUDVSEM_SYNC_ENABLED", "1").strip().lower() not in {"0", "false", "no"}
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -177,6 +179,8 @@ def _run_trudvsem_sync():
             per_page=10,
             timeout=(5, 45),
             scan_pages=5,
+            request_attempts=TRUDVSEM_REQUEST_ATTEMPTS,
+            retry_backoff=TRUDVSEM_RETRY_BACKOFF,
         )
 
         batch_size = max(1, min(TRUDVSEM_SYNC_BATCH, 10))
