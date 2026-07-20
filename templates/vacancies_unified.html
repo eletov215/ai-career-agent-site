@@ -53,7 +53,7 @@
     </div>
 
     {% if cache_note %}
-      <div class="card spaced"><span class="muted">{{ cache_note }}</span></div>
+      <div class="card spaced"><span class="muted" id="trudvsem-sync-note">{{ cache_note }}</span></div>
     {% endif %}
 
     {% for error in errors %}
@@ -65,7 +65,7 @@
         <input type="hidden" name="keyword" value="{{ keyword }}">
         {% for source in selected_sources %}<input type="hidden" name="source" value="{{ source }}">{% endfor %}
         {% if remote_only %}<input type="hidden" name="remote" value="1">{% endif %}
-        <button class="link-button" type="submit">Обновить данные «Работы России» сейчас</button>
+        <button class="link-button" id="trudvsem-refresh-button" type="submit">Обновить данные «Работы России» сейчас</button>
       </form>
     {% endif %}
 
@@ -126,4 +126,75 @@
     <p class="api-credit">Данные «Работа России» получены через официальный открытый API портала trudvsem.ru.</p>
   </div>
 </main>
+
+{% if sync_queued and sync_requested_at %}
+<script>
+(() => {
+  const requestedAt = {{ sync_requested_at|int }};
+  const statusUrl = {{ url_for('trudvsem_status')|tojson }};
+  const note = document.getElementById('trudvsem-sync-note');
+  const button = document.getElementById('trudvsem-refresh-button');
+  let attempts = 0;
+  let syncObserved = false;
+
+  if (button) {
+    button.disabled = true;
+    button.textContent = 'Обновление выполняется…';
+  }
+
+  const updateNote = (text, isError = false) => {
+    if (!note) return;
+    note.textContent = text;
+    note.classList.toggle('sync-error', isError);
+  };
+
+  const poll = async () => {
+    attempts += 1;
+    try {
+      const response = await fetch(statusUrl, {headers: {'Accept': 'application/json'}, cache: 'no-store'});
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const state = await response.json();
+
+      if (state.queued || state.running || (state.last_started && state.last_started >= requestedAt)) {
+        syncObserved = true;
+      }
+
+      if (state.last_error && state.last_finished && state.last_finished >= requestedAt) {
+        updateNote(`Не удалось обновить «Работу России»: ${state.last_error}`, true);
+        if (button) {
+          button.disabled = false;
+          button.textContent = 'Повторить обновление';
+        }
+        return;
+      }
+
+      if (syncObserved && !state.running && state.last_finished && state.last_finished >= requestedAt) {
+        const url = new URL(window.location.href);
+        url.searchParams.delete('sync');
+        url.searchParams.delete('sync_requested_at');
+        window.location.replace(url.toString());
+        return;
+      }
+
+      updateNote(state.running ? 'Данные «Работы России» обновляются…' : 'Обновление поставлено в очередь…');
+    } catch (error) {
+      if (attempts >= 20) {
+        updateNote('Не удалось проверить статус обновления. Обновите страницу вручную.', true);
+        if (button) button.disabled = false;
+        return;
+      }
+    }
+
+    if (attempts < 60) {
+      window.setTimeout(poll, 1500);
+    } else {
+      updateNote('Обновление занимает больше обычного. Обновите страницу позже.', true);
+      if (button) button.disabled = false;
+    }
+  };
+
+  poll();
+})();
+</script>
+{% endif %}
 {% endblock %}
