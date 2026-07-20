@@ -105,7 +105,11 @@
       {% else %}
         <section class="card">
           <h2>Вакансии не найдены</h2>
-          <p class="muted">Измени запрос или выбери другой источник.</p>
+          {% if 'trudvsem' in selected_sources and source_results.get('trudvsem') and source_results.get('trudvsem').total == 0 %}
+            <p class="muted">Локальный кэш «Работы России» пока пуст. После нового деплоя Render данные могут загружаться заново. Нажмите обновление и дождитесь успешного завершения.</p>
+          {% else %}
+            <p class="muted">Измени запрос или выбери другой источник.</p>
+          {% endif %}
         </section>
       {% endfor %}
     </div>
@@ -185,10 +189,10 @@
       }
     }
 
-    if (attempts < 60) {
+    if (attempts < 180) {
       window.setTimeout(poll, 1500);
     } else {
-      updateNote('Обновление занимает больше обычного. Обновите страницу позже.', true);
+      updateNote('API «Работы России» отвечает медленно. Обновление продолжается; проверьте страницу позже.', true);
       if (button) button.disabled = false;
     }
   };
