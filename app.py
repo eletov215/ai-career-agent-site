@@ -121,16 +121,18 @@ def trudvsem_sync_status():
 
 
 def request_trudvsem_sync():
+    """Queue synchronization and make sure a live worker can consume it."""
+    start_trudvsem_sync_worker()
     already_queued = TRUDVSEM_SYNC_EVENT.is_set()
     TRUDVSEM_SYNC_EVENT.set()
+    state = trudvsem_sync_status()
     logger.info(
-        "Trudvsem event set",
-    )
-    logger.info(
-        "Trudvsem sync requested already_queued=%s running=%s",
+        "Trudvsem sync requested already_queued=%s running=%s worker_alive=%s",
         already_queued,
-        trudvsem_sync_status().get("running"),
+        state.get("running"),
+        bool(TRUDVSEM_SYNC_THREAD and TRUDVSEM_SYNC_THREAD.is_alive()),
     )
+    return int(time.time())
 
 
 def _run_trudvsem_sync():
@@ -288,7 +290,9 @@ def start_trudvsem_sync_worker():
 def start_background_workers():
     global TRUDVSEM_SYNC_THREAD
 
-    if TRUDVSEM_SYNC_ENABLED and TRUDVSEM_SYNC_THREAD is None:
+    if TRUDVSEM_SYNC_ENABLED and (
+        TRUDVSEM_SYNC_THREAD is None or not TRUDVSEM_SYNC_THREAD.is_alive()
+    ):
         logger.info("Starting background worker from request")
         start_trudvsem_sync_worker()
 
@@ -752,6 +756,10 @@ def vacancies():
     force_refresh = request.args.get("refresh") == "1"
     sync_queued = request.args.get("sync") == "queued"
     try:
+        sync_requested_at = max(int(request.args.get("sync_requested_at", "0") or 0), 0)
+    except ValueError:
+        sync_requested_at = 0
+    try:
         page = max(int(request.args.get("page", "0") or 0), 0)
     except ValueError:
         page = 0
@@ -897,6 +905,8 @@ def vacancies():
         errors=errors,
         search_requested=search_requested,
         cache_note=cache_note,
+        sync_queued=sync_queued,
+        sync_requested_at=sync_requested_at,
     )
 
 
@@ -983,12 +993,17 @@ def debug_trudvsem():
 
 @app.post("/trudvsem/refresh")
 def refresh_trudvsem_cache():
-    """Queue a refresh and return immediately; never wait for the API."""
-    request_trudvsem_sync()
+    """Queue a refresh and redirect to a page that tracks its completion."""
+    requested_at = request_trudvsem_sync()
     keyword = request.form.get("keyword", "").strip()
     remote = request.form.get("remote") == "1"
     sources = request.form.getlist("source") or ["trudvsem"]
-    params = [("search", "1"), ("keyword", keyword), ("sync", "queued")]
+    params = [
+        ("search", "1"),
+        ("keyword", keyword),
+        ("sync", "queued"),
+        ("sync_requested_at", str(requested_at)),
+    ]
     params.extend(("source", source) for source in sources)
     if remote:
         params.append(("remote", "1"))
@@ -1001,6 +1016,8 @@ def trudvsem_status():
     state["cache_age_seconds"] = VACANCY_STORE.source_age_seconds("trudvsem")
     state["cached_total"] = VACANCY_STORE.count(keyword="", sources=["trudvsem"])
     state["sync_enabled"] = TRUDVSEM_SYNC_ENABLED
+    state["queued"] = TRUDVSEM_SYNC_EVENT.is_set()
+    state["worker_alive"] = bool(TRUDVSEM_SYNC_THREAD and TRUDVSEM_SYNC_THREAD.is_alive())
     return state, 200
 
 
