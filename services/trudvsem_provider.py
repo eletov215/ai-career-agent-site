@@ -123,6 +123,7 @@ class TrudvsemProvider(VacancyProvider):
             ),
             "schedule": schedule,
             "employment": employment,
+            "experience": self._text(raw.get("experience")) or self._text(raw.get("required_experience")),
             "description": self._text(description),
             "requirements": self._text(requirements_text),
             "published_at": self._text(raw.get("creation-date") or raw.get("date")),

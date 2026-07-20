@@ -855,6 +855,11 @@ def vacancies():
                 salary_only=filters.salary_only,
                 period_days=filters.period_days,
                 sort=filters.sort,
+                region=filters.region,
+                experience=filters.experience,
+                employment=filters.employment,
+                work_format=filters.work_format,
+                currency=filters.currency,
                 limit=VACANCY_PAGE_SIZE,
                 offset=offset,
             )
@@ -865,6 +870,11 @@ def vacancies():
                 salary_from=filters.salary_from,
                 salary_only=filters.salary_only,
                 period_days=filters.period_days,
+                region=filters.region,
+                experience=filters.experience,
+                employment=filters.employment,
+                work_format=filters.work_format,
+                currency=filters.currency,
             )
             cache_age = VACANCY_STORE.source_age_seconds("trudvsem")
             sync_state = trudvsem_sync_status()
@@ -967,6 +977,11 @@ def vacancies():
         },
     ]
 
+    filter_pairs = filters.query_pairs()
+    for source in selected_sources:
+        filter_pairs.append(("source", source))
+    filter_query = urlencode(filter_pairs)
+
     return render_template(
         "vacancies_unified.html",
         vacancies=all_items,
@@ -982,6 +997,7 @@ def vacancies():
         errors=errors,
         search_requested=search_requested,
         cache_note=cache_note,
+        filter_query=filter_query,
     )
 
 
@@ -1070,13 +1086,11 @@ def debug_trudvsem():
 def refresh_trudvsem_cache():
     """Queue a refresh and return immediately; never wait for the API."""
     request_trudvsem_sync()
-    keyword = request.form.get("keyword", "").strip()
-    remote = request.form.get("remote") == "1"
+    filters = VacancySearchFilters.from_query(request.form)
     sources = request.form.getlist("source") or ["trudvsem"]
-    params = [("search", "1"), ("keyword", keyword), ("sync", "queued")]
+    params = filters.query_pairs()
+    params.append(("sync", "queued"))
     params.extend(("source", source) for source in sources)
-    if remote:
-        params.append(("remote", "1"))
     return redirect(url_for("vacancies") + "?" + urlencode(params))
 
 

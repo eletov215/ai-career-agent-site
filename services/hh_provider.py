@@ -73,6 +73,7 @@ class HeadHunterProvider(VacancyProvider):
             "remote": schedule.get("id") == "remote",
             "schedule": schedule.get("name") or "",
             "employment": employment.get("name") or "",
+            "experience": experience.get("name") or "",
             "description": description,
             "requirements": experience.get("name") or "",
             "published_at": raw.get("published_at") or "",
@@ -124,12 +125,47 @@ class HeadHunterProvider(VacancyProvider):
         }
         if filters.keyword:
             params["text"] = filters.keyword
-        if filters.remote_only:
+        if filters.work_format == "remote":
             params["schedule"] = "remote"
+        elif filters.work_format == "hybrid":
+            params["schedule"] = "flexible"
+        if filters.experience:
+            params["experience"] = filters.experience
+        if filters.employment:
+            params["employment"] = filters.employment
+        if filters.currency:
+            params["currency"] = filters.currency
         if filters.salary_from is not None:
             params["salary"] = filters.salary_from
         if filters.salary_only:
             params["only_with_salary"] = "true"
+
+        hh_region_ids = {
+            "россия": "113",
+            "москва": "1",
+            "санкт-петербург": "2",
+            "санкт петербург": "2",
+            "екатеринбург": "3",
+            "новосибирск": "4",
+            "казань": "88",
+            "нижний новгород": "66",
+            "самара": "78",
+            "омск": "68",
+            "челябинск": "104",
+            "ростов-на-дону": "76",
+            "уфа": "99",
+            "красноярск": "54",
+            "пермь": "72",
+            "воронеж": "26",
+            "волгоград": "24",
+            "краснодар": "53",
+        }
+        if filters.region:
+            region_key = filters.region.casefold().strip()
+            if region_key.isdigit():
+                params["area"] = region_key
+            elif region_key in hh_region_ids:
+                params["area"] = hh_region_ids[region_key]
 
         token = None
         if self.token_factory is not None:
@@ -153,6 +189,11 @@ class HeadHunterProvider(VacancyProvider):
             response.raise_for_status()
             payload = response.json()
             items = [self._normalize(item) for item in payload.get("items", [])]
+            if filters.region and "area" not in params:
+                region_query = filters.region.casefold()
+                items = [item for item in items if region_query in str(item.get("location") or "").casefold()]
+            if filters.work_format == "onsite":
+                items = [item for item in items if not item.get("remote") and "гибк" not in str(item.get("schedule") or "").casefold()]
             current_page = int(payload.get("page", page) or page)
             pages = int(payload.get("pages", 0) or 0)
 

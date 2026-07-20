@@ -32,8 +32,58 @@
       </fieldset>
 
       <label class="search-field">
-        <span>Зарплата от, ₽</span>
+        <span>Регион</span>
+        <input type="text" name="region" value="{{ filters.region }}" placeholder="Например, Москва">
+      </label>
+
+      <label class="search-field">
+        <span>Опыт работы</span>
+        <select name="experience">
+          <option value="" {% if not filters.experience %}selected{% endif %}>Не важно</option>
+          <option value="no_experience" {% if filters.experience == 'no_experience' %}selected{% endif %}>Нет опыта</option>
+          <option value="between_1_and_3" {% if filters.experience == 'between_1_and_3' %}selected{% endif %}>От 1 до 3 лет</option>
+          <option value="between_3_and_6" {% if filters.experience == 'between_3_and_6' %}selected{% endif %}>От 3 до 6 лет</option>
+          <option value="more_than_6" {% if filters.experience == 'more_than_6' %}selected{% endif %}>Более 6 лет</option>
+        </select>
+      </label>
+
+      <label class="search-field">
+        <span>Тип занятости</span>
+        <select name="employment">
+          <option value="" {% if not filters.employment %}selected{% endif %}>Не важно</option>
+          <option value="full" {% if filters.employment == 'full' %}selected{% endif %}>Полная занятость</option>
+          <option value="part" {% if filters.employment == 'part' %}selected{% endif %}>Частичная занятость</option>
+          <option value="project" {% if filters.employment == 'project' %}selected{% endif %}>Проектная или временная</option>
+          <option value="probation" {% if filters.employment == 'probation' %}selected{% endif %}>Стажировка</option>
+          <option value="volunteer" {% if filters.employment == 'volunteer' %}selected{% endif %}>Волонтёрство</option>
+        </select>
+      </label>
+
+      <label class="search-field">
+        <span>Формат работы</span>
+        <select name="work_format">
+          <option value="" {% if not filters.work_format %}selected{% endif %}>Любой</option>
+          <option value="onsite" {% if filters.work_format == 'onsite' %}selected{% endif %}>На месте</option>
+          <option value="remote" {% if filters.work_format == 'remote' %}selected{% endif %}>Удалённо</option>
+          <option value="hybrid" {% if filters.work_format == 'hybrid' %}selected{% endif %}>Гибрид</option>
+        </select>
+      </label>
+
+      <label class="search-field">
+        <span>Зарплата от</span>
         <input type="number" name="salary_from" min="0" step="1000" value="{{ filters.salary_from or '' }}" placeholder="Например, 100000">
+      </label>
+
+      <label class="search-field">
+        <span>Валюта</span>
+        <select name="currency">
+          <option value="" {% if not filters.currency %}selected{% endif %}>Любая</option>
+          <option value="RUB" {% if filters.currency == 'RUB' %}selected{% endif %}>RUB — ₽</option>
+          <option value="USD" {% if filters.currency == 'USD' %}selected{% endif %}>USD — $</option>
+          <option value="EUR" {% if filters.currency == 'EUR' %}selected{% endif %}>EUR — €</option>
+          <option value="KZT" {% if filters.currency == 'KZT' %}selected{% endif %}>KZT — ₸</option>
+          <option value="BYR" {% if filters.currency == 'BYR' %}selected{% endif %}>BYR — Br</option>
+        </select>
       </label>
 
       <label class="search-field">
@@ -58,10 +108,6 @@
       </label>
 
       <div class="filter-checks">
-        <label class="remote-filter">
-          <input type="checkbox" name="remote" value="1" {% if remote_only %}checked{% endif %}>
-          <span>Только удалённая работа</span>
-        </label>
         <label class="remote-filter">
           <input type="checkbox" name="salary_only" value="1" {% if filters.salary_only %}checked{% endif %}>
           <span>Только с указанной зарплатой</span>
@@ -100,6 +146,11 @@
         {% if remote_only %}<input type="hidden" name="remote" value="1">{% endif %}
         {% if filters.salary_from %}<input type="hidden" name="salary_from" value="{{ filters.salary_from }}">{% endif %}
         {% if filters.salary_only %}<input type="hidden" name="salary_only" value="1">{% endif %}
+        {% if filters.region %}<input type="hidden" name="region" value="{{ filters.region }}">{% endif %}
+        {% if filters.experience %}<input type="hidden" name="experience" value="{{ filters.experience }}">{% endif %}
+        {% if filters.employment %}<input type="hidden" name="employment" value="{{ filters.employment }}">{% endif %}
+        {% if filters.work_format %}<input type="hidden" name="work_format" value="{{ filters.work_format }}">{% endif %}
+        {% if filters.currency %}<input type="hidden" name="currency" value="{{ filters.currency }}">{% endif %}
         <input type="hidden" name="period" value="{{ filters.period_days }}">
         <input type="hidden" name="sort" value="{{ filters.sort }}">
         <button class="link-button" type="submit">Обновить данные «Работы России» сейчас</button>
@@ -126,6 +177,7 @@
               {% if vacancy.location %}<span>{{ vacancy.location }}</span>{% endif %}
               {% if vacancy.schedule %}<span>{{ vacancy.schedule }}</span>{% endif %}
               {% if vacancy.employment %}<span>{{ vacancy.employment }}</span>{% endif %}
+              {% if vacancy.experience %}<span>{{ vacancy.experience }}</span>{% endif %}
               {% if vacancy.remote %}<span>Удалённо</span>{% endif %}
             </div>
 
@@ -153,10 +205,10 @@
 
     <div class="pagination">
       {% if page > 0 %}
-        <a class="btn btn-secondary" href="?search=1&keyword={{ keyword|urlencode }}{% for source in selected_sources %}&source={{ source }}{% endfor %}{% if remote_only %}&remote=1{% endif %}{% if filters.salary_from %}&salary_from={{ filters.salary_from }}{% endif %}{% if filters.salary_only %}&salary_only=1{% endif %}&period={{ filters.period_days }}&sort={{ filters.sort }}&page={{ page - 1 }}">Назад</a>
+        <a class="btn btn-secondary" href="?{{ filter_query }}&page={{ page - 1 }}">Назад</a>
       {% endif %}
       {% if has_next %}
-        <a class="btn btn-secondary" href="?search=1&keyword={{ keyword|urlencode }}{% for source in selected_sources %}&source={{ source }}{% endfor %}{% if remote_only %}&remote=1{% endif %}{% if filters.salary_from %}&salary_from={{ filters.salary_from }}{% endif %}{% if filters.salary_only %}&salary_only=1{% endif %}&period={{ filters.period_days }}&sort={{ filters.sort }}&page={{ page + 1 }}">Далее</a>
+        <a class="btn btn-secondary" href="?{{ filter_query }}&page={{ page + 1 }}">Далее</a>
       {% endif %}
     </div>
 

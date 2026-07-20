@@ -35,6 +35,7 @@ class VacancyStore:
                     remote INTEGER NOT NULL DEFAULT 0,
                     schedule TEXT,
                     employment TEXT,
+                    experience TEXT,
                     description TEXT,
                     requirements TEXT,
                     published_at TEXT,
@@ -50,9 +51,25 @@ class VacancyStore:
             conn.execute(
                 "CREATE INDEX IF NOT EXISTS idx_vacancies_source_fetched ON vacancies(source, fetched_at DESC)"
             )
+            columns = {row["name"] for row in conn.execute("PRAGMA table_info(vacancies)").fetchall()}
+            if "experience" not in columns:
+                conn.execute("ALTER TABLE vacancies ADD COLUMN experience TEXT")
             conn.execute(
                 "CREATE INDEX IF NOT EXISTS idx_vacancies_remote ON vacancies(remote)"
             )
+            conn.execute(
+                "CREATE INDEX IF NOT EXISTS idx_vacancies_location ON vacancies(location)"
+            )
+            stale_rows = conn.execute("SELECT id, raw_json FROM vacancies").fetchall()
+            for row in stale_rows:
+                try:
+                    item = json.loads(row["raw_json"])
+                except (TypeError, json.JSONDecodeError):
+                    continue
+                conn.execute(
+                    "UPDATE vacancies SET search_text = ?, experience = COALESCE(experience, ?) WHERE id = ?",
+                    (self._search_blob(item), item.get("experience"), row["id"]),
+                )
             conn.commit()
 
     @staticmethod
@@ -63,6 +80,10 @@ class VacancyStore:
             item.get("location"),
             item.get("description"),
             item.get("requirements"),
+            item.get("schedule"),
+            item.get("employment"),
+            item.get("experience"),
+            item.get("currency"),
         ]
         return " ".join(str(value or "") for value in values).lower()
 
@@ -87,6 +108,7 @@ class VacancyStore:
                     1 if item.get("remote") else 0,
                     item.get("schedule"),
                     item.get("employment"),
+                    item.get("experience"),
                     item.get("description"),
                     item.get("requirements"),
                     item.get("published_at"),
@@ -105,10 +127,10 @@ class VacancyStore:
                 """
                 INSERT INTO vacancies (
                     source, external_id, title, company, salary_from, salary_to,
-                    currency, location, remote, schedule, employment, description,
+                    currency, location, remote, schedule, employment, experience, description,
                     requirements, published_at, url, search_text, raw_json,
                     fetched_at, updated_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(source, external_id) DO UPDATE SET
                     title=excluded.title,
                     company=excluded.company,
@@ -119,6 +141,7 @@ class VacancyStore:
                     remote=excluded.remote,
                     schedule=excluded.schedule,
                     employment=excluded.employment,
+                    experience=excluded.experience,
                     description=excluded.description,
                     requirements=excluded.requirements,
                     published_at=excluded.published_at,
@@ -142,6 +165,11 @@ class VacancyStore:
         salary_from: int | None,
         salary_only: bool,
         period_days: int,
+        region: str = "",
+        experience: str = "",
+        employment: str = "",
+        work_format: str = "",
+        currency: str = "",
     ) -> tuple[list[str], list[Any]]:
         placeholders = ",".join("?" for _ in sources)
         terms = [term.lower() for term in keyword.split() if term.strip()]
@@ -150,8 +178,38 @@ class VacancyStore:
         for term in terms:
             conditions.append("search_text LIKE ?")
             params.append(f"%{term}%")
-        if remote_only:
+        if region:
+            conditions.append("search_text LIKE ?")
+            params.append(f"%{region.casefold()}%")
+        if remote_only or work_format == "remote":
             conditions.append("remote = 1")
+        elif work_format == "onsite":
+            conditions.append("remote = 0")
+            conditions.append("search_text NOT LIKE '%гибк%'")
+        elif work_format == "hybrid":
+            conditions.append("search_text LIKE '%гибк%'")
+        if currency:
+            conditions.append("UPPER(COALESCE(currency, '')) = ?")
+            params.append(currency.upper())
+        employment_terms = {
+            "full": ("полная", "полный"),
+            "part": ("частичная", "неполный"),
+            "project": ("проект", "временная"),
+            "probation": ("стажиров",),
+            "volunteer": ("волонт",),
+        }.get(employment, ())
+        if employment_terms:
+            conditions.append("(" + " OR ".join("search_text LIKE ?" for _ in employment_terms) + ")")
+            params.extend(f"%{term}%" for term in employment_terms)
+        experience_terms = {
+            "no_experience": ("без опыта",),
+            "between_1_and_3": ("1 год", "1-3", "от 1"),
+            "between_3_and_6": ("3 года", "3-6", "от 3"),
+            "more_than_6": ("6 лет", "более 6"),
+        }.get(experience, ())
+        if experience_terms:
+            conditions.append("(" + " OR ".join("search_text LIKE ?" for _ in experience_terms) + ")")
+            params.extend(f"%{term}%" for term in experience_terms)
         if salary_only:
             conditions.append("(salary_from IS NOT NULL OR salary_to IS NOT NULL)")
         if salary_from is not None:
@@ -174,6 +232,11 @@ class VacancyStore:
         sort: str = "date",
         limit: int = 60,
         offset: int = 0,
+        region: str = "",
+        experience: str = "",
+        employment: str = "",
+        work_format: str = "",
+        currency: str = "",
     ) -> list[dict[str, Any]]:
         if not sources:
             return []
@@ -184,6 +247,11 @@ class VacancyStore:
             salary_from=salary_from,
             salary_only=salary_only,
             period_days=period_days,
+            region=region,
+            experience=experience,
+            employment=employment,
+            work_format=work_format,
+            currency=currency,
         )
         order_by = {
             "salary_desc": "COALESCE(salary_to, salary_from, 0) DESC, COALESCE(published_at, '') DESC",
@@ -218,6 +286,11 @@ class VacancyStore:
         salary_from: int | None = None,
         salary_only: bool = False,
         period_days: int = 7,
+        region: str = "",
+        experience: str = "",
+        employment: str = "",
+        work_format: str = "",
+        currency: str = "",
     ) -> int:
         if not sources:
             return 0
@@ -228,6 +301,11 @@ class VacancyStore:
             salary_from=salary_from,
             salary_only=salary_only,
             period_days=period_days,
+            region=region,
+            experience=experience,
+            employment=employment,
+            work_format=work_format,
+            currency=currency,
         )
         with self._connect() as conn:
             row = conn.execute(
