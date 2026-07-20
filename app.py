@@ -2,6 +2,7 @@ import json
 import os
 import secrets
 import socket
+import platform
 import sqlite3
 import time
 import threading
@@ -55,6 +56,7 @@ TRUDVSEM_SYNC_BATCH = int(os.environ.get("TRUDVSEM_SYNC_BATCH", "10"))
 TRUDVSEM_SYNC_ENABLED = os.environ.get("TRUDVSEM_SYNC_ENABLED", "1").strip().lower() not in {"0", "false", "no"}
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
+DEBUG_HH = os.environ.get("DEBUG_HH", "0").strip().lower() in {"1", "true", "yes", "on"}
 
 
 def db():
@@ -386,6 +388,30 @@ def hh_headers(token=None):
     if token:
         headers["Authorization"] = f"Bearer {token}"
     return headers
+
+
+
+def _masked_hh_headers(headers):
+    """Return HH request headers safe for logs and debug responses."""
+    safe = {}
+    for key, value in dict(headers or {}).items():
+        if key.lower() == "authorization":
+            safe[key] = "Bearer ***" if value else "***"
+        else:
+            safe[key] = value
+    return safe
+
+
+def _hh_response_report(response):
+    """Build a JSON-safe diagnostic report without exposing OAuth secrets."""
+    return {
+        "status_code": response.status_code,
+        "ok": response.ok,
+        "url": response.url,
+        "request_headers": _masked_hh_headers(response.request.headers),
+        "response_headers": dict(response.headers),
+        "body_preview": response.text[:2000],
+    }
 
 
 def save_hh_account(profile, token_data):
@@ -1077,6 +1103,86 @@ def hh_vacancies():
         total=int(payload.get("found", 0) or 0),
         error=error,
     )
+
+
+
+@app.get("/debug/hh")
+def debug_hh():
+    """Run safe HH API diagnostics. Enabled only when DEBUG_HH=1."""
+    if not DEBUG_HH:
+        return {
+            "ok": False,
+            "error": "HH diagnostics are disabled. Set DEBUG_HH=1 in Render and redeploy.",
+        }, 404
+
+    row = hh_account()
+    params = {
+        "text": request.args.get("keyword", "инженер-конструктор").strip() or "инженер-конструктор",
+        "period": 7,
+        "page": 0,
+        "per_page": 1,
+        "order_by": "publication_time",
+    }
+    report = {
+        "ok": False,
+        "endpoint": HH_VACANCIES_URL,
+        "params": params,
+        "environment": {
+            "debug_hh": DEBUG_HH,
+            "render_region": os.environ.get("RENDER_REGION") or "unknown",
+            "python": platform.python_version(),
+            "requests": requests.__version__,
+            "hh_client_id_configured": bool(HH_CLIENT_ID),
+            "hh_redirect_uri": HH_REDIRECT_URI,
+            "hh_user_agent": HH_USER_AGENT,
+            "hh_account_connected": bool(row),
+        },
+        "attempts": [],
+    }
+
+    attempts = []
+    if row:
+        try:
+            attempts.append(("oauth", valid_hh_token(row)))
+        except Exception as exc:
+            report["oauth_token_error"] = f"{type(exc).__name__}: {exc}"
+    attempts.append(("public", None))
+
+    for name, token in attempts:
+        started = time.monotonic()
+        try:
+            response = requests.get(
+                HH_VACANCIES_URL,
+                params=params,
+                headers=hh_headers(token),
+                timeout=30,
+            )
+            attempt = {
+                "name": name,
+                "seconds": round(time.monotonic() - started, 3),
+                **_hh_response_report(response),
+            }
+            report["attempts"].append(attempt)
+            logger.info(
+                "HH DEBUG attempt=%s status=%s url=%s request_headers=%s response_headers=%s body=%s",
+                name,
+                response.status_code,
+                response.url,
+                _masked_hh_headers(response.request.headers),
+                dict(response.headers),
+                response.text[:2000],
+            )
+        except requests.RequestException as exc:
+            report["attempts"].append({
+                "name": name,
+                "seconds": round(time.monotonic() - started, 3),
+                "error_type": type(exc).__name__,
+                "error": str(exc),
+            })
+            logger.exception("HH DEBUG request failed attempt=%s", name)
+
+    report["ok"] = any(item.get("ok") for item in report["attempts"])
+    return report, 200
 
 
 @app.get("/health")
