@@ -108,11 +108,15 @@ TRUDVSEM_SYNC_LOCK = threading.Lock()
 TRUDVSEM_SYNC_THREAD = None
 TRUDVSEM_SYNC_STATE = {
     "running": False,
+    "queued": False,
     "last_started": None,
     "last_finished": None,
     "last_success": None,
     "last_saved": 0,
     "last_processed": 0,
+    "current_offset": 0,
+    "target": max(1, min(TRUDVSEM_SYNC_ITEMS, 500)),
+    "progress_percent": 0,
     "last_error": None,
 }
 
@@ -125,6 +129,8 @@ def trudvsem_sync_status():
 def request_trudvsem_sync():
     already_queued = TRUDVSEM_SYNC_EVENT.is_set()
     TRUDVSEM_SYNC_EVENT.set()
+    with TRUDVSEM_SYNC_LOCK:
+        TRUDVSEM_SYNC_STATE["queued"] = True
     logger.info(
         "Trudvsem event set",
     )
@@ -142,11 +148,18 @@ def _run_trudvsem_sync():
 
         previous_success = TRUDVSEM_SYNC_STATE.get("last_success")
 
+        target = max(1, min(TRUDVSEM_SYNC_ITEMS, 500))
         TRUDVSEM_SYNC_STATE.update(
             running=True,
+            queued=False,
             last_started=int(time.time()),
+            last_finished=None,
             last_error=None,
             last_saved=0,
+            last_processed=0,
+            current_offset=0,
+            target=target,
+            progress_percent=0,
         )
 
     saved = 0
@@ -161,8 +174,8 @@ def _run_trudvsem_sync():
 
         provider = TrudvsemProvider(
             HH_USER_AGENT,
-            per_page=25,
-            timeout=(4, 8),
+            per_page=10,
+            timeout=(5, 45),
             scan_pages=5,
         )
 
@@ -185,29 +198,42 @@ def _run_trudvsem_sync():
             modified_from,
         )
 
-        for offset in range(0, target, batch_size):
+        total_pages = (target + batch_size - 1) // batch_size
+        for page_number in range(1, total_pages + 1):
+            remaining = target - processed
+            requested = min(batch_size, remaining)
             items = provider.fetch_batch(
-                offset=offset,
-                limit=batch_size,
+                offset=page_number,
+                limit=requested,
                 modified_from=modified_from,
             )
 
             logger.info(
                 "Trudvsem batch fetched offset=%s requested=%s received=%s first=%s",
-                offset,
-                batch_size,
+                page_number,
+                requested,
                 len(items),
                 items[0].get("external_id") if items else None,
             )
 
             if not items:
+                if page_number == 1 and processed == 0:
+                    raise RuntimeError("API 'Работы России' вернул пустую первую страницу")
                 break
 
             processed += len(items)
             saved += VACANCY_STORE.upsert_many(items)
+            progress = min(100, int(processed * 100 / target))
+            with TRUDVSEM_SYNC_LOCK:
+                TRUDVSEM_SYNC_STATE.update(
+                    last_processed=processed,
+                    last_saved=saved,
+                    current_offset=processed,
+                    progress_percent=progress,
+                )
             logger.info(
-                "Trudvsem batch saved offset=%s processed=%s saved=%s",
-                offset,
+                "Trudvsem batch saved page=%s processed=%s saved=%s",
+                page_number,
                 processed,
                 saved,
             )
@@ -235,6 +261,8 @@ def _run_trudvsem_sync():
                 last_finished=finished_at,
                 last_saved=saved,
                 last_processed=processed,
+                current_offset=processed,
+                progress_percent=min(100, int(processed * 100 / max(1, target))),
                 last_error=error,
             )
             if error is None:
@@ -1033,6 +1061,8 @@ def trudvsem_status():
     state["cache_age_seconds"] = VACANCY_STORE.source_age_seconds("trudvsem")
     state["cached_total"] = VACANCY_STORE.count(keyword="", sources=["trudvsem"])
     state["sync_enabled"] = TRUDVSEM_SYNC_ENABLED
+    state["worker_alive"] = bool(TRUDVSEM_SYNC_THREAD and TRUDVSEM_SYNC_THREAD.is_alive())
+    state["queued"] = bool(state.get("queued") or TRUDVSEM_SYNC_EVENT.is_set())
     return state, 200
 
 

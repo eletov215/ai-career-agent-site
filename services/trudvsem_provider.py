@@ -162,7 +162,7 @@ class TrudvsemProvider(VacancyProvider):
     ) -> list[dict[str, Any]]:
         """Load a small API batch for the background cache worker."""
         safe_limit = max(1, min(int(limit), 10))
-        safe_offset = max(0, int(offset))
+        safe_offset = max(1, int(offset))
 
         params: dict[str, Any] = {
             "limit": safe_limit,

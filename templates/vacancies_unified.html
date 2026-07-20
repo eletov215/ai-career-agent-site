@@ -93,7 +93,8 @@
     {% endfor %}
 
     {% if 'trudvsem' in selected_sources %}
-      <form method="post" action="{{ url_for('refresh_trudvsem_cache') }}" class="cache-refresh-form">
+      <div id="trudvsem-sync-status" class="card spaced" hidden></div>
+      <form method="post" action="{{ url_for('refresh_trudvsem_cache') }}" class="cache-refresh-form" id="trudvsem-refresh-form">
         <input type="hidden" name="keyword" value="{{ keyword }}">
         {% for source in selected_sources %}<input type="hidden" name="source" value="{{ source }}">{% endfor %}
         {% if remote_only %}<input type="hidden" name="remote" value="1">{% endif %}
@@ -162,4 +163,51 @@
     <p class="api-credit">Данные «Работа России» получены через официальный открытый API портала trudvsem.ru.</p>
   </div>
 </main>
+{% if 'trudvsem' in selected_sources %}
+<script>
+(() => {
+  const statusBox = document.getElementById('trudvsem-sync-status');
+  const form = document.getElementById('trudvsem-refresh-form');
+  let observedRunning = false;
+
+  async function pollStatus() {
+    try {
+      const response = await fetch('{{ url_for("trudvsem_status") }}', {cache: 'no-store'});
+      if (!response.ok) return;
+      const state = await response.json();
+      const active = Boolean(state.running || state.queued);
+
+      if (active || state.last_error) {
+        statusBox.hidden = false;
+      }
+
+      if (active) {
+        observedRunning = true;
+        const processed = Number(state.last_processed || 0);
+        const target = Number(state.target || 0);
+        const percent = Number(state.progress_percent || 0);
+        statusBox.textContent = `Обновление: ${processed} из ${target} (${percent}%)`;
+      } else if (state.last_error) {
+        statusBox.textContent = `Ошибка обновления: ${state.last_error}`;
+      } else if (observedRunning) {
+        statusBox.textContent = `Обновление завершено. Загружено: ${state.last_saved || 0}`;
+        window.setTimeout(() => window.location.reload(), 800);
+        return;
+      }
+    } catch (error) {
+      console.debug('Trudvsem status poll failed', error);
+    }
+    window.setTimeout(pollStatus, 1500);
+  }
+
+  if (form) {
+    form.addEventListener('submit', () => {
+      statusBox.hidden = false;
+      statusBox.textContent = 'Обновление поставлено в очередь…';
+    });
+  }
+  pollStatus();
+})();
+</script>
+{% endif %}
 {% endblock %}
