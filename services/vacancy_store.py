@@ -133,17 +133,16 @@ class VacancyStore:
             conn.commit()
         return len(rows)
 
-    def search(
-        self,
+    @staticmethod
+    def _build_conditions(
         *,
         keyword: str,
         sources: list[str],
-        remote_only: bool = False,
-        limit: int = 60,
-        offset: int = 0,
-    ) -> list[dict[str, Any]]:
-        if not sources:
-            return []
+        remote_only: bool,
+        salary_from: int | None,
+        salary_only: bool,
+        period_days: int,
+    ) -> tuple[list[str], list[Any]]:
         placeholders = ",".join("?" for _ in sources)
         terms = [term.lower() for term in keyword.split() if term.strip()]
         conditions = [f"source IN ({placeholders})"]
@@ -153,12 +152,51 @@ class VacancyStore:
             params.append(f"%{term}%")
         if remote_only:
             conditions.append("remote = 1")
+        if salary_only:
+            conditions.append("(salary_from IS NOT NULL OR salary_to IS NOT NULL)")
+        if salary_from is not None:
+            conditions.append("COALESCE(salary_to, salary_from, 0) >= ?")
+            params.append(salary_from)
+        if period_days > 0:
+            conditions.append("datetime(published_at) >= datetime('now', ?)")
+            params.append(f"-{period_days} days")
+        return conditions, params
+
+    def search(
+        self,
+        *,
+        keyword: str,
+        sources: list[str],
+        remote_only: bool = False,
+        salary_from: int | None = None,
+        salary_only: bool = False,
+        period_days: int = 7,
+        sort: str = "date",
+        limit: int = 60,
+        offset: int = 0,
+    ) -> list[dict[str, Any]]:
+        if not sources:
+            return []
+        conditions, params = self._build_conditions(
+            keyword=keyword,
+            sources=sources,
+            remote_only=remote_only,
+            salary_from=salary_from,
+            salary_only=salary_only,
+            period_days=period_days,
+        )
+        order_by = {
+            "salary_desc": "COALESCE(salary_to, salary_from, 0) DESC, COALESCE(published_at, '') DESC",
+            "salary_asc": "CASE WHEN salary_from IS NULL AND salary_to IS NULL THEN 1 ELSE 0 END, COALESCE(salary_from, salary_to, 0) ASC, COALESCE(published_at, '') DESC",
+            "relevance": "COALESCE(published_at, '') DESC, fetched_at DESC",
+            "date": "COALESCE(published_at, '') DESC, fetched_at DESC",
+        }.get(sort, "COALESCE(published_at, '') DESC, fetched_at DESC")
         params.extend([limit, offset])
         sql = f"""
             SELECT raw_json
             FROM vacancies
             WHERE {' AND '.join(conditions)}
-            ORDER BY COALESCE(published_at, '') DESC, fetched_at DESC
+            ORDER BY {order_by}
             LIMIT ? OFFSET ?
         """
         with self._connect() as conn:
@@ -171,18 +209,26 @@ class VacancyStore:
                 continue
         return result
 
-    def count(self, *, keyword: str, sources: list[str], remote_only: bool = False) -> int:
+    def count(
+        self,
+        *,
+        keyword: str,
+        sources: list[str],
+        remote_only: bool = False,
+        salary_from: int | None = None,
+        salary_only: bool = False,
+        period_days: int = 7,
+    ) -> int:
         if not sources:
             return 0
-        placeholders = ",".join("?" for _ in sources)
-        terms = [term.lower() for term in keyword.split() if term.strip()]
-        conditions = [f"source IN ({placeholders})"]
-        params: list[Any] = list(sources)
-        for term in terms:
-            conditions.append("search_text LIKE ?")
-            params.append(f"%{term}%")
-        if remote_only:
-            conditions.append("remote = 1")
+        conditions, params = self._build_conditions(
+            keyword=keyword,
+            sources=sources,
+            remote_only=remote_only,
+            salary_from=salary_from,
+            salary_only=salary_only,
+            period_days=period_days,
+        )
         with self._connect() as conn:
             row = conn.execute(
                 f"SELECT COUNT(*) AS total FROM vacancies WHERE {' AND '.join(conditions)}",

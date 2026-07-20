@@ -20,6 +20,7 @@ from services.hh_provider import HeadHunterProvider
 from services.superjob_provider import SuperJobProvider
 from services.trudvsem_provider import TrudvsemProvider
 from services.vacancy_store import VacancyStore
+from services.search_filters import VacancySearchFilters
 
 app = Flask(__name__)
 app.secret_key = os.environ["FLASK_SECRET_KEY"]
@@ -747,8 +748,9 @@ def dashboard():
 
 @app.get("/vacancies")
 def vacancies():
-    keyword = request.args.get("keyword", "").strip()
-    remote_only = request.args.get("remote") == "1"
+    filters = VacancySearchFilters.from_query(request.args)
+    keyword = filters.keyword
+    remote_only = filters.remote_only
     search_requested = request.args.get("search") == "1"
     force_refresh = request.args.get("refresh") == "1"
     sync_queued = request.args.get("sync") == "queued"
@@ -795,14 +797,21 @@ def vacancies():
             cached_items = VACANCY_STORE.search(
                 keyword=keyword,
                 sources=["trudvsem"],
-                remote_only=remote_only,
+                remote_only=filters.remote_only,
+                salary_from=filters.salary_from,
+                salary_only=filters.salary_only,
+                period_days=filters.period_days,
+                sort=filters.sort,
                 limit=VACANCY_PAGE_SIZE,
                 offset=offset,
             )
             cached_total = VACANCY_STORE.count(
                 keyword=keyword,
                 sources=["trudvsem"],
-                remote_only=remote_only,
+                remote_only=filters.remote_only,
+                salary_from=filters.salary_from,
+                salary_only=filters.salary_only,
+                period_days=filters.period_days,
             )
             cache_age = VACANCY_STORE.source_age_seconds("trudvsem")
             sync_state = trudvsem_sync_status()
@@ -843,9 +852,8 @@ def vacancies():
                         continue
                     future = executor.submit(
                         provider.search,
-                        keyword=keyword,
+                        filters=filters,
                         page=page,
-                        remote_only=remote_only,
                     )
                     tasks[future] = source_key
 
@@ -869,14 +877,31 @@ def vacancies():
             key = (item.get("source"), item.get("external_id") or item.get("url"))
             unique_items[key] = item
         all_items = list(unique_items.values())
-        all_items.sort(
-            key=lambda item: (
-                bool(item.get("published_at")),
-                str(item.get("published_at") or ""),
-                str(item.get("title") or ""),
-            ),
-            reverse=True,
-        )
+        if filters.sort == "salary_desc":
+            all_items.sort(
+                key=lambda item: (
+                    float(item.get("salary_to") or item.get("salary_from") or 0),
+                    str(item.get("published_at") or ""),
+                ),
+                reverse=True,
+            )
+        elif filters.sort == "salary_asc":
+            all_items.sort(
+                key=lambda item: (
+                    item.get("salary_from") is None and item.get("salary_to") is None,
+                    float(item.get("salary_from") or item.get("salary_to") or 0),
+                    str(item.get("published_at") or ""),
+                )
+            )
+        else:
+            all_items.sort(
+                key=lambda item: (
+                    bool(item.get("published_at")),
+                    str(item.get("published_at") or ""),
+                    str(item.get("title") or ""),
+                ),
+                reverse=True,
+            )
 
     source_options = [
         {"key": "trudvsem", "title": "Работа России", "available": True},
@@ -894,6 +919,7 @@ def vacancies():
         vacancies=all_items,
         keyword=keyword,
         remote_only=remote_only,
+        filters=filters,
         selected_sources=selected_sources,
         source_options=source_options,
         source_results=source_results,

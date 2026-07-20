@@ -5,6 +5,7 @@ from typing import Callable
 import requests
 
 from .base_provider import SearchResult, VacancyProvider
+from .search_filters import VacancySearchFilters
 
 
 class SuperJobProvider(VacancyProvider):
@@ -39,25 +40,33 @@ class SuperJobProvider(VacancyProvider):
             "url": raw.get("link") or "",
         }
 
-    def search(self, *, keyword: str, page: int = 0, remote_only: bool = False) -> SearchResult:
+    def search(self, *, filters: VacancySearchFilters, page: int = 0) -> SearchResult:
+        order_field = "payment" if filters.sort in {"salary_desc", "salary_asc"} else "date"
+        order_direction = "asc" if filters.sort == "salary_asc" else "desc"
+        params = {
+            "keyword": filters.keyword,
+            "period": filters.period_days,
+            "order_field": order_field,
+            "order_direction": order_direction,
+            "count": self.per_page,
+            "page": page,
+        }
+        if filters.salary_from is not None:
+            params["payment_from"] = filters.salary_from
+        if filters.salary_only:
+            params["no_agreement"] = 1
+
         try:
             response = requests.get(
                 self.api_url,
-                params={
-                    "keyword": keyword,
-                    "period": 7,
-                    "order_field": "date",
-                    "order_direction": "desc",
-                    "count": self.per_page,
-                    "page": page,
-                },
+                params=params,
                 headers=self.header_factory(self.token_factory()),
                 timeout=8,
             )
             response.raise_for_status()
             payload = response.json()
             items = [self._normalize(item) for item in payload.get("objects", [])]
-            if remote_only:
+            if filters.remote_only:
                 items = [item for item in items if item.get("remote")]
             total = int(payload.get("total", 0) or 0)
             return SearchResult(

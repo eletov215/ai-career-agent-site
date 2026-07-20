@@ -7,6 +7,7 @@ from typing import Callable
 import requests
 
 from .base_provider import SearchResult, VacancyProvider
+from .search_filters import VacancySearchFilters
 
 logger = logging.getLogger(__name__)
 DEBUG_HH = os.environ.get("DEBUG_HH", "0").strip().lower() in {"1", "true", "yes", "on"}
@@ -108,17 +109,27 @@ class HeadHunterProvider(VacancyProvider):
             )
         return response
 
-    def search(self, *, keyword: str, page: int = 0, remote_only: bool = False) -> SearchResult:
+    def search(self, *, filters: VacancySearchFilters, page: int = 0) -> SearchResult:
+        order_by = {
+            "date": "publication_time",
+            "salary_desc": "salary_desc",
+            "salary_asc": "salary_asc",
+            "relevance": "relevance",
+        }.get(filters.sort, "publication_time")
         params = {
-            "period": 7,
+            "period": filters.period_days,
             "page": page,
             "per_page": self.per_page,
-            "order_by": "publication_time",
+            "order_by": order_by,
         }
-        if keyword:
-            params["text"] = keyword
-        if remote_only:
+        if filters.keyword:
+            params["text"] = filters.keyword
+        if filters.remote_only:
             params["schedule"] = "remote"
+        if filters.salary_from is not None:
+            params["salary"] = filters.salary_from
+        if filters.salary_only:
+            params["only_with_salary"] = "true"
 
         token = None
         if self.token_factory is not None:

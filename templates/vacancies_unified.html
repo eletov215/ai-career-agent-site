@@ -31,12 +31,44 @@
         {% endfor %}
       </fieldset>
 
-      <label class="remote-filter">
-        <input type="checkbox" name="remote" value="1" {% if remote_only %}checked{% endif %}>
-        <span>Только удалённая работа</span>
+      <label class="search-field">
+        <span>Зарплата от, ₽</span>
+        <input type="number" name="salary_from" min="0" step="1000" value="{{ filters.salary_from or '' }}" placeholder="Например, 100000">
       </label>
 
-      <button class="btn btn-primary" type="submit">Найти вакансии</button>
+      <label class="search-field">
+        <span>Период публикации</span>
+        <select name="period">
+          <option value="1" {% if filters.period_days == 1 %}selected{% endif %}>За сутки</option>
+          <option value="3" {% if filters.period_days == 3 %}selected{% endif %}>За 3 дня</option>
+          <option value="7" {% if filters.period_days == 7 %}selected{% endif %}>За неделю</option>
+          <option value="14" {% if filters.period_days == 14 %}selected{% endif %}>За 2 недели</option>
+          <option value="30" {% if filters.period_days == 30 %}selected{% endif %}>За месяц</option>
+        </select>
+      </label>
+
+      <label class="search-field">
+        <span>Сортировка</span>
+        <select name="sort">
+          <option value="date" {% if filters.sort == 'date' %}selected{% endif %}>Сначала новые</option>
+          <option value="salary_desc" {% if filters.sort == 'salary_desc' %}selected{% endif %}>Зарплата по убыванию</option>
+          <option value="salary_asc" {% if filters.sort == 'salary_asc' %}selected{% endif %}>Зарплата по возрастанию</option>
+          <option value="relevance" {% if filters.sort == 'relevance' %}selected{% endif %}>По соответствию</option>
+        </select>
+      </label>
+
+      <div class="filter-checks">
+        <label class="remote-filter">
+          <input type="checkbox" name="remote" value="1" {% if remote_only %}checked{% endif %}>
+          <span>Только удалённая работа</span>
+        </label>
+        <label class="remote-filter">
+          <input type="checkbox" name="salary_only" value="1" {% if filters.salary_only %}checked{% endif %}>
+          <span>Только с указанной зарплатой</span>
+        </label>
+      </div>
+
+      <button class="btn btn-primary search-submit" type="submit">Найти вакансии</button>
     </form>
 
     {% if search_requested %}
@@ -65,6 +97,10 @@
         <input type="hidden" name="keyword" value="{{ keyword }}">
         {% for source in selected_sources %}<input type="hidden" name="source" value="{{ source }}">{% endfor %}
         {% if remote_only %}<input type="hidden" name="remote" value="1">{% endif %}
+        {% if filters.salary_from %}<input type="hidden" name="salary_from" value="{{ filters.salary_from }}">{% endif %}
+        {% if filters.salary_only %}<input type="hidden" name="salary_only" value="1">{% endif %}
+        <input type="hidden" name="period" value="{{ filters.period_days }}">
+        <input type="hidden" name="sort" value="{{ filters.sort }}">
         <button class="link-button" type="submit">Обновить данные «Работы России» сейчас</button>
       </form>
     {% endif %}
@@ -116,10 +152,10 @@
 
     <div class="pagination">
       {% if page > 0 %}
-        <a class="btn btn-secondary" href="?search=1&keyword={{ keyword|urlencode }}{% for source in selected_sources %}&source={{ source }}{% endfor %}{% if remote_only %}&remote=1{% endif %}&page={{ page - 1 }}">Назад</a>
+        <a class="btn btn-secondary" href="?search=1&keyword={{ keyword|urlencode }}{% for source in selected_sources %}&source={{ source }}{% endfor %}{% if remote_only %}&remote=1{% endif %}{% if filters.salary_from %}&salary_from={{ filters.salary_from }}{% endif %}{% if filters.salary_only %}&salary_only=1{% endif %}&period={{ filters.period_days }}&sort={{ filters.sort }}&page={{ page - 1 }}">Назад</a>
       {% endif %}
       {% if has_next %}
-        <a class="btn btn-secondary" href="?search=1&keyword={{ keyword|urlencode }}{% for source in selected_sources %}&source={{ source }}{% endfor %}{% if remote_only %}&remote=1{% endif %}&page={{ page + 1 }}">Далее</a>
+        <a class="btn btn-secondary" href="?search=1&keyword={{ keyword|urlencode }}{% for source in selected_sources %}&source={{ source }}{% endfor %}{% if remote_only %}&remote=1{% endif %}{% if filters.salary_from %}&salary_from={{ filters.salary_from }}{% endif %}{% if filters.salary_only %}&salary_only=1{% endif %}&period={{ filters.period_days }}&sort={{ filters.sort }}&page={{ page + 1 }}">Далее</a>
       {% endif %}
     </div>
 

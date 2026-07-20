@@ -1,6 +1,8 @@
 from dataclasses import dataclass, field
 from typing import Any
 
+from .search_filters import VacancySearchFilters
+
 
 @dataclass
 class SearchResult:
@@ -16,5 +18,5 @@ class VacancyProvider:
     key = "base"
     title = "Источник"
 
-    def search(self, *, keyword: str, page: int = 0, remote_only: bool = False) -> SearchResult:
+    def search(self, *, filters: VacancySearchFilters, page: int = 0) -> SearchResult:
         raise NotImplementedError

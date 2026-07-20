@@ -9,6 +9,7 @@ from urllib3.util.retry import Retry
 
 
 from .base_provider import SearchResult, VacancyProvider
+from .search_filters import VacancySearchFilters
 
 logger = logging.getLogger(__name__)
 
@@ -218,9 +219,8 @@ class TrudvsemProvider(VacancyProvider):
     def search(
         self,
         *,
-        keyword: str,
+        filters: VacancySearchFilters,
         page: int = 0,
-        remote_only: bool = False,
     ) -> SearchResult:
         """Prevent user-facing requests from calling the external API directly."""
         logger.error("Direct TrudvsemProvider.search() call blocked; use VacancyStore")
