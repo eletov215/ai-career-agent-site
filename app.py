@@ -881,7 +881,12 @@ def vacancies():
     source_options = [
         {"key": "trudvsem", "title": "Работа России", "available": True},
         {"key": "superjob", "title": "SuperJob", "available": bool(superjob_row)},
-        {"key": "hh", "title": "HeadHunter", "available": bool(hh_account())},
+        {
+            "key": "hh",
+            "title": "HeadHunter",
+            "available": bool(HH_APP_TOKEN),
+            "note": None if HH_APP_TOKEN else "Не настроен токен приложения",
+        },
     ]
 
     return render_template(
@@ -1055,6 +1060,9 @@ def hh_vacancies():
     error = None
 
     try:
+        if not HH_APP_TOKEN:
+            raise RuntimeError("Токен приложения HH_APP_TOKEN не настроен")
+
         response = requests.get(
             HH_VACANCIES_URL,
             params=params,
@@ -1062,21 +1070,9 @@ def hh_vacancies():
             timeout=30,
         )
 
-        # Токен приложения отделён от пользовательского OAuth. Если он
-        # отклонён, публичный поиск остаётся официальным резервным режимом.
-        if HH_APP_TOKEN and response.status_code in {401, 403}:
-            logger.warning(
-                "HH application search returned %s; retrying public search. body=%s",
-                response.status_code,
-                response.text[:1000],
-            )
-            response = requests.get(
-                HH_VACANCIES_URL,
-                params=params,
-                headers=hh_headers(),
-                timeout=30,
-            )
-
+        # Поиск вакансий выполняется только с токеном приложения.
+        # Публичный запрос HH отклоняет с 403, поэтому резервный запрос без
+        # Authorization здесь намеренно не выполняется.
         response.raise_for_status()
         payload = response.json()
     except requests.RequestException as exc:

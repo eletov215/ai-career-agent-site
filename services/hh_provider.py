@@ -123,20 +123,22 @@ class HeadHunterProvider(VacancyProvider):
         token = None
         if self.token_factory is not None:
             try:
-                token = self.token_factory()
+                token = (self.token_factory() or "").strip()
             except Exception as exc:
-                logger.warning("HH application token unavailable, using public search: %s", exc)
+                logger.exception("HH application token unavailable")
+                return SearchResult(
+                    page=page,
+                    error=f"HeadHunter: не удалось получить токен приложения: {exc}",
+                )
+
+        if not token:
+            return SearchResult(
+                page=page,
+                error="HeadHunter: токен приложения HH_APP_TOKEN не настроен.",
+            )
 
         try:
-            response = self._request(params, token, "application" if token else "public")
-
-            if token and response.status_code in {401, 403}:
-                logger.warning(
-                    "HH application search returned %s; retrying public search",
-                    response.status_code,
-                )
-                response = self._request(params, None, "public-retry")
-
+            response = self._request(params, token, "application")
             response.raise_for_status()
             payload = response.json()
             items = [self._normalize(item) for item in payload.get("items", [])]
@@ -161,6 +163,8 @@ class HeadHunterProvider(VacancyProvider):
                 body,
             )
             message = f"HeadHunter: {exc}"
+            if status in {401, 403}:
+                message += " Токен приложения HH отклонён. Проверьте HH_APP_TOKEN в Render."
             if status == 403:
                 request_id = response_headers.get("X-Request-Id") or response_headers.get("x-request-id")
                 server = response_headers.get("Server") or response_headers.get("server")
