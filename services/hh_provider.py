@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import os
 from typing import Callable
 
 import requests
@@ -8,6 +9,17 @@ import requests
 from .base_provider import SearchResult, VacancyProvider
 
 logger = logging.getLogger(__name__)
+DEBUG_HH = os.environ.get("DEBUG_HH", "0").strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _safe_headers(headers: dict | None) -> dict:
+    safe = {}
+    for key, value in dict(headers or {}).items():
+        if key.lower() == "authorization":
+            safe[key] = "Bearer ***" if value else "***"
+        else:
+            safe[key] = value
+    return safe
 
 
 class HeadHunterProvider(VacancyProvider):
@@ -38,11 +50,14 @@ class HeadHunterProvider(VacancyProvider):
         experience = raw.get("experience") or {}
         snippet = raw.get("snippet") or {}
 
-        description_parts = [
-            snippet.get("requirement") or "",
-            snippet.get("responsibility") or "",
-        ]
-        description = " ".join(part for part in description_parts if part).strip()
+        description = " ".join(
+            part
+            for part in (
+                snippet.get("requirement") or "",
+                snippet.get("responsibility") or "",
+            )
+            if part
+        ).strip()
 
         return {
             "external_id": str(raw.get("id") or ""),
@@ -63,13 +78,35 @@ class HeadHunterProvider(VacancyProvider):
             "url": raw.get("alternate_url") or raw.get("apply_alternate_url") or "",
         }
 
-    def _request(self, params: dict, token: str | None) -> requests.Response:
-        return requests.get(
+    def _request(self, params: dict, token: str | None, attempt: str) -> requests.Response:
+        headers = self.header_factory(token)
+        if DEBUG_HH:
+            logger.info(
+                "HH REQUEST attempt=%s method=GET endpoint=%s params=%s headers=%s",
+                attempt,
+                self.api_url,
+                params,
+                _safe_headers(headers),
+            )
+
+        response = requests.get(
             self.api_url,
             params=params,
-            headers=self.header_factory(token),
+            headers=headers,
             timeout=self.timeout,
         )
+
+        if DEBUG_HH:
+            logger.info(
+                "HH RESPONSE attempt=%s status=%s url=%s request_headers=%s response_headers=%s body=%s",
+                attempt,
+                response.status_code,
+                response.url,
+                _safe_headers(response.request.headers),
+                dict(response.headers),
+                response.text[:2000],
+            )
+        return response
 
     def search(self, *, keyword: str, page: int = 0, remote_only: bool = False) -> SearchResult:
         params = {
@@ -90,37 +127,42 @@ class HeadHunterProvider(VacancyProvider):
                 logger.warning("HH token unavailable, using public search: %s", exc)
 
         try:
-            response = self._request(params, token)
+            response = self._request(params, token, "oauth" if token else "public")
 
-            # Поиск вакансий у HH публичный. Если пользовательский OAuth-токен
-            # ограничен или отозван, повторяем запрос без Authorization.
             if token and response.status_code in {401, 403}:
                 logger.warning(
                     "HH authenticated search returned %s; retrying public search",
                     response.status_code,
                 )
-                response = self._request(params, None)
+                response = self._request(params, None, "public-retry")
 
             response.raise_for_status()
             payload = response.json()
-            raw_items = payload.get("items", [])
-            items = [self._normalize(item) for item in raw_items]
+            items = [self._normalize(item) for item in payload.get("items", [])]
+            current_page = int(payload.get("page", page) or page)
+            pages = int(payload.get("pages", 0) or 0)
 
             return SearchResult(
                 items=items,
                 total=int(payload.get("found", 0) or 0),
-                page=int(payload.get("page", page) or page),
-                pages=int(payload.get("pages", 0) or 0),
-                has_next=(int(payload.get("page", page) or page) + 1) < int(payload.get("pages", 0) or 0),
+                page=current_page,
+                pages=pages,
+                has_next=(current_page + 1) < pages,
             )
         except requests.RequestException as exc:
             status = exc.response.status_code if exc.response is not None else None
-            body = exc.response.text[:1000] if exc.response is not None else ""
-            logger.warning("HH vacancy search failed status=%s body=%s", status, body)
+            body = exc.response.text[:2000] if exc.response is not None else ""
+            response_headers = dict(exc.response.headers) if exc.response is not None else {}
+            logger.exception(
+                "HH vacancy search failed status=%s response_headers=%s body=%s",
+                status,
+                response_headers,
+                body,
+            )
             message = f"HeadHunter: {exc}"
             if body:
                 message += f" Ответ HH: {body}"
             return SearchResult(page=page, error=message)
         except (ValueError, TypeError, KeyError) as exc:
-            logger.warning("HH returned invalid vacancy payload: %s", exc)
+            logger.exception("HH returned invalid vacancy payload")
             return SearchResult(page=page, error=f"HeadHunter: некорректный ответ API: {exc}")
