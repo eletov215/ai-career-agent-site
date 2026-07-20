@@ -17,20 +17,21 @@ class TrudvsemProvider(VacancyProvider):
     title = "Работа России"
     api_url = "https://opendata.trudvsem.ru/api/v1/vacancies"
 
-    def __init__(self, user_agent: str, per_page: int = 25, timeout: tuple[int, int] = (5, 20), scan_pages: int = 1):
+    def __init__(self, user_agent: str, per_page: int = 100, timeout: tuple[int, int] = (5, 30), scan_pages: int = 1):
         self.user_agent = user_agent
         self.per_page = max(1, min(int(per_page), 100))
         self.timeout = timeout
         self.scan_pages = max(1, min(int(scan_pages), 10))
         self.session = requests.Session()
         retry = Retry(
-            total=0,
-            connect=0,
-            read=0,
-            backoff_factor=0,
+            total=3,
+            connect=3,
+            read=3,
+            backoff_factor=1,
             status_forcelist=(429, 500, 502, 503, 504),
             allowed_methods=frozenset({"GET"}),
             raise_on_status=False,
+            respect_retry_after_header=True,
         )
         self.session.mount("https://", HTTPAdapter(max_retries=retry))
 
@@ -135,7 +136,6 @@ class TrudvsemProvider(VacancyProvider):
             headers={
                 "User-Agent": self.user_agent,
                 "Accept": "application/json",
-                "Connection": "close",
             },
             timeout=self.timeout,
         )
@@ -160,7 +160,7 @@ class TrudvsemProvider(VacancyProvider):
         modified_from: str | None = None,
     ) -> list[dict[str, Any]]:
         """Load a small API batch for the background cache worker."""
-        safe_limit = max(1, min(int(limit), 10))
+        safe_limit = max(1, min(int(limit), 100))
         safe_offset = max(0, int(offset))
 
         params: dict[str, Any] = {
