@@ -71,3 +71,11 @@
 - Подключение GitHub.
 - Dashboard.
 - Начальная OAuth-интеграция HeadHunter.
+
+## 2026-07-20 — Trudvsem small-batch sync
+
+- Limited Trudvsem API pages to 10 vacancies per request.
+- Changed the default sync batch from 100 to 10.
+- Increased the read timeout to 45 seconds.
+- Kept incremental saving after every successful batch, so a later network error does not discard already downloaded vacancies.
+- Fixed the README mismatch with the real application default.

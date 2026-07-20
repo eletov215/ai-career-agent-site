@@ -17,9 +17,9 @@ class TrudvsemProvider(VacancyProvider):
     title = "Работа России"
     api_url = "https://opendata.trudvsem.ru/api/v1/vacancies"
 
-    def __init__(self, user_agent: str, per_page: int = 100, timeout: tuple[int, int] = (5, 30), scan_pages: int = 1):
+    def __init__(self, user_agent: str, per_page: int = 10, timeout: tuple[int, int] = (5, 45), scan_pages: int = 1):
         self.user_agent = user_agent
-        self.per_page = max(1, min(int(per_page), 100))
+        self.per_page = max(1, min(int(per_page), 10))
         self.timeout = timeout
         self.scan_pages = max(1, min(int(scan_pages), 10))
         self.session = requests.Session()
@@ -160,7 +160,7 @@ class TrudvsemProvider(VacancyProvider):
         modified_from: str | None = None,
     ) -> list[dict[str, Any]]:
         """Load a small API batch for the background cache worker."""
-        safe_limit = max(1, min(int(limit), 100))
+        safe_limit = max(1, min(int(limit), 10))
         safe_offset = max(0, int(offset))
 
         params: dict[str, Any] = {

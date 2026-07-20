@@ -52,7 +52,7 @@ VACANCY_CACHE_TTL = int(os.environ.get("VACANCY_CACHE_TTL", "1800"))
 VACANCY_PAGE_SIZE = 60
 TRUDVSEM_SYNC_INTERVAL = int(os.environ.get("TRUDVSEM_SYNC_INTERVAL", "1800"))
 TRUDVSEM_SYNC_ITEMS = int(os.environ.get("TRUDVSEM_SYNC_ITEMS", "300"))
-TRUDVSEM_SYNC_BATCH = int(os.environ.get("TRUDVSEM_SYNC_BATCH", "100"))
+TRUDVSEM_SYNC_BATCH = int(os.environ.get("TRUDVSEM_SYNC_BATCH", "10"))
 TRUDVSEM_SYNC_ENABLED = os.environ.get("TRUDVSEM_SYNC_ENABLED", "1").strip().lower() not in {"0", "false", "no"}
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -161,12 +161,13 @@ def _run_trudvsem_sync():
 
         provider = TrudvsemProvider(
             HH_USER_AGENT,
-            per_page=100,
-            timeout=(5, 30),
+            per_page=10,
+            timeout=(5, 45),
             scan_pages=5,
         )
 
-        batch_size = max(1, min(TRUDVSEM_SYNC_BATCH, 100))
+        # Large Trudvsem responses are unstable from Render. Keep each response small.
+        batch_size = max(1, min(TRUDVSEM_SYNC_BATCH, 10))
         target = max(batch_size, min(TRUDVSEM_SYNC_ITEMS, 500))
 
         # После первой синхронизации запрашиваем только изменённые вакансии.
