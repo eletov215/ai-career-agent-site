@@ -735,7 +735,14 @@ def vacancies():
     if not selected_sources:
         selected_sources = ["trudvsem"]
 
-    providers = {"hh": HeadHunterProvider()}
+    hh_row = hh_account()
+    providers = {
+        "hh": HeadHunterProvider(
+            HH_VACANCIES_URL,
+            hh_headers,
+            (lambda: valid_hh_token(hh_row)) if hh_row else None,
+        )
+    }
     if superjob_row:
         providers["superjob"] = SuperJobProvider(
             VACANCIES_URL,
@@ -847,7 +854,7 @@ def vacancies():
     source_options = [
         {"key": "trudvsem", "title": "Работа России", "available": True},
         {"key": "superjob", "title": "SuperJob", "available": bool(superjob_row)},
-        {"key": "hh", "title": "HeadHunter", "available": bool(hh_account()), "note": "поиск временно недоступен"},
+        {"key": "hh", "title": "HeadHunter", "available": bool(hh_account())},
     ]
 
     return render_template(
@@ -1031,6 +1038,22 @@ def hh_vacancies():
             headers=hh_headers(token),
             timeout=30,
         )
+
+        # Поиск вакансий является публичным endpoint HH. Если OAuth-токен
+        # соискателя ограничен и даёт 401/403, повторяем запрос без него.
+        if response.status_code in {401, 403}:
+            logger.warning(
+                "HH authenticated vacancy search returned %s; retrying without Authorization. body=%s",
+                response.status_code,
+                response.text[:1000],
+            )
+            response = requests.get(
+                HH_VACANCIES_URL,
+                params=params,
+                headers=hh_headers(),
+                timeout=30,
+            )
+
         response.raise_for_status()
         payload = response.json()
     except requests.RequestException as exc:
