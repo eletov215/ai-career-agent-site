@@ -1,5 +1,48 @@
 {% extends "base.html" %}
-{% block title %}Вакансии — AI Career Agent{% endblock %}
+{% block title %}Вакансии — AI Career Agent<script>
+(() => {
+  const form = document.getElementById('trudvsem-refresh-form');
+  const button = document.getElementById('trudvsem-refresh-button');
+  const progress = document.getElementById('trudvsem-sync-progress');
+  if (!form || !button || !progress) return;
+
+  let sawRunning = false;
+  const poll = async () => {
+    try {
+      const response = await fetch('{{ url_for("trudvsem_status") }}', {cache: 'no-store'});
+      if (!response.ok) return;
+      const status = await response.json();
+      if (status.running || status.queued) {
+        sawRunning = true;
+        button.disabled = true;
+        const done = status.last_processed || 0;
+        const target = status.target || 0;
+        progress.textContent = target
+          ? `Обновление: ${done} из ${target} (${status.progress_percent || 0}%)`
+          : 'Обновление выполняется…';
+        window.setTimeout(poll, 1500);
+        return;
+      }
+      if (sawRunning) {
+        progress.textContent = status.last_error
+          ? `Ошибка: ${status.last_error}`
+          : `Готово: загружено ${status.cached_total || 0}`;
+        button.disabled = false;
+        if (!status.last_error) window.setTimeout(() => window.location.reload(), 700);
+      }
+    } catch (_) {
+      if (sawRunning) window.setTimeout(poll, 2500);
+    }
+  };
+
+  form.addEventListener('submit', () => {
+    button.disabled = true;
+    progress.textContent = 'Запускаем обновление…';
+  });
+  poll();
+})();
+</script>
+{% endblock %}
 {% block content %}
 <main class="section">
   <div class="container">
@@ -53,7 +96,7 @@
     </div>
 
     {% if cache_note %}
-      <div class="card spaced"><span class="muted" id="trudvsem-sync-note">{{ cache_note }}</span></div>
+      <div class="card spaced"><span class="muted">{{ cache_note }}</span></div>
     {% endif %}
 
     {% for error in errors %}
@@ -61,11 +104,12 @@
     {% endfor %}
 
     {% if 'trudvsem' in selected_sources %}
-      <form method="post" action="{{ url_for('refresh_trudvsem_cache') }}" class="cache-refresh-form">
+      <form method="post" action="{{ url_for('refresh_trudvsem_cache') }}" class="cache-refresh-form" id="trudvsem-refresh-form">
         <input type="hidden" name="keyword" value="{{ keyword }}">
         {% for source in selected_sources %}<input type="hidden" name="source" value="{{ source }}">{% endfor %}
         {% if remote_only %}<input type="hidden" name="remote" value="1">{% endif %}
-        <button class="link-button" id="trudvsem-refresh-button" type="submit">Обновить данные «Работы России» сейчас</button>
+        <button class="link-button" type="submit" id="trudvsem-refresh-button">Обновить данные «Работы России» сейчас</button>
+        <span class="muted sync-progress" id="trudvsem-sync-progress" aria-live="polite"></span>
       </form>
     {% endif %}
 
@@ -105,11 +149,7 @@
       {% else %}
         <section class="card">
           <h2>Вакансии не найдены</h2>
-          {% if 'trudvsem' in selected_sources and source_results.get('trudvsem') and source_results.get('trudvsem').total == 0 %}
-            <p class="muted">Локальный кэш «Работы России» пока пуст. После нового деплоя Render данные могут загружаться заново. Нажмите обновление и дождитесь успешного завершения.</p>
-          {% else %}
-            <p class="muted">Измени запрос или выбери другой источник.</p>
-          {% endif %}
+          <p class="muted">Измени запрос или выбери другой источник.</p>
         </section>
       {% endfor %}
     </div>
@@ -130,75 +170,47 @@
     <p class="api-credit">Данные «Работа России» получены через официальный открытый API портала trudvsem.ru.</p>
   </div>
 </main>
-
-{% if sync_queued and sync_requested_at %}
 <script>
 (() => {
-  const requestedAt = {{ sync_requested_at|int }};
-  const statusUrl = {{ url_for('trudvsem_status')|tojson }};
-  const note = document.getElementById('trudvsem-sync-note');
+  const form = document.getElementById('trudvsem-refresh-form');
   const button = document.getElementById('trudvsem-refresh-button');
-  let attempts = 0;
-  let syncObserved = false;
+  const progress = document.getElementById('trudvsem-sync-progress');
+  if (!form || !button || !progress) return;
 
-  if (button) {
-    button.disabled = true;
-    button.textContent = 'Обновление выполняется…';
-  }
-
-  const updateNote = (text, isError = false) => {
-    if (!note) return;
-    note.textContent = text;
-    note.classList.toggle('sync-error', isError);
-  };
-
+  let sawRunning = false;
   const poll = async () => {
-    attempts += 1;
     try {
-      const response = await fetch(statusUrl, {headers: {'Accept': 'application/json'}, cache: 'no-store'});
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      const state = await response.json();
-
-      if (state.queued || state.running || (state.last_started && state.last_started >= requestedAt)) {
-        syncObserved = true;
-      }
-
-      if (state.last_error && state.last_finished && state.last_finished >= requestedAt) {
-        updateNote(`Не удалось обновить «Работу России»: ${state.last_error}`, true);
-        if (button) {
-          button.disabled = false;
-          button.textContent = 'Повторить обновление';
-        }
+      const response = await fetch('{{ url_for("trudvsem_status") }}', {cache: 'no-store'});
+      if (!response.ok) return;
+      const status = await response.json();
+      if (status.running || status.queued) {
+        sawRunning = true;
+        button.disabled = true;
+        const done = status.last_processed || 0;
+        const target = status.target || 0;
+        progress.textContent = target
+          ? `Обновление: ${done} из ${target} (${status.progress_percent || 0}%)`
+          : 'Обновление выполняется…';
+        window.setTimeout(poll, 1500);
         return;
       }
-
-      if (syncObserved && !state.running && state.last_finished && state.last_finished >= requestedAt) {
-        const url = new URL(window.location.href);
-        url.searchParams.delete('sync');
-        url.searchParams.delete('sync_requested_at');
-        window.location.replace(url.toString());
-        return;
+      if (sawRunning) {
+        progress.textContent = status.last_error
+          ? `Ошибка: ${status.last_error}`
+          : `Готово: загружено ${status.cached_total || 0}`;
+        button.disabled = false;
+        if (!status.last_error) window.setTimeout(() => window.location.reload(), 700);
       }
-
-      updateNote(state.running ? 'Данные «Работы России» обновляются…' : 'Обновление поставлено в очередь…');
-    } catch (error) {
-      if (attempts >= 20) {
-        updateNote('Не удалось проверить статус обновления. Обновите страницу вручную.', true);
-        if (button) button.disabled = false;
-        return;
-      }
-    }
-
-    if (attempts < 180) {
-      window.setTimeout(poll, 1500);
-    } else {
-      updateNote('API «Работы России» отвечает медленно. Обновление продолжается; проверьте страницу позже.', true);
-      if (button) button.disabled = false;
+    } catch (_) {
+      if (sawRunning) window.setTimeout(poll, 2500);
     }
   };
 
+  form.addEventListener('submit', () => {
+    button.disabled = true;
+    progress.textContent = 'Запускаем обновление…';
+  });
   poll();
 })();
 </script>
-{% endif %}
 {% endblock %}

@@ -42,7 +42,7 @@ Optional environment variables:
 
 - `TRUDVSEM_SYNC_INTERVAL` - refresh interval in seconds, default `1800`.
 - `TRUDVSEM_SYNC_ITEMS` - maximum vacancies loaded per cycle, default `100`.
-- `TRUDVSEM_SYNC_BATCH` - API batch size, default `10`; values above 10 are safely limited to 10 because large responses time out on Render.
+- `TRUDVSEM_SYNC_BATCH` - API batch size, default `1` (most reliable on Render).
 
 The existing "Обновить данные" link only schedules a background refresh and
 returns immediately.

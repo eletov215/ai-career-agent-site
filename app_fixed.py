@@ -2,7 +2,6 @@ import json
 import os
 import secrets
 import socket
-import platform
 import sqlite3
 import time
 import threading
@@ -56,7 +55,6 @@ TRUDVSEM_SYNC_BATCH = int(os.environ.get("TRUDVSEM_SYNC_BATCH", "10"))
 TRUDVSEM_SYNC_ENABLED = os.environ.get("TRUDVSEM_SYNC_ENABLED", "1").strip().lower() not in {"0", "false", "no"}
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
-DEBUG_HH = os.environ.get("DEBUG_HH", "0").strip().lower() in {"1", "true", "yes", "on"}
 
 
 def db():
@@ -110,10 +108,7 @@ TRUDVSEM_SYNC_STATE = {
     "last_finished": None,
     "last_success": None,
     "last_saved": 0,
-    "last_processed": 0,
     "last_error": None,
-    "target": 0,
-    "current_offset": 0,
 }
 
 
@@ -125,9 +120,6 @@ def trudvsem_sync_status():
 def request_trudvsem_sync():
     already_queued = TRUDVSEM_SYNC_EVENT.is_set()
     TRUDVSEM_SYNC_EVENT.set()
-    logger.info(
-        "Trudvsem event set",
-    )
     logger.info(
         "Trudvsem sync requested already_queued=%s running=%s",
         already_queued,
@@ -147,32 +139,21 @@ def _run_trudvsem_sync():
             last_started=int(time.time()),
             last_error=None,
             last_saved=0,
-            last_processed=0,
-            target=0,
-            current_offset=0,
         )
 
     saved = 0
-    processed = 0
     error = None
 
     try:
-        logger.info(
-            "Trudvsem provider init previous_success=%s",
-            previous_success,
-        )
-
         provider = TrudvsemProvider(
             HH_USER_AGENT,
-            per_page=10,
-            timeout=(5, 45),
+            per_page=25,
+            timeout=(4, 8),
             scan_pages=5,
         )
 
         batch_size = max(1, min(TRUDVSEM_SYNC_BATCH, 10))
         target = max(batch_size, min(TRUDVSEM_SYNC_ITEMS, 500))
-        with TRUDVSEM_SYNC_LOCK:
-            TRUDVSEM_SYNC_STATE["target"] = target
 
         # После первой синхронизации запрашиваем только изменённые вакансии.
         modified_from = None
@@ -190,52 +171,28 @@ def _run_trudvsem_sync():
             modified_from,
         )
 
-        offset = 0
-        while processed < target:
-            requested = min(batch_size, target - processed)
-            items = provider.fetch_batch_adaptive(
+        for offset in range(0, target, batch_size):
+            items = provider.fetch_batch(
                 offset=offset,
-                limit=requested,
+                limit=batch_size,
                 modified_from=modified_from,
             )
 
             logger.info(
-                "Trudvsem batch fetched offset=%s requested=%s received=%s first=%s",
+                "Trudvsem batch fetched offset=%s requested=%s received=%s",
                 offset,
-                requested,
+                batch_size,
                 len(items),
-                items[0].get("external_id") if items else None,
             )
 
             if not items:
-                if processed == 0:
-                    raise RuntimeError(
-                        "API «Работы России» вернул пустую первую порцию вакансий"
-                    )
                 break
 
-            processed += len(items)
             saved += VACANCY_STORE.upsert_many(items)
-            offset += len(items)
-
-            with TRUDVSEM_SYNC_LOCK:
-                TRUDVSEM_SYNC_STATE.update(
-                    last_processed=processed,
-                    last_saved=saved,
-                    current_offset=offset,
-                )
-
-            logger.info(
-                "Trudvsem batch saved offset=%s processed=%s saved=%s",
-                offset,
-                processed,
-                saved,
-            )
             time.sleep(0.15)
 
         logger.info(
-            "Trudvsem background sync completed processed=%s saved=%s modified_from=%s",
-            processed,
+            "Trudvsem background sync completed saved=%s modified_from=%s",
             saved,
             modified_from,
         )
@@ -254,7 +211,6 @@ def _run_trudvsem_sync():
                 running=False,
                 last_finished=finished_at,
                 last_saved=saved,
-                last_processed=processed,
                 last_error=error,
             )
             if error is None:
@@ -311,7 +267,6 @@ def start_background_workers():
     global TRUDVSEM_SYNC_THREAD
 
     if TRUDVSEM_SYNC_ENABLED and TRUDVSEM_SYNC_THREAD is None:
-        logger.info("Starting background worker from request")
         start_trudvsem_sync_worker()
 
 def enc(value):
@@ -397,43 +352,16 @@ def hh_account():
 
 
 def hh_headers(token=None):
-    """Build headers required by HH API.
-
-    HH requires the custom HH-User-Agent header. We also send the regular
-    User-Agent for compatibility with proxies and HTTP tooling.
-    """
     headers = {
         "Accept": "application/json",
+        # HH API documentation requires this custom header.
         "HH-User-Agent": HH_USER_AGENT,
+        # Keep the standard header too for proxies and diagnostics.
         "User-Agent": HH_USER_AGENT,
     }
     if token:
         headers["Authorization"] = f"Bearer {token}"
     return headers
-
-
-
-def _masked_hh_headers(headers):
-    """Return HH request headers safe for logs and debug responses."""
-    safe = {}
-    for key, value in dict(headers or {}).items():
-        if key.lower() == "authorization":
-            safe[key] = "Bearer ***" if value else "***"
-        else:
-            safe[key] = value
-    return safe
-
-
-def _hh_response_report(response):
-    """Build a JSON-safe diagnostic report without exposing OAuth secrets."""
-    return {
-        "status_code": response.status_code,
-        "ok": response.ok,
-        "url": response.url,
-        "request_headers": _masked_hh_headers(response.request.headers),
-        "response_headers": dict(response.headers),
-        "body_preview": response.text[:2000],
-    }
 
 
 def save_hh_account(profile, token_data):
@@ -506,7 +434,10 @@ def valid_hh_token(row):
             "client_id": HH_CLIENT_ID,
             "client_secret": HH_CLIENT_SECRET,
         },
-        headers=hh_headers(),
+        headers={
+            "Accept": "application/json",
+            "User-Agent": HH_USER_AGENT,
+        },
         timeout=30,
     )
     response.raise_for_status()
@@ -676,10 +607,7 @@ def hh_callback():
                 "code": code,
                 "redirect_uri": HH_REDIRECT_URI,
             },
-            headers={
-                "Accept": "application/json",
-                "User-Agent": HH_USER_AGENT,
-            },
+            headers=hh_headers(),
             timeout=30,
         )
 
@@ -783,14 +711,7 @@ def vacancies():
     if not selected_sources:
         selected_sources = ["trudvsem"]
 
-    hh_row = hh_account()
-    providers = {
-        "hh": HeadHunterProvider(
-            HH_VACANCIES_URL,
-            hh_headers,
-            (lambda: valid_hh_token(hh_row)) if hh_row else None,
-        )
-    }
+    providers = {"hh": HeadHunterProvider()}
     if superjob_row:
         providers["superjob"] = SuperJobProvider(
             VACANCIES_URL,
@@ -902,7 +823,7 @@ def vacancies():
     source_options = [
         {"key": "trudvsem", "title": "Работа России", "available": True},
         {"key": "superjob", "title": "SuperJob", "available": bool(superjob_row)},
-        {"key": "hh", "title": "HeadHunter", "available": bool(hh_account())},
+        {"key": "hh", "title": "HeadHunter", "available": bool(hh_account()), "note": "поиск временно недоступен"},
     ]
 
     return render_template(
@@ -1023,15 +944,6 @@ def trudvsem_status():
     state["cache_age_seconds"] = VACANCY_STORE.source_age_seconds("trudvsem")
     state["cached_total"] = VACANCY_STORE.count(keyword="", sources=["trudvsem"])
     state["sync_enabled"] = TRUDVSEM_SYNC_ENABLED
-    target = int(state.get("target") or 0)
-    processed = int(state.get("last_processed") or 0)
-    state["progress_percent"] = (
-        min(100, round(processed * 100 / target)) if target else 0
-    )
-    state["queued"] = TRUDVSEM_SYNC_EVENT.is_set()
-    state["worker_alive"] = bool(
-        TRUDVSEM_SYNC_THREAD and TRUDVSEM_SYNC_THREAD.is_alive()
-    )
     return state, 200
 
 
@@ -1096,13 +1008,13 @@ def hh_vacancies():
             timeout=30,
         )
 
-        # Поиск вакансий является публичным endpoint HH. Если OAuth-токен
-        # соискателя ограничен и даёт 401/403, повторяем запрос без него.
-        if response.status_code in {401, 403}:
+        # Some HH installations may reject an authorized vacancy-search request.
+        # Retry once as a public request while preserving the required client header.
+        if response.status_code == 403:
             logger.warning(
-                "HH authenticated vacancy search returned %s; retrying without Authorization. body=%s",
-                response.status_code,
-                response.text[:1000],
+                "HH vacancies authorized request returned 403; retrying publicly request_id=%s body=%s",
+                response.headers.get("X-Request-Id"),
+                response.text[:500],
             )
             response = requests.get(
                 HH_VACANCIES_URL,
@@ -1134,86 +1046,6 @@ def hh_vacancies():
         total=int(payload.get("found", 0) or 0),
         error=error,
     )
-
-
-
-@app.get("/debug/hh")
-def debug_hh():
-    """Run safe HH API diagnostics. Enabled only when DEBUG_HH=1."""
-    if not DEBUG_HH:
-        return {
-            "ok": False,
-            "error": "HH diagnostics are disabled. Set DEBUG_HH=1 in Render and redeploy.",
-        }, 404
-
-    row = hh_account()
-    params = {
-        "text": request.args.get("keyword", "инженер-конструктор").strip() or "инженер-конструктор",
-        "period": 7,
-        "page": 0,
-        "per_page": 1,
-        "order_by": "publication_time",
-    }
-    report = {
-        "ok": False,
-        "endpoint": HH_VACANCIES_URL,
-        "params": params,
-        "environment": {
-            "debug_hh": DEBUG_HH,
-            "render_region": os.environ.get("RENDER_REGION") or "unknown",
-            "python": platform.python_version(),
-            "requests": requests.__version__,
-            "hh_client_id_configured": bool(HH_CLIENT_ID),
-            "hh_redirect_uri": HH_REDIRECT_URI,
-            "hh_user_agent": HH_USER_AGENT,
-            "hh_account_connected": bool(row),
-        },
-        "attempts": [],
-    }
-
-    attempts = []
-    if row:
-        try:
-            attempts.append(("oauth", valid_hh_token(row)))
-        except Exception as exc:
-            report["oauth_token_error"] = f"{type(exc).__name__}: {exc}"
-    attempts.append(("public", None))
-
-    for name, token in attempts:
-        started = time.monotonic()
-        try:
-            response = requests.get(
-                HH_VACANCIES_URL,
-                params=params,
-                headers=hh_headers(token),
-                timeout=30,
-            )
-            attempt = {
-                "name": name,
-                "seconds": round(time.monotonic() - started, 3),
-                **_hh_response_report(response),
-            }
-            report["attempts"].append(attempt)
-            logger.info(
-                "HH DEBUG attempt=%s status=%s url=%s request_headers=%s response_headers=%s body=%s",
-                name,
-                response.status_code,
-                response.url,
-                _masked_hh_headers(response.request.headers),
-                dict(response.headers),
-                response.text[:2000],
-            )
-        except requests.RequestException as exc:
-            report["attempts"].append({
-                "name": name,
-                "seconds": round(time.monotonic() - started, 3),
-                "error_type": type(exc).__name__,
-                "error": str(exc),
-            })
-            logger.exception("HH DEBUG request failed attempt=%s", name)
-
-    report["ok"] = any(item.get("ok") for item in report["attempts"])
-    return report, 200
 
 
 @app.get("/health")

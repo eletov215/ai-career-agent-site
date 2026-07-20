@@ -8,4 +8,5 @@
 
 .cache-refresh-form { margin: 14px 0; }
 .link-button { background: none; border: 0; padding: 0; color: #0645ad; text-decoration: underline; cursor: pointer; font: inherit; }
-.link-button:disabled{cursor:wait;color:var(--muted);text-decoration:none}.sync-error{color:var(--danger)!important}
+.sync-progress { display: inline-block; margin-left: 10px; }
+.cache-refresh-form .link-button:disabled { opacity: .65; cursor: wait; }

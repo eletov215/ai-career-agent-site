@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import time
 from typing import Any
 
 import requests
@@ -17,21 +18,20 @@ class TrudvsemProvider(VacancyProvider):
     title = "Работа России"
     api_url = "https://opendata.trudvsem.ru/api/v1/vacancies"
 
-    def __init__(self, user_agent: str, per_page: int = 10, timeout: tuple[int, int] = (5, 45), scan_pages: int = 1):
+    def __init__(self, user_agent: str, per_page: int = 25, timeout: tuple[int, int] = (5, 20), scan_pages: int = 1):
         self.user_agent = user_agent
-        self.per_page = max(1, min(int(per_page), 10))
+        self.per_page = max(1, min(int(per_page), 100))
         self.timeout = timeout
         self.scan_pages = max(1, min(int(scan_pages), 10))
         self.session = requests.Session()
         retry = Retry(
-            total=3,
-            connect=3,
-            read=3,
-            backoff_factor=1,
+            total=2,
+            connect=2,
+            read=2,
+            backoff_factor=0.8,
             status_forcelist=(429, 500, 502, 503, 504),
             allowed_methods=frozenset({"GET"}),
             raise_on_status=False,
-            respect_retry_after_header=True,
         )
         self.session.mount("https://", HTTPAdapter(max_retries=retry))
 
@@ -214,6 +214,50 @@ class TrudvsemProvider(VacancyProvider):
         )
 
         return normalized
+
+
+    def fetch_batch_adaptive(
+        self,
+        *,
+        offset: int = 0,
+        limit: int = 10,
+        modified_from: str | None = None,
+    ) -> list[dict[str, Any]]:
+        """Fetch a batch and reduce its size when the API times out.
+
+        The API may answer quickly for one vacancy but time out for larger
+        payloads. The offset is preserved while the requested size falls back
+        from the configured value to 5 and then to 1.
+        """
+        requested = max(1, min(int(limit), 10))
+        sizes = []
+        for size in (requested, 5, 1):
+            size = min(size, requested)
+            if size not in sizes:
+                sizes.append(size)
+
+        last_error: Exception | None = None
+        for size in sizes:
+            try:
+                return self.fetch_batch(
+                    offset=offset,
+                    limit=size,
+                    modified_from=modified_from,
+                )
+            except (requests.Timeout, requests.ConnectionError) as exc:
+                last_error = exc
+                logger.warning(
+                    "TRUDVSEM batch failed offset=%s limit=%s error=%s",
+                    offset,
+                    size,
+                    type(exc).__name__,
+                )
+                time.sleep(0.6)
+
+        raise ConnectionError(
+            "Не удалось получить порцию вакансий «Работы России» "
+            f"с позиции {offset} после повторных попыток"
+        ) from last_error
 
     def search(
         self,
