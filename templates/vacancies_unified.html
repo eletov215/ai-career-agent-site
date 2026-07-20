@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+{% block title %}Вакансии — AI Career Agent{% endblock %}
+{% block content %}
+<main class="section">
+  <div class="container">
+    <div class="page-heading">
+      <div>
+        <div class="muted">Все источники в одном месте</div>
+        <h1 class="page-title">Единый поиск вакансий</h1>
+      </div>
+      <a class="btn btn-secondary" href="{{ url_for('dashboard') }}">В кабинет</a>
+    </div>
+
+    <form class="unified-search" method="get">
+      <input type="hidden" name="search" value="1">
+      <label class="search-keyword">
+        <span>Должность или ключевые слова</span>
+        <input type="text" name="keyword" value="{{ keyword }}" placeholder="Например, инженер-конструктор">
+      </label>
+
+      <fieldset class="source-picker">
+        <legend>Источники</legend>
+        {% for source in source_options %}
+          <label class="source-option {% if not source.available %}source-disabled{% endif %}">
+            <input type="checkbox" name="source" value="{{ source.key }}"
+                   {% if source.key in selected_sources %}checked{% endif %}
+                   {% if not source.available and source.key != 'trudvsem' %}disabled{% endif %}>
+            <span>{{ source.title }}</span>
+            {% if source.note %}<small>{{ source.note }}</small>{% endif %}
+          </label>
+        {% endfor %}
+      </fieldset>
+
+      <label class="remote-filter">
+        <input type="checkbox" name="remote" value="1" {% if remote_only %}checked{% endif %}>
+        <span>Только удалённая работа</span>
+      </label>
+
+      <button class="btn btn-primary" type="submit">Найти вакансии</button>
+    </form>
+
+    {% if search_requested %}
+    <div class="results-heading">
+      <div>
+        <strong>Найдено по источникам: {{ total }}</strong>
+        <div class="muted">На странице показано {{ vacancies|length }}</div>
+      </div>
+      <div class="source-badges">
+        {% for key, result in source_results.items() %}
+          <span>{{ key|replace('trudvsem', 'Работа России')|replace('superjob', 'SuperJob')|replace('hh', 'HeadHunter') }}: {{ result.total }}</span>
+        {% endfor %}
+      </div>
+    </div>
+
+    {% if cache_note %}
+      <div class="card spaced"><span class="muted">{{ cache_note }}</span></div>
+    {% endif %}
+
+    {% for error in errors %}
+      <div class="error-box spaced">{{ error }}</div>
+    {% endfor %}
+
+    {% if 'trudvsem' in selected_sources %}
+      <form method="post" action="{{ url_for('refresh_trudvsem_cache') }}" class="cache-refresh-form">
+        <input type="hidden" name="keyword" value="{{ keyword }}">
+        {% for source in selected_sources %}<input type="hidden" name="source" value="{{ source }}">{% endfor %}
+        {% if remote_only %}<input type="hidden" name="remote" value="1">{% endif %}
+        <button class="link-button" type="submit">Обновить данные «Работы России» сейчас</button>
+      </form>
+    {% endif %}
+
+    <div class="vacancy-list">
+      {% for vacancy in vacancies %}
+        <article class="vacancy-card unified-vacancy-card">
+          <div class="vacancy-main">
+            <div class="vacancy-source source-{{ vacancy.source }}">{{ vacancy.source_title }}</div>
+            <h2>{{ vacancy.title }}</h2>
+            <p class="vacancy-company">{{ vacancy.company }}</p>
+
+            {% if vacancy.salary_from or vacancy.salary_to %}
+              <p class="vacancy-salary">
+                {% if vacancy.salary_from %}от {{ vacancy.salary_from }}{% endif %}
+                {% if vacancy.salary_to %} до {{ vacancy.salary_to }}{% endif %}
+                {{ vacancy.currency }}
+              </p>
+            {% endif %}
+
+            <div class="vacancy-meta">
+              {% if vacancy.location %}<span>{{ vacancy.location }}</span>{% endif %}
+              {% if vacancy.schedule %}<span>{{ vacancy.schedule }}</span>{% endif %}
+              {% if vacancy.employment %}<span>{{ vacancy.employment }}</span>{% endif %}
+              {% if vacancy.remote %}<span>Удалённо</span>{% endif %}
+            </div>
+
+            {% if vacancy.description %}<p>{{ vacancy.description[:420] }}</p>{% endif %}
+            {% if vacancy.requirements %}<p class="muted"><strong>Требования:</strong> {{ vacancy.requirements[:300] }}</p>{% endif %}
+          </div>
+          <div class="vacancy-actions">
+            {% if vacancy.url %}
+              <a class="btn btn-secondary" href="{{ vacancy.url }}" target="_blank" rel="noopener noreferrer">Открыть вакансию</a>
+            {% endif %}
+            <button class="btn btn-ghost" type="button" disabled title="Будет добавлено на этапе AI-анализа">AI-анализ</button>
+          </div>
+        </article>
+      {% else %}
+        <section class="card">
+          <h2>Вакансии не найдены</h2>
+          <p class="muted">Измени запрос или выбери другой источник.</p>
+        </section>
+      {% endfor %}
+    </div>
+
+    {% else %}
+      <section class="card"><h2>Поиск готов</h2><p class="muted">Выберите источники и нажмите «Найти вакансии». Страница больше не ждёт внешние API при открытии.</p></section>
+    {% endif %}
+
+    <div class="pagination">
+      {% if page > 0 %}
+        <a class="btn btn-secondary" href="?search=1&keyword={{ keyword|urlencode }}{% for source in selected_sources %}&source={{ source }}{% endfor %}{% if remote_only %}&remote=1{% endif %}&page={{ page - 1 }}">Назад</a>
+      {% endif %}
+      {% if has_next %}
+        <a class="btn btn-secondary" href="?search=1&keyword={{ keyword|urlencode }}{% for source in selected_sources %}&source={{ source }}{% endfor %}{% if remote_only %}&remote=1{% endif %}&page={{ page + 1 }}">Далее</a>
+      {% endif %}
+    </div>
+
+    <p class="api-credit">Данные «Работа России» получены через официальный открытый API портала trudvsem.ru.</p>
+  </div>
+</main>
+{% endblock %}
