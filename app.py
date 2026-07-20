@@ -221,8 +221,29 @@ def _run_trudvsem_sync():
             )
 
             if not items:
-                if page_number == 1 and processed == 0:
+                # Пустая первая страница является нормальным ответом при
+                # инкрементальной синхронизации: после previous_success новых
+                # или изменённых вакансий могло не появиться. Считаем это
+                # ошибкой только при самой первой полной загрузке пустого кэша.
+                cached_before_sync = VACANCY_STORE.count(
+                    keyword="",
+                    sources=["trudvsem"],
+                    period_days=3650,
+                )
+                if (
+                    page_number == 1
+                    and processed == 0
+                    and modified_from is None
+                    and cached_before_sync == 0
+                ):
                     raise RuntimeError("API 'Работы России' вернул пустую первую страницу")
+
+                logger.info(
+                    "Trudvsem sync has no new items page=%s modified_from=%s cached=%s",
+                    page_number,
+                    modified_from,
+                    cached_before_sync,
+                )
                 break
 
             processed += len(items)
