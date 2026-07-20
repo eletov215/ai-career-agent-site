@@ -52,7 +52,7 @@ VACANCY_CACHE_TTL = int(os.environ.get("VACANCY_CACHE_TTL", "1800"))
 VACANCY_PAGE_SIZE = 60
 TRUDVSEM_SYNC_INTERVAL = int(os.environ.get("TRUDVSEM_SYNC_INTERVAL", "1800"))
 TRUDVSEM_SYNC_ITEMS = int(os.environ.get("TRUDVSEM_SYNC_ITEMS", "300"))
-TRUDVSEM_SYNC_BATCH = int(os.environ.get("TRUDVSEM_SYNC_BATCH", "10"))
+TRUDVSEM_SYNC_BATCH = int(os.environ.get("TRUDVSEM_SYNC_BATCH", "100"))
 TRUDVSEM_SYNC_ENABLED = os.environ.get("TRUDVSEM_SYNC_ENABLED", "1").strip().lower() not in {"0", "false", "no"}
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -161,12 +161,12 @@ def _run_trudvsem_sync():
 
         provider = TrudvsemProvider(
             HH_USER_AGENT,
-            per_page=25,
-            timeout=(4, 8),
+            per_page=100,
+            timeout=(5, 30),
             scan_pages=5,
         )
 
-        batch_size = max(1, min(TRUDVSEM_SYNC_BATCH, 10))
+        batch_size = max(1, min(TRUDVSEM_SYNC_BATCH, 100))
         target = max(batch_size, min(TRUDVSEM_SYNC_ITEMS, 500))
 
         # После первой синхронизации запрашиваем только изменённые вакансии.
@@ -220,6 +220,19 @@ def _run_trudvsem_sync():
             modified_from,
         )
 
+    except requests.Timeout as exc:
+        error = (
+            "API «Работы России» не ответил вовремя после повторных попыток. "
+            "Сохранённые ранее вакансии не удалены; повторите обновление позже."
+        )
+        logger.warning("Trudvsem timeout details=%s", exc)
+    except requests.ConnectionError as exc:
+        error = (
+            "Не удалось установить соединение с API «Работы России» после "
+            "повторных попыток. Сохранённые ранее вакансии не удалены; "
+            "повторите обновление позже."
+        )
+        logger.warning("Trudvsem connection details=%s", exc)
     except Exception as exc:
         error = f"{type(exc).__name__}: {exc}"
         logger.warning(
