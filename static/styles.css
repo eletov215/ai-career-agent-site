@@ -417,7 +417,7 @@ body{font-family:"Manrope",Inter,system-ui,-apple-system,BlinkMacSystemFont,"Seg
 .scroll-story-section::before{content:"";position:absolute;z-index:-1;left:50%;top:-28px;width:1px;height:56px;background:linear-gradient(180deg,rgba(124,91,241,0),rgba(124,91,241,.45),rgba(124,91,241,0));transform:scaleY(0);transform-origin:top;transition:transform .8s cubic-bezier(.22,1,.36,1)}
 .scroll-story-section.is-active::before{transform:scaleY(1)}
 
-.js .scroll-reveal{--reveal-x:0px;--reveal-y:34px;--reveal-scale:.97;opacity:0;filter:blur(8px);transform:translate3d(var(--reveal-x),var(--reveal-y),0) scale(var(--reveal-scale));transition:opacity .72s ease,filter .78s ease,transform .88s cubic-bezier(.22,1,.36,1);transition-delay:calc(var(--reveal-delay,0) * 110ms);will-change:opacity,filter,transform}
+.js .scroll-reveal{--reveal-x:0px;--reveal-y:34px;--reveal-scale:.97;opacity:0;transform:translate3d(var(--reveal-x),var(--reveal-y),0) scale(var(--reveal-scale));transition:opacity .72s ease,transform .88s cubic-bezier(.22,1,.36,1);transition-delay:calc(var(--reveal-delay,0) * 110ms);will-change:opacity,transform}
 .js .scroll-reveal[data-reveal="fly-left"]{--reveal-x:-54px;--reveal-y:8px;--reveal-scale:.98}
 .js .scroll-reveal[data-reveal="fly-right"]{--reveal-x:54px;--reveal-y:8px;--reveal-scale:.98}
 .js .scroll-reveal[data-reveal="fly-up"]{--reveal-y:46px;--reveal-scale:.9}
@@ -425,7 +425,7 @@ body{font-family:"Manrope",Inter,system-ui,-apple-system,BlinkMacSystemFont,"Seg
 .js .scroll-reveal[data-reveal="shell"]{--reveal-y:48px;--reveal-scale:.96}
 .js .scroll-reveal[data-reveal="step"]{--reveal-x:42px;--reveal-y:0;--reveal-scale:.96}
 .js .scroll-reveal[data-reveal="cta"]{--reveal-y:54px;--reveal-scale:.92}
-.js .scroll-reveal.is-visible{opacity:1;filter:blur(0);transform:translate3d(0,0,0) scale(1)}
+.js .scroll-reveal.is-visible{opacity:1;transform:translate3d(0,0,0) scale(1)}
 .js .scroll-reveal[data-reveal-delay="1"]{--reveal-delay:1}
 .js .scroll-reveal[data-reveal-delay="2"]{--reveal-delay:2}
 .js .scroll-reveal[data-reveal-delay="3"]{--reveal-delay:3}
@@ -455,7 +455,7 @@ body{font-family:"Manrope",Inter,system-ui,-apple-system,BlinkMacSystemFont,"Seg
 /* ===== Scroll story stage 2: calm continuity between hero and sources ===== */
 .orbit-hero{--hero-exit-progress:0}
 .orbit-hero__copy{transform:translate3d(0,calc(var(--hero-exit-progress) * -12px),0);opacity:calc(1 - var(--hero-exit-progress) * .18);transition:opacity .12s linear;will-change:transform,opacity}
-.orbit-scene{transform:translate3d(0,calc(var(--hero-exit-progress) * -34px),0) scale(calc(1 - var(--hero-exit-progress) * .025));opacity:calc(1 - var(--hero-exit-progress) * .55);filter:blur(calc(var(--hero-exit-progress) * 1.2px));transition:opacity .12s linear,filter .12s linear;will-change:transform,opacity,filter}
+.orbit-scene{transform:translate3d(0,calc(var(--hero-exit-progress) * -34px),0) scale(calc(1 - var(--hero-exit-progress) * .025));opacity:calc(1 - var(--hero-exit-progress) * .45);transition:opacity .12s linear;will-change:transform,opacity}
 .orbit-hero::after{content:"";position:absolute;z-index:3;left:50%;bottom:-58px;width:1px;height:116px;background:linear-gradient(180deg,rgba(124,91,241,0),rgba(124,91,241,.34) 35%,rgba(124,91,241,.14) 70%,rgba(124,91,241,0));transform:translateX(-50%) scaleY(calc(.3 + var(--hero-exit-progress) * .7));transform-origin:top;opacity:calc(.18 + var(--hero-exit-progress) * .82);pointer-events:none}
 .platform-strip--v2{--strip-entry-progress:0;position:relative}
 .platform-strip--v2 .platform-strip-inner{transform:translate3d(0,calc((1 - var(--strip-entry-progress)) * 18px),0);opacity:calc(.72 + var(--strip-entry-progress) * .28);transition:opacity .12s linear;will-change:transform,opacity}
@@ -506,8 +506,8 @@ body{font-family:"Manrope",Inter,system-ui,-apple-system,BlinkMacSystemFont,"Seg
 }
 .feature-workspace.is-visible .feature-workspace__grid{opacity:1;transform:scale(1)}
 .feature-workspace .feature-grid{z-index:1}
-.js .scroll-reveal[data-reveal="workspace"]{--reveal-y:42px;--reveal-scale:.975;filter:blur(5px)}
-.js .scroll-reveal[data-reveal="workspace-card"]{--reveal-y:22px;--reveal-scale:.985;filter:blur(4px);transition-duration:.72s,.76s,.82s;transition-delay:calc(260ms + var(--reveal-delay,0) * 130ms)}
+.js .scroll-reveal[data-reveal="workspace"]{--reveal-y:42px;--reveal-scale:.975}
+.js .scroll-reveal[data-reveal="workspace-card"]{--reveal-y:22px;--reveal-scale:.985;transition-duration:.72s,.82s;transition-delay:calc(260ms + var(--reveal-delay,0) * 130ms)}
 .feature-workspace .feature-card{background:rgba(255,255,255,.84);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:0 16px 36px rgba(47,36,95,.07);transition:border-color .25s ease,box-shadow .25s ease,transform .25s ease}
 .feature-workspace .feature-card:hover{transform:translateY(-3px);border-color:rgba(119,86,230,.25);box-shadow:0 22px 44px rgba(47,36,95,.11)}
 .landing-section.is-active .feature-workspace{box-shadow:0 32px 78px rgba(57,43,112,.13),inset 0 1px 0 rgba(255,255,255,.9)}
@@ -528,7 +528,7 @@ body{font-family:"Manrope",Inter,system-ui,-apple-system,BlinkMacSystemFont,"Seg
 .workflow-list li>span{position:relative;z-index:1;box-shadow:0 0 0 7px rgba(239,243,255,.92)}
 .workflow-list li>div{position:relative;z-index:1}
 .workflow-list small{display:block;margin:0 0 4px;color:#9aa3b5;font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase}
-.js .scroll-reveal[data-reveal="workflow-step"]{--reveal-x:24px;--reveal-y:0;--reveal-scale:.985;filter:blur(4px);transition-delay:calc(180ms + var(--reveal-delay,0) * 145ms)}
+.js .scroll-reveal[data-reveal="workflow-step"]{--reveal-x:24px;--reveal-y:0;--reveal-scale:.985;transition-delay:calc(180ms + var(--reveal-delay,0) * 145ms)}
 .workflow-list li.is-visible>span{animation:workflow-node-settle .62s cubic-bezier(.22,1,.36,1) calc(240ms + var(--reveal-delay,0) * 145ms) both}
 @keyframes workflow-node-settle{0%{transform:scale(.72);box-shadow:0 0 0 0 rgba(112,80,222,.2)}65%{transform:scale(1.08);box-shadow:0 0 0 10px rgba(112,80,222,0)}100%{transform:scale(1);box-shadow:0 0 0 7px rgba(239,243,255,.92)}}
 @keyframes workflow-card-sheen{0%{transform:translateX(-125%);opacity:0}18%{opacity:.55}100%{transform:translateX(125%);opacity:0}}
