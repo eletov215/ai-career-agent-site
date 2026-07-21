@@ -8,14 +8,16 @@ ALLOWED_SORTS = {"date", "salary_desc", "salary_asc", "relevance"}
 ALLOWED_EXPERIENCE = {"", "no_experience", "between_1_and_3", "between_3_and_6", "more_than_6"}
 ALLOWED_EMPLOYMENT = {"", "full", "part", "project", "probation", "volunteer"}
 ALLOWED_WORK_FORMATS = {"", "onsite", "remote", "hybrid"}
-ALLOWED_CURRENCIES = {"", "RUB", "USD", "EUR", "KZT", "BYR"}
+ALLOWED_CURRENCIES = {"", "RUB", "USD", "EUR", "KZT", "BYN"}
 
 
 def canonical_currency(value: str | None) -> str:
     currency = str(value or "").strip().upper()
-    if currency == "RUR":
-        return "RUB"
-    return currency
+    aliases = {
+        "RUR": "RUB",
+        "BYR": "BYN",
+    }
+    return aliases.get(currency, currency)
 
 
 @dataclass(frozen=True)

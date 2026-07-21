@@ -139,10 +139,14 @@ class HeadHunterProvider(VacancyProvider):
             params["experience"] = hh_experience
         if filters.employment:
             params["employment"] = filters.employment
-        if filters.currency:
-            params["currency"] = "RUR" if filters.currency == "RUB" else filters.currency
+        # HH uses currency only together with the salary threshold and does not
+        # guarantee that returned vacancies are denominated in that currency.
+        # Exact currency matching is therefore performed on normalized results.
         if filters.salary_from is not None:
             params["salary"] = filters.salary_from
+            if filters.currency:
+                hh_currency = {"RUB": "RUR", "BYN": "BYR"}.get(filters.currency, filters.currency)
+                params["currency"] = hh_currency
         if filters.salary_only:
             params["only_with_salary"] = "true"
 
@@ -191,6 +195,49 @@ class HeadHunterProvider(VacancyProvider):
             )
 
         try:
+            if filters.currency:
+                # Currency is not a strict server-side filter in HH vacancy search.
+                # Scan larger API pages and build the requested logical page from
+                # vacancies whose salary is actually specified in the chosen currency.
+                logical_offset = page * self.per_page
+                logical_limit = logical_offset + self.per_page
+                matched_items: list[dict] = []
+                api_page = 0
+                api_pages = 1
+                max_scan_pages = max(1, min(int(os.environ.get("HH_CURRENCY_SCAN_PAGES", "20")), 20))
+
+                while api_page < api_pages and api_page < max_scan_pages and len(matched_items) <= logical_limit:
+                    scan_params = dict(params)
+                    scan_params["page"] = api_page
+                    scan_params["per_page"] = 100
+                    response = self._request(scan_params, token, f"application-currency-{api_page}")
+                    response.raise_for_status()
+                    payload = response.json()
+                    api_pages = int(payload.get("pages", 0) or 0)
+                    batch = [self._normalize(item) for item in payload.get("items", [])]
+                    if filters.region and "area" not in params:
+                        region_query = filters.region.casefold()
+                        batch = [item for item in batch if region_query in str(item.get("location") or "").casefold()]
+                    if filters.work_format == "onsite":
+                        batch = [item for item in batch if not item.get("remote") and "гибк" not in str(item.get("schedule") or "").casefold()]
+                    batch = [
+                        item for item in batch
+                        if canonical_currency(item.get("currency")) == filters.currency
+                    ]
+                    matched_items.extend(batch)
+                    api_page += 1
+
+                page_items = matched_items[logical_offset:logical_limit]
+                scan_exhausted = api_page >= api_pages
+                has_next = len(matched_items) > logical_limit or (not scan_exhausted and api_page >= max_scan_pages)
+                return SearchResult(
+                    items=page_items,
+                    total=len(matched_items),
+                    page=page,
+                    pages=(len(matched_items) + self.per_page - 1) // self.per_page,
+                    has_next=has_next,
+                )
+
             response = self._request(params, token, "application")
             response.raise_for_status()
             payload = response.json()
@@ -200,8 +247,6 @@ class HeadHunterProvider(VacancyProvider):
                 items = [item for item in items if region_query in str(item.get("location") or "").casefold()]
             if filters.work_format == "onsite":
                 items = [item for item in items if not item.get("remote") and "гибк" not in str(item.get("schedule") or "").casefold()]
-            if filters.currency:
-                items = [item for item in items if canonical_currency(item.get("currency")) == filters.currency]
             current_page = int(payload.get("page", page) or page)
             pages = int(payload.get("pages", 0) or 0)
 
