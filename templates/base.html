@@ -5,15 +5,16 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#f6f8ff">
   <title>{% block title %}AI Career Agent{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
 <body>
   <nav class="nav site-nav">
     <div class="container nav-inner">
       <a class="brand brand-lockup" href="/" aria-label="AI Career Agent — главная">
-        <span class="brand-mark" aria-hidden="true">
-          <svg viewBox="0 0 32 32"><path d="M8 21.5 13 9l4 9 3-7 4 10.5M6 24h20"/></svg>
-        </span>
+        <span class="brand-mark" aria-hidden="true">✦</span>
         <span>AI Career Agent</span>
       </a>
       <div class="nav-links">
@@ -31,7 +32,7 @@
         {% if session.get('superjob_user_id') or session.get('hh_user_id') %}
           <a href="/logout">Выйти</a>
         {% else %}
-          <a class="nav-cta" href="{{ url_for('ai_career') }}">Начать</a>
+          <a class="nav-cta" href="{{ url_for('ai_career') }}">Попробовать бесплатно</a>
         {% endif %}
       </div>
     </div>

@@ -1,64 +1,105 @@
 {% extends "base.html" %}
 {% block title %}AI Career Agent — умный поиск работы{% endblock %}
 {% block content %}
-<main class="landing-page">
-  <section class="landing-hero">
-    <div class="hero-orb hero-orb-one" aria-hidden="true"></div>
-    <div class="hero-orb hero-orb-two" aria-hidden="true"></div>
-    <div class="container landing-hero-grid">
-      <div class="landing-copy">
-        <div class="eyebrow"><span></span> Карьерная платформа нового поколения</div>
-        <h1>Найдите работу, которая подходит именно вам</h1>
-        <p class="landing-lead">AI Career Agent объединяет вакансии с разных площадок, анализирует резюме и помогает быстрее перейти от поиска к сильному отклику.</p>
-        <div class="landing-actions">
-          <a class="btn landing-primary" href="{{ url_for('ai_career') }}">Загрузить резюме <span aria-hidden="true">→</span></a>
-          <a class="btn landing-secondary" href="{{ url_for('vacancies') }}">Смотреть вакансии</a>
+<main class="landing-page landing-v2">
+  <section class="orbit-hero">
+    <div class="orbit-hero__glow orbit-hero__glow--one" aria-hidden="true"></div>
+    <div class="orbit-hero__glow orbit-hero__glow--two" aria-hidden="true"></div>
+
+    <div class="container orbit-hero__grid">
+      <div class="orbit-hero__copy">
+        <div class="orbit-badge">
+          <span class="orbit-badge__spark" aria-hidden="true">✦</span>
+          Умный поиск работы с AI
         </div>
-        <div class="hero-trust" aria-label="Преимущества сервиса">
-          <span><b>✓</b> Без паролей от job-сайтов</span>
-          <span><b>✓</b> Данные защищены</span>
-          <span><b>✓</b> Единый поиск</span>
+
+        <h1>Найдите работу,<br>которая подходит<br><span>именно вам</span></h1>
+        <p>AI Career Agent анализирует ваше резюме и находит лучшие вакансии со всех популярных площадок.</p>
+
+        <div class="orbit-hero__actions">
+          <a class="btn orbit-primary" href="{{ url_for('ai_career') }}">
+            <span class="orbit-primary__icon" aria-hidden="true">↑</span>
+            Загрузить резюме
+            <span aria-hidden="true">→</span>
+          </a>
+          <a class="btn orbit-secondary" href="{{ url_for('vacancies') }}">Смотреть вакансии</a>
+        </div>
+
+        <div class="orbit-trust" aria-label="Преимущества сервиса">
+          <span><i aria-hidden="true">✓</i> Данные защищены</span>
+          <span><i aria-hidden="true">✓</i> Единый поиск</span>
+          <span><i aria-hidden="true">✓</i> Быстрый старт</span>
         </div>
       </div>
 
-      <div class="career-visual" aria-label="Визуализация работы AI Career Agent">
-        <div class="visual-glow" aria-hidden="true"></div>
-        <div class="visual-topbar">
-          <span class="visual-dot"></span>
-          <span>AI-анализ профиля</span>
-          <span class="live-pill">Активен</span>
-        </div>
-        <div class="profile-score-card">
-          <div class="score-ring"><span>87</span><small>%</small></div>
-          <div>
-            <span class="visual-label">Совпадение с рынком</span>
-            <strong>Сильный профиль</strong>
-            <p>Ваш опыт подходит для 124 актуальных вакансий</p>
+      <div class="orbit-scene" aria-label="Источники вакансий вращаются вокруг резюме">
+        <div class="orbit-scene__halo" aria-hidden="true"></div>
+        <div class="orbit-scene__ring orbit-scene__ring--outer" aria-hidden="true"></div>
+        <div class="orbit-scene__ring orbit-scene__ring--inner" aria-hidden="true"></div>
+
+        <div class="orbit-track orbit-track--outer" aria-hidden="true">
+          <div class="orbit-source orbit-source--hh" style="--start-angle: 8deg;">
+            <div class="orbit-source__counter-rotate">
+              <span class="orbit-source__logo">hh</span>
+              <strong>HH.ru</strong>
+              <small>+340 вакансий</small>
+            </div>
+          </div>
+          <div class="orbit-source orbit-source--trud" style="--start-angle: 128deg;">
+            <div class="orbit-source__counter-rotate">
+              <span class="orbit-source__logo">РФ</span>
+              <strong>Работа России</strong>
+              <small>+116 вакансий</small>
+            </div>
+          </div>
+          <div class="orbit-source orbit-source--other" style="--start-angle: 248deg;">
+            <div class="orbit-source__counter-rotate">
+              <span class="orbit-source__logo">✦</span>
+              <strong>Другие</strong>
+              <small>Новые источники</small>
+            </div>
           </div>
         </div>
-        <div class="signal-card signal-one">
-          <span class="signal-icon">CV</span>
-          <div><small>Резюме</small><strong>Проанализировано</strong></div>
-          <b>✓</b>
+
+        <div class="orbit-track orbit-track--inner" aria-hidden="true">
+          <div class="orbit-source orbit-source--sj" style="--start-angle: 190deg;">
+            <div class="orbit-source__counter-rotate">
+              <span class="orbit-source__logo">SJ</span>
+              <strong>SuperJob</strong>
+              <small>+82 вакансии</small>
+            </div>
+          </div>
+          <div class="orbit-source orbit-source--ai" style="--start-angle: 10deg;">
+            <div class="orbit-source__counter-rotate">
+              <span class="orbit-source__logo">AI</span>
+              <strong>Умный подбор</strong>
+              <small>Совпадение 92%</small>
+            </div>
+          </div>
         </div>
-        <div class="signal-card signal-two">
-          <span class="signal-icon">AI</span>
-          <div><small>Рекомендация</small><strong>Senior Product Manager</strong></div>
-          <b>92%</b>
+
+        <div class="resume-core">
+          <div class="resume-core__status"><span></span> AI анализирует</div>
+          <div class="resume-core__document">
+            <div class="resume-core__avatar" aria-hidden="true">●</div>
+            <div class="resume-core__lines" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+            <div class="resume-core__skills" aria-hidden="true"><b></b><b></b><b></b><b></b></div>
+            <div class="resume-core__checks" aria-hidden="true"><i></i><i></i></div>
+          </div>
+          <strong>Ваше резюме</strong>
+          <small>Профиль готов к подбору</small>
+          <div class="resume-core__progress"><span></span></div>
         </div>
-        <div class="vacancy-preview-card">
-          <div class="vacancy-preview-head"><span>Подходящие вакансии</span><b>124</b></div>
-          <div class="match-row"><i></i><div><strong>Product Manager</strong><small>FinTech · удалённо</small></div><span>94%</span></div>
-          <div class="match-row"><i></i><div><strong>Product Lead</strong><small>EdTech · гибрид</small></div><span>91%</span></div>
-          <div class="match-row"><i></i><div><strong>Project Manager</strong><small>SaaS · удалённо</small></div><span>88%</span></div>
-        </div>
+
+        <div class="orbit-result orbit-result--top">+538 вакансий</div>
+        <div class="orbit-result orbit-result--bottom">Совпадение 92%</div>
       </div>
     </div>
   </section>
 
-  <section class="platform-strip">
+  <section class="platform-strip platform-strip--v2">
     <div class="container platform-strip-inner">
-      <span>Единое пространство вакансий</span>
+      <span>Работаем с ведущими площадками</span>
       <div class="platform-chip hh-chip">hh <small>HeadHunter</small></div>
       <div class="platform-chip sj-chip">SJ <small>SuperJob</small></div>
       <div class="platform-chip trud-chip">РФ <small>Работа России</small></div>
