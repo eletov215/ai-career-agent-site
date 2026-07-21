@@ -67,3 +67,65 @@
 .resume-quick-note{margin:0;font-size:12px}
 .resume-inline-error{padding:11px 13px;border-radius:12px;background:#fff1f2;color:#b4232d;font-size:13px;font-weight:700}
 @media(max-width:620px){.resume-quick-grid{grid-template-columns:1fr}.resume-upload-card .resume-dropzone.is-ready .resume-pdf-icon{width:90px;height:106px}}
+
+/* AI Career: compact and calm resume uploader states */
+.resume-upload-card .resume-dropzone{
+  min-height:180px;
+  padding:24px;
+  gap:0;
+  border:1.5px dashed #bdcbe0;
+  border-radius:18px;
+  background:linear-gradient(180deg,#fbfdff 0%,#f7faff 100%);
+}
+.resume-upload-card .resume-dropzone:hover{
+  border-color:#7ea3f4;
+  background:#f5f8ff;
+  box-shadow:0 8px 24px rgba(47,99,235,.07);
+}
+.resume-upload-card .resume-empty-state{gap:8px}
+.resume-upload-illustration{
+  display:grid;
+  place-items:center;
+  width:58px;
+  height:58px;
+  margin-bottom:3px;
+  border-radius:17px;
+  background:#eaf0ff;
+  color:var(--accent);
+}
+.resume-upload-illustration svg{width:34px;height:34px;fill:none;stroke:currentColor;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+.resume-upload-card .resume-dropzone-title{font-size:18px;line-height:1.25}
+.resume-dropzone-hint{font-size:14px;color:var(--muted)}
+.resume-dropzone-hint span{color:var(--accent);font-weight:800}
+.resume-upload-card .resume-limit{margin-top:2px;padding:4px 9px;background:#eef3fb;color:#75839a;font-size:11px;letter-spacing:.02em}
+
+.resume-upload-card .resume-dropzone.has-file{
+  min-height:190px;
+  padding:22px;
+  border-style:solid;
+  background:#f9fbff;
+}
+.resume-upload-card .resume-dropzone.is-loading .resume-file-state{gap:5px}
+.resume-upload-card .resume-dropzone.is-loading .resume-pdf-icon{width:62px;height:74px;margin:0}
+.resume-upload-card .resume-dropzone.is-loading .resume-file-name{font-size:15px}
+.resume-upload-card .resume-dropzone.is-loading .resume-file-ready{font-size:13px;margin-top:0}
+.resume-upload-card .resume-progress-wrap{
+  position:static;
+  width:min(340px,100%);
+  margin:10px auto 0;
+}
+.resume-upload-card .resume-progress-track{height:7px}
+.resume-upload-card .resume-progress-label{font-size:12px;color:var(--muted)}
+
+.resume-upload-card .resume-dropzone.is-ready{
+  min-height:0;
+  padding:22px 20px;
+}
+.resume-upload-card .resume-dropzone.is-ready .resume-pdf-icon{width:86px;height:101px}
+
+@media(max-width:520px){
+  .resume-upload-card .resume-dropzone{min-height:168px;padding:20px 16px}
+  .resume-upload-card .resume-dropzone.has-file{min-height:180px}
+  .resume-upload-illustration{width:52px;height:52px}
+  .resume-upload-card .resume-dropzone-title{font-size:17px}
+}

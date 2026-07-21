@@ -24,10 +24,16 @@
             <input id="resumeFileInput" type="file" name="resume" accept="application/pdf,.pdf" required>
 
             <span class="resume-empty-state" id="resumeEmptyState">
-              <span class="resume-upload-symbol" aria-hidden="true">+</span>
-              <span class="resume-dropzone-title">Загрузите PDF-резюме</span>
-              <span class="muted">Перетащите файл сюда или нажмите для выбора</span>
-              <span class="resume-limit">PDF до {{ max_resume_upload_mb }} МБ</span>
+              <span class="resume-upload-illustration" aria-hidden="true">
+                <svg viewBox="0 0 64 64">
+                  <path d="M20 47h-5a9 9 0 0 1-1.1-17.9A17 17 0 0 1 46.7 25 11 11 0 0 1 47 47h-4"/>
+                  <path d="M32 44V23"/>
+                  <path d="m24 31 8-8 8 8"/>
+                </svg>
+              </span>
+              <span class="resume-dropzone-title">Перетащите резюме сюда</span>
+              <span class="resume-dropzone-hint">или <span>выберите файл</span> на устройстве</span>
+              <span class="resume-limit">PDF · до {{ max_resume_upload_mb }} МБ</span>
             </span>
 
             <span class="resume-file-state" id="resumeFileState" hidden>
