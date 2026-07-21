@@ -149,10 +149,11 @@
         <p>Начните с текущего резюме. Сервис подготовит структуру профиля и поможет перейти к релевантному поиску.</p>
         <a class="btn landing-primary" href="{{ url_for('ai_career') }}">Начать бесплатно</a>
       </div>
-      <ol class="workflow-list">
-        <li class="scroll-reveal" data-reveal="step" data-reveal-delay="1"><span>1</span><div><strong>Загрузите резюме</strong><p>Поддерживается PDF-файл с вашим актуальным опытом.</p></div></li>
-        <li class="scroll-reveal" data-reveal="step" data-reveal-delay="2"><span>2</span><div><strong>Получите первичный анализ</strong><p>Проверьте должность, навыки и качество заполнения профиля.</p></div></li>
-        <li class="scroll-reveal" data-reveal="step" data-reveal-delay="3"><span>3</span><div><strong>Перейдите к вакансиям</strong><p>Используйте единый поиск по подключённым источникам.</p></div></li>
+      <ol class="workflow-list workflow-path" aria-label="Этапы работы с сервисом">
+        <span class="workflow-path__line" aria-hidden="true"></span>
+        <li class="scroll-reveal" data-reveal="workflow-step" data-reveal-delay="1"><span>1</span><div><small>Подготовка</small><strong>Загрузите резюме</strong><p>Поддерживается PDF-файл с вашим актуальным опытом.</p></div></li>
+        <li class="scroll-reveal" data-reveal="workflow-step" data-reveal-delay="2"><span>2</span><div><small>Проверка</small><strong>Получите первичный анализ</strong><p>Проверьте должность, навыки и качество заполнения профиля.</p></div></li>
+        <li class="scroll-reveal" data-reveal="workflow-step" data-reveal-delay="3"><span>3</span><div><small>Поиск</small><strong>Перейдите к вакансиям</strong><p>Используйте единый поиск по подключённым источникам.</p></div></li>
       </ol>
     </div>
   </section>
