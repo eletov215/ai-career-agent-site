@@ -1,51 +1,124 @@
 {% extends "base.html" %}
+{% block title %}AI Career Agent — умный поиск работы{% endblock %}
 {% block content %}
-<main>
-  <section class="hero">
-    <div class="container hero-grid">
-      <div>
-        <span class="badge">MVP: интеграции</span>
-        <h1>Один кабинет для поиска работы</h1>
-        <p class="lead">Подключите HeadHunter и SuperJob. Платформа безопасно сохранит доступ и подготовит основу для единого поиска вакансий.</p>
-        <div class="actions">
-          {% if account or hh_account %}
-            <a class="btn btn-primary" href="/dashboard">Открыть кабинет</a>
-          {% endif %}
-          {% if not hh_account %}
-            <a class="btn btn-hh" href="/oauth/hh/login">Подключить HeadHunter</a>
-          {% endif %}
-          {% if not account %}
-            <a class="btn btn-secondary" href="/oauth/superjob/login">Подключить SuperJob</a>
-          {% endif %}
+<main class="landing-page">
+  <section class="landing-hero">
+    <div class="hero-orb hero-orb-one" aria-hidden="true"></div>
+    <div class="hero-orb hero-orb-two" aria-hidden="true"></div>
+    <div class="container landing-hero-grid">
+      <div class="landing-copy">
+        <div class="eyebrow"><span></span> Карьерная платформа нового поколения</div>
+        <h1>Найдите работу, которая подходит именно вам</h1>
+        <p class="landing-lead">AI Career Agent объединяет вакансии с разных площадок, анализирует резюме и помогает быстрее перейти от поиска к сильному отклику.</p>
+        <div class="landing-actions">
+          <a class="btn landing-primary" href="{{ url_for('ai_career') }}">Загрузить резюме <span aria-hidden="true">→</span></a>
+          <a class="btn landing-secondary" href="{{ url_for('vacancies') }}">Смотреть вакансии</a>
+        </div>
+        <div class="hero-trust" aria-label="Преимущества сервиса">
+          <span><b>✓</b> Без паролей от job-сайтов</span>
+          <span><b>✓</b> Данные защищены</span>
+          <span><b>✓</b> Единый поиск</span>
         </div>
       </div>
 
-      <div class="platform-panel">
-        <div class="muted">Подключённые платформы</div>
-        <div class="platform-row">
-          <div>
-            <strong>HeadHunter</strong>
-            <span>Профиль и доступ к API</span>
-          </div>
-          {% if hh_account %}
-            <span class="status-pill connected">Подключён</span>
-          {% else %}
-            <span class="status-pill">Не подключён</span>
-          {% endif %}
+      <div class="career-visual" aria-label="Визуализация работы AI Career Agent">
+        <div class="visual-glow" aria-hidden="true"></div>
+        <div class="visual-topbar">
+          <span class="visual-dot"></span>
+          <span>AI-анализ профиля</span>
+          <span class="live-pill">Активен</span>
         </div>
-        <div class="platform-row">
+        <div class="profile-score-card">
+          <div class="score-ring"><span>87</span><small>%</small></div>
           <div>
-            <strong>SuperJob</strong>
-            <span>Резюме и поиск вакансий</span>
+            <span class="visual-label">Совпадение с рынком</span>
+            <strong>Сильный профиль</strong>
+            <p>Ваш опыт подходит для 124 актуальных вакансий</p>
           </div>
-          {% if account %}
-            <span class="status-pill connected">Подключён</span>
-          {% else %}
-            <span class="status-pill">Не подключён</span>
-          {% endif %}
         </div>
-        <p class="security-note">OAuth-токены хранятся в зашифрованном виде. Пароли от сайтов вакансий приложение не получает.</p>
+        <div class="signal-card signal-one">
+          <span class="signal-icon">CV</span>
+          <div><small>Резюме</small><strong>Проанализировано</strong></div>
+          <b>✓</b>
+        </div>
+        <div class="signal-card signal-two">
+          <span class="signal-icon">AI</span>
+          <div><small>Рекомендация</small><strong>Senior Product Manager</strong></div>
+          <b>92%</b>
+        </div>
+        <div class="vacancy-preview-card">
+          <div class="vacancy-preview-head"><span>Подходящие вакансии</span><b>124</b></div>
+          <div class="match-row"><i></i><div><strong>Product Manager</strong><small>FinTech · удалённо</small></div><span>94%</span></div>
+          <div class="match-row"><i></i><div><strong>Product Lead</strong><small>EdTech · гибрид</small></div><span>91%</span></div>
+          <div class="match-row"><i></i><div><strong>Project Manager</strong><small>SaaS · удалённо</small></div><span>88%</span></div>
+        </div>
       </div>
+    </div>
+  </section>
+
+  <section class="platform-strip">
+    <div class="container platform-strip-inner">
+      <span>Единое пространство вакансий</span>
+      <div class="platform-chip hh-chip">hh <small>HeadHunter</small></div>
+      <div class="platform-chip sj-chip">SJ <small>SuperJob</small></div>
+      <div class="platform-chip trud-chip">РФ <small>Работа России</small></div>
+      <div class="platform-chip ai-chip">AI <small>Умный подбор</small></div>
+    </div>
+  </section>
+
+  <section class="landing-section">
+    <div class="container">
+      <div class="section-heading centered-heading">
+        <span class="section-kicker">Всё необходимое в одном сервисе</span>
+        <h2>Меньше рутины. Больше подходящих возможностей.</h2>
+        <p>Платформа помогает пройти весь путь поиска работы последовательно и без десятков открытых вкладок.</p>
+      </div>
+      <div class="feature-grid">
+        <article class="feature-card feature-card-primary">
+          <div class="feature-icon">01</div>
+          <h3>AI-анализ резюме</h3>
+          <p>Определяем сильные стороны профиля, ключевые навыки и направления для развития.</p>
+          <a href="{{ url_for('ai_career') }}">Проверить резюме <span>→</span></a>
+        </article>
+        <article class="feature-card">
+          <div class="feature-icon">02</div>
+          <h3>Единый поиск вакансий</h3>
+          <p>Собираем предложения с нескольких площадок и приводим их к единому удобному формату.</p>
+          <a href="{{ url_for('vacancies') }}">Перейти к поиску <span>→</span></a>
+        </article>
+        <article class="feature-card">
+          <div class="feature-icon">03</div>
+          <h3>Умное совпадение</h3>
+          <p>Показываем, насколько вакансия соответствует вашему опыту, навыкам и карьерным целям.</p>
+          <span class="feature-status">Следующий этап</span>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="workflow-section">
+    <div class="container workflow-shell">
+      <div class="workflow-copy">
+        <span class="section-kicker">Как это работает</span>
+        <h2>От резюме до подходящей вакансии — три простых шага</h2>
+        <p>Начните с текущего резюме. Сервис подготовит структуру профиля и поможет перейти к релевантному поиску.</p>
+        <a class="btn landing-primary" href="{{ url_for('ai_career') }}">Начать бесплатно</a>
+      </div>
+      <ol class="workflow-list">
+        <li><span>1</span><div><strong>Загрузите резюме</strong><p>Поддерживается PDF-файл с вашим актуальным опытом.</p></div></li>
+        <li><span>2</span><div><strong>Получите первичный анализ</strong><p>Проверьте должность, навыки и качество заполнения профиля.</p></div></li>
+        <li><span>3</span><div><strong>Перейдите к вакансиям</strong><p>Используйте единый поиск по подключённым источникам.</p></div></li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="landing-cta-section">
+    <div class="container landing-cta">
+      <div>
+        <span class="section-kicker">Ваш следующий карьерный шаг</span>
+        <h2>Превратите поиск работы в понятный процесс</h2>
+      </div>
+      <a class="btn cta-light" href="{{ url_for('ai_career') }}">Начать с резюме <span>→</span></a>
     </div>
   </section>
 </main>

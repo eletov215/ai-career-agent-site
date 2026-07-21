@@ -3,28 +3,36 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#f6f8ff">
   <title>{% block title %}AI Career Agent{% endblock %}</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
 <body>
-  <nav class="nav">
+  <nav class="nav site-nav">
     <div class="container nav-inner">
-      <a class="brand" href="/">AI Career Agent</a>
+      <a class="brand brand-lockup" href="/" aria-label="AI Career Agent — главная">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 32 32"><path d="M8 21.5 13 9l4 9 3-7 4 10.5M6 24h20"/></svg>
+        </span>
+        <span>AI Career Agent</span>
+      </a>
       <div class="nav-links">
         {% if session.get('superjob_user_id') or session.get('hh_user_id') %}
           <a href="/dashboard">Кабинет</a>
         {% endif %}
         <a href="{{ url_for('ai_career') }}">AI Карьера</a>
+        <a href="{{ url_for('vacancies') }}">Вакансии</a>
         {% if not session.get('superjob_user_id') %}
-          <a href="/oauth/superjob/login">Подключить SuperJob</a>
+          <a class="nav-muted-link" href="/oauth/superjob/login">SuperJob</a>
         {% endif %}
         {% if not session.get('hh_user_id') %}
-          <a href="/oauth/hh/login">Подключить HeadHunter</a>
+          <a class="nav-muted-link" href="/oauth/hh/login">HeadHunter</a>
         {% endif %}
         {% if session.get('superjob_user_id') or session.get('hh_user_id') %}
           <a href="/logout">Выйти</a>
+        {% else %}
+          <a class="nav-cta" href="{{ url_for('ai_career') }}">Начать</a>
         {% endif %}
-        <a href="/privacy">Конфиденциальность</a>
       </div>
     </div>
   </nav>
