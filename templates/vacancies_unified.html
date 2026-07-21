@@ -134,9 +134,9 @@
       <div class="card spaced"><span class="muted">{{ cache_note }}</span></div>
     {% endif %}
 
-    {% for error in errors %}
-      <div class="error-box spaced">{{ error }}</div>
-    {% endfor %}
+    {% if errors %}
+      <div class="warning-box spaced">Один из источников временно не смог выполнить поиск. Результаты остальных площадок показаны ниже.</div>
+    {% endif %}
 
     {% if 'trudvsem' in selected_sources %}
       <div id="trudvsem-sync-status" class="card spaced" hidden></div>
@@ -155,6 +155,13 @@
         <input type="hidden" name="sort" value="{{ filters.sort }}">
         <button class="link-button" type="submit">Обновить данные «Работы России» сейчас</button>
       </form>
+    {% endif %}
+
+    {% if not vacancies and not errors %}
+      <div class="card spaced empty-results">
+        <strong>По выбранным условиям вакансии не найдены</strong>
+        <div class="muted">Измените один или несколько фильтров и повторите поиск.</div>
+      </div>
     {% endif %}
 
     <div class="vacancy-list">

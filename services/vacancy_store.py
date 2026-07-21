@@ -189,8 +189,11 @@ class VacancyStore:
         elif work_format == "hybrid":
             conditions.append("search_text LIKE '%гибк%'")
         if currency:
-            conditions.append("UPPER(COALESCE(currency, '')) = ?")
-            params.append(currency.upper())
+            if currency.upper() == "RUB":
+                conditions.append("UPPER(COALESCE(currency, '')) IN ('RUB', 'RUR')")
+            else:
+                conditions.append("UPPER(COALESCE(currency, '')) = ?")
+                params.append(currency.upper())
         employment_terms = {
             "full": ("полная", "полный"),
             "part": ("частичная", "неполный"),

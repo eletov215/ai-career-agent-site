@@ -11,3 +11,5 @@
 
 /* Unified vacancy search filters */
 .unified-search{grid-template-columns:repeat(12,minmax(0,1fr))}.search-keyword{grid-column:span 5}.source-picker{grid-column:span 7}.search-field{display:grid;gap:7px;grid-column:span 3}.search-field span{font-size:14px}.search-field input,.search-field select{width:100%;padding:13px;border:1px solid var(--line);border-radius:12px;background:#fff;font:inherit}.filter-checks{grid-column:span 6;display:flex;gap:18px;align-items:center;flex-wrap:wrap}.search-submit{grid-column:span 3;justify-content:center}@media(max-width:980px){.unified-search{grid-template-columns:repeat(2,minmax(0,1fr))}.search-keyword,.source-picker,.search-field,.filter-checks,.search-submit{grid-column:span 1}.search-keyword,.source-picker{grid-column:span 2}}@media(max-width:650px){.unified-search{grid-template-columns:1fr}.search-keyword,.source-picker,.search-field,.filter-checks,.search-submit{grid-column:span 1}.filter-checks{display:grid;gap:8px}}
+
+.warning-box{background:#fff8e6;color:#8a5a00;border:1px solid #f5d48a;padding:14px;border-radius:12px}.empty-results{text-align:center;padding:34px}

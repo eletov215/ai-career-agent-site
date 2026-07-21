@@ -11,6 +11,13 @@ ALLOWED_WORK_FORMATS = {"", "onsite", "remote", "hybrid"}
 ALLOWED_CURRENCIES = {"", "RUB", "USD", "EUR", "KZT", "BYR"}
 
 
+def canonical_currency(value: str | None) -> str:
+    currency = str(value or "").strip().upper()
+    if currency == "RUR":
+        return "RUB"
+    return currency
+
+
 @dataclass(frozen=True)
 class VacancySearchFilters:
     keyword: str = ""
@@ -46,7 +53,7 @@ class VacancySearchFilters:
         if remote_only and not work_format:
             work_format = "remote"
 
-        currency = str(args.get("currency", "") or "").strip().upper()
+        currency = canonical_currency(args.get("currency", ""))
         if currency not in ALLOWED_CURRENCIES:
             currency = ""
 

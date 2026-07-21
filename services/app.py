@@ -2,7 +2,6 @@ import json
 import os
 import secrets
 import socket
-import platform
 import sqlite3
 import time
 import threading
@@ -20,7 +19,6 @@ from services.hh_provider import HeadHunterProvider
 from services.superjob_provider import SuperJobProvider
 from services.trudvsem_provider import TrudvsemProvider
 from services.vacancy_store import VacancyStore
-from services.search_filters import VacancySearchFilters, canonical_currency
 
 app = Flask(__name__)
 app.secret_key = os.environ["FLASK_SECRET_KEY"]
@@ -32,7 +30,6 @@ HH_CLIENT_ID = os.environ["HH_CLIENT_ID"].strip()
 HH_CLIENT_SECRET = os.environ["HH_CLIENT_SECRET"].strip()
 HH_REDIRECT_URI = os.environ["HH_REDIRECT_URI"].strip()
 HH_USER_AGENT = os.environ["HH_USER_AGENT"].strip()
-HH_APP_TOKEN = os.environ.get("HH_APP_TOKEN", "").strip() or None
 
 HH_AUTHORIZE_URL = "https://hh.ru/oauth/authorize"
 HH_TOKEN_URL = "https://api.hh.ru/token"
@@ -55,12 +52,9 @@ VACANCY_PAGE_SIZE = 60
 TRUDVSEM_SYNC_INTERVAL = int(os.environ.get("TRUDVSEM_SYNC_INTERVAL", "1800"))
 TRUDVSEM_SYNC_ITEMS = int(os.environ.get("TRUDVSEM_SYNC_ITEMS", "300"))
 TRUDVSEM_SYNC_BATCH = int(os.environ.get("TRUDVSEM_SYNC_BATCH", "10"))
-TRUDVSEM_REQUEST_ATTEMPTS = int(os.environ.get("TRUDVSEM_REQUEST_ATTEMPTS", "5"))
-TRUDVSEM_RETRY_BACKOFF = float(os.environ.get("TRUDVSEM_RETRY_BACKOFF", "1"))
 TRUDVSEM_SYNC_ENABLED = os.environ.get("TRUDVSEM_SYNC_ENABLED", "1").strip().lower() not in {"0", "false", "no"}
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
-DEBUG_HH = os.environ.get("DEBUG_HH", "0").strip().lower() in {"1", "true", "yes", "on"}
 
 
 def db():
@@ -110,15 +104,11 @@ TRUDVSEM_SYNC_LOCK = threading.Lock()
 TRUDVSEM_SYNC_THREAD = None
 TRUDVSEM_SYNC_STATE = {
     "running": False,
-    "queued": False,
     "last_started": None,
     "last_finished": None,
     "last_success": None,
     "last_saved": 0,
     "last_processed": 0,
-    "current_offset": 0,
-    "target": max(1, min(TRUDVSEM_SYNC_ITEMS, 500)),
-    "progress_percent": 0,
     "last_error": None,
 }
 
@@ -131,8 +121,6 @@ def trudvsem_sync_status():
 def request_trudvsem_sync():
     already_queued = TRUDVSEM_SYNC_EVENT.is_set()
     TRUDVSEM_SYNC_EVENT.set()
-    with TRUDVSEM_SYNC_LOCK:
-        TRUDVSEM_SYNC_STATE["queued"] = True
     logger.info(
         "Trudvsem event set",
     )
@@ -150,18 +138,11 @@ def _run_trudvsem_sync():
 
         previous_success = TRUDVSEM_SYNC_STATE.get("last_success")
 
-        target = max(1, min(TRUDVSEM_SYNC_ITEMS, 500))
         TRUDVSEM_SYNC_STATE.update(
             running=True,
-            queued=False,
             last_started=int(time.time()),
-            last_finished=None,
             last_error=None,
             last_saved=0,
-            last_processed=0,
-            current_offset=0,
-            target=target,
-            progress_percent=0,
         )
 
     saved = 0
@@ -176,11 +157,9 @@ def _run_trudvsem_sync():
 
         provider = TrudvsemProvider(
             HH_USER_AGENT,
-            per_page=10,
-            timeout=(5, 45),
+            per_page=25,
+            timeout=(4, 8),
             scan_pages=5,
-            request_attempts=TRUDVSEM_REQUEST_ATTEMPTS,
-            retry_backoff=TRUDVSEM_RETRY_BACKOFF,
         )
 
         batch_size = max(1, min(TRUDVSEM_SYNC_BATCH, 10))
@@ -202,63 +181,29 @@ def _run_trudvsem_sync():
             modified_from,
         )
 
-        total_pages = (target + batch_size - 1) // batch_size
-        for page_number in range(1, total_pages + 1):
-            remaining = target - processed
-            requested = min(batch_size, remaining)
+        for offset in range(0, target, batch_size):
             items = provider.fetch_batch(
-                offset=page_number,
-                limit=requested,
+                offset=offset,
+                limit=batch_size,
                 modified_from=modified_from,
             )
 
             logger.info(
                 "Trudvsem batch fetched offset=%s requested=%s received=%s first=%s",
-                page_number,
-                requested,
+                offset,
+                batch_size,
                 len(items),
                 items[0].get("external_id") if items else None,
             )
 
             if not items:
-                # Пустая первая страница является нормальным ответом при
-                # инкрементальной синхронизации: после previous_success новых
-                # или изменённых вакансий могло не появиться. Считаем это
-                # ошибкой только при самой первой полной загрузке пустого кэша.
-                cached_before_sync = VACANCY_STORE.count(
-                    keyword="",
-                    sources=["trudvsem"],
-                    period_days=3650,
-                )
-                if (
-                    page_number == 1
-                    and processed == 0
-                    and modified_from is None
-                    and cached_before_sync == 0
-                ):
-                    raise RuntimeError("API 'Работы России' вернул пустую первую страницу")
-
-                logger.info(
-                    "Trudvsem sync has no new items page=%s modified_from=%s cached=%s",
-                    page_number,
-                    modified_from,
-                    cached_before_sync,
-                )
                 break
 
             processed += len(items)
             saved += VACANCY_STORE.upsert_many(items)
-            progress = min(100, int(processed * 100 / target))
-            with TRUDVSEM_SYNC_LOCK:
-                TRUDVSEM_SYNC_STATE.update(
-                    last_processed=processed,
-                    last_saved=saved,
-                    current_offset=processed,
-                    progress_percent=progress,
-                )
             logger.info(
-                "Trudvsem batch saved page=%s processed=%s saved=%s",
-                page_number,
+                "Trudvsem batch saved offset=%s processed=%s saved=%s",
+                offset,
                 processed,
                 saved,
             )
@@ -286,8 +231,6 @@ def _run_trudvsem_sync():
                 last_finished=finished_at,
                 last_saved=saved,
                 last_processed=processed,
-                current_offset=processed,
-                progress_percent=min(100, int(processed * 100 / max(1, target))),
                 last_error=error,
             )
             if error is None:
@@ -443,30 +386,6 @@ def hh_headers(token=None):
     if token:
         headers["Authorization"] = f"Bearer {token}"
     return headers
-
-
-
-def _masked_hh_headers(headers):
-    """Return HH request headers safe for logs and debug responses."""
-    safe = {}
-    for key, value in dict(headers or {}).items():
-        if key.lower() == "authorization":
-            safe[key] = "Bearer ***" if value else "***"
-        else:
-            safe[key] = value
-    return safe
-
-
-def _hh_response_report(response):
-    """Build a JSON-safe diagnostic report without exposing OAuth secrets."""
-    return {
-        "status_code": response.status_code,
-        "ok": response.ok,
-        "url": response.url,
-        "request_headers": _masked_hh_headers(response.request.headers),
-        "response_headers": dict(response.headers),
-        "body_preview": response.text[:2000],
-    }
 
 
 def save_hh_account(profile, token_data):
@@ -801,9 +720,8 @@ def dashboard():
 
 @app.get("/vacancies")
 def vacancies():
-    filters = VacancySearchFilters.from_query(request.args)
-    keyword = filters.keyword
-    remote_only = filters.remote_only
+    keyword = request.args.get("keyword", "").strip()
+    remote_only = request.args.get("remote") == "1"
     search_requested = request.args.get("search") == "1"
     force_refresh = request.args.get("refresh") == "1"
     sync_queued = request.args.get("sync") == "queued"
@@ -822,7 +740,7 @@ def vacancies():
         "hh": HeadHunterProvider(
             HH_VACANCIES_URL,
             hh_headers,
-            (lambda: HH_APP_TOKEN) if HH_APP_TOKEN else None,
+            (lambda: valid_hh_token(hh_row)) if hh_row else None,
         )
     }
     if superjob_row:
@@ -850,31 +768,14 @@ def vacancies():
             cached_items = VACANCY_STORE.search(
                 keyword=keyword,
                 sources=["trudvsem"],
-                remote_only=filters.remote_only,
-                salary_from=filters.salary_from,
-                salary_only=filters.salary_only,
-                period_days=filters.period_days,
-                sort=filters.sort,
-                region=filters.region,
-                experience=filters.experience,
-                employment=filters.employment,
-                work_format=filters.work_format,
-                currency=filters.currency,
+                remote_only=remote_only,
                 limit=VACANCY_PAGE_SIZE,
                 offset=offset,
             )
             cached_total = VACANCY_STORE.count(
                 keyword=keyword,
                 sources=["trudvsem"],
-                remote_only=filters.remote_only,
-                salary_from=filters.salary_from,
-                salary_only=filters.salary_only,
-                period_days=filters.period_days,
-                region=filters.region,
-                experience=filters.experience,
-                employment=filters.employment,
-                work_format=filters.work_format,
-                currency=filters.currency,
+                remote_only=remote_only,
             )
             cache_age = VACANCY_STORE.source_age_seconds("trudvsem")
             sync_state = trudvsem_sync_status()
@@ -915,8 +816,9 @@ def vacancies():
                         continue
                     future = executor.submit(
                         provider.search,
-                        filters=filters,
+                        keyword=keyword,
                         page=page,
+                        remote_only=remote_only,
                     )
                     tasks[future] = source_key
 
@@ -934,68 +836,32 @@ def vacancies():
                     if result.error:
                         errors.append(result.error)
 
-        # Enforce currency consistently after all providers are combined.
-        # Some APIs treat currency as a salary-conversion hint rather than a strict filter.
-        if filters.currency:
-            all_items = [
-                item for item in all_items
-                if canonical_currency(item.get("currency")) == filters.currency
-            ]
-
         # Remove duplicates across providers and sort newest first.
         unique_items = {}
         for item in all_items:
             key = (item.get("source"), item.get("external_id") or item.get("url"))
             unique_items[key] = item
         all_items = list(unique_items.values())
-        if filters.sort == "salary_desc":
-            all_items.sort(
-                key=lambda item: (
-                    float(item.get("salary_to") or item.get("salary_from") or 0),
-                    str(item.get("published_at") or ""),
-                ),
-                reverse=True,
-            )
-        elif filters.sort == "salary_asc":
-            all_items.sort(
-                key=lambda item: (
-                    item.get("salary_from") is None and item.get("salary_to") is None,
-                    float(item.get("salary_from") or item.get("salary_to") or 0),
-                    str(item.get("published_at") or ""),
-                )
-            )
-        else:
-            all_items.sort(
-                key=lambda item: (
-                    bool(item.get("published_at")),
-                    str(item.get("published_at") or ""),
-                    str(item.get("title") or ""),
-                ),
-                reverse=True,
-            )
+        all_items.sort(
+            key=lambda item: (
+                bool(item.get("published_at")),
+                str(item.get("published_at") or ""),
+                str(item.get("title") or ""),
+            ),
+            reverse=True,
+        )
 
     source_options = [
         {"key": "trudvsem", "title": "Работа России", "available": True},
         {"key": "superjob", "title": "SuperJob", "available": bool(superjob_row)},
-        {
-            "key": "hh",
-            "title": "HeadHunter",
-            "available": bool(HH_APP_TOKEN),
-            "note": None if HH_APP_TOKEN else "Не настроен токен приложения",
-        },
+        {"key": "hh", "title": "HeadHunter", "available": bool(hh_account())},
     ]
-
-    filter_pairs = filters.query_pairs()
-    for source in selected_sources:
-        filter_pairs.append(("source", source))
-    filter_query = urlencode(filter_pairs)
 
     return render_template(
         "vacancies_unified.html",
         vacancies=all_items,
         keyword=keyword,
         remote_only=remote_only,
-        filters=filters,
         selected_sources=selected_sources,
         source_options=source_options,
         source_results=source_results,
@@ -1005,7 +871,6 @@ def vacancies():
         errors=errors,
         search_requested=search_requested,
         cache_note=cache_note,
-        filter_query=filter_query,
     )
 
 
@@ -1094,11 +959,13 @@ def debug_trudvsem():
 def refresh_trudvsem_cache():
     """Queue a refresh and return immediately; never wait for the API."""
     request_trudvsem_sync()
-    filters = VacancySearchFilters.from_query(request.form)
+    keyword = request.form.get("keyword", "").strip()
+    remote = request.form.get("remote") == "1"
     sources = request.form.getlist("source") or ["trudvsem"]
-    params = filters.query_pairs()
-    params.append(("sync", "queued"))
+    params = [("search", "1"), ("keyword", keyword), ("sync", "queued")]
     params.extend(("source", source) for source in sources)
+    if remote:
+        params.append(("remote", "1"))
     return redirect(url_for("vacancies") + "?" + urlencode(params))
 
 
@@ -1108,8 +975,6 @@ def trudvsem_status():
     state["cache_age_seconds"] = VACANCY_STORE.source_age_seconds("trudvsem")
     state["cached_total"] = VACANCY_STORE.count(keyword="", sources=["trudvsem"])
     state["sync_enabled"] = TRUDVSEM_SYNC_ENABLED
-    state["worker_alive"] = bool(TRUDVSEM_SYNC_THREAD and TRUDVSEM_SYNC_THREAD.is_alive())
-    state["queued"] = bool(state.get("queued") or TRUDVSEM_SYNC_EVENT.is_set())
     return state, 200
 
 
@@ -1136,6 +1001,10 @@ def superjob_vacancies_redirect():
 
 @app.get("/hh/vacancies")
 def hh_vacancies():
+    row = hh_account()
+    if not row:
+        return redirect(url_for("hh_login"))
+
     keyword = request.args.get("keyword", "инженер-конструктор").strip()
     period = request.args.get("period", "7").strip()
     remote_only = request.args.get("remote") == "1"
@@ -1149,13 +1018,12 @@ def hh_vacancies():
         period = "7"
 
     params = {
+        "text": keyword,
         "period": period,
         "page": page,
         "per_page": 20,
         "order_by": "publication_time",
     }
-    if keyword:
-        params["text"] = keyword
     if remote_only:
         params["schedule"] = "remote"
 
@@ -1163,19 +1031,29 @@ def hh_vacancies():
     error = None
 
     try:
-        if not HH_APP_TOKEN:
-            raise RuntimeError("Токен приложения HH_APP_TOKEN не настроен")
-
+        token = valid_hh_token(row)
         response = requests.get(
             HH_VACANCIES_URL,
             params=params,
-            headers=hh_headers(HH_APP_TOKEN),
+            headers=hh_headers(token),
             timeout=30,
         )
 
-        # Поиск вакансий выполняется только с токеном приложения.
-        # Публичный запрос HH отклоняет с 403, поэтому резервный запрос без
-        # Authorization здесь намеренно не выполняется.
+        # Поиск вакансий является публичным endpoint HH. Если OAuth-токен
+        # соискателя ограничен и даёт 401/403, повторяем запрос без него.
+        if response.status_code in {401, 403}:
+            logger.warning(
+                "HH authenticated vacancy search returned %s; retrying without Authorization. body=%s",
+                response.status_code,
+                response.text[:1000],
+            )
+            response = requests.get(
+                HH_VACANCIES_URL,
+                params=params,
+                headers=hh_headers(),
+                timeout=30,
+            )
+
         response.raise_for_status()
         payload = response.json()
     except requests.RequestException as exc:
@@ -1199,89 +1077,6 @@ def hh_vacancies():
         total=int(payload.get("found", 0) or 0),
         error=error,
     )
-
-
-
-@app.get("/debug/hh")
-def debug_hh():
-    """Run safe HH API diagnostics. Enabled only when DEBUG_HH=1."""
-    if not DEBUG_HH:
-        return {
-            "ok": False,
-            "error": "HH diagnostics are disabled. Set DEBUG_HH=1 in Render and redeploy.",
-        }, 404
-
-    row = hh_account()
-    params = {
-        "text": request.args.get("keyword", "инженер-конструктор").strip() or "инженер-конструктор",
-        "period": 7,
-        "page": 0,
-        "per_page": 1,
-        "order_by": "publication_time",
-    }
-    report = {
-        "ok": False,
-        "endpoint": HH_VACANCIES_URL,
-        "params": params,
-        "environment": {
-            "debug_hh": DEBUG_HH,
-            "render_region": os.environ.get("RENDER_REGION") or "unknown",
-            "python": platform.python_version(),
-            "requests": requests.__version__,
-            "hh_client_id_configured": bool(HH_CLIENT_ID),
-            "hh_redirect_uri": HH_REDIRECT_URI,
-            "hh_user_agent": HH_USER_AGENT,
-            "hh_app_token_configured": bool(HH_APP_TOKEN),
-            "hh_account_connected": bool(row),
-        },
-        "attempts": [],
-    }
-
-    attempts = []
-    if HH_APP_TOKEN:
-        attempts.append(("application", HH_APP_TOKEN))
-    if row:
-        try:
-            attempts.append(("oauth", valid_hh_token(row)))
-        except Exception as exc:
-            report["oauth_token_error"] = f"{type(exc).__name__}: {exc}"
-    attempts.append(("public", None))
-
-    for name, token in attempts:
-        started = time.monotonic()
-        try:
-            response = requests.get(
-                HH_VACANCIES_URL,
-                params=params,
-                headers=hh_headers(token),
-                timeout=30,
-            )
-            attempt = {
-                "name": name,
-                "seconds": round(time.monotonic() - started, 3),
-                **_hh_response_report(response),
-            }
-            report["attempts"].append(attempt)
-            logger.info(
-                "HH DEBUG attempt=%s status=%s url=%s request_headers=%s response_headers=%s body=%s",
-                name,
-                response.status_code,
-                response.url,
-                _masked_hh_headers(response.request.headers),
-                dict(response.headers),
-                response.text[:2000],
-            )
-        except requests.RequestException as exc:
-            report["attempts"].append({
-                "name": name,
-                "seconds": round(time.monotonic() - started, 3),
-                "error_type": type(exc).__name__,
-                "error": str(exc),
-            })
-            logger.exception("HH DEBUG request failed attempt=%s", name)
-
-    report["ok"] = any(item.get("ok") for item in report["attempts"])
-    return report, 200
 
 
 @app.get("/health")

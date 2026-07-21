@@ -7,7 +7,7 @@ from typing import Callable
 import requests
 
 from .base_provider import SearchResult, VacancyProvider
-from .search_filters import VacancySearchFilters
+from .search_filters import VacancySearchFilters, canonical_currency
 
 logger = logging.getLogger(__name__)
 DEBUG_HH = os.environ.get("DEBUG_HH", "0").strip().lower() in {"1", "true", "yes", "on"}
@@ -68,7 +68,7 @@ class HeadHunterProvider(VacancyProvider):
             "company": employer.get("name") or "Компания не указана",
             "salary_from": salary.get("from"),
             "salary_to": salary.get("to"),
-            "currency": (salary.get("currency") or "").upper(),
+            "currency": canonical_currency(salary.get("currency")),
             "location": area.get("name") or "",
             "remote": schedule.get("id") == "remote",
             "schedule": schedule.get("name") or "",
@@ -129,12 +129,18 @@ class HeadHunterProvider(VacancyProvider):
             params["schedule"] = "remote"
         elif filters.work_format == "hybrid":
             params["schedule"] = "flexible"
-        if filters.experience:
-            params["experience"] = filters.experience
+        hh_experience = {
+            "no_experience": "noExperience",
+            "between_1_and_3": "between1And3",
+            "between_3_and_6": "between3And6",
+            "more_than_6": "moreThan6",
+        }.get(filters.experience)
+        if hh_experience:
+            params["experience"] = hh_experience
         if filters.employment:
             params["employment"] = filters.employment
         if filters.currency:
-            params["currency"] = filters.currency
+            params["currency"] = "RUR" if filters.currency == "RUB" else filters.currency
         if filters.salary_from is not None:
             params["salary"] = filters.salary_from
         if filters.salary_only:
@@ -194,6 +200,8 @@ class HeadHunterProvider(VacancyProvider):
                 items = [item for item in items if region_query in str(item.get("location") or "").casefold()]
             if filters.work_format == "onsite":
                 items = [item for item in items if not item.get("remote") and "гибк" not in str(item.get("schedule") or "").casefold()]
+            if filters.currency:
+                items = [item for item in items if canonical_currency(item.get("currency")) == filters.currency]
             current_page = int(payload.get("page", page) or page)
             pages = int(payload.get("pages", 0) or 0)
 

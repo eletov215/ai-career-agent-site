@@ -5,7 +5,7 @@ from typing import Callable
 import requests
 
 from .base_provider import SearchResult, VacancyProvider
-from .search_filters import VacancySearchFilters
+from .search_filters import VacancySearchFilters, canonical_currency
 
 
 class SuperJobProvider(VacancyProvider):
@@ -29,7 +29,7 @@ class SuperJobProvider(VacancyProvider):
             "company": raw.get("firm_name") or "Компания не указана",
             "salary_from": raw.get("payment_from"),
             "salary_to": raw.get("payment_to"),
-            "currency": (raw.get("currency") or "RUB").upper(),
+            "currency": canonical_currency(raw.get("currency") or "RUB"),
             "location": town.get("title", "") if isinstance(town, dict) else str(town),
             "remote": bool(raw.get("is_remote_work")),
             "schedule": (raw.get("type_of_work") or {}).get("title", "") if isinstance(raw.get("type_of_work"), dict) else "",
@@ -77,7 +77,7 @@ class SuperJobProvider(VacancyProvider):
                 region_query = filters.region.casefold()
                 items = [item for item in items if region_query in str(item.get("location") or "").casefold()]
             if filters.currency:
-                items = [item for item in items if str(item.get("currency") or "").upper() == filters.currency]
+                items = [item for item in items if canonical_currency(item.get("currency")) == filters.currency]
             if filters.employment:
                 employment_terms = {
                     "full": ("полная", "полный"),
