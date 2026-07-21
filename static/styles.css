@@ -411,3 +411,43 @@ body{font-family:"Manrope",Inter,system-ui,-apple-system,BlinkMacSystemFont,"Seg
     line-height:1.18;
   }
 }
+
+/* ===== Scroll story: sections assemble while scrolling ===== */
+.scroll-story-section{position:relative;isolation:isolate}
+.scroll-story-section::before{content:"";position:absolute;z-index:-1;left:50%;top:-28px;width:1px;height:56px;background:linear-gradient(180deg,rgba(124,91,241,0),rgba(124,91,241,.45),rgba(124,91,241,0));transform:scaleY(0);transform-origin:top;transition:transform .8s cubic-bezier(.22,1,.36,1)}
+.scroll-story-section.is-active::before{transform:scaleY(1)}
+
+.js .scroll-reveal{--reveal-x:0px;--reveal-y:34px;--reveal-scale:.97;opacity:0;filter:blur(8px);transform:translate3d(var(--reveal-x),var(--reveal-y),0) scale(var(--reveal-scale));transition:opacity .72s ease,filter .78s ease,transform .88s cubic-bezier(.22,1,.36,1);transition-delay:calc(var(--reveal-delay,0) * 110ms);will-change:opacity,filter,transform}
+.js .scroll-reveal[data-reveal="fly-left"]{--reveal-x:-54px;--reveal-y:8px;--reveal-scale:.98}
+.js .scroll-reveal[data-reveal="fly-right"]{--reveal-x:54px;--reveal-y:8px;--reveal-scale:.98}
+.js .scroll-reveal[data-reveal="fly-up"]{--reveal-y:46px;--reveal-scale:.9}
+.js .scroll-reveal[data-reveal="card"]{--reveal-y:56px;--reveal-scale:.93}
+.js .scroll-reveal[data-reveal="shell"]{--reveal-y:48px;--reveal-scale:.96}
+.js .scroll-reveal[data-reveal="step"]{--reveal-x:42px;--reveal-y:0;--reveal-scale:.96}
+.js .scroll-reveal[data-reveal="cta"]{--reveal-y:54px;--reveal-scale:.92}
+.js .scroll-reveal.is-visible{opacity:1;filter:blur(0);transform:translate3d(0,0,0) scale(1)}
+.js .scroll-reveal[data-reveal-delay="1"]{--reveal-delay:1}
+.js .scroll-reveal[data-reveal-delay="2"]{--reveal-delay:2}
+.js .scroll-reveal[data-reveal-delay="3"]{--reveal-delay:3}
+.js .scroll-reveal[data-reveal-delay="4"]{--reveal-delay:4}
+
+.platform-strip--v2.is-active .platform-chip{animation:source-arrival-pulse .75s cubic-bezier(.22,1,.36,1) both;animation-delay:calc(var(--reveal-delay,0) * 110ms + 350ms)}
+.feature-grid{position:relative}
+.feature-grid::before{content:"";position:absolute;left:7%;right:7%;top:50%;height:1px;background:linear-gradient(90deg,transparent,rgba(120,87,235,.28),transparent);transform:scaleX(0);transition:transform 1.15s cubic-bezier(.22,1,.36,1) .35s}
+.landing-section.is-active .feature-grid::before{transform:scaleX(1)}
+.workflow-list li.is-visible>span{animation:step-node-pop .6s cubic-bezier(.22,1,.36,1) .25s both}
+.landing-cta.is-visible{box-shadow:0 32px 80px rgba(49,35,109,.30)}
+
+@keyframes source-arrival-pulse{0%{box-shadow:0 8px 21px rgba(43,39,75,.05)}55%{box-shadow:0 0 0 9px rgba(123,87,235,.08),0 16px 34px rgba(65,45,140,.14)}100%{box-shadow:0 8px 21px rgba(43,39,75,.05)}}
+@keyframes step-node-pop{0%{transform:scale(.65) rotate(-8deg)}70%{transform:scale(1.1) rotate(2deg)}100%{transform:scale(1) rotate(0)}}
+
+@media(max-width:720px){
+  .js .scroll-reveal[data-reveal="fly-left"],.js .scroll-reveal[data-reveal="fly-right"],.js .scroll-reveal[data-reveal="step"]{--reveal-x:0px;--reveal-y:34px}
+  .feature-grid::before{display:none}
+  .scroll-story-section::before{height:40px;top:-20px}
+}
+@media(prefers-reduced-motion:reduce){
+  .js .scroll-reveal{opacity:1!important;filter:none!important;transform:none!important;transition:none!important}
+  .scroll-story-section::before,.feature-grid::before{transition:none!important;transform:none!important}
+  .platform-strip--v2.is-active .platform-chip,.workflow-list li.is-visible>span{animation:none!important}
+}

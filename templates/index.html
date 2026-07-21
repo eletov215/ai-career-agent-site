@@ -97,37 +97,37 @@
     </div>
   </section>
 
-  <section class="platform-strip platform-strip--v2">
-    <div class="container platform-strip-inner">
+  <section class="platform-strip platform-strip--v2 scroll-story-section" data-reveal-section>
+    <div class="container platform-strip-inner scroll-reveal" data-reveal="rise">
       <span>Работаем с ведущими площадками</span>
-      <div class="platform-chip hh-chip"><img src="{{ url_for('static', filename='images/logos/hh.svg') }}" alt=""><small>HeadHunter</small></div>
-      <div class="platform-chip sj-chip"><img src="{{ url_for('static', filename='images/logos/superjob.svg') }}" alt=""><small>SuperJob</small></div>
-      <div class="platform-chip trud-chip"><img src="{{ url_for('static', filename='images/logos/trudvsem.svg') }}" alt=""><small>Работа России</small></div>
-      <div class="platform-chip ai-chip"><img src="{{ url_for('static', filename='images/logos/ai-match.svg') }}" alt=""><small>Умный подбор</small></div>
+      <div class="platform-chip hh-chip scroll-reveal" data-reveal="fly-left" data-reveal-delay="1"><img src="{{ url_for('static', filename='images/logos/hh.svg') }}" alt=""><small>HeadHunter</small></div>
+      <div class="platform-chip sj-chip scroll-reveal" data-reveal="fly-up" data-reveal-delay="2"><img src="{{ url_for('static', filename='images/logos/superjob.svg') }}" alt=""><small>SuperJob</small></div>
+      <div class="platform-chip trud-chip scroll-reveal" data-reveal="fly-right" data-reveal-delay="3"><img src="{{ url_for('static', filename='images/logos/trudvsem.svg') }}" alt=""><small>Работа России</small></div>
+      <div class="platform-chip ai-chip scroll-reveal" data-reveal="fly-up" data-reveal-delay="4"><img src="{{ url_for('static', filename='images/logos/ai-match.svg') }}" alt=""><small>Умный подбор</small></div>
     </div>
   </section>
 
-  <section class="landing-section">
+  <section class="landing-section scroll-story-section" data-reveal-section>
     <div class="container">
-      <div class="section-heading centered-heading">
+      <div class="section-heading centered-heading scroll-reveal" data-reveal="rise">
         <span class="section-kicker">Всё необходимое в одном сервисе</span>
         <h2>Меньше рутины. Больше подходящих возможностей.</h2>
         <p>Платформа помогает пройти весь путь поиска работы последовательно и без десятков открытых вкладок.</p>
       </div>
       <div class="feature-grid">
-        <article class="feature-card feature-card-primary">
+        <article class="feature-card feature-card-primary scroll-reveal" data-reveal="card" data-reveal-delay="1">
           <div class="feature-icon">01</div>
           <h3>AI-анализ резюме</h3>
           <p>Определяем сильные стороны профиля, ключевые навыки и направления для развития.</p>
           <a href="{{ url_for('ai_career') }}">Проверить резюме <span>→</span></a>
         </article>
-        <article class="feature-card">
+        <article class="feature-card scroll-reveal" data-reveal="card" data-reveal-delay="2">
           <div class="feature-icon">02</div>
           <h3>Единый поиск вакансий</h3>
           <p>Собираем предложения с нескольких площадок и приводим их к единому удобному формату.</p>
           <a href="{{ url_for('vacancies') }}">Перейти к поиску <span>→</span></a>
         </article>
-        <article class="feature-card">
+        <article class="feature-card scroll-reveal" data-reveal="card" data-reveal-delay="3">
           <div class="feature-icon">03</div>
           <h3>Умное совпадение</h3>
           <p>Показываем, насколько вакансия соответствует вашему опыту, навыкам и карьерным целям.</p>
@@ -137,24 +137,24 @@
     </div>
   </section>
 
-  <section class="workflow-section">
-    <div class="container workflow-shell">
-      <div class="workflow-copy">
+  <section class="workflow-section scroll-story-section" data-reveal-section>
+    <div class="container workflow-shell scroll-reveal" data-reveal="shell">
+      <div class="workflow-copy scroll-reveal" data-reveal="fly-left">
         <span class="section-kicker">Как это работает</span>
         <h2>От резюме до подходящей вакансии — три простых шага</h2>
         <p>Начните с текущего резюме. Сервис подготовит структуру профиля и поможет перейти к релевантному поиску.</p>
         <a class="btn landing-primary" href="{{ url_for('ai_career') }}">Начать бесплатно</a>
       </div>
       <ol class="workflow-list">
-        <li><span>1</span><div><strong>Загрузите резюме</strong><p>Поддерживается PDF-файл с вашим актуальным опытом.</p></div></li>
-        <li><span>2</span><div><strong>Получите первичный анализ</strong><p>Проверьте должность, навыки и качество заполнения профиля.</p></div></li>
-        <li><span>3</span><div><strong>Перейдите к вакансиям</strong><p>Используйте единый поиск по подключённым источникам.</p></div></li>
+        <li class="scroll-reveal" data-reveal="step" data-reveal-delay="1"><span>1</span><div><strong>Загрузите резюме</strong><p>Поддерживается PDF-файл с вашим актуальным опытом.</p></div></li>
+        <li class="scroll-reveal" data-reveal="step" data-reveal-delay="2"><span>2</span><div><strong>Получите первичный анализ</strong><p>Проверьте должность, навыки и качество заполнения профиля.</p></div></li>
+        <li class="scroll-reveal" data-reveal="step" data-reveal-delay="3"><span>3</span><div><strong>Перейдите к вакансиям</strong><p>Используйте единый поиск по подключённым источникам.</p></div></li>
       </ol>
     </div>
   </section>
 
-  <section class="landing-cta-section">
-    <div class="container landing-cta">
+  <section class="landing-cta-section scroll-story-section" data-reveal-section>
+    <div class="container landing-cta scroll-reveal" data-reveal="cta">
       <div>
         <span class="section-kicker">Ваш следующий карьерный шаг</span>
         <h2>Превратите поиск работы в понятный процесс</h2>
@@ -163,4 +163,30 @@
     </div>
   </section>
 </main>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(() => {
+  const items = document.querySelectorAll('.scroll-reveal');
+  if (!items.length) return;
+
+  if (!('IntersectionObserver' in window)) {
+    items.forEach((item) => item.classList.add('is-visible'));
+    return;
+  }
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (!entry.isIntersecting) return;
+      entry.target.classList.add('is-visible');
+      const section = entry.target.closest('[data-reveal-section]');
+      if (section) section.classList.add('is-active');
+      observer.unobserve(entry.target);
+    });
+  }, { rootMargin: '0px 0px -12% 0px', threshold: 0.14 });
+
+  items.forEach((item) => observer.observe(item));
+})();
+</script>
 {% endblock %}
