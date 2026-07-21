@@ -114,25 +114,29 @@
         <h2>Меньше рутины. Больше подходящих возможностей.</h2>
         <p>Платформа помогает пройти весь путь поиска работы последовательно и без десятков открытых вкладок.</p>
       </div>
-      <div class="feature-grid">
-        <article class="feature-card feature-card-primary scroll-reveal" data-reveal="card" data-reveal-delay="1">
-          <div class="feature-icon">01</div>
-          <h3>AI-анализ резюме</h3>
-          <p>Определяем сильные стороны профиля, ключевые навыки и направления для развития.</p>
-          <a href="{{ url_for('ai_career') }}">Проверить резюме <span>→</span></a>
-        </article>
-        <article class="feature-card scroll-reveal" data-reveal="card" data-reveal-delay="2">
-          <div class="feature-icon">02</div>
-          <h3>Единый поиск вакансий</h3>
-          <p>Собираем предложения с нескольких площадок и приводим их к единому удобному формату.</p>
-          <a href="{{ url_for('vacancies') }}">Перейти к поиску <span>→</span></a>
-        </article>
-        <article class="feature-card scroll-reveal" data-reveal="card" data-reveal-delay="3">
-          <div class="feature-icon">03</div>
-          <h3>Умное совпадение</h3>
-          <p>Показываем, насколько вакансия соответствует вашему опыту, навыкам и карьерным целям.</p>
-          <span class="feature-status">Следующий этап</span>
-        </article>
+      <div class="feature-workspace scroll-reveal" data-reveal="workspace" aria-label="Возможности платформы">
+        <div class="feature-workspace__glow" aria-hidden="true"></div>
+        <div class="feature-workspace__grid" aria-hidden="true"></div>
+        <div class="feature-grid">
+          <article class="feature-card feature-card-primary scroll-reveal" data-reveal="workspace-card" data-reveal-delay="1">
+            <div class="feature-icon">01</div>
+            <h3>Анализ резюме</h3>
+            <p>Раздел для проверки структуры профиля, навыков и направлений дальнейшего развития.</p>
+            <a href="{{ url_for('ai_career') }}">Открыть раздел <span>→</span></a>
+          </article>
+          <article class="feature-card scroll-reveal" data-reveal="workspace-card" data-reveal-delay="2">
+            <div class="feature-icon">02</div>
+            <h3>Единый поиск вакансий</h3>
+            <p>Предложения с нескольких площадок собраны в одном удобном формате.</p>
+            <a href="{{ url_for('vacancies') }}">Перейти к поиску <span>→</span></a>
+          </article>
+          <article class="feature-card scroll-reveal" data-reveal="workspace-card" data-reveal-delay="3">
+            <div class="feature-icon">03</div>
+            <h3>Умное совпадение</h3>
+            <p>Будущий инструмент сопоставления вакансий с опытом, навыками и карьерными целями.</p>
+            <span class="feature-status">В разработке</span>
+          </article>
+        </div>
       </div>
     </div>
   </section>
