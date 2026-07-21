@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-labelledby="t">
+  <title id="t">Работа России</title>
+  <rect x="5" y="5" width="110" height="110" rx="30" fill="#fff"/>
+  <g transform="translate(18 24)">
+    <path d="M0 0h30l18 18-18 18H0l18-18L0 0Z" fill="#f25b2a"/>
+    <path d="M34 0h30l18 18-18 18H34l18-18L34 0Z" fill="#ef3f31"/>
+    <path d="M0 36h30l18 18-18 18H0l18-18L0 36Z" fill="#ff8a24"/>
+    <path d="M34 36h30l18 18-18 18H34l18-18L34 36Z" fill="#f15a24"/>
+  </g>
+</svg>

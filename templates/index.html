@@ -40,21 +40,21 @@
         <div class="orbit-track orbit-track--outer" aria-hidden="true">
           <div class="orbit-source orbit-source--hh" style="--start-angle: 8deg;">
             <div class="orbit-source__counter-rotate">
-              <span class="orbit-source__logo">hh</span>
+              <span class="orbit-source__logo"><img src="{{ url_for('static', filename='images/logos/hh.svg') }}" alt="Логотип HeadHunter"></span>
               <strong>HH.ru</strong>
               <small>+340 вакансий</small>
             </div>
           </div>
           <div class="orbit-source orbit-source--trud" style="--start-angle: 128deg;">
             <div class="orbit-source__counter-rotate">
-              <span class="orbit-source__logo">РФ</span>
+              <span class="orbit-source__logo"><img src="{{ url_for('static', filename='images/logos/trudvsem.svg') }}" alt="Логотип Работа России"></span>
               <strong>Работа России</strong>
               <small>+116 вакансий</small>
             </div>
           </div>
           <div class="orbit-source orbit-source--other" style="--start-angle: 248deg;">
             <div class="orbit-source__counter-rotate">
-              <span class="orbit-source__logo">✦</span>
+              <span class="orbit-source__logo"><img src="{{ url_for('static', filename='images/logos/sources.svg') }}" alt="Другие источники вакансий"></span>
               <strong>Другие</strong>
               <small>Новые источники</small>
             </div>
@@ -64,14 +64,14 @@
         <div class="orbit-track orbit-track--inner" aria-hidden="true">
           <div class="orbit-source orbit-source--sj" style="--start-angle: 190deg;">
             <div class="orbit-source__counter-rotate">
-              <span class="orbit-source__logo">SJ</span>
+              <span class="orbit-source__logo"><img src="{{ url_for('static', filename='images/logos/superjob.svg') }}" alt="Логотип SuperJob"></span>
               <strong>SuperJob</strong>
               <small>+82 вакансии</small>
             </div>
           </div>
           <div class="orbit-source orbit-source--ai" style="--start-angle: 10deg;">
             <div class="orbit-source__counter-rotate">
-              <span class="orbit-source__logo">AI</span>
+              <span class="orbit-source__logo"><img src="{{ url_for('static', filename='images/logos/ai-match.svg') }}" alt="AI-подбор вакансий"></span>
               <strong>Умный подбор</strong>
               <small>Совпадение 92%</small>
             </div>
@@ -100,10 +100,10 @@
   <section class="platform-strip platform-strip--v2">
     <div class="container platform-strip-inner">
       <span>Работаем с ведущими площадками</span>
-      <div class="platform-chip hh-chip">hh <small>HeadHunter</small></div>
-      <div class="platform-chip sj-chip">SJ <small>SuperJob</small></div>
-      <div class="platform-chip trud-chip">РФ <small>Работа России</small></div>
-      <div class="platform-chip ai-chip">AI <small>Умный подбор</small></div>
+      <div class="platform-chip hh-chip"><img src="{{ url_for('static', filename='images/logos/hh.svg') }}" alt=""><small>HeadHunter</small></div>
+      <div class="platform-chip sj-chip"><img src="{{ url_for('static', filename='images/logos/superjob.svg') }}" alt=""><small>SuperJob</small></div>
+      <div class="platform-chip trud-chip"><img src="{{ url_for('static', filename='images/logos/trudvsem.svg') }}" alt=""><small>Работа России</small></div>
+      <div class="platform-chip ai-chip"><img src="{{ url_for('static', filename='images/logos/ai-match.svg') }}" alt=""><small>Умный подбор</small></div>
     </div>
   </section>
 
