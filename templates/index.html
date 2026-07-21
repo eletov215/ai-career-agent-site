@@ -38,14 +38,14 @@
         <div class="orbit-scene__ring orbit-scene__ring--inner" aria-hidden="true"></div>
 
         <div class="orbit-track orbit-track--outer" aria-hidden="true">
-          <div class="orbit-source orbit-source--hh" style="--start-angle: 8deg;">
+          <div class="orbit-source orbit-source--hh" data-transfer-source="hh" style="--start-angle: 8deg;">
             <div class="orbit-source__counter-rotate">
               <span class="orbit-source__logo"><img src="{{ url_for('static', filename='images/logos/hh.svg') }}" alt="Логотип HeadHunter"></span>
               <strong>HH.ru</strong>
               <small>+340 вакансий</small>
             </div>
           </div>
-          <div class="orbit-source orbit-source--trud" style="--start-angle: 128deg;">
+          <div class="orbit-source orbit-source--trud" data-transfer-source="trud" style="--start-angle: 128deg;">
             <div class="orbit-source__counter-rotate">
               <span class="orbit-source__logo"><img src="{{ url_for('static', filename='images/logos/trudvsem.svg') }}" alt="Логотип Работа России"></span>
               <strong>Работа России</strong>
@@ -62,14 +62,14 @@
         </div>
 
         <div class="orbit-track orbit-track--inner" aria-hidden="true">
-          <div class="orbit-source orbit-source--sj" style="--start-angle: 190deg;">
+          <div class="orbit-source orbit-source--sj" data-transfer-source="sj" style="--start-angle: 190deg;">
             <div class="orbit-source__counter-rotate">
               <span class="orbit-source__logo"><img src="{{ url_for('static', filename='images/logos/superjob.svg') }}" alt="Логотип SuperJob"></span>
               <strong>SuperJob</strong>
               <small>+82 вакансии</small>
             </div>
           </div>
-          <div class="orbit-source orbit-source--ai" style="--start-angle: 10deg;">
+          <div class="orbit-source orbit-source--ai" data-transfer-source="ai" style="--start-angle: 10deg;">
             <div class="orbit-source__counter-rotate">
               <span class="orbit-source__logo"><img src="{{ url_for('static', filename='images/logos/ai-match.svg') }}" alt="AI-подбор вакансий"></span>
               <strong>Умный подбор</strong>
@@ -100,10 +100,10 @@
   <section class="platform-strip platform-strip--v2 scroll-story-section" data-reveal-section>
     <div class="container platform-strip-inner scroll-reveal" data-reveal="rise">
       <span>Работаем с ведущими площадками</span>
-      <div class="platform-chip hh-chip scroll-reveal" data-reveal="fly-left" data-reveal-delay="1"><img src="{{ url_for('static', filename='images/logos/hh.svg') }}" alt=""><small>HeadHunter</small></div>
-      <div class="platform-chip sj-chip scroll-reveal" data-reveal="fly-up" data-reveal-delay="2"><img src="{{ url_for('static', filename='images/logos/superjob.svg') }}" alt=""><small>SuperJob</small></div>
-      <div class="platform-chip trud-chip scroll-reveal" data-reveal="fly-right" data-reveal-delay="3"><img src="{{ url_for('static', filename='images/logos/trudvsem.svg') }}" alt=""><small>Работа России</small></div>
-      <div class="platform-chip ai-chip scroll-reveal" data-reveal="fly-up" data-reveal-delay="4"><img src="{{ url_for('static', filename='images/logos/ai-match.svg') }}" alt=""><small>Умный подбор</small></div>
+      <div class="platform-chip hh-chip scroll-reveal" data-transfer-target="hh" data-reveal="fly-left" data-reveal-delay="1"><img src="{{ url_for('static', filename='images/logos/hh.svg') }}" alt=""><small>HeadHunter</small></div>
+      <div class="platform-chip sj-chip scroll-reveal" data-transfer-target="sj" data-reveal="fly-up" data-reveal-delay="2"><img src="{{ url_for('static', filename='images/logos/superjob.svg') }}" alt=""><small>SuperJob</small></div>
+      <div class="platform-chip trud-chip scroll-reveal" data-transfer-target="trud" data-reveal="fly-right" data-reveal-delay="3"><img src="{{ url_for('static', filename='images/logos/trudvsem.svg') }}" alt=""><small>Работа России</small></div>
+      <div class="platform-chip ai-chip scroll-reveal" data-transfer-target="ai" data-reveal="fly-up" data-reveal-delay="4"><img src="{{ url_for('static', filename='images/logos/ai-match.svg') }}" alt=""><small>Умный подбор</small></div>
     </div>
   </section>
 
@@ -187,6 +187,81 @@
   }, { rootMargin: '0px 0px -12% 0px', threshold: 0.14 });
 
   items.forEach((item) => observer.observe(item));
+
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const strip = document.querySelector('.platform-strip--v2');
+  const scene = document.querySelector('.orbit-scene');
+  const transferKeys = ['hh', 'sj', 'trud', 'ai'];
+  let transferStarted = false;
+
+  const runSourceTransfer = () => {
+    if (transferStarted || reduceMotion || !strip || !scene) return;
+    transferStarted = true;
+    document.body.classList.add('source-transfer-running');
+    scene.classList.add('is-transfering');
+
+    const animations = transferKeys.map((key, index) => {
+      const sourceLogo = document.querySelector(`[data-transfer-source="${key}"] .orbit-source__logo`);
+      const targetLogo = document.querySelector(`[data-transfer-target="${key}"] img`);
+      const targetChip = document.querySelector(`[data-transfer-target="${key}"]`);
+      if (!sourceLogo || !targetLogo || !targetChip) return Promise.resolve();
+
+      targetChip.classList.add('is-awaiting-transfer');
+      const start = sourceLogo.getBoundingClientRect();
+      const end = targetLogo.getBoundingClientRect();
+      const clone = sourceLogo.cloneNode(true);
+      clone.className = `source-transfer-clone source-transfer-clone--${key}`;
+      clone.setAttribute('aria-hidden', 'true');
+      Object.assign(clone.style, {
+        left: `${start.left}px`,
+        top: `${start.top}px`,
+        width: `${start.width}px`,
+        height: `${start.height}px`
+      });
+      document.body.appendChild(clone);
+
+      const dx = end.left - start.left;
+      const dy = end.top - start.top;
+      const scale = Math.max(.45, end.width / Math.max(start.width, 1));
+      const midX = dx * .52 + (index % 2 ? 34 : -34);
+      const midY = dy * .42 - 72 - index * 8;
+
+      const animation = clone.animate([
+        { transform: 'translate3d(0,0,0) scale(1)', opacity: 1, offset: 0 },
+        { transform: `translate3d(${midX}px,${midY}px,0) scale(${Math.max(.82, scale + .12)})`, opacity: 1, offset: .58 },
+        { transform: `translate3d(${dx}px,${dy}px,0) scale(${scale})`, opacity: .98, offset: 1 }
+      ], {
+        duration: 980 + index * 110,
+        delay: index * 90,
+        easing: 'cubic-bezier(.22,1,.36,1)',
+        fill: 'forwards'
+      });
+
+      return animation.finished.catch(() => {}).then(() => {
+        targetChip.classList.remove('is-awaiting-transfer');
+        targetChip.classList.add('has-received-source');
+        clone.remove();
+      });
+    });
+
+    Promise.all(animations).then(() => {
+      document.body.classList.remove('source-transfer-running');
+      document.body.classList.add('source-transfer-complete');
+      scene.classList.remove('is-transfering');
+      scene.classList.add('has-transferred');
+    });
+  };
+
+  if (strip && scene && !reduceMotion && 'IntersectionObserver' in window) {
+    const transferObserver = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (!entry.isIntersecting) return;
+        runSourceTransfer();
+        transferObserver.disconnect();
+      });
+    }, { rootMargin: '0px 0px -22% 0px', threshold: .12 });
+    transferObserver.observe(strip);
+  }
 })();
 </script>
 {% endblock %}
