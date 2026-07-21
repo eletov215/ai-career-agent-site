@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block title %}AI Карьера — AI Career Agent{% endblock %}
+{% block content %}
+<main class="section ai-career-page">
+  <div class="container">
+    <div class="page-heading ai-career-heading">
+      <div>
+        <div class="badge">Персональный AI-подбор</div>
+        <h1 class="page-title">AI Карьера</h1>
+        <p class="lead">Загрузите резюме — AI проанализирует ваш опыт и подготовит поиск подходящих вакансий по подключённым площадкам.</p>
+      </div>
+    </div>
+
+    <div class="ai-career-grid">
+      <section class="card resume-upload-card">
+        <div class="step-label">Шаг 1</div>
+        <h2>Загрузите резюме</h2>
+        <p class="muted">Поддерживается PDF до {{ max_resume_upload_mb }} МБ. Файл обрабатывается в памяти и на этом этапе не сохраняется на сервере.</p>
+
+        {% if upload_error %}
+          <div class="error-box spaced">{{ upload_error }}</div>
+        {% endif %}
+
+        <form method="post" enctype="multipart/form-data" class="resume-upload-form">
+          <label class="resume-dropzone">
+            <input type="file" name="resume" accept="application/pdf,.pdf" required>
+            <span class="resume-dropzone-title">Выберите PDF-резюме</span>
+            <span class="muted">или перетащите файл в это поле</span>
+          </label>
+          <button class="btn btn-primary" type="submit">Проанализировать резюме</button>
+        </form>
+      </section>
+
+      <section class="card source-settings-card">
+        <div class="step-label">Шаг 2</div>
+        <h2>Источники вакансий</h2>
+        <p class="muted">На следующем этапе AI будет искать вакансии по выбранным площадкам.</p>
+        <div class="career-source-list">
+          {% for source in source_options %}
+            <div class="career-source-row">
+              <div>
+                <strong>{{ source.title }}</strong>
+                <span class="muted">{% if source.connected %}Доступен для поиска{% else %}Требуется подключение{% endif %}</span>
+              </div>
+              {% if source.connected %}
+                <span class="status-pill connected">Подключён</span>
+              {% elif source.connect_url %}
+                <a class="btn btn-secondary" href="{{ source.connect_url }}">Подключить</a>
+              {% endif %}
+            </div>
+          {% endfor %}
+        </div>
+      </section>
+    </div>
+
+    {% if parsed_resume %}
+      <section class="card spaced resume-preview-card">
+        <div class="resume-preview-head">
+          <div>
+            <div class="step-label success-step">Резюме распознано</div>
+            <h2>{{ parsed_resume.filename }}</h2>
+          </div>
+          <div class="resume-stats">
+            <span>{{ parsed_resume.page_count }} стр.</span>
+            <span>{{ parsed_resume.character_count }} символов</span>
+          </div>
+        </div>
+        <p class="muted">Проверьте извлечённый текст. На следующем этапе AI превратит его в структурированный профиль кандидата и запустит подбор вакансий.</p>
+        <textarea class="resume-preview-text" readonly>{{ parsed_resume.preview }}</textarea>
+        <button class="btn btn-primary" type="button" disabled title="Будет подключено на следующем этапе">Продолжить к AI-подбору</button>
+      </section>
+    {% else %}
+      <section class="card spaced ai-next-step">
+        <div class="step-label">Далее</div>
+        <h2>AI сформирует карьерный профиль</h2>
+        <p class="muted">После загрузки будут определены профессия, опыт, навыки и ключевые поисковые запросы.</p>
+      </section>
+    {% endif %}
+  </div>
+</main>
+{% endblock %}

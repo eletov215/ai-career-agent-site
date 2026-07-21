@@ -14,7 +14,7 @@
         {% if session.get('superjob_user_id') or session.get('hh_user_id') %}
           <a href="/dashboard">Кабинет</a>
         {% endif %}
-        <a href="{{ url_for('vacancies') }}">Вакансии</a>
+        <a href="{{ url_for('ai_career') }}">AI Карьера</a>
         {% if not session.get('superjob_user_id') %}
           <a href="/oauth/superjob/login">Подключить SuperJob</a>
         {% endif %}

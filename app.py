@@ -21,6 +21,7 @@ from services.superjob_provider import SuperJobProvider
 from services.trudvsem_provider import TrudvsemProvider
 from services.vacancy_store import VacancyStore
 from services.search_filters import VacancySearchFilters, canonical_currency
+from services.resume_parser import ResumeParseError, parse_resume_pdf
 
 app = Flask(__name__)
 app.secret_key = os.environ["FLASK_SECRET_KEY"]
@@ -61,6 +62,7 @@ TRUDVSEM_SYNC_ENABLED = os.environ.get("TRUDVSEM_SYNC_ENABLED", "1").strip().low
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 DEBUG_HH = os.environ.get("DEBUG_HH", "0").strip().lower() in {"1", "true", "yes", "on"}
+MAX_RESUME_UPLOAD_MB = max(1, min(int(os.environ.get("MAX_RESUME_UPLOAD_MB", "8")), 25))
 
 
 def db():
@@ -799,7 +801,63 @@ def dashboard():
     )
 
 
+@app.route("/ai-career", methods=["GET", "POST"])
+def ai_career():
+    parsed_resume = None
+    upload_error = None
+
+    source_options = [
+        {"key": "trudvsem", "title": "Работа России", "available": True, "connected": True},
+        {
+            "key": "hh",
+            "title": "HeadHunter",
+            "available": bool(HH_APP_TOKEN),
+            "connected": bool(HH_APP_TOKEN),
+            "connect_url": url_for("hh_login"),
+        },
+        {
+            "key": "superjob",
+            "title": "SuperJob",
+            "available": bool(account()),
+            "connected": bool(account()),
+            "connect_url": url_for("login"),
+        },
+    ]
+
+    if request.method == "POST":
+        uploaded = request.files.get("resume")
+        if not uploaded or not uploaded.filename:
+            upload_error = "Выберите PDF-файл с резюме."
+        else:
+            safe_name = Path(uploaded.filename).name
+            if not safe_name.lower().endswith(".pdf"):
+                upload_error = "Поддерживаются только файлы PDF."
+            else:
+                max_bytes = MAX_RESUME_UPLOAD_MB * 1024 * 1024
+                file_bytes = uploaded.stream.read(max_bytes + 1)
+                if len(file_bytes) > max_bytes:
+                    upload_error = f"Размер PDF не должен превышать {MAX_RESUME_UPLOAD_MB} МБ."
+                else:
+                    try:
+                        parsed_resume = parse_resume_pdf(file_bytes, safe_name)
+                    except ResumeParseError as exc:
+                        upload_error = str(exc)
+
+    return render_template(
+        "ai_career.html",
+        parsed_resume=parsed_resume,
+        upload_error=upload_error,
+        max_resume_upload_mb=MAX_RESUME_UPLOAD_MB,
+        source_options=source_options,
+    )
+
+
 @app.get("/vacancies")
+def vacancies_redirect():
+    return redirect(url_for("ai_career"))
+
+
+@app.get("/vacancies/internal")
 def vacancies():
     filters = VacancySearchFilters.from_query(request.args)
     keyword = filters.keyword
