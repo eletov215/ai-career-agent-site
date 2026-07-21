@@ -13,7 +13,7 @@ from urllib.parse import urlencode
 
 import requests
 from cryptography.fernet import Fernet, InvalidToken
-from flask import Flask, redirect, render_template, request, session, url_for
+from flask import Flask, jsonify, redirect, render_template, request, session, url_for
 from datetime import datetime, timezone
 
 from services.hh_provider import HeadHunterProvider
@@ -21,7 +21,7 @@ from services.superjob_provider import SuperJobProvider
 from services.trudvsem_provider import TrudvsemProvider
 from services.vacancy_store import VacancyStore
 from services.search_filters import VacancySearchFilters, canonical_currency
-from services.resume_parser import ResumeParseError, parse_resume_pdf
+from services.resume_parser import ResumeParseError, build_resume_preview, parse_resume_pdf
 
 app = Flask(__name__)
 app.secret_key = os.environ["FLASK_SECRET_KEY"]
@@ -799,6 +799,29 @@ def dashboard():
         resumes=resumes,
         error=error,
     )
+
+
+@app.post("/api/resume/preview")
+def resume_preview_api():
+    uploaded = request.files.get("resume")
+    if not uploaded or not uploaded.filename:
+        return jsonify({"ok": False, "error": "Выберите PDF-файл с резюме."}), 400
+
+    safe_name = Path(uploaded.filename).name
+    if not safe_name.lower().endswith(".pdf"):
+        return jsonify({"ok": False, "error": "Поддерживаются только файлы PDF."}), 400
+
+    max_bytes = MAX_RESUME_UPLOAD_MB * 1024 * 1024
+    file_bytes = uploaded.stream.read(max_bytes + 1)
+    if len(file_bytes) > max_bytes:
+        return jsonify({"ok": False, "error": f"Размер PDF не должен превышать {MAX_RESUME_UPLOAD_MB} МБ."}), 413
+
+    try:
+        parsed = parse_resume_pdf(file_bytes, safe_name)
+    except ResumeParseError as exc:
+        return jsonify({"ok": False, "error": str(exc)}), 400
+
+    return jsonify({"ok": True, "profile": build_resume_preview(parsed)})
 
 
 @app.route("/ai-career", methods=["GET", "POST"])
