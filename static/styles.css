@@ -129,3 +129,39 @@
   .resume-upload-illustration{width:52px;height:52px}
   .resume-upload-card .resume-dropzone-title{font-size:17px}
 }
+
+
+/* AI Career uploader: strict visibility for the three UI states */
+.resume-empty-state[hidden],
+.resume-file-state[hidden],
+.resume-progress-wrap[hidden],
+.resume-file-actions[hidden],
+.resume-quick-analysis[hidden],
+.resume-inline-error[hidden]{display:none !important}
+
+/* Waiting state: only the upload invitation is visible */
+.resume-upload-card .resume-dropzone:not(.has-file){
+  min-height:220px;
+  padding:28px 20px;
+}
+.resume-upload-card .resume-dropzone:not(.has-file) .resume-empty-state{
+  display:grid;
+  place-items:center;
+  gap:9px;
+}
+.resume-upload-card .resume-dropzone:not(.has-file) .resume-file-state,
+.resume-upload-card .resume-dropzone:not(.has-file) .resume-progress-wrap{
+  display:none !important;
+}
+.resume-upload-card .resume-dropzone:not(.has-file) .resume-upload-illustration{
+  width:60px;
+  height:60px;
+  margin-bottom:5px;
+}
+.resume-upload-card .resume-dropzone:not(.has-file) .resume-dropzone-title{
+  font-size:18px;
+}
+
+@media(max-width:520px){
+  .resume-upload-card .resume-dropzone:not(.has-file){min-height:200px;padding:24px 16px}
+}
