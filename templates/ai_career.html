@@ -22,7 +22,7 @@
         {% endif %}
 
         <form method="post" enctype="multipart/form-data" class="resume-upload-form" id="resumeUploadForm">
-          <label class="resume-dropzone" id="resumeDropzone">
+          <label class="resume-dropzone" id="resumeDropzone" data-max-bytes="{{ max_resume_upload_mb * 1024 * 1024 }}">
             <input id="resumeFileInput" type="file" name="resume" accept="application/pdf,.pdf" required>
 
             <span class="resume-empty-state" id="resumeEmptyState">
@@ -43,6 +43,10 @@
               <strong class="resume-file-name" id="resumeFileName"></strong>
               <span class="muted" id="resumeFileMeta"></span>
               <span class="resume-file-ready" id="resumeFileReady">Файл готов к анализу</span>
+              <span class="resume-file-actions" id="resumeFileActions" hidden>
+                <button class="resume-file-action" id="resumeReplaceButton" type="button">Заменить файл</button>
+                <button class="resume-file-action danger" id="resumeRemoveButton" type="button">Удалить</button>
+              </span>
             </span>
 
             <span class="resume-progress-wrap" id="resumeProgressWrap" hidden>
@@ -124,6 +128,10 @@
   const progressPercent = document.getElementById('resumeProgressPercent');
   const progressText = document.getElementById('resumeProgressText');
   const submitButton = document.getElementById('resumeSubmitButton');
+  const fileActions = document.getElementById('resumeFileActions');
+  const replaceButton = document.getElementById('resumeReplaceButton');
+  const removeButton = document.getElementById('resumeRemoveButton');
+  const maxBytes = Number(dropzone.dataset.maxBytes || 0);
 
   if (!form || !input || !dropzone) return;
 
@@ -136,6 +144,7 @@
   const setProgress = (value, text) => {
     const safeValue = Math.max(0, Math.min(100, Math.round(value)));
     progressWrap.hidden = false;
+    progressWrap.classList.remove('is-complete');
     progressBar.style.width = `${safeValue}%`;
     progressPercent.textContent = `${safeValue}%`;
     progressText.textContent = text;
@@ -147,7 +156,8 @@
     progressWrap.hidden = true;
     progressBar.style.width = '0%';
     submitButton.disabled = true;
-    dropzone.classList.remove('has-file', 'is-loading', 'is-dragover');
+    fileActions.hidden = true;
+    dropzone.classList.remove('has-file', 'is-loading', 'is-dragover', 'is-ready');
   };
 
   const showSelectedFile = (file) => {
@@ -161,13 +171,22 @@
       return;
     }
 
+    if (maxBytes && file.size > maxBytes) {
+      input.value = '';
+      resetSelection();
+      window.alert(`Размер PDF превышает допустимый лимит {{ max_resume_upload_mb }} МБ.`);
+      return;
+    }
+
     emptyState.hidden = true;
     fileState.hidden = false;
     readyText.textContent = 'Подготовка файла…';
     fileName.textContent = file.name;
     fileMeta.textContent = formatBytes(file.size);
     submitButton.disabled = true;
+    fileActions.hidden = true;
     dropzone.classList.add('has-file', 'is-loading');
+    dropzone.classList.remove('is-ready');
 
     const reader = new FileReader();
     reader.onprogress = (event) => {
@@ -177,8 +196,14 @@
       setProgress(100, 'PDF загружен');
       readyText.textContent = 'Файл готов к анализу';
       submitButton.disabled = false;
+      fileActions.hidden = false;
       dropzone.classList.remove('is-loading');
-      window.setTimeout(() => { progressWrap.hidden = true; }, 650);
+      dropzone.classList.add('is-ready');
+      progressWrap.classList.add('is-complete');
+      window.setTimeout(() => {
+        progressWrap.hidden = true;
+        progressWrap.classList.remove('is-complete');
+      }, 480);
     };
     reader.onerror = () => {
       input.value = '';
@@ -189,6 +214,22 @@
   };
 
   input.addEventListener('change', () => showSelectedFile(input.files[0]));
+  const openFilePicker = (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    input.click();
+  };
+
+  const removeSelectedFile = (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    input.value = '';
+    resetSelection();
+  };
+
+  replaceButton.addEventListener('click', openFilePicker);
+  removeButton.addEventListener('click', removeSelectedFile);
+
 
   ['dragenter', 'dragover'].forEach((eventName) => {
     dropzone.addEventListener(eventName, (event) => {
