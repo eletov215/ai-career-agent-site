@@ -1216,71 +1216,12 @@ def superjob_vacancies_redirect():
 
 
 @app.get("/hh/vacancies")
-def hh_vacancies():
-    keyword = request.args.get("keyword", "инженер-конструктор").strip()
-    period = request.args.get("period", "7").strip()
-    remote_only = request.args.get("remote") == "1"
-
-    try:
-        page = max(int(request.args.get("page", "0") or 0), 0)
-    except ValueError:
-        page = 0
-
-    if period not in {"1", "3", "7", "14", "30"}:
-        period = "7"
-
-    params = {
-        "period": period,
-        "page": page,
-        "per_page": 20,
-        "order_by": "publication_time",
-    }
-    if keyword:
-        params["text"] = keyword
-    if remote_only:
-        params["schedule"] = "remote"
-
-    payload = {"items": [], "found": 0, "pages": 0, "page": page}
-    error = None
-
-    try:
-        if not HH_APP_TOKEN:
-            raise RuntimeError("Токен приложения HH_APP_TOKEN не настроен")
-
-        response = requests.get(
-            HH_VACANCIES_URL,
-            params=params,
-            headers=hh_headers(HH_APP_TOKEN),
-            timeout=30,
-        )
-
-        # Поиск вакансий выполняется только с токеном приложения.
-        # Публичный запрос HH отклоняет с 403, поэтому резервный запрос без
-        # Authorization здесь намеренно не выполняется.
-        response.raise_for_status()
-        payload = response.json()
-    except requests.RequestException as exc:
-        response_text = ""
-        if exc.response is not None:
-            response_text = exc.response.text[:1000]
-        error = str(exc)
-        if response_text:
-            error += f" Ответ HH: {response_text}"
-    except (ValueError, KeyError, RuntimeError) as exc:
-        error = str(exc)
-
-    return render_template(
-        "hh_vacancies.html",
-        vacancies=payload.get("items", []),
-        keyword=keyword,
-        period=period,
-        remote_only=remote_only,
-        page=page,
-        pages=int(payload.get("pages", 0) or 0),
-        total=int(payload.get("found", 0) or 0),
-        error=error,
-    )
-
+def hh_vacancies_redirect():
+    """Keep the legacy HH URL working through the unified vacancy search."""
+    query = request.args.to_dict(flat=False)
+    query["source"] = ["hh"]
+    query["search"] = ["1"]
+    return redirect(url_for("vacancies") + "?" + urlencode(query, doseq=True))
 
 
 @app.get("/debug/hh")
