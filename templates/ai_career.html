@@ -21,13 +21,41 @@
           <div class="error-box spaced">{{ upload_error }}</div>
         {% endif %}
 
-        <form method="post" enctype="multipart/form-data" class="resume-upload-form">
-          <label class="resume-dropzone">
-            <input type="file" name="resume" accept="application/pdf,.pdf" required>
-            <span class="resume-dropzone-title">Выберите PDF-резюме</span>
-            <span class="muted">или перетащите файл в это поле</span>
+        <form method="post" enctype="multipart/form-data" class="resume-upload-form" id="resumeUploadForm">
+          <label class="resume-dropzone" id="resumeDropzone">
+            <input id="resumeFileInput" type="file" name="resume" accept="application/pdf,.pdf" required>
+
+            <span class="resume-empty-state" id="resumeEmptyState">
+              <span class="resume-upload-symbol" aria-hidden="true">+</span>
+              <span class="resume-dropzone-title">Выберите PDF-резюме</span>
+              <span class="muted">или перетащите файл в это поле</span>
+            </span>
+
+            <span class="resume-file-state" id="resumeFileState" hidden>
+              <span class="resume-pdf-icon" aria-hidden="true">
+                <svg viewBox="0 0 64 76" role="img">
+                  <path d="M10 2h30l14 14v54a4 4 0 0 1-4 4H10a4 4 0 0 1-4-4V6a4 4 0 0 1 4-4Z"/>
+                  <path class="pdf-fold" d="M40 2v14h14"/>
+                  <rect x="1" y="39" width="62" height="24" rx="6"/>
+                  <text x="32" y="56" text-anchor="middle">PDF</text>
+                </svg>
+              </span>
+              <strong class="resume-file-name" id="resumeFileName"></strong>
+              <span class="muted" id="resumeFileMeta"></span>
+              <span class="resume-file-ready" id="resumeFileReady">Файл готов к анализу</span>
+            </span>
+
+            <span class="resume-progress-wrap" id="resumeProgressWrap" hidden>
+              <span class="resume-progress-label">
+                <span id="resumeProgressText">Загрузка файла</span>
+                <strong id="resumeProgressPercent">0%</strong>
+              </span>
+              <span class="resume-progress-track" aria-hidden="true">
+                <span class="resume-progress-bar" id="resumeProgressBar"></span>
+              </span>
+            </span>
           </label>
-          <button class="btn btn-primary" type="submit">Проанализировать резюме</button>
+          <button class="btn btn-primary" id="resumeSubmitButton" type="submit" disabled>Проанализировать резюме</button>
         </form>
       </section>
 
@@ -78,4 +106,150 @@
     {% endif %}
   </div>
 </main>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(() => {
+  const form = document.getElementById('resumeUploadForm');
+  const input = document.getElementById('resumeFileInput');
+  const dropzone = document.getElementById('resumeDropzone');
+  const emptyState = document.getElementById('resumeEmptyState');
+  const fileState = document.getElementById('resumeFileState');
+  const fileName = document.getElementById('resumeFileName');
+  const fileMeta = document.getElementById('resumeFileMeta');
+  const readyText = document.getElementById('resumeFileReady');
+  const progressWrap = document.getElementById('resumeProgressWrap');
+  const progressBar = document.getElementById('resumeProgressBar');
+  const progressPercent = document.getElementById('resumeProgressPercent');
+  const progressText = document.getElementById('resumeProgressText');
+  const submitButton = document.getElementById('resumeSubmitButton');
+
+  if (!form || !input || !dropzone) return;
+
+  const formatBytes = (bytes) => {
+    if (bytes < 1024) return `${bytes} Б`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} КБ`;
+    return `${(bytes / (1024 * 1024)).toFixed(2)} МБ`;
+  };
+
+  const setProgress = (value, text) => {
+    const safeValue = Math.max(0, Math.min(100, Math.round(value)));
+    progressWrap.hidden = false;
+    progressBar.style.width = `${safeValue}%`;
+    progressPercent.textContent = `${safeValue}%`;
+    progressText.textContent = text;
+  };
+
+  const resetSelection = () => {
+    emptyState.hidden = false;
+    fileState.hidden = true;
+    progressWrap.hidden = true;
+    progressBar.style.width = '0%';
+    submitButton.disabled = true;
+    dropzone.classList.remove('has-file', 'is-loading', 'is-dragover');
+  };
+
+  const showSelectedFile = (file) => {
+    if (!file) return resetSelection();
+
+    const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+    if (!isPdf) {
+      input.value = '';
+      resetSelection();
+      window.alert('Выберите файл в формате PDF.');
+      return;
+    }
+
+    emptyState.hidden = true;
+    fileState.hidden = false;
+    readyText.textContent = 'Подготовка файла…';
+    fileName.textContent = file.name;
+    fileMeta.textContent = formatBytes(file.size);
+    submitButton.disabled = true;
+    dropzone.classList.add('has-file', 'is-loading');
+
+    const reader = new FileReader();
+    reader.onprogress = (event) => {
+      if (event.lengthComputable) setProgress((event.loaded / event.total) * 100, 'Чтение PDF');
+    };
+    reader.onload = () => {
+      setProgress(100, 'PDF загружен');
+      readyText.textContent = 'Файл готов к анализу';
+      submitButton.disabled = false;
+      dropzone.classList.remove('is-loading');
+      window.setTimeout(() => { progressWrap.hidden = true; }, 650);
+    };
+    reader.onerror = () => {
+      input.value = '';
+      resetSelection();
+      window.alert('Не удалось прочитать выбранный файл.');
+    };
+    reader.readAsArrayBuffer(file);
+  };
+
+  input.addEventListener('change', () => showSelectedFile(input.files[0]));
+
+  ['dragenter', 'dragover'].forEach((eventName) => {
+    dropzone.addEventListener(eventName, (event) => {
+      event.preventDefault();
+      dropzone.classList.add('is-dragover');
+    });
+  });
+  ['dragleave', 'drop'].forEach((eventName) => {
+    dropzone.addEventListener(eventName, (event) => {
+      event.preventDefault();
+      dropzone.classList.remove('is-dragover');
+    });
+  });
+  dropzone.addEventListener('drop', (event) => {
+    const file = event.dataTransfer.files[0];
+    if (!file) return;
+    const transfer = new DataTransfer();
+    transfer.items.add(file);
+    input.files = transfer.files;
+    showSelectedFile(file);
+  });
+
+  form.addEventListener('submit', (event) => {
+    if (!input.files.length || !window.XMLHttpRequest) return;
+    event.preventDefault();
+
+    submitButton.disabled = true;
+    submitButton.textContent = 'Загружаем резюме…';
+    dropzone.classList.add('is-loading');
+    setProgress(0, 'Отправка на анализ');
+
+    const request = new XMLHttpRequest();
+    request.open(form.method || 'POST', form.action || window.location.href);
+    request.upload.addEventListener('progress', (uploadEvent) => {
+      if (uploadEvent.lengthComputable) {
+        setProgress((uploadEvent.loaded / uploadEvent.total) * 100, 'Отправка на анализ');
+      }
+    });
+    request.addEventListener('load', () => {
+      if (request.status >= 200 && request.status < 400) {
+        setProgress(100, 'Загрузка завершена');
+        document.open();
+        document.write(request.responseText);
+        document.close();
+      } else {
+        submitButton.disabled = false;
+        submitButton.textContent = 'Проанализировать резюме';
+        dropzone.classList.remove('is-loading');
+        progressWrap.hidden = true;
+        window.alert('Не удалось загрузить резюме. Попробуйте ещё раз.');
+      }
+    });
+    request.addEventListener('error', () => {
+      submitButton.disabled = false;
+      submitButton.textContent = 'Проанализировать резюме';
+      dropzone.classList.remove('is-loading');
+      progressWrap.hidden = true;
+      window.alert('Ошибка сети при загрузке резюме.');
+    });
+    request.send(new FormData(form));
+  });
+})();
+</script>
 {% endblock %}
