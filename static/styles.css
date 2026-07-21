@@ -266,8 +266,9 @@ body{font-family:"Manrope",Inter,system-ui,-apple-system,BlinkMacSystemFont,"Seg
 .orbit-hero__copy{max-width:650px}
 .orbit-badge{display:inline-flex;align-items:center;gap:9px;padding:10px 14px;border:1px solid #ded4ff;border-radius:999px;background:rgba(247,243,255,.9);color:#6c50da;font-size:13px;font-weight:800;box-shadow:0 8px 24px rgba(95,67,211,.08)}
 .orbit-badge__spark{font-size:15px}
-.orbit-hero__copy h1{margin:24px 0 22px;font-size:clamp(52px,5.45vw,76px);line-height:1.03;letter-spacing:-.055em;color:#17172b;font-weight:800}
-.orbit-hero__copy h1 span{background:linear-gradient(100deg,#6d4ae7,#945fe8 60%,#7054ea);-webkit-background-clip:text;background-clip:text;color:transparent}
+.orbit-hero__copy h1{max-width:680px;margin:24px 0 22px;font-size:clamp(52px,5.45vw,76px);line-height:.94;letter-spacing:-.055em;color:#17172b;font-weight:800}
+.orbit-hero__title-line{display:block;white-space:nowrap}
+.orbit-hero__title-accent{margin-top:10px;background:linear-gradient(100deg,#6d4ae7,#945fe8 60%,#7054ea);-webkit-background-clip:text;background-clip:text;color:transparent}
 .orbit-hero__copy>p{max-width:600px;margin:0;color:#77758a;font-size:18px;line-height:1.78;font-weight:500}
 .orbit-hero__actions{display:flex;gap:13px;flex-wrap:wrap;margin-top:32px}
 .orbit-hero__actions .btn{min-height:52px;padding:0 20px;border-radius:12px;align-items:center;justify-content:center;font-size:14px;font-weight:800}
@@ -310,7 +311,7 @@ body{font-family:"Manrope",Inter,system-ui,-apple-system,BlinkMacSystemFont,"Seg
 .platform-strip--v2{background:#fff}.platform-strip--v2 .platform-strip-inner{min-height:96px}.platform-strip--v2 .platform-chip{box-shadow:0 8px 21px rgba(43,39,75,.05)}
 
 @media(max-width:1060px){.orbit-hero__grid{grid-template-columns:1fr;gap:42px}.orbit-hero__copy{max-width:760px;text-align:center;margin:auto}.orbit-hero__copy>p{margin-left:auto;margin-right:auto}.orbit-hero__actions,.orbit-trust{justify-content:center}.orbit-scene{margin:auto;width:min(610px,100%)}}
-@media(max-width:720px){.orbit-hero{padding:62px 0 70px}.orbit-hero__copy h1{font-size:clamp(43px,13vw,62px)}.orbit-hero__copy>p{font-size:16px}.orbit-hero__actions .btn{width:100%}.orbit-scene{width:100%;aspect-ratio:.92;margin-top:8px}.resume-core{width:190px;min-height:245px;padding:15px}.resume-core__document{width:104px;height:126px}.orbit-scene__ring--outer,.orbit-track--outer{width:98%;height:62%}.orbit-scene__ring--inner,.orbit-track--inner{width:72%;height:45%}.orbit-source{--radius-x:calc((100vw - 70px)/2);width:112px;height:64px;margin:-32px 0 0 -56px}.orbit-track--inner .orbit-source{--radius-x:calc((100vw - 180px)/2)}.orbit-source__counter-rotate{grid-template-columns:33px 1fr;padding:9px 10px}.orbit-source__logo{width:32px;height:32px;font-size:10px}.orbit-source strong{font-size:10px}.orbit-source small{font-size:7px}.orbit-result{display:none}}
+@media(max-width:720px){.orbit-hero{padding:62px 0 70px}.orbit-hero__copy h1{font-size:clamp(34px,10.8vw,52px);line-height:.96;letter-spacing:-.05em}.orbit-hero__title-accent{margin-top:8px}.orbit-hero__copy>p{font-size:16px}.orbit-hero__actions .btn{width:100%}.orbit-scene{width:100%;aspect-ratio:.92;margin-top:8px}.resume-core{width:190px;min-height:245px;padding:15px}.resume-core__document{width:104px;height:126px}.orbit-scene__ring--outer,.orbit-track--outer{width:98%;height:62%}.orbit-scene__ring--inner,.orbit-track--inner{width:72%;height:45%}.orbit-source{--radius-x:calc((100vw - 70px)/2);width:112px;height:64px;margin:-32px 0 0 -56px}.orbit-track--inner .orbit-source{--radius-x:calc((100vw - 180px)/2)}.orbit-source__counter-rotate{grid-template-columns:33px 1fr;padding:9px 10px}.orbit-source__logo{width:32px;height:32px;font-size:10px}.orbit-source strong{font-size:10px}.orbit-source small{font-size:7px}.orbit-result{display:none}}
 @media(prefers-reduced-motion:reduce){.orbit-track,.orbit-source__counter-rotate,.resume-core,.orbit-result,.resume-core__status span,.resume-core__progress span{animation:none!important}.orbit-track{transform:translate(-50%,-50%) rotate(0)}}
 
 /* ===== Logo-first orbit sources ===== */
