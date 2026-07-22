@@ -245,8 +245,8 @@
       currentY += (targetY - currentY) * 0.1;
       orbitStage.style.setProperty('--scene-rotate-x', `${currentY.toFixed(2)}deg`);
       orbitStage.style.setProperty('--scene-rotate-y', `${currentX.toFixed(2)}deg`);
-      orbitStage.style.setProperty('--scene-shift-x', `${(currentX * 0.85).toFixed(2)}px`);
-      orbitStage.style.setProperty('--scene-shift-y', `${(currentY * -0.7).toFixed(2)}px`);
+      orbitStage.style.setProperty('--scene-shift-x', `${(currentX * 0.65).toFixed(2)}px`);
+      orbitStage.style.setProperty('--scene-shift-y', `${(currentY * -0.55).toFixed(2)}px`);
 
       if (Math.abs(targetX - currentX) > 0.01 || Math.abs(targetY - currentY) > 0.01) {
         frameId = window.requestAnimationFrame(renderParallax);
@@ -263,8 +263,8 @@
       const rect = orbitScene.getBoundingClientRect();
       const normalizedX = ((event.clientX - rect.left) / rect.width - 0.5) * 2;
       const normalizedY = ((event.clientY - rect.top) / rect.height - 0.5) * 2;
-      targetX = Math.max(-3.4, Math.min(3.4, normalizedX * 3.4));
-      targetY = Math.max(-2.8, Math.min(2.8, normalizedY * -2.8));
+      targetX = Math.max(-2.4, Math.min(2.4, normalizedX * 2.4));
+      targetY = Math.max(-1.8, Math.min(1.8, normalizedY * -1.8));
       orbitScene.classList.add('is-parallax-active');
       requestParallaxFrame();
     });
