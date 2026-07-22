@@ -916,3 +916,70 @@ body{font-family:"Manrope",Inter,system-ui,-apple-system,BlinkMacSystemFont,"Seg
   .orbit-scene__ring--outer,.orbit-scene__ring--inner{animation:none!important}
   .orbit-source,.resume-core,.orbit-result,.orbit-scene__halo{transition:none!important}
 }
+
+/* ===== Stage 10: crisp orbiting vacancy cards ===== */
+@media(min-width:1061px){
+  .orbit-track,
+  .orbit-track--outer,
+  .orbit-track--inner{
+    position:absolute;
+    inset:0;
+    width:100%;
+    height:100%;
+    pointer-events:none;
+  }
+
+  .orbit-source,
+  .orbit-source--trud,
+  .orbit-source--hh,
+  .orbit-source--sj,
+  .orbit-source--ai,
+  .orbit-source--other{
+    left:50%;
+    top:50%;
+    margin:0;
+    pointer-events:auto;
+    transform:translate(-50%,-50%) translate3d(
+      calc(var(--orbit-x,0px) + var(--depth-mid-x,0px)),
+      calc(var(--orbit-y,0px) + var(--depth-mid-y,0px)),
+      0
+    );
+    transition:filter .24s ease-out;
+    will-change:transform;
+    contain:layout paint;
+  }
+
+  .orbit-source--trud,
+  .orbit-source--other{
+    transform:translate(-50%,-50%) translate3d(
+      calc(var(--orbit-x,0px) + var(--depth-far-x,0px)),
+      calc(var(--orbit-y,0px) + var(--depth-far-y,0px)),
+      0
+    );
+  }
+
+  .orbit-source--ai{
+    transform:translate(-50%,-50%) translate3d(
+      calc(var(--orbit-x,0px) + var(--depth-near-x,0px)),
+      calc(var(--orbit-y,0px) + var(--depth-near-y,0px)),
+      0
+    );
+  }
+
+  .orbit-source__counter-rotate{
+    transform:none!important;
+    animation:none!important;
+    backface-visibility:hidden;
+    -webkit-font-smoothing:antialiased;
+    text-rendering:optimizeLegibility;
+  }
+
+  /* Existing hover enlargement and highlight rules remain unchanged. */
+  .orbit-source:hover{z-index:20}
+}
+
+@media(prefers-reduced-motion:reduce){
+  .orbit-source{
+    will-change:auto!important;
+  }
+}

@@ -233,6 +233,87 @@
   const orbitStage = orbitScene ? orbitScene.querySelector('.orbit-scene__stage') : null;
   const finePointer = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
 
+  const orbitCards = orbitStage ? Array.from(orbitStage.querySelectorAll('.orbit-source')) : [];
+  const desktopOrbit = window.matchMedia('(min-width: 1061px)');
+
+  if (orbitScene && orbitStage && orbitCards.length && !reduceMotion) {
+    const orbitSettings = [
+      { selector: '.orbit-source--hh', angle: 8, duration: 22, ring: 'outer' },
+      { selector: '.orbit-source--trud', angle: 128, duration: 31, ring: 'outer' },
+      { selector: '.orbit-source--other', angle: 248, duration: 35, ring: 'outer' },
+      { selector: '.orbit-source--sj', angle: 190, duration: 27, ring: 'inner' },
+      { selector: '.orbit-source--ai', angle: 10, duration: 24, ring: 'inner' }
+    ].map((settings) => {
+      const element = orbitStage.querySelector(settings.selector);
+      return element ? { ...settings, element, paused: false, pauseStarted: 0, pausedTotal: 0 } : null;
+    }).filter(Boolean);
+
+    let orbitFrameId = 0;
+    let orbitStartedAt = performance.now();
+
+    const renderOrbitCards = (now) => {
+      if (!desktopOrbit.matches) {
+        orbitSettings.forEach(({ element }) => {
+          element.style.removeProperty('--orbit-x');
+          element.style.removeProperty('--orbit-y');
+        });
+        orbitFrameId = 0;
+        return;
+      }
+
+      const sceneWidth = orbitStage.clientWidth;
+      const sceneHeight = orbitStage.clientHeight;
+      const outerRadiusX = sceneWidth * 0.36;
+      const outerRadiusY = sceneHeight * 0.29;
+      const innerRadiusX = sceneWidth * 0.255;
+      const innerRadiusY = sceneHeight * 0.205;
+
+      orbitSettings.forEach((item) => {
+        const activeNow = item.paused ? item.pauseStarted : now;
+        const elapsed = Math.max(0, activeNow - orbitStartedAt - item.pausedTotal);
+        const angle = (item.angle + (elapsed / (item.duration * 1000)) * 360) * Math.PI / 180;
+        const radiusX = item.ring === 'outer' ? outerRadiusX : innerRadiusX;
+        const radiusY = item.ring === 'outer' ? outerRadiusY : innerRadiusY;
+        const x = Math.cos(angle) * radiusX;
+        const y = Math.sin(angle) * radiusY;
+
+        item.element.style.setProperty('--orbit-x', `${x.toFixed(2)}px`);
+        item.element.style.setProperty('--orbit-y', `${y.toFixed(2)}px`);
+      });
+
+      orbitFrameId = window.requestAnimationFrame(renderOrbitCards);
+    };
+
+    orbitSettings.forEach((item) => {
+      item.element.addEventListener('pointerenter', () => {
+        if (!desktopOrbit.matches || item.paused) return;
+        item.paused = true;
+        item.pauseStarted = performance.now();
+      });
+
+      item.element.addEventListener('pointerleave', () => {
+        if (!item.paused) return;
+        item.pausedTotal += performance.now() - item.pauseStarted;
+        item.paused = false;
+      });
+    });
+
+    const restartOrbit = () => {
+      if (desktopOrbit.matches && !orbitFrameId) {
+        orbitStartedAt = performance.now();
+        orbitSettings.forEach((item) => {
+          item.paused = false;
+          item.pauseStarted = 0;
+          item.pausedTotal = 0;
+        });
+        orbitFrameId = window.requestAnimationFrame(renderOrbitCards);
+      }
+    };
+
+    desktopOrbit.addEventListener('change', restartOrbit);
+    restartOrbit();
+  }
+
   if (orbitScene && orbitStage && finePointer && !reduceMotion) {
     let frameId = 0;
     let targetX = 0;
