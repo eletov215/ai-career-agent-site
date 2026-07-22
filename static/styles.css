@@ -1038,3 +1038,63 @@ body{font-family:"Manrope",Inter,system-ui,-apple-system,BlinkMacSystemFont,"Seg
   .hero-metric:last-child{border-bottom:0}
 }
 @media(prefers-reduced-motion:reduce){.orbit-source{transition:none!important}}
+
+/* ===== Stage 11.1: corrected multi-orbit coordinate system ===== */
+@media (min-width:1061px){
+  /* Tracks fill the stage. Do not shift them by half their own size: that
+     moved the orbital centre into the upper-left corner of the scene. */
+  .orbit-track,
+  .orbit-track--outer,
+  .orbit-track--middle,
+  .orbit-track--inner{
+    position:absolute;
+    inset:0;
+    left:0;
+    top:0;
+    width:100%;
+    height:100%;
+    transform:none!important;
+    border-radius:0;
+  }
+
+  /* JavaScript supplies coordinates relative to the exact stage centre.
+     The extra -50% keeps each card centred on its calculated point. */
+  .orbit-source,
+  .orbit-source--trud,
+  .orbit-source--hh,
+  .orbit-source--sj,
+  .orbit-source--ai,
+  .orbit-source--other{
+    left:50%;
+    top:50%;
+    margin:0;
+    transform:translate(-50%,-50%) translate3d(
+      calc(var(--orbit-x,0px) + var(--depth-mid-x,0px)),
+      calc(var(--orbit-y,0px) + var(--depth-mid-y,0px)),
+      0
+    )!important;
+  }
+
+  .orbit-source--trud,
+  .orbit-source--other{
+    transform:translate(-50%,-50%) translate3d(
+      calc(var(--orbit-x,0px) + var(--depth-far-x,0px)),
+      calc(var(--orbit-y,0px) + var(--depth-far-y,0px)),
+      0
+    )!important;
+  }
+
+  .orbit-source--ai{
+    transform:translate(-50%,-50%) translate3d(
+      calc(var(--orbit-x,0px) + var(--depth-near-x,0px)),
+      calc(var(--orbit-y,0px) + var(--depth-near-y,0px)),
+      0
+    )!important;
+  }
+
+  /* Keep the moving composition inside the visual column. */
+  .orbit-scene{
+    margin-left:auto;
+    margin-right:0;
+  }
+}
