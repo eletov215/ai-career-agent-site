@@ -258,7 +258,7 @@
       { selector: '.orbit-source--other', angle: 312, duration: 25, ring: 'inner', direction: 1 }
     ].map((settings) => {
       const element = orbitStage.querySelector(settings.selector);
-      return element ? { ...settings, element, paused: false, pauseStarted: 0, pausedTotal: 0 } : null;
+      return element ? { ...settings, element } : null;
     }).filter(Boolean);
 
     let orbitFrameId = 0;
@@ -276,47 +276,24 @@
 
       const sceneWidth = orbitStage.clientWidth;
       const sceneHeight = orbitStage.clientHeight;
+      const orbitBase = Math.min(sceneWidth, sceneHeight);
       const orbitRadii = {
-        outer: { x: sceneWidth * 0.455, y: sceneHeight * 0.39 },
-        middle: { x: sceneWidth * 0.385, y: sceneHeight * 0.31 },
-        inner: { x: sceneWidth * 0.31, y: sceneHeight * 0.245 }
+        outer: orbitBase * 0.47,
+        middle: orbitBase * 0.40,
+        inner: orbitBase * 0.34
       };
 
-      const resumeCard = orbitStage.querySelector('.resume-core');
-      const resumeWidth = resumeCard ? resumeCard.offsetWidth : 222;
-      const resumeHeight = resumeCard ? resumeCard.offsetHeight : 292;
-      const centreGap = 34;
-
       orbitSettings.forEach((item) => {
-        const activeNow = item.paused ? item.pauseStarted : now;
-        const elapsed = Math.max(0, activeNow - orbitStartedAt - item.pausedTotal);
+        const elapsed = Math.max(0, now - orbitStartedAt);
         const direction = item.direction || 1;
         const angle = (item.angle + direction * (elapsed / (item.duration * 1000)) * 360) * Math.PI / 180;
         const radius = orbitRadii[item.ring];
-        const card = item.element.querySelector('.orbit-source__counter-rotate') || item.element;
-        const cardWidth = card.offsetWidth || 190;
-        const cardHeight = card.offsetHeight || 92;
 
-        let x = Math.cos(angle) * radius.x;
-        let y = Math.sin(angle) * radius.y;
-
-        // Keep every flying card outside a protected rectangle around the
-        // central resume. This works at every angle, not only at the sides.
-        const safeX = (resumeWidth + cardWidth) / 2 + centreGap;
-        const safeY = (resumeHeight + cardHeight) / 2 + centreGap;
-        const clearance = Math.max(Math.abs(x) / safeX, Math.abs(y) / safeY);
-
-        if (clearance < 1) {
-          const pushOut = (1 / Math.max(clearance, 0.01)) * 1.035;
-          x *= pushOut;
-          y *= pushOut;
-        }
-
-        // Prevent the wider trajectories from clipping against the scene.
-        const maxX = Math.max(0, sceneWidth / 2 - cardWidth / 2 - 8);
-        const maxY = Math.max(0, sceneHeight / 2 - cardHeight / 2 - 8);
-        x = Math.max(-maxX, Math.min(maxX, x));
-        y = Math.max(-maxY, Math.min(maxY, y));
+        // True circular movement: no rectangular collision correction and no
+        // coordinate clamping. The radii themselves keep cards away from the
+        // central resume while preserving a smooth round trajectory.
+        const x = Math.cos(angle) * radius;
+        const y = Math.sin(angle) * radius;
 
         item.element.style.setProperty('--orbit-x', `${x.toFixed(2)}px`);
         item.element.style.setProperty('--orbit-y', `${y.toFixed(2)}px`);
@@ -325,28 +302,9 @@
       orbitFrameId = window.requestAnimationFrame(renderOrbitCards);
     };
 
-    orbitSettings.forEach((item) => {
-      item.element.addEventListener('pointerenter', () => {
-        if (!desktopOrbit.matches || item.paused) return;
-        item.paused = true;
-        item.pauseStarted = performance.now();
-      });
-
-      item.element.addEventListener('pointerleave', () => {
-        if (!item.paused) return;
-        item.pausedTotal += performance.now() - item.pauseStarted;
-        item.paused = false;
-      });
-    });
-
     const restartOrbit = () => {
       if (desktopOrbit.matches && !orbitFrameId) {
         orbitStartedAt = performance.now();
-        orbitSettings.forEach((item) => {
-          item.paused = false;
-          item.pauseStarted = 0;
-          item.pausedTotal = 0;
-        });
         orbitFrameId = window.requestAnimationFrame(renderOrbitCards);
       }
     };
