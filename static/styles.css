@@ -1098,3 +1098,13 @@ body{font-family:"Manrope",Inter,system-ui,-apple-system,BlinkMacSystemFont,"Seg
     margin-right:0;
   }
 }
+
+/* ===== Stage 11.2: protected centre for orbiting cards ===== */
+@media (min-width:1061px){
+  /* The JS trajectory now keeps cards outside the resume safety zone.
+     Give the visual a little more vertical room so the wider paths remain airy. */
+  .orbit-scene{aspect-ratio:1.26}
+  .orbit-scene__stage{overflow:visible}
+  .resume-core{z-index:15}
+  .orbit-source{will-change:transform}
+}
