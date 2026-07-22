@@ -1195,3 +1195,53 @@ body{font-family:"Manrope",Inter,system-ui,-apple-system,BlinkMacSystemFont,"Seg
 @media(max-width:1240px) and (min-width:1061px){
   .orbit-scene{transform:translate3d(34px,-18px,0);width:min(610px,100%)}
 }
+
+/* ===== Stage 11.5: wider flight paths and tighter hero layout ===== */
+@media (min-width:1241px){
+  .orbit-hero .container{
+    width:min(1500px,calc(100% - 24px));
+  }
+
+  .orbit-hero__grid{
+    grid-template-columns:minmax(610px,.92fr) minmax(760px,1.08fr);
+    gap:12px;
+  }
+
+  .orbit-hero__copy{
+    max-width:700px;
+  }
+
+  .orbit-scene{
+    width:min(760px,100%);
+    transform:translate3d(12px,-24px,0);
+    margin-left:0;
+    margin-right:0;
+  }
+
+  /* Keep the same luminous style while restoring wide elliptical paths. */
+  .orbit-scene__ring--outer{width:96%;height:78%}
+  .orbit-scene__ring--middle{width:80%;height:64%}
+  .orbit-scene__ring--inner{width:66%;height:54%}
+}
+
+@media (min-width:1061px) and (max-width:1240px){
+  .orbit-hero .container{
+    width:min(1220px,calc(100% - 24px));
+  }
+
+  .orbit-hero__grid{
+    grid-template-columns:minmax(500px,.94fr) minmax(650px,1.06fr);
+    gap:16px;
+  }
+
+  .orbit-scene{
+    width:min(680px,100%);
+    transform:translate3d(8px,-20px,0);
+    margin-left:0;
+    margin-right:0;
+  }
+
+  .orbit-scene__ring--outer{width:95%;height:78%}
+  .orbit-scene__ring--middle{width:79%;height:64%}
+  .orbit-scene__ring--inner{width:65%;height:54%}
+}
