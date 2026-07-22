@@ -40,45 +40,49 @@
         <div class="orbit-scene__stage">
         <div class="orbit-scene__halo" aria-hidden="true"></div>
         <div class="orbit-scene__ring orbit-scene__ring--outer" aria-hidden="true"></div>
+        <div class="orbit-scene__ring orbit-scene__ring--middle" aria-hidden="true"></div>
         <div class="orbit-scene__ring orbit-scene__ring--inner" aria-hidden="true"></div>
 
         <div class="orbit-track orbit-track--outer" aria-hidden="true">
-          <div class="orbit-source orbit-source--hh" style="--start-angle: 8deg;">
-            <div class="orbit-source__counter-rotate">
-              <span class="orbit-source__logo"><img src="{{ url_for('static', filename='images/logos/hh.svg') }}" alt="Логотип HeadHunter"></span>
-              <strong>HH.ru</strong>
-              <small>+340 вакансий</small>
-            </div>
-          </div>
-          <div class="orbit-source orbit-source--trud" style="--start-angle: 128deg;">
+          <div class="orbit-source orbit-source--trud" style="--start-angle: 286deg;">
             <div class="orbit-source__counter-rotate">
               <span class="orbit-source__logo"><img src="{{ url_for('static', filename='images/logos/trudvsem.svg') }}" alt="Логотип Работа России"></span>
               <strong>Работа России</strong>
               <small>+116 вакансий</small>
             </div>
           </div>
-          <div class="orbit-source orbit-source--other" style="--start-angle: 248deg;">
-            <div class="orbit-source__counter-rotate">
-              <span class="orbit-source__logo"><img src="{{ url_for('static', filename='images/logos/sources.svg') }}" alt="Другие источники вакансий"></span>
-              <strong>Другие</strong>
-              <small>Новые источники</small>
-            </div>
-          </div>
         </div>
 
-        <div class="orbit-track orbit-track--inner" aria-hidden="true">
-          <div class="orbit-source orbit-source--sj" style="--start-angle: 190deg;">
+        <div class="orbit-track orbit-track--middle" aria-hidden="true">
+          <div class="orbit-source orbit-source--hh" style="--start-angle: 168deg;">
+            <div class="orbit-source__counter-rotate">
+              <span class="orbit-source__logo"><img src="{{ url_for('static', filename='images/logos/hh.svg') }}" alt="Логотип HeadHunter"></span>
+              <strong>HH.ru</strong>
+              <small>+340 вакансий</small>
+            </div>
+          </div>
+          <div class="orbit-source orbit-source--sj" style="--start-angle: 348deg;">
             <div class="orbit-source__counter-rotate">
               <span class="orbit-source__logo"><img src="{{ url_for('static', filename='images/logos/superjob.svg') }}" alt="Логотип SuperJob"></span>
               <strong>SuperJob</strong>
               <small>+82 вакансии</small>
             </div>
           </div>
-          <div class="orbit-source orbit-source--ai" style="--start-angle: 10deg;">
+        </div>
+
+        <div class="orbit-track orbit-track--inner" aria-hidden="true">
+          <div class="orbit-source orbit-source--ai" style="--start-angle: 132deg;">
             <div class="orbit-source__counter-rotate">
               <span class="orbit-source__logo"><img src="{{ url_for('static', filename='images/logos/ai-match.svg') }}" alt="AI-подбор вакансий"></span>
               <strong>Умный подбор</strong>
               <small>Совпадение 92%</small>
+            </div>
+          </div>
+          <div class="orbit-source orbit-source--other" style="--start-angle: 312deg;">
+            <div class="orbit-source__counter-rotate">
+              <span class="orbit-source__logo"><img src="{{ url_for('static', filename='images/logos/sources.svg') }}" alt="Другие источники вакансий"></span>
+              <strong>Другие источники</strong>
+              <small>Новые вакансии</small>
             </div>
           </div>
         </div>
@@ -103,99 +107,83 @@
     </div>
   </section>
 
-  <section class="platform-strip platform-strip--v2 scroll-story-section" data-reveal-section>
-    <div class="container platform-strip-inner scroll-reveal" data-reveal="rise">
-      <span>Работаем с ведущими площадками</span>
-      <div class="platform-chip hh-chip scroll-reveal" data-reveal="fly-left" data-reveal-delay="1"><img src="{{ url_for('static', filename='images/logos/hh.svg') }}" alt=""><small>HeadHunter</small></div>
-      <div class="platform-chip sj-chip scroll-reveal" data-reveal="fly-up" data-reveal-delay="2"><img src="{{ url_for('static', filename='images/logos/superjob.svg') }}" alt=""><small>SuperJob</small></div>
-      <div class="platform-chip trud-chip scroll-reveal" data-reveal="fly-right" data-reveal-delay="3"><img src="{{ url_for('static', filename='images/logos/trudvsem.svg') }}" alt=""><small>Работа России</small></div>
-      <div class="platform-chip ai-chip scroll-reveal" data-reveal="fly-up" data-reveal-delay="4"><img src="{{ url_for('static', filename='images/logos/ai-match.svg') }}" alt=""><small>Умный подбор</small></div>
-    </div>
-  </section>
-
-  <section class="vision-section vision-section--network scroll-story-section" data-reveal-section>
-    <div class="container vision-grid">
-      <div class="vision-copy scroll-reveal" data-reveal="fly-left">
-        <span class="section-kicker">AI-карта возможностей</span>
-        <h2>Резюме становится центром карьерной сети</h2>
-        <p>Навыки, профессии, компании и вакансии соединяются в единую систему. AI показывает не просто список, а наиболее логичный маршрут для следующего шага.</p>
-        <div class="vision-points">
-          <span><i>01</i> Анализ навыков и опыта</span>
-          <span><i>02</i> Поиск сильных совпадений</span>
-          <span><i>03</i> Понятные рекомендации</span>
+  <section class="hero-metrics scroll-story-section" data-reveal-section aria-label="Ключевые показатели сервиса">
+    <div class="container">
+      <div class="hero-metrics__panel scroll-reveal" data-reveal="rise">
+        <div class="hero-metric">
+          <span class="hero-metric__icon" aria-hidden="true">▣</span>
+          <div><strong>700K+</strong><small>актуальных вакансий</small></div>
+        </div>
+        <div class="hero-metric">
+          <span class="hero-metric__icon" aria-hidden="true">⌁</span>
+          <div><strong>92%</strong><small>точность подбора</small></div>
+        </div>
+        <div class="hero-metric">
+          <span class="hero-metric__icon" aria-hidden="true">◷</span>
+          <div><strong>24/7</strong><small>мониторинг рынка</small></div>
         </div>
       </div>
-
-      <div class="career-network scroll-reveal" data-reveal="workspace" aria-label="Схема карьерных связей">
-        <div class="career-network__grid" aria-hidden="true"></div>
-        <span class="network-line network-line--1" aria-hidden="true"></span>
-        <span class="network-line network-line--2" aria-hidden="true"></span>
-        <span class="network-line network-line--3" aria-hidden="true"></span>
-        <span class="network-line network-line--4" aria-hidden="true"></span>
-        <div class="network-core"><span>✦</span><strong>Ваш профиль</strong><small>92% готовности</small></div>
-        <div class="network-node network-node--skills"><small>Навыки</small><strong>Python · Flask</strong></div>
-        <div class="network-node network-node--role"><small>Профессия</small><strong>Backend developer</strong></div>
-        <div class="network-node network-node--salary"><small>Зарплата</small><strong>от 180 000 ₽</strong></div>
-        <div class="network-node network-node--company"><small>Компания</small><strong>TechNova</strong></div>
-        <div class="network-node network-node--remote"><small>Формат</small><strong>Удалённо</strong></div>
-        <div class="network-match">Лучшее совпадение <b>92%</b></div>
-      </div>
     </div>
   </section>
 
-  <section class="vision-section vision-section--command scroll-story-section" data-reveal-section>
-    <div class="container command-shell scroll-reveal" data-reveal="shell">
-      <div class="command-dashboard" aria-label="Центр управления карьерой">
-        <div class="command-dashboard__topbar"><span>AI CAREER CONTROL</span><i></i><i></i><i></i></div>
-        <div class="command-dashboard__layout">
-          <article class="command-panel command-panel--score">
-            <small>Сила резюме</small><div class="score-ring"><strong>86</strong><span>%</span></div><p>Профиль выглядит убедительно</p>
+  <section class="landing-section scroll-story-section" data-reveal-section>
+    <div class="container">
+      <div class="section-heading centered-heading scroll-reveal" data-reveal="rise">
+        <span class="section-kicker">Всё необходимое в одном сервисе</span>
+        <h2>Меньше рутины. Больше подходящих возможностей.</h2>
+        <p>Платформа помогает пройти весь путь поиска работы последовательно и без десятков открытых вкладок.</p>
+      </div>
+      <div class="feature-workspace scroll-reveal" data-reveal="workspace" aria-label="Возможности платформы">
+        <div class="feature-workspace__glow" aria-hidden="true"></div>
+        <div class="feature-workspace__grid" aria-hidden="true"></div>
+        <div class="feature-grid">
+          <article class="feature-card feature-card-primary scroll-reveal" data-reveal="workspace-card" data-reveal-delay="1">
+            <div class="feature-icon">01</div>
+            <h3>Анализ резюме</h3>
+            <p>Раздел для проверки структуры профиля, навыков и направлений дальнейшего развития.</p>
+            <a href="{{ url_for('ai_career') }}">Открыть раздел <span>→</span></a>
           </article>
-          <article class="command-panel command-panel--jobs">
-            <small>Лучшие вакансии</small>
-            <div class="mini-job"><span class="mini-job__logo">H</span><div><strong>Python Developer</strong><small>Совпадение 94%</small></div><b>→</b></div>
-            <div class="mini-job"><span class="mini-job__logo">S</span><div><strong>Backend Engineer</strong><small>Совпадение 89%</small></div><b>→</b></div>
-            <div class="mini-job"><span class="mini-job__logo">T</span><div><strong>Flask Developer</strong><small>Совпадение 84%</small></div><b>→</b></div>
+          <article class="feature-card scroll-reveal" data-reveal="workspace-card" data-reveal-delay="2">
+            <div class="feature-icon">02</div>
+            <h3>Единый поиск вакансий</h3>
+            <p>Предложения с нескольких площадок собраны в одном удобном формате.</p>
+            <a href="{{ url_for('vacancies') }}">Перейти к поиску <span>→</span></a>
           </article>
-          <article class="command-panel command-panel--chart"><small>Активность рынка</small><div class="signal-chart" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><p>Спрос на ваш профиль растёт</p></article>
-          <article class="command-panel command-panel--letter"><small>Сопроводительное письмо</small><span></span><span></span><span></span><span></span><button type="button" disabled>Создать с AI</button></article>
+          <article class="feature-card scroll-reveal" data-reveal="workspace-card" data-reveal-delay="3">
+            <div class="feature-icon">03</div>
+            <h3>Умное совпадение</h3>
+            <p>Будущий инструмент сопоставления вакансий с опытом, навыками и карьерными целями.</p>
+            <span class="feature-status">В разработке</span>
+          </article>
         </div>
       </div>
-      <div class="command-copy scroll-reveal" data-reveal="fly-right">
-        <span class="section-kicker">AI Command Center</span>
-        <h2>Весь поиск работы — на одном экране</h2>
-        <p>Резюме, подходящие вакансии, динамика рынка и будущие AI-инструменты собраны в понятный персональный центр управления.</p>
-        <a class="btn landing-primary" href="{{ url_for('ai_career') }}">Открыть AI Карьеру</a>
-      </div>
     </div>
   </section>
 
-  <section class="vision-section vision-section--route scroll-story-section" data-reveal-section>
-    <div class="container route-shell">
-      <div class="route-copy scroll-reveal" data-reveal="fly-left">
-        <span class="section-kicker">Ваш карьерный маршрут</span>
-        <h2>От загрузки резюме до лучшего предложения</h2>
-        <p>Платформа проводит пользователя через понятный путь без лишних действий и десятков открытых вкладок.</p>
-        <a class="btn orbit-primary" href="{{ url_for('ai_career') }}">Начать с резюме <span>→</span></a>
+  <section class="workflow-section scroll-story-section" data-reveal-section>
+    <div class="container workflow-shell scroll-reveal" data-reveal="shell">
+      <div class="workflow-copy scroll-reveal" data-reveal="fly-left">
+        <span class="section-kicker">Как это работает</span>
+        <h2>От резюме до подходящей вакансии — три простых шага</h2>
+        <p>Начните с текущего резюме. Сервис подготовит структуру профиля и поможет перейти к релевантному поиску.</p>
+        <a class="btn landing-primary" href="{{ url_for('ai_career') }}">Начать бесплатно</a>
       </div>
-      <div class="career-route scroll-reveal" data-reveal="workspace" aria-label="Три этапа работы сервиса">
-        <div class="career-route__road" aria-hidden="true"></div>
-        <article class="route-stop route-stop--one"><span>01</span><div><small>Старт</small><strong>Загрузите PDF</strong><p>Используйте актуальное резюме.</p></div></article>
-        <article class="route-stop route-stop--two"><span>02</span><div><small>Анализ</small><strong>Получите профиль</strong><p>Проверьте опыт и навыки.</p></div></article>
-        <article class="route-stop route-stop--three"><span>03</span><div><small>Результат</small><strong>Выберите вакансию</strong><p>Сравните лучшие совпадения.</p></div></article>
-        <div class="route-destination"><span>✦</span><strong>Идеальная вакансия</strong><small>Совпадение 92%</small></div>
-      </div>
+      <ol class="workflow-list workflow-path" aria-label="Этапы работы с сервисом">
+        <span class="workflow-path__line" aria-hidden="true"></span>
+        <li class="scroll-reveal" data-reveal="workflow-step" data-reveal-delay="1"><span>1</span><div><small>Подготовка</small><strong>Загрузите резюме</strong><p>Поддерживается PDF-файл с вашим актуальным опытом.</p></div></li>
+        <li class="scroll-reveal" data-reveal="workflow-step" data-reveal-delay="2"><span>2</span><div><small>Проверка</small><strong>Получите первичный анализ</strong><p>Проверьте должность, навыки и качество заполнения профиля.</p></div></li>
+        <li class="scroll-reveal" data-reveal="workflow-step" data-reveal-delay="3"><span>3</span><div><small>Поиск</small><strong>Перейдите к вакансиям</strong><p>Используйте единый поиск по подключённым источникам.</p></div></li>
+      </ol>
     </div>
   </section>
 
-  <section class="landing-cta-section landing-cta-section--future scroll-story-section" data-reveal-section>
-    <div class="container landing-cta landing-cta--future scroll-reveal" data-reveal="cta">
+  <section class="landing-cta-section scroll-story-section" data-reveal-section>
+    <div class="container landing-cta scroll-reveal" data-reveal="cta">
       <div>
-        <span class="section-kicker">AI Career Agent</span>
-        <h2>Ваша следующая работа уже где-то рядом</h2>
-        <p>Загрузите резюме и начните поиск в едином карьерном пространстве.</p>
+        <span class="section-kicker">Ваш следующий карьерный шаг</span>
+        <h2>Превратите поиск работы в понятный процесс</h2>
       </div>
-      <a class="btn cta-light" href="{{ url_for('ai_career') }}">Запустить поиск <span>→</span></a>
+      <a class="btn cta-light" href="{{ url_for('ai_career') }}">Начать с резюме <span>→</span></a>
     </div>
   </section>
 </main>
@@ -263,11 +251,11 @@
 
   if (orbitScene && orbitStage && orbitCards.length && !reduceMotion) {
     const orbitSettings = [
-      { selector: '.orbit-source--hh', angle: 8, duration: 22, ring: 'outer' },
-      { selector: '.orbit-source--trud', angle: 128, duration: 31, ring: 'outer' },
-      { selector: '.orbit-source--other', angle: 248, duration: 35, ring: 'outer' },
-      { selector: '.orbit-source--sj', angle: 190, duration: 27, ring: 'inner' },
-      { selector: '.orbit-source--ai', angle: 10, duration: 24, ring: 'inner' }
+      { selector: '.orbit-source--trud', angle: 286, duration: 42, ring: 'outer', direction: 1 },
+      { selector: '.orbit-source--hh', angle: 168, duration: 32, ring: 'middle', direction: -1 },
+      { selector: '.orbit-source--sj', angle: 348, duration: 32, ring: 'middle', direction: -1 },
+      { selector: '.orbit-source--ai', angle: 132, duration: 25, ring: 'inner', direction: 1 },
+      { selector: '.orbit-source--other', angle: 312, duration: 25, ring: 'inner', direction: 1 }
     ].map((settings) => {
       const element = orbitStage.querySelector(settings.selector);
       return element ? { ...settings, element, paused: false, pauseStarted: 0, pausedTotal: 0 } : null;
@@ -288,17 +276,20 @@
 
       const sceneWidth = orbitStage.clientWidth;
       const sceneHeight = orbitStage.clientHeight;
-      const outerRadiusX = sceneWidth * 0.36;
-      const outerRadiusY = sceneHeight * 0.29;
-      const innerRadiusX = sceneWidth * 0.255;
-      const innerRadiusY = sceneHeight * 0.205;
+      const orbitRadii = {
+        outer: { x: sceneWidth * 0.43, y: sceneHeight * 0.34 },
+        middle: { x: sceneWidth * 0.345, y: sceneHeight * 0.275 },
+        inner: { x: sceneWidth * 0.265, y: sceneHeight * 0.205 }
+      };
 
       orbitSettings.forEach((item) => {
         const activeNow = item.paused ? item.pauseStarted : now;
         const elapsed = Math.max(0, activeNow - orbitStartedAt - item.pausedTotal);
-        const angle = (item.angle + (elapsed / (item.duration * 1000)) * 360) * Math.PI / 180;
-        const radiusX = item.ring === 'outer' ? outerRadiusX : innerRadiusX;
-        const radiusY = item.ring === 'outer' ? outerRadiusY : innerRadiusY;
+        const direction = item.direction || 1;
+        const angle = (item.angle + direction * (elapsed / (item.duration * 1000)) * 360) * Math.PI / 180;
+        const radius = orbitRadii[item.ring];
+        const radiusX = radius.x;
+        const radiusY = radius.y;
         const x = Math.cos(angle) * radiusX;
         const y = Math.sin(angle) * radiusY;
 
