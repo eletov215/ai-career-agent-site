@@ -37,6 +37,7 @@
       </div>
 
       <div class="orbit-scene" aria-label="Источники вакансий вращаются вокруг резюме">
+        <div class="orbit-scene__stage">
         <div class="orbit-scene__halo" aria-hidden="true"></div>
         <div class="orbit-scene__ring orbit-scene__ring--outer" aria-hidden="true"></div>
         <div class="orbit-scene__ring orbit-scene__ring--inner" aria-hidden="true"></div>
@@ -97,6 +98,7 @@
 
         <div class="orbit-result orbit-result--top">+538 вакансий</div>
         <div class="orbit-result orbit-result--bottom">Совпадение 92%</div>
+        </div>
       </div>
     </div>
   </section>
@@ -225,6 +227,54 @@
     updateSectionTransition();
     window.addEventListener('scroll', requestTransitionUpdate, { passive: true });
     window.addEventListener('resize', requestTransitionUpdate);
+  }
+
+  const orbitScene = document.querySelector('.orbit-scene');
+  const orbitStage = orbitScene ? orbitScene.querySelector('.orbit-scene__stage') : null;
+  const finePointer = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+
+  if (orbitScene && orbitStage && finePointer && !reduceMotion) {
+    let frameId = 0;
+    let targetX = 0;
+    let targetY = 0;
+    let currentX = 0;
+    let currentY = 0;
+
+    const renderParallax = () => {
+      currentX += (targetX - currentX) * 0.1;
+      currentY += (targetY - currentY) * 0.1;
+      orbitStage.style.setProperty('--scene-rotate-x', `${currentY.toFixed(2)}deg`);
+      orbitStage.style.setProperty('--scene-rotate-y', `${currentX.toFixed(2)}deg`);
+      orbitStage.style.setProperty('--scene-shift-x', `${(currentX * 0.85).toFixed(2)}px`);
+      orbitStage.style.setProperty('--scene-shift-y', `${(currentY * -0.7).toFixed(2)}px`);
+
+      if (Math.abs(targetX - currentX) > 0.01 || Math.abs(targetY - currentY) > 0.01) {
+        frameId = window.requestAnimationFrame(renderParallax);
+      } else {
+        frameId = 0;
+      }
+    };
+
+    const requestParallaxFrame = () => {
+      if (!frameId) frameId = window.requestAnimationFrame(renderParallax);
+    };
+
+    orbitScene.addEventListener('pointermove', (event) => {
+      const rect = orbitScene.getBoundingClientRect();
+      const normalizedX = ((event.clientX - rect.left) / rect.width - 0.5) * 2;
+      const normalizedY = ((event.clientY - rect.top) / rect.height - 0.5) * 2;
+      targetX = Math.max(-3.4, Math.min(3.4, normalizedX * 3.4));
+      targetY = Math.max(-2.8, Math.min(2.8, normalizedY * -2.8));
+      orbitScene.classList.add('is-parallax-active');
+      requestParallaxFrame();
+    });
+
+    orbitScene.addEventListener('pointerleave', () => {
+      targetX = 0;
+      targetY = 0;
+      orbitScene.classList.remove('is-parallax-active');
+      requestParallaxFrame();
+    });
   }
 
 })();

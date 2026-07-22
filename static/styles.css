@@ -568,3 +568,63 @@ body{font-family:"Manrope",Inter,system-ui,-apple-system,BlinkMacSystemFont,"Seg
   .orbit-hero__copy h1{font-size:clamp(48px,5vw,62px)}
   .orbit-scene{width:min(490px,100%)}
 }
+
+
+/* ===== Stage 7: subtle 3D parallax for hero visualization ===== */
+.orbit-scene{perspective:1100px;perspective-origin:50% 48%;overflow:visible}
+.orbit-scene__stage{
+  --scene-rotate-x:0deg;
+  --scene-rotate-y:0deg;
+  --scene-shift-x:0px;
+  --scene-shift-y:0px;
+  position:absolute;
+  inset:0;
+  transform-style:preserve-3d;
+  transform:translate3d(var(--scene-shift-x),var(--scene-shift-y),0) rotateX(var(--scene-rotate-x)) rotateY(var(--scene-rotate-y));
+  transition:transform .18s ease-out;
+  will-change:transform;
+}
+.orbit-scene.is-parallax-active .orbit-scene__stage{transition:none}
+.orbit-scene__halo{transform:translateZ(-70px) scale(1.04)}
+.orbit-scene__ring--outer{transform:translate(-50%,-50%) translateZ(-34px) rotate(-12deg)}
+.orbit-scene__ring--inner{transform:translate(-50%,-50%) translateZ(-10px) rotate(-12deg)}
+.orbit-track--outer{--orbit-depth:18px}
+.orbit-track--inner{--orbit-depth:42px}
+.resume-core{--core-depth:86px}
+.orbit-result--top{--result-depth:112px}
+.orbit-result--bottom{--result-depth:96px}
+.orbit-result{transform:translateZ(var(--result-depth,70px));box-shadow:0 16px 34px rgba(80,58,150,.16)}
+.orbit-source__counter-rotate{transform-style:preserve-3d}
+.orbit-source__logo{transform:translateZ(12px)}
+.orbit-scene.is-parallax-active .resume-core{box-shadow:0 32px 68px rgba(88,64,175,.28)}
+
+@keyframes orbit-spin{
+  from{transform:translate(-50%,-50%) translateZ(var(--orbit-depth,0px)) rotate(0deg)}
+  to{transform:translate(-50%,-50%) translateZ(var(--orbit-depth,0px)) rotate(360deg)}
+}
+@keyframes core-float{
+  0%,100%{transform:translate(-50%,-50%) translateZ(var(--core-depth,0px)) rotate(-1.5deg) translateY(0)}
+  50%{transform:translate(-50%,-50%) translateZ(var(--core-depth,0px)) rotate(.8deg) translateY(-8px)}
+}
+@keyframes result-float{
+  0%,100%{transform:translateZ(var(--result-depth,70px)) translateY(0)}
+  50%{transform:translateZ(var(--result-depth,70px)) translateY(-7px)}
+}
+
+@media(max-width:1060px){
+  .orbit-scene{perspective:none}
+  .orbit-scene__stage{transform:none!important;transition:none!important}
+  .orbit-scene__halo{transform:none}
+  .orbit-scene__ring--outer,.orbit-scene__ring--inner{transform:translate(-50%,-50%) rotate(-12deg)}
+  .orbit-track{--orbit-depth:0px}
+  .resume-core{--core-depth:0px}
+  .orbit-result{--result-depth:0px}
+  .orbit-source__logo{transform:none}
+}
+@media(prefers-reduced-motion:reduce){
+  .orbit-scene{perspective:none}
+  .orbit-scene__stage{transform:none!important;transition:none!important}
+  .orbit-scene__halo{transform:none!important}
+  .orbit-scene__ring--outer,.orbit-scene__ring--inner{transform:translate(-50%,-50%) rotate(-12deg)!important}
+  .orbit-result{transform:none!important}
+}
