@@ -36,7 +36,7 @@
         </div>
       </div>
 
-      <div class="orbit-scene" aria-label="Источники вакансий вращаются вокруг резюме">
+      <div class="orbit-scene" aria-label="Источники вакансий расположены вокруг резюме">
         <div class="orbit-scene__stage">
         <div class="orbit-scene__halo" aria-hidden="true"></div>
         <div class="orbit-scene__ring orbit-scene__ring--outer" aria-hidden="true"></div>
@@ -241,14 +241,17 @@
     let currentY = 0;
 
     const renderParallax = () => {
-      currentX += (targetX - currentX) * 0.1;
-      currentY += (targetY - currentY) * 0.1;
-      orbitStage.style.setProperty('--scene-rotate-x', `${currentY.toFixed(2)}deg`);
-      orbitStage.style.setProperty('--scene-rotate-y', `${currentX.toFixed(2)}deg`);
-      orbitStage.style.setProperty('--scene-shift-x', `${(currentX * 0.65).toFixed(2)}px`);
-      orbitStage.style.setProperty('--scene-shift-y', `${(currentY * -0.55).toFixed(2)}px`);
+      currentX += (targetX - currentX) * 0.11;
+      currentY += (targetY - currentY) * 0.11;
 
-      if (Math.abs(targetX - currentX) > 0.01 || Math.abs(targetY - currentY) > 0.01) {
+      orbitStage.style.setProperty('--depth-near-x', `${(currentX * 9).toFixed(2)}px`);
+      orbitStage.style.setProperty('--depth-near-y', `${(currentY * 7).toFixed(2)}px`);
+      orbitStage.style.setProperty('--depth-mid-x', `${(currentX * 5).toFixed(2)}px`);
+      orbitStage.style.setProperty('--depth-mid-y', `${(currentY * 4).toFixed(2)}px`);
+      orbitStage.style.setProperty('--depth-far-x', `${(currentX * 2.5).toFixed(2)}px`);
+      orbitStage.style.setProperty('--depth-far-y', `${(currentY * 2).toFixed(2)}px`);
+
+      if (Math.abs(targetX - currentX) > 0.002 || Math.abs(targetY - currentY) > 0.002) {
         frameId = window.requestAnimationFrame(renderParallax);
       } else {
         frameId = 0;
@@ -261,10 +264,8 @@
 
     orbitScene.addEventListener('pointermove', (event) => {
       const rect = orbitScene.getBoundingClientRect();
-      const normalizedX = ((event.clientX - rect.left) / rect.width - 0.5) * 2;
-      const normalizedY = ((event.clientY - rect.top) / rect.height - 0.5) * 2;
-      targetX = Math.max(-2.4, Math.min(2.4, normalizedX * 2.4));
-      targetY = Math.max(-1.8, Math.min(1.8, normalizedY * -1.8));
+      targetX = Math.max(-1, Math.min(1, ((event.clientX - rect.left) / rect.width - 0.5) * 2));
+      targetY = Math.max(-1, Math.min(1, ((event.clientY - rect.top) / rect.height - 0.5) * 2));
       orbitScene.classList.add('is-parallax-active');
       requestParallaxFrame();
     });

@@ -731,3 +731,188 @@ body{font-family:"Manrope",Inter,system-ui,-apple-system,BlinkMacSystemFont,"Seg
 .orbit-result--top{--result-depth:68px}
 .orbit-result--bottom{--result-depth:58px}
 .orbit-source__logo{transform:translateZ(6px)}
+
+/* ===== Stage 9: Apple-style depth with crisp fixed cards ===== */
+.orbit-scene{
+  perspective:none;
+}
+.orbit-scene__stage{
+  --depth-near-x:0px;
+  --depth-near-y:0px;
+  --depth-mid-x:0px;
+  --depth-mid-y:0px;
+  --depth-far-x:0px;
+  --depth-far-y:0px;
+  transform:none;
+  transform-style:flat;
+  transition:none;
+  will-change:auto;
+}
+.orbit-scene.is-parallax-active .orbit-scene__stage{transition:none}
+
+/* Only the thin decorative rings rotate. Text cards stay upright and sharp. */
+.orbit-scene__ring{
+  transform-origin:center;
+  will-change:transform;
+}
+.orbit-scene__ring--outer{
+  animation:stage9-ring-outer 52s linear infinite;
+}
+.orbit-scene__ring--inner{
+  animation:stage9-ring-inner 38s linear infinite;
+}
+
+.orbit-track,
+.orbit-track--outer,
+.orbit-track--inner{
+  left:0;
+  top:0;
+  width:100%;
+  height:100%;
+  transform:none;
+  animation:none;
+  border-radius:0;
+}
+
+.orbit-source{
+  --radius-x:0px;
+  --radius-y:0px;
+  margin:0;
+  animation:none;
+  transform:none;
+  transform-origin:center;
+  filter:none;
+  transition:transform .24s ease-out,filter .24s ease-out;
+  will-change:transform;
+}
+.orbit-source__counter-rotate,
+.orbit-track--inner .orbit-source__counter-rotate,
+.orbit-track--outer .orbit-source__counter-rotate{
+  animation:none;
+  transform:none;
+  transform-style:flat;
+  backface-visibility:visible;
+  -webkit-font-smoothing:antialiased;
+  text-rendering:geometricPrecision;
+}
+.orbit-source__logo{transform:none}
+
+/* Fixed composition: each card occupies its own readable position. */
+.orbit-source--trud{
+  left:39%;
+  top:2%;
+  z-index:5;
+  transform:translate3d(var(--depth-far-x),var(--depth-far-y),0);
+}
+.orbit-source--hh{
+  left:-1%;
+  top:43%;
+  z-index:4;
+  transform:translate3d(var(--depth-mid-x),var(--depth-mid-y),0);
+}
+.orbit-source--sj{
+  left:69%;
+  top:34%;
+  z-index:6;
+  transform:translate3d(var(--depth-mid-x),var(--depth-mid-y),0);
+}
+.orbit-source--ai{
+  left:10%;
+  top:58%;
+  z-index:9;
+  transform:translate3d(var(--depth-near-x),var(--depth-near-y),0);
+}
+.orbit-source--other{
+  left:64%;
+  top:75%;
+  z-index:5;
+  transform:translate3d(var(--depth-far-x),var(--depth-far-y),0);
+}
+
+.resume-core{
+  --core-depth:0px;
+  z-index:8;
+  animation:none;
+  transform:translate(calc(-50% + var(--depth-near-x)),calc(-50% + var(--depth-near-y))) rotate(-.6deg);
+  transition:transform .24s ease-out,box-shadow .24s ease-out;
+  will-change:transform;
+  backface-visibility:visible;
+  -webkit-font-smoothing:antialiased;
+}
+.orbit-scene.is-parallax-active .resume-core{
+  box-shadow:0 34px 72px rgba(88,64,175,.28);
+}
+
+.orbit-result{
+  animation:none;
+  transform:translate3d(var(--depth-near-x),var(--depth-near-y),0);
+  transition:transform .24s ease-out;
+  will-change:transform;
+}
+.orbit-result--top{right:3%;top:17%}
+.orbit-result--bottom{left:12%;bottom:18%}
+
+.orbit-scene__halo{
+  transform:translate3d(var(--depth-far-x),var(--depth-far-y),0) scale(1.015);
+  transition:transform .28s ease-out;
+}
+
+@keyframes stage9-ring-outer{
+  from{transform:translate(-50%,-50%) rotate(-12deg)}
+  to{transform:translate(-50%,-50%) rotate(348deg)}
+}
+@keyframes stage9-ring-inner{
+  from{transform:translate(-50%,-50%) rotate(22deg)}
+  to{transform:translate(-50%,-50%) rotate(-338deg)}
+}
+
+@media(max-width:1240px) and (min-width:1061px){
+  .orbit-source--trud{left:37%;top:3%}
+  .orbit-source--hh{left:-2%;top:42%}
+  .orbit-source--sj{left:67%;top:35%}
+  .orbit-source--ai{left:8%;top:59%}
+  .orbit-source--other{left:62%;top:75%}
+}
+
+@media(max-width:1060px){
+  .orbit-scene__ring--outer,.orbit-scene__ring--inner{animation:none}
+  .orbit-track,.orbit-track--outer,.orbit-track--inner{
+    left:50%;top:50%;
+    width:var(--mobile-track-width,91%);
+    height:var(--mobile-track-height,64%);
+    transform:translate(-50%,-50%);
+    border-radius:50%;
+  }
+  .orbit-track--inner{--mobile-track-width:68%;--mobile-track-height:47%}
+  .orbit-source,
+  .orbit-source--trud,
+  .orbit-source--hh,
+  .orbit-source--sj,
+  .orbit-source--ai,
+  .orbit-source--other{
+    left:50%;top:50%;
+    margin:-41px 0 0 -77px;
+    transform:rotate(var(--start-angle)) translateX(var(--radius-x)) rotate(calc(var(--start-angle) * -1));
+  }
+  .orbit-track--inner .orbit-source{--radius-x:188px}
+  .resume-core{transform:translate(-50%,-50%) rotate(-.6deg)}
+  .orbit-result{transform:none}
+  .orbit-scene__halo{transform:none}
+}
+
+@media(max-width:720px){
+  .orbit-source,
+  .orbit-source--trud,
+  .orbit-source--hh,
+  .orbit-source--sj,
+  .orbit-source--ai,
+  .orbit-source--other{
+    margin:-32px 0 0 -56px;
+  }
+  .orbit-track--inner .orbit-source{--radius-x:calc((100vw - 180px)/2)}
+}
+
+@media(prefers-reduced-motion:reduce){
+  .orbit-scene__ring--outer,.orbit-scene__ring--inner{animation:none!important}
+  .orbit-source,.resume-core,.orbit-result,.orbit-scene__halo{transition:none!important}
+}
