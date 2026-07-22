@@ -1134,3 +1134,64 @@ body{font-family:"Manrope",Inter,system-ui,-apple-system,BlinkMacSystemFont,"Seg
 @media (min-width:1061px) and (max-width:1240px){
   .orbit-scene{width:min(700px,100%)}
 }
+
+
+/* ===== Stage 11.4: equal-speed premium glowing ellipses ===== */
+@media(min-width:1061px){
+  .orbit-hero{padding-top:68px}
+  .orbit-hero__grid{align-items:center}
+  .orbit-scene{
+    width:min(650px,100%);
+    transform:translate3d(54px,-24px,0);
+  }
+  .orbit-scene__stage{overflow:visible}
+  .orbit-scene__halo{
+    inset:3%;
+    background:radial-gradient(ellipse at center,rgba(125,88,240,.15) 0%,rgba(125,88,240,.075) 42%,rgba(125,88,240,0) 74%);
+    filter:blur(9px);
+  }
+  .orbit-scene__ring{
+    border:1px solid rgba(129,101,236,.19);
+    background:transparent;
+    box-shadow:
+      0 0 10px rgba(130,102,240,.13),
+      0 0 24px rgba(112,192,255,.07),
+      inset 0 0 12px rgba(255,255,255,.45);
+    opacity:.86;
+  }
+  .orbit-scene__ring::before,
+  .orbit-scene__ring::after{
+    content:"";
+    position:absolute;
+    width:7px;
+    height:7px;
+    border-radius:50%;
+    background:#fff;
+    box-shadow:0 0 8px rgba(121,88,241,.75),0 0 16px rgba(111,208,255,.55);
+  }
+  .orbit-scene__ring::before{left:18%;top:8%}
+  .orbit-scene__ring::after{right:13%;bottom:12%}
+  .orbit-scene__ring--outer{
+    width:88%;
+    height:76%;
+    border-color:rgba(112,198,235,.21);
+  }
+  .orbit-scene__ring--middle{
+    width:74%;
+    height:62%;
+    border-color:rgba(124,109,238,.22);
+  }
+  .orbit-scene__ring--inner{
+    width:62%;
+    height:54%;
+    border-style:solid;
+    border-color:rgba(147,111,237,.2);
+    opacity:.82;
+  }
+  .orbit-result--top{right:0;top:16%}
+  .orbit-result--bottom{display:none!important}
+}
+
+@media(max-width:1240px) and (min-width:1061px){
+  .orbit-scene{transform:translate3d(34px,-18px,0);width:min(610px,100%)}
+}

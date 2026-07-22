@@ -101,7 +101,6 @@
         </div>
 
         <div class="orbit-result orbit-result--top">+538 вакансий</div>
-        <div class="orbit-result orbit-result--bottom">Совпадение 92%</div>
         </div>
       </div>
     </div>
@@ -251,11 +250,11 @@
 
   if (orbitScene && orbitStage && orbitCards.length && !reduceMotion) {
     const orbitSettings = [
-      { selector: '.orbit-source--trud', angle: 286, duration: 42, ring: 'outer', direction: 1 },
+      { selector: '.orbit-source--trud', angle: 286, duration: 32, ring: 'outer', direction: 1 },
       { selector: '.orbit-source--hh', angle: 168, duration: 32, ring: 'middle', direction: -1 },
       { selector: '.orbit-source--sj', angle: 348, duration: 32, ring: 'middle', direction: -1 },
-      { selector: '.orbit-source--ai', angle: 132, duration: 25, ring: 'inner', direction: 1 },
-      { selector: '.orbit-source--other', angle: 312, duration: 25, ring: 'inner', direction: 1 }
+      { selector: '.orbit-source--ai', angle: 132, duration: 32, ring: 'inner', direction: 1 },
+      { selector: '.orbit-source--other', angle: 312, duration: 32, ring: 'inner', direction: 1 }
     ].map((settings) => {
       const element = orbitStage.querySelector(settings.selector);
       return element ? { ...settings, element } : null;
@@ -276,11 +275,10 @@
 
       const sceneWidth = orbitStage.clientWidth;
       const sceneHeight = orbitStage.clientHeight;
-      const orbitBase = Math.min(sceneWidth, sceneHeight);
       const orbitRadii = {
-        outer: orbitBase * 0.47,
-        middle: orbitBase * 0.40,
-        inner: orbitBase * 0.34
+        outer: { x: sceneWidth * 0.44, y: sceneHeight * 0.38 },
+        middle: { x: sceneWidth * 0.37, y: sceneHeight * 0.31 },
+        inner: { x: sceneWidth * 0.31, y: sceneHeight * 0.27 }
       };
 
       orbitSettings.forEach((item) => {
@@ -289,11 +287,10 @@
         const angle = (item.angle + direction * (elapsed / (item.duration * 1000)) * 360) * Math.PI / 180;
         const radius = orbitRadii[item.ring];
 
-        // True circular movement: no rectangular collision correction and no
-        // coordinate clamping. The radii themselves keep cards away from the
-        // central resume while preserving a smooth round trajectory.
-        const x = Math.cos(angle) * radius;
-        const y = Math.sin(angle) * radius;
+        // Smooth elliptical movement matching the visible glowing rings.
+        // No clamping or collision correction is used, so the path remains fluid.
+        const x = Math.cos(angle) * radius.x;
+        const y = Math.sin(angle) * radius.y;
 
         item.element.style.setProperty('--orbit-x', `${x.toFixed(2)}px`);
         item.element.style.setProperty('--orbit-y', `${y.toFixed(2)}px`);
