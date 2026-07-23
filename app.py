@@ -18,6 +18,7 @@ from datetime import datetime, timezone
 
 from services.hh_provider import HeadHunterProvider
 from services.superjob_provider import SuperJobProvider
+from services.reed_provider import ReedProvider
 from services.trudvsem_provider import TrudvsemProvider
 from services.vacancy_store import VacancyStore
 from services.search_filters import VacancySearchFilters, canonical_currency
@@ -34,6 +35,7 @@ HH_CLIENT_SECRET = os.environ["HH_CLIENT_SECRET"].strip()
 HH_REDIRECT_URI = os.environ["HH_REDIRECT_URI"].strip()
 HH_USER_AGENT = os.environ["HH_USER_AGENT"].strip()
 HH_APP_TOKEN = os.environ.get("HH_APP_TOKEN", "").strip() or None
+REED_API_KEY = os.environ.get("REED_API_KEY", "").strip() or None
 
 HH_AUTHORIZE_URL = "https://hh.ru/oauth/authorize"
 HH_TOKEN_URL = "https://api.hh.ru/token"
@@ -906,6 +908,8 @@ def vacancies():
             (lambda: HH_APP_TOKEN) if HH_APP_TOKEN else None,
         )
     }
+    if REED_API_KEY:
+        providers["reed"] = ReedProvider(REED_API_KEY)
     if superjob_row:
         providers["superjob"] = SuperJobProvider(
             VACANCIES_URL,
@@ -993,6 +997,8 @@ def vacancies():
                     if not provider:
                         if source_key == "superjob":
                             errors.append("SuperJob не подключён. Подключите аккаунт в личном кабинете.")
+                        elif source_key == "reed":
+                            errors.append("Reed.co.uk не подключён. Добавьте REED_API_KEY в Render.")
                         continue
                     future = executor.submit(
                         provider.search,
@@ -1058,6 +1064,12 @@ def vacancies():
     source_options = [
         {"key": "trudvsem", "title": "Работа России", "available": True},
         {"key": "superjob", "title": "SuperJob", "available": bool(superjob_row)},
+        {
+            "key": "reed",
+            "title": "Reed.co.uk",
+            "available": bool(REED_API_KEY),
+            "note": None if REED_API_KEY else "Не настроен REED_API_KEY",
+        },
         {
             "key": "hh",
             "title": "HeadHunter",

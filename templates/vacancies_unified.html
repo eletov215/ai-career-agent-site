@@ -81,6 +81,7 @@
           <option value="RUB" {% if filters.currency == 'RUB' %}selected{% endif %}>RUB — ₽</option>
           <option value="USD" {% if filters.currency == 'USD' %}selected{% endif %}>USD — $</option>
           <option value="EUR" {% if filters.currency == 'EUR' %}selected{% endif %}>EUR — €</option>
+          <option value="GBP" {% if filters.currency == 'GBP' %}selected{% endif %}>GBP — £</option>
           <option value="KZT" {% if filters.currency == 'KZT' %}selected{% endif %}>KZT — ₸</option>
           <option value="BYN" {% if filters.currency == 'BYN' %}selected{% endif %}>BYN — Br</option>
         </select>
@@ -125,7 +126,7 @@
       </div>
       <div class="source-badges">
         {% for key, result in source_results.items() %}
-          <span>{{ key|replace('trudvsem', 'Работа России')|replace('superjob', 'SuperJob')|replace('hh', 'HeadHunter') }}: {{ result.total }}</span>
+          <span>{{ key|replace('trudvsem', 'Работа России')|replace('superjob', 'SuperJob')|replace('hh', 'HeadHunter')|replace('reed', 'Reed.co.uk') }}: {{ result.total }}</span>
         {% endfor %}
       </div>
     </div>
@@ -220,6 +221,7 @@
     </div>
 
     <p class="api-credit">Данные «Работа России» получены через официальный открытый API портала trudvsem.ru.</p>
+    {% if 'reed' in selected_sources %}<p class="api-credit">Вакансии Великобритании получены через официальный Reed.co.uk Jobseeker API.</p>{% endif %}
   </div>
 </main>
 {% if 'trudvsem' in selected_sources %}
