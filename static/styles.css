@@ -1283,3 +1283,28 @@ body{font-family:"Manrope",Inter,system-ui,-apple-system,BlinkMacSystemFont,"Seg
   .resume-preview-toolbar{padding:13px 14px}.resume-preview-toolbar>div:first-child strong{font-size:16px}.resume-preview-viewport{padding:18px 10px;height:calc(100vh - 325px);min-height:400px}.resume-paper-stage{--resume-zoom:.56}.resume-preview-tools{gap:4px}.resume-preview-tools button{width:30px;height:30px}.resume-preview-footer{padding:10px}
   .resume-chat-head{padding:15px}.resume-chat-head span{font-size:12px}.resume-chat-preview-button{font-size:10px;padding:7px 9px}.resume-chat{max-height:none;height:calc(100vh - 405px);min-height:360px}.resume-chat-compose{padding:12px}.resume-chat-actions{padding:0 15px 13px}
 }
+
+/* Resume builder stage 3: interview first and refined send action */
+.resume-builder-layout{grid-template-columns:minmax(0,1.05fr) minmax(430px,.95fr)}
+.resume-chat-compose{align-items:flex-end}
+.resume-chat-send{
+  width:46px;
+  height:46px;
+  flex:0 0 46px;
+  display:grid;
+  place-items:center;
+  padding:0;
+  border:0;
+  border-radius:50%;
+  color:#fff;
+  background:linear-gradient(135deg,#7457f5 0%,#2f66e9 100%);
+  box-shadow:0 8px 20px rgba(70,83,221,.24);
+  cursor:pointer;
+  transition:transform .18s ease,box-shadow .18s ease,filter .18s ease;
+}
+.resume-chat-send svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.resume-chat-send:hover{transform:translateY(-1px);box-shadow:0 11px 24px rgba(70,83,221,.3);filter:brightness(1.03)}
+.resume-chat-send:active{transform:translateY(0) scale(.96)}
+.resume-chat-send:focus-visible{outline:3px solid rgba(80,99,235,.24);outline-offset:3px}
+@media(max-width:900px){.resume-builder-layout{grid-template-columns:1fr}}
+@media(max-width:620px){.resume-chat-send{width:44px;height:44px;flex-basis:44px}.resume-chat-send svg{width:20px;height:20px}}

@@ -15,6 +15,25 @@
     </div>
 
     <div class="resume-builder-layout" id="resumeBuilderLayout" data-mobile-view="chat">
+      <section class="card resume-chat-card" data-builder-panel="chat">
+        <div class="resume-chat-head">
+          <div class="resume-ai-avatar">✦</div>
+          <div><strong>AI-консультант</strong><span>Помогу создать ваше резюме</span></div>
+          <button type="button" class="resume-chat-preview-button" data-builder-tab-target="preview">Посмотреть резюме · <span id="chatProfilePercent">0%</span></button>
+        </div>
+        <div class="resume-chat" id="resumeChat" aria-live="polite"></div>
+        <form class="resume-chat-compose" id="resumeChatForm">
+          <textarea id="resumeChatInput" rows="2" placeholder="Введите ответ…" required></textarea>
+          <button class="resume-chat-send" type="submit" aria-label="Отправить ответ" title="Отправить">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M5 12h12"></path>
+              <path d="m13 6 6 6-6 6"></path>
+            </svg>
+          </button>
+        </form>
+        <div class="resume-chat-actions"><button type="button" id="builderSkip">Пропустить вопрос</button><button type="button" id="builderReset">Начать заново</button></div>
+      </section>
+
       <section class="card resume-preview-panel" data-builder-panel="preview">
         <div class="resume-preview-toolbar">
           <div>
@@ -89,19 +108,7 @@
         <button type="button" class="resume-mobile-return" data-builder-tab-target="chat">Продолжить интервью</button>
       </section>
 
-      <section class="card resume-chat-card" data-builder-panel="chat">
-        <div class="resume-chat-head">
-          <div class="resume-ai-avatar">✦</div>
-          <div><strong>AI-консультант</strong><span>Помогу создать ваше резюме</span></div>
-          <button type="button" class="resume-chat-preview-button" data-builder-tab-target="preview">Посмотреть резюме · <span id="chatProfilePercent">0%</span></button>
-        </div>
-        <div class="resume-chat" id="resumeChat" aria-live="polite"></div>
-        <form class="resume-chat-compose" id="resumeChatForm">
-          <textarea id="resumeChatInput" rows="2" placeholder="Введите ответ…" required></textarea>
-          <button class="btn btn-primary" type="submit" aria-label="Отправить">→</button>
-        </form>
-        <div class="resume-chat-actions"><button type="button" id="builderSkip">Пропустить вопрос</button><button type="button" id="builderReset">Начать заново</button></div>
-      </section>
+
     </div>
   </div>
 </main>
