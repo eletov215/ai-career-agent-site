@@ -119,14 +119,17 @@
     </form>
 
     {% if search_requested %}
-    <div class="results-heading">
+    <div class="results-heading results-summary">
       <div>
-        <strong>Найдено по источникам: {{ total }}</strong>
-        <div class="muted">На странице показано {{ vacancies|length }}</div>
+        <strong>{{ "{:,}".format(total).replace(",", " ") }} вакансий найдено</strong>
+        <div class="muted">На этой странице показано {{ vacancies|length }}. Количество указано по данным выбранных площадок.</div>
       </div>
       <div class="source-badges">
         {% for key, result in source_results.items() %}
-          <span>{{ key|replace('trudvsem', 'Работа России')|replace('superjob', 'SuperJob')|replace('hh', 'HeadHunter')|replace('reed', 'Reed.co.uk') }}: {{ result.total }}</span>
+          <span class="source-count source-count-{{ key }}">
+            {{ key|replace('trudvsem', 'Работа России')|replace('superjob', 'SuperJob')|replace('hh', 'HeadHunter')|replace('reed', 'Reed.co.uk') }}
+            <strong>{{ "{:,}".format(result.total).replace(",", " ") }}</strong>
+          </span>
         {% endfor %}
       </div>
     </div>
@@ -173,23 +176,18 @@
             <h2>{{ vacancy.title }}</h2>
             <p class="vacancy-company">{{ vacancy.company }}</p>
 
-            {% if vacancy.salary_from or vacancy.salary_to %}
-              <p class="vacancy-salary">
-                {% if vacancy.salary_from %}от {{ vacancy.salary_from }}{% endif %}
-                {% if vacancy.salary_to %} до {{ vacancy.salary_to }}{% endif %}
-                {{ vacancy.currency }}
-              </p>
+            {% if vacancy.salary_display %}
+              <p class="vacancy-salary">{{ vacancy.salary_display }}</p>
+            {% else %}
+              <p class="vacancy-salary vacancy-salary-empty">Зарплата не указана</p>
             {% endif %}
 
             <div class="vacancy-meta">
-              {% if vacancy.location %}<span>{{ vacancy.location }}</span>{% endif %}
-              {% if vacancy.schedule %}<span>{{ vacancy.schedule }}</span>{% endif %}
-              {% if vacancy.employment %}<span>{{ vacancy.employment }}</span>{% endif %}
-              {% if vacancy.experience %}<span>{{ vacancy.experience }}</span>{% endif %}
-              {% if vacancy.remote %}<span>Удалённо</span>{% endif %}
+              {% for label in vacancy.meta_labels %}<span>{{ label }}</span>{% endfor %}
+              {% if vacancy.published_display %}<span class="vacancy-date">Опубликовано {{ vacancy.published_display }}</span>{% endif %}
             </div>
 
-            {% if vacancy.description %}<p>{{ vacancy.description[:420] }}</p>{% endif %}
+            {% if vacancy.description %}<p class="vacancy-description">{{ vacancy.description[:420] }}{% if vacancy.description|length > 420 %}…{% endif %}</p>{% endif %}
             {% if vacancy.requirements %}<p class="muted"><strong>Требования:</strong> {{ vacancy.requirements[:300] }}</p>{% endif %}
           </div>
           <div class="vacancy-actions">

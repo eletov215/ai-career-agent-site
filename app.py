@@ -22,6 +22,7 @@ from services.reed_provider import ReedProvider
 from services.trudvsem_provider import TrudvsemProvider
 from services.vacancy_store import VacancyStore
 from services.search_filters import VacancySearchFilters, canonical_currency
+from services.vacancy_presenter import present_vacancy
 from services.resume_parser import ResumeParseError, build_resume_preview, parse_resume_pdf
 
 app = Flask(__name__)
@@ -1060,6 +1061,8 @@ def vacancies():
                 ),
                 reverse=True,
             )
+
+        all_items = [present_vacancy(item) for item in all_items]
 
     source_options = [
         {"key": "trudvsem", "title": "Работа России", "available": True},
