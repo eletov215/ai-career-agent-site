@@ -4,8 +4,14 @@
 <main class="section resume-builder-page">
   <div class="container resume-builder-shell">
     <div class="resume-builder-topbar">
-      <a href="{{ url_for('ai_career') }}" class="resume-builder-back">← Назад</a>
-      <div class="resume-builder-progress"><span id="builderProgressText">Шаг 1 из 8</span><div><i id="builderProgressBar"></i></div></div>
+      <a href="{{ url_for('ai_career') }}" class="resume-builder-back" aria-label="Вернуться к выбору способа создания резюме">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 18l-6-6 6-6"></path></svg>
+        <span>Назад</span>
+      </a>
+      <div class="resume-builder-progress">
+        <span id="builderProgressText">Шаг 1 из 8</span>
+        <div aria-hidden="true"><i id="builderProgressBar"></i></div>
+      </div>
       <span class="resume-builder-save" id="builderSaveStatus">Черновик сохраняется</span>
     </div>
 
