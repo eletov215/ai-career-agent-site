@@ -9,9 +9,92 @@
       <span class="resume-builder-save" id="builderSaveStatus">Черновик сохраняется</span>
     </div>
 
-    <div class="resume-builder-layout">
-      <section class="card resume-chat-card">
-        <div class="resume-chat-head"><div class="resume-ai-avatar">✦</div><div><strong>AI-консультант</strong><span>Помогу создать ваше резюме</span></div></div>
+    <div class="resume-builder-mobile-tabs" role="tablist" aria-label="Режим создания резюме">
+      <button type="button" class="is-active" data-builder-tab="chat" role="tab" aria-selected="true">Интервью</button>
+      <button type="button" data-builder-tab="preview" role="tab" aria-selected="false">Резюме <span id="mobileProfilePercent">0%</span></button>
+    </div>
+
+    <div class="resume-builder-layout" id="resumeBuilderLayout" data-mobile-view="chat">
+      <section class="card resume-preview-panel" data-builder-panel="preview">
+        <div class="resume-preview-toolbar">
+          <div>
+            <span>Живой предпросмотр</span>
+            <strong>Ваше резюме</strong>
+          </div>
+          <div class="resume-preview-tools">
+            <button type="button" id="resumeZoomOut" aria-label="Уменьшить масштаб">−</button>
+            <span id="resumeZoomText">82%</span>
+            <button type="button" id="resumeZoomIn" aria-label="Увеличить масштаб">+</button>
+          </div>
+        </div>
+
+        <div class="resume-preview-viewport" id="resumePreviewViewport">
+          <div class="resume-paper-stage" id="resumePaperStage">
+            <article class="resume-paper is-active" data-resume-page="0">
+              <header class="resume-paper-header">
+                <div>
+                  <h1 id="previewName">Ваше имя</h1>
+                  <p id="previewRole">Желаемая должность</p>
+                </div>
+                <div class="resume-paper-contacts" id="previewContacts">Телефон · Email · Портфолио</div>
+              </header>
+
+              <section class="resume-paper-section">
+                <h2>Профессиональный профиль</h2>
+                <p id="previewSummary">Здесь появится краткое профессиональное описание на основе ваших ответов.</p>
+              </section>
+
+              <section class="resume-paper-section">
+                <h2>Опыт работы</h2>
+                <div class="resume-paper-entry">
+                  <div class="resume-paper-entry-head"><strong id="previewExperienceTitle">Опыт пока не указан</strong><span>Период</span></div>
+                  <p id="previewExperience">Расскажите, где вы работали, какую должность занимали и чем занимались.</p>
+                  <ul id="previewAchievements"><li>Достижения и результаты появятся после ответа на соответствующий вопрос.</li></ul>
+                </div>
+              </section>
+
+              <section class="resume-paper-section">
+                <h2>Навыки</h2>
+                <div class="resume-paper-skills" id="previewSkills"><span>Ваши навыки</span></div>
+              </section>
+            </article>
+
+            <article class="resume-paper" data-resume-page="1">
+              <section class="resume-paper-section resume-paper-section-first">
+                <h2>Образование и подготовка</h2>
+                <div class="resume-paper-entry">
+                  <strong id="previewEducationTitle">Образование пока не указано</strong>
+                  <p id="previewEducation">Учебное заведение, специальность, курсы и годы обучения появятся здесь.</p>
+                </div>
+              </section>
+
+              <section class="resume-paper-section">
+                <h2>Предпочтения по работе</h2>
+                <p id="previewGoal">Формат работы, график, желаемая зарплата и другие условия.</p>
+              </section>
+
+              <section class="resume-paper-section">
+                <h2>Дополнительная информация</h2>
+                <p>После завершения интервью AI поможет улучшить формулировки, убрать повторы и подготовить резюме к скачиванию в PDF.</p>
+              </section>
+            </article>
+          </div>
+        </div>
+
+        <div class="resume-preview-footer">
+          <button type="button" id="resumePagePrev" aria-label="Предыдущая страница">←</button>
+          <span><strong id="resumeCurrentPage">1</strong> из <strong>2</strong></span>
+          <button type="button" id="resumePageNext" aria-label="Следующая страница">→</button>
+        </div>
+        <button type="button" class="resume-mobile-return" data-builder-tab-target="chat">Продолжить интервью</button>
+      </section>
+
+      <section class="card resume-chat-card" data-builder-panel="chat">
+        <div class="resume-chat-head">
+          <div class="resume-ai-avatar">✦</div>
+          <div><strong>AI-консультант</strong><span>Помогу создать ваше резюме</span></div>
+          <button type="button" class="resume-chat-preview-button" data-builder-tab-target="preview">Посмотреть резюме · <span id="chatProfilePercent">0%</span></button>
+        </div>
         <div class="resume-chat" id="resumeChat" aria-live="polite"></div>
         <form class="resume-chat-compose" id="resumeChatForm">
           <textarea id="resumeChatInput" rows="2" placeholder="Введите ответ…" required></textarea>
@@ -19,16 +102,6 @@
         </form>
         <div class="resume-chat-actions"><button type="button" id="builderSkip">Пропустить вопрос</button><button type="button" id="builderReset">Начать заново</button></div>
       </section>
-
-      <aside class="card resume-profile-live">
-        <div class="resume-profile-live-head"><div><span>Предпросмотр</span><h2>Карьерный профиль</h2></div><span id="profilePercent">0%</span></div>
-        <div class="profile-completeness"><i id="profileCompletenessBar"></i></div>
-        <div class="live-profile-section"><span>Имя</span><strong id="liveName">Пока не указано</strong></div>
-        <div class="live-profile-section"><span>Желаемая должность</span><strong id="liveRole">Пока не указана</strong></div>
-        <div class="live-profile-section"><span>Опыт</span><strong id="liveExperience">Пока не указан</strong></div>
-        <div class="live-profile-section"><span>Навыки</span><div class="live-skills" id="liveSkills"><em>Появятся во время интервью</em></div></div>
-        <div class="live-profile-tip"><span>💡</span><p>Отвечайте своими словами. Позже AI поможет улучшить формулировки.</p></div>
-      </aside>
     </div>
   </div>
 </main>
@@ -55,23 +128,44 @@
   const saveStatus = document.getElementById('builderSaveStatus');
   const skip = document.getElementById('builderSkip');
   const reset = document.getElementById('builderReset');
+  const layout = document.getElementById('resumeBuilderLayout');
+  const pages = [...document.querySelectorAll('[data-resume-page]')];
+  let currentPage = 0;
+  let zoom = 0.82;
   let state = {index:0, answers:{}, messages:[]};
   try { const saved = JSON.parse(localStorage.getItem(storageKey) || 'null'); if (saved && saved.answers) state = saved; } catch (_) {}
 
+  const setText = (id, value, fallback) => { document.getElementById(id).textContent = value || fallback; };
   const addMessage = (type, text) => { const item = document.createElement('div'); item.className = `resume-message ${type}`; item.innerHTML = type === 'ai' ? `<span class="resume-ai-mini">✦</span><p></p>` : '<p></p>'; item.querySelector('p').textContent = text; chat.appendChild(item); chat.scrollTop = chat.scrollHeight; };
   const save = () => { localStorage.setItem(storageKey, JSON.stringify(state)); saveStatus.textContent = 'Черновик сохранён'; window.setTimeout(() => saveStatus.textContent = 'Черновик сохраняется', 1400); };
+
   const updatePreview = () => {
-    document.getElementById('liveName').textContent = state.answers.name || 'Пока не указано';
-    document.getElementById('liveRole').textContent = state.answers.role || 'Пока не указана';
-    document.getElementById('liveExperience').textContent = state.answers.experience || 'Пока не указан';
-    const skills = document.getElementById('liveSkills'); skills.replaceChildren();
-    if (state.answers.skills) state.answers.skills.split(/[,;\n]/).map(v=>v.trim()).filter(Boolean).slice(0,8).forEach(v=>{ const span=document.createElement('span'); span.textContent=v; skills.appendChild(span); });
-    else { const em=document.createElement('em'); em.textContent='Появятся во время интервью'; skills.appendChild(em); }
-    const completed = Object.values(state.answers).filter(Boolean).length;
+    const a = state.answers;
+    setText('previewName', a.name, 'Ваше имя');
+    setText('previewRole', a.role, 'Желаемая должность');
+    setText('previewContacts', a.contacts, 'Телефон · Email · Портфолио');
+    setText('previewExperienceTitle', a.role, 'Опыт пока не указан');
+    setText('previewExperience', a.experience, 'Расскажите, где вы работали, какую должность занимали и чем занимались.');
+    setText('previewEducationTitle', a.education, 'Образование пока не указано');
+    setText('previewEducation', a.education, 'Учебное заведение, специальность, курсы и годы обучения появятся здесь.');
+    setText('previewGoal', a.goal, 'Формат работы, график, желаемая зарплата и другие условия.');
+
+    const summaryParts = [a.role && `Специалист в направлении «${a.role}».`, a.experience, a.goal].filter(Boolean);
+    setText('previewSummary', summaryParts.join(' ') || '', 'Здесь появится краткое профессиональное описание на основе ваших ответов.');
+
+    const achievements = document.getElementById('previewAchievements'); achievements.replaceChildren();
+    const achievementItems = (a.achievements || '').split(/[\n;]+/).map(v => v.trim()).filter(Boolean);
+    (achievementItems.length ? achievementItems : ['Достижения и результаты появятся после ответа на соответствующий вопрос.']).slice(0,4).forEach(value => { const li = document.createElement('li'); li.textContent = value; achievements.appendChild(li); });
+
+    const skills = document.getElementById('previewSkills'); skills.replaceChildren();
+    const skillItems = (a.skills || '').split(/[,;\n]/).map(v => v.trim()).filter(Boolean).slice(0,12);
+    (skillItems.length ? skillItems : ['Ваши навыки']).forEach(value => { const span = document.createElement('span'); span.textContent = value; skills.appendChild(span); });
+
+    const completed = Object.values(a).filter(Boolean).length;
     const percent = Math.round(completed / questions.length * 100);
-    document.getElementById('profilePercent').textContent = `${percent}%`;
-    document.getElementById('profileCompletenessBar').style.width = `${percent}%`;
+    ['mobileProfilePercent','chatProfilePercent'].forEach(id => document.getElementById(id).textContent = `${percent}%`);
   };
+
   const renderHistory = () => { chat.replaceChildren(); state.messages.forEach(m => addMessage(m.type, m.text)); };
   const askCurrent = () => {
     if (state.index >= questions.length) {
@@ -87,10 +181,42 @@
     progressText.textContent = `Шаг ${state.index + 1} из ${questions.length}`;
     progressBar.style.width = `${(state.index / questions.length) * 100}%`;
   };
+
+  const showPage = (index) => {
+    currentPage = Math.max(0, Math.min(pages.length - 1, index));
+    pages.forEach((page, pageIndex) => page.classList.toggle('is-active', pageIndex === currentPage));
+    document.getElementById('resumeCurrentPage').textContent = currentPage + 1;
+    document.getElementById('resumePagePrev').disabled = currentPage === 0;
+    document.getElementById('resumePageNext').disabled = currentPage === pages.length - 1;
+    document.getElementById('resumePreviewViewport').scrollTop = 0;
+  };
+
+  const applyZoom = () => {
+    document.getElementById('resumePaperStage').style.setProperty('--resume-zoom', zoom);
+    document.getElementById('resumeZoomText').textContent = `${Math.round(zoom * 100)}%`;
+  };
+
+  const switchMobileView = (view) => {
+    layout.dataset.mobileView = view;
+    document.querySelectorAll('[data-builder-tab]').forEach(button => {
+      const active = button.dataset.builderTab === view;
+      button.classList.toggle('is-active', active);
+      button.setAttribute('aria-selected', String(active));
+    });
+    if (view === 'chat') window.setTimeout(() => input.focus(), 100);
+  };
+
   form.addEventListener('submit', (event) => { event.preventDefault(); const value = input.value.trim(); if (!value || state.index >= questions.length) return; const q = questions[state.index]; state.answers[q.key] = value; state.messages.push({type:'user',text:value}); addMessage('user',value); input.value=''; state.index += 1; save(); updatePreview(); window.setTimeout(askCurrent, 250); });
   skip.addEventListener('click', () => { if (state.index >= questions.length) return; state.index += 1; save(); askCurrent(); });
-  reset.addEventListener('click', () => { if (!confirm('Удалить сохранённый черновик и начать заново?')) return; localStorage.removeItem(storageKey); state={index:0,answers:{},messages:[]}; input.disabled=false; form.querySelector('button').disabled=false; skip.hidden=false; renderHistory(); updatePreview(); askCurrent(); });
-  renderHistory(); updatePreview(); askCurrent();
+  reset.addEventListener('click', () => { if (!confirm('Удалить сохранённый черновик и начать заново?')) return; localStorage.removeItem(storageKey); state={index:0,answers:{},messages:[]}; input.disabled=false; form.querySelector('button').disabled=false; skip.hidden=false; renderHistory(); updatePreview(); askCurrent(); showPage(0); });
+  document.getElementById('resumePagePrev').addEventListener('click', () => showPage(currentPage - 1));
+  document.getElementById('resumePageNext').addEventListener('click', () => showPage(currentPage + 1));
+  document.getElementById('resumeZoomOut').addEventListener('click', () => { zoom = Math.max(0.62, +(zoom - 0.1).toFixed(2)); applyZoom(); });
+  document.getElementById('resumeZoomIn').addEventListener('click', () => { zoom = Math.min(1.12, +(zoom + 0.1).toFixed(2)); applyZoom(); });
+  document.querySelectorAll('[data-builder-tab]').forEach(button => button.addEventListener('click', () => switchMobileView(button.dataset.builderTab)));
+  document.querySelectorAll('[data-builder-tab-target]').forEach(button => button.addEventListener('click', () => switchMobileView(button.dataset.builderTabTarget)));
+
+  renderHistory(); updatePreview(); askCurrent(); showPage(0); applyZoom();
 })();
 </script>
 {% endblock %}
