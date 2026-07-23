@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% block title %}Создание резюме — AI Career Agent{% endblock %}
+{% block content %}
+<main class="section resume-builder-page">
+  <div class="container resume-builder-shell">
+    <div class="resume-builder-topbar">
+      <a href="{{ url_for('ai_career') }}" class="resume-builder-back">← Назад</a>
+      <div class="resume-builder-progress"><span id="builderProgressText">Шаг 1 из 8</span><div><i id="builderProgressBar"></i></div></div>
+      <span class="resume-builder-save" id="builderSaveStatus">Черновик сохраняется</span>
+    </div>
+
+    <div class="resume-builder-layout">
+      <section class="card resume-chat-card">
+        <div class="resume-chat-head"><div class="resume-ai-avatar">✦</div><div><strong>AI-консультант</strong><span>Помогу создать ваше резюме</span></div></div>
+        <div class="resume-chat" id="resumeChat" aria-live="polite"></div>
+        <form class="resume-chat-compose" id="resumeChatForm">
+          <textarea id="resumeChatInput" rows="2" placeholder="Введите ответ…" required></textarea>
+          <button class="btn btn-primary" type="submit" aria-label="Отправить">→</button>
+        </form>
+        <div class="resume-chat-actions"><button type="button" id="builderSkip">Пропустить вопрос</button><button type="button" id="builderReset">Начать заново</button></div>
+      </section>
+
+      <aside class="card resume-profile-live">
+        <div class="resume-profile-live-head"><div><span>Предпросмотр</span><h2>Карьерный профиль</h2></div><span id="profilePercent">0%</span></div>
+        <div class="profile-completeness"><i id="profileCompletenessBar"></i></div>
+        <div class="live-profile-section"><span>Имя</span><strong id="liveName">Пока не указано</strong></div>
+        <div class="live-profile-section"><span>Желаемая должность</span><strong id="liveRole">Пока не указана</strong></div>
+        <div class="live-profile-section"><span>Опыт</span><strong id="liveExperience">Пока не указан</strong></div>
+        <div class="live-profile-section"><span>Навыки</span><div class="live-skills" id="liveSkills"><em>Появятся во время интервью</em></div></div>
+        <div class="live-profile-tip"><span>💡</span><p>Отвечайте своими словами. Позже AI поможет улучшить формулировки.</p></div>
+      </aside>
+    </div>
+  </div>
+</main>
+{% endblock %}
+{% block scripts %}
+<script>
+(() => {
+  const questions = [
+    {key:'name', text:'Привет! Я помогу создать профессиональное резюме. Для начала, как вас зовут?', placeholder:'Например: Иван Петров'},
+    {key:'role', text:'На какую должность вы хотите устроиться?', placeholder:'Например: Python-разработчик'},
+    {key:'experience', text:'Расскажите о вашем опыте работы. Где вы работали и сколько времени?', placeholder:'Компания, должность, период'},
+    {key:'achievements', text:'Какие задачи или достижения с прошлого места работы вы считаете самыми важными?', placeholder:'Опишите 2–3 сильных результата'},
+    {key:'skills', text:'Какими профессиональными навыками, инструментами или технологиями вы владеете?', placeholder:'Например: Python, Flask, PostgreSQL'},
+    {key:'education', text:'Расскажите об образовании, курсах или профессиональной подготовке.', placeholder:'Учебное заведение, специальность, год'},
+    {key:'contacts', text:'Какие контакты добавить в резюме? Укажите телефон, email и при желании ссылку на портфолио.', placeholder:'Телефон, email, GitHub или портфолио'},
+    {key:'goal', text:'Что для вас важно в новой работе: формат, график, зарплата, город или другие условия?', placeholder:'Например: удалённо, полная занятость'}
+  ];
+  const storageKey = 'aiCareerResumeDraftV1';
+  const chat = document.getElementById('resumeChat');
+  const form = document.getElementById('resumeChatForm');
+  const input = document.getElementById('resumeChatInput');
+  const progressText = document.getElementById('builderProgressText');
+  const progressBar = document.getElementById('builderProgressBar');
+  const saveStatus = document.getElementById('builderSaveStatus');
+  const skip = document.getElementById('builderSkip');
+  const reset = document.getElementById('builderReset');
+  let state = {index:0, answers:{}, messages:[]};
+  try { const saved = JSON.parse(localStorage.getItem(storageKey) || 'null'); if (saved && saved.answers) state = saved; } catch (_) {}
+
+  const addMessage = (type, text) => { const item = document.createElement('div'); item.className = `resume-message ${type}`; item.innerHTML = type === 'ai' ? `<span class="resume-ai-mini">✦</span><p></p>` : '<p></p>'; item.querySelector('p').textContent = text; chat.appendChild(item); chat.scrollTop = chat.scrollHeight; };
+  const save = () => { localStorage.setItem(storageKey, JSON.stringify(state)); saveStatus.textContent = 'Черновик сохранён'; window.setTimeout(() => saveStatus.textContent = 'Черновик сохраняется', 1400); };
+  const updatePreview = () => {
+    document.getElementById('liveName').textContent = state.answers.name || 'Пока не указано';
+    document.getElementById('liveRole').textContent = state.answers.role || 'Пока не указана';
+    document.getElementById('liveExperience').textContent = state.answers.experience || 'Пока не указан';
+    const skills = document.getElementById('liveSkills'); skills.replaceChildren();
+    if (state.answers.skills) state.answers.skills.split(/[,;\n]/).map(v=>v.trim()).filter(Boolean).slice(0,8).forEach(v=>{ const span=document.createElement('span'); span.textContent=v; skills.appendChild(span); });
+    else { const em=document.createElement('em'); em.textContent='Появятся во время интервью'; skills.appendChild(em); }
+    const completed = Object.values(state.answers).filter(Boolean).length;
+    const percent = Math.round(completed / questions.length * 100);
+    document.getElementById('profilePercent').textContent = `${percent}%`;
+    document.getElementById('profileCompletenessBar').style.width = `${percent}%`;
+  };
+  const renderHistory = () => { chat.replaceChildren(); state.messages.forEach(m => addMessage(m.type, m.text)); };
+  const askCurrent = () => {
+    if (state.index >= questions.length) {
+      const text = 'Отлично! Основная информация собрана. На следующем этапе AI улучшит формулировки и подготовит готовое резюме.';
+      if (!state.messages.length || state.messages[state.messages.length-1].text !== text) { state.messages.push({type:'ai',text}); addMessage('ai',text); save(); }
+      input.placeholder = 'Интервью завершено'; input.disabled = true; form.querySelector('button').disabled = true; skip.hidden = true;
+      progressText.textContent = 'Интервью завершено'; progressBar.style.width = '100%'; updatePreview(); return;
+    }
+    const q = questions[state.index];
+    const last = state.messages[state.messages.length-1];
+    if (!last || last.type !== 'ai' || last.text !== q.text) { state.messages.push({type:'ai',text:q.text}); addMessage('ai',q.text); save(); }
+    input.placeholder = q.placeholder; input.focus();
+    progressText.textContent = `Шаг ${state.index + 1} из ${questions.length}`;
+    progressBar.style.width = `${(state.index / questions.length) * 100}%`;
+  };
+  form.addEventListener('submit', (event) => { event.preventDefault(); const value = input.value.trim(); if (!value || state.index >= questions.length) return; const q = questions[state.index]; state.answers[q.key] = value; state.messages.push({type:'user',text:value}); addMessage('user',value); input.value=''; state.index += 1; save(); updatePreview(); window.setTimeout(askCurrent, 250); });
+  skip.addEventListener('click', () => { if (state.index >= questions.length) return; state.index += 1; save(); askCurrent(); });
+  reset.addEventListener('click', () => { if (!confirm('Удалить сохранённый черновик и начать заново?')) return; localStorage.removeItem(storageKey); state={index:0,answers:{},messages:[]}; input.disabled=false; form.querySelector('button').disabled=false; skip.hidden=false; renderHistory(); updatePreview(); askCurrent(); });
+  renderHistory(); updatePreview(); askCurrent();
+})();
+</script>
+{% endblock %}

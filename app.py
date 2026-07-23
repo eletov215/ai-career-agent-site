@@ -832,24 +832,6 @@ def ai_career():
     parsed_resume = None
     upload_error = None
 
-    source_options = [
-        {"key": "trudvsem", "title": "Работа России", "available": True, "connected": True},
-        {
-            "key": "hh",
-            "title": "HeadHunter",
-            "available": bool(HH_APP_TOKEN),
-            "connected": bool(HH_APP_TOKEN),
-            "connect_url": url_for("hh_login"),
-        },
-        {
-            "key": "superjob",
-            "title": "SuperJob",
-            "available": bool(account()),
-            "connected": bool(account()),
-            "connect_url": url_for("login"),
-        },
-    ]
-
     if request.method == "POST":
         uploaded = request.files.get("resume")
         if not uploaded or not uploaded.filename:
@@ -874,8 +856,12 @@ def ai_career():
         parsed_resume=parsed_resume,
         upload_error=upload_error,
         max_resume_upload_mb=MAX_RESUME_UPLOAD_MB,
-        source_options=source_options,
     )
+
+
+@app.get("/resume-builder")
+def resume_builder():
+    return render_template("resume_builder.html")
 
 
 @app.get("/vacancies")
