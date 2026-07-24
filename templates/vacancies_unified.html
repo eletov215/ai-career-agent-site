@@ -582,8 +582,15 @@
     if (fromSalaryOnly && toSalaryOnly) toSalaryOnly.checked = fromSalaryOnly.checked;
   };
 
+  const mobileCompactSearchMedia = window.matchMedia('(max-width: 720px)');
+
   const updateCompactSearch = () => {
     if (!searchForm || !compactSearch) return;
+    if (mobileCompactSearchMedia.matches) {
+      compactSearch.classList.remove('is-visible');
+      compactSearch.setAttribute('aria-hidden', 'true');
+      return;
+    }
     const navigationHeight = siteNavigation?.getBoundingClientRect().height || 0;
     compactSearch.style.setProperty('--vacancy-compact-top', `${Math.ceil(navigationHeight + 8)}px`);
     const shouldShow = searchForm.getBoundingClientRect().bottom <= navigationHeight + 18;
@@ -624,6 +631,7 @@
     updateCompactSearch();
     window.addEventListener('scroll', requestCompactSearchUpdate, {passive: true});
     window.addEventListener('resize', requestCompactSearchUpdate, {passive: true});
+    mobileCompactSearchMedia.addEventListener?.('change', requestCompactSearchUpdate);
   }
 
   const loadingState = document.querySelector('[data-vacancy-loading]');
