@@ -488,3 +488,137 @@ input:focus,select:focus,textarea:focus{outline:3px solid rgba(109,91,255,.14);b
   }
   .ai-recommended-badge span{width:15px;height:15px;font-size:8px}
 }
+
+
+/* Aurora AI Components v1: unified actions, secondary controls and badges */
+:root{
+  --control-primary-height:56px;
+  --control-primary-radius:16px;
+  --control-primary-font-size:16px;
+  --control-primary-font-weight:800;
+  --control-secondary-height:40px;
+  --control-secondary-font-size:14px;
+  --control-badge-height:30px;
+  --control-badge-radius:999px;
+  --control-badge-font-size:11px;
+}
+
+/* Main actions use one geometry and typography everywhere. */
+.career-entry-card .career-main-action{
+  width:100%;
+  min-width:0;
+  min-height:var(--control-primary-height)!important;
+  height:var(--control-primary-height);
+  padding:0 20px!important;
+  border-radius:var(--control-primary-radius)!important;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+  font-family:inherit!important;
+  font-size:var(--control-primary-font-size)!important;
+  font-weight:var(--control-primary-font-weight)!important;
+  line-height:1!important;
+  letter-spacing:-.01em;
+  white-space:nowrap;
+  text-align:center;
+}
+.career-action-arrow,
+.ai-interview-button>span[aria-hidden="true"]{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:18px;
+  height:18px;
+  flex:0 0 18px;
+  font-size:17px;
+  font-weight:700;
+  line-height:1;
+  transform:translateY(-.5px);
+}
+
+/* File actions share one secondary-button standard. */
+.resume-file-actions{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+  flex-wrap:wrap;
+  width:100%;
+  max-width:100%;
+  margin-top:12px;
+}
+.resume-file-action{
+  min-width:118px;
+  min-height:var(--control-secondary-height)!important;
+  height:var(--control-secondary-height);
+  padding:0 15px!important;
+  border-radius:12px!important;
+  gap:8px!important;
+  font-family:inherit!important;
+  font-size:var(--control-secondary-font-size)!important;
+  font-weight:800!important;
+  line-height:1!important;
+}
+.resume-file-action svg{
+  width:16px!important;
+  height:16px!important;
+  flex:0 0 16px;
+}
+
+/* Pills and recommendation badge follow the same compact scale. */
+.ai-resume-time span,
+.resume-upload-meta>span{
+  min-height:var(--control-badge-height);
+  padding:0 11px!important;
+  border-radius:var(--control-badge-radius)!important;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  font-family:inherit!important;
+  font-size:var(--control-badge-font-size)!important;
+  font-weight:800!important;
+  line-height:1!important;
+}
+.ai-recommended-badge{
+  min-height:var(--control-badge-height)!important;
+  height:var(--control-badge-height);
+  padding:0 12px!important;
+  border-radius:var(--control-badge-radius)!important;
+  font-family:inherit!important;
+  font-size:var(--control-badge-font-size)!important;
+  font-weight:900!important;
+  line-height:1!important;
+}
+
+@media(max-width:620px){
+  :root{
+    --control-primary-height:52px;
+    --control-primary-radius:14px;
+    --control-primary-font-size:15px;
+    --control-secondary-height:40px;
+    --control-secondary-font-size:13px;
+    --control-badge-height:28px;
+    --control-badge-font-size:10px;
+  }
+  .career-entry-card .career-main-action{
+    padding:0 14px!important;
+  }
+  .resume-file-actions{
+    display:grid;
+    grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+    gap:8px;
+  }
+  .resume-file-action{
+    width:100%;
+    min-width:0;
+    padding:0 10px!important;
+  }
+  .career-action-arrow,
+  .ai-interview-button>span[aria-hidden="true"]{
+    width:16px;
+    height:16px;
+    flex-basis:16px;
+    font-size:15px;
+  }
+}
