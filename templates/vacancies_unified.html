@@ -86,36 +86,17 @@
         <button type="button" data-search-example="Менеджер проектов">Менеджер проектов</button>
       </div>
 
-      <fieldset class="source-picker" data-source-picker>
-        <div class="source-picker__heading">
-          <div>
-            <legend>Источники</legend>
-            <p>Выберите площадки, на которых нужно искать вакансии.</p>
-          </div>
-          <span class="source-picker__count" data-source-count aria-live="polite">Выбрано источников: 0</span>
-        </div>
-
-        <div class="source-picker__grid">
-          {% for source in source_options %}
-            <label class="source-option source-option--{{ source.key }} {% if not source.available %}source-disabled{% endif %}">
-              <input type="checkbox" name="source" value="{{ source.key }}"
-                     {% if source.key in selected_sources %}checked{% endif %}
-                     {% if not source.available and source.key != 'trudvsem' %}disabled{% endif %}>
-              <span class="source-option__mark" aria-hidden="true">
-                {% if source.key in ['trudvsem', 'superjob', 'hh', 'reed'] %}
-                  <img src="{{ url_for('static', filename='images/sources/' ~ source.key ~ '.svg') }}" alt="" loading="lazy">
-                {% else %}
-                  <span class="source-option__fallback">{{ source.title[:2] }}</span>
-                {% endif %}
-              </span>
-              <span class="source-option__copy">
-                <strong>{{ source.title }}</strong>
-                {% if source.available %}<small>Поиск доступен</small>{% elif source.note %}<small>{{ source.note }}</small>{% else %}<small>Поиск недоступен</small>{% endif %}
-              </span>
-              <span class="source-option__check" aria-hidden="true">✓</span>
-            </label>
-          {% endfor %}
-        </div>
+      <fieldset class="source-picker">
+        <legend>Источники</legend>
+        {% for source in source_options %}
+          <label class="source-option {% if not source.available %}source-disabled{% endif %}">
+            <input type="checkbox" name="source" value="{{ source.key }}"
+                   {% if source.key in selected_sources %}checked{% endif %}
+                   {% if not source.available and source.key != 'trudvsem' %}disabled{% endif %}>
+            <span>{{ source.title }}</span>
+            {% if source.note %}<small>{{ source.note }}</small>{% endif %}
+          </label>
+        {% endfor %}
       </fieldset>
 
       <div class="vacancy-main-filters" aria-label="Основные фильтры">
@@ -221,32 +202,6 @@
 
     </form>
 
-    <section class="vacancy-loading-state" data-vacancy-loading hidden aria-live="polite" aria-busy="true">
-      <div class="vacancy-loading-state__heading">
-        <span class="vacancy-loading-state__spinner" aria-hidden="true"></span>
-        <div>
-          <strong>Ищем вакансии на выбранных площадках</strong>
-          <p>Собираем предложения и применяем выбранные фильтры. Это может занять несколько секунд.</p>
-        </div>
-      </div>
-      <div class="vacancy-loading-state__sources" data-loading-sources aria-label="Выбранные источники"></div>
-      <div class="vacancy-loading-state__skeletons" aria-hidden="true">
-        {% for _ in range(3) %}
-          <article class="vacancy-loading-card">
-            <span class="vacancy-loading-line vacancy-loading-line--badge"></span>
-            <span class="vacancy-loading-line vacancy-loading-line--title"></span>
-            <span class="vacancy-loading-line vacancy-loading-line--company"></span>
-            <span class="vacancy-loading-line vacancy-loading-line--salary"></span>
-            <div class="vacancy-loading-card__tags">
-              <span></span><span></span><span></span>
-            </div>
-            <span class="vacancy-loading-line vacancy-loading-line--text"></span>
-            <span class="vacancy-loading-line vacancy-loading-line--text-short"></span>
-          </article>
-        {% endfor %}
-      </div>
-    </section>
-
     {% if search_requested %}
     <div class="results-heading results-summary">
       <div>
@@ -299,9 +254,12 @@
 
     <div class="vacancy-list vacancy-results-grid">
       {% for vacancy in vacancies %}
-        <article class="vacancy-card unified-vacancy-card" data-vacancy-card>
-          <div class="vacancy-card__topline">
-            <h2>{{ vacancy.title }}</h2>
+        <article class="vacancy-card unified-vacancy-card vacancy-result-card" data-vacancy-id="{{ vacancy.url or (vacancy.title ~ vacancy.company) }}">
+          <div class="vacancy-result-card__top">
+            <div class="vacancy-result-card__heading">
+              <h2>{{ vacancy.title }}</h2>
+              <p class="vacancy-company">{{ vacancy.company }}</p>
+            </div>
             {% if vacancy.salary_display %}
               <p class="vacancy-salary">{{ vacancy.salary_display }}</p>
             {% else %}
@@ -309,58 +267,50 @@
             {% endif %}
           </div>
 
-          <p class="vacancy-company">{{ vacancy.company }}</p>
+          <div class="vacancy-meta vacancy-result-card__tags">
+            {% for label in vacancy.meta_labels %}<span>{{ label }}</span>{% endfor %}
+          </div>
 
-          {% if vacancy.meta_labels %}
-            <div class="vacancy-meta" aria-label="Основные параметры вакансии">
-              {% for label in vacancy.meta_labels %}<span>{{ label }}</span>{% endfor %}
-            </div>
-          {% endif %}
+          <div class="vacancy-result-card__content">
+            {% if vacancy.description %}<p class="vacancy-description">{{ vacancy.description[:420] }}{% if vacancy.description|length > 420 %}…{% endif %}</p>{% endif %}
+            {% if vacancy.requirements %}<p class="vacancy-requirements"><strong>Требования:</strong> {{ vacancy.requirements[:300] }}{% if vacancy.requirements|length > 300 %}…{% endif %}</p>{% endif %}
+          </div>
 
-          {% if vacancy.description %}
-            <p class="vacancy-description">{{ vacancy.description[:360] }}{% if vacancy.description|length > 360 %}…{% endif %}</p>
-          {% endif %}
-          {% if vacancy.requirements %}
-            <p class="vacancy-requirements"><strong>Требования:</strong> {{ vacancy.requirements[:220] }}{% if vacancy.requirements|length > 220 %}…{% endif %}</p>
-          {% endif %}
-
-          <div class="vacancy-card__footer">
-            <div class="vacancy-card__source-date">
-              <span class="vacancy-source-logo" aria-hidden="true">
-                {% if vacancy.source in ['hh', 'superjob', 'trudvsem', 'reed'] %}
-                  <img src="{{ url_for('static', filename='images/sources/' ~ vacancy.source ~ '.svg') }}" alt="">
+          <footer class="vacancy-result-card__footer">
+            <div class="vacancy-result-card__source">
+              <span class="vacancy-source-logo vacancy-source-logo--{{ vacancy.source }}" aria-hidden="true">
+                {% if vacancy.source == 'hh' %}
+                  <img src="{{ url_for('static', filename='images/logos/hh.svg') }}" alt="">
+                {% elif vacancy.source == 'superjob' %}
+                  <img src="{{ url_for('static', filename='images/logos/superjob.svg') }}" alt="">
+                {% elif vacancy.source == 'trudvsem' %}
+                  <img src="{{ url_for('static', filename='images/logos/trudvsem.svg') }}" alt="">
                 {% else %}
-                  <span>{{ vacancy.source_title[:1] }}</span>
+                  <span>REED</span>
                 {% endif %}
               </span>
-              <span class="vacancy-source-copy">
+              <span class="vacancy-result-card__source-text">
                 <strong>{{ vacancy.source_title }}</strong>
                 {% if vacancy.published_display %}<small>Опубликовано {{ vacancy.published_display }}</small>{% endif %}
               </span>
             </div>
 
-            <div class="vacancy-actions">
-              <button
-                class="btn btn-ghost vacancy-save-button"
-                type="button"
-                data-save-vacancy
-                data-save-key="{{ vacancy.url or (vacancy.source ~ ':' ~ vacancy.title ~ ':' ~ vacancy.company) }}"
-                aria-pressed="false"
-              >
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4.8A1.8 1.8 0 0 1 7.8 3h8.4A1.8 1.8 0 0 1 18 4.8V21l-6-3.8L6 21V4.8Z"></path></svg>
+            <div class="vacancy-actions vacancy-result-card__actions">
+              <button class="btn btn-secondary vacancy-save-button" type="button" data-save-vacancy aria-pressed="false">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 4.5h11v15l-5.5-3.4-5.5 3.4z"></path></svg>
                 <span>Сохранить</span>
               </button>
               {% if vacancy.url %}
-                <a class="btn btn-primary vacancy-details-button" href="{{ vacancy.url }}" target="_blank" rel="noopener noreferrer">
-                  Подробнее
-                  <span aria-hidden="true">→</span>
+                <a class="btn btn-primary vacancy-apply-button" href="{{ vacancy.url }}" target="_blank" rel="noopener noreferrer">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3.5 11 16-7-5.8 16-3.1-6z"></path><path d="m10.6 14 8.9-10"></path></svg>
+                  <span>Откликнуться</span>
                 </a>
               {% endif %}
             </div>
-          </div>
+          </footer>
         </article>
       {% else %}
-        <section class="card">
+        <section class="card vacancy-results-empty">
           <h2>Вакансии не найдены</h2>
           <p class="muted">Измени запрос или выбери другой источник.</p>
         </section>
@@ -368,41 +318,7 @@
     </div>
 
     {% else %}
-      <section class="vacancy-start-state" aria-labelledby="vacancy-start-title">
-        <div class="vacancy-start-state__visual" aria-hidden="true">
-          <div class="vacancy-start-state__glow"></div>
-          <article class="vacancy-start-card vacancy-start-card--main">
-            <span class="vacancy-start-card__icon">
-              <svg viewBox="0 0 24 24"><path d="M8 7V5.8A2.8 2.8 0 0 1 10.8 3h2.4A2.8 2.8 0 0 1 16 5.8V7"></path><rect x="4" y="7" width="16" height="12" rx="3"></rect><path d="M4 12h16"></path><path d="M10 12v2h4v-2"></path></svg>
-            </span>
-            <span class="vacancy-start-card__copy"><strong>Python-разработчик</strong><small>Удалённо · от 180 000 ₽</small></span>
-            <span class="vacancy-start-card__match">92%</span>
-          </article>
-          <article class="vacancy-start-card vacancy-start-card--left">
-            <span class="vacancy-start-card__dot"></span>
-            <span class="vacancy-start-card__copy"><strong>Аналитик данных</strong><small>Москва · гибрид</small></span>
-          </article>
-          <article class="vacancy-start-card vacancy-start-card--right">
-            <span class="vacancy-start-card__dot"></span>
-            <span class="vacancy-start-card__copy"><strong>Product Manager</strong><small>Санкт-Петербург</small></span>
-          </article>
-          <div class="vacancy-start-state__search-mark">
-            <svg viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="5.8"></circle><path d="m15 15 5 5"></path></svg>
-          </div>
-        </div>
-
-        <div class="vacancy-start-state__content">
-          <span class="vacancy-start-state__eyebrow">Всё готово к поиску</span>
-          <h2 id="vacancy-start-title">Начните поиск вакансий</h2>
-          <p>Укажите должность или ключевые навыки, выберите площадки и получите предложения в одной удобной ленте.</p>
-          <div class="vacancy-start-state__examples" aria-label="Популярные запросы">
-            <span>Попробуйте:</span>
-            <button type="button" data-search-example="Python-разработчик">Python-разработчик</button>
-            <button type="button" data-search-example="Аналитик данных">Аналитик данных</button>
-            <button type="button" data-search-example="Менеджер проектов">Менеджер проектов</button>
-          </div>
-        </div>
-      </section>
+      <section class="card"><h2>Поиск готов</h2><p class="muted">Выберите источники и нажмите «Найти вакансии». Страница больше не ждёт внешние API при открытии.</p></section>
     {% endif %}
 
     <div class="pagination">
@@ -430,84 +346,42 @@
     });
   });
 
-  const sourcePicker = document.querySelector('[data-source-picker]');
-  const sourceCount = sourcePicker?.querySelector('[data-source-count]');
-
-  const updateSourceCount = () => {
-    if (!sourcePicker || !sourceCount) return;
-    const count = sourcePicker.querySelectorAll('input[name="source"]:checked:not(:disabled)').length;
-    sourceCount.textContent = `Выбрано источников: ${count}`;
-  };
-
-  sourcePicker?.querySelectorAll('input[name="source"]').forEach((checkbox) => {
-    checkbox.addEventListener('change', updateSourceCount);
-  });
-
-  updateSourceCount();
-
-  const searchForm = document.querySelector('.unified-search');
-  const loadingState = document.querySelector('[data-vacancy-loading]');
-  const loadingSources = loadingState?.querySelector('[data-loading-sources]');
-  const sourceNames = {
-    trudvsem: 'Работа России',
-    superjob: 'SuperJob',
-    reed: 'Reed.co.uk',
-    hh: 'HeadHunter'
-  };
-
-  const savedVacanciesKey = 'ai-career-agent:saved-vacancies';
-  let savedVacancies = new Set();
+  const storageKey = 'ai-career-agent-saved-vacancies';
+  let savedVacancies = [];
   try {
-    savedVacancies = new Set(JSON.parse(localStorage.getItem(savedVacanciesKey) || '[]'));
+    savedVacancies = JSON.parse(localStorage.getItem(storageKey) || '[]');
+    if (!Array.isArray(savedVacancies)) savedVacancies = [];
   } catch (error) {
-    savedVacancies = new Set();
+    savedVacancies = [];
   }
 
   document.querySelectorAll('[data-save-vacancy]').forEach((button) => {
-    const key = button.dataset.saveKey || '';
-    const label = button.querySelector('span');
-    const renderSavedState = () => {
-      const isSaved = savedVacancies.has(key);
+    const card = button.closest('[data-vacancy-id]');
+    if (!card) return;
+    const vacancyId = card.dataset.vacancyId;
+
+    const renderState = () => {
+      const isSaved = savedVacancies.includes(vacancyId);
       button.classList.toggle('is-saved', isSaved);
       button.setAttribute('aria-pressed', String(isSaved));
+      const label = button.querySelector('span');
       if (label) label.textContent = isSaved ? 'Сохранено' : 'Сохранить';
     };
 
-    renderSavedState();
+    renderState();
     button.addEventListener('click', () => {
-      if (!key) return;
-      if (savedVacancies.has(key)) savedVacancies.delete(key);
-      else savedVacancies.add(key);
-      try {
-        localStorage.setItem(savedVacanciesKey, JSON.stringify(Array.from(savedVacancies)));
-      } catch (error) {
-        // Интерфейс продолжает работать, даже если хранилище браузера недоступно.
+      if (savedVacancies.includes(vacancyId)) {
+        savedVacancies = savedVacancies.filter((item) => item !== vacancyId);
+      } else {
+        savedVacancies.push(vacancyId);
       }
-      renderSavedState();
+      try {
+        localStorage.setItem(storageKey, JSON.stringify(savedVacancies));
+      } catch (error) {
+        // Карточка всё равно обновится визуально, даже если хранилище недоступно.
+      }
+      renderState();
     });
-  });
-
-  searchForm?.addEventListener('submit', (event) => {
-    if (!searchForm.checkValidity()) return;
-
-    const selected = Array.from(searchForm.querySelectorAll('input[name="source"]:checked:not(:disabled)'));
-    if (loadingSources) {
-      loadingSources.replaceChildren(...selected.map((input) => {
-        const item = document.createElement('span');
-        item.className = 'vacancy-loading-source';
-        item.innerHTML = `<i aria-hidden="true"></i>${sourceNames[input.value] || input.value}`;
-        return item;
-      }));
-    }
-
-    loadingState?.removeAttribute('hidden');
-    loadingState?.scrollIntoView({behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start'});
-
-    const submitButton = searchForm.querySelector('.search-submit');
-    if (submitButton) {
-      submitButton.disabled = true;
-      submitButton.textContent = 'Ищем вакансии…';
-    }
   });
 })();
 </script>
