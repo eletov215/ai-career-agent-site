@@ -62,8 +62,7 @@
       <a class="btn btn-secondary vacancy-cabinet-link" href="{{ url_for('dashboard') }}">В кабинет</a>
     </section>
 
-    <div class="vacancy-search-sticky-anchor" aria-hidden="true"></div>
-    <form class="unified-search" method="get" data-sticky-search>
+    <form class="unified-search" method="get">
       <input type="hidden" name="search" value="1">
 
       <div class="vacancy-primary-search">
@@ -221,6 +220,16 @@
       </details>
 
     </form>
+
+    <div class="vacancy-compact-search" data-compact-search aria-hidden="true">
+      <div class="vacancy-compact-search__inner">
+        <span class="vacancy-search-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"></circle><path d="m16 16 4 4"></path></svg>
+        </span>
+        <input type="text" data-compact-keyword value="{{ keyword }}" placeholder="Должность или ключевые слова" aria-label="Должность или ключевые слова">
+        <button class="btn btn-primary" type="button" data-compact-submit>Найти вакансии</button>
+      </div>
+    </div>
 
     <section class="vacancy-loading-state" data-vacancy-loading hidden aria-live="polite" aria-busy="true">
       <div class="vacancy-loading-state__heading">
@@ -447,24 +456,50 @@
   updateSourceCount();
 
   const searchForm = document.querySelector('.unified-search');
-  const stickySearchAnchor = document.querySelector('.vacancy-search-sticky-anchor');
   const siteNavigation = document.querySelector('.site-nav');
+  const compactSearch = document.querySelector('[data-compact-search]');
+  const compactKeyword = compactSearch?.querySelector('[data-compact-keyword]');
+  const compactSubmit = compactSearch?.querySelector('[data-compact-submit]');
 
-  const updateStickySearchOffset = () => {
-    if (!searchForm) return;
+  const updateCompactSearch = () => {
+    if (!searchForm || !compactSearch) return;
     const navigationHeight = siteNavigation?.getBoundingClientRect().height || 0;
-    searchForm.style.setProperty('--vacancy-sticky-top', `${Math.ceil(navigationHeight + 10)}px`);
+    compactSearch.style.setProperty('--vacancy-compact-top', `${Math.ceil(navigationHeight + 8)}px`);
+    const shouldShow = searchForm.getBoundingClientRect().bottom <= navigationHeight + 18;
+    compactSearch.classList.toggle('is-visible', shouldShow);
+    compactSearch.setAttribute('aria-hidden', shouldShow ? 'false' : 'true');
   };
 
-  if (searchForm && stickySearchAnchor) {
-    updateStickySearchOffset();
-    window.addEventListener('resize', updateStickySearchOffset, {passive: true});
+  if (searchForm && compactSearch) {
+    let compactSearchTicking = false;
+    const requestCompactSearchUpdate = () => {
+      if (compactSearchTicking) return;
+      compactSearchTicking = true;
+      window.requestAnimationFrame(() => {
+        updateCompactSearch();
+        compactSearchTicking = false;
+      });
+    };
 
-    const stickySearchObserver = new IntersectionObserver(([entry]) => {
-      searchForm.classList.toggle('is-sticky-compact', !entry.isIntersecting && entry.boundingClientRect.top < 0);
-    }, {threshold: 0});
+    compactKeyword?.addEventListener('input', () => {
+      if (keywordInput) keywordInput.value = compactKeyword.value;
+    });
+    keywordInput?.addEventListener('input', () => {
+      if (compactKeyword) compactKeyword.value = keywordInput.value;
+    });
+    compactSubmit?.addEventListener('click', () => {
+      if (keywordInput && compactKeyword) keywordInput.value = compactKeyword.value;
+      searchForm.requestSubmit();
+    });
+    compactKeyword?.addEventListener('keydown', (event) => {
+      if (event.key !== 'Enter') return;
+      event.preventDefault();
+      compactSubmit?.click();
+    });
 
-    stickySearchObserver.observe(stickySearchAnchor);
+    updateCompactSearch();
+    window.addEventListener('scroll', requestCompactSearchUpdate, {passive: true});
+    window.addEventListener('resize', requestCompactSearchUpdate, {passive: true});
   }
 
   const loadingState = document.querySelector('[data-vacancy-loading]');

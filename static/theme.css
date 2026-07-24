@@ -2509,77 +2509,80 @@ input:focus,select:focus,textarea:focus{outline:3px solid rgba(109,91,255,.14);b
 }
 .vacancy-apply-button span{font-size:inherit;line-height:1}
 
-.vacancy-search-sticky-anchor{
-  width:100%;
-  height:1px;
-  margin-top:-1px;
-  pointer-events:none;
-}
-.unified-search[data-sticky-search]{
-  z-index:42;
-  transition:padding .25s ease,border-radius .25s ease,box-shadow .25s ease,background-color .25s ease;
-}
-.unified-search[data-sticky-search].is-sticky-compact{
-  position:sticky;
-  top:var(--vacancy-sticky-top,84px);
-  padding:14px 16px;
-  border-color:rgba(91,91,210,.18);
+.vacancy-compact-search{
+  position:fixed;
+  top:var(--vacancy-compact-top,84px);
+  left:50%;
+  z-index:60;
+  width:min(1120px,calc(100% - 32px));
+  padding:10px;
+  border:1px solid rgba(91,91,210,.16);
   border-radius:18px;
-  background:rgba(255,255,255,.94);
-  box-shadow:0 16px 44px rgba(35,43,92,.14);
+  background:rgba(255,255,255,.95);
+  box-shadow:0 16px 42px rgba(35,43,92,.14);
   backdrop-filter:blur(18px);
   -webkit-backdrop-filter:blur(18px);
+  opacity:0;
+  visibility:hidden;
+  pointer-events:none;
+  transform:translate(-50%,-12px);
+  transition:opacity .2s ease,transform .2s ease,visibility .2s ease;
 }
-.unified-search[data-sticky-search].is-sticky-compact::before{opacity:.55}
-.unified-search[data-sticky-search].is-sticky-compact .vacancy-primary-search{
-  grid-template-columns:minmax(0,1fr) auto;
-  align-items:end;
-  gap:12px;
+.vacancy-compact-search.is-visible{
+  opacity:1;
+  visibility:visible;
+  pointer-events:auto;
+  transform:translate(-50%,0);
 }
-.unified-search[data-sticky-search].is-sticky-compact .search-keyword>span:first-child{display:none}
-.unified-search[data-sticky-search].is-sticky-compact .vacancy-keyword-control input{min-height:44px}
-.unified-search[data-sticky-search].is-sticky-compact .search-submit{
-  min-width:170px;
-  min-height:44px;
-  padding:10px 20px;
+.vacancy-compact-search__inner{
+  display:grid;
+  grid-template-columns:auto minmax(0,1fr) auto;
+  align-items:center;
+  gap:10px;
 }
-.unified-search[data-sticky-search].is-sticky-compact .vacancy-quick-search{
-  margin-top:8px;
-  gap:6px;
+.vacancy-compact-search .vacancy-search-icon{
+  position:static;
+  width:38px;
+  height:38px;
+  border-radius:12px;
+  background:rgba(108,92,255,.09);
 }
-.unified-search[data-sticky-search].is-sticky-compact .vacancy-quick-search button{
-  min-height:28px;
-  padding:5px 9px;
-  font-size:10px;
+.vacancy-compact-search input{
+  width:100%;
+  min-width:0;
+  min-height:42px;
+  padding:9px 12px;
+  border:1px solid rgba(91,91,210,.16);
+  border-radius:12px;
+  background:#fff;
+  color:var(--ink);
+  font:inherit;
+  outline:none;
 }
-.unified-search[data-sticky-search].is-sticky-compact>.source-picker,
-.unified-search[data-sticky-search].is-sticky-compact>.vacancy-main-filters,
-.unified-search[data-sticky-search].is-sticky-compact>.vacancy-extra-filters{
-  display:none;
+.vacancy-compact-search input:focus{
+  border-color:rgba(96,82,255,.55);
+  box-shadow:0 0 0 4px rgba(96,82,255,.1);
 }
-
+.vacancy-compact-search .btn{
+  min-height:42px;
+  padding:9px 18px;
+  white-space:nowrap;
+}
 @media(max-width:720px){
-  .unified-search[data-sticky-search].is-sticky-compact{
-    top:var(--vacancy-sticky-top,72px);
-    padding:10px;
+  .vacancy-compact-search{
+    width:calc(100% - 20px);
+    padding:8px;
     border-radius:15px;
   }
-  .unified-search[data-sticky-search].is-sticky-compact .vacancy-primary-search{
-    grid-template-columns:1fr auto;
-    gap:8px;
-  }
-  .unified-search[data-sticky-search].is-sticky-compact .search-submit{
-    width:auto;
-    min-width:0;
-    padding-inline:14px;
-    white-space:nowrap;
-  }
-  .unified-search[data-sticky-search].is-sticky-compact .vacancy-quick-search{display:none}
+  .vacancy-compact-search__inner{grid-template-columns:minmax(0,1fr) auto}
+  .vacancy-compact-search .vacancy-search-icon{display:none}
+  .vacancy-compact-search .btn{padding-inline:14px}
 }
 @media(max-width:470px){
-  .unified-search[data-sticky-search].is-sticky-compact .vacancy-primary-search{grid-template-columns:1fr}
-  .unified-search[data-sticky-search].is-sticky-compact .search-submit{width:100%}
+  .vacancy-compact-search__inner{grid-template-columns:1fr}
+  .vacancy-compact-search .btn{width:100%}
 }
 @media(prefers-reduced-motion:reduce){
-  .unified-search[data-sticky-search]{transition:none}
+  .vacancy-compact-search{transition:none}
 }
+
