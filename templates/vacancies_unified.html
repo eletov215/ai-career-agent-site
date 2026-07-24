@@ -86,17 +86,36 @@
         <button type="button" data-search-example="Менеджер проектов">Менеджер проектов</button>
       </div>
 
-      <fieldset class="source-picker">
-        <legend>Источники</legend>
-        {% for source in source_options %}
-          <label class="source-option {% if not source.available %}source-disabled{% endif %}">
-            <input type="checkbox" name="source" value="{{ source.key }}"
-                   {% if source.key in selected_sources %}checked{% endif %}
-                   {% if not source.available and source.key != 'trudvsem' %}disabled{% endif %}>
-            <span>{{ source.title }}</span>
-            {% if source.note %}<small>{{ source.note }}</small>{% endif %}
-          </label>
-        {% endfor %}
+      <fieldset class="source-picker" data-source-picker>
+        <div class="source-picker__heading">
+          <div>
+            <legend>Источники</legend>
+            <p>Выберите площадки, на которых нужно искать вакансии.</p>
+          </div>
+          <span class="source-picker__count" data-source-count aria-live="polite">Выбрано источников: 0</span>
+        </div>
+
+        <div class="source-picker__grid">
+          {% for source in source_options %}
+            <label class="source-option source-option--{{ source.key }} {% if not source.available %}source-disabled{% endif %}">
+              <input type="checkbox" name="source" value="{{ source.key }}"
+                     {% if source.key in selected_sources %}checked{% endif %}
+                     {% if not source.available and source.key != 'trudvsem' %}disabled{% endif %}>
+              <span class="source-option__mark" aria-hidden="true">
+                {% if source.key == 'trudvsem' %}РФ
+                {% elif source.key == 'superjob' %}SJ
+                {% elif source.key == 'hh' %}hh
+                {% elif source.key == 'reed' %}R
+                {% else %}{{ source.title[:2] }}{% endif %}
+              </span>
+              <span class="source-option__copy">
+                <strong>{{ source.title }}</strong>
+                {% if source.note %}<small>{{ source.note }}</small>{% else %}<small>Поиск доступен</small>{% endif %}
+              </span>
+              <span class="source-option__check" aria-hidden="true">✓</span>
+            </label>
+          {% endfor %}
+        </div>
       </fieldset>
 
       <div class="vacancy-main-filters" aria-label="Основные фильтры">
@@ -317,6 +336,21 @@
       keywordInput.focus();
     });
   });
+
+  const sourcePicker = document.querySelector('[data-source-picker]');
+  const sourceCount = sourcePicker?.querySelector('[data-source-count]');
+
+  const updateSourceCount = () => {
+    if (!sourcePicker || !sourceCount) return;
+    const count = sourcePicker.querySelectorAll('input[name="source"]:checked:not(:disabled)').length;
+    sourceCount.textContent = `Выбрано источников: ${count}`;
+  };
+
+  sourcePicker?.querySelectorAll('input[name="source"]').forEach((checkbox) => {
+    checkbox.addEventListener('change', updateSourceCount);
+  });
+
+  updateSourceCount();
 })();
 </script>
 {% if 'trudvsem' in selected_sources %}
