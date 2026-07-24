@@ -1745,33 +1745,36 @@ input:focus,select:focus,textarea:focus{outline:3px solid rgba(109,91,255,.14);b
   .source-option__copy small{font-size:9.5px}
 }
 
-/* Vacancies page only: compact platform logos */
-.unified-search .source-option__mark img{
+
+/* Stage 3.3: official platform logos, fully visible without distortion */
+.source-option__mark img{
+  max-width:100%;
+  max-height:100%;
   object-fit:contain;
   object-position:center;
 }
-.unified-search .source-option--trudvsem .source-option__mark img{
-  width:22px;
-  height:22px;
-  transform:translateX(.5px);
-}
-.unified-search .source-option--superjob .source-option__mark img{
-  width:21px;
-  height:21px;
-}
-.unified-search .source-option--reed .source-option__mark img{
-  width:18px;
-  height:21px;
+.source-option--trudvsem .source-option__mark img{
+  width:32px;
+  height:auto;
   transform:none;
 }
-.unified-search .source-option--hh .source-option__mark img{
-  width:23px;
-  height:23px;
+.source-option--superjob .source-option__mark img{
+  width:27px;
+  height:27px;
+}
+.source-option--reed .source-option__mark img{
+  width:30px;
+  height:30px;
+  transform:none;
+}
+.source-option--hh .source-option__mark img{
+  width:29px;
+  height:29px;
 }
 
 @media(max-width:620px){
-  .unified-search .source-option--trudvsem .source-option__mark img{width:20px;height:20px}
-  .unified-search .source-option--superjob .source-option__mark img{width:19px;height:19px}
-  .unified-search .source-option--reed .source-option__mark img{width:17px;height:20px}
-  .unified-search .source-option--hh .source-option__mark img{width:21px;height:21px}
+  .source-option--trudvsem .source-option__mark img{width:28px;height:auto}
+  .source-option--superjob .source-option__mark img{width:24px;height:24px}
+  .source-option--reed .source-option__mark img{width:27px;height:27px}
+  .source-option--hh .source-option__mark img{width:26px;height:26px}
 }
