@@ -663,86 +663,91 @@ input:focus,select:focus,textarea:focus{outline:3px solid rgba(109,91,255,.14);b
   opacity:.25;
   animation:careerLineShimmer 4.8s ease-in-out infinite;
 }
- .career-journey-walker{
+ .career-journey-car{
   position:absolute;
   z-index:3;
   left:0;
   top:50%;
-  width:48px;
-  height:58px;
-  margin-left:-24px;
-  transform:translateY(-84%);
-  filter:drop-shadow(0 8px 10px rgba(93,91,239,.24));
-  animation:careerWalkerTravel 8.5s linear infinite;
+  width:68px;
+  height:38px;
+  margin-left:-34px;
+  transform:translateY(-78%);
+  filter:drop-shadow(0 9px 10px rgba(93,91,239,.24));
+  animation:careerCarTravel 8.5s linear infinite;
 }
-.career-journey-walker::after{
+.career-journey-car::after{
   content:"";
   position:absolute;
   left:50%;
-  bottom:1px;
-  width:28px;
+  bottom:-2px;
+  width:48px;
   height:7px;
   transform:translateX(-50%);
   border-radius:50%;
-  background:rgba(89,105,245,.2);
+  background:rgba(89,105,245,.18);
   filter:blur(4px);
-  animation:careerWalkerShadow .62s ease-in-out infinite alternate;
+  animation:careerCarShadow .52s ease-in-out infinite alternate;
 }
-.career-journey-walker svg{
+.career-journey-car svg{
   width:100%;
   height:100%;
   overflow:visible;
-  animation:careerWalkerBob .31s ease-in-out infinite alternate;
 }
-.career-journey-walker path{
-  fill:none;
-  stroke:url(#journeyWalkerGradient);
-  stroke-width:4;
-  stroke-linecap:round;
+.career-journey-car .car-bob{
+  transform-box:view-box;
+  transform-origin:42px 31px;
+  animation:careerCarBob .52s ease-in-out infinite alternate;
+}
+.career-journey-car .car-body{
+  fill:url(#journeyCarBody);
+  stroke:rgba(255,255,255,.96);
+  stroke-width:1.6;
   stroke-linejoin:round;
 }
-.career-journey-walker .walker-body-group{
-  transform-box:view-box;
-  transform-origin:25px 34px;
-  animation:careerWalkerLean .62s ease-in-out infinite;
-}
-.career-journey-walker .walker-head{
-  fill:url(#journeyWalkerGradient);
+.career-journey-car .car-window{
+  fill:url(#journeyCarGlass);
   stroke:rgba(255,255,255,.92);
-  stroke-width:2;
+  stroke-width:1.1;
+  stroke-linejoin:round;
 }
-.career-journey-walker .walker-neck{stroke-width:4}
-.career-journey-walker .walker-torso{stroke-width:6}
-.career-journey-walker .walker-hip{stroke-width:5}
-.career-journey-walker .walker-hand,
-.career-journey-walker .walker-knee{
-  fill:#6d5bff;
+.career-journey-car .car-bumper,
+.career-journey-car .car-detail{
+  fill:none;
+  stroke:rgba(255,255,255,.72);
+  stroke-width:1.6;
+  stroke-linecap:round;
+}
+.career-journey-car .car-headlight{
+  fill:#dff8ff;
   stroke:#fff;
-  stroke-width:1.2;
+  stroke-width:1;
+  filter:drop-shadow(0 0 4px rgba(96,220,255,.95));
+  animation:careerCarHeadlight 1.4s ease-in-out infinite;
 }
-.career-journey-walker .walker-foot{stroke-width:4.4}
-.career-journey-walker .walker-arm,
-.career-journey-walker .walker-leg,
-.career-journey-walker .walker-forearm,
-.career-journey-walker .walker-shin{
+.career-journey-car .car-tail-light{
+  fill:#ff8fca;
+  stroke:#fff;
+  stroke-width:.8;
+}
+.career-journey-car .car-wheel{
   transform-box:view-box;
+  transform-origin:center;
+  animation:careerCarWheel .52s linear infinite;
 }
-.career-journey-walker .walker-arm{transform-origin:27px 22px}
-.career-journey-walker .walker-leg{transform-origin:24px 35px}
-.career-journey-walker .walker-forearm-front{transform-origin:35px 29px}
-.career-journey-walker .walker-forearm-back{transform-origin:18px 29px}
-.career-journey-walker .walker-shin-front{transform-origin:35px 47px}
-.career-journey-walker .walker-shin-back{transform-origin:16px 47px}
-.career-journey-walker .walker-arm-front{animation:careerArmFront .62s cubic-bezier(.45,.05,.55,.95) infinite}
-.career-journey-walker .walker-arm-back{animation:careerArmBack .62s cubic-bezier(.45,.05,.55,.95) infinite}
-.career-journey-walker .walker-forearm-front{animation:careerForearmFront .62s ease-in-out infinite}
-.career-journey-walker .walker-forearm-back{animation:careerForearmBack .62s ease-in-out infinite}
-.career-journey-walker .walker-leg-front{animation:careerThighFront .62s cubic-bezier(.45,.05,.55,.95) infinite}
-.career-journey-walker .walker-leg-back{animation:careerThighBack .62s cubic-bezier(.45,.05,.55,.95) infinite}
-.career-journey-walker .walker-shin-front{animation:careerShinFront .62s cubic-bezier(.35,0,.65,1) infinite}
-.career-journey-walker .walker-shin-back{animation:careerShinBack .62s cubic-bezier(.35,0,.65,1) infinite}
-.career-journey-walker .walker-spark{fill:#775fff;opacity:.72;animation:careerWalkerSpark 1.5s ease-in-out infinite}
-.career-journey-walker .walker-spark-two{fill:#39b7ef;animation-delay:-.7s}
+.career-journey-car .car-wheel-back{transform-origin:24px 32.5px}
+.career-journey-car .car-wheel-front{transform-origin:64px 32.5px}
+.career-journey-car .car-tire{fill:#20284d;stroke:#fff;stroke-width:1.5}
+.career-journey-car .car-rim{fill:#9fdcff;stroke:#fff;stroke-width:1}
+.career-journey-car .car-spoke{fill:none;stroke:#5b63f4;stroke-width:1.1;stroke-linecap:round}
+.career-journey-car .car-speed-line{
+  fill:none;
+  stroke:#775fff;
+  stroke-width:2;
+  stroke-linecap:round;
+  opacity:.55;
+  animation:careerCarSpeedLine .9s ease-in-out infinite;
+}
+.career-journey-car .car-speed-line-two{stroke:#39b7ef;animation-delay:-.42s}
 .career-journey-step{position:relative;z-index:1;min-width:0;text-align:center}
 .career-journey-icon{
   display:grid;
@@ -766,65 +771,27 @@ input:focus,select:focus,textarea:focus{outline:3px solid rgba(109,91,255,.14);b
 .career-journey-note>span{color:#665cff;font-size:26px;line-height:1}
 .career-journey-note strong{display:block;color:var(--text-title);font-size:14px}
 .career-journey-note small{display:block;margin-top:5px;color:var(--text-body);font-size:12px}
-@keyframes careerWalkerTravel{
+@keyframes careerCarTravel{
   0%{left:0;opacity:0}
   3%{opacity:1}
   97%{opacity:1}
   100%{left:100%;opacity:0}
 }
-@keyframes careerArmFront{
-  0%,100%{transform:rotate(-24deg)}
-  50%{transform:rotate(26deg)}
+@keyframes careerCarWheel{to{transform:rotate(360deg)}}
+@keyframes careerCarBob{
+  from{transform:translateY(0) rotate(-.35deg)}
+  to{transform:translateY(-1.8px) rotate(.35deg)}
 }
-@keyframes careerArmBack{
-  0%,100%{transform:rotate(22deg)}
-  50%{transform:rotate(-28deg)}
+@keyframes careerCarShadow{
+  from{transform:translateX(-50%) scaleX(.86);opacity:.28}
+  to{transform:translateX(-50%) scaleX(1.05);opacity:.5}
 }
-@keyframes careerForearmFront{
-  0%,100%{transform:rotate(18deg)}
-  50%{transform:rotate(-8deg)}
-}
-@keyframes careerForearmBack{
-  0%,100%{transform:rotate(-12deg)}
-  50%{transform:rotate(24deg)}
-}
-@keyframes careerThighFront{
-  0%,100%{transform:rotate(-30deg)}
-  50%{transform:rotate(28deg)}
-}
-@keyframes careerThighBack{
-  0%,100%{transform:rotate(24deg)}
-  50%{transform:rotate(-30deg)}
-}
-@keyframes careerShinFront{
-  0%,100%{transform:rotate(42deg)}
-  24%{transform:rotate(10deg)}
-  50%{transform:rotate(-18deg)}
-  76%{transform:rotate(20deg)}
-}
-@keyframes careerShinBack{
-  0%,100%{transform:rotate(-16deg)}
-  24%{transform:rotate(18deg)}
-  50%{transform:rotate(44deg)}
-  76%{transform:rotate(8deg)}
-}
-@keyframes careerWalkerBob{
-  from{transform:translateY(0) rotate(-.5deg)}
-  to{transform:translateY(-3px) rotate(.5deg)}
-}
-@keyframes careerWalkerLean{
-  0%,100%{transform:rotate(-5deg) translateX(-1px)}
-  50%{transform:rotate(-1deg) translateX(1px)}
-}
-@keyframes careerWalkerShadow{
-  from{transform:translateX(-50%) scaleX(.72);opacity:.28}
-  to{transform:translateX(-50%) scaleX(1.08);opacity:.58}
-}
-@keyframes careerWalkerSpark{0%,100%{transform:scale(.7);opacity:.25}50%{transform:scale(1.35);opacity:.95}}
+@keyframes careerCarHeadlight{0%,100%{opacity:.65}50%{opacity:1}}
+@keyframes careerCarSpeedLine{0%,100%{transform:translateX(2px) scaleX(.65);opacity:.18}50%{transform:translateX(-3px) scaleX(1);opacity:.72}}
 @keyframes careerLineShimmer{0%,100%{transform:translateX(-30%);opacity:.1}50%{transform:translateX(30%);opacity:.4}}
 @media(max-width:900px){
   .career-journey{grid-template-columns:repeat(2,minmax(0,1fr));gap:26px 18px}
-  .career-journey-line,.career-journey-walker{display:none}
+  .career-journey-line,.career-journey-car{display:none}
   .career-journey-step p{min-height:auto}
 }
 @media(max-width:620px){
@@ -841,4 +808,4 @@ input:focus,select:focus,textarea:focus{outline:3px solid rgba(109,91,255,.14);b
   .career-journey-chip{grid-area:chip;justify-self:start}
   .career-journey-note{padding:15px 16px;align-items:flex-start}
 }
-@media(prefers-reduced-motion:reduce){.career-journey-walker,.career-journey-walker *,.career-journey-line::after{animation:none!important}.career-journey-walker{display:none}}
+@media(prefers-reduced-motion:reduce){.career-journey-car,.career-journey-car *,.career-journey-line::after{animation:none!important}.career-journey-car{display:none}}
