@@ -430,3 +430,61 @@ input:focus,select:focus,textarea:focus{outline:3px solid rgba(109,91,255,.14);b
   }
   .resume-quick-grid{grid-template-columns:1fr}
 }
+
+/* Stage 6: readable in-card recommendation badge.
+   Keep the label fully inside the card so it cannot be clipped by fixed-height layouts. */
+.ai-recommended-badge{
+  position:absolute;
+  z-index:5;
+  top:18px;
+  right:18px;
+  left:auto;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+  min-height:29px;
+  max-width:calc(100% - 92px);
+  padding:7px 12px;
+  transform:none;
+  border:1px solid rgba(109,91,255,.24);
+  border-radius:999px;
+  color:#5f55e8;
+  background:rgba(255,255,255,.9);
+  box-shadow:0 7px 18px rgba(93,91,239,.12),inset 0 1px 0 rgba(255,255,255,.9);
+  backdrop-filter:blur(10px);
+  -webkit-backdrop-filter:blur(10px);
+  font-size:10px;
+  font-weight:900;
+  line-height:1;
+  letter-spacing:.045em;
+  text-transform:uppercase;
+  white-space:nowrap;
+}
+.ai-recommended-badge::before,
+.ai-recommended-badge::after{content:none!important;display:none!important}
+.ai-recommended-badge span{
+  display:inline-grid;
+  place-items:center;
+  width:16px;
+  height:16px;
+  border-radius:50%;
+  color:#fff;
+  background:var(--gradient-primary);
+  font-size:9px;
+  line-height:1;
+  box-shadow:0 4px 10px rgba(93,91,239,.2);
+}
+
+@media(max-width:620px){
+  .ai-recommended-badge{
+    top:16px;
+    right:16px;
+    left:auto;
+    min-height:27px;
+    max-width:calc(100% - 84px);
+    padding:6px 10px;
+    font-size:9px;
+  }
+  .ai-recommended-badge span{width:15px;height:15px;font-size:8px}
+}
