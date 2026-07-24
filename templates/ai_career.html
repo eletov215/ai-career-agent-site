@@ -59,11 +59,6 @@
               <span class="resume-progress-track" aria-hidden="true"><span class="resume-progress-bar" id="resumeProgressBar"></span></span>
             </span>
           </label>
-          <div class="resume-quick-analysis" id="resumeQuickAnalysis" hidden>
-            <div class="resume-quick-analysis-head"><div><span class="resume-quick-kicker">Предварительный анализ</span><h3>Система определила</h3></div><span class="resume-quick-status" id="resumeQuickStatus">Готово</span></div>
-            <div class="resume-quick-grid"><div><span>Профессия</span><strong id="resumeProfession">—</strong></div><div><span>Опыт</span><strong id="resumeExperience">—</strong></div><div><span>Навыков найдено</span><strong id="resumeSkillsCount">0</strong></div></div>
-            <div class="resume-skill-tags" id="resumeSkillTags"></div>
-          </div>
           <div class="resume-inline-error" id="resumeInlineError" hidden></div>
           </div>
           <button class="btn btn-primary career-main-action" id="resumeSubmitButton" type="submit" disabled>Проанализировать резюме</button>
@@ -133,11 +128,6 @@
   const fileActions = document.getElementById('resumeFileActions');
   const replaceButton = document.getElementById('resumeReplaceButton');
   const removeButton = document.getElementById('resumeRemoveButton');
-  const quickAnalysis = document.getElementById('resumeQuickAnalysis');
-  const profession = document.getElementById('resumeProfession');
-  const experience = document.getElementById('resumeExperience');
-  const skillsCount = document.getElementById('resumeSkillsCount');
-  const skillTags = document.getElementById('resumeSkillTags');
   const inlineError = document.getElementById('resumeInlineError');
   const maxBytes = Number(dropzone.dataset.maxBytes || 0);
   let previewRequest = null;
@@ -146,10 +136,9 @@
   const hideProgress = () => { progressWrap.hidden = true; };
   const showError = (message) => { inlineError.textContent = message; inlineError.hidden = false; };
   const clearError = () => { inlineError.hidden = true; inlineError.textContent = ''; };
-  const resetSelection = () => { if (previewRequest) previewRequest.abort(); emptyState.hidden = false; fileState.hidden = true; quickAnalysis.hidden = true; progressWrap.hidden = true; submitButton.disabled = true; fileActions.hidden = true; skillTags.replaceChildren(); clearError(); dropzone.classList.remove('has-file','is-loading','is-dragover','is-ready'); };
-  const renderPreview = (profile) => { profession.textContent = profile.profession || 'Будет уточнено'; experience.textContent = profile.experience || 'Будет уточнён'; skillsCount.textContent = String(profile.skills_count || 0); skillTags.replaceChildren(); (profile.skills || []).forEach((skill) => { const tag = document.createElement('span'); tag.textContent = skill; skillTags.appendChild(tag); }); quickAnalysis.hidden = false; };
-  const requestPreview = (file) => { const data = new FormData(); data.append('resume', file); previewRequest = new XMLHttpRequest(); previewRequest.open('POST', '{{ url_for("resume_preview_api") }}'); previewRequest.upload.addEventListener('progress', (event) => { if (event.lengthComputable) setProgress((event.loaded / event.total) * 100, 'Анализируем PDF'); }); previewRequest.addEventListener('load', () => { let payload = {}; try { payload = JSON.parse(previewRequest.responseText || '{}'); } catch (_) {} if (previewRequest.status >= 200 && previewRequest.status < 300 && payload.ok) { readyText.textContent = 'Файл готов к анализу'; fileActions.hidden = false; submitButton.disabled = false; dropzone.classList.remove('is-loading'); dropzone.classList.add('is-ready'); renderPreview(payload.profile || {}); hideProgress(); } else { input.value = ''; resetSelection(); showError(payload.error || 'Не удалось прочитать PDF.'); } }); previewRequest.addEventListener('error', () => { input.value = ''; resetSelection(); showError('Ошибка сети при анализе PDF.'); }); previewRequest.send(data); };
-  const showSelectedFile = (file) => { if (!file) return resetSelection(); clearError(); const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf'); if (!isPdf) { input.value = ''; resetSelection(); showError('Выберите файл в формате PDF.'); return; } if (maxBytes && file.size > maxBytes) { input.value = ''; resetSelection(); showError('Размер PDF превышает допустимый лимит.'); return; } emptyState.hidden = true; fileState.hidden = false; quickAnalysis.hidden = true; readyText.textContent = 'Подготовка файла…'; fileName.textContent = file.name; fileMeta.textContent = formatBytes(file.size); submitButton.disabled = true; fileActions.hidden = true; dropzone.classList.add('has-file','is-loading'); setProgress(4, 'Подготовка PDF'); requestPreview(file); };
+  const resetSelection = () => { if (previewRequest) previewRequest.abort(); emptyState.hidden = false; fileState.hidden = true; progressWrap.hidden = true; submitButton.disabled = true; fileActions.hidden = true; clearError(); dropzone.classList.remove('has-file','is-loading','is-dragover','is-ready'); };
+  const requestPreview = (file) => { const data = new FormData(); data.append('resume', file); previewRequest = new XMLHttpRequest(); previewRequest.open('POST', '{{ url_for("resume_preview_api") }}'); previewRequest.upload.addEventListener('progress', (event) => { if (event.lengthComputable) setProgress((event.loaded / event.total) * 100, 'Анализируем PDF'); }); previewRequest.addEventListener('load', () => { let payload = {}; try { payload = JSON.parse(previewRequest.responseText || '{}'); } catch (_) {} if (previewRequest.status >= 200 && previewRequest.status < 300 && payload.ok) { readyText.textContent = 'Файл готов к анализу'; fileActions.hidden = false; submitButton.disabled = false; dropzone.classList.remove('is-loading'); dropzone.classList.add('is-ready'); hideProgress(); } else { input.value = ''; resetSelection(); showError(payload.error || 'Не удалось прочитать PDF.'); } }); previewRequest.addEventListener('error', () => { input.value = ''; resetSelection(); showError('Ошибка сети при анализе PDF.'); }); previewRequest.send(data); };
+  const showSelectedFile = (file) => { if (!file) return resetSelection(); clearError(); const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf'); if (!isPdf) { input.value = ''; resetSelection(); showError('Выберите файл в формате PDF.'); return; } if (maxBytes && file.size > maxBytes) { input.value = ''; resetSelection(); showError('Размер PDF превышает допустимый лимит.'); return; } emptyState.hidden = true; fileState.hidden = false; readyText.textContent = 'Подготовка файла…'; fileName.textContent = file.name; fileMeta.textContent = formatBytes(file.size); submitButton.disabled = true; fileActions.hidden = true; dropzone.classList.add('has-file','is-loading'); setProgress(4, 'Подготовка PDF'); requestPreview(file); };
   input.addEventListener('change', () => showSelectedFile(input.files[0]));
   replaceButton.addEventListener('click', (event) => { event.preventDefault(); event.stopPropagation(); input.click(); });
   removeButton.addEventListener('click', (event) => { event.preventDefault(); event.stopPropagation(); input.value = ''; resetSelection(); });
