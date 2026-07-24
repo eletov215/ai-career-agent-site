@@ -134,3 +134,121 @@ input:focus,select:focus,textarea:focus{outline:3px solid rgba(109,91,255,.14);b
 @media(prefers-reduced-motion:reduce){
   .btn,.nav-cta{transition:none!important}
 }
+
+/* Career entry cards: recommended AI path and stable responsive layout */
+.career-entry-grid{
+  grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+  gap:20px;
+  align-items:stretch;
+}
+.career-entry-card{
+  min-width:0;
+  height:100%;
+  padding:28px;
+  border-radius:22px;
+}
+.career-entry-card .career-entry-icon,
+.career-entry-card .step-label,
+.career-entry-card h2,
+.career-entry-card>.muted{
+  flex:0 0 auto;
+}
+.resume-upload-card{
+  background:rgba(255,255,255,.9)!important;
+  border-color:rgba(139,149,184,.26)!important;
+  box-shadow:0 10px 28px rgba(54,61,111,.06)!important;
+}
+.ai-resume-card{
+  overflow:visible;
+  border-color:rgba(109,91,255,.42)!important;
+  box-shadow:0 18px 46px rgba(93,91,239,.16)!important;
+}
+.ai-recommended-badge{
+  position:absolute;
+  z-index:3;
+  top:-12px;
+  left:28px;
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:7px 12px;
+  border-radius:10px;
+  color:#fff;
+  background:var(--gradient-primary);
+  box-shadow:0 9px 22px rgba(93,91,239,.26);
+  font-size:11px;
+  font-weight:900;
+  letter-spacing:.045em;
+  text-transform:uppercase;
+}
+.ai-recommended-badge span{font-size:12px;line-height:1}
+.career-entry-icon{margin-top:0}
+.career-entry-card h2{min-height:34px}
+.career-entry-card>.muted{min-height:58px}
+.resume-upload-form{display:flex;flex:1 1 auto;flex-direction:column;gap:14px;margin-top:22px}
+.resume-upload-form .resume-dropzone{flex:1 1 auto;min-height:220px}
+.resume-upload-meta{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  flex-wrap:wrap;
+  margin-top:4px;
+}
+.resume-upload-meta>span{
+  display:inline-flex;
+  align-items:center;
+  gap:5px;
+  padding:5px 10px;
+  border-radius:999px;
+  background:var(--primary-soft);
+  color:var(--text-muted);
+  font-size:11px;
+  font-weight:800;
+}
+.resume-safe-badge svg{width:13px;height:13px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.ai-resume-benefits{margin-top:23px}
+.ai-resume-time{margin-top:auto}
+.career-main-action{min-height:52px;margin-top:0}
+
+/* Secondary CTA stays brighter while preserving AI as the primary choice. */
+#resumeSubmitButton:disabled{
+  opacity:1!important;
+  color:#fff!important;
+  background:linear-gradient(135deg,rgba(109,91,255,.58) 0%,rgba(93,111,255,.55) 48%,rgba(78,139,255,.58) 100%)!important;
+  border-color:rgba(109,91,255,.1)!important;
+  box-shadow:0 8px 20px rgba(93,91,239,.12),inset 0 1px 0 rgba(255,255,255,.24)!important;
+  filter:saturate(.86);
+}
+#resumeSubmitButton:not(:disabled){
+  background:linear-gradient(135deg,#6d5bff 0%,#5f70f5 52%,#5587ee 100%)!important;
+  box-shadow:0 10px 24px rgba(93,91,239,.22)!important;
+}
+.ai-interview-button{
+  min-height:52px;
+  box-shadow:0 14px 30px rgba(93,91,239,.28)!important;
+}
+
+@media(max-width:850px){
+  .career-entry-grid{grid-template-columns:1fr;gap:22px}
+  .career-entry-card{height:auto;min-height:0}
+  .ai-resume-card{margin-top:4px}
+  .career-entry-card h2,.career-entry-card>.muted{min-height:0}
+  .resume-upload-form .resume-dropzone{min-height:210px}
+}
+@media(max-width:620px){
+  .career-choice-label{margin:18px 0 10px}
+  .career-entry-grid{gap:18px}
+  .career-entry-card{padding:22px 18px;border-radius:20px}
+  .career-entry-icon{width:46px;height:46px;border-radius:14px;margin-bottom:14px}
+  .career-entry-card h2{font-size:22px;line-height:1.2}
+  .career-entry-card>.muted{font-size:15px;line-height:1.55}
+  .ai-recommended-badge{left:18px;top:-10px;padding:6px 10px;font-size:10px}
+  .resume-upload-form{margin-top:18px}
+  .resume-upload-form .resume-dropzone{min-height:185px;padding:20px 14px}
+  .resume-upload-meta{gap:6px}
+  .resume-upload-meta>span{padding:4px 8px;font-size:10px}
+  .ai-resume-benefits{gap:13px;margin:20px 0}
+  .ai-resume-time{margin-bottom:14px}
+  .career-main-action{min-height:50px}
+}
