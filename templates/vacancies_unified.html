@@ -309,7 +309,41 @@
     </div>
 
     {% else %}
-      <section class="card"><h2>Поиск готов</h2><p class="muted">Выберите источники и нажмите «Найти вакансии». Страница больше не ждёт внешние API при открытии.</p></section>
+      <section class="vacancy-start-state" aria-labelledby="vacancy-start-title">
+        <div class="vacancy-start-state__visual" aria-hidden="true">
+          <div class="vacancy-start-state__glow"></div>
+          <article class="vacancy-start-card vacancy-start-card--main">
+            <span class="vacancy-start-card__icon">
+              <svg viewBox="0 0 24 24"><path d="M8 7V5.8A2.8 2.8 0 0 1 10.8 3h2.4A2.8 2.8 0 0 1 16 5.8V7"></path><rect x="4" y="7" width="16" height="12" rx="3"></rect><path d="M4 12h16"></path><path d="M10 12v2h4v-2"></path></svg>
+            </span>
+            <span class="vacancy-start-card__copy"><strong>Python-разработчик</strong><small>Удалённо · от 180 000 ₽</small></span>
+            <span class="vacancy-start-card__match">92%</span>
+          </article>
+          <article class="vacancy-start-card vacancy-start-card--left">
+            <span class="vacancy-start-card__dot"></span>
+            <span class="vacancy-start-card__copy"><strong>Аналитик данных</strong><small>Москва · гибрид</small></span>
+          </article>
+          <article class="vacancy-start-card vacancy-start-card--right">
+            <span class="vacancy-start-card__dot"></span>
+            <span class="vacancy-start-card__copy"><strong>Product Manager</strong><small>Санкт-Петербург</small></span>
+          </article>
+          <div class="vacancy-start-state__search-mark">
+            <svg viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="5.8"></circle><path d="m15 15 5 5"></path></svg>
+          </div>
+        </div>
+
+        <div class="vacancy-start-state__content">
+          <span class="vacancy-start-state__eyebrow">Всё готово к поиску</span>
+          <h2 id="vacancy-start-title">Начните поиск вакансий</h2>
+          <p>Укажите должность или ключевые навыки, выберите площадки и получите предложения в одной удобной ленте.</p>
+          <div class="vacancy-start-state__examples" aria-label="Популярные запросы">
+            <span>Попробуйте:</span>
+            <button type="button" data-search-example="Python-разработчик">Python-разработчик</button>
+            <button type="button" data-search-example="Аналитик данных">Аналитик данных</button>
+            <button type="button" data-search-example="Менеджер проектов">Менеджер проектов</button>
+          </div>
+        </div>
+      </section>
     {% endif %}
 
     <div class="pagination">
