@@ -668,31 +668,31 @@ input:focus,select:focus,textarea:focus{outline:3px solid rgba(109,91,255,.14);b
   z-index:3;
   left:0;
   top:50%;
-  width:42px;
-  height:52px;
-  margin-left:-21px;
-  transform:translateY(-86%);
-  filter:drop-shadow(0 7px 9px rgba(93,91,239,.22));
+  width:48px;
+  height:58px;
+  margin-left:-24px;
+  transform:translateY(-84%);
+  filter:drop-shadow(0 8px 10px rgba(93,91,239,.24));
   animation:careerWalkerTravel 8.5s linear infinite;
 }
 .career-journey-walker::after{
   content:"";
   position:absolute;
   left:50%;
-  bottom:3px;
-  width:26px;
+  bottom:1px;
+  width:28px;
   height:7px;
   transform:translateX(-50%);
   border-radius:50%;
-  background:rgba(89,105,245,.18);
+  background:rgba(89,105,245,.2);
   filter:blur(4px);
-  animation:careerWalkerShadow .72s ease-in-out infinite alternate;
+  animation:careerWalkerShadow .62s ease-in-out infinite alternate;
 }
 .career-journey-walker svg{
   width:100%;
   height:100%;
   overflow:visible;
-  animation:careerWalkerBob .42s ease-in-out infinite alternate;
+  animation:careerWalkerBob .31s ease-in-out infinite alternate;
 }
 .career-journey-walker path{
   fill:none;
@@ -703,32 +703,45 @@ input:focus,select:focus,textarea:focus{outline:3px solid rgba(109,91,255,.14);b
 }
 .career-journey-walker .walker-body-group{
   transform-box:view-box;
-  transform-origin:24px 31px;
-  animation:careerWalkerLean .84s ease-in-out infinite;
+  transform-origin:25px 34px;
+  animation:careerWalkerLean .62s ease-in-out infinite;
 }
 .career-journey-walker .walker-head{
   fill:url(#journeyWalkerGradient);
-  stroke:rgba(255,255,255,.9);
+  stroke:rgba(255,255,255,.92);
   stroke-width:2;
 }
-.career-journey-walker .walker-body{stroke-width:5}
-.career-journey-walker .walker-hand{
+.career-journey-walker .walker-neck{stroke-width:4}
+.career-journey-walker .walker-torso{stroke-width:6}
+.career-journey-walker .walker-hip{stroke-width:5}
+.career-journey-walker .walker-hand,
+.career-journey-walker .walker-knee{
   fill:#6d5bff;
   stroke:#fff;
   stroke-width:1.2;
 }
-.career-journey-walker .walker-foot{stroke-width:4.5}
+.career-journey-walker .walker-foot{stroke-width:4.4}
 .career-journey-walker .walker-arm,
-.career-journey-walker .walker-leg{
+.career-journey-walker .walker-leg,
+.career-journey-walker .walker-forearm,
+.career-journey-walker .walker-shin{
   transform-box:view-box;
-  transform-origin:24px 21px;
 }
-.career-journey-walker .walker-leg{transform-origin:24px 34px}
-.career-journey-walker .walker-arm-left,
-.career-journey-walker .walker-leg-right{animation:careerLimbForward .84s cubic-bezier(.45,.05,.55,.95) infinite}
-.career-journey-walker .walker-arm-right,
-.career-journey-walker .walker-leg-left{animation:careerLimbBack .84s cubic-bezier(.45,.05,.55,.95) infinite}
-.career-journey-walker .walker-spark{fill:#775fff;opacity:.75;animation:careerWalkerSpark 1.5s ease-in-out infinite}
+.career-journey-walker .walker-arm{transform-origin:27px 22px}
+.career-journey-walker .walker-leg{transform-origin:24px 35px}
+.career-journey-walker .walker-forearm-front{transform-origin:35px 29px}
+.career-journey-walker .walker-forearm-back{transform-origin:18px 29px}
+.career-journey-walker .walker-shin-front{transform-origin:35px 47px}
+.career-journey-walker .walker-shin-back{transform-origin:16px 47px}
+.career-journey-walker .walker-arm-front{animation:careerArmFront .62s cubic-bezier(.45,.05,.55,.95) infinite}
+.career-journey-walker .walker-arm-back{animation:careerArmBack .62s cubic-bezier(.45,.05,.55,.95) infinite}
+.career-journey-walker .walker-forearm-front{animation:careerForearmFront .62s ease-in-out infinite}
+.career-journey-walker .walker-forearm-back{animation:careerForearmBack .62s ease-in-out infinite}
+.career-journey-walker .walker-leg-front{animation:careerThighFront .62s cubic-bezier(.45,.05,.55,.95) infinite}
+.career-journey-walker .walker-leg-back{animation:careerThighBack .62s cubic-bezier(.45,.05,.55,.95) infinite}
+.career-journey-walker .walker-shin-front{animation:careerShinFront .62s cubic-bezier(.35,0,.65,1) infinite}
+.career-journey-walker .walker-shin-back{animation:careerShinBack .62s cubic-bezier(.35,0,.65,1) infinite}
+.career-journey-walker .walker-spark{fill:#775fff;opacity:.72;animation:careerWalkerSpark 1.5s ease-in-out infinite}
 .career-journey-walker .walker-spark-two{fill:#39b7ef;animation-delay:-.7s}
 .career-journey-step{position:relative;z-index:1;min-width:0;text-align:center}
 .career-journey-icon{
@@ -759,21 +772,49 @@ input:focus,select:focus,textarea:focus{outline:3px solid rgba(109,91,255,.14);b
   97%{opacity:1}
   100%{left:100%;opacity:0}
 }
-@keyframes careerLimbForward{
-  0%,100%{transform:rotate(-31deg)}
-  50%{transform:rotate(31deg)}
+@keyframes careerArmFront{
+  0%,100%{transform:rotate(-24deg)}
+  50%{transform:rotate(26deg)}
 }
-@keyframes careerLimbBack{
-  0%,100%{transform:rotate(31deg)}
-  50%{transform:rotate(-31deg)}
+@keyframes careerArmBack{
+  0%,100%{transform:rotate(22deg)}
+  50%{transform:rotate(-28deg)}
+}
+@keyframes careerForearmFront{
+  0%,100%{transform:rotate(18deg)}
+  50%{transform:rotate(-8deg)}
+}
+@keyframes careerForearmBack{
+  0%,100%{transform:rotate(-12deg)}
+  50%{transform:rotate(24deg)}
+}
+@keyframes careerThighFront{
+  0%,100%{transform:rotate(-30deg)}
+  50%{transform:rotate(28deg)}
+}
+@keyframes careerThighBack{
+  0%,100%{transform:rotate(24deg)}
+  50%{transform:rotate(-30deg)}
+}
+@keyframes careerShinFront{
+  0%,100%{transform:rotate(42deg)}
+  24%{transform:rotate(10deg)}
+  50%{transform:rotate(-18deg)}
+  76%{transform:rotate(20deg)}
+}
+@keyframes careerShinBack{
+  0%,100%{transform:rotate(-16deg)}
+  24%{transform:rotate(18deg)}
+  50%{transform:rotate(44deg)}
+  76%{transform:rotate(8deg)}
 }
 @keyframes careerWalkerBob{
-  from{transform:translateY(0)}
-  to{transform:translateY(-3.5px)}
+  from{transform:translateY(0) rotate(-.5deg)}
+  to{transform:translateY(-3px) rotate(.5deg)}
 }
 @keyframes careerWalkerLean{
-  0%,100%{transform:rotate(-2deg)}
-  50%{transform:rotate(3deg)}
+  0%,100%{transform:rotate(-5deg) translateX(-1px)}
+  50%{transform:rotate(-1deg) translateX(1px)}
 }
 @keyframes careerWalkerShadow{
   from{transform:translateX(-50%) scaleX(.72);opacity:.28}

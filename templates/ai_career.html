@@ -98,7 +98,7 @@
         <div class="career-journey" aria-label="Путь от резюме до отклика">
           <div class="career-journey-line" aria-hidden="true">
             <span class="career-journey-walker">
-              <svg viewBox="0 0 48 58" focusable="false">
+              <svg viewBox="0 0 58 66" focusable="false" aria-hidden="true">
                 <defs>
                   <linearGradient id="journeyWalkerGradient" x1="0" y1="0" x2="1" y2="1">
                     <stop offset="0" stop-color="#7a5cff"/>
@@ -106,27 +106,45 @@
                   </linearGradient>
                 </defs>
                 <g class="walker-body-group">
-                  <circle class="walker-head" cx="24" cy="9" r="6"/>
-                  <path class="walker-body" d="M24 16v18"/>
-                  <g class="walker-arm walker-arm-left">
-                    <path d="M24 21 14 31"/>
-                    <circle class="walker-hand" cx="14" cy="31" r="2"/>
+                  <circle class="walker-head" cx="31" cy="9" r="6"/>
+                  <path class="walker-neck" d="M29 15.5 27.5 19"/>
+                  <path class="walker-torso" d="M27.5 19 24.5 35"/>
+                  <path class="walker-hip" d="M20.5 35h8"/>
+
+                  <g class="walker-arm walker-arm-front">
+                    <path class="walker-upper-arm" d="M27 21 35 29"/>
+                    <g class="walker-forearm walker-forearm-front">
+                      <path d="M35 29 39 39"/>
+                      <circle class="walker-hand" cx="39" cy="39" r="2"/>
+                    </g>
                   </g>
-                  <g class="walker-arm walker-arm-right">
-                    <path d="M24 21 34 31"/>
-                    <circle class="walker-hand" cx="34" cy="31" r="2"/>
+                  <g class="walker-arm walker-arm-back">
+                    <path class="walker-upper-arm" d="M26 22 18 29"/>
+                    <g class="walker-forearm walker-forearm-back">
+                      <path d="M18 29 14 38"/>
+                      <circle class="walker-hand" cx="14" cy="38" r="2"/>
+                    </g>
                   </g>
-                  <g class="walker-leg walker-leg-left">
-                    <path d="M24 34 16 48"/>
-                    <path class="walker-foot" d="M16 48h-6"/>
+
+                  <g class="walker-leg walker-leg-front">
+                    <path class="walker-thigh" d="M26 35 35 47"/>
+                    <circle class="walker-knee" cx="35" cy="47" r="2.2"/>
+                    <g class="walker-shin walker-shin-front">
+                      <path d="M35 47 32 59"/>
+                      <path class="walker-foot" d="M32 59h8"/>
+                    </g>
                   </g>
-                  <g class="walker-leg walker-leg-right">
-                    <path d="M24 34 32 48"/>
-                    <path class="walker-foot" d="M32 48h6"/>
+                  <g class="walker-leg walker-leg-back">
+                    <path class="walker-thigh" d="M22 35 16 47"/>
+                    <circle class="walker-knee" cx="16" cy="47" r="2.2"/>
+                    <g class="walker-shin walker-shin-back">
+                      <path d="M16 47 20 59"/>
+                      <path class="walker-foot" d="M20 59h-8"/>
+                    </g>
                   </g>
                 </g>
-                <circle class="walker-spark walker-spark-one" cx="39" cy="12" r="2"/>
-                <circle class="walker-spark walker-spark-two" cx="43" cy="19" r="1.3"/>
+                <circle class="walker-spark walker-spark-one" cx="46" cy="15" r="2"/>
+                <circle class="walker-spark walker-spark-two" cx="50" cy="22" r="1.3"/>
               </svg>
             </span>
           </div>
