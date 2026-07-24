@@ -102,11 +102,11 @@
                      {% if source.key in selected_sources %}checked{% endif %}
                      {% if not source.available and source.key != 'trudvsem' %}disabled{% endif %}>
               <span class="source-option__mark" aria-hidden="true">
-                {% if source.key == 'trudvsem' %}РФ
-                {% elif source.key == 'superjob' %}SJ
-                {% elif source.key == 'hh' %}hh
-                {% elif source.key == 'reed' %}R
-                {% else %}{{ source.title[:2] }}{% endif %}
+                {% if source.key in ['trudvsem', 'superjob', 'hh', 'reed'] %}
+                  <img src="{{ url_for('static', filename='images/sources/' ~ source.key ~ '.svg') }}" alt="" loading="lazy">
+                {% else %}
+                  <span class="source-option__fallback">{{ source.title[:2] }}</span>
+                {% endif %}
               </span>
               <span class="source-option__copy">
                 <strong>{{ source.title }}</strong>
