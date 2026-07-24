@@ -262,3 +262,144 @@ input:focus,select:focus,textarea:focus{outline:3px solid rgba(109,91,255,.14);b
 .resume-file-action.danger:hover{background:rgba(255,106,106,.08);border-color:rgba(217,79,92,.38);box-shadow:0 8px 18px rgba(217,79,92,.1)}
 .resume-file-action:focus-visible{outline:3px solid rgba(109,91,255,.2);outline-offset:2px}
 @media(max-width:620px){.resume-file-actions{gap:8px}.resume-file-action{min-height:34px;padding:8px 12px;font-size:11px}}
+
+/* Stage 4: fixed desktop card height after PDF selection */
+.career-entry-card,
+.career-entry-card *{
+  box-sizing:border-box;
+  font-family:inherit;
+}
+.career-entry-card{min-width:0}
+
+@media (min-width:901px){
+  .career-entry-grid{
+    align-items:stretch;
+    grid-auto-rows:620px;
+  }
+  .career-entry-card,
+  .resume-upload-card,
+  .ai-resume-card{
+    height:620px;
+    min-height:620px;
+    max-height:620px;
+    overflow:hidden;
+  }
+}
+
+.resume-upload-form{
+  min-height:0;
+  display:grid;
+  grid-template-rows:minmax(0,1fr) auto;
+  gap:12px;
+}
+.resume-upload-dynamic{
+  min-width:0;
+  min-height:0;
+  display:grid;
+  align-content:start;
+  gap:10px;
+  overflow-x:hidden;
+  overflow-y:auto;
+  padding-right:3px;
+  scrollbar-gutter:stable;
+  scrollbar-width:thin;
+  scrollbar-color:rgba(109,91,255,.22) transparent;
+}
+.resume-upload-dynamic::-webkit-scrollbar{width:6px}
+.resume-upload-dynamic::-webkit-scrollbar-track{background:transparent}
+.resume-upload-dynamic::-webkit-scrollbar-thumb{background:rgba(109,91,255,.22);border-radius:999px}
+
+.resume-upload-card .resume-dropzone,
+.resume-upload-card .resume-file-state,
+.resume-quick-analysis,
+.resume-quick-grid,
+.resume-quick-grid>div{
+  min-width:0;
+  max-width:100%;
+  width:100%;
+}
+.resume-upload-card .resume-dropzone.has-file,
+.resume-upload-card .resume-dropzone.is-ready{
+  min-height:210px;
+  padding:16px 14px;
+}
+.resume-upload-card .resume-dropzone.is-ready .resume-pdf-icon{
+  width:68px;
+  height:80px;
+}
+.resume-upload-card .resume-file-name,
+.resume-upload-card .resume-file-state .muted,
+.resume-upload-card .resume-file-ready,
+.resume-quick-grid strong{
+  max-width:100%;
+  overflow-wrap:anywhere;
+  word-break:break-word;
+}
+.resume-file-actions{
+  width:100%;
+  max-width:100%;
+  flex-wrap:wrap;
+  gap:8px;
+}
+.resume-file-action{
+  min-width:0;
+  max-width:100%;
+  white-space:nowrap;
+}
+.resume-quick-analysis{
+  padding:13px;
+  gap:10px;
+}
+.resume-quick-grid{gap:8px}
+.resume-quick-grid>div{padding:10px}
+.resume-upload-card .career-main-action{
+  flex:0 0 auto;
+  width:100%;
+  min-width:0;
+  margin:0;
+}
+
+@media (max-width:900px){
+  .career-entry-grid{
+    grid-template-columns:minmax(0,1fr);
+    align-items:start;
+  }
+  .career-entry-card,
+  .resume-upload-card,
+  .ai-resume-card{
+    width:100%;
+    min-width:0;
+    height:auto;
+    min-height:0;
+    max-height:none;
+    overflow:hidden;
+  }
+  .resume-upload-form{
+    display:flex;
+    flex-direction:column;
+    min-height:0;
+  }
+  .resume-upload-dynamic{
+    overflow:visible;
+    padding-right:0;
+  }
+}
+
+@media (max-width:520px){
+  .career-entry-card{padding:20px 16px}
+  .resume-upload-card .resume-dropzone,
+  .resume-upload-card .resume-dropzone.has-file,
+  .resume-upload-card .resume-dropzone.is-ready{
+    min-height:205px;
+    padding:16px 12px;
+  }
+  .resume-file-actions{
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+  .resume-file-action{
+    width:100%;
+    padding:9px 8px;
+  }
+  .resume-quick-grid{grid-template-columns:1fr}
+}

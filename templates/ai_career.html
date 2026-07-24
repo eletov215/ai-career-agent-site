@@ -24,6 +24,7 @@
         {% if upload_error %}<div class="error-box spaced">{{ upload_error }}</div>{% endif %}
 
         <form method="post" enctype="multipart/form-data" class="resume-upload-form" id="resumeUploadForm">
+          <div class="resume-upload-dynamic" id="resumeUploadDynamic">
           <label class="resume-dropzone" id="resumeDropzone" data-max-bytes="{{ max_resume_upload_mb * 1024 * 1024 }}">
             <input id="resumeFileInput" type="file" name="resume" accept="application/pdf,.pdf" required>
             <span class="resume-empty-state" id="resumeEmptyState">
@@ -64,6 +65,7 @@
             <div class="resume-skill-tags" id="resumeSkillTags"></div>
           </div>
           <div class="resume-inline-error" id="resumeInlineError" hidden></div>
+          </div>
           <button class="btn btn-primary career-main-action" id="resumeSubmitButton" type="submit" disabled>Проанализировать резюме</button>
         </form>
       </section>
