@@ -622,3 +622,148 @@ input:focus,select:focus,textarea:focus{outline:3px solid rgba(109,91,255,.14);b
     font-size:15px;
   }
 }
+
+/* Career journey: animated energy flow between stages */
+.career-journey-card{
+  position:relative;
+  overflow:hidden;
+  padding:36px 30px 28px;
+  text-align:center;
+  background:
+    radial-gradient(circle at 50% 0%,rgba(109,91,255,.075),transparent 42%),
+    rgba(255,255,255,.9);
+}
+.career-journey-card>h2{margin:8px 0 8px;font-size:30px;line-height:1.15}
+.career-journey-subtitle{margin:0;color:var(--text-body);font-size:14px}
+.career-journey{
+  position:relative;
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:18px;
+  margin-top:34px;
+}
+.career-journey-line{
+  position:absolute;
+  z-index:0;
+  top:42px;
+  left:10.5%;
+  right:10.5%;
+  height:4px;
+  border-radius:999px;
+  overflow:visible;
+  background:linear-gradient(90deg,#6d5bff 0%,#5d6fff 38%,#35b9ef 62%,#6d5bff 100%);
+  box-shadow:0 0 14px rgba(93,111,255,.32);
+}
+.career-journey-line::after{
+  content:"";
+  position:absolute;
+  inset:-4px 0;
+  border-radius:999px;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.85),transparent);
+  opacity:.25;
+  animation:careerLineShimmer 4.8s ease-in-out infinite;
+}
+ .career-journey-walker{
+  position:absolute;
+  z-index:3;
+  left:0;
+  top:50%;
+  width:42px;
+  height:52px;
+  margin-left:-21px;
+  transform:translateY(-86%);
+  filter:drop-shadow(0 7px 9px rgba(93,91,239,.22));
+  animation:careerWalkerTravel 10s linear infinite;
+}
+.career-journey-walker::after{
+  content:"";
+  position:absolute;
+  left:50%;
+  bottom:3px;
+  width:26px;
+  height:7px;
+  transform:translateX(-50%);
+  border-radius:50%;
+  background:rgba(89,105,245,.18);
+  filter:blur(4px);
+  animation:careerWalkerShadow .72s ease-in-out infinite alternate;
+}
+.career-journey-walker svg{width:100%;height:100%;overflow:visible}
+.career-journey-walker path{
+  fill:none;
+  stroke:url(#journeyWalkerGradient);
+  stroke-width:4;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+}
+.career-journey-walker .walker-head{fill:url(#journeyWalkerGradient);stroke:rgba(255,255,255,.9);stroke-width:2}
+.career-journey-walker .walker-body{stroke-width:5}
+.career-journey-walker .walker-arm,
+.career-journey-walker .walker-leg{
+  transform-box:fill-box;
+  transform-origin:top center;
+}
+.career-journey-walker .walker-arm-left,
+.career-journey-walker .walker-leg-right{animation:careerLimbForward .72s ease-in-out infinite alternate}
+.career-journey-walker .walker-arm-right,
+.career-journey-walker .walker-leg-left{animation:careerLimbBack .72s ease-in-out infinite alternate}
+.career-journey-walker .walker-spark{fill:#775fff;opacity:.75;animation:careerWalkerSpark 1.5s ease-in-out infinite}
+.career-journey-walker .walker-spark-two{fill:#39b7ef;animation-delay:-.7s}
+.career-journey-step{position:relative;z-index:1;min-width:0;text-align:center}
+.career-journey-icon{
+  display:grid;
+  place-items:center;
+  width:82px;
+  height:82px;
+  margin:0 auto 16px;
+  border:3px solid rgba(255,255,255,.95);
+  border-radius:50%;
+  color:#665cff;
+  background:linear-gradient(145deg,rgba(255,255,255,.98),rgba(245,247,255,.9));
+  box-shadow:0 0 0 1px rgba(109,91,255,.12),0 12px 30px rgba(92,97,255,.13),0 0 24px rgba(109,91,255,.12);
+}
+.career-journey-icon svg{width:34px;height:34px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.career-journey-number{display:inline-grid;place-items:center;min-width:30px;height:30px;padding:0 8px;border-radius:10px;color:#665cff;background:#f0efff;font-weight:900;font-size:13px}
+.career-journey-step h3{margin:12px 0 7px;font-size:16px;line-height:1.25}
+.career-journey-step p{min-height:42px;margin:0 auto 13px;max-width:210px;color:var(--text-body);font-size:12px;line-height:1.55}
+.career-journey-chip{display:inline-flex;align-items:center;justify-content:center;min-height:30px;padding:0 12px;border:1px solid rgba(109,91,255,.14);border-radius:999px;color:#665cff;background:rgba(109,91,255,.055);font-size:10px;font-weight:800;white-space:nowrap}
+.career-journey-chip.accent{color:#178fc7;border-color:rgba(53,185,239,.18);background:rgba(53,185,239,.08)}
+.career-journey-note{display:flex;align-items:center;gap:16px;margin-top:30px;padding:18px 24px;border:1px solid rgba(109,91,255,.12);border-radius:16px;text-align:left;background:linear-gradient(90deg,rgba(109,91,255,.035),rgba(78,139,255,.025))}
+.career-journey-note>span{color:#665cff;font-size:26px;line-height:1}
+.career-journey-note strong{display:block;color:var(--text-title);font-size:14px}
+.career-journey-note small{display:block;margin-top:5px;color:var(--text-body);font-size:12px}
+@keyframes careerWalkerTravel{
+  0%{left:0;opacity:0}
+  4%{opacity:1}
+  24%{left:31.5%}
+  28%{left:31.5%}
+  50%{left:65.5%}
+  54%{left:65.5%}
+  96%{opacity:1}
+  100%{left:100%;opacity:0}
+}
+@keyframes careerLimbForward{from{transform:rotate(-23deg)}to{transform:rotate(24deg)}}
+@keyframes careerLimbBack{from{transform:rotate(24deg)}to{transform:rotate(-23deg)}}
+@keyframes careerWalkerShadow{from{transform:translateX(-50%) scaleX(.8);opacity:.35}to{transform:translateX(-50%) scaleX(1.12);opacity:.6}}
+@keyframes careerWalkerSpark{0%,100%{transform:scale(.7);opacity:.25}50%{transform:scale(1.35);opacity:.95}}
+@keyframes careerLineShimmer{0%,100%{transform:translateX(-30%);opacity:.1}50%{transform:translateX(30%);opacity:.4}}
+@media(max-width:900px){
+  .career-journey{grid-template-columns:repeat(2,minmax(0,1fr));gap:26px 18px}
+  .career-journey-line,.career-journey-walker{display:none}
+  .career-journey-step p{min-height:auto}
+}
+@media(max-width:620px){
+  .career-journey-card{padding:28px 18px 22px}
+  .career-journey-card>h2{font-size:23px}
+  .career-journey{grid-template-columns:1fr;gap:0;margin-top:26px;text-align:left}
+  .career-journey-step{display:grid;grid-template-columns:58px 1fr;grid-template-areas:"icon number" "icon title" "icon desc" "icon chip";column-gap:14px;padding:0 0 26px;text-align:left}
+  .career-journey-step:not(:last-child)::after{content:"";position:absolute;left:28px;top:58px;bottom:0;width:2px;background:linear-gradient(#6d5bff,#5d8dff);opacity:.3}
+  .career-journey-icon{grid-area:icon;width:56px;height:56px;margin:0}
+  .career-journey-icon svg{width:25px;height:25px}
+  .career-journey-number{grid-area:number;justify-self:start;height:25px;min-width:25px;border-radius:8px;font-size:11px}
+  .career-journey-step h3{grid-area:title;margin:7px 0 4px;font-size:15px}
+  .career-journey-step p{grid-area:desc;min-height:auto;margin:0 0 10px;max-width:none;font-size:12px}
+  .career-journey-chip{grid-area:chip;justify-self:start}
+  .career-journey-note{padding:15px 16px;align-items:flex-start}
+}
+@media(prefers-reduced-motion:reduce){.career-journey-walker,.career-journey-walker *,.career-journey-line::after{animation:none!important}.career-journey-walker{display:none}}
