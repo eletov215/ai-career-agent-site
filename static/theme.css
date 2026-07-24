@@ -1621,3 +1621,69 @@ input:focus,select:focus,textarea:focus{outline:3px solid rgba(109,91,255,.14);b
   border-color:rgba(109,91,255,.2);
   box-shadow:0 6px 16px rgba(54,61,111,.08);
 }
+
+/* Stage 3.1: optical alignment for platform emblems */
+.source-option__mark{
+  box-sizing:border-box;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex:none;
+  width:46px;
+  height:46px;
+  padding:7px;
+  border:1px solid rgba(102,112,170,.14);
+  border-radius:14px;
+  background:#fff;
+  box-shadow:0 5px 14px rgba(54,61,111,.045);
+}
+.source-option__mark img{
+  display:block;
+  flex:none;
+  max-width:none;
+  object-fit:contain;
+  object-position:center;
+  transform-origin:center;
+}
+.source-option--trudvsem .source-option__mark img{
+  width:31px;
+  height:31px;
+  transform:translateX(1px);
+}
+.source-option--superjob .source-option__mark img{
+  width:30px;
+  height:30px;
+}
+.source-option--reed .source-option__mark img{
+  width:28px;
+  height:31px;
+  transform:translateY(1px);
+}
+.source-option--hh .source-option__mark img{
+  width:32px;
+  height:32px;
+}
+.source-option:has(input:checked) .source-option__mark{
+  transform:scale(1.035);
+  border-color:rgba(109,91,255,.24);
+  box-shadow:0 7px 18px rgba(75,72,183,.10);
+}
+.source-option:has(input:checked) .source-option__mark img{
+  filter:saturate(1.04);
+}
+
+@media(max-width:620px){
+  .source-option{
+    grid-template-columns:40px minmax(0,1fr) 20px;
+  }
+  .source-option__mark{
+    width:40px;
+    height:40px;
+    padding:6px;
+    border-radius:12px;
+  }
+  .source-option--trudvsem .source-option__mark img{width:27px;height:27px}
+  .source-option--superjob .source-option__mark img{width:26px;height:26px}
+  .source-option--reed .source-option__mark img{width:24px;height:27px}
+  .source-option--hh .source-option__mark img{width:28px;height:28px}
+}
