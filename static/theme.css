@@ -1,0 +1,136 @@
+/* AI Career Agent Design System v1.0 — Aurora AI */
+:root{
+  --primary:#6d5bff;
+  --primary-hover:#5f4ce8;
+  --primary-active:#503ecf;
+  --primary-end:#4e8bff;
+  --primary-solid:#665cff;
+  --primary-soft:#f0efff;
+  --primary-soft-strong:#e7e4ff;
+  --primary-border:#d9d4ff;
+  --gradient-primary:linear-gradient(135deg,#6d5bff 0%,#5d6fff 48%,#4e8bff 100%);
+  --gradient-primary-hover:linear-gradient(135deg,#624ff1 0%,#5264ed 48%,#437eea 100%);
+  --gradient-surface:linear-gradient(145deg,rgba(255,255,255,.96),rgba(248,247,255,.92));
+  --bg:#f7f8fe;
+  --bg-page:#f7f8fe;
+  --surface:#fff;
+  --surface-glass:rgba(255,255,255,.84);
+  --surface-soft:#fafaff;
+  --text:#1b2340;
+  --ink:#1b2340;
+  --text-title:#1b2340;
+  --muted:#68718c;
+  --text-body:#68718c;
+  --text-muted:#9197b5;
+  --line:#e2e5f0;
+  --line-strong:#d6daea;
+  --success:#36b975;
+  --success-soft:#eaf8f1;
+  --danger:#ef656d;
+  --danger-soft:#fff0f1;
+  --warning:#d79a35;
+  --radius-sm:12px;
+  --radius-md:16px;
+  --radius-lg:20px;
+  --radius-xl:24px;
+  --shadow-sm:0 6px 18px rgba(76,67,169,.08);
+  --shadow:0 10px 35px rgba(92,97,255,.12);
+  --shadow-hover:0 16px 42px rgba(92,97,255,.18);
+  --transition-fast:150ms ease;
+  --transition:200ms ease;
+  --accent:var(--primary);
+  --brand:var(--primary);
+  --brand-deep:#5367ed;
+  --brand-soft:var(--primary-soft);
+}
+
+html{color-scheme:light}
+body{background:var(--bg-page);color:var(--text-title)}
+.muted,.lead{color:var(--text-body)}
+
+/* Shared surfaces */
+.card,.mock-card,.vacancy-card,.platform-panel,.unified-search,.status{
+  background:var(--surface-glass);
+  border-color:var(--line);
+  box-shadow:var(--shadow-sm);
+  backdrop-filter:blur(14px);
+  -webkit-backdrop-filter:blur(14px);
+}
+
+/* Shared buttons */
+.btn{
+  min-height:46px;
+  border-radius:var(--radius-sm);
+  transition:transform var(--transition-fast),box-shadow var(--transition),background var(--transition),border-color var(--transition),color var(--transition);
+}
+.btn-primary,.landing-primary,.career-main-action,.nav-cta{
+  color:#fff!important;
+  background:var(--gradient-primary)!important;
+  border-color:transparent!important;
+  box-shadow:0 12px 26px rgba(93,91,239,.24)!important;
+}
+.btn-primary:hover,.landing-primary:hover,.career-main-action:hover,.nav-cta:hover{
+  color:#fff!important;
+  background:var(--gradient-primary-hover)!important;
+  transform:translateY(-2px);
+  box-shadow:0 16px 34px rgba(93,91,239,.30)!important;
+}
+.btn-primary:active,.landing-primary:active,.career-main-action:active,.nav-cta:active{transform:translateY(0);box-shadow:0 8px 20px rgba(93,91,239,.22)!important}
+.btn-primary:disabled,.career-main-action:disabled{background:linear-gradient(135deg,#a8b0d4,#929bbf)!important;box-shadow:none!important;cursor:not-allowed;transform:none}
+.btn-secondary,.btn-ghost{
+  color:var(--text-title);
+  background:rgba(255,255,255,.88);
+  border-color:var(--line-strong);
+}
+.btn-secondary:hover,.btn-ghost:hover{border-color:var(--primary-border);color:var(--primary-solid);background:var(--surface)}
+
+/* Accent text, pills and fields */
+.badge,.step-label,.section-kicker,.eyebrow{color:var(--primary-solid)}
+.badge{background:var(--primary-soft);border:1px solid var(--primary-border)}
+.source-badges span,.resume-stats span,.vacancy-meta span{background:var(--primary-soft);color:var(--text-title)}
+input,select,textarea{color:var(--text-title)}
+input:focus,select:focus,textarea:focus{outline:3px solid rgba(109,91,255,.14);border-color:var(--primary)}
+
+/* Navigation harmonization */
+.site-nav{
+  background:radial-gradient(circle at 14% -20%,rgba(109,91,255,.14),transparent 34%),radial-gradient(circle at 86% -35%,rgba(78,139,255,.11),transparent 38%),rgba(247,248,254,.76);
+}
+.brand-mark{background:var(--gradient-primary)!important}
+.brand-aura::before{background:radial-gradient(circle,rgba(109,91,255,.27),rgba(78,139,255,.08) 48%,transparent 72%)}
+.site-nav .nav-links a:hover{color:var(--primary-solid);background:rgba(109,91,255,.075)}
+.site-nav .nav-links a.is-active{color:var(--primary-solid);background:linear-gradient(135deg,rgba(109,91,255,.13),rgba(78,139,255,.09))}
+.site-nav .nav-links a.is-active::after{background:var(--gradient-primary)}
+
+/* Career profile entry screen */
+.career-entry-card{border-color:var(--line);background:var(--surface-glass)}
+.ai-resume-card{background:var(--gradient-surface);border-color:var(--primary-border)}
+.ai-resume-glow{background:radial-gradient(circle,rgba(109,91,255,.13),rgba(78,139,255,.05) 52%,transparent 72%)}
+.career-entry-icon{background:var(--primary-soft);color:var(--primary-solid)}
+.career-entry-icon.ai{background:var(--gradient-primary);box-shadow:0 12px 28px rgba(93,91,239,.24)}
+.ai-resume-card .step-label{color:var(--primary-solid)}
+.ai-resume-time span{background:var(--primary-soft);color:var(--primary-solid);border:1px solid rgba(109,91,255,.08)}
+.ai-resume-benefits>div>span{background:var(--success-soft);color:var(--success)}
+.ai-interview-button{letter-spacing:-.01em}
+.resume-dropzone{background:var(--surface-soft);border-color:var(--line-strong)}
+.resume-dropzone:hover,.resume-dropzone.is-dragover{border-color:var(--primary);background:var(--primary-soft)}
+.resume-upload-illustration,.resume-dropzone-hint span{color:var(--primary-solid)}
+.career-flow>div>span{background:var(--primary-soft);color:var(--primary-solid)}
+
+/* Search and vacancies */
+.source-superjob,.source-hh,.source-trudvsem,.source-reed{color:var(--primary-solid)}
+.source-option:has(input:checked){border-color:var(--primary-border);background:var(--primary-soft)}
+.link-button{color:var(--primary-solid)}
+
+/* Semantic states */
+.success-text,.status.success h1,.status-pill.connected{color:var(--success)}
+.status-pill.connected{background:var(--success-soft);border-color:#c9efda}
+.error-box{color:var(--danger);background:var(--danger-soft);border-color:#ffd2d5}
+
+@media(max-width:720px){
+  .btn{min-height:44px}
+  .career-main-action{border-radius:14px}
+}
+
+@media(prefers-reduced-motion:reduce){
+  .btn,.nav-cta{transition:none!important}
+}
