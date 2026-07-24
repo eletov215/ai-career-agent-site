@@ -3,20 +3,38 @@
 {% block content %}
 <main class="section">
   <div class="container">
-    <div class="page-heading">
-      <div>
-        <div class="muted">Все источники в одном месте</div>
-        <h1 class="page-title">Единый поиск вакансий</h1>
+    <section class="vacancy-search-hero" aria-labelledby="vacancy-search-title">
+      <div class="vacancy-search-hero__copy">
+        <div class="vacancy-search-kicker"><span aria-hidden="true"></span>Все источники в одном месте</div>
+        <h1 class="page-title" id="vacancy-search-title">Единый поиск вакансий</h1>
+        <p>Ищите предложения сразу на нескольких площадках и сравнивайте подходящие вакансии в одной ленте.</p>
       </div>
-      <a class="btn btn-secondary" href="{{ url_for('dashboard') }}">В кабинет</a>
-    </div>
+      <a class="btn btn-secondary vacancy-cabinet-link" href="{{ url_for('dashboard') }}">В кабинет</a>
+    </section>
 
     <form class="unified-search" method="get">
       <input type="hidden" name="search" value="1">
-      <label class="search-keyword">
-        <span>Должность или ключевые слова</span>
-        <input type="text" name="keyword" value="{{ keyword }}" placeholder="Например, инженер-конструктор">
-      </label>
+
+      <div class="vacancy-primary-search">
+        <label class="search-keyword">
+          <span>Должность или ключевые слова</span>
+          <span class="vacancy-keyword-control">
+            <span class="vacancy-search-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"></circle><path d="m16 16 4 4"></path></svg>
+            </span>
+            <input id="vacancy-keyword" type="text" name="keyword" value="{{ keyword }}" placeholder="Например, инженер-конструктор">
+          </span>
+        </label>
+        <button class="btn btn-primary search-submit" type="submit">Найти вакансии</button>
+      </div>
+
+      <div class="vacancy-quick-search" aria-label="Примеры поисковых запросов">
+        <span>Популярное:</span>
+        <button type="button" data-search-example="Python-разработчик">Python-разработчик</button>
+        <button type="button" data-search-example="Аналитик данных">Аналитик данных</button>
+        <button type="button" data-search-example="UX/UI дизайнер">UX/UI дизайнер</button>
+        <button type="button" data-search-example="Менеджер проектов">Менеджер проектов</button>
+      </div>
 
       <fieldset class="source-picker">
         <legend>Источники</legend>
@@ -115,7 +133,6 @@
         </label>
       </div>
 
-      <button class="btn btn-primary search-submit" type="submit">Найти вакансии</button>
     </form>
 
     {% if search_requested %}
@@ -222,6 +239,19 @@
     {% if 'reed' in selected_sources %}<p class="api-credit">Вакансии Великобритании получены через официальный Reed.co.uk Jobseeker API.</p>{% endif %}
   </div>
 </main>
+<script>
+(() => {
+  const keywordInput = document.getElementById('vacancy-keyword');
+  if (!keywordInput) return;
+
+  document.querySelectorAll('[data-search-example]').forEach((button) => {
+    button.addEventListener('click', () => {
+      keywordInput.value = button.dataset.searchExample || '';
+      keywordInput.focus();
+    });
+  });
+})();
+</script>
 {% if 'trudvsem' in selected_sources %}
 <script>
 (() => {

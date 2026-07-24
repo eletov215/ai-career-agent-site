@@ -855,3 +855,155 @@ input:focus,select:focus,textarea:focus{outline:3px solid rgba(109,91,255,.14);b
   .career-journey-note{padding:15px 16px;align-items:flex-start}
 }
 @media(prefers-reduced-motion:reduce){.career-journey-capsule,.career-journey-capsule *,.career-journey-line::after{animation:none!important}.career-journey-capsule{display:none}}
+
+/* Unified vacancy search — stage 1: hero and primary search */
+.vacancy-search-hero{
+  position:relative;
+  display:flex;
+  align-items:flex-end;
+  justify-content:space-between;
+  gap:32px;
+  margin-bottom:24px;
+  padding:10px 2px 0;
+}
+.vacancy-search-hero__copy{max-width:760px}
+.vacancy-search-kicker{
+  display:inline-flex;
+  align-items:center;
+  gap:9px;
+  color:var(--primary-solid);
+  font-size:13px;
+  font-weight:800;
+  letter-spacing:.06em;
+  text-transform:uppercase;
+}
+.vacancy-search-kicker span{
+  width:8px;
+  height:8px;
+  border-radius:50%;
+  background:var(--gradient-primary);
+  box-shadow:0 0 0 6px rgba(109,91,255,.10);
+}
+.vacancy-search-hero .page-title{
+  margin:12px 0 10px;
+  color:var(--text-title);
+  font-size:clamp(38px,5vw,58px);
+  line-height:1.02;
+  letter-spacing:-.045em;
+}
+.vacancy-search-hero__copy p{
+  max-width:690px;
+  margin:0;
+  color:var(--text-body);
+  font-size:17px;
+  line-height:1.7;
+}
+.vacancy-cabinet-link{flex:0 0 auto;margin-bottom:5px}
+
+.unified-search{position:relative;overflow:hidden}
+.unified-search:before{
+  content:"";
+  position:absolute;
+  width:360px;
+  height:220px;
+  right:-150px;
+  top:-150px;
+  border-radius:50%;
+  background:radial-gradient(circle,rgba(109,91,255,.12),rgba(78,139,255,0) 70%);
+  pointer-events:none;
+}
+.vacancy-primary-search{
+  position:relative;
+  z-index:1;
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  gap:12px;
+  align-items:end;
+  grid-column:1/-1;
+}
+.vacancy-primary-search .search-keyword{min-width:0}
+.vacancy-keyword-control{position:relative;display:block}
+.vacancy-keyword-control input{
+  min-height:54px;
+  padding-left:48px;
+  border-color:var(--line-strong);
+  border-radius:14px;
+  background:rgba(255,255,255,.96);
+  transition:border-color var(--transition),box-shadow var(--transition),background var(--transition);
+}
+.vacancy-keyword-control input:hover{border-color:var(--primary-border);background:#fff}
+.vacancy-search-icon{
+  position:absolute;
+  z-index:2;
+  left:17px;
+  top:50%;
+  display:grid;
+  place-items:center;
+  width:20px;
+  height:20px;
+  color:var(--text-muted);
+  transform:translateY(-50%);
+  pointer-events:none;
+}
+.vacancy-search-icon svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round}
+.vacancy-primary-search .search-submit{
+  min-width:190px;
+  min-height:54px;
+  padding-inline:24px;
+  justify-content:center;
+  border-radius:14px;
+}
+.vacancy-quick-search{
+  position:relative;
+  z-index:1;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  grid-column:1/-1;
+  flex-wrap:wrap;
+  margin-top:-3px;
+}
+.vacancy-quick-search>span{margin-right:2px;color:var(--text-muted);font-size:12px;font-weight:700}
+.vacancy-quick-search button{
+  appearance:none;
+  padding:7px 10px;
+  border:1px solid var(--line);
+  border-radius:999px;
+  background:rgba(255,255,255,.78);
+  color:var(--text-body);
+  font:inherit;
+  font-size:12px;
+  font-weight:700;
+  cursor:pointer;
+  transition:color var(--transition-fast),border-color var(--transition-fast),background var(--transition-fast),transform var(--transition-fast);
+}
+.vacancy-quick-search button:hover{
+  color:var(--primary-solid);
+  border-color:var(--primary-border);
+  background:var(--primary-soft);
+  transform:translateY(-1px);
+}
+
+@media(max-width:980px){
+  .vacancy-search-hero{align-items:flex-start}
+  .vacancy-search-hero .page-title{font-size:clamp(36px,6vw,50px)}
+}
+@media(max-width:720px){
+  .section{padding-top:34px}
+  .vacancy-search-hero{display:block;margin-bottom:20px}
+  .vacancy-search-hero__copy p{font-size:15px;line-height:1.6}
+  .vacancy-cabinet-link{margin-top:18px}
+  .vacancy-primary-search{grid-template-columns:1fr}
+  .vacancy-primary-search .search-submit{width:100%;min-width:0}
+  .vacancy-quick-search{overflow-x:auto;flex-wrap:nowrap;padding-bottom:3px;scrollbar-width:none}
+  .vacancy-quick-search::-webkit-scrollbar{display:none}
+  .vacancy-quick-search>span,.vacancy-quick-search button{flex:0 0 auto}
+}
+@media(max-width:520px){
+  .vacancy-search-kicker{font-size:11px;letter-spacing:.045em}
+  .vacancy-search-hero .page-title{margin-top:10px;font-size:36px}
+  .vacancy-cabinet-link{width:100%;justify-content:center}
+  .unified-search{padding:16px}
+  .vacancy-keyword-control input{min-height:52px;padding-left:45px;font-size:14px}
+  .vacancy-primary-search .search-submit{min-height:52px}
+}
