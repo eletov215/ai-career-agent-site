@@ -221,6 +221,32 @@
 
     </form>
 
+    <section class="vacancy-loading-state" data-vacancy-loading hidden aria-live="polite" aria-busy="true">
+      <div class="vacancy-loading-state__heading">
+        <span class="vacancy-loading-state__spinner" aria-hidden="true"></span>
+        <div>
+          <strong>Ищем вакансии на выбранных площадках</strong>
+          <p>Собираем предложения и применяем выбранные фильтры. Это может занять несколько секунд.</p>
+        </div>
+      </div>
+      <div class="vacancy-loading-state__sources" data-loading-sources aria-label="Выбранные источники"></div>
+      <div class="vacancy-loading-state__skeletons" aria-hidden="true">
+        {% for _ in range(3) %}
+          <article class="vacancy-loading-card">
+            <span class="vacancy-loading-line vacancy-loading-line--badge"></span>
+            <span class="vacancy-loading-line vacancy-loading-line--title"></span>
+            <span class="vacancy-loading-line vacancy-loading-line--company"></span>
+            <span class="vacancy-loading-line vacancy-loading-line--salary"></span>
+            <div class="vacancy-loading-card__tags">
+              <span></span><span></span><span></span>
+            </div>
+            <span class="vacancy-loading-line vacancy-loading-line--text"></span>
+            <span class="vacancy-loading-line vacancy-loading-line--text-short"></span>
+          </article>
+        {% endfor %}
+      </div>
+    </section>
+
     {% if search_requested %}
     <div class="results-heading results-summary">
       <div>
@@ -385,6 +411,39 @@
   });
 
   updateSourceCount();
+
+  const searchForm = document.querySelector('.unified-search');
+  const loadingState = document.querySelector('[data-vacancy-loading]');
+  const loadingSources = loadingState?.querySelector('[data-loading-sources]');
+  const sourceNames = {
+    trudvsem: 'Работа России',
+    superjob: 'SuperJob',
+    reed: 'Reed.co.uk',
+    hh: 'HeadHunter'
+  };
+
+  searchForm?.addEventListener('submit', (event) => {
+    if (!searchForm.checkValidity()) return;
+
+    const selected = Array.from(searchForm.querySelectorAll('input[name="source"]:checked:not(:disabled)'));
+    if (loadingSources) {
+      loadingSources.replaceChildren(...selected.map((input) => {
+        const item = document.createElement('span');
+        item.className = 'vacancy-loading-source';
+        item.innerHTML = `<i aria-hidden="true"></i>${sourceNames[input.value] || input.value}`;
+        return item;
+      }));
+    }
+
+    loadingState?.removeAttribute('hidden');
+    loadingState?.scrollIntoView({behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start'});
+
+    const submitButton = searchForm.querySelector('.search-submit');
+    if (submitButton) {
+      submitButton.disabled = true;
+      submitButton.textContent = 'Ищем вакансии…';
+    }
+  });
 })();
 </script>
 {% if 'trudvsem' in selected_sources %}
