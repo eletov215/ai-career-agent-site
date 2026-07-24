@@ -97,40 +97,30 @@
 
         <div class="career-journey" aria-label="Путь от резюме до отклика">
           <div class="career-journey-line" aria-hidden="true">
-            <span class="career-journey-car">
-              <svg viewBox="0 0 84 46" focusable="false" aria-hidden="true">
+            <span class="career-journey-capsule">
+              <svg viewBox="0 0 74 44" focusable="false" aria-hidden="true">
                 <defs>
-                  <linearGradient id="journeyCarBody" x1="0" y1="0" x2="1" y2="1">
-                    <stop offset="0" stop-color="#7a5cff"/>
-                    <stop offset="0.55" stop-color="#5d6fff"/>
-                    <stop offset="1" stop-color="#4e8bff"/>
+                  <linearGradient id="journeyCapsuleShell" x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0" stop-color="#8065ff"/>
+                    <stop offset="0.52" stop-color="#5d6fff"/>
+                    <stop offset="1" stop-color="#46a3ff"/>
                   </linearGradient>
-                  <linearGradient id="journeyCarGlass" x1="0" y1="0" x2="1" y2="1">
-                    <stop offset="0" stop-color="#f8fbff" stop-opacity=".96"/>
-                    <stop offset="1" stop-color="#bfe8ff" stop-opacity=".82"/>
-                  </linearGradient>
+                  <radialGradient id="journeyCapsuleCore" cx="42%" cy="35%" r="70%">
+                    <stop offset="0" stop-color="#ffffff" stop-opacity="1"/>
+                    <stop offset="0.42" stop-color="#eaf6ff" stop-opacity=".98"/>
+                    <stop offset="1" stop-color="#b9d9ff" stop-opacity=".9"/>
+                  </radialGradient>
                 </defs>
-                <g class="car-bob">
-                  <path class="car-body" d="M10 28c1.6-5.6 5.2-8.7 10.7-9.4l8.2-9.1h25.2l10 9.2 8.1 1.1c3.7.5 6.8 3.4 7.4 7.1l.7 4.5H8.7z"/>
-                  <path class="car-window car-window-left" d="M31.4 11.8h10.1v7H25.2z"/>
-                  <path class="car-window car-window-right" d="M44.5 11.8h8.6l7.5 7H44.5z"/>
-                  <path class="car-bumper" d="M7.5 31.4h73"/>
-                  <path class="car-detail" d="M37.2 22.1h10.5"/>
-                  <circle class="car-headlight" cx="74" cy="24.5" r="2.4"/>
-                  <circle class="car-tail-light" cx="14" cy="24.7" r="1.9"/>
-                  <g class="car-wheel car-wheel-back">
-                    <circle class="car-tire" cx="24" cy="32.5" r="7.3"/>
-                    <circle class="car-rim" cx="24" cy="32.5" r="3.1"/>
-                    <path class="car-spoke" d="M24 29.8v5.4M21.3 32.5h5.4"/>
-                  </g>
-                  <g class="car-wheel car-wheel-front">
-                    <circle class="car-tire" cx="64" cy="32.5" r="7.3"/>
-                    <circle class="car-rim" cx="64" cy="32.5" r="3.1"/>
-                    <path class="car-spoke" d="M64 29.8v5.4M61.3 32.5h5.4"/>
-                  </g>
+                <g class="capsule-float">
+                  <path class="capsule-trail capsule-trail-long" d="M1 22h16"/>
+                  <path class="capsule-trail capsule-trail-short" d="M5 28h10"/>
+                  <ellipse class="capsule-halo" cx="43" cy="22" rx="22" ry="17"/>
+                  <rect class="capsule-shell" x="22" y="8" width="42" height="28" rx="14"/>
+                  <circle class="capsule-core" cx="43" cy="22" r="10"/>
+                  <path class="capsule-star" d="M43 14.5c.7 3.8 2.7 5.8 6.5 6.5-3.8.7-5.8 2.7-6.5 6.5-.7-3.8-2.7-5.8-6.5-6.5 3.8-.7 5.8-2.7 6.5-6.5z"/>
+                  <circle class="capsule-spark spark-one" cx="60" cy="12" r="1.5"/>
+                  <circle class="capsule-spark spark-two" cx="65" cy="28" r="1.2"/>
                 </g>
-                <path class="car-speed-line car-speed-line-one" d="M2 19h9"/>
-                <path class="car-speed-line car-speed-line-two" d="M0 25h7"/>
               </svg>
             </span>
           </div>

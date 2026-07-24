@@ -663,91 +663,82 @@ input:focus,select:focus,textarea:focus{outline:3px solid rgba(109,91,255,.14);b
   opacity:.25;
   animation:careerLineShimmer 4.8s ease-in-out infinite;
 }
- .career-journey-car{
+.career-journey-capsule{
   position:absolute;
   z-index:3;
   left:0;
   top:50%;
-  width:68px;
+  width:62px;
   height:38px;
-  margin-left:-34px;
-  transform:translateY(-78%);
-  filter:drop-shadow(0 9px 10px rgba(93,91,239,.24));
-  animation:careerCarTravel 8.5s linear infinite;
+  margin-left:-31px;
+  transform:translateY(-50%);
+  filter:drop-shadow(0 8px 12px rgba(93,91,239,.24));
+  animation:careerCapsuleTravel 8.5s linear infinite;
 }
-.career-journey-car::after{
+.career-journey-capsule::after{
   content:"";
   position:absolute;
   left:50%;
-  bottom:-2px;
-  width:48px;
+  bottom:1px;
+  width:38px;
   height:7px;
   transform:translateX(-50%);
   border-radius:50%;
-  background:rgba(89,105,245,.18);
-  filter:blur(4px);
-  animation:careerCarShadow .52s ease-in-out infinite alternate;
+  background:rgba(89,105,245,.16);
+  filter:blur(5px);
+  animation:careerCapsuleShadow 1.8s ease-in-out infinite;
 }
-.career-journey-car svg{
+.career-journey-capsule svg{
   width:100%;
   height:100%;
   overflow:visible;
 }
-.career-journey-car .car-bob{
+.career-journey-capsule .capsule-float{
   transform-box:view-box;
-  transform-origin:42px 31px;
-  animation:careerCarBob .52s ease-in-out infinite alternate;
+  transform-origin:43px 22px;
+  animation:careerCapsuleFloat 1.8s ease-in-out infinite;
 }
-.career-journey-car .car-body{
-  fill:url(#journeyCarBody);
+.career-journey-capsule .capsule-shell{
+  fill:url(#journeyCapsuleShell);
   stroke:rgba(255,255,255,.96);
-  stroke-width:1.6;
-  stroke-linejoin:round;
+  stroke-width:1.4;
 }
-.career-journey-car .car-window{
-  fill:url(#journeyCarGlass);
-  stroke:rgba(255,255,255,.92);
-  stroke-width:1.1;
-  stroke-linejoin:round;
-}
-.career-journey-car .car-bumper,
-.career-journey-car .car-detail{
-  fill:none;
-  stroke:rgba(255,255,255,.72);
-  stroke-width:1.6;
-  stroke-linecap:round;
-}
-.career-journey-car .car-headlight{
-  fill:#dff8ff;
+.career-journey-capsule .capsule-core{
+  fill:url(#journeyCapsuleCore);
   stroke:#fff;
-  stroke-width:1;
-  filter:drop-shadow(0 0 4px rgba(96,220,255,.95));
-  animation:careerCarHeadlight 1.4s ease-in-out infinite;
+  stroke-width:1.2;
+  filter:drop-shadow(0 0 6px rgba(117,139,255,.72));
 }
-.career-journey-car .car-tail-light{
-  fill:#ff8fca;
-  stroke:#fff;
+.career-journey-capsule .capsule-star{
+  fill:#665cff;
+  filter:drop-shadow(0 0 4px rgba(102,92,255,.45));
+  animation:careerCapsuleStar 2.1s ease-in-out infinite;
+}
+.career-journey-capsule .capsule-halo{
+  fill:rgba(126,102,255,.1);
+  stroke:rgba(255,255,255,.55);
   stroke-width:.8;
+  filter:blur(.3px);
+  animation:careerCapsuleHalo 2.1s ease-in-out infinite;
 }
-.career-journey-car .car-wheel{
-  transform-box:view-box;
-  transform-origin:center;
-  animation:careerCarWheel .52s linear infinite;
-}
-.career-journey-car .car-wheel-back{transform-origin:24px 32.5px}
-.career-journey-car .car-wheel-front{transform-origin:64px 32.5px}
-.career-journey-car .car-tire{fill:#20284d;stroke:#fff;stroke-width:1.5}
-.career-journey-car .car-rim{fill:#9fdcff;stroke:#fff;stroke-width:1}
-.career-journey-car .car-spoke{fill:none;stroke:#5b63f4;stroke-width:1.1;stroke-linecap:round}
-.career-journey-car .car-speed-line{
+.career-journey-capsule .capsule-trail{
   fill:none;
-  stroke:#775fff;
-  stroke-width:2;
   stroke-linecap:round;
-  opacity:.55;
-  animation:careerCarSpeedLine .9s ease-in-out infinite;
+  stroke-width:2;
+  opacity:.65;
+  animation:careerCapsuleTrail .95s ease-in-out infinite;
 }
-.career-journey-car .car-speed-line-two{stroke:#39b7ef;animation-delay:-.42s}
+.career-journey-capsule .capsule-trail-long{stroke:#775fff}
+.career-journey-capsule .capsule-trail-short{stroke:#3bb9ef;animation-delay:-.45s}
+.career-journey-capsule .capsule-spark{
+  fill:#fff;
+  stroke:#6d5bff;
+  stroke-width:.8;
+  transform-box:fill-box;
+  transform-origin:center;
+  animation:careerCapsuleSpark 1.4s ease-in-out infinite;
+}
+.career-journey-capsule .spark-two{animation-delay:-.7s}
 .career-journey-step{position:relative;z-index:1;min-width:0;text-align:center}
 .career-journey-icon{
   display:grid;
@@ -771,27 +762,40 @@ input:focus,select:focus,textarea:focus{outline:3px solid rgba(109,91,255,.14);b
 .career-journey-note>span{color:#665cff;font-size:26px;line-height:1}
 .career-journey-note strong{display:block;color:var(--text-title);font-size:14px}
 .career-journey-note small{display:block;margin-top:5px;color:var(--text-body);font-size:12px}
-@keyframes careerCarTravel{
+@keyframes careerCapsuleTravel{
   0%{left:0;opacity:0}
   3%{opacity:1}
   97%{opacity:1}
   100%{left:100%;opacity:0}
 }
-@keyframes careerCarWheel{to{transform:rotate(360deg)}}
-@keyframes careerCarBob{
-  from{transform:translateY(0) rotate(-.35deg)}
-  to{transform:translateY(-1.8px) rotate(.35deg)}
+@keyframes careerCapsuleFloat{
+  0%,100%{transform:translateY(0) rotate(-1deg)}
+  50%{transform:translateY(-3px) rotate(1deg)}
 }
-@keyframes careerCarShadow{
-  from{transform:translateX(-50%) scaleX(.86);opacity:.28}
-  to{transform:translateX(-50%) scaleX(1.05);opacity:.5}
+@keyframes careerCapsuleShadow{
+  0%,100%{transform:translateX(-50%) scaleX(.82);opacity:.22}
+  50%{transform:translateX(-50%) scaleX(1.08);opacity:.42}
 }
-@keyframes careerCarHeadlight{0%,100%{opacity:.65}50%{opacity:1}}
-@keyframes careerCarSpeedLine{0%,100%{transform:translateX(2px) scaleX(.65);opacity:.18}50%{transform:translateX(-3px) scaleX(1);opacity:.72}}
+@keyframes careerCapsuleStar{
+  0%,100%{transform:scale(.88);opacity:.86}
+  50%{transform:scale(1.08);opacity:1}
+}
+@keyframes careerCapsuleHalo{
+  0%,100%{opacity:.45;transform:scale(.96)}
+  50%{opacity:.9;transform:scale(1.06)}
+}
+@keyframes careerCapsuleTrail{
+  0%,100%{transform:translateX(3px) scaleX(.62);opacity:.18}
+  50%{transform:translateX(-3px) scaleX(1);opacity:.72}
+}
+@keyframes careerCapsuleSpark{
+  0%,100%{transform:scale(.65);opacity:.3}
+  50%{transform:scale(1.2);opacity:1}
+}
 @keyframes careerLineShimmer{0%,100%{transform:translateX(-30%);opacity:.1}50%{transform:translateX(30%);opacity:.4}}
 @media(max-width:900px){
   .career-journey{grid-template-columns:repeat(2,minmax(0,1fr));gap:26px 18px}
-  .career-journey-line,.career-journey-car{display:none}
+  .career-journey-line,.career-journey-capsule{display:none}
   .career-journey-step p{min-height:auto}
 }
 @media(max-width:620px){
@@ -808,4 +812,4 @@ input:focus,select:focus,textarea:focus{outline:3px solid rgba(109,91,255,.14);b
   .career-journey-chip{grid-area:chip;justify-self:start}
   .career-journey-note{padding:15px 16px;align-items:flex-start}
 }
-@media(prefers-reduced-motion:reduce){.career-journey-car,.career-journey-car *,.career-journey-line::after{animation:none!important}.career-journey-car{display:none}}
+@media(prefers-reduced-motion:reduce){.career-journey-capsule,.career-journey-capsule *,.career-journey-line::after{animation:none!important}.career-journey-capsule{display:none}}
