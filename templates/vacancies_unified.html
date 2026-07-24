@@ -10,28 +10,53 @@
         <p>Ищите предложения сразу на нескольких площадках и сравнивайте подходящие вакансии в одной ленте.</p>
       </div>
 
-      <div class="vacancy-search-animation" aria-hidden="true">
-        <div class="vacancy-search-animation__orbit"></div>
-        <div class="vacancy-search-animation__card vacancy-search-animation__card--one">
-          <span class="vacancy-search-animation__avatar"></span>
-          <span class="vacancy-search-animation__lines"><i></i><i></i></span>
-          <strong>120 000 ₽</strong>
+      <div class="vacancy-search-scene" aria-hidden="true">
+        <div class="vacancy-search-orbit"></div>
+
+        <article class="vacancy-mini-card vacancy-mini-card--1">
+          <span class="vacancy-mini-card__icon">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.4"></circle><path d="M5.5 19c.7-4 3-6 6.5-6s5.8 2 6.5 6"></path></svg>
+          </span>
+          <span class="vacancy-mini-card__body"><strong>Python-разработчик</strong><small>Москва, Россия</small></span>
+          <b>120 000 ₽</b>
+        </article>
+
+        <article class="vacancy-mini-card vacancy-mini-card--2">
+          <span class="vacancy-mini-card__icon">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.4"></circle><path d="M5.5 19c.7-4 3-6 6.5-6s5.8 2 6.5 6"></path></svg>
+          </span>
+          <span class="vacancy-mini-card__body"><strong>Product Manager</strong><small>Лондон, Великобритания</small></span>
+          <b>£3 000</b>
+        </article>
+
+        <article class="vacancy-mini-card vacancy-mini-card--3">
+          <span class="vacancy-mini-card__icon">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.4"></circle><path d="M5.5 19c.7-4 3-6 6.5-6s5.8 2 6.5 6"></path></svg>
+          </span>
+          <span class="vacancy-mini-card__body"><strong>Frontend Developer</strong><small>Нью-Йорк, США</small></span>
+          <b>$5 200</b>
+        </article>
+
+        <article class="vacancy-mini-card vacancy-mini-card--4">
+          <span class="vacancy-mini-card__icon">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.4"></circle><path d="M5.5 19c.7-4 3-6 6.5-6s5.8 2 6.5 6"></path></svg>
+          </span>
+          <span class="vacancy-mini-card__body"><strong>Data Analyst</strong><small>Берлин, Германия</small></span>
+          <b>€3 200</b>
+        </article>
+
+        <article class="vacancy-mini-card vacancy-mini-card--5">
+          <span class="vacancy-mini-card__icon">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.4"></circle><path d="M5.5 19c.7-4 3-6 6.5-6s5.8 2 6.5 6"></path></svg>
+          </span>
+          <span class="vacancy-mini-card__body"><strong>UX/UI дизайнер</strong><small>Санкт-Петербург</small></span>
+          <b>180 000 ₽</b>
+        </article>
+
+        <div class="vacancy-magnifier">
+          <span class="vacancy-magnifier__glass"></span>
+          <span class="vacancy-magnifier__handle"></span>
         </div>
-        <div class="vacancy-search-animation__card vacancy-search-animation__card--two">
-          <span class="vacancy-search-animation__avatar"></span>
-          <span class="vacancy-search-animation__lines"><i></i><i></i></span>
-          <strong>от 150 000 ₽</strong>
-        </div>
-        <div class="vacancy-search-animation__card vacancy-search-animation__card--three">
-          <span class="vacancy-search-animation__avatar"></span>
-          <span class="vacancy-search-animation__lines"><i></i><i></i></span>
-          <strong>Удалённо</strong>
-        </div>
-        <div class="vacancy-search-animation__magnifier">
-          <span></span>
-        </div>
-        <span class="vacancy-search-animation__dot vacancy-search-animation__dot--one"></span>
-        <span class="vacancy-search-animation__dot vacancy-search-animation__dot--two"></span>
       </div>
 
       <a class="btn btn-secondary vacancy-cabinet-link" href="{{ url_for('dashboard') }}">В кабинет</a>
