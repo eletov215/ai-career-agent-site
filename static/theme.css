@@ -1176,3 +1176,86 @@ input:focus,select:focus,textarea:focus{outline:3px solid rgba(109,91,255,.14);b
   .vacancy-magnifier,.vacancy-mini-card,.vacancy-search-orbit::before,.vacancy-search-orbit::after{animation:none!important}
   .vacancy-magnifier{left:43%;top:38%}
 }
+
+/* Vacancy search scene — continuous scan and gentle card motion */
+.vacancy-primary-search .search-submit{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:auto;
+  min-width:200px;
+  height:46px;
+  min-height:46px;
+  padding:0 24px;
+  font-family:"Manrope",Inter,system-ui,sans-serif;
+  font-size:14px;
+  font-weight:600;
+  line-height:1;
+  text-align:center;
+  vertical-align:middle;
+}
+
+.vacancy-magnifier{
+  animation:vacancyMagnifierScanSmooth 16s linear infinite;
+}
+
+.vacancy-mini-card--1{
+  animation:vacancyCardOneSmooth 16s linear infinite,vacancyFloatOne 5.4s ease-in-out infinite;
+}
+.vacancy-mini-card--2{
+  animation:vacancyCardTwoSmooth 16s linear infinite,vacancyFloatTwo 6.2s ease-in-out infinite;
+}
+.vacancy-mini-card--3{
+  animation:vacancyCardThreeSmooth 16s linear infinite,vacancyFloatThree 5.8s ease-in-out infinite;
+}
+.vacancy-mini-card--4{
+  animation:vacancyCardFourSmooth 16s linear infinite,vacancyFloatFour 6.6s ease-in-out infinite;
+}
+.vacancy-mini-card--5{
+  animation:vacancyCardFiveSmooth 16s linear infinite,vacancyFloatFive 5.1s ease-in-out infinite;
+}
+
+@keyframes vacancyMagnifierScanSmooth{
+  0%{left:15%;top:5%;transform:translate(-12%,-4%) rotate(-5deg)}
+  10%{left:29%;top:20%;transform:translate(-10%,-4%) rotate(-2deg)}
+  20%{left:43%;top:38%;transform:translate(-8%,-4%) rotate(1deg)}
+  30%{left:57%;top:25%;transform:translate(-5%,-5%) rotate(3deg)}
+  40%{left:70%;top:15%;transform:translate(-2%,-5%) rotate(4deg)}
+  50%{left:42%;top:42%;transform:translate(-5%,-4%) rotate(0deg)}
+  60%{left:8%;top:57%;transform:translate(-4%,-5%) rotate(-4deg)}
+  70%{left:38%;top:63%;transform:translate(-4%,-4%) rotate(-1deg)}
+  80%{left:69%;top:59%;transform:translate(-4%,-3%) rotate(3deg)}
+  90%{left:46%;top:27%;transform:translate(-7%,-4%) rotate(1deg)}
+  100%{left:15%;top:5%;transform:translate(-12%,-4%) rotate(-5deg)}
+}
+
+@keyframes vacancyCardOneSmooth{
+  0%,6%{transform:scale(1.13);filter:brightness(1.05)}
+  12%,100%{transform:scale(1);filter:brightness(1)}
+}
+@keyframes vacancyCardTwoSmooth{
+  0%,15%,25%,100%{transform:scale(1);filter:brightness(1)}
+  19%,22%{transform:scale(1.13);filter:brightness(1.05)}
+}
+@keyframes vacancyCardThreeSmooth{
+  0%,35%,45%,100%{transform:scale(1);filter:brightness(1)}
+  39%,42%{transform:scale(1.13);filter:brightness(1.05)}
+}
+@keyframes vacancyCardFourSmooth{
+  0%,55%,65%,100%{transform:scale(1);filter:brightness(1)}
+  59%,62%{transform:scale(1.13);filter:brightness(1.05)}
+}
+@keyframes vacancyCardFiveSmooth{
+  0%,75%,85%,100%{transform:scale(1);filter:brightness(1)}
+  79%,82%{transform:scale(1.13);filter:brightness(1.05)}
+}
+
+@keyframes vacancyFloatOne{0%,100%{translate:0 0}50%{translate:0 -4px}}
+@keyframes vacancyFloatTwo{0%,100%{translate:0 0}50%{translate:3px -3px}}
+@keyframes vacancyFloatThree{0%,100%{translate:0 0}50%{translate:-2px -5px}}
+@keyframes vacancyFloatFour{0%,100%{translate:0 0}50%{translate:2px 4px}}
+@keyframes vacancyFloatFive{0%,100%{translate:0 0}50%{translate:-3px 3px}}
+
+@media(prefers-reduced-motion:reduce){
+  .vacancy-mini-card{translate:0 0!important}
+}
