@@ -99,89 +99,106 @@
         {% endfor %}
       </fieldset>
 
-      <label class="search-field">
-        <span>Регион</span>
-        <input type="text" name="region" value="{{ filters.region }}" placeholder="Например, Москва">
-      </label>
+      <div class="vacancy-main-filters" aria-label="Основные фильтры">
+        <label class="search-field">
+          <span>Регион</span>
+          <input type="text" name="region" value="{{ filters.region }}" placeholder="Например, Москва">
+        </label>
 
-      <label class="search-field">
-        <span>Опыт работы</span>
-        <select name="experience">
-          <option value="" {% if not filters.experience %}selected{% endif %}>Не важно</option>
-          <option value="no_experience" {% if filters.experience == 'no_experience' %}selected{% endif %}>Нет опыта</option>
-          <option value="between_1_and_3" {% if filters.experience == 'between_1_and_3' %}selected{% endif %}>От 1 до 3 лет</option>
-          <option value="between_3_and_6" {% if filters.experience == 'between_3_and_6' %}selected{% endif %}>От 3 до 6 лет</option>
-          <option value="more_than_6" {% if filters.experience == 'more_than_6' %}selected{% endif %}>Более 6 лет</option>
-        </select>
-      </label>
+        <label class="search-field">
+          <span>Зарплата от</span>
+          <input type="number" name="salary_from" min="0" step="1000" value="{{ filters.salary_from or '' }}" placeholder="Например, 100000">
+        </label>
 
-      <label class="search-field">
-        <span>Тип занятости</span>
-        <select name="employment">
-          <option value="" {% if not filters.employment %}selected{% endif %}>Не важно</option>
-          <option value="full" {% if filters.employment == 'full' %}selected{% endif %}>Полная занятость</option>
-          <option value="part" {% if filters.employment == 'part' %}selected{% endif %}>Частичная занятость</option>
-          <option value="project" {% if filters.employment == 'project' %}selected{% endif %}>Проектная или временная</option>
-          <option value="probation" {% if filters.employment == 'probation' %}selected{% endif %}>Стажировка</option>
-          <option value="volunteer" {% if filters.employment == 'volunteer' %}selected{% endif %}>Волонтёрство</option>
-        </select>
-      </label>
-
-      <label class="search-field">
-        <span>Формат работы</span>
-        <select name="work_format">
-          <option value="" {% if not filters.work_format %}selected{% endif %}>Любой</option>
-          <option value="onsite" {% if filters.work_format == 'onsite' %}selected{% endif %}>На месте</option>
-          <option value="remote" {% if filters.work_format == 'remote' %}selected{% endif %}>Удалённо</option>
-          <option value="hybrid" {% if filters.work_format == 'hybrid' %}selected{% endif %}>Гибрид</option>
-        </select>
-      </label>
-
-      <label class="search-field">
-        <span>Зарплата от</span>
-        <input type="number" name="salary_from" min="0" step="1000" value="{{ filters.salary_from or '' }}" placeholder="Например, 100000">
-      </label>
-
-      <label class="search-field">
-        <span>Валюта</span>
-        <select name="currency">
-          <option value="" {% if not filters.currency %}selected{% endif %}>Любая</option>
-          <option value="RUB" {% if filters.currency == 'RUB' %}selected{% endif %}>RUB — ₽</option>
-          <option value="USD" {% if filters.currency == 'USD' %}selected{% endif %}>USD — $</option>
-          <option value="EUR" {% if filters.currency == 'EUR' %}selected{% endif %}>EUR — €</option>
-          <option value="GBP" {% if filters.currency == 'GBP' %}selected{% endif %}>GBP — £</option>
-          <option value="KZT" {% if filters.currency == 'KZT' %}selected{% endif %}>KZT — ₸</option>
-          <option value="BYN" {% if filters.currency == 'BYN' %}selected{% endif %}>BYN — Br</option>
-        </select>
-      </label>
-
-      <label class="search-field">
-        <span>Период публикации</span>
-        <select name="period">
-          <option value="1" {% if filters.period_days == 1 %}selected{% endif %}>За сутки</option>
-          <option value="3" {% if filters.period_days == 3 %}selected{% endif %}>За 3 дня</option>
-          <option value="7" {% if filters.period_days == 7 %}selected{% endif %}>За неделю</option>
-          <option value="14" {% if filters.period_days == 14 %}selected{% endif %}>За 2 недели</option>
-          <option value="30" {% if filters.period_days == 30 %}selected{% endif %}>За месяц</option>
-        </select>
-      </label>
-
-      <label class="search-field">
-        <span>Сортировка</span>
-        <select name="sort">
-          <option value="date" {% if filters.sort == 'date' %}selected{% endif %}>Сначала новые</option>
-          <option value="salary_desc" {% if filters.sort == 'salary_desc' %}selected{% endif %}>Зарплата по убыванию</option>
-          <option value="salary_asc" {% if filters.sort == 'salary_asc' %}selected{% endif %}>Зарплата по возрастанию</option>
-          <option value="relevance" {% if filters.sort == 'relevance' %}selected{% endif %}>По соответствию</option>
-        </select>
-      </label>
-
-      <div class="filter-checks">
-        <label class="remote-filter">
-          <input type="checkbox" name="salary_only" value="1" {% if filters.salary_only %}checked{% endif %}>
-          <span>Только с указанной зарплатой</span>
+        <label class="search-field">
+          <span>Формат работы</span>
+          <select name="work_format">
+            <option value="" {% if not filters.work_format %}selected{% endif %}>Любой</option>
+            <option value="onsite" {% if filters.work_format == 'onsite' %}selected{% endif %}>На месте</option>
+            <option value="remote" {% if filters.work_format == 'remote' %}selected{% endif %}>Удалённо</option>
+            <option value="hybrid" {% if filters.work_format == 'hybrid' %}selected{% endif %}>Гибрид</option>
+          </select>
         </label>
       </div>
+
+      <details class="vacancy-extra-filters" {% if filters.experience or filters.employment or filters.currency or filters.salary_only or filters.period_days != 7 or filters.sort != 'date' %}open{% endif %}>
+        <summary>
+          <span class="vacancy-extra-filters__title">
+            <span class="vacancy-extra-filters__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="M4 7h10"></path><path d="M18 7h2"></path><circle cx="16" cy="7" r="2"></circle><path d="M4 17h2"></path><path d="M10 17h10"></path><circle cx="8" cy="17" r="2"></circle></svg>
+            </span>
+            Дополнительные фильтры
+          </span>
+          <span class="vacancy-extra-filters__hint">Опыт, занятость, валюта и сортировка</span>
+          <span class="vacancy-extra-filters__chevron" aria-hidden="true"></span>
+        </summary>
+
+        <div class="vacancy-extra-filters__content">
+          <label class="search-field">
+            <span>Опыт работы</span>
+            <select name="experience">
+              <option value="" {% if not filters.experience %}selected{% endif %}>Не важно</option>
+              <option value="no_experience" {% if filters.experience == 'no_experience' %}selected{% endif %}>Нет опыта</option>
+              <option value="between_1_and_3" {% if filters.experience == 'between_1_and_3' %}selected{% endif %}>От 1 до 3 лет</option>
+              <option value="between_3_and_6" {% if filters.experience == 'between_3_and_6' %}selected{% endif %}>От 3 до 6 лет</option>
+              <option value="more_than_6" {% if filters.experience == 'more_than_6' %}selected{% endif %}>Более 6 лет</option>
+            </select>
+          </label>
+
+          <label class="search-field">
+            <span>Тип занятости</span>
+            <select name="employment">
+              <option value="" {% if not filters.employment %}selected{% endif %}>Не важно</option>
+              <option value="full" {% if filters.employment == 'full' %}selected{% endif %}>Полная занятость</option>
+              <option value="part" {% if filters.employment == 'part' %}selected{% endif %}>Частичная занятость</option>
+              <option value="project" {% if filters.employment == 'project' %}selected{% endif %}>Проектная или временная</option>
+              <option value="probation" {% if filters.employment == 'probation' %}selected{% endif %}>Стажировка</option>
+              <option value="volunteer" {% if filters.employment == 'volunteer' %}selected{% endif %}>Волонтёрство</option>
+            </select>
+          </label>
+
+          <label class="search-field">
+            <span>Валюта</span>
+            <select name="currency">
+              <option value="" {% if not filters.currency %}selected{% endif %}>Любая</option>
+              <option value="RUB" {% if filters.currency == 'RUB' %}selected{% endif %}>RUB — ₽</option>
+              <option value="USD" {% if filters.currency == 'USD' %}selected{% endif %}>USD — $</option>
+              <option value="EUR" {% if filters.currency == 'EUR' %}selected{% endif %}>EUR — €</option>
+              <option value="GBP" {% if filters.currency == 'GBP' %}selected{% endif %}>GBP — £</option>
+              <option value="KZT" {% if filters.currency == 'KZT' %}selected{% endif %}>KZT — ₸</option>
+              <option value="BYN" {% if filters.currency == 'BYN' %}selected{% endif %}>BYN — Br</option>
+            </select>
+          </label>
+
+          <label class="search-field">
+            <span>Период публикации</span>
+            <select name="period">
+              <option value="1" {% if filters.period_days == 1 %}selected{% endif %}>За сутки</option>
+              <option value="3" {% if filters.period_days == 3 %}selected{% endif %}>За 3 дня</option>
+              <option value="7" {% if filters.period_days == 7 %}selected{% endif %}>За неделю</option>
+              <option value="14" {% if filters.period_days == 14 %}selected{% endif %}>За 2 недели</option>
+              <option value="30" {% if filters.period_days == 30 %}selected{% endif %}>За месяц</option>
+            </select>
+          </label>
+
+          <label class="search-field">
+            <span>Сортировка</span>
+            <select name="sort">
+              <option value="date" {% if filters.sort == 'date' %}selected{% endif %}>Сначала новые</option>
+              <option value="salary_desc" {% if filters.sort == 'salary_desc' %}selected{% endif %}>Зарплата по убыванию</option>
+              <option value="salary_asc" {% if filters.sort == 'salary_asc' %}selected{% endif %}>Зарплата по возрастанию</option>
+              <option value="relevance" {% if filters.sort == 'relevance' %}selected{% endif %}>По соответствию</option>
+            </select>
+          </label>
+
+          <div class="filter-checks">
+            <label class="remote-filter">
+              <input type="checkbox" name="salary_only" value="1" {% if filters.salary_only %}checked{% endif %}>
+              <span>Только с указанной зарплатой</span>
+            </label>
+          </div>
+        </div>
+      </details>
 
     </form>
 
