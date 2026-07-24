@@ -1890,3 +1890,40 @@ input:focus,select:focus,textarea:focus{outline:3px solid rgba(109,91,255,.14);b
     min-height:46px;
   }
 }
+
+/* Career entry cards: compact CTAs and stable alignment on shorter screens */
+@media (min-width:901px){
+  .career-entry-grid{
+    grid-auto-rows:660px;
+  }
+  .career-entry-card,
+  .resume-upload-card,
+  .ai-resume-card{
+    height:660px;
+    min-height:660px;
+    max-height:660px;
+  }
+}
+
+.career-entry-card .career-main-action{
+  width:auto!important;
+  max-width:100%;
+  min-width:0;
+  align-self:center;
+  padding-left:28px!important;
+  padding-right:28px!important;
+}
+.resume-upload-form .career-main-action{
+  justify-self:center;
+}
+
+@media (max-width:620px){
+  .career-entry-card .career-main-action{
+    width:auto!important;
+    max-width:100%;
+    padding-left:20px!important;
+    padding-right:20px!important;
+    white-space:normal;
+    text-align:center;
+  }
+}
