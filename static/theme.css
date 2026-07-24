@@ -166,18 +166,42 @@ input:focus,select:focus,textarea:focus{outline:3px solid rgba(109,91,255,.14);b
   overflow:hidden;
   z-index:0;
 }
-.career-journey-line::before,
-.career-journey-line::after{
-  content:"";
-  position:absolute;top:50%;
-  width:8px;height:8px;
+.career-journey-marker{
+  position:absolute;
+  top:50%;
+  width:20px;
+  height:20px;
   border-radius:50%;
-  background:#fff;
-  transform:translateY(-50%);
-  box-shadow:0 0 12px rgba(89,103,255,.8);
+  transform:translate(-50%,-50%);
+  background:rgba(255,255,255,.68);
+  border:3px solid rgba(255,255,255,.9);
+  box-shadow:
+    0 0 0 7px rgba(109,91,255,.09),
+    0 0 18px rgba(109,91,255,.58),
+    inset 0 0 7px rgba(109,91,255,.25);
+  z-index:2;
 }
-.career-journey-line::before{left:33.333%}
-.career-journey-line::after{left:66.666%}
+.career-journey-marker::after{
+  content:"";
+  position:absolute;
+  inset:4px;
+  border-radius:50%;
+  background:rgba(109,91,255,.42);
+  box-shadow:0 0 9px rgba(109,91,255,.55);
+}
+.career-journey-marker-1{left:16.666%}
+.career-journey-marker-2{left:50%}
+.career-journey-marker-3{left:83.333%}
+.career-journey-marker-2{
+  box-shadow:
+    0 0 0 7px rgba(67,188,230,.09),
+    0 0 18px rgba(67,188,230,.58),
+    inset 0 0 7px rgba(67,188,230,.25);
+}
+.career-journey-marker-2::after{
+  background:rgba(67,188,230,.46);
+  box-shadow:0 0 9px rgba(67,188,230,.58);
+}
 .career-journey-pulse{
   position:absolute;
   top:50%;left:-30px;
@@ -260,6 +284,7 @@ input:focus,select:focus,textarea:focus{outline:3px solid rgba(109,91,255,.14);b
   .career-journey-card{padding:34px 24px 28px}
   .career-journey{grid-template-columns:1fr 1fr;gap:34px 20px}
   .career-journey-line{display:none}
+  .career-journey-marker{display:none}
   .career-journey-step{padding:22px 14px;border:1px solid rgba(109,91,255,.09);border-radius:18px;background:rgba(255,255,255,.55)}
   .career-journey-icon{width:82px;height:82px}
   .career-journey-icon svg{width:36px;height:36px}
