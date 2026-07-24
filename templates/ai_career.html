@@ -97,29 +97,40 @@
 
         <div class="career-journey" aria-label="Путь от резюме до отклика">
           <div class="career-journey-line" aria-hidden="true">
-            <span class="career-journey-capsule">
-              <svg viewBox="0 0 74 44" focusable="false" aria-hidden="true">
+            <span class="career-journey-capsule career-journey-crystal">
+              <svg viewBox="0 0 78 54" focusable="false" aria-hidden="true">
                 <defs>
-                  <linearGradient id="journeyCapsuleShell" x1="0" y1="0" x2="1" y2="1">
-                    <stop offset="0" stop-color="#8065ff"/>
-                    <stop offset="0.52" stop-color="#5d6fff"/>
-                    <stop offset="1" stop-color="#46a3ff"/>
+                  <linearGradient id="journeyCrystalMain" x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0" stop-color="#9b86ff"/>
+                    <stop offset="0.45" stop-color="#695cff"/>
+                    <stop offset="1" stop-color="#42b9ff"/>
                   </linearGradient>
-                  <radialGradient id="journeyCapsuleCore" cx="42%" cy="35%" r="70%">
-                    <stop offset="0" stop-color="#ffffff" stop-opacity="1"/>
-                    <stop offset="0.42" stop-color="#eaf6ff" stop-opacity=".98"/>
-                    <stop offset="1" stop-color="#b9d9ff" stop-opacity=".9"/>
+                  <linearGradient id="journeyCrystalLight" x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0" stop-color="#ffffff" stop-opacity=".94"/>
+                    <stop offset="1" stop-color="#bfe8ff" stop-opacity=".22"/>
+                  </linearGradient>
+                  <radialGradient id="journeyCrystalCore" cx="45%" cy="38%" r="65%">
+                    <stop offset="0" stop-color="#ffffff"/>
+                    <stop offset="0.5" stop-color="#eaf5ff"/>
+                    <stop offset="1" stop-color="#9bc8ff" stop-opacity=".92"/>
                   </radialGradient>
                 </defs>
-                <g class="capsule-float">
-                  <path class="capsule-trail capsule-trail-long" d="M1 22h16"/>
-                  <path class="capsule-trail capsule-trail-short" d="M5 28h10"/>
-                  <ellipse class="capsule-halo" cx="43" cy="22" rx="22" ry="17"/>
-                  <rect class="capsule-shell" x="22" y="8" width="42" height="28" rx="14"/>
-                  <circle class="capsule-core" cx="43" cy="22" r="10"/>
-                  <path class="capsule-star" d="M43 14.5c.7 3.8 2.7 5.8 6.5 6.5-3.8.7-5.8 2.7-6.5 6.5-.7-3.8-2.7-5.8-6.5-6.5 3.8-.7 5.8-2.7 6.5-6.5z"/>
-                  <circle class="capsule-spark spark-one" cx="60" cy="12" r="1.5"/>
-                  <circle class="capsule-spark spark-two" cx="65" cy="28" r="1.2"/>
+                <g class="crystal-float">
+                  <path class="crystal-trail crystal-trail-main" d="M1 27h17"/>
+                  <path class="crystal-trail crystal-trail-soft" d="M6 34h10"/>
+                  <ellipse class="crystal-halo" cx="47" cy="27" rx="24" ry="20"/>
+                  <g class="crystal-body">
+                    <path class="crystal-base" d="M47 5 68 20 61 44 33 44 26 20Z"/>
+                    <path class="crystal-facet crystal-facet-left" d="M47 5 47 27 26 20Z"/>
+                    <path class="crystal-facet crystal-facet-right" d="M47 5 68 20 47 27Z"/>
+                    <path class="crystal-facet crystal-facet-bottom-left" d="M26 20 47 27 33 44Z"/>
+                    <path class="crystal-facet crystal-facet-bottom-right" d="M47 27 68 20 61 44Z"/>
+                    <path class="crystal-core" d="M47 17 56 24 53 35 41 35 38 24Z"/>
+                    <path class="crystal-star" d="M47 20c.65 3.25 2.35 4.95 5.6 5.6-3.25.65-4.95 2.35-5.6 5.6-.65-3.25-2.35-4.95-5.6-5.6 3.25-.65 4.95-2.35 5.6-5.6z"/>
+                    <path class="crystal-shine" d="M37 15 45 9 42 18Z"/>
+                  </g>
+                  <circle class="crystal-spark spark-one" cx="69" cy="13" r="1.4"/>
+                  <circle class="crystal-spark spark-two" cx="72" cy="35" r="1.1"/>
                 </g>
               </svg>
             </span>

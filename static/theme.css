@@ -693,52 +693,86 @@ input:focus,select:focus,textarea:focus{outline:3px solid rgba(109,91,255,.14);b
   height:100%;
   overflow:visible;
 }
-.career-journey-capsule .capsule-float{
+.career-journey-crystal{
+  width:66px;
+  height:46px;
+  margin-left:-33px;
+  filter:drop-shadow(0 9px 14px rgba(93,91,239,.28));
+}
+.career-journey-crystal::after{
+  bottom:-1px;
+  width:40px;
+  height:8px;
+  background:rgba(87,104,246,.18);
+}
+.career-journey-crystal .crystal-float{
   transform-box:view-box;
-  transform-origin:43px 22px;
-  animation:careerCapsuleFloat 1.8s ease-in-out infinite;
+  transform-origin:47px 27px;
+  animation:careerCrystalFloat 1.9s ease-in-out infinite;
 }
-.career-journey-capsule .capsule-shell{
-  fill:url(#journeyCapsuleShell);
+.career-journey-crystal .crystal-body{
+  transform-box:fill-box;
+  transform-origin:center;
+  animation:careerCrystalTilt 3.2s ease-in-out infinite;
+}
+.career-journey-crystal .crystal-base{
+  fill:url(#journeyCrystalMain);
+  stroke:rgba(255,255,255,.98);
+  stroke-width:1.45;
+  filter:drop-shadow(0 0 8px rgba(109,91,255,.42));
+}
+.career-journey-crystal .crystal-facet{
+  stroke:rgba(255,255,255,.42);
+  stroke-width:.7;
+}
+.career-journey-crystal .crystal-facet-left{fill:rgba(255,255,255,.2)}
+.career-journey-crystal .crystal-facet-right{fill:rgba(88,116,255,.16)}
+.career-journey-crystal .crystal-facet-bottom-left{fill:rgba(80,87,230,.28)}
+.career-journey-crystal .crystal-facet-bottom-right{fill:rgba(56,187,255,.2)}
+.career-journey-crystal .crystal-core{
+  fill:url(#journeyCrystalCore);
   stroke:rgba(255,255,255,.96);
-  stroke-width:1.4;
+  stroke-width:1;
+  filter:drop-shadow(0 0 6px rgba(191,232,255,.82));
 }
-.career-journey-capsule .capsule-core{
-  fill:url(#journeyCapsuleCore);
-  stroke:#fff;
-  stroke-width:1.2;
-  filter:drop-shadow(0 0 6px rgba(117,139,255,.72));
-}
-.career-journey-capsule .capsule-star{
+.career-journey-crystal .crystal-star{
   fill:#665cff;
-  filter:drop-shadow(0 0 4px rgba(102,92,255,.45));
-  animation:careerCapsuleStar 2.1s ease-in-out infinite;
+  filter:drop-shadow(0 0 4px rgba(102,92,255,.5));
+  transform-box:fill-box;
+  transform-origin:center;
+  animation:careerCrystalStar 2s ease-in-out infinite;
 }
-.career-journey-capsule .capsule-halo{
-  fill:rgba(126,102,255,.1);
-  stroke:rgba(255,255,255,.55);
-  stroke-width:.8;
-  filter:blur(.3px);
-  animation:careerCapsuleHalo 2.1s ease-in-out infinite;
+.career-journey-crystal .crystal-shine{
+  fill:url(#journeyCrystalLight);
+  opacity:.9;
+  transform-box:fill-box;
+  transform-origin:center;
+  animation:careerCrystalShine 2.8s ease-in-out infinite;
 }
-.career-journey-capsule .capsule-trail{
+.career-journey-crystal .crystal-halo{
+  fill:rgba(126,102,255,.09);
+  stroke:rgba(255,255,255,.48);
+  stroke-width:.7;
+  animation:careerCrystalHalo 2.1s ease-in-out infinite;
+}
+.career-journey-crystal .crystal-trail{
   fill:none;
   stroke-linecap:round;
   stroke-width:2;
-  opacity:.65;
-  animation:careerCapsuleTrail .95s ease-in-out infinite;
+  opacity:.6;
+  animation:careerCrystalTrail .95s ease-in-out infinite;
 }
-.career-journey-capsule .capsule-trail-long{stroke:#775fff}
-.career-journey-capsule .capsule-trail-short{stroke:#3bb9ef;animation-delay:-.45s}
-.career-journey-capsule .capsule-spark{
+.career-journey-crystal .crystal-trail-main{stroke:#765fff}
+.career-journey-crystal .crystal-trail-soft{stroke:#42b9ff;animation-delay:-.45s}
+.career-journey-crystal .crystal-spark{
   fill:#fff;
   stroke:#6d5bff;
-  stroke-width:.8;
+  stroke-width:.75;
   transform-box:fill-box;
   transform-origin:center;
-  animation:careerCapsuleSpark 1.4s ease-in-out infinite;
+  animation:careerCrystalSpark 1.45s ease-in-out infinite;
 }
-.career-journey-capsule .spark-two{animation-delay:-.7s}
+.career-journey-crystal .spark-two{animation-delay:-.72s}
 .career-journey-step{position:relative;z-index:1;min-width:0;text-align:center}
 .career-journey-icon{
   display:grid;
@@ -768,29 +802,37 @@ input:focus,select:focus,textarea:focus{outline:3px solid rgba(109,91,255,.14);b
   97%{opacity:1}
   100%{left:100%;opacity:0}
 }
-@keyframes careerCapsuleFloat{
-  0%,100%{transform:translateY(0) rotate(-1deg)}
-  50%{transform:translateY(-3px) rotate(1deg)}
+@keyframes careerCrystalFloat{
+  0%,100%{transform:translateY(0) rotate(-1.5deg)}
+  50%{transform:translateY(-3px) rotate(1.5deg)}
+}
+@keyframes careerCrystalTilt{
+  0%,100%{transform:rotate(-2deg) scale(.98)}
+  50%{transform:rotate(2deg) scale(1.03)}
 }
 @keyframes careerCapsuleShadow{
   0%,100%{transform:translateX(-50%) scaleX(.82);opacity:.22}
   50%{transform:translateX(-50%) scaleX(1.08);opacity:.42}
 }
-@keyframes careerCapsuleStar{
+@keyframes careerCrystalStar{
   0%,100%{transform:scale(.88);opacity:.86}
-  50%{transform:scale(1.08);opacity:1}
+  50%{transform:scale(1.1);opacity:1}
 }
-@keyframes careerCapsuleHalo{
-  0%,100%{opacity:.45;transform:scale(.96)}
-  50%{opacity:.9;transform:scale(1.06)}
+@keyframes careerCrystalShine{
+  0%,100%{transform:translate(-1px,1px) scale(.9);opacity:.35}
+  50%{transform:translate(2px,-2px) scale(1.08);opacity:1}
 }
-@keyframes careerCapsuleTrail{
-  0%,100%{transform:translateX(3px) scaleX(.62);opacity:.18}
-  50%{transform:translateX(-3px) scaleX(1);opacity:.72}
+@keyframes careerCrystalHalo{
+  0%,100%{opacity:.4;transform:scale(.95)}
+  50%{opacity:.88;transform:scale(1.07)}
 }
-@keyframes careerCapsuleSpark{
-  0%,100%{transform:scale(.65);opacity:.3}
-  50%{transform:scale(1.2);opacity:1}
+@keyframes careerCrystalTrail{
+  0%,100%{transform:translateX(3px) scaleX(.58);opacity:.16}
+  50%{transform:translateX(-3px) scaleX(1);opacity:.7}
+}
+@keyframes careerCrystalSpark{
+  0%,100%{transform:scale(.62);opacity:.28}
+  50%{transform:scale(1.25);opacity:1}
 }
 @keyframes careerLineShimmer{0%,100%{transform:translateX(-30%);opacity:.1}50%{transform:translateX(30%);opacity:.4}}
 @media(max-width:900px){
