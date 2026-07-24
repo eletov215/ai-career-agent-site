@@ -1778,3 +1778,115 @@ input:focus,select:focus,textarea:focus{outline:3px solid rgba(109,91,255,.14);b
   .source-option--reed .source-option__mark img{width:27px;height:27px}
   .source-option--hh .source-option__mark img{width:26px;height:26px}
 }
+
+/* Stage 3.4: logos sit directly inside source cards without a nested tile */
+.unified-search .source-option{
+  grid-template-columns:68px minmax(0,1fr) 24px;
+  min-height:88px;
+  padding:15px 14px;
+  gap:12px;
+}
+.unified-search .source-option__mark{
+  box-sizing:border-box;
+  display:grid;
+  place-items:center;
+  width:68px;
+  height:58px;
+  padding:0;
+  overflow:visible;
+  border:0;
+  border-radius:0;
+  background:transparent;
+  box-shadow:none;
+  transform:none;
+}
+.unified-search .source-option--trudvsem .source-option__mark,
+.unified-search .source-option--superjob .source-option__mark,
+.unified-search .source-option--hh .source-option__mark,
+.unified-search .source-option--reed .source-option__mark,
+.unified-search .source-option:has(input:checked) .source-option__mark{
+  border:0;
+  background:transparent;
+  box-shadow:none;
+  transform:none;
+}
+.unified-search .source-option__mark img{
+  display:block;
+  max-width:100%;
+  max-height:100%;
+  object-fit:contain;
+  object-position:center;
+  transform:none;
+  filter:none;
+}
+.unified-search .source-option--trudvsem .source-option__mark img{
+  width:64px;
+  height:auto;
+}
+.unified-search .source-option--superjob .source-option__mark img{
+  width:48px;
+  height:48px;
+}
+.unified-search .source-option--reed .source-option__mark img{
+  width:54px;
+  height:54px;
+}
+.unified-search .source-option--hh .source-option__mark img{
+  width:50px;
+  height:50px;
+}
+.unified-search .source-option:has(input:checked) .source-option__mark img{
+  filter:saturate(1.04);
+}
+
+@media(max-width:620px){
+  .unified-search .source-option{
+    grid-template-columns:54px minmax(0,1fr) 20px;
+    min-height:78px;
+    padding:11px 10px;
+    gap:8px;
+  }
+  .unified-search .source-option__mark{
+    width:54px;
+    height:50px;
+  }
+  .unified-search .source-option--trudvsem .source-option__mark img{width:52px;height:auto}
+  .unified-search .source-option--superjob .source-option__mark img{width:42px;height:42px}
+  .unified-search .source-option--reed .source-option__mark img{width:46px;height:46px}
+  .unified-search .source-option--hh .source-option__mark img{width:44px;height:44px}
+}
+
+/* Stage 3.5: platform logos stay on the left and align in one horizontal row */
+.unified-search .source-option{
+  grid-template-columns:64px minmax(0,1fr) 24px;
+  align-items:center;
+  column-gap:14px;
+}
+.unified-search .source-option__mark{
+  width:64px;
+  height:auto;
+  min-height:54px;
+  justify-self:start;
+  align-self:center;
+  place-items:center start;
+}
+.unified-search .source-option__mark img{
+  margin:0;
+  object-position:left center;
+}
+.unified-search .source-option__copy{
+  align-self:center;
+  justify-self:stretch;
+  text-align:left;
+}
+
+@media(max-width:620px){
+  .unified-search .source-option{
+    grid-template-columns:52px minmax(0,1fr) 20px;
+    column-gap:10px;
+  }
+  .unified-search .source-option__mark{
+    width:52px;
+    min-height:46px;
+  }
+}
