@@ -9,6 +9,31 @@
         <h1 class="page-title" id="vacancy-search-title">Единый поиск вакансий</h1>
         <p>Ищите предложения сразу на нескольких площадках и сравнивайте подходящие вакансии в одной ленте.</p>
       </div>
+
+      <div class="vacancy-search-animation" aria-hidden="true">
+        <div class="vacancy-search-animation__orbit"></div>
+        <div class="vacancy-search-animation__card vacancy-search-animation__card--one">
+          <span class="vacancy-search-animation__avatar"></span>
+          <span class="vacancy-search-animation__lines"><i></i><i></i></span>
+          <strong>120 000 ₽</strong>
+        </div>
+        <div class="vacancy-search-animation__card vacancy-search-animation__card--two">
+          <span class="vacancy-search-animation__avatar"></span>
+          <span class="vacancy-search-animation__lines"><i></i><i></i></span>
+          <strong>от 150 000 ₽</strong>
+        </div>
+        <div class="vacancy-search-animation__card vacancy-search-animation__card--three">
+          <span class="vacancy-search-animation__avatar"></span>
+          <span class="vacancy-search-animation__lines"><i></i><i></i></span>
+          <strong>Удалённо</strong>
+        </div>
+        <div class="vacancy-search-animation__magnifier">
+          <span></span>
+        </div>
+        <span class="vacancy-search-animation__dot vacancy-search-animation__dot--one"></span>
+        <span class="vacancy-search-animation__dot vacancy-search-animation__dot--two"></span>
+      </div>
+
       <a class="btn btn-secondary vacancy-cabinet-link" href="{{ url_for('dashboard') }}">В кабинет</a>
     </section>
 
