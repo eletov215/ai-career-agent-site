@@ -2626,7 +2626,7 @@ body.resume-reader-open{overflow:hidden}
   background:linear-gradient(135deg,#7457f5 0%,#2f66e9 100%);
   box-shadow:0 8px 20px rgba(70,83,221,.24);
   cursor:pointer;
-  transition:transform .18s ease,box-shadow .18s ease,filter .18s ease,opacity .18s ease;
+  transition:transform .18s ease,box-shadow .18s ease,opacity .18s ease;
 }
 .resume-preview-pagination .resume-preview-page-arrow svg{
   display:block;
@@ -2642,7 +2642,6 @@ body.resume-reader-open{overflow:hidden}
 .resume-preview-pagination .resume-preview-page-arrow:hover:not(:disabled){
   transform:translateY(-1px);
   box-shadow:0 11px 24px rgba(70,83,221,.3);
-  filter:brightness(1.03);
 }
 .resume-preview-pagination .resume-preview-page-arrow:active:not(:disabled){
   transform:translateY(0) scale(.96);
