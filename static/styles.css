@@ -2063,3 +2063,46 @@ body.resume-reader-open{overflow:hidden}
 .resume-pdf-flow .resume-modern-section,.resume-pdf-flow .resume-modern-experience,.resume-pdf-flow .resume-modern-achievements{height:auto!important;max-height:none!important;overflow:visible!important;break-inside:avoid;page-break-inside:avoid}
 .resume-pdf-flow p,.resume-pdf-flow li,.resume-pdf-flow div{max-height:none!important}
 .resume-pdf-flow [hidden]{display:none!important}
+
+
+/* Resume chat usability fix: aligned send button and readable header */
+.resume-chat-head > div:nth-child(2){
+  min-width:0;
+  display:flex;
+  flex-wrap:wrap;
+  align-items:baseline;
+  column-gap:8px;
+  row-gap:3px;
+}
+.resume-chat-head > div:nth-child(2) strong{
+  display:block;
+  line-height:1.25;
+  color:var(--text-title,var(--text));
+}
+.resume-chat-head > div:nth-child(2) span{
+  display:block;
+  line-height:1.35;
+  color:var(--muted);
+}
+.resume-chat-compose{
+  align-items:center;
+}
+.resume-chat-compose textarea{
+  min-height:78px;
+  line-height:1.45;
+  overflow-y:auto;
+}
+.resume-chat-send{
+  align-self:center;
+}
+.resume-message p{
+  overflow-wrap:anywhere;
+  word-break:break-word;
+}
+@media(max-width:620px){
+  .resume-chat-head > div:nth-child(2){
+    display:grid;
+    gap:2px;
+  }
+  .resume-chat-compose textarea{min-height:78px}
+}
