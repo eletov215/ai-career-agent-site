@@ -2151,6 +2151,7 @@ body.resume-reader-open{overflow:hidden}
   height:auto!important;
   min-height:1123px!important;
   display:block!important;
+  transform:translateY(calc(-1 * var(--resume-preview-page-offset, 0px)))!important;
   transform-origin:top left!important;
   box-shadow:none!important;
 }
@@ -2173,6 +2174,8 @@ body.resume-reader-open{overflow:hidden}
   position:relative;
   z-index:8;
   display:flex;
+  margin-top:20px;
+  margin-bottom:8px;
   align-items:center;
   justify-content:center;
   gap:12px;
@@ -2249,4 +2252,13 @@ body.resume-reader-open{overflow:hidden}
     transform:scale(calc((100vw - 16px)/794));
     margin-bottom:calc(1123px * ((100vw - 16px)/794 - 1));
   }
+}
+
+
+/* Multipage preview correction: each sheet displays its own vertical slice. */
+.resume-reader-page .resume-preview-page-flow{
+  transform:translateY(calc(-1 * var(--resume-preview-page-offset, 0px)))!important;
+}
+@media(max-width:620px){
+  .resume-preview-pagination{margin-top:16px;margin-bottom:12px}
 }

@@ -484,7 +484,10 @@
         viewport.className = 'resume-preview-page-clip';
         const pageFlow = flow.cloneNode(true);
         pageFlow.classList.add('resume-preview-page-flow');
-        pageFlow.style.transform = `translateY(-${index * pageHeightPx}px)`;
+        // .resume-pdf-flow intentionally uses transform:none!important for export.
+        // Store the page offset in a CSS variable so the preview-specific rule
+        // can apply the translation with the same priority.
+        pageFlow.style.setProperty('--resume-preview-page-offset', `${index * pageHeightPx}px`);
         viewport.appendChild(pageFlow);
         page.appendChild(viewport);
         const number = document.createElement('span');
