@@ -54,27 +54,6 @@
           </div>
         </div>
 
-        <div class="resume-university-logo-upload" id="resumeUniversityLogoUpload">
-          <div class="resume-university-logo-preview" aria-hidden="true">
-            <svg id="resumeUniversityLogoPlaceholder" viewBox="0 0 64 64" role="img" aria-label="Эмблема учебного заведения">
-              <path d="M7 25 32 12l25 13-25 13L7 25Z"></path>
-              <path d="M16 31v13c8 7 24 7 32 0V31"></path>
-              <path d="M54 28v17"></path>
-              <circle cx="54" cy="49" r="3"></circle>
-            </svg>
-            <img id="resumeUniversityLogoThumb" alt="Предпросмотр эмблемы учебного заведения" hidden>
-          </div>
-          <div class="resume-university-logo-copy">
-            <strong>Эмблема университета</strong>
-            <span>Загрузите официальный логотип или герб в JPG, PNG или WebP, до 3 МБ.</span>
-            <div class="resume-university-logo-actions">
-              <label class="resume-university-logo-button" for="resumeUniversityLogoInput">Загрузить эмблему</label>
-              <button type="button" class="resume-university-logo-remove" id="resumeUniversityLogoRemove" hidden>Удалить</button>
-            </div>
-            <input id="resumeUniversityLogoInput" type="file" accept="image/jpeg,image/png,image/webp" hidden>
-            <p class="resume-university-logo-error" id="resumeUniversityLogoError" role="alert" hidden></p>
-          </div>
-        </div>
         <div class="resume-chat-actions"><button type="button" id="builderSkip">Пропустить вопрос</button><button type="button" id="builderReset">Начать заново</button></div>
       </section>
 
@@ -201,11 +180,6 @@
   const photoError = document.getElementById('resumePhotoError');
   const previewPhoto = document.getElementById('previewPhoto');
   const previewPhotoWrap = document.getElementById('previewPhotoWrap');
-  const universityLogoInput = document.getElementById('resumeUniversityLogoInput');
-  const universityLogoThumb = document.getElementById('resumeUniversityLogoThumb');
-  const universityLogoPlaceholder = document.getElementById('resumeUniversityLogoPlaceholder');
-  const universityLogoRemove = document.getElementById('resumeUniversityLogoRemove');
-  const universityLogoError = document.getElementById('resumeUniversityLogoError');
   const previewUniversityLogo = document.getElementById('previewUniversityLogo');
   const previewUniversityLogoWrap = document.getElementById('previewUniversityLogoWrap');
 
@@ -231,45 +205,12 @@
   const updateUniversityLogoPreview = () => {
     const hasLogo = Boolean(state.universityLogo);
     previewUniversityLogoWrap.hidden = !hasLogo;
-    universityLogoThumb.hidden = !hasLogo;
-    universityLogoPlaceholder.hidden = hasLogo;
-    universityLogoRemove.hidden = !hasLogo;
     if (hasLogo) {
       previewUniversityLogo.src = state.universityLogo;
-      universityLogoThumb.src = state.universityLogo;
     } else {
       previewUniversityLogo.removeAttribute('src');
-      universityLogoThumb.removeAttribute('src');
     }
   };
-
-  const resizeUniversityLogo = file => new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onerror = () => reject(new Error('Не удалось прочитать файл.'));
-    reader.onload = () => {
-      const image = new Image();
-      image.onerror = () => reject(new Error('Не удалось открыть изображение.'));
-      image.onload = () => {
-        const size = 320;
-        const padding = 24;
-        const maxSide = size - padding * 2;
-        const scale = Math.min(maxSide / image.width, maxSide / image.height, 1);
-        const width = Math.max(1, Math.round(image.width * scale));
-        const height = Math.max(1, Math.round(image.height * scale));
-        const canvas = document.createElement('canvas');
-        canvas.width = size;
-        canvas.height = size;
-        const context = canvas.getContext('2d');
-        context.clearRect(0, 0, size, size);
-        context.imageSmoothingEnabled = true;
-        context.imageSmoothingQuality = 'high';
-        context.drawImage(image, (size - width) / 2, (size - height) / 2, width, height);
-        resolve(canvas.toDataURL('image/png'));
-      };
-      image.src = reader.result;
-    };
-    reader.readAsDataURL(file);
-  });
 
   const resizeProfilePhoto = file => new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -420,40 +361,6 @@
   });
   photoRemove.addEventListener('click', () => {
     state.photo = '';
-    save();
-    updatePreview();
-    fitResumePreview();
-  });
-  universityLogoInput.addEventListener('change', async () => {
-    const file = universityLogoInput.files && universityLogoInput.files[0];
-    universityLogoError.hidden = true;
-    if (!file) return;
-    if (!['image/jpeg','image/png','image/webp'].includes(file.type)) {
-      universityLogoError.textContent = 'Выберите изображение в формате JPG, PNG или WebP.';
-      universityLogoError.hidden = false;
-      universityLogoInput.value = '';
-      return;
-    }
-    if (file.size > 3 * 1024 * 1024) {
-      universityLogoError.textContent = 'Размер эмблемы не должен превышать 3 МБ.';
-      universityLogoError.hidden = false;
-      universityLogoInput.value = '';
-      return;
-    }
-    try {
-      state.universityLogo = await resizeUniversityLogo(file);
-      save();
-      updatePreview();
-      fitResumePreview();
-    } catch (error) {
-      universityLogoError.textContent = error.message || 'Не удалось обработать эмблему.';
-      universityLogoError.hidden = false;
-    } finally {
-      universityLogoInput.value = '';
-    }
-  });
-  universityLogoRemove.addEventListener('click', () => {
-    state.universityLogo = '';
     save();
     updatePreview();
     fitResumePreview();
