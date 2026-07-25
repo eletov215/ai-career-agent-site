@@ -443,31 +443,48 @@
     fitResumePreview();
   };
 
-  const measureResumeContentHeight = (flow) => {
-    const header = flow.querySelector('.resume-modern-header');
-    const layoutNode = flow.querySelector('.resume-modern-layout');
-    const sidebar = flow.querySelector('.resume-modern-sidebar');
-    const mainColumn = flow.querySelector('.resume-modern-main');
+  const isResumeElementVisible = element => {
+    if (!element || element.closest('[hidden]')) return false;
+    const styles = getComputedStyle(element);
+    return styles.display !== 'none'
+      && styles.visibility !== 'hidden'
+      && Number.parseFloat(styles.opacity || '1') > 0;
+  };
 
-    const measureColumn = column => {
-      if (!column) return 0;
-      const columnRect = column.getBoundingClientRect();
-      const styles = getComputedStyle(column);
-      const paddingTop = parseFloat(styles.paddingTop) || 0;
-      const paddingBottom = parseFloat(styles.paddingBottom) || 0;
-      let contentBottom = paddingTop;
-      [...column.children].forEach(child => {
-        if (getComputedStyle(child).display === 'none') return;
-        const childRect = child.getBoundingClientRect();
-        contentBottom = Math.max(contentBottom, childRect.bottom - columnRect.top);
-      });
-      return Math.ceil(contentBottom + paddingBottom);
-    };
+  const getResumeRenderableRects = flow => {
+    const rects = [];
+    const walker = document.createTreeWalker(flow, NodeFilter.SHOW_TEXT);
+    let textNode = walker.nextNode();
+    while (textNode) {
+      if (String(textNode.nodeValue || '').trim() && isResumeElementVisible(textNode.parentElement)) {
+        const range = document.createRange();
+        range.selectNodeContents(textNode);
+        [...range.getClientRects()].forEach(rect => {
+          if (rect.width > 0.5 && rect.height > 0.5) rects.push(rect);
+        });
+        if (typeof range.detach === 'function') range.detach();
+      }
+      textNode = walker.nextNode();
+    }
 
-    const headerHeight = header ? Math.max(header.scrollHeight, header.offsetHeight) : 0;
-    const naturalLayoutHeight = Math.max(measureColumn(sidebar), measureColumn(mainColumn));
-    if (layoutNode && !sidebar && !mainColumn) return headerHeight + layoutNode.scrollHeight;
-    return Math.ceil(headerHeight + naturalLayoutHeight);
+    flow.querySelectorAll('img').forEach(image => {
+      if (!image.getAttribute('src') || !isResumeElementVisible(image)) return;
+      const rect = image.getBoundingClientRect();
+      if (rect.width > 0.5 && rect.height > 0.5) rects.push(rect);
+    });
+    return rects;
+  };
+
+  const measureResumeContentHeight = flow => {
+    const flowRect = flow.getBoundingClientRect();
+    let meaningfulBottom = 0;
+    getResumeRenderableRects(flow).forEach(rect => {
+      meaningfulBottom = Math.max(meaningfulBottom, rect.bottom - flowRect.top);
+    });
+
+    // Считаем страницы по последней строке или изображению, а не по нижнему
+    // padding колонок. Иначе один только служебный отступ создаёт пустой лист.
+    return Math.max(1, Math.ceil(meaningfulBottom + 6));
   };
 
   const renderPagedPreview = async () => {
@@ -650,31 +667,87 @@
     });
   };
 
+  const resumePageHasVisibleContent = page => {
+    const clip = page.querySelector('.resume-preview-page-clip');
+    const flow = page.querySelector('.resume-preview-page-flow');
+    if (!clip || !flow) return Boolean(String(page.textContent || '').trim());
+
+    const clipRect = clip.getBoundingClientRect();
+    const clipStyles = getComputedStyle(clip);
+    const topPadding = Number.parseFloat(clipStyles.getPropertyValue('--resume-preview-page-top-padding')) || 48;
+    const bottomPadding = Number.parseFloat(clipStyles.getPropertyValue('--resume-preview-page-bottom-padding')) || 52;
+    const visibleTop = clipRect.top + topPadding;
+    const visibleBottom = clipRect.bottom - bottomPadding;
+
+    return getResumeRenderableRects(flow).some(rect => (
+      rect.bottom > visibleTop + 0.5
+      && rect.top < visibleBottom - 0.5
+      && rect.right > clipRect.left + 0.5
+      && rect.left < clipRect.right - 0.5
+    ));
+  };
+
   const canvasContainsResumeContent = (canvas) => {
-    // Проверяем не только размер canvas, но и наличие реального содержимого.
-    // Это не позволяет сохранить полностью белый PDF при сбое отрисовки.
-    const probe = document.createElement('canvas');
-    probe.width = 80;
-    probe.height = 113;
-    const context = probe.getContext('2d', {willReadFrequently:true});
+    // Нельзя уменьшать страницу до миниатюры 80x113 для проверки: редкие строки
+    // на последнем листе усредняются до белого и дают ложную ошибку. Проверяем
+    // пиксели исходного canvas с шагом, соответствующим масштабу отрисовки.
+    const context = canvas.getContext('2d', {willReadFrequently:true});
     if (!context) return true;
     try {
-      context.drawImage(canvas, 0, 0, probe.width, probe.height);
-      const pixels = context.getImageData(0, 0, probe.width, probe.height).data;
-      for (let index = 0; index < pixels.length; index += 4) {
-        const alpha = pixels[index + 3];
-        const red = pixels[index];
-        const green = pixels[index + 1];
-        const blue = pixels[index + 2];
-        if (alpha > 8 && (red < 246 || green < 246 || blue < 246)) return true;
+      const width = canvas.width;
+      const height = canvas.height;
+      const pixels = context.getImageData(0, 0, width, height).data;
+      const renderScale = Math.max(1, Math.round(Math.min(width / 794, height / 1123)));
+      const step = Math.max(1, Math.min(3, renderScale));
+      let inkPixels = 0;
+
+      for (let y = 0; y < height; y += step) {
+        for (let x = 0; x < width; x += step) {
+          const index = (y * width + x) * 4;
+          const alpha = pixels[index + 3];
+          const red = pixels[index];
+          const green = pixels[index + 1];
+          const blue = pixels[index + 2];
+          if (alpha > 12 && (red < 252 || green < 252 || blue < 252)) {
+            inkPixels += 1;
+            if (inkPixels >= 12) return true;
+          }
+        }
       }
       return false;
     } catch (_) {
-      // Если браузер запретил чтение пикселей из-за внешнего изображения,
-      // не блокируем уже успешно созданный canvas.
+      // Data URL или внешний логотип могут сделать canvas недоступным для чтения.
+      // Сам факт успешной отрисовки в этом случае считаем достаточным.
       return true;
     }
   };
+
+  const normalizePdfCapturePage = page => {
+    const flow = page.querySelector('.resume-preview-page-flow');
+    if (!flow) return;
+    const offset = Number.parseFloat(flow.style.getPropertyValue('--resume-preview-page-offset')) || 0;
+    const padding = Number.parseFloat(flow.style.getPropertyValue('--resume-preview-page-padding')) || 48;
+
+    // Для html2canvas используем явное позиционирование вместо большого
+    // translateY. Это устойчивее на четвёртой и последующих страницах.
+    flow.style.setProperty('transform', 'none', 'important');
+    flow.style.setProperty('inset', `${padding - offset}px auto auto 0`, 'important');
+  };
+
+  const captureResumePageCanvas = (page, scale = 2) => window.html2canvas(page, {
+    scale,
+    useCORS: true,
+    allowTaint: false,
+    backgroundColor: '#ffffff',
+    logging: false,
+    width: 794,
+    height: 1123,
+    windowWidth: 794,
+    windowHeight: 1123,
+    scrollX: 0,
+    scrollY: 0,
+    imageTimeout: 15000
+  });
 
   const waitForResumeImages = async (root) => {
     const images = [...root.querySelectorAll('img')];
@@ -723,8 +796,7 @@
       document.body.appendChild(printHost);
 
       try {
-        const { jsPDF } = window.jspdf;
-        const pdf = new jsPDF({orientation:'portrait', unit:'mm', format:'a4', compress:true});
+        const renderedPages = [];
 
         for (let pageIndex = 0; pageIndex < previewPages.length; pageIndex += 1) {
           const capturePage = previewPages[pageIndex].cloneNode(true);
@@ -732,38 +804,54 @@
           capturePage.removeAttribute('hidden');
           capturePage.classList.add('is-active', 'resume-pdf-capture-page');
           capturePage.querySelector('.resume-preview-page-number')?.remove();
+          normalizePdfCapturePage(capturePage);
           printHost.replaceChildren(capturePage);
 
           await waitForResumeImages(capturePage);
           await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
 
-          const canvas = await window.html2canvas(capturePage, {
-            scale: 2,
-            useCORS: true,
-            allowTaint: false,
-            backgroundColor: '#ffffff',
-            logging: false,
-            width: pageWidthPx,
-            height: pageHeightPx,
-            windowWidth: pageWidthPx,
-            windowHeight: pageHeightPx,
-            scrollX: 0,
-            scrollY: 0
-          });
-
-          if (!canvas.width || !canvas.height || !canvasContainsResumeContent(canvas)) {
-            throw new Error(`Не удалось отрисовать страницу ${pageIndex + 1} резюме.`);
+          // Нижний padding колонок раньше мог создать пустой последний лист.
+          // Такой лист не добавляем ни в PDF, ни в итоговую нумерацию.
+          if (!resumePageHasVisibleContent(capturePage)) {
+            console.warn(`Resume PDF: skipped empty generated page ${pageIndex + 1}.`);
+            continue;
           }
 
+          let canvas = await captureResumePageCanvas(capturePage, 2);
+          if (!canvas.width || !canvas.height || !canvasContainsResumeContent(canvas)) {
+            // На отдельных мобильных браузерах повторная отрисовка после ещё
+            // одного layout-цикла надёжнее первой, особенно для дальних страниц.
+            await new Promise(resolve => window.setTimeout(resolve, 90));
+            normalizePdfCapturePage(capturePage);
+            await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+            canvas = await captureResumePageCanvas(capturePage, 1.5);
+          }
+
+          if (!canvas.width || !canvas.height || !canvasContainsResumeContent(canvas)) {
+            throw new Error(`Не удалось подготовить страницу ${pageIndex + 1} резюме. Повторите скачивание.`);
+          }
+
+          renderedPages.push(canvas.toDataURL('image/jpeg', 0.94));
+          canvas.width = 1;
+          canvas.height = 1;
+        }
+
+        if (!renderedPages.length) {
+          throw new Error('Не удалось подготовить содержимое резюме для PDF.');
+        }
+
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF({orientation:'portrait', unit:'mm', format:'a4', compress:true});
+        renderedPages.forEach((pageImage, pageIndex) => {
           if (pageIndex > 0) pdf.addPage('a4', 'portrait');
-          pdf.addImage(canvas.toDataURL('image/jpeg', 0.94), 'JPEG', 0, 0, 210, 297, undefined, 'FAST');
-          if (previewPages.length > 1) {
+          pdf.addImage(pageImage, 'JPEG', 0, 0, 210, 297, undefined, 'FAST');
+          if (renderedPages.length > 1) {
             pdf.setFont('helvetica', 'normal');
             pdf.setFontSize(8);
             pdf.setTextColor(130, 138, 158);
-            pdf.text(`${pageIndex + 1} / ${previewPages.length}`, 105, 293.5, {align:'center'});
+            pdf.text(`${pageIndex + 1} / ${renderedPages.length}`, 105, 293.5, {align:'center'});
           }
-        }
+        });
 
         const rawName = (state.answers.name || 'resume').trim();
         const safeName = rawName.replace(/[^a-zA-Zа-яА-ЯёЁ0-9_-]+/g, '_').replace(/^_+|_+$/g, '') || 'resume';
