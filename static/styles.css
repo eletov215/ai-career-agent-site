@@ -2018,3 +2018,38 @@ body.resume-reader-open{overflow:hidden}
 @media(prefers-reduced-motion:reduce){.resume-reader,.resume-reader-dialog,.resume-preview-hover-hint,.resume-preview-open-button,.resume-download-button,.resume-reader-download,.resume-reader-close{transition:none}}
 @media(max-width:850px){.resume-reader-stage{width:min(794px,calc(100vw - 52px));min-height:auto;aspect-ratio:794/1123}.resume-reader-stage>.resume-paper-modern{transform:scale(calc((100vw - 52px)/794))!important;transform-origin:top left!important}.resume-reader-stage{height:calc(1123px * (100vw - 52px)/794)}}
 @media(max-width:620px){.resume-reader-stage{width:calc(100vw - 16px);height:calc(1123px * (100vw - 16px)/794)}.resume-reader-stage>.resume-paper-modern{transform:scale(calc((100vw - 16px)/794))!important}}
+
+/* Keep PDF download icon visible in every responsive layout */
+.resume-download-button,
+.resume-reader-download {
+  flex-wrap: nowrap;
+  white-space: nowrap;
+}
+.resume-download-button > .resume-download-icon,
+.resume-reader-download > .resume-download-icon {
+  display: block !important;
+  position: relative;
+  z-index: 2;
+  min-width: 21px;
+  min-height: 21px;
+  color: #fff;
+  opacity: 1;
+  visibility: visible;
+}
+.resume-download-button > span,
+.resume-reader-download > span {
+  position: relative;
+  z-index: 2;
+}
+@media (max-width: 620px) {
+  .resume-download-button,
+  .resume-reader-download {
+    gap: 7px;
+  }
+  .resume-download-button > .resume-download-icon,
+  .resume-reader-download > .resume-download-icon {
+    display: block !important;
+    min-width: 19px;
+    min-height: 19px;
+  }
+}
