@@ -2565,3 +2565,42 @@ body.resume-reader-open{overflow:hidden}
   .resume-preview-pagination .resume-preview-page-arrow{flex-basis:30px;width:30px;height:30px;font-size:17px}
   .resume-preview-dots{gap:5px;max-width:42vw}
 }
+
+
+/* Minimal numeric resume preview pagination */
+.resume-preview-pagination{
+  gap:14px;
+}
+.resume-preview-pagination .resume-preview-page-arrow{
+  flex:0 0 34px;
+  width:34px;
+  height:34px;
+  border:1px solid #e1e4ec;
+  border-radius:50%;
+  background:#f8f9fc;
+  color:#596174;
+  font-size:18px;
+}
+.resume-preview-pagination .resume-preview-page-arrow:hover:not(:disabled){
+  border-color:#cfd3df;
+  background:#f0f1f6;
+  color:#5559d9;
+}
+.resume-preview-page-count{
+  min-width:48px;
+  text-align:center;
+  color:#697084;
+  font:700 13px/1.2 "Manrope",Inter,sans-serif;
+  letter-spacing:.02em;
+  user-select:none;
+}
+@media(max-width:620px){
+  .resume-preview-pagination{gap:12px}
+  .resume-preview-pagination .resume-preview-page-arrow{
+    flex-basis:32px;
+    width:32px;
+    height:32px;
+    font-size:17px;
+  }
+  .resume-preview-page-count{min-width:44px;font-size:12px}
+}
