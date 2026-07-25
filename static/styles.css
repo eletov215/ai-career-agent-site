@@ -1854,3 +1854,78 @@ body{font-family:"Manrope",Inter,system-ui,-apple-system,BlinkMacSystemFont,"Seg
   .resume-photo-upload{grid-template-columns:58px minmax(0,1fr)}
   .resume-photo-upload-preview{width:58px;height:70px}
 }
+
+/* University emblem upload */
+.resume-university-logo-upload{
+  margin:10px 14px 0;
+  padding:12px 14px;
+  display:grid;
+  grid-template-columns:58px minmax(0,1fr);
+  gap:12px;
+  align-items:center;
+  border:1px solid #dfe3f1;
+  border-radius:16px;
+  background:linear-gradient(135deg,#fbfbff 0%,#f7f8ff 100%);
+}
+.resume-university-logo-preview{
+  width:58px;
+  height:58px;
+  display:grid;
+  place-items:center;
+}
+.resume-university-logo-preview svg{
+  width:48px;
+  height:48px;
+  fill:none;
+  stroke:#6757e8;
+  stroke-width:2.4;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+  filter:drop-shadow(0 6px 12px rgba(103,87,232,.18));
+}
+.resume-university-logo-preview img{
+  width:58px;
+  height:58px;
+  display:block;
+  object-fit:contain;
+}
+.resume-university-logo-copy{min-width:0;display:grid;gap:4px}
+.resume-university-logo-copy>strong{font-size:13px;color:#1b2336}
+.resume-university-logo-copy>span{font-size:11px;line-height:1.45;color:#6d7688}
+.resume-university-logo-actions{display:flex;align-items:center;gap:8px;margin-top:3px;flex-wrap:wrap}
+.resume-university-logo-button,.resume-university-logo-remove{
+  min-height:32px;
+  padding:7px 11px;
+  border-radius:9px;
+  font:700 11px/1 inherit;
+  cursor:pointer;
+}
+.resume-university-logo-button{display:inline-flex;align-items:center;border:1px solid #6757e8;background:#6757e8;color:#fff}
+.resume-university-logo-remove{border:1px solid #dfe2eb;background:#fff;color:#596274}
+.resume-university-logo-error{margin:3px 0 0;font-size:11px;line-height:1.4;color:#b42318}
+.resume-university-logo-preview>[hidden],
+.resume-modern-university-logo[hidden]{display:none!important}
+.resume-modern-education-row{
+  display:grid;
+  grid-template-columns:auto minmax(0,1fr);
+  gap:10px;
+  align-items:start;
+}
+.resume-modern-university-logo{
+  width:42px;
+  height:42px;
+  display:grid;
+  place-items:center;
+  flex:none;
+}
+.resume-modern-university-logo img{
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  display:block;
+}
+@media (max-width:700px){
+  .resume-university-logo-upload{margin-inline:10px;grid-template-columns:52px minmax(0,1fr)}
+  .resume-university-logo-preview,.resume-university-logo-preview img{width:52px;height:52px}
+  .resume-university-logo-preview svg{width:44px;height:44px}
+}

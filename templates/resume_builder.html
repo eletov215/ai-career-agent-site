@@ -53,6 +53,28 @@
             <p class="resume-photo-error" id="resumePhotoError" role="alert" hidden></p>
           </div>
         </div>
+
+        <div class="resume-university-logo-upload" id="resumeUniversityLogoUpload">
+          <div class="resume-university-logo-preview" aria-hidden="true">
+            <svg id="resumeUniversityLogoPlaceholder" viewBox="0 0 64 64" role="img" aria-label="Эмблема учебного заведения">
+              <path d="M7 25 32 12l25 13-25 13L7 25Z"></path>
+              <path d="M16 31v13c8 7 24 7 32 0V31"></path>
+              <path d="M54 28v17"></path>
+              <circle cx="54" cy="49" r="3"></circle>
+            </svg>
+            <img id="resumeUniversityLogoThumb" alt="Предпросмотр эмблемы учебного заведения" hidden>
+          </div>
+          <div class="resume-university-logo-copy">
+            <strong>Эмблема университета</strong>
+            <span>Загрузите официальный логотип или герб в JPG, PNG или WebP, до 3 МБ.</span>
+            <div class="resume-university-logo-actions">
+              <label class="resume-university-logo-button" for="resumeUniversityLogoInput">Загрузить эмблему</label>
+              <button type="button" class="resume-university-logo-remove" id="resumeUniversityLogoRemove" hidden>Удалить</button>
+            </div>
+            <input id="resumeUniversityLogoInput" type="file" accept="image/jpeg,image/png,image/webp" hidden>
+            <p class="resume-university-logo-error" id="resumeUniversityLogoError" role="alert" hidden></p>
+          </div>
+        </div>
         <div class="resume-chat-actions"><button type="button" id="builderSkip">Пропустить вопрос</button><button type="button" id="builderReset">Начать заново</button></div>
       </section>
 
@@ -91,9 +113,14 @@
 
                   <section class="resume-modern-section resume-modern-section-compact">
                     <h2>Образование</h2>
-                    <div class="resume-modern-side-entry">
-                      <strong id="previewEducationTitle">Образование пока не указано</strong>
-                      <p id="previewEducation">Учебное заведение, специальность, курсы и годы обучения появятся здесь.</p>
+                    <div class="resume-modern-education-row">
+                      <div class="resume-modern-university-logo" id="previewUniversityLogoWrap" hidden>
+                        <img id="previewUniversityLogo" alt="Эмблема учебного заведения">
+                      </div>
+                      <div class="resume-modern-side-entry">
+                        <strong id="previewEducationTitle">Образование пока не указано</strong>
+                        <p id="previewEducation">Учебное заведение, специальность, курсы и годы обучения появятся здесь.</p>
+                      </div>
                     </div>
                   </section>
 
@@ -165,8 +192,8 @@
   const layout = document.getElementById('resumeBuilderLayout');
   const pages = [...document.querySelectorAll('[data-resume-page]')];
   let currentPage = 0;
-  let state = {index:0, answers:{}, messages:[], photo:''};
-  try { const saved = JSON.parse(localStorage.getItem(storageKey) || 'null'); if (saved && saved.answers) state = {...state, ...saved, photo:saved.photo || ''}; } catch (_) {}
+  let state = {index:0, answers:{}, messages:[], photo:'', universityLogo:''};
+  try { const saved = JSON.parse(localStorage.getItem(storageKey) || 'null'); if (saved && saved.answers) state = {...state, ...saved, photo:saved.photo || '', universityLogo:saved.universityLogo || ''}; } catch (_) {}
   const photoInput = document.getElementById('resumePhotoInput');
   const photoThumb = document.getElementById('resumePhotoThumb');
   const photoInitials = document.getElementById('resumePhotoInitials');
@@ -174,6 +201,13 @@
   const photoError = document.getElementById('resumePhotoError');
   const previewPhoto = document.getElementById('previewPhoto');
   const previewPhotoWrap = document.getElementById('previewPhotoWrap');
+  const universityLogoInput = document.getElementById('resumeUniversityLogoInput');
+  const universityLogoThumb = document.getElementById('resumeUniversityLogoThumb');
+  const universityLogoPlaceholder = document.getElementById('resumeUniversityLogoPlaceholder');
+  const universityLogoRemove = document.getElementById('resumeUniversityLogoRemove');
+  const universityLogoError = document.getElementById('resumeUniversityLogoError');
+  const previewUniversityLogo = document.getElementById('previewUniversityLogo');
+  const previewUniversityLogoWrap = document.getElementById('previewUniversityLogoWrap');
 
   const setText = (id, value, fallback) => { document.getElementById(id).textContent = value || fallback; };
   const addMessage = (type, text) => { const item = document.createElement('div'); item.className = `resume-message ${type}`; item.innerHTML = type === 'ai' ? `<span class="resume-ai-mini">✦</span><p></p>` : '<p></p>'; item.querySelector('p').textContent = text; chat.appendChild(item); chat.scrollTop = chat.scrollHeight; };
@@ -193,6 +227,49 @@
       photoThumb.removeAttribute('src');
     }
   };
+
+  const updateUniversityLogoPreview = () => {
+    const hasLogo = Boolean(state.universityLogo);
+    previewUniversityLogoWrap.hidden = !hasLogo;
+    universityLogoThumb.hidden = !hasLogo;
+    universityLogoPlaceholder.hidden = hasLogo;
+    universityLogoRemove.hidden = !hasLogo;
+    if (hasLogo) {
+      previewUniversityLogo.src = state.universityLogo;
+      universityLogoThumb.src = state.universityLogo;
+    } else {
+      previewUniversityLogo.removeAttribute('src');
+      universityLogoThumb.removeAttribute('src');
+    }
+  };
+
+  const resizeUniversityLogo = file => new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error('Не удалось прочитать файл.'));
+    reader.onload = () => {
+      const image = new Image();
+      image.onerror = () => reject(new Error('Не удалось открыть изображение.'));
+      image.onload = () => {
+        const size = 320;
+        const padding = 24;
+        const maxSide = size - padding * 2;
+        const scale = Math.min(maxSide / image.width, maxSide / image.height, 1);
+        const width = Math.max(1, Math.round(image.width * scale));
+        const height = Math.max(1, Math.round(image.height * scale));
+        const canvas = document.createElement('canvas');
+        canvas.width = size;
+        canvas.height = size;
+        const context = canvas.getContext('2d');
+        context.clearRect(0, 0, size, size);
+        context.imageSmoothingEnabled = true;
+        context.imageSmoothingQuality = 'high';
+        context.drawImage(image, (size - width) / 2, (size - height) / 2, width, height);
+        resolve(canvas.toDataURL('image/png'));
+      };
+      image.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
 
   const resizeProfilePhoto = file => new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -228,6 +305,7 @@
   const updatePreview = () => {
     const a = state.answers;
     updatePhotoPreview();
+    updateUniversityLogoPreview();
     setText('previewName', a.name, 'Ваше имя');
     setText('previewRole', a.role, 'Желаемая должность');
     setText('previewContacts', a.contacts, 'Телефон · Email · Портфолио');
@@ -346,7 +424,41 @@
     updatePreview();
     fitResumePreview();
   });
-  reset.addEventListener('click', () => { if (!confirm('Удалить сохранённый черновик и начать заново?')) return; localStorage.removeItem(storageKey); state={index:0,answers:{},messages:[],photo:''}; input.disabled=false; form.querySelector('button').disabled=false; skip.hidden=false; renderHistory(); updatePreview(); askCurrent(); showPage(0); });
+  universityLogoInput.addEventListener('change', async () => {
+    const file = universityLogoInput.files && universityLogoInput.files[0];
+    universityLogoError.hidden = true;
+    if (!file) return;
+    if (!['image/jpeg','image/png','image/webp'].includes(file.type)) {
+      universityLogoError.textContent = 'Выберите изображение в формате JPG, PNG или WebP.';
+      universityLogoError.hidden = false;
+      universityLogoInput.value = '';
+      return;
+    }
+    if (file.size > 3 * 1024 * 1024) {
+      universityLogoError.textContent = 'Размер эмблемы не должен превышать 3 МБ.';
+      universityLogoError.hidden = false;
+      universityLogoInput.value = '';
+      return;
+    }
+    try {
+      state.universityLogo = await resizeUniversityLogo(file);
+      save();
+      updatePreview();
+      fitResumePreview();
+    } catch (error) {
+      universityLogoError.textContent = error.message || 'Не удалось обработать эмблему.';
+      universityLogoError.hidden = false;
+    } finally {
+      universityLogoInput.value = '';
+    }
+  });
+  universityLogoRemove.addEventListener('click', () => {
+    state.universityLogo = '';
+    save();
+    updatePreview();
+    fitResumePreview();
+  });
+  reset.addEventListener('click', () => { if (!confirm('Удалить сохранённый черновик и начать заново?')) return; localStorage.removeItem(storageKey); state={index:0,answers:{},messages:[],photo:'',universityLogo:''}; input.disabled=false; form.querySelector('button').disabled=false; skip.hidden=false; renderHistory(); updatePreview(); askCurrent(); showPage(0); });
   document.querySelectorAll('[data-builder-tab]').forEach(button => button.addEventListener('click', () => switchMobileView(button.dataset.builderTab)));
   document.querySelectorAll('[data-builder-tab-target]').forEach(button => button.addEventListener('click', () => switchMobileView(button.dataset.builderTabTarget)));
 
