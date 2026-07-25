@@ -85,7 +85,7 @@
             <span>Нажмите, чтобы открыть крупно</span>
           </div>
           <div class="resume-paper-stage" id="resumePaperStage">
-            <article class="resume-paper resume-paper-modern is-active" data-resume-page="0">
+            <article class="resume-paper resume-paper-modern is-active resume-preview-source" data-resume-page="0">
               <header class="resume-modern-header">
                 <div class="resume-modern-photo" id="previewPhotoWrap" hidden>
                   <img id="previewPhoto" alt="Фотография владельца резюме">
@@ -154,6 +154,11 @@
                 </main>
               </div>
             </article>
+          </div>
+          <div class="resume-preview-pagination" id="resumePreviewPagination" hidden>
+            <button type="button" id="resumePreviewPrev" aria-label="Предыдущая страница">←</button>
+            <span id="resumePreviewPageLabel">1 из 1</span>
+            <button type="button" id="resumePreviewNext" aria-label="Следующая страница">→</button>
           </div>
         </div>
 
@@ -234,12 +239,21 @@
   const universityLogoStatus = document.getElementById('universityLogoStatus');
   let universityLogoRequestId = 0;
   const previewOpenButton = document.getElementById('resumePreviewOpen');
+  const previewStage = document.getElementById('resumePaperStage');
+  const previewPagination = document.getElementById('resumePreviewPagination');
+  const previewPrevButton = document.getElementById('resumePreviewPrev');
+  const previewNextButton = document.getElementById('resumePreviewNext');
+  const previewPageLabel = document.getElementById('resumePreviewPageLabel');
   const previewDownloadButton = document.getElementById('resumeDownloadPdf');
   const reader = document.getElementById('resumeReader');
   const readerStage = document.getElementById('resumeReaderStage');
   const readerDownloadButton = document.getElementById('resumeReaderDownload');
   let readerLastFocus = null;
   let isDownloadingPdf = false;
+  let previewPageIndex = 0;
+  let previewPageCount = 1;
+  let previewRenderTimer = 0;
+  let previewRenderToken = 0;
 
   const setText = (id, value, fallback) => { document.getElementById(id).textContent = value || fallback; };
   const addMessage = (type, text) => { const item = document.createElement('div'); item.className = `resume-message ${type}`; item.innerHTML = type === 'ai' ? `<span class="resume-ai-mini">✦</span><p></p>` : '<p></p>'; item.querySelector('p').textContent = text; chat.appendChild(item); chat.scrollTop = chat.scrollHeight; };
@@ -381,7 +395,7 @@
     const completed = Object.values(a).filter(Boolean).length;
     const percent = Math.round(completed / questions.length * 100);
     ['mobileProfilePercent','chatProfilePercent'].forEach(id => document.getElementById(id).textContent = `${percent}%`);
-    syncReaderSheet();
+    schedulePagedPreview();
   };
 
   const renderHistory = () => { chat.replaceChildren(); state.messages.forEach(m => addMessage(m.type, m.text)); };
@@ -417,10 +431,79 @@
     stage.style.setProperty('--resume-fit', String(Math.max(0.2, fit)));
   };
 
-  const showPage = (index) => {
-    currentPage = Math.max(0, Math.min(pages.length - 1, index));
-    pages.forEach((page, pageIndex) => page.classList.toggle('is-active', pageIndex === currentPage));
+  const showPreviewPage = (index) => {
+    const generatedPages = [...previewStage.querySelectorAll('.resume-preview-page')];
+    previewPageIndex = Math.max(0, Math.min(generatedPages.length - 1, index));
+    generatedPages.forEach((page, pageIndex) => page.classList.toggle('is-active', pageIndex === previewPageIndex));
+    previewPageCount = Math.max(1, generatedPages.length);
+    previewPageLabel.textContent = `${previewPageIndex + 1} из ${previewPageCount}`;
+    previewPrevButton.disabled = previewPageIndex <= 0;
+    previewNextButton.disabled = previewPageIndex >= previewPageCount - 1;
+    previewPagination.hidden = previewPageCount <= 1;
     fitResumePreview();
+  };
+
+  const renderPagedPreview = async () => {
+    const token = ++previewRenderToken;
+    const source = previewStage.querySelector('.resume-preview-source');
+    if (!source) return;
+    const pageWidthPx = 794;
+    const pageHeightPx = 1123;
+    const host = document.createElement('div');
+    host.className = 'resume-preview-measure-host';
+    host.setAttribute('aria-hidden', 'true');
+    const flow = prepareResumeForPdf(source);
+    host.appendChild(flow);
+    document.body.appendChild(host);
+    try {
+      if (document.fonts && document.fonts.ready) await document.fonts.ready;
+      await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+      keepPdfBlocksTogether(flow, pageHeightPx);
+      keepPdfBlocksTogether(flow, pageHeightPx);
+      await new Promise(resolve => requestAnimationFrame(resolve));
+      if (token !== previewRenderToken) return;
+      const headerHeight = flow.querySelector('.resume-modern-header')?.scrollHeight || 0;
+      const layoutNode = flow.querySelector('.resume-modern-layout');
+      const sidebar = flow.querySelector('.resume-modern-sidebar');
+      const mainColumn = flow.querySelector('.resume-modern-main');
+      const measuredHeight = Math.max(
+        flow.scrollHeight,
+        flow.offsetHeight,
+        headerHeight + Math.max(layoutNode?.scrollHeight || 0, sidebar?.scrollHeight || 0, mainColumn?.scrollHeight || 0)
+      );
+      const pageCount = Math.max(1, Math.ceil(Math.max(pageHeightPx, measuredHeight) / pageHeightPx));
+      flow.style.height = `${pageCount * pageHeightPx}px`;
+      flow.style.minHeight = `${pageCount * pageHeightPx}px`;
+
+      previewStage.querySelectorAll('.resume-preview-page').forEach(node => node.remove());
+      for (let index = 0; index < pageCount; index += 1) {
+        const page = document.createElement('div');
+        page.className = 'resume-preview-page';
+        page.dataset.previewPage = String(index);
+        const viewport = document.createElement('div');
+        viewport.className = 'resume-preview-page-clip';
+        const pageFlow = flow.cloneNode(true);
+        pageFlow.classList.add('resume-preview-page-flow');
+        pageFlow.style.transform = `translateY(-${index * pageHeightPx}px)`;
+        viewport.appendChild(pageFlow);
+        page.appendChild(viewport);
+        const number = document.createElement('span');
+        number.className = 'resume-preview-page-number';
+        number.textContent = `${index + 1}`;
+        page.appendChild(number);
+        previewStage.appendChild(page);
+      }
+      source.hidden = true;
+      showPreviewPage(Math.min(previewPageIndex, pageCount - 1));
+      syncReaderSheet();
+    } finally {
+      host.remove();
+    }
+  };
+
+  const schedulePagedPreview = () => {
+    window.clearTimeout(previewRenderTimer);
+    previewRenderTimer = window.setTimeout(renderPagedPreview, 120);
   };
 
   const previewViewport = document.getElementById('resumePreviewViewport');
@@ -430,15 +513,16 @@
     window.addEventListener('resize', fitResumePreview);
   }
 
-
   const syncReaderSheet = () => {
     if (!readerStage || reader.hidden) return;
-    const source = document.querySelector('.resume-paper-modern.is-active');
-    if (!source) return;
-    const clone = source.cloneNode(true);
-    clone.removeAttribute('data-resume-page');
-    clone.classList.add('resume-reader-paper');
-    readerStage.replaceChildren(clone);
+    const generatedPages = [...previewStage.querySelectorAll('.resume-preview-page')];
+    readerStage.replaceChildren();
+    generatedPages.forEach((page, index) => {
+      const clone = page.cloneNode(true);
+      clone.classList.add('is-active', 'resume-reader-page');
+      clone.querySelector('.resume-preview-page-number')?.remove();
+      readerStage.appendChild(clone);
+    });
   };
 
   const openResumeReader = () => {
@@ -527,7 +611,7 @@
 
   const downloadResumePdf = async (button) => {
     if (isDownloadingPdf) return;
-    const source = document.querySelector('.resume-paper-modern.is-active');
+    const source = document.querySelector('.resume-preview-source');
     if (!source) return;
     const labelNode = button && button.querySelector('span');
     const originalLabel = labelNode ? labelNode.textContent : '';
@@ -701,10 +785,12 @@
     updatePreview();
     fitResumePreview();
   });
-  reset.addEventListener('click', () => { if (!confirm('Удалить сохранённый черновик и начать заново?')) return; localStorage.removeItem(storageKey); state={index:0,answers:{},messages:[],photo:'',universityLogo:'',universityLogoFor:'',universityResolvedName:''}; input.disabled=false; form.querySelector('button').disabled=false; skip.hidden=false; renderHistory(); updatePreview(); askCurrent(); showPage(0); });
+  reset.addEventListener('click', () => { if (!confirm('Удалить сохранённый черновик и начать заново?')) return; localStorage.removeItem(storageKey); state={index:0,answers:{},messages:[],photo:'',universityLogo:'',universityLogoFor:'',universityResolvedName:''}; input.disabled=false; form.querySelector('button').disabled=false; skip.hidden=false; renderHistory(); updatePreview(); askCurrent(); showPreviewPage(0); });
   document.querySelectorAll('[data-builder-tab]').forEach(button => button.addEventListener('click', () => switchMobileView(button.dataset.builderTab)));
   document.querySelectorAll('[data-builder-tab-target]').forEach(button => button.addEventListener('click', () => switchMobileView(button.dataset.builderTabTarget)));
 
+  previewPrevButton.addEventListener('click', event => { event.stopPropagation(); showPreviewPage(previewPageIndex - 1); });
+  previewNextButton.addEventListener('click', event => { event.stopPropagation(); showPreviewPage(previewPageIndex + 1); });
   previewOpenButton.addEventListener('click', openResumeReader);
   previewViewport.addEventListener('click', openResumeReader);
   previewViewport.addEventListener('keydown', event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); openResumeReader(); } });
@@ -716,7 +802,7 @@
   renderHistory(); updatePreview();
   if (state.answers.education && !state.universityLogo && state.universityLogoFor !== state.answers.education) findUniversityLogo(state.answers.education);
   else if (state.universityLogo) setUniversityLogoStatus('Официальная эмблема найдена', 'success');
-  askCurrent(); showPage(0); window.requestAnimationFrame(fitResumePreview);
+  askCurrent(); showPreviewPage(0); window.requestAnimationFrame(fitResumePreview);
 })();
 </script>
 {% endblock %}

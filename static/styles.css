@@ -2106,3 +2106,147 @@ body.resume-reader-open{overflow:hidden}
   }
   .resume-chat-compose textarea{min-height:78px}
 }
+
+/* Multi-page live resume preview */
+.resume-preview-viewport{
+  display:grid;
+  grid-template-rows:minmax(0,1fr) auto;
+  justify-items:center;
+  align-items:start;
+  gap:12px;
+}
+.resume-paper-stage{
+  position:relative;
+  width:calc(794px * var(--resume-fit,1));
+  height:calc(1123px * var(--resume-fit,1));
+  min-width:0;
+  overflow:visible;
+}
+.resume-preview-source[hidden]{display:none!important}
+.resume-preview-page{
+  position:absolute;
+  inset:0 auto auto 0;
+  width:794px;
+  height:1123px;
+  display:none;
+  transform:scale(var(--resume-fit,1));
+  transform-origin:top left;
+  background:#fff;
+  box-shadow:0 16px 42px rgba(31,40,72,.16);
+}
+.resume-preview-page.is-active{display:block}
+.resume-preview-page-clip{
+  position:relative;
+  width:794px;
+  height:1123px;
+  overflow:hidden;
+  background:#fff;
+}
+.resume-preview-page-flow{
+  position:absolute!important;
+  inset:0 auto auto 0!important;
+  width:794px!important;
+  min-width:794px!important;
+  max-width:794px!important;
+  height:auto!important;
+  min-height:1123px!important;
+  display:block!important;
+  transform-origin:top left!important;
+  box-shadow:none!important;
+}
+.resume-preview-page-number{
+  position:absolute;
+  right:14px;
+  bottom:12px;
+  z-index:3;
+  min-width:24px;
+  height:24px;
+  padding:0 7px;
+  border-radius:999px;
+  display:grid;
+  place-items:center;
+  background:rgba(91,74,226,.09);
+  color:#6655db;
+  font:800 11px/1 "Manrope",Inter,sans-serif;
+}
+.resume-preview-pagination{
+  position:relative;
+  z-index:8;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:12px;
+  padding:7px 10px;
+  border:1px solid rgba(105,84,222,.16);
+  border-radius:999px;
+  background:rgba(255,255,255,.94);
+  box-shadow:0 8px 22px rgba(45,52,91,.12);
+  backdrop-filter:blur(10px);
+}
+.resume-preview-pagination[hidden]{display:none!important}
+.resume-preview-pagination button{
+  width:30px;
+  height:30px;
+  border:0;
+  border-radius:50%;
+  display:grid;
+  place-items:center;
+  background:linear-gradient(135deg,#795cf2,#5570e9);
+  color:#fff;
+  font:800 16px/1 "Manrope",Inter,sans-serif;
+  cursor:pointer;
+  box-shadow:0 6px 14px rgba(91,72,218,.24);
+}
+.resume-preview-pagination button:disabled{opacity:.32;cursor:default;box-shadow:none}
+.resume-preview-pagination span{min-width:54px;text-align:center;color:#555f79;font:800 11px/1 "Manrope",Inter,sans-serif}
+.resume-preview-measure-host{
+  position:fixed;
+  left:-20000px;
+  top:0;
+  width:794px;
+  opacity:0;
+  pointer-events:none;
+  z-index:-1;
+}
+.resume-preview-measure-host .resume-pdf-flow{
+  position:static!important;
+  width:794px!important;
+  min-width:794px!important;
+  max-width:794px!important;
+  height:auto!important;
+  min-height:1123px!important;
+  overflow:visible!important;
+  transform:none!important;
+  display:block!important;
+}
+.resume-reader-stage{
+  width:794px;
+  min-height:0;
+  display:grid;
+  gap:26px;
+  box-shadow:none;
+}
+.resume-reader-stage .resume-reader-page{
+  position:relative;
+  inset:auto;
+  display:block;
+  transform:none;
+  width:794px;
+  height:1123px;
+  box-shadow:0 20px 55px rgba(29,37,64,.22);
+}
+@media(max-width:850px){
+  .resume-reader-stage{width:min(794px,calc(100vw - 52px));gap:18px}
+  .resume-reader-stage .resume-reader-page{
+    transform:scale(calc((100vw - 52px)/794));
+    transform-origin:top left;
+    margin-bottom:calc(1123px * ((100vw - 52px)/794 - 1));
+  }
+}
+@media(max-width:620px){
+  .resume-reader-stage{width:calc(100vw - 16px);gap:14px}
+  .resume-reader-stage .resume-reader-page{
+    transform:scale(calc((100vw - 16px)/794));
+    margin-bottom:calc(1123px * ((100vw - 16px)/794 - 1));
+  }
+}
