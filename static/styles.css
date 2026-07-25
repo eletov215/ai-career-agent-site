@@ -2677,3 +2677,11 @@ body.resume-reader-open{overflow:hidden}
 @media(prefers-reduced-motion:reduce){
   .resume-preview-pagination .resume-preview-page-arrow{transition:none}
 }
+
+/* Keep branded pagination color unchanged on hover/focus */
+.resume-preview-pagination .resume-preview-page-arrow:hover:not(:disabled),
+.resume-preview-pagination .resume-preview-page-arrow:focus-visible:not(:disabled){
+  background:linear-gradient(135deg,#7457f5 0%,#2f66e9 100%);
+  color:#fff;
+  border-color:transparent;
+}
