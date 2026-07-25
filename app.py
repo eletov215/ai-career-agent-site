@@ -24,6 +24,7 @@ from services.vacancy_store import VacancyStore
 from services.search_filters import VacancySearchFilters, canonical_currency
 from services.vacancy_presenter import present_vacancy
 from services.resume_parser import ResumeParseError, build_resume_preview, parse_resume_pdf
+from services.university_logo import find_university_logo
 
 app = Flask(__name__)
 app.secret_key = os.environ["FLASK_SECRET_KEY"]
@@ -857,6 +858,25 @@ def ai_career():
         upload_error=upload_error,
         max_resume_upload_mb=MAX_RESUME_UPLOAD_MB,
     )
+
+
+@app.post("/api/university/logo")
+def university_logo_api():
+    payload = request.get_json(silent=True) or {}
+    university_name = str(payload.get("name") or "").strip()
+    if len(university_name) < 3:
+        return jsonify({"ok": False, "error": "Укажите название учебного заведения."}), 400
+    try:
+        result = find_university_logo(university_name)
+    except requests.RequestException:
+        logger.exception("University logo lookup request failed")
+        return jsonify({"ok": False, "error": "Сервис поиска эмблемы временно недоступен."}), 502
+    except ValueError as error:
+        return jsonify({"ok": False, "error": str(error)}), 400
+    except Exception:
+        logger.exception("University logo lookup failed")
+        return jsonify({"ok": False, "error": "Не удалось найти эмблему университета."}), 500
+    return jsonify({"ok": True, **result})
 
 
 @app.get("/resume-builder")

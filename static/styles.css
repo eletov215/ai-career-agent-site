@@ -1878,3 +1878,32 @@ body{font-family:"Manrope",Inter,system-ui,-apple-system,BlinkMacSystemFont,"Seg
 }
 @media (max-width:700px){
     .resume-university-logo-preview,  }
+
+/* Automatic university emblem lookup */
+.resume-university-logo-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 7px;
+  font-size: 10px;
+  line-height: 1.35;
+  color: #73809b;
+}
+.resume-university-logo-status::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  flex: 0 0 6px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: .75;
+}
+.resume-university-logo-status[data-type="loading"] { color: #6556e8; }
+.resume-university-logo-status[data-type="loading"]::before { animation: university-logo-pulse 1s ease-in-out infinite; }
+.resume-university-logo-status[data-type="success"] { color: #278466; }
+.resume-university-logo-status[data-type="error"] { color: #b45666; }
+.resume-university-logo-status[data-type="muted"] { color: #8a94a9; }
+@keyframes university-logo-pulse { 50% { opacity: .2; transform: scale(.72); } }
+@media print {
+  .resume-university-logo-status { display: none !important; }
+}

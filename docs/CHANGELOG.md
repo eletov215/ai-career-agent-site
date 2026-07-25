@@ -99,3 +99,8 @@
 - По умолчанию просматривается до 20 страниц HH; лимит можно изменить переменной `HH_CURRENCY_SCAN_PAGES`.
 - Современный код белорусского рубля изменён на BYN; старые значения BYR продолжают распознаваться как BYN.
 - Локальный SQLite-кэш сопоставляет BYN и устаревший BYR.
+
+## 2026-07-25 — Automatic university emblem lookup
+- Added `/api/university/logo` endpoint.
+- Added Wikidata/official-site emblem resolver with SSRF and size checks.
+- Resume builder now starts emblem lookup after the education answer and stores the result in the local draft.

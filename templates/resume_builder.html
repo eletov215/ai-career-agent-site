@@ -99,6 +99,7 @@
                       <div class="resume-modern-side-entry">
                         <strong id="previewEducationTitle">Образование пока не указано</strong>
                         <p id="previewEducation">Учебное заведение, специальность, курсы и годы обучения появятся здесь.</p>
+                        <span class="resume-university-logo-status" id="universityLogoStatus" hidden></span>
                       </div>
                     </div>
                   </section>
@@ -182,6 +183,8 @@
   const previewPhotoWrap = document.getElementById('previewPhotoWrap');
   const previewUniversityLogo = document.getElementById('previewUniversityLogo');
   const previewUniversityLogoWrap = document.getElementById('previewUniversityLogoWrap');
+  const universityLogoStatus = document.getElementById('universityLogoStatus');
+  let universityLogoRequestId = 0;
 
   const setText = (id, value, fallback) => { document.getElementById(id).textContent = value || fallback; };
   const addMessage = (type, text) => { const item = document.createElement('div'); item.className = `resume-message ${type}`; item.innerHTML = type === 'ai' ? `<span class="resume-ai-mini">✦</span><p></p>` : '<p></p>'; item.querySelector('p').textContent = text; chat.appendChild(item); chat.scrollTop = chat.scrollHeight; };
@@ -209,6 +212,59 @@
       previewUniversityLogo.src = state.universityLogo;
     } else {
       previewUniversityLogo.removeAttribute('src');
+    }
+  };
+
+
+  const setUniversityLogoStatus = (text, type = '') => {
+    universityLogoStatus.textContent = text || '';
+    universityLogoStatus.hidden = !text;
+    universityLogoStatus.dataset.type = type;
+  };
+
+  const findUniversityLogo = async (educationText) => {
+    const requestId = ++universityLogoRequestId;
+    const query = String(educationText || '').trim();
+    if (!query) {
+      state.universityLogo = '';
+      state.universityLogoFor = '';
+      setUniversityLogoStatus('');
+      updateUniversityLogoPreview();
+      save();
+      return;
+    }
+
+    setUniversityLogoStatus('Ищу официальную эмблему…', 'loading');
+    try {
+      const response = await fetch('/api/university/logo', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({name: query})
+      });
+      const result = await response.json().catch(() => ({}));
+      if (requestId !== universityLogoRequestId) return;
+      if (!response.ok || !result.ok) throw new Error(result.error || 'Не удалось выполнить поиск.');
+      if (result.found && result.image_data) {
+        state.universityLogo = result.image_data;
+        state.universityLogoFor = query;
+        state.universityResolvedName = result.university_name || '';
+        setUniversityLogoStatus('Официальная эмблема найдена', 'success');
+      } else {
+        state.universityLogo = '';
+        state.universityLogoFor = query;
+        state.universityResolvedName = result.university_name || '';
+        setUniversityLogoStatus('Эмблема не найдена — резюме останется без неё', 'muted');
+      }
+      save();
+      updateUniversityLogoPreview();
+      fitResumePreview();
+    } catch (error) {
+      if (requestId !== universityLogoRequestId) return;
+      state.universityLogo = '';
+      state.universityLogoFor = query;
+      save();
+      updateUniversityLogoPreview();
+      setUniversityLogoStatus(error.message || 'Не удалось найти эмблему.', 'error');
     }
   };
 
@@ -329,7 +385,21 @@
     if (view === 'chat') window.setTimeout(() => input.focus(), 100);
   };
 
-  form.addEventListener('submit', (event) => { event.preventDefault(); const value = input.value.trim(); if (!value || state.index >= questions.length) return; const q = questions[state.index]; state.answers[q.key] = value; state.messages.push({type:'user',text:value}); addMessage('user',value); input.value=''; state.index += 1; save(); updatePreview(); window.setTimeout(askCurrent, 250); });
+  form.addEventListener('submit', (event) => {
+    event.preventDefault();
+    const value = input.value.trim();
+    if (!value || state.index >= questions.length) return;
+    const q = questions[state.index];
+    state.answers[q.key] = value;
+    state.messages.push({type:'user',text:value});
+    addMessage('user',value);
+    input.value='';
+    state.index += 1;
+    save();
+    updatePreview();
+    if (q.key === 'education' && state.universityLogoFor !== value) findUniversityLogo(value);
+    window.setTimeout(askCurrent, 250);
+  });
   skip.addEventListener('click', () => { if (state.index >= questions.length) return; state.index += 1; save(); askCurrent(); });
   photoInput.addEventListener('change', async () => {
     const file = photoInput.files && photoInput.files[0];
@@ -365,11 +435,14 @@
     updatePreview();
     fitResumePreview();
   });
-  reset.addEventListener('click', () => { if (!confirm('Удалить сохранённый черновик и начать заново?')) return; localStorage.removeItem(storageKey); state={index:0,answers:{},messages:[],photo:'',universityLogo:''}; input.disabled=false; form.querySelector('button').disabled=false; skip.hidden=false; renderHistory(); updatePreview(); askCurrent(); showPage(0); });
+  reset.addEventListener('click', () => { if (!confirm('Удалить сохранённый черновик и начать заново?')) return; localStorage.removeItem(storageKey); state={index:0,answers:{},messages:[],photo:'',universityLogo:'',universityLogoFor:'',universityResolvedName:''}; input.disabled=false; form.querySelector('button').disabled=false; skip.hidden=false; renderHistory(); updatePreview(); askCurrent(); showPage(0); });
   document.querySelectorAll('[data-builder-tab]').forEach(button => button.addEventListener('click', () => switchMobileView(button.dataset.builderTab)));
   document.querySelectorAll('[data-builder-tab-target]').forEach(button => button.addEventListener('click', () => switchMobileView(button.dataset.builderTabTarget)));
 
-  renderHistory(); updatePreview(); askCurrent(); showPage(0); window.requestAnimationFrame(fitResumePreview);
+  renderHistory(); updatePreview();
+  if (state.answers.education && !state.universityLogo && state.universityLogoFor !== state.answers.education) findUniversityLogo(state.answers.education);
+  else if (state.universityLogo) setUniversityLogoStatus('Официальная эмблема найдена', 'success');
+  askCurrent(); showPage(0); window.requestAnimationFrame(fitResumePreview);
 })();
 </script>
 {% endblock %}
