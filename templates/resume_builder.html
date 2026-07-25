@@ -37,6 +37,22 @@
             </svg>
           </button>
         </form>
+        <div class="resume-photo-upload" id="resumePhotoUpload">
+          <div class="resume-photo-upload-preview" id="resumePhotoUploadPreview" aria-hidden="true">
+            <span id="resumePhotoInitials">Фото</span>
+            <img id="resumePhotoThumb" alt="Предпросмотр фотографии профиля" hidden>
+          </div>
+          <div class="resume-photo-upload-copy">
+            <strong>Фотография профиля</strong>
+            <span>JPG, PNG или WebP, до 5 МБ. Фото автоматически кадрируется под шаблон.</span>
+            <div class="resume-photo-upload-actions">
+              <label class="resume-photo-button" for="resumePhotoInput">Загрузить фото</label>
+              <button type="button" class="resume-photo-remove" id="resumePhotoRemove" hidden>Удалить</button>
+            </div>
+            <input id="resumePhotoInput" type="file" accept="image/jpeg,image/png,image/webp" hidden>
+            <p class="resume-photo-error" id="resumePhotoError" role="alert" hidden></p>
+          </div>
+        </div>
         <div class="resume-chat-actions"><button type="button" id="builderSkip">Пропустить вопрос</button><button type="button" id="builderReset">Начать заново</button></div>
       </section>
 
@@ -52,6 +68,9 @@
           <div class="resume-paper-stage" id="resumePaperStage">
             <article class="resume-paper resume-paper-modern is-active" data-resume-page="0">
               <header class="resume-modern-header">
+                <div class="resume-modern-photo" id="previewPhotoWrap" hidden>
+                  <img id="previewPhoto" alt="Фотография владельца резюме">
+                </div>
                 <div class="resume-modern-identity">
                   <span class="resume-modern-kicker">Резюме</span>
                   <h1 id="previewName">Ваше имя</h1>
@@ -146,15 +165,69 @@
   const layout = document.getElementById('resumeBuilderLayout');
   const pages = [...document.querySelectorAll('[data-resume-page]')];
   let currentPage = 0;
-  let state = {index:0, answers:{}, messages:[]};
-  try { const saved = JSON.parse(localStorage.getItem(storageKey) || 'null'); if (saved && saved.answers) state = saved; } catch (_) {}
+  let state = {index:0, answers:{}, messages:[], photo:''};
+  try { const saved = JSON.parse(localStorage.getItem(storageKey) || 'null'); if (saved && saved.answers) state = {...state, ...saved, photo:saved.photo || ''}; } catch (_) {}
+  const photoInput = document.getElementById('resumePhotoInput');
+  const photoThumb = document.getElementById('resumePhotoThumb');
+  const photoInitials = document.getElementById('resumePhotoInitials');
+  const photoRemove = document.getElementById('resumePhotoRemove');
+  const photoError = document.getElementById('resumePhotoError');
+  const previewPhoto = document.getElementById('previewPhoto');
+  const previewPhotoWrap = document.getElementById('previewPhotoWrap');
 
   const setText = (id, value, fallback) => { document.getElementById(id).textContent = value || fallback; };
   const addMessage = (type, text) => { const item = document.createElement('div'); item.className = `resume-message ${type}`; item.innerHTML = type === 'ai' ? `<span class="resume-ai-mini">✦</span><p></p>` : '<p></p>'; item.querySelector('p').textContent = text; chat.appendChild(item); chat.scrollTop = chat.scrollHeight; };
   const save = () => { localStorage.setItem(storageKey, JSON.stringify(state)); saveStatus.textContent = 'Черновик сохранён'; window.setTimeout(() => saveStatus.textContent = 'Черновик сохраняется', 1400); };
 
+  const updatePhotoPreview = () => {
+    const hasPhoto = Boolean(state.photo);
+    previewPhotoWrap.hidden = !hasPhoto;
+    photoThumb.hidden = !hasPhoto;
+    photoInitials.hidden = hasPhoto;
+    photoRemove.hidden = !hasPhoto;
+    if (hasPhoto) {
+      previewPhoto.src = state.photo;
+      photoThumb.src = state.photo;
+    } else {
+      previewPhoto.removeAttribute('src');
+      photoThumb.removeAttribute('src');
+    }
+  };
+
+  const resizeProfilePhoto = file => new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error('Не удалось прочитать файл.'));
+    reader.onload = () => {
+      const image = new Image();
+      image.onerror = () => reject(new Error('Не удалось открыть изображение.'));
+      image.onload = () => {
+        const targetWidth = 480;
+        const targetHeight = 600;
+        const sourceRatio = image.width / image.height;
+        const targetRatio = targetWidth / targetHeight;
+        let sx = 0, sy = 0, sw = image.width, sh = image.height;
+        if (sourceRatio > targetRatio) {
+          sw = image.height * targetRatio;
+          sx = (image.width - sw) / 2;
+        } else {
+          sh = image.width / targetRatio;
+          sy = (image.height - sh) / 2;
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = targetWidth;
+        canvas.height = targetHeight;
+        const context = canvas.getContext('2d');
+        context.drawImage(image, sx, sy, sw, sh, 0, 0, targetWidth, targetHeight);
+        resolve(canvas.toDataURL('image/jpeg', 0.86));
+      };
+      image.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
+
   const updatePreview = () => {
     const a = state.answers;
+    updatePhotoPreview();
     setText('previewName', a.name, 'Ваше имя');
     setText('previewRole', a.role, 'Желаемая должность');
     setText('previewContacts', a.contacts, 'Телефон · Email · Портфолио');
@@ -239,7 +312,41 @@
 
   form.addEventListener('submit', (event) => { event.preventDefault(); const value = input.value.trim(); if (!value || state.index >= questions.length) return; const q = questions[state.index]; state.answers[q.key] = value; state.messages.push({type:'user',text:value}); addMessage('user',value); input.value=''; state.index += 1; save(); updatePreview(); window.setTimeout(askCurrent, 250); });
   skip.addEventListener('click', () => { if (state.index >= questions.length) return; state.index += 1; save(); askCurrent(); });
-  reset.addEventListener('click', () => { if (!confirm('Удалить сохранённый черновик и начать заново?')) return; localStorage.removeItem(storageKey); state={index:0,answers:{},messages:[]}; input.disabled=false; form.querySelector('button').disabled=false; skip.hidden=false; renderHistory(); updatePreview(); askCurrent(); showPage(0); });
+  photoInput.addEventListener('change', async () => {
+    const file = photoInput.files && photoInput.files[0];
+    photoError.hidden = true;
+    if (!file) return;
+    if (!['image/jpeg','image/png','image/webp'].includes(file.type)) {
+      photoError.textContent = 'Выберите изображение в формате JPG, PNG или WebP.';
+      photoError.hidden = false;
+      photoInput.value = '';
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      photoError.textContent = 'Размер фотографии не должен превышать 5 МБ.';
+      photoError.hidden = false;
+      photoInput.value = '';
+      return;
+    }
+    try {
+      state.photo = await resizeProfilePhoto(file);
+      save();
+      updatePreview();
+      fitResumePreview();
+    } catch (error) {
+      photoError.textContent = error.message || 'Не удалось обработать фотографию.';
+      photoError.hidden = false;
+    } finally {
+      photoInput.value = '';
+    }
+  });
+  photoRemove.addEventListener('click', () => {
+    state.photo = '';
+    save();
+    updatePreview();
+    fitResumePreview();
+  });
+  reset.addEventListener('click', () => { if (!confirm('Удалить сохранённый черновик и начать заново?')) return; localStorage.removeItem(storageKey); state={index:0,answers:{},messages:[],photo:''}; input.disabled=false; form.querySelector('button').disabled=false; skip.hidden=false; renderHistory(); updatePreview(); askCurrent(); showPage(0); });
   document.querySelectorAll('[data-builder-tab]').forEach(button => button.addEventListener('click', () => switchMobileView(button.dataset.builderTab)));
   document.querySelectorAll('[data-builder-tab-target]').forEach(button => button.addEventListener('click', () => switchMobileView(button.dataset.builderTabTarget)));
 
