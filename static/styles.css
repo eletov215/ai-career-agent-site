@@ -1813,3 +1813,44 @@ body{font-family:"Manrope",Inter,system-ui,-apple-system,BlinkMacSystemFont,"Seg
   object-fit:cover;
   object-position:center;
 }
+
+/* Profile photo card: transparent illustration and reliable state switching */
+.resume-photo-upload{
+  grid-template-columns:64px minmax(0,1fr);
+  align-items:center;
+}
+.resume-photo-upload-preview{
+  width:64px;
+  height:76px;
+  border-radius:0;
+  overflow:visible;
+  background:transparent;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+.resume-photo-upload-preview > img{
+  width:100%;
+  height:100%;
+  display:block;
+}
+.resume-photo-upload-preview > .resume-photo-placeholder{
+  object-fit:contain;
+  object-position:center;
+  background:transparent;
+  filter:drop-shadow(0 8px 12px rgba(91,72,210,.16));
+}
+.resume-photo-upload-preview > #resumePhotoThumb{
+  object-fit:cover;
+  border-radius:12px;
+  box-shadow:0 7px 18px rgba(43,37,98,.16);
+}
+.resume-photo-upload-preview > [hidden],
+.resume-photo-placeholder[hidden],
+#resumePhotoThumb[hidden]{
+  display:none !important;
+}
+@media(max-width:620px){
+  .resume-photo-upload{grid-template-columns:58px minmax(0,1fr)}
+  .resume-photo-upload-preview{width:58px;height:70px}
+}
