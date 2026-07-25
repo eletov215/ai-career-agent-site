@@ -2058,6 +2058,8 @@ body.resume-reader-open{overflow:hidden}
 /* Professional multi-page PDF export */
 .resume-pdf-host{position:fixed;left:-10000px;top:0;width:794px;background:#fff;pointer-events:none;z-index:-1;overflow:visible}
 .resume-pdf-flow{position:relative!important;inset:auto!important;display:block!important;width:794px!important;height:auto!important;min-height:1123px;margin:0!important;transform:none!important;transform-origin:top left!important;opacity:1!important;visibility:visible!important;overflow:visible!important;background:#fff!important;box-shadow:none!important;border-radius:0!important}
-.resume-pdf-flow .resume-modern-layout{min-height:917px}
-.resume-pdf-flow .resume-modern-section,.resume-pdf-flow .resume-modern-experience,.resume-pdf-flow .resume-modern-achievements{break-inside:avoid;page-break-inside:avoid}
+.resume-pdf-flow .resume-modern-layout{height:auto!important;min-height:933px!important;overflow:visible!important;align-items:start!important}
+.resume-pdf-flow .resume-modern-sidebar,.resume-pdf-flow .resume-modern-main{height:auto!important;min-height:933px!important;overflow:visible!important}
+.resume-pdf-flow .resume-modern-section,.resume-pdf-flow .resume-modern-experience,.resume-pdf-flow .resume-modern-achievements{height:auto!important;max-height:none!important;overflow:visible!important;break-inside:avoid;page-break-inside:avoid}
+.resume-pdf-flow p,.resume-pdf-flow li,.resume-pdf-flow div{max-height:none!important}
 .resume-pdf-flow [hidden]{display:none!important}

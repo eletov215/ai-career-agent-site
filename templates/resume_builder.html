@@ -557,12 +557,32 @@
           });
         }));
 
+        // Даём браузеру полностью пересчитать высоту клонированного документа.
+        await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
         keepPdfBlocksTogether(printSheet, pageHeightPx);
         // Повторный проход учитывает сдвиги, добавленные первым проходом.
         keepPdfBlocksTogether(printSheet, pageHeightPx);
-        const contentHeight = Math.max(pageHeightPx, printSheet.scrollHeight);
+        await new Promise(resolve => requestAnimationFrame(resolve));
+
+        const headerHeight = printSheet.querySelector('.resume-modern-header')?.scrollHeight || 0;
+        const layout = printSheet.querySelector('.resume-modern-layout');
+        const sidebar = printSheet.querySelector('.resume-modern-sidebar');
+        const mainColumn = printSheet.querySelector('.resume-modern-main');
+        const layoutContentHeight = Math.max(
+          layout?.scrollHeight || 0,
+          sidebar?.scrollHeight || 0,
+          mainColumn?.scrollHeight || 0
+        );
+        const measuredHeight = Math.max(
+          printSheet.scrollHeight,
+          printSheet.offsetHeight,
+          headerHeight + layoutContentHeight
+        );
+        const contentHeight = Math.max(pageHeightPx, Math.ceil(measuredHeight));
         const pageCount = Math.max(1, Math.ceil(contentHeight / pageHeightPx));
-        printSheet.style.minHeight = `${pageCount * pageHeightPx}px`;
+        const exportHeight = pageCount * pageHeightPx;
+        printSheet.style.height = `${exportHeight}px`;
+        printSheet.style.minHeight = `${exportHeight}px`;
 
         const canvas = await window.html2canvas(printSheet, {
           scale: 2,
@@ -571,9 +591,9 @@
           backgroundColor: '#ffffff',
           logging: false,
           width: pageWidthPx,
-          height: pageCount * pageHeightPx,
+          height: exportHeight,
           windowWidth: pageWidthPx,
-          windowHeight: pageCount * pageHeightPx,
+          windowHeight: exportHeight,
           scrollX: 0,
           scrollY: 0
         });
