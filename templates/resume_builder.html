@@ -50,62 +50,69 @@
 
         <div class="resume-preview-viewport" id="resumePreviewViewport">
           <div class="resume-paper-stage" id="resumePaperStage">
-            <article class="resume-paper is-active" data-resume-page="0">
-              <header class="resume-paper-header">
-                <div>
+            <article class="resume-paper resume-paper-modern is-active" data-resume-page="0">
+              <header class="resume-modern-header">
+                <div class="resume-modern-identity">
+                  <span class="resume-modern-kicker">Резюме</span>
                   <h1 id="previewName">Ваше имя</h1>
                   <p id="previewRole">Желаемая должность</p>
                 </div>
-                <div class="resume-paper-contacts" id="previewContacts">Телефон · Email · Портфолио</div>
+                <div class="resume-modern-contact-card">
+                  <span>Контакты</span>
+                  <div id="previewContacts">Телефон · Email · Портфолио</div>
+                </div>
               </header>
 
-              <section class="resume-paper-section">
-                <h2>Профессиональный профиль</h2>
-                <p id="previewSummary">Здесь появится краткое профессиональное описание на основе ваших ответов.</p>
-              </section>
+              <div class="resume-modern-layout">
+                <aside class="resume-modern-sidebar">
+                  <section class="resume-modern-section resume-modern-section-compact">
+                    <h2>Навыки</h2>
+                    <div class="resume-paper-skills" id="previewSkills"><span>Ваши навыки</span></div>
+                  </section>
 
-              <section class="resume-paper-section">
-                <h2>Опыт работы</h2>
-                <div class="resume-paper-entry">
-                  <div class="resume-paper-entry-head"><strong id="previewExperienceTitle">Опыт пока не указан</strong><span>Период</span></div>
-                  <p id="previewExperience">Расскажите, где вы работали, какую должность занимали и чем занимались.</p>
-                  <ul id="previewAchievements"><li>Достижения и результаты появятся после ответа на соответствующий вопрос.</li></ul>
-                </div>
-              </section>
+                  <section class="resume-modern-section resume-modern-section-compact">
+                    <h2>Образование</h2>
+                    <div class="resume-modern-side-entry">
+                      <strong id="previewEducationTitle">Образование пока не указано</strong>
+                      <p id="previewEducation">Учебное заведение, специальность, курсы и годы обучения появятся здесь.</p>
+                    </div>
+                  </section>
 
-              <section class="resume-paper-section">
-                <h2>Навыки</h2>
-                <div class="resume-paper-skills" id="previewSkills"><span>Ваши навыки</span></div>
-              </section>
-            </article>
+                  <section class="resume-modern-section resume-modern-section-compact">
+                    <h2>Предпочтения</h2>
+                    <p id="previewGoal">Формат работы, график, желаемая зарплата и другие условия.</p>
+                  </section>
+                </aside>
 
-            <article class="resume-paper" data-resume-page="1">
-              <section class="resume-paper-section resume-paper-section-first">
-                <h2>Образование и подготовка</h2>
-                <div class="resume-paper-entry">
-                  <strong id="previewEducationTitle">Образование пока не указано</strong>
-                  <p id="previewEducation">Учебное заведение, специальность, курсы и годы обучения появятся здесь.</p>
-                </div>
-              </section>
+                <main class="resume-modern-main">
+                  <section class="resume-modern-section resume-modern-profile">
+                    <h2>Профессиональный профиль</h2>
+                    <p id="previewSummary">Здесь появится краткое профессиональное описание на основе ваших ответов.</p>
+                  </section>
 
-              <section class="resume-paper-section">
-                <h2>Предпочтения по работе</h2>
-                <p id="previewGoal">Формат работы, график, желаемая зарплата и другие условия.</p>
-              </section>
-
-              <section class="resume-paper-section">
-                <h2>Дополнительная информация</h2>
-                <p>После завершения интервью AI поможет улучшить формулировки, убрать повторы и подготовить резюме к скачиванию в PDF.</p>
-              </section>
+                  <section class="resume-modern-section">
+                    <h2>Опыт работы</h2>
+                    <div class="resume-modern-experience">
+                      <div class="resume-modern-experience-head">
+                        <div>
+                          <strong id="previewExperienceTitle">Опыт пока не указан</strong>
+                          <span>Профессиональный опыт</span>
+                        </div>
+                        <span class="resume-modern-period">Период</span>
+                      </div>
+                      <p id="previewExperience">Расскажите, где вы работали, какую должность занимали и чем занимались.</p>
+                      <div class="resume-modern-achievements">
+                        <h3>Ключевые результаты</h3>
+                        <ul id="previewAchievements"><li>Достижения и результаты появятся после ответа на соответствующий вопрос.</li></ul>
+                      </div>
+                    </div>
+                  </section>
+                </main>
+              </div>
             </article>
           </div>
         </div>
 
-        <div class="resume-preview-footer">
-          <button type="button" id="resumePagePrev" aria-label="Предыдущая страница">←</button>
-          <span><strong id="resumeCurrentPage">1</strong> из <strong>2</strong></span>
-          <button type="button" id="resumePageNext" aria-label="Следующая страница">→</button>
-        </div>
         <button type="button" class="resume-mobile-return" data-builder-tab-target="chat">Продолжить интервью</button>
       </section>
 
@@ -192,24 +199,9 @@
   const showPage = (index) => {
     currentPage = Math.max(0, Math.min(pages.length - 1, index));
     pages.forEach((page, pageIndex) => page.classList.toggle('is-active', pageIndex === currentPage));
-    document.getElementById('resumeCurrentPage').textContent = currentPage + 1;
-    document.getElementById('resumePagePrev').disabled = currentPage === 0;
-    document.getElementById('resumePageNext').disabled = currentPage === pages.length - 1;
+    document.getElementById('resumePreviewViewport').scrollTop = 0;
   };
 
-  const fitResumePreview = () => {
-    const viewport = document.getElementById('resumePreviewViewport');
-    const stage = document.getElementById('resumePaperStage');
-    if (!viewport || !stage) return;
-
-    const styles = getComputedStyle(viewport);
-    const horizontalPadding = parseFloat(styles.paddingLeft) + parseFloat(styles.paddingRight);
-    const verticalPadding = parseFloat(styles.paddingTop) + parseFloat(styles.paddingBottom);
-    const availableWidth = Math.max(1, viewport.clientWidth - horizontalPadding);
-    const availableHeight = Math.max(1, viewport.clientHeight - verticalPadding);
-    const scale = Math.min(availableWidth / 794, availableHeight / 1123);
-    stage.style.setProperty('--resume-zoom', String(scale));
-  };
 
   const switchMobileView = (view) => {
     layout.dataset.mobileView = view;
@@ -224,16 +216,10 @@
   form.addEventListener('submit', (event) => { event.preventDefault(); const value = input.value.trim(); if (!value || state.index >= questions.length) return; const q = questions[state.index]; state.answers[q.key] = value; state.messages.push({type:'user',text:value}); addMessage('user',value); input.value=''; state.index += 1; save(); updatePreview(); window.setTimeout(askCurrent, 250); });
   skip.addEventListener('click', () => { if (state.index >= questions.length) return; state.index += 1; save(); askCurrent(); });
   reset.addEventListener('click', () => { if (!confirm('Удалить сохранённый черновик и начать заново?')) return; localStorage.removeItem(storageKey); state={index:0,answers:{},messages:[]}; input.disabled=false; form.querySelector('button').disabled=false; skip.hidden=false; renderHistory(); updatePreview(); askCurrent(); showPage(0); });
-  document.getElementById('resumePagePrev').addEventListener('click', () => showPage(currentPage - 1));
-  document.getElementById('resumePageNext').addEventListener('click', () => showPage(currentPage + 1));
   document.querySelectorAll('[data-builder-tab]').forEach(button => button.addEventListener('click', () => switchMobileView(button.dataset.builderTab)));
   document.querySelectorAll('[data-builder-tab-target]').forEach(button => button.addEventListener('click', () => switchMobileView(button.dataset.builderTabTarget)));
 
-  const previewResizeObserver = new ResizeObserver(fitResumePreview);
-  previewResizeObserver.observe(document.getElementById('resumePreviewViewport'));
-  window.addEventListener('orientationchange', fitResumePreview);
-
-  renderHistory(); updatePreview(); askCurrent(); showPage(0); fitResumePreview();
+  renderHistory(); updatePreview(); askCurrent(); showPage(0);
 })();
 </script>
 {% endblock %}

@@ -1628,3 +1628,100 @@ body{font-family:"Manrope",Inter,system-ui,-apple-system,BlinkMacSystemFont,"Seg
   .resume-preview-viewport{height:auto!important;min-height:0!important;padding:10px}
   .resume-paper-stage{--resume-zoom:1}
 }
+
+/* Resume template stage 1: modern one-page A4 layout */
+.resume-preview-panel{grid-template-rows:auto minmax(0,1fr) auto}
+.resume-preview-viewport{aspect-ratio:794/1123;padding:18px}
+.resume-paper-stage{width:794px;height:1123px}
+.resume-paper-modern{
+  width:794px;
+  height:1123px;
+  min-height:1123px;
+  padding:0;
+  overflow:hidden;
+  background:#fff;
+  color:#172033;
+  font-family:Arial,sans-serif;
+}
+.resume-modern-header{
+  min-height:190px;
+  padding:54px 58px 38px;
+  display:grid;
+  grid-template-columns:minmax(0,1fr) 245px;
+  align-items:end;
+  gap:34px;
+  background:linear-gradient(135deg,#f7f6ff 0%,#fff 68%);
+  border-bottom:1px solid #e6e8f0;
+  position:relative;
+}
+.resume-modern-header::before{
+  content:"";
+  position:absolute;
+  left:58px;
+  bottom:-2px;
+  width:108px;
+  height:4px;
+  border-radius:999px;
+  background:#6757e8;
+}
+.resume-modern-kicker{
+  display:block;
+  margin-bottom:12px;
+  font-size:11px;
+  line-height:1;
+  font-weight:800;
+  letter-spacing:.18em;
+  text-transform:uppercase;
+  color:#6b5de7;
+}
+.resume-modern-identity h1{margin:0 0 9px;font-size:38px;line-height:1.05;letter-spacing:-.03em;color:#12182a}
+.resume-modern-identity p{margin:0;font-size:18px;line-height:1.35;font-weight:700;color:#6155d8}
+.resume-modern-contact-card{
+  padding:16px 18px;
+  border:1px solid #e5e3fb;
+  border-radius:14px;
+  background:rgba(255,255,255,.82);
+}
+.resume-modern-contact-card>span{display:block;margin-bottom:8px;font-size:10px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#6b5de7}
+.resume-modern-contact-card>div{font-size:11px;line-height:1.55;color:#596274;white-space:pre-wrap;overflow-wrap:anywhere}
+.resume-modern-layout{display:grid;grid-template-columns:230px minmax(0,1fr);min-height:933px}
+.resume-modern-sidebar{padding:38px 30px 44px 58px;background:#f7f8fc;border-right:1px solid #e6e8f0}
+.resume-modern-main{padding:38px 58px 44px 38px}
+.resume-modern-section{margin:0 0 31px}
+.resume-modern-section:last-child{margin-bottom:0}
+.resume-modern-section h2{
+  margin:0 0 14px;
+  font-size:12px;
+  line-height:1.2;
+  font-weight:800;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:#5d52cc;
+}
+.resume-modern-section p{margin:0;font-size:12px;line-height:1.62;color:#465166;white-space:pre-line;overflow-wrap:anywhere}
+.resume-modern-section-compact{margin-bottom:30px}
+.resume-modern-section-compact h2{padding-bottom:10px;border-bottom:1px solid #dfe2eb}
+.resume-modern-side-entry strong{display:block;margin-bottom:7px;font-size:12px;line-height:1.4;color:#20283a;overflow-wrap:anywhere}
+.resume-modern-profile{padding-bottom:28px;border-bottom:1px solid #e6e8f0}
+.resume-modern-profile p{font-size:13px;line-height:1.72}
+.resume-modern-experience{position:relative;padding-left:20px;border-left:2px solid #dedaff}
+.resume-modern-experience::before{content:"";position:absolute;left:-6px;top:2px;width:10px;height:10px;border-radius:50%;background:#6757e8;box-shadow:0 0 0 4px #f1efff}
+.resume-modern-experience-head{display:flex;justify-content:space-between;align-items:flex-start;gap:18px;margin-bottom:13px}
+.resume-modern-experience-head>div{display:grid;gap:4px;min-width:0}
+.resume-modern-experience-head strong{font-size:15px;line-height:1.35;color:#171e31;overflow-wrap:anywhere}
+.resume-modern-experience-head>div>span{font-size:10px;color:#7a8496}
+.resume-modern-period{flex:0 0 auto;padding:5px 8px;border-radius:999px;background:#f1efff;color:#5b50c4;font-size:9px;font-weight:700}
+.resume-modern-achievements{margin-top:20px;padding-top:17px;border-top:1px dashed #dfe2eb}
+.resume-modern-achievements h3{margin:0 0 10px;font-size:10px;line-height:1.2;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#70798b}
+.resume-modern-achievements ul{margin:0;padding-left:17px}
+.resume-modern-achievements li{margin:0 0 8px;font-size:11px;line-height:1.55;color:#465166}
+.resume-modern-achievements li::marker{color:#6757e8}
+.resume-paper-modern .resume-paper-skills{display:flex;flex-wrap:wrap;gap:7px}
+.resume-paper-modern .resume-paper-skills span{padding:6px 8px;border:1px solid #dedaff;border-radius:6px;background:#fff;color:#5146b6;font-size:10px;line-height:1.2;font-weight:700}
+.resume-preview-footer{display:none!important}
+@media(max-width:900px){
+  .resume-preview-viewport{padding:14px}
+}
+@media(max-width:620px){
+  .resume-preview-viewport{padding:10px}
+}
