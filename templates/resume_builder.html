@@ -157,7 +157,7 @@
           </div>
           <div class="resume-preview-pagination" id="resumePreviewPagination" hidden>
             <button type="button" id="resumePreviewPrev" aria-label="Предыдущая страница">←</button>
-            <span id="resumePreviewPageLabel">1 из 1</span>
+            <div id="resumePreviewPageLabel" class="resume-preview-dots"></div>
             <button type="button" id="resumePreviewNext" aria-label="Следующая страница">→</button>
           </div>
         </div>
@@ -436,7 +436,7 @@
     previewPageIndex = Math.max(0, Math.min(generatedPages.length - 1, index));
     generatedPages.forEach((page, pageIndex) => page.classList.toggle('is-active', pageIndex === previewPageIndex));
     previewPageCount = Math.max(1, generatedPages.length);
-    previewPageLabel.textContent = `${previewPageIndex + 1} из ${previewPageCount}`;
+    previewPageLabel.innerHTML=""; for(let i=0;i<previewPageCount;i++){const b=document.createElement("button");b.type="button";b.className="resume-preview-dot"+(i===previewPageIndex?" active":"");b.onclick=()=>{previewPageIndex=i;updatePreviewPagination();showPreviewPage();};previewPageLabel.appendChild(b);}
     previewPrevButton.disabled = previewPageIndex <= 0;
     previewNextButton.disabled = previewPageIndex >= previewPageCount - 1;
     previewPagination.hidden = previewPageCount <= 1;
