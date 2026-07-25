@@ -2604,3 +2604,77 @@ body.resume-reader-open{overflow:hidden}
   }
   .resume-preview-page-count{min-width:44px;font-size:12px}
 }
+
+
+/* Branded numeric resume preview pagination */
+.resume-preview-pagination{
+  gap:20px;
+  align-items:center;
+}
+.resume-preview-pagination .resume-preview-page-arrow{
+  flex:0 0 46px;
+  width:46px;
+  height:46px;
+  min-width:46px;
+  min-height:46px;
+  display:grid;
+  place-items:center;
+  padding:0;
+  border:0;
+  border-radius:50%;
+  color:#fff;
+  background:linear-gradient(135deg,#7457f5 0%,#2f66e9 100%);
+  box-shadow:0 8px 20px rgba(70,83,221,.24);
+  cursor:pointer;
+  transition:transform .18s ease,box-shadow .18s ease,filter .18s ease,opacity .18s ease;
+}
+.resume-preview-pagination .resume-preview-page-arrow svg{
+  display:block;
+  width:21px;
+  height:21px;
+  fill:none;
+  stroke:currentColor;
+  stroke-width:2;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+  pointer-events:none;
+}
+.resume-preview-pagination .resume-preview-page-arrow:hover:not(:disabled){
+  transform:translateY(-1px);
+  box-shadow:0 11px 24px rgba(70,83,221,.3);
+  filter:brightness(1.03);
+}
+.resume-preview-pagination .resume-preview-page-arrow:active:not(:disabled){
+  transform:translateY(0) scale(.96);
+}
+.resume-preview-pagination .resume-preview-page-arrow:focus-visible{
+  outline:3px solid rgba(80,99,235,.24);
+  outline-offset:3px;
+}
+.resume-preview-pagination .resume-preview-page-arrow:disabled{
+  opacity:.36;
+  cursor:default;
+  box-shadow:none;
+  filter:saturate(.7);
+}
+.resume-preview-page-count{
+  min-width:54px;
+  color:#4d5670;
+  font:800 13px/1.2 "Manrope",Inter,sans-serif;
+  letter-spacing:.035em;
+}
+@media(max-width:620px){
+  .resume-preview-pagination{gap:16px}
+  .resume-preview-pagination .resume-preview-page-arrow{
+    flex-basis:42px;
+    width:42px;
+    height:42px;
+    min-width:42px;
+    min-height:42px;
+  }
+  .resume-preview-pagination .resume-preview-page-arrow svg{width:20px;height:20px}
+  .resume-preview-page-count{min-width:48px;font-size:12px}
+}
+@media(prefers-reduced-motion:reduce){
+  .resume-preview-pagination .resume-preview-page-arrow{transition:none}
+}
