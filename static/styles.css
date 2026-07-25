@@ -1574,3 +1574,57 @@ body{font-family:"Manrope",Inter,system-ui,-apple-system,BlinkMacSystemFont,"Seg
 @media (max-width:1024px){
 .resume-preview-viewport{height:auto;max-height:none;padding:16px;overflow:hidden}
 }
+
+/* Resume preview: fixed A4 sheet without zoom controls or internal scrolling */
+.resume-preview-toolbar{justify-content:flex-start}
+.resume-preview-tools{display:none!important}
+.resume-preview-viewport{
+  width:100%;
+  height:auto!important;
+  min-height:0!important;
+  max-height:none!important;
+  aspect-ratio:794 / 1123;
+  box-sizing:border-box;
+  overflow:hidden!important;
+  padding:18px;
+  align-items:center;
+  justify-content:center;
+  overscroll-behavior:none;
+  touch-action:pan-y;
+}
+.resume-paper-stage{
+  --resume-zoom:1;
+  width:calc(794px * var(--resume-zoom));
+  height:calc(1123px * var(--resume-zoom));
+  flex:0 0 auto;
+  margin:0;
+  overflow:hidden;
+}
+.resume-paper{
+  width:794px;
+  height:1123px;
+  min-height:1123px;
+  box-sizing:border-box;
+  overflow:hidden;
+  padding:58px 62px;
+}
+.resume-paper *{box-sizing:border-box;max-width:100%}
+.resume-paper-header{display:grid;grid-template-columns:minmax(0,1fr) minmax(180px,250px);align-items:start;gap:28px}
+.resume-paper-header>div{min-width:0}
+.resume-paper-header h1,.resume-paper-header p,.resume-paper-contacts,.resume-paper-section p,.resume-paper-entry strong,.resume-paper-entry li{
+  overflow-wrap:anywhere;
+  word-break:normal;
+}
+.resume-paper-contacts{width:100%;max-width:none;white-space:pre-wrap}
+.resume-paper-entry-head{align-items:flex-start}
+.resume-paper-entry-head strong{min-width:0;flex:1}
+.resume-paper-entry-head span{flex:0 0 auto}
+
+@media(max-width:900px){
+  .resume-preview-viewport{height:auto!important;min-height:0!important;padding:14px}
+  .resume-paper-stage{--resume-zoom:1}
+}
+@media(max-width:620px){
+  .resume-preview-viewport{height:auto!important;min-height:0!important;padding:10px}
+  .resume-paper-stage{--resume-zoom:1}
+}

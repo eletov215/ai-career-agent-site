@@ -46,11 +46,6 @@
             <span>Живой предпросмотр</span>
             <strong>Ваше резюме</strong>
           </div>
-          <div class="resume-preview-tools">
-            <button type="button" id="resumeZoomOut" disabled aria-label="Уменьшить масштаб">−</button>
-            <span id="resumeZoomText">82%</span>
-            <button type="button" id="resumeZoomIn" aria-label="Увеличить масштаб">+</button>
-          </div>
         </div>
 
         <div class="resume-preview-viewport" id="resumePreviewViewport">
@@ -144,7 +139,6 @@
   const layout = document.getElementById('resumeBuilderLayout');
   const pages = [...document.querySelectorAll('[data-resume-page]')];
   let currentPage = 0;
-  let zoom = 0.82;
   let state = {index:0, answers:{}, messages:[]};
   try { const saved = JSON.parse(localStorage.getItem(storageKey) || 'null'); if (saved && saved.answers) state = saved; } catch (_) {}
 
@@ -201,12 +195,20 @@
     document.getElementById('resumeCurrentPage').textContent = currentPage + 1;
     document.getElementById('resumePagePrev').disabled = currentPage === 0;
     document.getElementById('resumePageNext').disabled = currentPage === pages.length - 1;
-    document.getElementById('resumePreviewViewport').scrollTop = 0;
   };
 
-  const applyZoom = () => {
-    document.getElementById('resumePaperStage').style.setProperty('--resume-zoom', zoom);
-    document.getElementById('resumeZoomText').textContent = `${Math.round(zoom * 100)}%`;
+  const fitResumePreview = () => {
+    const viewport = document.getElementById('resumePreviewViewport');
+    const stage = document.getElementById('resumePaperStage');
+    if (!viewport || !stage) return;
+
+    const styles = getComputedStyle(viewport);
+    const horizontalPadding = parseFloat(styles.paddingLeft) + parseFloat(styles.paddingRight);
+    const verticalPadding = parseFloat(styles.paddingTop) + parseFloat(styles.paddingBottom);
+    const availableWidth = Math.max(1, viewport.clientWidth - horizontalPadding);
+    const availableHeight = Math.max(1, viewport.clientHeight - verticalPadding);
+    const scale = Math.min(availableWidth / 794, availableHeight / 1123);
+    stage.style.setProperty('--resume-zoom', String(scale));
   };
 
   const switchMobileView = (view) => {
@@ -224,12 +226,14 @@
   reset.addEventListener('click', () => { if (!confirm('Удалить сохранённый черновик и начать заново?')) return; localStorage.removeItem(storageKey); state={index:0,answers:{},messages:[]}; input.disabled=false; form.querySelector('button').disabled=false; skip.hidden=false; renderHistory(); updatePreview(); askCurrent(); showPage(0); });
   document.getElementById('resumePagePrev').addEventListener('click', () => showPage(currentPage - 1));
   document.getElementById('resumePageNext').addEventListener('click', () => showPage(currentPage + 1));
-  document.getElementById('resumeZoomOut').addEventListener('click', () => { zoom = Math.max(0.62, +(zoom - 0.1).toFixed(2)); applyZoom(); });
-  document.getElementById('resumeZoomIn').addEventListener('click', () => { zoom = Math.min(1.12, +(zoom + 0.1).toFixed(2)); applyZoom(); });
   document.querySelectorAll('[data-builder-tab]').forEach(button => button.addEventListener('click', () => switchMobileView(button.dataset.builderTab)));
   document.querySelectorAll('[data-builder-tab-target]').forEach(button => button.addEventListener('click', () => switchMobileView(button.dataset.builderTabTarget)));
 
-  renderHistory(); updatePreview(); askCurrent(); showPage(0); applyZoom();
+  const previewResizeObserver = new ResizeObserver(fitResumePreview);
+  previewResizeObserver.observe(document.getElementById('resumePreviewViewport'));
+  window.addEventListener('orientationchange', fitResumePreview);
+
+  renderHistory(); updatePreview(); askCurrent(); showPage(0); fitResumePreview();
 })();
 </script>
 {% endblock %}
