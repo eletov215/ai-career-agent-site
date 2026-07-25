@@ -2053,3 +2053,11 @@ body.resume-reader-open{overflow:hidden}
     min-height: 19px;
   }
 }
+
+
+/* Professional multi-page PDF export */
+.resume-pdf-host{position:fixed;left:-10000px;top:0;width:794px;background:#fff;pointer-events:none;z-index:-1;overflow:visible}
+.resume-pdf-flow{position:relative!important;inset:auto!important;display:block!important;width:794px!important;height:auto!important;min-height:1123px;margin:0!important;transform:none!important;transform-origin:top left!important;opacity:1!important;visibility:visible!important;overflow:visible!important;background:#fff!important;box-shadow:none!important;border-radius:0!important}
+.resume-pdf-flow .resume-modern-layout{min-height:917px}
+.resume-pdf-flow .resume-modern-section,.resume-pdf-flow .resume-modern-experience,.resume-pdf-flow .resume-modern-achievements{break-inside:avoid;page-break-inside:avoid}
+.resume-pdf-flow [hidden]{display:none!important}

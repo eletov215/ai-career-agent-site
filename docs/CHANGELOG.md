@@ -109,3 +109,11 @@
 - Added adaptive fullscreen A4 reader for desktop, tablet, and mobile.
 - Added PDF download actions in the preview toolbar and fullscreen reader.
 - Added keyboard accessibility, Escape/background closing, and reduced-motion support.
+
+
+## PDF export stage 1
+- Added multi-page A4 export.
+- Empty resume sections are removed from the final PDF.
+- Semantic blocks are moved to the next page instead of being cut.
+- Added page numbering for multi-page resumes.
+- Profile photo and university emblem remain supported.

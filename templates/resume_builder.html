@@ -466,66 +466,103 @@
     }, 220);
   };
 
+  const prepareResumeForPdf = (source) => {
+    const sheet = source.cloneNode(true);
+    sheet.removeAttribute('data-resume-page');
+    sheet.classList.remove('is-active', 'resume-reader-paper');
+    sheet.classList.add('is-active', 'resume-pdf-flow');
+
+    // В итоговом документе не показываем подсказки и пустые разделы.
+    sheet.querySelectorAll('.resume-university-logo-status').forEach(node => node.remove());
+    const answers = state.answers || {};
+    const hideClosest = (selector, closestSelector = '.resume-modern-section') => {
+      const node = sheet.querySelector(selector);
+      const block = node && node.closest(closestSelector);
+      if (block) block.remove();
+    };
+    if (!String(answers.skills || '').trim()) hideClosest('#previewSkills');
+    if (!String(answers.education || '').trim()) hideClosest('#previewEducation');
+    if (!String(answers.goal || '').trim()) hideClosest('#previewGoal');
+    if (!String(answers.experience || '').trim() && !String(answers.achievements || '').trim()) hideClosest('#previewExperience');
+    if (!String(answers.role || '').trim() && !String(answers.experience || '').trim() && !String(answers.goal || '').trim()) hideClosest('#previewSummary');
+    if (!String(answers.contacts || '').trim()) {
+      const contact = sheet.querySelector('.resume-modern-contact-card');
+      if (contact) contact.remove();
+    }
+    if (!state.photo) {
+      const photo = sheet.querySelector('.resume-modern-photo');
+      if (photo) photo.remove();
+    }
+    if (!state.universityLogo) {
+      const logo = sheet.querySelector('.resume-modern-university-logo');
+      if (logo) logo.remove();
+    }
+    return sheet;
+  };
+
+  const keepPdfBlocksTogether = (sheet, pageHeight) => {
+    // Не разрываем смысловые блоки между страницами: если блок не помещается,
+    // переносим его целиком на следующую страницу с помощью верхнего отступа.
+    const selectors = [
+      '.resume-modern-header',
+      '.resume-modern-sidebar > .resume-modern-section',
+      '.resume-modern-main > .resume-modern-section',
+      '.resume-modern-experience',
+      '.resume-modern-achievements'
+    ];
+    const blocks = [...sheet.querySelectorAll(selectors.join(','))];
+    blocks.forEach(block => {
+      const top = block.offsetTop;
+      const height = block.offsetHeight;
+      if (!height || height >= pageHeight - 80) return;
+      const pageStart = Math.floor(top / pageHeight) * pageHeight;
+      const safeBottom = pageStart + pageHeight - 34;
+      if (top + height > safeBottom) {
+        const shift = pageStart + pageHeight - top + 30;
+        const current = parseFloat(getComputedStyle(block).marginTop) || 0;
+        block.style.marginTop = `${current + shift}px`;
+      }
+    });
+  };
+
   const downloadResumePdf = async (button) => {
     if (isDownloadingPdf) return;
     const source = document.querySelector('.resume-paper-modern.is-active');
     if (!source) return;
-    const originalLabel = button && button.querySelector('span') ? button.querySelector('span').textContent : '';
+    const labelNode = button && button.querySelector('span');
+    const originalLabel = labelNode ? labelNode.textContent : '';
     isDownloadingPdf = true;
-    if (button) { button.disabled = true; if (button.querySelector('span')) button.querySelector('span').textContent = 'Подготовка…'; }
+    if (button) { button.disabled = true; if (labelNode) labelNode.textContent = 'Подготовка…'; }
     try {
       if (!window.html2canvas || !window.jspdf || !window.jspdf.jsPDF) throw new Error('Модуль PDF ещё не загрузился. Проверьте подключение к интернету и повторите попытку.');
       if (document.fonts && document.fonts.ready) await document.fonts.ready;
 
-      // Рендерим не уменьшенный лист из предпросмотра, а отдельную копию
-      // реального размера A4. Это исключает пустой PDF из-за transform/overflow.
+      const pageWidthPx = 794;
+      const pageHeightPx = 1123;
       const printHost = document.createElement('div');
       printHost.setAttribute('aria-hidden', 'true');
-      printHost.style.cssText = [
-        'position:fixed',
-        'left:-10000px',
-        'top:0',
-        'width:794px',
-        'height:1123px',
-        'overflow:visible',
-        'background:#fff',
-        'pointer-events:none',
-        'z-index:-1'
-      ].join(';');
-
-      const printSheet = source.cloneNode(true);
-      printSheet.classList.remove('is-active');
-      printSheet.classList.add('is-active', 'resume-pdf-sheet');
-      printSheet.style.cssText = [
-        'position:relative',
-        'inset:auto',
-        'display:block',
-        'width:794px',
-        'height:1123px',
-        'min-height:1123px',
-        'transform:none',
-        'transform-origin:top left',
-        'opacity:1',
-        'visibility:visible',
-        'overflow:hidden',
-        'margin:0'
-      ].join(';');
+      printHost.className = 'resume-pdf-host';
+      const printSheet = prepareResumeForPdf(source);
       printHost.appendChild(printSheet);
       document.body.appendChild(printHost);
 
       try {
         const images = [...printSheet.querySelectorAll('img')];
-        await Promise.all(images.map(async (image) => {
+        await Promise.all(images.map(async image => {
           if (!image.getAttribute('src')) return;
-          if (image.complete) {
-            try { await image.decode(); } catch (_) {}
-            return;
-          }
-          await new Promise((resolve) => {
+          if (image.complete) { try { await image.decode(); } catch (_) {} return; }
+          await new Promise(resolve => {
             image.addEventListener('load', resolve, {once:true});
             image.addEventListener('error', resolve, {once:true});
           });
         }));
+
+        keepPdfBlocksTogether(printSheet, pageHeightPx);
+        // Повторный проход учитывает сдвиги, добавленные первым проходом.
+        keepPdfBlocksTogether(printSheet, pageHeightPx);
+        const contentHeight = Math.max(pageHeightPx, printSheet.scrollHeight);
+        const pageCount = Math.max(1, Math.ceil(contentHeight / pageHeightPx));
+        printSheet.style.minHeight = `${pageCount * pageHeightPx}px`;
 
         const canvas = await window.html2canvas(printSheet, {
           scale: 2,
@@ -533,19 +570,35 @@
           allowTaint: false,
           backgroundColor: '#ffffff',
           logging: false,
-          width: 794,
-          height: 1123,
-          windowWidth: 794,
-          windowHeight: 1123,
+          width: pageWidthPx,
+          height: pageCount * pageHeightPx,
+          windowWidth: pageWidthPx,
+          windowHeight: pageCount * pageHeightPx,
           scrollX: 0,
           scrollY: 0
         });
-
         if (!canvas.width || !canvas.height) throw new Error('Не удалось получить изображение резюме.');
 
         const { jsPDF } = window.jspdf;
         const pdf = new jsPDF({orientation:'portrait', unit:'mm', format:'a4', compress:true});
-        pdf.addImage(canvas.toDataURL('image/jpeg', 0.94), 'JPEG', 0, 0, 210, 297, undefined, 'FAST');
+        const sliceHeight = pageHeightPx * 2;
+        for (let pageIndex = 0; pageIndex < pageCount; pageIndex += 1) {
+          if (pageIndex > 0) pdf.addPage('a4', 'portrait');
+          const pageCanvas = document.createElement('canvas');
+          pageCanvas.width = canvas.width;
+          pageCanvas.height = sliceHeight;
+          const ctx = pageCanvas.getContext('2d');
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(0, 0, pageCanvas.width, pageCanvas.height);
+          ctx.drawImage(canvas, 0, pageIndex * sliceHeight, canvas.width, sliceHeight, 0, 0, canvas.width, sliceHeight);
+          pdf.addImage(pageCanvas.toDataURL('image/jpeg', 0.94), 'JPEG', 0, 0, 210, 297, undefined, 'FAST');
+          if (pageCount > 1) {
+            pdf.setFont('helvetica', 'normal');
+            pdf.setFontSize(8);
+            pdf.setTextColor(130, 138, 158);
+            pdf.text(`${pageIndex + 1} / ${pageCount}`, 105, 293.5, {align:'center'});
+          }
+        }
         const rawName = (state.answers.name || 'resume').trim();
         const safeName = rawName.replace(/[^a-zA-Zа-яА-ЯёЁ0-9_-]+/g, '_').replace(/^_+|_+$/g, '') || 'resume';
         pdf.save(`${safeName}_resume.pdf`);
@@ -556,7 +609,7 @@
       alert(error.message || 'Не удалось сформировать PDF.');
     } finally {
       isDownloadingPdf = false;
-      if (button) { button.disabled = false; if (button.querySelector('span')) button.querySelector('span').textContent = originalLabel || 'Скачать PDF'; }
+      if (button) { button.disabled = false; if (labelNode) labelNode.textContent = originalLabel || 'Скачать PDF'; }
     }
   };
 
