@@ -196,11 +196,35 @@
     progressBar.style.width = `${(state.index / questions.length) * 100}%`;
   };
 
+  const fitResumePreview = () => {
+    const viewport = document.getElementById('resumePreviewViewport');
+    const stage = viewport && viewport.querySelector('.resume-paper-stage');
+    if (!viewport || !stage) return;
+
+    const styles = getComputedStyle(viewport);
+    const horizontalPadding = parseFloat(styles.paddingLeft) + parseFloat(styles.paddingRight);
+    const verticalPadding = parseFloat(styles.paddingTop) + parseFloat(styles.paddingBottom);
+    const availableWidth = Math.max(0, viewport.clientWidth - horizontalPadding);
+    const availableHeight = Math.max(0, viewport.clientHeight - verticalPadding);
+    const widthScale = availableWidth / 794;
+    const heightScale = availableHeight > 0 ? availableHeight / 1123 : widthScale;
+    const fit = Math.min(1, widthScale, heightScale);
+
+    stage.style.setProperty('--resume-fit', String(Math.max(0.2, fit)));
+  };
+
   const showPage = (index) => {
     currentPage = Math.max(0, Math.min(pages.length - 1, index));
     pages.forEach((page, pageIndex) => page.classList.toggle('is-active', pageIndex === currentPage));
-    document.getElementById('resumePreviewViewport').scrollTop = 0;
+    fitResumePreview();
   };
+
+  const previewViewport = document.getElementById('resumePreviewViewport');
+  if ('ResizeObserver' in window && previewViewport) {
+    new ResizeObserver(fitResumePreview).observe(previewViewport);
+  } else {
+    window.addEventListener('resize', fitResumePreview);
+  }
 
 
   const switchMobileView = (view) => {
@@ -219,7 +243,7 @@
   document.querySelectorAll('[data-builder-tab]').forEach(button => button.addEventListener('click', () => switchMobileView(button.dataset.builderTab)));
   document.querySelectorAll('[data-builder-tab-target]').forEach(button => button.addEventListener('click', () => switchMobileView(button.dataset.builderTabTarget)));
 
-  renderHistory(); updatePreview(); askCurrent(); showPage(0);
+  renderHistory(); updatePreview(); askCurrent(); showPage(0); window.requestAnimationFrame(fitResumePreview);
 })();
 </script>
 {% endblock %}

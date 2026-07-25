@@ -1632,7 +1632,20 @@ body{font-family:"Manrope",Inter,system-ui,-apple-system,BlinkMacSystemFont,"Seg
 /* Resume template stage 1: modern one-page A4 layout */
 .resume-preview-panel{grid-template-rows:auto minmax(0,1fr) auto}
 .resume-preview-viewport{aspect-ratio:794/1123;padding:18px}
-.resume-paper-stage{width:794px;height:1123px}
+.resume-paper-stage{
+  --resume-fit:1;
+  position:relative;
+  width:calc(794px * var(--resume-fit));
+  height:calc(1123px * var(--resume-fit));
+  flex:0 0 auto;
+  overflow:hidden;
+}
+.resume-paper-stage > .resume-paper{
+  position:absolute;
+  inset:0 auto auto 0;
+  transform:scale(var(--resume-fit));
+  transform-origin:top left;
+}
 .resume-paper-modern{
   width:794px;
   height:1123px;
@@ -1684,9 +1697,9 @@ body{font-family:"Manrope",Inter,system-ui,-apple-system,BlinkMacSystemFont,"Seg
 }
 .resume-modern-contact-card>span{display:block;margin-bottom:8px;font-size:10px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#6b5de7}
 .resume-modern-contact-card>div{font-size:11px;line-height:1.55;color:#596274;white-space:pre-wrap;overflow-wrap:anywhere}
-.resume-modern-layout{display:grid;grid-template-columns:230px minmax(0,1fr);min-height:933px}
-.resume-modern-sidebar{padding:38px 30px 44px 58px;background:#f7f8fc;border-right:1px solid #e6e8f0}
-.resume-modern-main{padding:38px 58px 44px 38px}
+.resume-modern-layout{display:grid;grid-template-columns:230px minmax(0,1fr);min-height:933px;min-width:0}
+.resume-modern-sidebar{min-width:0;padding:38px 30px 44px 58px;background:#f7f8fc;border-right:1px solid #e6e8f0}
+.resume-modern-main{min-width:0;padding:38px 58px 44px 38px}
 .resume-modern-section{margin:0 0 31px}
 .resume-modern-section:last-child{margin-bottom:0}
 .resume-modern-section h2{
@@ -1698,7 +1711,7 @@ body{font-family:"Manrope",Inter,system-ui,-apple-system,BlinkMacSystemFont,"Seg
   text-transform:uppercase;
   color:#5d52cc;
 }
-.resume-modern-section p{margin:0;font-size:12px;line-height:1.62;color:#465166;white-space:pre-line;overflow-wrap:anywhere}
+.resume-modern-section p{margin:0;max-width:100%;font-size:12px;line-height:1.62;color:#465166;white-space:pre-line;overflow-wrap:anywhere;word-break:break-word}
 .resume-modern-section-compact{margin-bottom:30px}
 .resume-modern-section-compact h2{padding-bottom:10px;border-bottom:1px solid #dfe2eb}
 .resume-modern-side-entry strong{display:block;margin-bottom:7px;font-size:12px;line-height:1.4;color:#20283a;overflow-wrap:anywhere}
