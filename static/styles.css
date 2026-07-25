@@ -2495,3 +2495,73 @@ body.resume-reader-open{overflow:hidden}
   .resume-preview-pagination .resume-preview-page-arrow,
   .resume-preview-pagination .resume-preview-dot{transition:none}
 }
+
+/* Minimal resume preview pagination */
+.resume-preview-pagination-wrap{
+  min-height:48px;
+  padding:10px 12px 12px;
+  background:transparent;
+}
+.resume-preview-pagination{
+  gap:10px;
+  padding:0;
+  border:0;
+  border-radius:0;
+  background:transparent;
+  box-shadow:none;
+  backdrop-filter:none;
+}
+.resume-preview-pagination .resume-preview-page-arrow{
+  flex:0 0 32px;
+  width:32px;
+  height:32px;
+  border:1px solid #d9deea;
+  background:#fff;
+  color:#626b7f;
+  font:500 18px/1 "Manrope",Inter,sans-serif;
+  box-shadow:none;
+}
+.resume-preview-pagination .resume-preview-page-arrow:hover:not(:disabled){
+  transform:none;
+  border-color:#bfc6d8;
+  background:#f8f9fc;
+  color:#4f5fdf;
+  box-shadow:none;
+}
+.resume-preview-pagination .resume-preview-page-arrow:active:not(:disabled){
+  transform:scale(.96);
+}
+.resume-preview-pagination .resume-preview-page-arrow:disabled{
+  opacity:.35;
+  background:#f7f8fb;
+  color:#9da5b6;
+  border-color:#e4e7ef;
+}
+.resume-preview-dots{
+  gap:6px;
+  max-width:min(180px,44vw);
+}
+.resume-preview-pagination .resume-preview-dot{
+  flex:0 0 6px;
+  width:6px;
+  height:6px;
+  min-width:6px;
+  background:#cfd4e2;
+  transition:width .18s ease,background .18s ease,transform .18s ease;
+}
+.resume-preview-pagination .resume-preview-dot:hover{
+  transform:scale(1.15);
+  background:#9ba4ba;
+}
+.resume-preview-pagination .resume-preview-dot.active{
+  width:16px;
+  flex-basis:16px;
+  background:#5f63e8;
+  box-shadow:none;
+}
+@media(max-width:620px){
+  .resume-preview-pagination-wrap{min-height:44px;padding:8px 10px 10px}
+  .resume-preview-pagination{gap:8px;padding:0}
+  .resume-preview-pagination .resume-preview-page-arrow{flex-basis:30px;width:30px;height:30px;font-size:17px}
+  .resume-preview-dots{gap:5px;max-width:42vw}
+}
