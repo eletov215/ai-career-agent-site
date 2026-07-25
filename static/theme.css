@@ -2779,3 +2779,84 @@ input:focus,select:focus,textarea:focus{outline:3px solid rgba(109,91,255,.14);b
   .vacancy-compact-search,.vacancy-compact-chevron{transition:none}
 }
 
+
+/* Unified luminous treatment for primary conversion buttons. */
+.ai-interview-button,
+.site-nav .nav-links .nav-cta{
+  position:relative;
+  isolation:isolate;
+  overflow:hidden;
+  font-family:inherit!important;
+  font-weight:800!important;
+  background:linear-gradient(135deg,#7657f6 0%,#655cf1 48%,#4f83f5 100%)!important;
+  border:1px solid rgba(255,255,255,.24)!important;
+  box-shadow:
+    0 12px 26px rgba(93,91,239,.27),
+    inset 0 1px 0 rgba(255,255,255,.32)!important;
+}
+.ai-interview-button::before,
+.site-nav .nav-links .nav-cta::before{
+  content:"";
+  position:absolute;
+  z-index:-1;
+  top:-45%;
+  bottom:-45%;
+  left:-55%;
+  width:42%;
+  pointer-events:none;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.46),transparent);
+  transform:skewX(-20deg) translateX(-170%);
+  opacity:0;
+}
+.ai-interview-button::after,
+.site-nav .nav-links .nav-cta::after{
+  content:"";
+  position:absolute;
+  z-index:-2;
+  inset:8px 12px -12px;
+  border-radius:inherit;
+  background:linear-gradient(100deg,rgba(118,87,246,.44),rgba(79,131,245,.5));
+  filter:blur(16px);
+  opacity:0;
+  transition:opacity .24s ease;
+  pointer-events:none;
+}
+.ai-interview-button:hover,
+.site-nav .nav-links .nav-cta:hover{
+  background:linear-gradient(135deg,#8062ff 0%,#6964f7 48%,#5790ff 100%)!important;
+  transform:translateY(-2px);
+  box-shadow:
+    0 17px 36px rgba(93,91,239,.35),
+    0 0 0 5px rgba(109,91,255,.09),
+    inset 0 1px 0 rgba(255,255,255,.42)!important;
+}
+.ai-interview-button:hover::before,
+.site-nav .nav-links .nav-cta:hover::before{
+  opacity:1;
+  animation:primary-button-shine .78s ease-out;
+}
+.ai-interview-button:hover::after,
+.site-nav .nav-links .nav-cta:hover::after{
+  opacity:.95;
+}
+.ai-interview-button:focus-visible,
+.site-nav .nav-links .nav-cta:focus-visible{
+  outline:none;
+  box-shadow:
+    0 15px 32px rgba(93,91,239,.32),
+    0 0 0 4px rgba(255,255,255,.95),
+    0 0 0 7px rgba(109,91,255,.28)!important;
+}
+.ai-interview-button:active,
+.site-nav .nav-links .nav-cta:active{
+  transform:translateY(0) scale(.985);
+  box-shadow:0 8px 20px rgba(93,91,239,.25),inset 0 1px 0 rgba(255,255,255,.26)!important;
+}
+@keyframes primary-button-shine{
+  from{transform:skewX(-20deg) translateX(-170%)}
+  to{transform:skewX(-20deg) translateX(470%)}
+}
+@media (prefers-reduced-motion:reduce){
+  .ai-interview-button::before,
+  .site-nav .nav-links .nav-cta::before{animation:none!important;display:none}
+}
