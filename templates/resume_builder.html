@@ -39,7 +39,7 @@
         </form>
         <div class="resume-photo-upload" id="resumePhotoUpload">
           <div class="resume-photo-upload-preview" id="resumePhotoUploadPreview" aria-hidden="true">
-            <span id="resumePhotoInitials">Фото</span>
+            <span id="resumePhotoInitials" class="resume-photo-placeholder"><img src="{{ url_for('static', filename='images/profile-photo-upload-icon.png') }}" alt="" aria-hidden="true"></span>
             <img id="resumePhotoThumb" alt="Предпросмотр фотографии профиля" hidden>
           </div>
           <div class="resume-photo-upload-copy">
