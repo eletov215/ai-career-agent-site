@@ -2328,3 +2328,62 @@ body.resume-reader-open{overflow:hidden}
   opacity:1!important;
   visibility:visible!important;
 }
+
+/* Resume preview pager: large circular controls below the A4 sheet. */
+.resume-preview-viewport{
+  grid-template-rows:minmax(0,auto) auto;
+  row-gap:30px;
+  padding-bottom:34px;
+  overflow:visible;
+}
+.resume-preview-pagination{
+  position:relative;
+  inset:auto;
+  z-index:8;
+  margin:0;
+  padding:8px 12px;
+  gap:14px;
+  flex:0 0 auto;
+  background:rgba(255,255,255,.96);
+  border:1px solid rgba(105,84,222,.13);
+  box-shadow:0 12px 30px rgba(44,51,88,.14);
+}
+.resume-preview-pagination button{
+  width:46px;
+  height:46px;
+  min-width:46px;
+  min-height:46px;
+  padding:0;
+  border-radius:50%;
+  background:linear-gradient(145deg,#6757f6 0%,#4f6ff0 100%);
+  color:#fff;
+  font:500 25px/1 "Manrope",Inter,sans-serif;
+  box-shadow:0 10px 24px rgba(83,88,235,.30);
+  transition:transform .18s ease,box-shadow .18s ease,filter .18s ease;
+}
+.resume-preview-pagination button:hover:not(:disabled){
+  transform:translateY(-2px);
+  filter:brightness(1.04);
+  box-shadow:0 14px 30px rgba(83,88,235,.38),0 0 22px rgba(102,87,246,.24);
+}
+.resume-preview-pagination button:active:not(:disabled){transform:translateY(0) scale(.96)}
+.resume-preview-pagination button:disabled{
+  opacity:1;
+  color:#fff;
+  background:linear-gradient(145deg,#d9d7ff 0%,#c7cdfd 100%);
+  box-shadow:0 7px 18px rgba(93,91,185,.12);
+  cursor:default;
+}
+.resume-preview-pagination span{
+  min-width:64px;
+  font:800 12px/1 "Manrope",Inter,sans-serif;
+  color:#4f5871;
+}
+@media(max-width:620px){
+  .resume-preview-viewport{row-gap:24px;padding-bottom:28px}
+  .resume-preview-pagination{margin:0;padding:7px 10px;gap:12px}
+  .resume-preview-pagination button{width:44px;height:44px;min-width:44px;min-height:44px;font-size:24px}
+}
+@media(prefers-reduced-motion:reduce){
+  .resume-preview-pagination button{transition:none}
+}
