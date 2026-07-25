@@ -104,3 +104,8 @@
 - Added `/api/university/logo` endpoint.
 - Added Wikidata/official-site emblem resolver with SSRF and size checks.
 - Resume builder now starts emblem lookup after the education answer and stores the result in the local draft.
+
+## Resume fullscreen preview and PDF download
+- Added adaptive fullscreen A4 reader for desktop, tablet, and mobile.
+- Added PDF download actions in the preview toolbar and fullscreen reader.
+- Added keyboard accessibility, Escape/background closing, and reduced-motion support.

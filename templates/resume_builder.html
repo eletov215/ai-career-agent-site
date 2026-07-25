@@ -63,9 +63,23 @@
             <span>Живой предпросмотр</span>
             <strong>Ваше резюме</strong>
           </div>
+          <div class="resume-preview-toolbar-actions">
+            <button type="button" class="resume-preview-open-button" id="resumePreviewOpen" aria-label="Открыть резюме крупно">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H3v5M16 3h5v5M8 21H3v-5M16 21h5v-5"></path></svg>
+              <span>Открыть</span>
+            </button>
+            <button type="button" class="resume-download-button" id="resumeDownloadPdf">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 20h14"></path></svg>
+              <span>Скачать PDF</span>
+            </button>
+          </div>
         </div>
 
-        <div class="resume-preview-viewport" id="resumePreviewViewport">
+        <div class="resume-preview-viewport" id="resumePreviewViewport" tabindex="0" role="button" aria-label="Открыть увеличенный предпросмотр резюме">
+          <div class="resume-preview-hover-hint" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"></circle><path d="m16 16 4 4M11 8v6M8 11h6"></path></svg>
+            <span>Нажмите, чтобы открыть крупно</span>
+          </div>
           <div class="resume-paper-stage" id="resumePaperStage">
             <article class="resume-paper resume-paper-modern is-active" data-resume-page="0">
               <header class="resume-modern-header">
@@ -146,8 +160,34 @@
     </div>
   </div>
 </main>
+
+<div class="resume-reader" id="resumeReader" hidden aria-hidden="true">
+  <div class="resume-reader-backdrop" data-resume-reader-close></div>
+  <section class="resume-reader-dialog" role="dialog" aria-modal="true" aria-labelledby="resumeReaderTitle">
+    <header class="resume-reader-toolbar">
+      <div>
+        <span>Предпросмотр документа</span>
+        <strong id="resumeReaderTitle">Ваше резюме</strong>
+      </div>
+      <div class="resume-reader-actions">
+        <button type="button" class="resume-reader-download" id="resumeReaderDownload">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 20h14"></path></svg>
+          <span>Скачать PDF</span>
+        </button>
+        <button type="button" class="resume-reader-close" data-resume-reader-close aria-label="Закрыть предпросмотр">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"></path></svg>
+        </button>
+      </div>
+    </header>
+    <div class="resume-reader-body">
+      <div class="resume-reader-stage" id="resumeReaderStage"></div>
+    </div>
+  </section>
+</div>
 {% endblock %}
 {% block scripts %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script>
 (() => {
   const questions = [
@@ -185,6 +225,13 @@
   const previewUniversityLogoWrap = document.getElementById('previewUniversityLogoWrap');
   const universityLogoStatus = document.getElementById('universityLogoStatus');
   let universityLogoRequestId = 0;
+  const previewOpenButton = document.getElementById('resumePreviewOpen');
+  const previewDownloadButton = document.getElementById('resumeDownloadPdf');
+  const reader = document.getElementById('resumeReader');
+  const readerStage = document.getElementById('resumeReaderStage');
+  const readerDownloadButton = document.getElementById('resumeReaderDownload');
+  let readerLastFocus = null;
+  let isDownloadingPdf = false;
 
   const setText = (id, value, fallback) => { document.getElementById(id).textContent = value || fallback; };
   const addMessage = (type, text) => { const item = document.createElement('div'); item.className = `resume-message ${type}`; item.innerHTML = type === 'ai' ? `<span class="resume-ai-mini">✦</span><p></p>` : '<p></p>'; item.querySelector('p').textContent = text; chat.appendChild(item); chat.scrollTop = chat.scrollHeight; };
@@ -326,6 +373,7 @@
     const completed = Object.values(a).filter(Boolean).length;
     const percent = Math.round(completed / questions.length * 100);
     ['mobileProfilePercent','chatProfilePercent'].forEach(id => document.getElementById(id).textContent = `${percent}%`);
+    syncReaderSheet();
   };
 
   const renderHistory = () => { chat.replaceChildren(); state.messages.forEach(m => addMessage(m.type, m.text)); };
@@ -374,6 +422,75 @@
     window.addEventListener('resize', fitResumePreview);
   }
 
+
+  const syncReaderSheet = () => {
+    if (!readerStage || reader.hidden) return;
+    const source = document.querySelector('.resume-paper-modern.is-active');
+    if (!source) return;
+    const clone = source.cloneNode(true);
+    clone.removeAttribute('data-resume-page');
+    clone.classList.add('resume-reader-paper');
+    readerStage.replaceChildren(clone);
+  };
+
+  const openResumeReader = () => {
+    readerLastFocus = document.activeElement;
+    reader.hidden = false;
+    reader.setAttribute('aria-hidden', 'false');
+    document.body.classList.add('resume-reader-open');
+    syncReaderSheet();
+    window.requestAnimationFrame(() => {
+      reader.classList.add('is-open');
+      const closeButton = reader.querySelector('.resume-reader-close');
+      if (closeButton) closeButton.focus();
+    });
+  };
+
+  const closeResumeReader = () => {
+    if (reader.hidden) return;
+    reader.classList.remove('is-open');
+    document.body.classList.remove('resume-reader-open');
+    window.setTimeout(() => {
+      reader.hidden = true;
+      reader.setAttribute('aria-hidden', 'true');
+      readerStage.replaceChildren();
+      if (readerLastFocus && typeof readerLastFocus.focus === 'function') readerLastFocus.focus();
+    }, 220);
+  };
+
+  const downloadResumePdf = async (button) => {
+    if (isDownloadingPdf) return;
+    const source = document.querySelector('.resume-paper-modern.is-active');
+    if (!source) return;
+    const originalLabel = button && button.querySelector('span') ? button.querySelector('span').textContent : '';
+    isDownloadingPdf = true;
+    if (button) { button.disabled = true; if (button.querySelector('span')) button.querySelector('span').textContent = 'Подготовка…'; }
+    try {
+      if (!window.html2canvas || !window.jspdf || !window.jspdf.jsPDF) throw new Error('Модуль PDF ещё не загрузился. Проверьте подключение к интернету и повторите попытку.');
+      if (document.fonts && document.fonts.ready) await document.fonts.ready;
+      const canvas = await window.html2canvas(source, {
+        scale: 2.25,
+        useCORS: true,
+        backgroundColor: '#ffffff',
+        logging: false,
+        width: 794,
+        height: 1123,
+        windowWidth: 794,
+        windowHeight: 1123
+      });
+      const { jsPDF } = window.jspdf;
+      const pdf = new jsPDF({orientation:'portrait', unit:'mm', format:'a4', compress:true});
+      pdf.addImage(canvas.toDataURL('image/jpeg', 0.94), 'JPEG', 0, 0, 210, 297, undefined, 'FAST');
+      const rawName = (state.answers.name || 'resume').trim();
+      const safeName = rawName.replace(/[^a-zA-Zа-яА-ЯёЁ0-9_-]+/g, '_').replace(/^_+|_+$/g, '') || 'resume';
+      pdf.save(`${safeName}_resume.pdf`);
+    } catch (error) {
+      alert(error.message || 'Не удалось сформировать PDF.');
+    } finally {
+      isDownloadingPdf = false;
+      if (button) { button.disabled = false; if (button.querySelector('span')) button.querySelector('span').textContent = originalLabel || 'Скачать PDF'; }
+    }
+  };
 
   const switchMobileView = (view) => {
     layout.dataset.mobileView = view;
@@ -438,6 +555,14 @@
   reset.addEventListener('click', () => { if (!confirm('Удалить сохранённый черновик и начать заново?')) return; localStorage.removeItem(storageKey); state={index:0,answers:{},messages:[],photo:'',universityLogo:'',universityLogoFor:'',universityResolvedName:''}; input.disabled=false; form.querySelector('button').disabled=false; skip.hidden=false; renderHistory(); updatePreview(); askCurrent(); showPage(0); });
   document.querySelectorAll('[data-builder-tab]').forEach(button => button.addEventListener('click', () => switchMobileView(button.dataset.builderTab)));
   document.querySelectorAll('[data-builder-tab-target]').forEach(button => button.addEventListener('click', () => switchMobileView(button.dataset.builderTabTarget)));
+
+  previewOpenButton.addEventListener('click', openResumeReader);
+  previewViewport.addEventListener('click', openResumeReader);
+  previewViewport.addEventListener('keydown', event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); openResumeReader(); } });
+  previewDownloadButton.addEventListener('click', event => { event.stopPropagation(); downloadResumePdf(previewDownloadButton); });
+  readerDownloadButton.addEventListener('click', () => downloadResumePdf(readerDownloadButton));
+  reader.querySelectorAll('[data-resume-reader-close]').forEach(element => element.addEventListener('click', closeResumeReader));
+  document.addEventListener('keydown', event => { if (event.key === 'Escape' && !reader.hidden) closeResumeReader(); });
 
   renderHistory(); updatePreview();
   if (state.answers.education && !state.universityLogo && state.universityLogoFor !== state.answers.education) findUniversityLogo(state.answers.education);

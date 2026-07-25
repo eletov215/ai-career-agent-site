@@ -1907,3 +1907,42 @@ body{font-family:"Manrope",Inter,system-ui,-apple-system,BlinkMacSystemFont,"Seg
 @media print {
   .resume-university-logo-status { display: none !important; }
 }
+
+/* Fullscreen resume reader and PDF actions */
+.resume-preview-toolbar{justify-content:space-between}
+.resume-preview-toolbar-actions,.resume-reader-actions{display:flex;align-items:center;gap:9px}
+.resume-preview-open-button,.resume-download-button,.resume-reader-download,.resume-reader-close{
+  border:1px solid #dcdff0;border-radius:11px;background:#fff;color:#242b42;font:800 12px/1 Arial,sans-serif;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:38px;padding:0 13px;transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease,background .18s ease
+}
+.resume-download-button,.resume-reader-download{border-color:transparent;background:linear-gradient(135deg,#7357eb,#5a48dc);color:#fff;box-shadow:0 8px 18px rgba(94,71,218,.22)}
+.resume-preview-open-button:hover,.resume-download-button:hover,.resume-reader-download:hover,.resume-reader-close:hover{transform:translateY(-1px);box-shadow:0 9px 20px rgba(48,61,118,.14)}
+.resume-preview-open-button svg,.resume-download-button svg,.resume-reader-download svg,.resume-reader-close svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.resume-preview-open-button:disabled,.resume-download-button:disabled,.resume-reader-download:disabled{opacity:.65;cursor:wait;transform:none}
+.resume-preview-viewport{position:relative;cursor:zoom-in;isolation:isolate}
+.resume-preview-hover-hint{position:absolute;z-index:4;left:50%;bottom:30px;transform:translate(-50%,10px);display:flex;align-items:center;gap:8px;padding:9px 13px;border-radius:999px;background:rgba(26,32,53,.86);color:#fff;font-size:12px;font-weight:800;opacity:0;pointer-events:none;transition:opacity .2s ease,transform .2s ease;backdrop-filter:blur(8px);white-space:nowrap}
+.resume-preview-hover-hint svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round}
+.resume-preview-viewport:hover .resume-preview-hover-hint,.resume-preview-viewport:focus-visible .resume-preview-hover-hint{opacity:1;transform:translate(-50%,0)}
+body.resume-reader-open{overflow:hidden}
+.resume-reader[hidden]{display:none!important}
+.resume-reader{position:fixed;z-index:10000;inset:0;display:grid;place-items:center;padding:22px;opacity:0;transition:opacity .22s ease}
+.resume-reader.is-open{opacity:1}
+.resume-reader-backdrop{position:absolute;inset:0;background:rgba(17,21,39,.74);backdrop-filter:blur(12px)}
+.resume-reader-dialog{position:relative;z-index:1;width:min(1120px,100%);height:min(94vh,980px);display:grid;grid-template-rows:auto minmax(0,1fr);overflow:hidden;border:1px solid rgba(255,255,255,.22);border-radius:22px;background:#eef1f7;box-shadow:0 32px 90px rgba(8,12,29,.42);transform:translateY(18px) scale(.985);transition:transform .25s ease}
+.resume-reader.is-open .resume-reader-dialog{transform:none}
+.resume-reader-toolbar{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:14px 16px 14px 20px;background:rgba(255,255,255,.96);border-bottom:1px solid #dde2ec}
+.resume-reader-toolbar>div:first-child{display:grid;gap:2px}.resume-reader-toolbar>div:first-child span{font-size:10px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:#6855df}.resume-reader-toolbar>div:first-child strong{font-size:17px}
+.resume-reader-close{width:40px;padding:0;border-radius:50%}
+.resume-reader-body{min-height:0;overflow:auto;padding:26px;overscroll-behavior:contain;background:radial-gradient(circle at top,#f8f9fd,#e3e8f1 76%)}
+.resume-reader-stage{width:794px;min-height:1123px;margin:0 auto;box-shadow:0 20px 55px rgba(29,37,64,.22)}
+.resume-reader-paper{position:static!important;transform:none!important;transform-origin:center!important;display:block!important}
+@media(max-width:900px){
+  .resume-preview-toolbar-actions{gap:7px}.resume-preview-open-button span{display:none}.resume-preview-open-button{width:38px;padding:0}
+  .resume-reader{padding:12px}.resume-reader-dialog{height:calc(100dvh - 24px);border-radius:18px}.resume-reader-body{padding:18px;overflow:auto}.resume-reader-stage{transform-origin:top center}
+}
+@media(max-width:620px){
+  .resume-preview-toolbar{align-items:center;padding:12px 13px}.resume-preview-toolbar-actions{gap:6px}.resume-download-button{min-height:36px;padding:0 10px}.resume-download-button span{font-size:11px}.resume-preview-hover-hint{display:none}
+  .resume-reader{padding:0}.resume-reader-dialog{width:100%;height:100dvh;border-radius:0;border:0}.resume-reader-toolbar{padding:10px 10px 10px 14px}.resume-reader-toolbar>div:first-child span{display:none}.resume-reader-toolbar>div:first-child strong{font-size:15px}.resume-reader-download{min-height:38px;padding:0 11px}.resume-reader-download span{font-size:11px}.resume-reader-close{width:38px;min-height:38px}.resume-reader-body{padding:14px 8px 24px}.resume-reader-stage{box-shadow:0 13px 36px rgba(29,37,64,.18)}
+}
+@media(prefers-reduced-motion:reduce){.resume-reader,.resume-reader-dialog,.resume-preview-hover-hint,.resume-preview-open-button,.resume-download-button,.resume-reader-download,.resume-reader-close{transition:none}}
+@media(max-width:850px){.resume-reader-stage{width:min(794px,calc(100vw - 52px));min-height:auto;aspect-ratio:794/1123}.resume-reader-stage>.resume-paper-modern{transform:scale(calc((100vw - 52px)/794))!important;transform-origin:top left!important}.resume-reader-stage{height:calc(1123px * (100vw - 52px)/794)}}
+@media(max-width:620px){.resume-reader-stage{width:calc(100vw - 16px);height:calc(1123px * (100vw - 16px)/794)}.resume-reader-stage>.resume-paper-modern{transform:scale(calc((100vw - 16px)/794))!important}}
