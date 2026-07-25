@@ -449,6 +449,9 @@
     if (!source) return;
     const pageWidthPx = 794;
     const pageHeightPx = 1123;
+    const pageTopPaddingPx = 48;
+    const pageBottomPaddingPx = 52;
+    const pageContentHeightPx = pageHeightPx - pageTopPaddingPx - pageBottomPaddingPx;
     const host = document.createElement('div');
     host.className = 'resume-preview-measure-host';
     host.setAttribute('aria-hidden', 'true');
@@ -458,8 +461,8 @@
     try {
       if (document.fonts && document.fonts.ready) await document.fonts.ready;
       await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
-      keepPdfBlocksTogether(flow, pageHeightPx);
-      keepPdfBlocksTogether(flow, pageHeightPx);
+      keepPdfBlocksTogether(flow, pageContentHeightPx);
+      keepPdfBlocksTogether(flow, pageContentHeightPx);
       await new Promise(resolve => requestAnimationFrame(resolve));
       if (token !== previewRenderToken) return;
       const headerHeight = flow.querySelector('.resume-modern-header')?.scrollHeight || 0;
@@ -471,9 +474,9 @@
         flow.offsetHeight,
         headerHeight + Math.max(layoutNode?.scrollHeight || 0, sidebar?.scrollHeight || 0, mainColumn?.scrollHeight || 0)
       );
-      const pageCount = Math.max(1, Math.ceil(Math.max(pageHeightPx, measuredHeight) / pageHeightPx));
-      flow.style.height = `${pageCount * pageHeightPx}px`;
-      flow.style.minHeight = `${pageCount * pageHeightPx}px`;
+      const pageCount = Math.max(1, Math.ceil(Math.max(pageContentHeightPx, measuredHeight) / pageContentHeightPx));
+      flow.style.height = `${pageCount * pageContentHeightPx}px`;
+      flow.style.minHeight = `${pageCount * pageContentHeightPx}px`;
 
       previewStage.querySelectorAll('.resume-preview-page').forEach(node => node.remove());
       for (let index = 0; index < pageCount; index += 1) {
@@ -487,7 +490,10 @@
         // .resume-pdf-flow intentionally uses transform:none!important for export.
         // Store the page offset in a CSS variable so the preview-specific rule
         // can apply the translation with the same priority.
-        pageFlow.style.setProperty('--resume-preview-page-offset', `${index * pageHeightPx}px`);
+        pageFlow.style.setProperty('--resume-preview-page-offset', `${index * pageContentHeightPx}px`);
+        pageFlow.style.setProperty('--resume-preview-page-padding', `${pageTopPaddingPx}px`);
+        viewport.style.setProperty('--resume-preview-page-top-padding', `${pageTopPaddingPx}px`);
+        viewport.style.setProperty('--resume-preview-page-bottom-padding', `${pageBottomPaddingPx}px`);
         viewport.appendChild(pageFlow);
         page.appendChild(viewport);
         const number = document.createElement('span');
@@ -646,9 +652,12 @@
 
         // Даём браузеру полностью пересчитать высоту клонированного документа.
         await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
-        keepPdfBlocksTogether(printSheet, pageHeightPx);
+        const pageTopPaddingPx = 48;
+        const pageBottomPaddingPx = 52;
+        const pageContentHeightPx = pageHeightPx - pageTopPaddingPx - pageBottomPaddingPx;
+        keepPdfBlocksTogether(printSheet, pageContentHeightPx);
         // Повторный проход учитывает сдвиги, добавленные первым проходом.
-        keepPdfBlocksTogether(printSheet, pageHeightPx);
+        keepPdfBlocksTogether(printSheet, pageContentHeightPx);
         await new Promise(resolve => requestAnimationFrame(resolve));
 
         const headerHeight = printSheet.querySelector('.resume-modern-header')?.scrollHeight || 0;
@@ -665,9 +674,9 @@
           printSheet.offsetHeight,
           headerHeight + layoutContentHeight
         );
-        const contentHeight = Math.max(pageHeightPx, Math.ceil(measuredHeight));
-        const pageCount = Math.max(1, Math.ceil(contentHeight / pageHeightPx));
-        const exportHeight = pageCount * pageHeightPx;
+        const contentHeight = Math.max(pageContentHeightPx, Math.ceil(measuredHeight));
+        const pageCount = Math.max(1, Math.ceil(contentHeight / pageContentHeightPx));
+        const exportHeight = pageCount * pageContentHeightPx;
         printSheet.style.height = `${exportHeight}px`;
         printSheet.style.minHeight = `${exportHeight}px`;
 
@@ -688,16 +697,18 @@
 
         const { jsPDF } = window.jspdf;
         const pdf = new jsPDF({orientation:'portrait', unit:'mm', format:'a4', compress:true});
-        const sliceHeight = pageHeightPx * 2;
+        const pageCanvasHeight = pageHeightPx * 2;
+        const sliceHeight = pageContentHeightPx * 2;
+        const pageTopPaddingCanvas = pageTopPaddingPx * 2;
         for (let pageIndex = 0; pageIndex < pageCount; pageIndex += 1) {
           if (pageIndex > 0) pdf.addPage('a4', 'portrait');
           const pageCanvas = document.createElement('canvas');
           pageCanvas.width = canvas.width;
-          pageCanvas.height = sliceHeight;
+          pageCanvas.height = pageCanvasHeight;
           const ctx = pageCanvas.getContext('2d');
           ctx.fillStyle = '#ffffff';
           ctx.fillRect(0, 0, pageCanvas.width, pageCanvas.height);
-          ctx.drawImage(canvas, 0, pageIndex * sliceHeight, canvas.width, sliceHeight, 0, 0, canvas.width, sliceHeight);
+          ctx.drawImage(canvas, 0, pageIndex * sliceHeight, canvas.width, sliceHeight, 0, pageTopPaddingCanvas, canvas.width, sliceHeight);
           pdf.addImage(pageCanvas.toDataURL('image/jpeg', 0.94), 'JPEG', 0, 0, 210, 297, undefined, 'FAST');
           if (pageCount > 1) {
             pdf.setFont('helvetica', 'normal');

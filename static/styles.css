@@ -2262,3 +2262,27 @@ body.resume-reader-open{overflow:hidden}
 @media(max-width:620px){
   .resume-preview-pagination{margin-top:16px;margin-bottom:12px}
 }
+
+/* Multipage resume: safe top and bottom margins on every generated sheet. */
+.resume-preview-page-clip::before,
+.resume-preview-page-clip::after{
+  content:"";
+  position:absolute;
+  left:0;
+  right:0;
+  z-index:2;
+  pointer-events:none;
+  background:#fff;
+}
+.resume-preview-page-clip::before{
+  top:0;
+  height:var(--resume-preview-page-top-padding,48px);
+}
+.resume-preview-page-clip::after{
+  bottom:0;
+  height:var(--resume-preview-page-bottom-padding,52px);
+}
+.resume-preview-page-flow{
+  transform:translateY(calc(var(--resume-preview-page-padding,48px) - var(--resume-preview-page-offset,0px)))!important;
+}
+.resume-preview-page-number{z-index:4}
