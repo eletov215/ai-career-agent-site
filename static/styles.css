@@ -2056,7 +2056,17 @@ body.resume-reader-open{overflow:hidden}
 
 
 /* Professional multi-page PDF export */
-.resume-pdf-host{position:fixed;left:-10000px;top:0;width:794px;background:#fff;pointer-events:none;z-index:-1;overflow:visible}
+.resume-pdf-host{
+  position:fixed;
+  left:-10000px;
+  top:0;
+  width:794px;
+  height:1123px;
+  overflow:visible;
+  pointer-events:none;
+  z-index:2147483647;
+  background:#fff;
+}
 .resume-pdf-flow{position:relative!important;inset:auto!important;display:block!important;width:794px!important;height:auto!important;min-height:1123px;margin:0!important;transform:none!important;transform-origin:top left!important;opacity:1!important;visibility:visible!important;overflow:visible!important;background:#fff!important;box-shadow:none!important;border-radius:0!important}
 .resume-pdf-flow .resume-modern-layout{height:auto!important;min-height:933px!important;overflow:visible!important;align-items:start!important}
 .resume-pdf-flow .resume-modern-sidebar,.resume-pdf-flow .resume-modern-main{height:auto!important;min-height:933px!important;overflow:visible!important}
@@ -2286,3 +2296,35 @@ body.resume-reader-open{overflow:hidden}
   transform:translateY(calc(var(--resume-preview-page-padding,48px) - var(--resume-preview-page-offset,0px)))!important;
 }
 .resume-preview-page-number{z-index:4}
+
+
+/* Stable PDF capture: render every A4 page separately. */
+.resume-pdf-host > .resume-pdf-capture-page{
+  position:relative!important;
+  inset:auto!important;
+  display:block!important;
+  width:794px!important;
+  min-width:794px!important;
+  max-width:794px!important;
+  height:1123px!important;
+  min-height:1123px!important;
+  margin:0!important;
+  overflow:hidden!important;
+  transform:none!important;
+  transform-origin:top left!important;
+  opacity:1!important;
+  visibility:visible!important;
+  background:#fff!important;
+  box-shadow:none!important;
+}
+.resume-pdf-host > .resume-pdf-capture-page .resume-preview-page-clip{
+  width:794px!important;
+  height:1123px!important;
+  overflow:hidden!important;
+  background:#fff!important;
+}
+.resume-pdf-host > .resume-pdf-capture-page .resume-preview-page-flow{
+  display:block!important;
+  opacity:1!important;
+  visibility:visible!important;
+}

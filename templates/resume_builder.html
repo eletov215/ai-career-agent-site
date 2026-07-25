@@ -443,6 +443,33 @@
     fitResumePreview();
   };
 
+  const measureResumeContentHeight = (flow) => {
+    const header = flow.querySelector('.resume-modern-header');
+    const layoutNode = flow.querySelector('.resume-modern-layout');
+    const sidebar = flow.querySelector('.resume-modern-sidebar');
+    const mainColumn = flow.querySelector('.resume-modern-main');
+
+    const measureColumn = column => {
+      if (!column) return 0;
+      const columnRect = column.getBoundingClientRect();
+      const styles = getComputedStyle(column);
+      const paddingTop = parseFloat(styles.paddingTop) || 0;
+      const paddingBottom = parseFloat(styles.paddingBottom) || 0;
+      let contentBottom = paddingTop;
+      [...column.children].forEach(child => {
+        if (getComputedStyle(child).display === 'none') return;
+        const childRect = child.getBoundingClientRect();
+        contentBottom = Math.max(contentBottom, childRect.bottom - columnRect.top);
+      });
+      return Math.ceil(contentBottom + paddingBottom);
+    };
+
+    const headerHeight = header ? Math.max(header.scrollHeight, header.offsetHeight) : 0;
+    const naturalLayoutHeight = Math.max(measureColumn(sidebar), measureColumn(mainColumn));
+    if (layoutNode && !sidebar && !mainColumn) return headerHeight + layoutNode.scrollHeight;
+    return Math.ceil(headerHeight + naturalLayoutHeight);
+  };
+
   const renderPagedPreview = async () => {
     const token = ++previewRenderToken;
     const source = previewStage.querySelector('.resume-preview-source');
@@ -465,18 +492,14 @@
       keepPdfBlocksTogether(flow, pageContentHeightPx);
       await new Promise(resolve => requestAnimationFrame(resolve));
       if (token !== previewRenderToken) return;
-      const headerHeight = flow.querySelector('.resume-modern-header')?.scrollHeight || 0;
-      const layoutNode = flow.querySelector('.resume-modern-layout');
-      const sidebar = flow.querySelector('.resume-modern-sidebar');
-      const mainColumn = flow.querySelector('.resume-modern-main');
-      const measuredHeight = Math.max(
-        flow.scrollHeight,
-        flow.offsetHeight,
-        headerHeight + Math.max(layoutNode?.scrollHeight || 0, sidebar?.scrollHeight || 0, mainColumn?.scrollHeight || 0)
-      );
+      // У шаблона есть минимальная высота A4 для красивого фона первой страницы.
+      // Для подсчёта страниц измеряем только реальное содержимое колонок, иначе
+      // короткое резюме ошибочно превращается в два листа из-за внутренних полей.
+      const measuredHeight = measureResumeContentHeight(flow);
       const pageCount = Math.max(1, Math.ceil(Math.max(pageContentHeightPx, measuredHeight) / pageContentHeightPx));
-      flow.style.height = `${pageCount * pageContentHeightPx}px`;
-      flow.style.minHeight = `${pageCount * pageContentHeightPx}px`;
+      const flowHeight = Math.max(pageHeightPx, pageCount * pageContentHeightPx);
+      flow.style.height = `${flowHeight}px`;
+      flow.style.minHeight = `${flowHeight}px`;
 
       previewStage.querySelectorAll('.resume-preview-page').forEach(node => node.remove());
       for (let index = 0; index < pageCount; index += 1) {
@@ -561,9 +584,18 @@
 
   const prepareResumeForPdf = (source) => {
     const sheet = source.cloneNode(true);
+
+    // Источник скрывается после построения постраничного предпросмотра.
+    // cloneNode() копирует атрибут hidden и класс resume-preview-source,
+    // поэтому без явного сброса html2canvas получает display:none и белый лист.
+    sheet.hidden = false;
+    sheet.removeAttribute('hidden');
     sheet.removeAttribute('data-resume-page');
-    sheet.classList.remove('is-active', 'resume-reader-paper');
+    sheet.classList.remove('is-active', 'resume-reader-paper', 'resume-preview-source');
     sheet.classList.add('is-active', 'resume-pdf-flow');
+    sheet.style.setProperty('display', 'block', 'important');
+    sheet.style.setProperty('visibility', 'visible', 'important');
+    sheet.style.setProperty('opacity', '1', 'important');
 
     // В итоговом документе не показываем подсказки и пустые разделы.
     sheet.querySelectorAll('.resume-university-logo-status').forEach(node => node.remove());
@@ -618,105 +650,121 @@
     });
   };
 
+  const canvasContainsResumeContent = (canvas) => {
+    // Проверяем не только размер canvas, но и наличие реального содержимого.
+    // Это не позволяет сохранить полностью белый PDF при сбое отрисовки.
+    const probe = document.createElement('canvas');
+    probe.width = 80;
+    probe.height = 113;
+    const context = probe.getContext('2d', {willReadFrequently:true});
+    if (!context) return true;
+    try {
+      context.drawImage(canvas, 0, 0, probe.width, probe.height);
+      const pixels = context.getImageData(0, 0, probe.width, probe.height).data;
+      for (let index = 0; index < pixels.length; index += 4) {
+        const alpha = pixels[index + 3];
+        const red = pixels[index];
+        const green = pixels[index + 1];
+        const blue = pixels[index + 2];
+        if (alpha > 8 && (red < 246 || green < 246 || blue < 246)) return true;
+      }
+      return false;
+    } catch (_) {
+      // Если браузер запретил чтение пикселей из-за внешнего изображения,
+      // не блокируем уже успешно созданный canvas.
+      return true;
+    }
+  };
+
+  const waitForResumeImages = async (root) => {
+    const images = [...root.querySelectorAll('img')];
+    await Promise.all(images.map(async image => {
+      if (!image.getAttribute('src')) return;
+      if (image.complete) {
+        try { await image.decode(); } catch (_) {}
+        return;
+      }
+      await new Promise(resolve => {
+        image.addEventListener('load', resolve, {once:true});
+        image.addEventListener('error', resolve, {once:true});
+      });
+    }));
+  };
+
   const downloadResumePdf = async (button) => {
     if (isDownloadingPdf) return;
-    const source = document.querySelector('.resume-preview-source');
-    if (!source) return;
     const labelNode = button && button.querySelector('span');
     const originalLabel = labelNode ? labelNode.textContent : '';
     isDownloadingPdf = true;
-    if (button) { button.disabled = true; if (labelNode) labelNode.textContent = 'Подготовка…'; }
+    if (button) {
+      button.disabled = true;
+      if (labelNode) labelNode.textContent = 'Подготовка…';
+    }
+
     try {
-      if (!window.html2canvas || !window.jspdf || !window.jspdf.jsPDF) throw new Error('Модуль PDF ещё не загрузился. Проверьте подключение к интернету и повторите попытку.');
+      if (!window.html2canvas || !window.jspdf || !window.jspdf.jsPDF) {
+        throw new Error('Модуль PDF ещё не загрузился. Проверьте подключение к интернету и повторите попытку.');
+      }
       if (document.fonts && document.fonts.ready) await document.fonts.ready;
+
+      // Перед экспортом заново строим актуальный постраничный макет.
+      // Каждая страница A4 снимается отдельно: так html2canvas не создаёт
+      // один сверхвысокий canvas, который в браузере мог стать пустым.
+      window.clearTimeout(previewRenderTimer);
+      await renderPagedPreview();
+      const previewPages = [...previewStage.querySelectorAll('.resume-preview-page')];
+      if (!previewPages.length) throw new Error('Не удалось подготовить страницы резюме.');
 
       const pageWidthPx = 794;
       const pageHeightPx = 1123;
       const printHost = document.createElement('div');
       printHost.setAttribute('aria-hidden', 'true');
       printHost.className = 'resume-pdf-host';
-      const printSheet = prepareResumeForPdf(source);
-      printHost.appendChild(printSheet);
       document.body.appendChild(printHost);
 
       try {
-        const images = [...printSheet.querySelectorAll('img')];
-        await Promise.all(images.map(async image => {
-          if (!image.getAttribute('src')) return;
-          if (image.complete) { try { await image.decode(); } catch (_) {} return; }
-          await new Promise(resolve => {
-            image.addEventListener('load', resolve, {once:true});
-            image.addEventListener('error', resolve, {once:true});
-          });
-        }));
-
-        // Даём браузеру полностью пересчитать высоту клонированного документа.
-        await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
-        const pageTopPaddingPx = 48;
-        const pageBottomPaddingPx = 52;
-        const pageContentHeightPx = pageHeightPx - pageTopPaddingPx - pageBottomPaddingPx;
-        keepPdfBlocksTogether(printSheet, pageContentHeightPx);
-        // Повторный проход учитывает сдвиги, добавленные первым проходом.
-        keepPdfBlocksTogether(printSheet, pageContentHeightPx);
-        await new Promise(resolve => requestAnimationFrame(resolve));
-
-        const headerHeight = printSheet.querySelector('.resume-modern-header')?.scrollHeight || 0;
-        const layout = printSheet.querySelector('.resume-modern-layout');
-        const sidebar = printSheet.querySelector('.resume-modern-sidebar');
-        const mainColumn = printSheet.querySelector('.resume-modern-main');
-        const layoutContentHeight = Math.max(
-          layout?.scrollHeight || 0,
-          sidebar?.scrollHeight || 0,
-          mainColumn?.scrollHeight || 0
-        );
-        const measuredHeight = Math.max(
-          printSheet.scrollHeight,
-          printSheet.offsetHeight,
-          headerHeight + layoutContentHeight
-        );
-        const contentHeight = Math.max(pageContentHeightPx, Math.ceil(measuredHeight));
-        const pageCount = Math.max(1, Math.ceil(contentHeight / pageContentHeightPx));
-        const exportHeight = pageCount * pageContentHeightPx;
-        printSheet.style.height = `${exportHeight}px`;
-        printSheet.style.minHeight = `${exportHeight}px`;
-
-        const canvas = await window.html2canvas(printSheet, {
-          scale: 2,
-          useCORS: true,
-          allowTaint: false,
-          backgroundColor: '#ffffff',
-          logging: false,
-          width: pageWidthPx,
-          height: exportHeight,
-          windowWidth: pageWidthPx,
-          windowHeight: exportHeight,
-          scrollX: 0,
-          scrollY: 0
-        });
-        if (!canvas.width || !canvas.height) throw new Error('Не удалось получить изображение резюме.');
-
         const { jsPDF } = window.jspdf;
         const pdf = new jsPDF({orientation:'portrait', unit:'mm', format:'a4', compress:true});
-        const pageCanvasHeight = pageHeightPx * 2;
-        const sliceHeight = pageContentHeightPx * 2;
-        const pageTopPaddingCanvas = pageTopPaddingPx * 2;
-        for (let pageIndex = 0; pageIndex < pageCount; pageIndex += 1) {
+
+        for (let pageIndex = 0; pageIndex < previewPages.length; pageIndex += 1) {
+          const capturePage = previewPages[pageIndex].cloneNode(true);
+          capturePage.hidden = false;
+          capturePage.removeAttribute('hidden');
+          capturePage.classList.add('is-active', 'resume-pdf-capture-page');
+          capturePage.querySelector('.resume-preview-page-number')?.remove();
+          printHost.replaceChildren(capturePage);
+
+          await waitForResumeImages(capturePage);
+          await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+
+          const canvas = await window.html2canvas(capturePage, {
+            scale: 2,
+            useCORS: true,
+            allowTaint: false,
+            backgroundColor: '#ffffff',
+            logging: false,
+            width: pageWidthPx,
+            height: pageHeightPx,
+            windowWidth: pageWidthPx,
+            windowHeight: pageHeightPx,
+            scrollX: 0,
+            scrollY: 0
+          });
+
+          if (!canvas.width || !canvas.height || !canvasContainsResumeContent(canvas)) {
+            throw new Error(`Не удалось отрисовать страницу ${pageIndex + 1} резюме.`);
+          }
+
           if (pageIndex > 0) pdf.addPage('a4', 'portrait');
-          const pageCanvas = document.createElement('canvas');
-          pageCanvas.width = canvas.width;
-          pageCanvas.height = pageCanvasHeight;
-          const ctx = pageCanvas.getContext('2d');
-          ctx.fillStyle = '#ffffff';
-          ctx.fillRect(0, 0, pageCanvas.width, pageCanvas.height);
-          ctx.drawImage(canvas, 0, pageIndex * sliceHeight, canvas.width, sliceHeight, 0, pageTopPaddingCanvas, canvas.width, sliceHeight);
-          pdf.addImage(pageCanvas.toDataURL('image/jpeg', 0.94), 'JPEG', 0, 0, 210, 297, undefined, 'FAST');
-          if (pageCount > 1) {
+          pdf.addImage(canvas.toDataURL('image/jpeg', 0.94), 'JPEG', 0, 0, 210, 297, undefined, 'FAST');
+          if (previewPages.length > 1) {
             pdf.setFont('helvetica', 'normal');
             pdf.setFontSize(8);
             pdf.setTextColor(130, 138, 158);
-            pdf.text(`${pageIndex + 1} / ${pageCount}`, 105, 293.5, {align:'center'});
+            pdf.text(`${pageIndex + 1} / ${previewPages.length}`, 105, 293.5, {align:'center'});
           }
         }
+
         const rawName = (state.answers.name || 'resume').trim();
         const safeName = rawName.replace(/[^a-zA-Zа-яА-ЯёЁ0-9_-]+/g, '_').replace(/^_+|_+$/g, '') || 'resume';
         pdf.save(`${safeName}_resume.pdf`);
@@ -724,10 +772,14 @@
         printHost.remove();
       }
     } catch (error) {
+      console.error('Resume PDF export failed:', error);
       alert(error.message || 'Не удалось сформировать PDF.');
     } finally {
       isDownloadingPdf = false;
-      if (button) { button.disabled = false; if (labelNode) labelNode.textContent = originalLabel || 'Скачать PDF'; }
+      if (button) {
+        button.disabled = false;
+        if (labelNode) labelNode.textContent = originalLabel || 'Скачать PDF';
+      }
     }
   };
 
