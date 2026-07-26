@@ -3146,3 +3146,91 @@ body.resume-reader-open{overflow:hidden}
   .site-nav .nav-links{width:min(224px,calc(100vw - 24px));padding:9px}
   .site-nav .nav-links a,.site-nav .nav-links a:not(.nav-cta){min-height:38px;font-size:13px}
 }
+
+/* ===== Landing stage 2: balanced mobile hero rhythm ===== */
+.orbit-hero__title{
+  line-height:.98;
+}
+.orbit-hero__title-line{
+  margin:0;
+}
+.orbit-hero__title-accent{
+  margin-top:0;
+}
+
+@media (min-width:761px) and (max-width:1060px){
+  .orbit-hero__grid{gap:20px}
+  .orbit-hero__copy h1{line-height:.98}
+  .orbit-hero__title-accent{margin-top:0}
+  .orbit-hero__actions{margin-top:22px}
+  .orbit-trust{margin-top:16px}
+  .orbit-scene{margin-top:-8px}
+}
+
+@media (max-width:760px){
+  .orbit-hero{padding:26px 0 42px}
+  .orbit-hero__grid{gap:10px}
+  .orbit-hero__copy h1{
+    margin-top:14px;
+    font-size:clamp(38px,11.8vw,54px);
+    line-height:.98;
+    letter-spacing:-.052em;
+  }
+  .orbit-hero__title-line{display:block;white-space:nowrap}
+  .orbit-hero__title-accent{margin-top:0}
+  .orbit-hero__copy>p{
+    margin-top:14px;
+    font-size:15px;
+    line-height:1.55;
+  }
+  .orbit-hero__actions{
+    gap:8px;
+    margin-top:18px;
+  }
+  .orbit-hero__actions .btn{
+    min-height:46px;
+    padding:0 16px;
+    border-radius:12px;
+    font-size:13px;
+  }
+  .orbit-trust{
+    display:flex;
+    flex-wrap:nowrap;
+    justify-content:space-between;
+    gap:8px;
+    margin-top:14px;
+    font-size:9px;
+  }
+  .orbit-trust span,
+  .orbit-trust span:last-child{
+    grid-column:auto;
+    min-width:0;
+    gap:5px;
+    white-space:nowrap;
+  }
+  .orbit-trust i{
+    width:16px;
+    height:16px;
+    flex:0 0 16px;
+    font-size:10px;
+  }
+  .orbit-scene{
+    margin-top:-6px;
+  }
+}
+
+@media (max-width:420px){
+  .orbit-hero{padding-top:24px}
+  .orbit-hero__copy h1{
+    font-size:clamp(36px,11.6vw,48px);
+    line-height:.99;
+  }
+  .orbit-badge{font-size:10px}
+  .orbit-hero__copy>p{font-size:14px}
+  .orbit-trust{gap:5px;font-size:8.5px}
+}
+
+@media (max-width:350px){
+  .orbit-hero__title-line{white-space:normal}
+  .orbit-trust{flex-wrap:wrap;justify-content:flex-start;gap:7px 12px}
+}
