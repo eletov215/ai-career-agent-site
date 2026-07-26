@@ -2885,3 +2885,81 @@ body.resume-reader-open{overflow:hidden}
     min-height:30px!important;
   }
 }
+
+/* Mobile/tablet A4 text safety: fixed inner gutters and hard wrapping */
+@media (max-width:900px){
+  .resume-paper-modern,
+  .resume-paper-modern *,
+  .resume-modern-header,
+  .resume-modern-layout,
+  .resume-modern-sidebar,
+  .resume-modern-main,
+  .resume-modern-section,
+  .resume-modern-experience,
+  .resume-modern-achievements{
+    box-sizing:border-box;
+  }
+
+  .resume-modern-layout,
+  .resume-modern-sidebar,
+  .resume-modern-main,
+  .resume-modern-section,
+  .resume-modern-experience,
+  .resume-modern-experience-head,
+  .resume-modern-experience-head>div,
+  .resume-modern-achievements,
+  .resume-modern-achievements ul,
+  .resume-modern-education-row,
+  .resume-modern-side-entry{
+    min-width:0;
+    max-width:100%;
+  }
+
+  /* Keep permanent print-like gutters on the scaled A4 sheet. */
+  .resume-modern-sidebar{
+    padding-left:52px;
+    padding-right:28px;
+  }
+  .resume-modern-main{
+    padding-left:38px;
+    padding-right:52px;
+  }
+
+  /* Prevent user-entered text, URLs and long words from crossing the A4 edge. */
+  .resume-paper-modern p,
+  .resume-paper-modern li,
+  .resume-paper-modern h1,
+  .resume-paper-modern h2,
+  .resume-paper-modern h3,
+  .resume-paper-modern strong,
+  .resume-paper-modern span,
+  .resume-paper-modern div{
+    max-width:100%;
+    overflow-wrap:anywhere;
+    word-break:break-word;
+  }
+
+  .resume-modern-section p,
+  .resume-modern-achievements li,
+  .resume-modern-side-entry p,
+  .resume-modern-contact-card>div{
+    white-space:pre-wrap;
+    hyphens:auto;
+  }
+
+  .resume-modern-achievements ul{
+    width:100%;
+    margin-right:0;
+    padding-right:8px;
+    padding-left:18px;
+  }
+
+  .resume-modern-achievements li{
+    width:100%;
+    padding-right:0;
+  }
+
+  .resume-modern-experience-head{
+    width:100%;
+  }
+}

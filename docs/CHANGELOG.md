@@ -153,3 +153,9 @@
 - Kept desktop click-to-open behavior for large screens.
 - Added compact page controls in a dedicated row below the A4 preview.
 - Page controls remain hidden when the resume contains only one page.
+
+## Mobile/tablet resume text bounds
+- Added fixed inner gutters to the A4 resume layout on screens up to 900px.
+- Added safe wrapping for long words, URLs, achievements and user-entered text.
+- Constrained resume columns, lists and experience blocks to the available page width.
+- Desktop resume layout and PDF export rules were not changed.
