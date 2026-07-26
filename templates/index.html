@@ -272,22 +272,26 @@
     <div class="container">
       <div class="match-showcase scroll-reveal" data-reveal="shell" data-match-workspace>
         <div class="match-showcase__glow" aria-hidden="true"></div>
+        <div class="match-showcase__particles" aria-hidden="true"><i style="--x:8%;--y:18%;--d:0s"></i><i style="--x:16%;--y:72%;--d:0.7s"></i><i style="--x:28%;--y:10%;--d:1.2s"></i><i style="--x:38%;--y:42%;--d:0.3s"></i><i style="--x:48%;--y:84%;--d:1.8s"></i><i style="--x:61%;--y:20%;--d:0.9s"></i><i style="--x:72%;--y:74%;--d:1.4s"></i><i style="--x:83%;--y:34%;--d:0.5s"></i><i style="--x:92%;--y:66%;--d:1.1s"></i><i style="--x:54%;--y:54%;--d:2.0s"></i></div>
         <div class="match-showcase__profile">
           <div class="match-profile-photo-wrap">
             <span class="match-profile-ring" aria-hidden="true"></span>
-            <img class="match-profile-photo" src="{{ url_for('static', filename='images/profile/alexey-profile.jpg') }}" alt="Фотография профиля Алексея">
+            <img class="match-profile-photo" src="{{ url_for('static', filename='images/profile/alexey-profile-business.png') }}" alt="Фотография профиля Алексея">
             <span class="match-profile-ai" aria-hidden="true">
               <svg viewBox="0 0 48 48" fill="none"><path d="M24 7c1.6 8.1 5.9 12.4 14 14-8.1 1.6-12.4 5.9-14 14-1.6-8.1-5.9-12.4-14-14 8.1-1.6 12.4-5.9 14-14Z" fill="currentColor"/><path d="M37 6c.7 3.7 2.6 5.6 6.3 6.3-3.7.7-5.6 2.6-6.3 6.3-.7-3.7-2.6-5.6-6.3-6.3C34.4 11.6 36.3 9.7 37 6Z" fill="currentColor" opacity=".8"/></svg>
             </span>
           </div>
+          <span class="match-profile-chip match-profile-chip--resume"><b>Резюме</b><small>проанализировано ИИ</small></span>
+          <span class="match-profile-chip match-profile-chip--skills"><b>12 сильных навыков</b><small>найдено в профиле</small></span>
+          <span class="match-profile-chip match-profile-chip--ready"><b>Профиль готов</b><small>к умному подбору</small></span>
           <div class="match-profile-status">
             <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m7 12 3 3 7-7"/><circle cx="12" cy="12" r="9"/></svg>
             <span>Профиль проанализирован ИИ</span>
           </div>
           <div class="match-profile-copy">
             <span class="section-kicker">AI-подбор вакансий</span>
-            <h2>Мы проанализировали<br><strong>ваше резюме</strong></h2>
-            <p>ИИ нашёл лучшие вакансии на основе вашего опыта, навыков и предпочтений.</p>
+            <h2>Не просто вакансии —<br><strong>предложения, которые подходят вам</strong></h2>
+            <p>AI Career Agent анализирует опыт, навыки и предпочтения, сравнивает их с требованиями работодателей и показывает лучшие возможности.</p>
           </div>
         </div>
 
@@ -301,6 +305,10 @@
             </span>
             <span class="match-job-meta"><span>180 000 – 230 000 ₽</span><span>Удалённо</span><span>Полная занятость</span></span>
             <span class="match-job-summary" data-match-summary>Ваш опыт управления продуктом и аналитический бэкграунд совпадают с ключевыми требованиями вакансии.</span>
+            <span class="match-job-reasons" aria-label="Почему вакансия подходит">
+              <span><i>✓</i>Навыки совпадают</span><span><i>✓</i>Опыт подходит</span><span><i>✓</i>Зарплата соответствует</span>
+            </span>
+            <span class="match-score-ring" aria-hidden="true"><svg viewBox="0 0 44 44"><circle cx="22" cy="22" r="18"/><circle class="match-score-ring__progress" cx="22" cy="22" r="18"/></svg></span>
           </button>
 
           <button class="match-job-card" type="button" role="option" aria-selected="false" data-match-job="project">
@@ -317,12 +325,12 @@
           <button class="match-job-card" type="button" role="option" aria-selected="false" data-match-job="analyst">
             <span class="match-job-badge">Лучшее совпадение</span>
             <span class="match-job-main">
-              <img src="{{ url_for('static', filename='images/sources/trudvsem.svg') }}" alt="">
-              <span><strong>Бизнес-аналитик</strong><small>Работа России</small></span>
+              <img src="{{ url_for('static', filename='images/sources/reed.svg') }}" alt="">
+              <span><strong>Python Developer</strong><small>Reed</small></span>
               <b>84%</b>
             </span>
-            <span class="match-job-meta"><span>140 000 – 185 000 ₽</span><span>Удалённо</span><span>Полная занятость</span></span>
-            <span class="match-job-summary">Подходит аналитический опыт и умение переводить бизнес-задачи в требования для команды разработки.</span>
+            <span class="match-job-meta"><span>£45 000 – £55 000</span><span>Удалённо</span><span>Полная занятость</span></span>
+            <span class="match-job-summary">Подходит опыт Python-разработки, API и работы с backend-сервисами.</span>
           </button>
         </div>
 
@@ -332,7 +340,7 @@
           <div><span class="match-stat-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M4 7h16v11H4zM8 7V5h8v2M16 12h4"/></svg></span><p><b>185 000 ₽</b><small>средняя зарплата</small></p></div>
           <div><span class="match-stat-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M14 4c3 1 5 3 6 6l-5 1-2 5-5-5 6-7ZM8 16l-3 3M7 13l-3 1M10 17l-1 3"/></svg></span><p><b>3 дня</b><small>обновление результатов</small></p></div>
         </div>
-        <p class="match-showcase__footnote"><span>✦</span> Результаты обновляются каждый день с помощью ИИ</p>
+        <p class="match-showcase__footnote"><span>✦</span> Меньше ручного поиска. Больше подходящих возможностей.</p>
       </div>
     </div>
   </section>
@@ -688,10 +696,32 @@
   if (matchWorkspace) {
     const jobs = Array.from(matchWorkspace.querySelectorAll('[data-match-job]'));
     const bestScore = matchWorkspace.querySelector('[data-match-best-score]');
+    const statNumbers = Array.from(matchWorkspace.querySelectorAll('.match-showcase__stats b'));
     let index = 0;
     let timer = null;
     let pausedUntil = 0;
     let changing = false;
+    let visible = false;
+
+    const animateNumber = (element) => {
+      if (!element || element.dataset.counted === 'true' || reduceMotion) return;
+      const raw = element.textContent.trim();
+      const match = raw.match(/^(\d[\d ]*)(.*)$/);
+      if (!match) return;
+      const target = Number(match[1].replace(/\s/g, ''));
+      const suffix = match[2];
+      const start = performance.now();
+      const duration = 900;
+      element.dataset.counted = 'true';
+      const frame = (now) => {
+        const progress = Math.min(1, (now - start) / duration);
+        const eased = 1 - Math.pow(1 - progress, 3);
+        const current = Math.round(target * eased).toLocaleString('ru-RU');
+        element.textContent = `${current}${suffix}`;
+        if (progress < 1) requestAnimationFrame(frame);
+      };
+      requestAnimationFrame(frame);
+    };
 
     const activate = (nextIndex, manual = false) => {
       if (changing || nextIndex === index) {
@@ -699,6 +729,10 @@
         return;
       }
       changing = true;
+      const current = jobs[index];
+      const next = jobs[nextIndex];
+      current.classList.add('is-stack-up');
+      next.classList.add('is-stack-in');
       matchWorkspace.classList.add('is-changing');
       window.setTimeout(() => {
         index = nextIndex;
@@ -706,22 +740,39 @@
           const active = i === index;
           job.classList.toggle('is-active', active);
           job.setAttribute('aria-selected', String(active));
+          job.classList.remove('is-stack-up', 'is-stack-in');
         });
         const activeScore = jobs[index].querySelector('.match-job-main > b');
         if (bestScore && activeScore) bestScore.textContent = activeScore.textContent;
         jobs[index].scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'nearest', inline: 'center' });
         matchWorkspace.classList.remove('is-changing');
         changing = false;
-      }, 260);
+      }, 720);
       if (manual) pausedUntil = Date.now() + 120000;
     };
 
     jobs.forEach((job, i) => job.addEventListener('click', () => activate(i, true)));
+
+    if ('IntersectionObserver' in window) {
+      const observer = new IntersectionObserver((entries) => {
+        visible = entries.some((entry) => entry.isIntersecting);
+        if (visible) {
+          matchWorkspace.classList.add('is-inview');
+          statNumbers.forEach((number, i) => window.setTimeout(() => animateNumber(number), 1500 + i * 180));
+        }
+      }, { threshold: 0.28 });
+      observer.observe(matchWorkspace);
+    } else {
+      visible = true;
+      matchWorkspace.classList.add('is-inview');
+      statNumbers.forEach(animateNumber);
+    }
+
     if (!reduceMotion) {
       timer = window.setInterval(() => {
-        if (Date.now() < pausedUntil || document.hidden || changing) return;
+        if (!visible || Date.now() < pausedUntil || document.hidden || changing) return;
         activate((index + 1) % jobs.length, false);
-      }, 8000);
+      }, 9000);
     }
   }
 
