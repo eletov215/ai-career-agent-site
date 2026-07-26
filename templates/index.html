@@ -303,10 +303,18 @@
 
   items.forEach((item) => observer.observe(item));
 
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const workflowConsole = document.querySelector('[data-workflow-console]');
   if (workflowConsole) {
     const tabs = Array.from(workflowConsole.querySelectorAll('[data-workflow-tab]'));
     const panels = Array.from(workflowConsole.querySelectorAll('[data-workflow-panel]'));
+    const autoDelay = 6000;
+    const manualPause = 120000;
+    let autoTimer = null;
+    let pausedUntil = 0;
+    let workflowVisible = false;
+
+    const activeIndex = () => Math.max(0, tabs.findIndex((tab) => tab.classList.contains('is-active')));
 
     const activateWorkflow = (key, focusTab = false) => {
       tabs.forEach((tab) => {
@@ -323,8 +331,38 @@
       });
     };
 
+    const clearAutoTimer = () => {
+      if (autoTimer) window.clearTimeout(autoTimer);
+      autoTimer = null;
+    };
+
+    const scheduleAutoAdvance = () => {
+      clearAutoTimer();
+      if (reduceMotion || !workflowVisible || document.hidden) return;
+
+      const remainingPause = pausedUntil - Date.now();
+      if (remainingPause > 0) {
+        autoTimer = window.setTimeout(scheduleAutoAdvance, remainingPause);
+        return;
+      }
+
+      autoTimer = window.setTimeout(() => {
+        const nextIndex = (activeIndex() + 1) % tabs.length;
+        activateWorkflow(tabs[nextIndex].dataset.workflowTab);
+        scheduleAutoAdvance();
+      }, autoDelay);
+    };
+
+    const pauseAfterManualChoice = () => {
+      pausedUntil = Date.now() + manualPause;
+      scheduleAutoAdvance();
+    };
+
     tabs.forEach((tab, index) => {
-      tab.addEventListener('click', () => activateWorkflow(tab.dataset.workflowTab));
+      tab.addEventListener('click', () => {
+        activateWorkflow(tab.dataset.workflowTab);
+        pauseAfterManualChoice();
+      });
       tab.addEventListener('keydown', (event) => {
         if (!['ArrowDown', 'ArrowUp', 'ArrowRight', 'ArrowLeft', 'Home', 'End'].includes(event.key)) return;
         event.preventDefault();
@@ -334,11 +372,24 @@
         else if (event.key === 'ArrowDown' || event.key === 'ArrowRight') nextIndex = (index + 1) % tabs.length;
         else nextIndex = (index - 1 + tabs.length) % tabs.length;
         activateWorkflow(tabs[nextIndex].dataset.workflowTab, true);
+        pauseAfterManualChoice();
       });
     });
+
+    if ('IntersectionObserver' in window) {
+      const workflowObserver = new IntersectionObserver((entries) => {
+        workflowVisible = entries.some((entry) => entry.isIntersecting);
+        scheduleAutoAdvance();
+      }, { threshold: 0.25 });
+      workflowObserver.observe(workflowConsole);
+    } else {
+      workflowVisible = true;
+      scheduleAutoAdvance();
+    }
+
+    document.addEventListener('visibilitychange', scheduleAutoAdvance);
   }
 
-  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const hero = document.querySelector('.orbit-hero');
   const strip = document.querySelector('.platform-strip--v2');
 
