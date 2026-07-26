@@ -146,3 +146,10 @@
 - Removed excess internal spacing from the preview panel.
 - Reduced the mobile “Continue interview” area to a compact action button.
 - Kept page navigation hidden when the resume has only one page.
+
+## Mobile and tablet resume preview controls
+- Removed the separate “Open” button from the preview toolbar.
+- Disabled opening the fullscreen reader by tapping the A4 preview on screens up to 900 px.
+- Kept desktop click-to-open behavior for large screens.
+- Added compact page controls in a dedicated row below the A4 preview.
+- Page controls remain hidden when the resume contains only one page.

@@ -64,10 +64,6 @@
             <strong>Ваше резюме</strong>
           </div>
           <div class="resume-preview-toolbar-actions">
-            <button type="button" class="resume-preview-open-button" id="resumePreviewOpen" aria-label="Открыть резюме крупно">
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H3v5M16 3h5v5M8 21H3v-5M16 21h5v-5"></path></svg>
-              <span>Открыть</span>
-            </button>
             <button type="button" class="resume-download-button" id="resumeDownloadPdf">
               <svg class="resume-download-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
                 <path class="resume-download-icon__arrow" d="M12 4.5v10.2m0 0 3.4-3.4M12 14.7l-3.4-3.4"></path>
@@ -79,11 +75,7 @@
           </div>
         </div>
 
-        <div class="resume-preview-viewport" id="resumePreviewViewport" tabindex="0" role="button" aria-label="Открыть увеличенный предпросмотр резюме">
-          <div class="resume-preview-hover-hint" aria-hidden="true">
-            <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"></circle><path d="m16 16 4 4M11 8v6M8 11h6"></path></svg>
-            <span>Нажмите, чтобы открыть крупно</span>
-          </div>
+        <div class="resume-preview-viewport" id="resumePreviewViewport">
           <div class="resume-paper-stage" id="resumePaperStage">
             <article class="resume-paper resume-paper-modern is-active resume-preview-source" data-resume-page="0">
               <header class="resume-modern-header">
@@ -251,7 +243,6 @@
   const previewUniversityLogoWrap = document.getElementById('previewUniversityLogoWrap');
   const universityLogoStatus = document.getElementById('universityLogoStatus');
   let universityLogoRequestId = 0;
-  const previewOpenButton = document.getElementById('resumePreviewOpen');
   const previewStage = document.getElementById('resumePaperStage');
   const previewPagination = document.getElementById('resumePreviewPagination');
   const previewPrevButton = document.getElementById('resumePreviewPrev');
@@ -958,9 +949,11 @@
 
   previewPrevButton.addEventListener('click', event => { event.stopPropagation(); showPreviewPage(previewPageIndex - 1); });
   previewNextButton.addEventListener('click', event => { event.stopPropagation(); showPreviewPage(previewPageIndex + 1); });
-  previewOpenButton.addEventListener('click', openResumeReader);
-  previewViewport.addEventListener('click', openResumeReader);
-  previewViewport.addEventListener('keydown', event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); openResumeReader(); } });
+  // Полноэкранный просмотр оставлен только для настольных экранов.
+  // На телефонах и планшетах лист уже читаем в основном предпросмотре.
+  previewViewport.addEventListener('click', () => {
+    if (window.matchMedia('(min-width: 901px)').matches) openResumeReader();
+  });
   previewDownloadButton.addEventListener('click', event => { event.stopPropagation(); downloadResumePdf(previewDownloadButton); });
   readerDownloadButton.addEventListener('click', () => downloadResumePdf(readerDownloadButton));
   reader.querySelectorAll('[data-resume-reader-close]').forEach(element => element.addEventListener('click', closeResumeReader));
