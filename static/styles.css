@@ -3234,3 +3234,47 @@ body.resume-reader-open{overflow:hidden}
   .orbit-hero__title-line{white-space:normal}
   .orbit-trust{flex-wrap:wrap;justify-content:flex-start;gap:7px 12px}
 }
+
+/* ===== Landing stage 2.1: premium benefit icons ===== */
+.orbit-trust__icon{
+  display:grid;
+  place-items:center;
+  width:22px;
+  height:22px;
+  flex:0 0 22px;
+  border-radius:50%;
+  background:linear-gradient(145deg,#ffffff 0%,#f2efff 100%);
+  color:#674fe2;
+  box-shadow:0 5px 14px rgba(103,79,226,.16),inset 0 0 0 1px rgba(115,91,221,.12);
+  transition:transform .2s ease,box-shadow .2s ease,color .2s ease;
+}
+.orbit-trust__icon svg{
+  width:14px;
+  height:14px;
+  stroke:currentColor;
+  stroke-width:1.85;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+}
+.orbit-trust span{
+  transition:color .2s ease;
+}
+@media(hover:hover) and (pointer:fine){
+  .orbit-trust span:hover{color:#5d5870}
+  .orbit-trust span:hover .orbit-trust__icon{
+    transform:translateY(-1px) scale(1.05);
+    color:#5d43db;
+    box-shadow:0 7px 18px rgba(103,79,226,.22),inset 0 0 0 1px rgba(115,91,221,.16);
+  }
+}
+@media(max-width:760px){
+  .orbit-trust__icon{
+    width:20px;
+    height:20px;
+    flex-basis:20px;
+  }
+  .orbit-trust__icon svg{width:12.5px;height:12.5px}
+}
+@media(prefers-reduced-motion:reduce){
+  .orbit-trust__icon,.orbit-trust span{transition:none}
+}
