@@ -270,64 +270,69 @@
 
   <section class="match-demo-section scroll-story-section" data-reveal-section>
     <div class="container">
-      <div class="match-editorial scroll-reveal" data-reveal="shell" data-match-workspace>
-        <div class="match-editorial__visual" aria-label="Пример результата AI-подбора">
-          <div class="match-resume-sheet" aria-hidden="true">
-            <div class="match-resume-sheet__profile">
-              <span class="candidate-avatar"><img src="{{ url_for('static', filename='images/profile/alexey-profile.jpg') }}" alt="Фотография профиля Алексея"></span>
-              <div><strong>Алексей К.</strong><small>Product / Project Manager</small><span class="candidate-status">Профиль проанализирован</span></div>
-            </div>
-            <span class="resume-line resume-line--wide"></span>
-            <span class="resume-line resume-line--short"></span>
-            <span class="resume-line"></span>
-            <span class="resume-line resume-line--mid"></span>
-            <div class="match-resume-sheet__skills"><span>Product</span><span>Agile</span><span>SQL</span></div>
+      <div class="match-showcase scroll-reveal" data-reveal="shell" data-match-workspace>
+        <div class="match-showcase__glow" aria-hidden="true"></div>
+        <div class="match-showcase__profile">
+          <div class="match-profile-photo-wrap">
+            <span class="match-profile-ring" aria-hidden="true"></span>
+            <img class="match-profile-photo" src="{{ url_for('static', filename='images/profile/alexey-profile.jpg') }}" alt="Фотография профиля Алексея">
+            <span class="match-profile-ai" aria-hidden="true">
+              <svg viewBox="0 0 48 48" fill="none"><path d="M24 7c1.6 8.1 5.9 12.4 14 14-8.1 1.6-12.4 5.9-14 14-1.6-8.1-5.9-12.4-14-14 8.1-1.6 12.4-5.9 14-14Z" fill="currentColor"/><path d="M37 6c.7 3.7 2.6 5.6 6.3 6.3-3.7.7-5.6 2.6-6.3 6.3-.7-3.7-2.6-5.6-6.3-6.3C34.4 11.6 36.3 9.7 37 6Z" fill="currentColor" opacity=".8"/></svg>
+            </span>
           </div>
-
-          <div class="match-ai-orb" aria-hidden="true">
-            <svg viewBox="0 0 48 48" fill="none"><path d="M24 7c1.6 8.1 5.9 12.4 14 14-8.1 1.6-12.4 5.9-14 14-1.6-8.1-5.9-12.4-14-14 8.1-1.6 12.4-5.9 14-14Z" fill="currentColor"/><path d="M37 6c.7 3.7 2.6 5.6 6.3 6.3-3.7.7-5.6 2.6-6.3 6.3-.7-3.7-2.6-5.6-6.3-6.3C34.4 11.6 36.3 9.7 37 6Z" fill="currentColor" opacity=".8"/></svg>
+          <div class="match-profile-status">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m7 12 3 3 7-7"/><circle cx="12" cy="12" r="9"/></svg>
+            <span>Профиль проанализирован ИИ</span>
           </div>
-
-          <div class="match-floating-card">
-            <div class="match-floating-card__top">
-              <img src="{{ url_for('static', filename='images/sources/hh.svg') }}" alt="HeadHunter">
-              <div><small>Лучшее совпадение</small><strong data-match-title>Senior Product Manager</strong></div>
-              <b data-match-score>94%</b>
-            </div>
-            <p data-match-summary>Ваш опыт управления продуктом и аналитический бэкграунд совпадают с ключевыми требованиями вакансии.</p>
-          </div>
-
-          <div class="match-source-switcher" role="listbox" aria-label="Подходящие вакансии">
-            <button class="match-vacancy is-active" type="button" role="option" aria-selected="true" data-match-job="product" aria-label="Senior Product Manager, HeadHunter">
-              <img src="{{ url_for('static', filename='images/sources/hh.svg') }}" alt=""><span>HH</span><b>94%</b>
-            </button>
-            <button class="match-vacancy" type="button" role="option" aria-selected="false" data-match-job="project" aria-label="Project Manager, SuperJob">
-              <img src="{{ url_for('static', filename='images/sources/superjob.svg') }}" alt=""><span>SuperJob</span><b>89%</b>
-            </button>
-            <button class="match-vacancy" type="button" role="option" aria-selected="false" data-match-job="analyst" aria-label="Бизнес-аналитик, Работа России">
-              <img src="{{ url_for('static', filename='images/sources/trudvsem.svg') }}" alt=""><span>Работа России</span><b>84%</b>
-            </button>
+          <div class="match-profile-copy">
+            <span class="section-kicker">AI-подбор вакансий</span>
+            <h2>Мы проанализировали<br><strong>ваше резюме</strong></h2>
+            <p>ИИ нашёл лучшие вакансии на основе вашего опыта, навыков и предпочтений.</p>
           </div>
         </div>
 
-        <article class="match-editorial__content" aria-live="polite">
-          <span class="section-kicker">AI-подбор вакансий</span>
-          <h2>Покажем не просто вакансию, а почему она подходит</h2>
-          <p class="match-editorial__lead">AI Career Agent сопоставляет опыт, навыки, формат работы и зарплатные ожидания с требованиями работодателя.</p>
+        <div class="match-showcase__jobs" role="listbox" aria-label="Подходящие вакансии">
+          <button class="match-job-card is-active" type="button" role="option" aria-selected="true" data-match-job="product">
+            <span class="match-job-badge">Лучшее совпадение</span>
+            <span class="match-job-main">
+              <img src="{{ url_for('static', filename='images/sources/hh.svg') }}" alt="">
+              <span><strong data-match-title>Senior Product Manager</strong><small>HeadHunter</small></span>
+              <b data-match-score>94%</b>
+            </span>
+            <span class="match-job-meta"><span>180 000 – 230 000 ₽</span><span>Удалённо</span><span>Полная занятость</span></span>
+            <span class="match-job-summary" data-match-summary>Ваш опыт управления продуктом и аналитический бэкграунд совпадают с ключевыми требованиями вакансии.</span>
+          </button>
 
-          <div class="match-reasons" data-match-reasons>
-            <div><i>✓</i><span><strong>Совпадение навыков</strong><small>Product strategy, Agile, аналитика</small></span></div>
-            <div><i>✓</i><span><strong>Подходит формат</strong><small>Удалённая работа и гибкий график</small></span></div>
-            <div><i>✓</i><span><strong>Зарплатный диапазон</strong><small>Выше минимальных ожиданий</small></span></div>
-          </div>
+          <button class="match-job-card" type="button" role="option" aria-selected="false" data-match-job="project">
+            <span class="match-job-badge">Лучшее совпадение</span>
+            <span class="match-job-main">
+              <img src="{{ url_for('static', filename='images/sources/superjob.svg') }}" alt="">
+              <span><strong>Project Manager</strong><small>SuperJob</small></span>
+              <b>89%</b>
+            </span>
+            <span class="match-job-meta"><span>165 000 – 210 000 ₽</span><span>Гибрид</span><span>Полная занятость</span></span>
+            <span class="match-job-summary">Сильное совпадение по управлению командами, сроками и коммуникации с заказчиками.</span>
+          </button>
 
-          <div class="match-editorial__note">
-            <span>AI-рекомендация</span>
-            <p data-match-note>Подчеркните запуск новых функций и рост продуктовых метрик в последних проектах.</p>
-          </div>
+          <button class="match-job-card" type="button" role="option" aria-selected="false" data-match-job="analyst">
+            <span class="match-job-badge">Лучшее совпадение</span>
+            <span class="match-job-main">
+              <img src="{{ url_for('static', filename='images/sources/trudvsem.svg') }}" alt="">
+              <span><strong>Бизнес-аналитик</strong><small>Работа России</small></span>
+              <b>84%</b>
+            </span>
+            <span class="match-job-meta"><span>140 000 – 185 000 ₽</span><span>Удалённо</span><span>Полная занятость</span></span>
+            <span class="match-job-summary">Подходит аналитический опыт и умение переводить бизнес-задачи в требования для команды разработки.</span>
+          </button>
+        </div>
 
-          <div class="match-editorial__metric"><b data-match-score>94%</b><span>совпадение профиля и вакансии</span></div>
-        </article>
+        <div class="match-showcase__stats" aria-label="Результаты AI-подбора">
+          <div><span class="match-stat-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M4 8h16v11H4zM8 8V5h8v3M4 12h16"/></svg></span><p><b>24</b><small>подходящие вакансии</small></p></div>
+          <div><span class="match-stat-icon"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/><path d="m16 8 4-4M17 4h3v3"/></svg></span><p><b data-match-best-score>94%</b><small>лучшее совпадение</small></p></div>
+          <div><span class="match-stat-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M4 7h16v11H4zM8 7V5h8v2M16 12h4"/></svg></span><p><b>185 000 ₽</b><small>средняя зарплата</small></p></div>
+          <div><span class="match-stat-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M14 4c3 1 5 3 6 6l-5 1-2 5-5-5 6-7ZM8 16l-3 3M7 13l-3 1M10 17l-1 3"/></svg></span><p><b>3 дня</b><small>обновление результатов</small></p></div>
+        </div>
+        <p class="match-showcase__footnote"><span>✦</span> Результаты обновляются каждый день с помощью ИИ</p>
       </div>
     </div>
   </section>
@@ -682,31 +687,41 @@
   const matchWorkspace = document.querySelector('[data-match-workspace]');
   if (matchWorkspace) {
     const jobs = Array.from(matchWorkspace.querySelectorAll('[data-match-job]'));
-    const title = matchWorkspace.querySelector('[data-match-title]');
-    const score = matchWorkspace.querySelector('[data-match-score]');
-    const summary = matchWorkspace.querySelector('[data-match-summary]');
-    const reasons = matchWorkspace.querySelector('[data-match-reasons]');
-    const note = matchWorkspace.querySelector('[data-match-note]');
-    const data = {
-      product: { score:'94%', title:'Senior Product Manager', summary:'Ваш опыт управления продуктом и аналитический бэкграунд совпадают с ключевыми требованиями вакансии.', reasons:[['Совпадение навыков','Product strategy, Agile, аналитика'],['Подходит формат','Удалённая работа и гибкий график'],['Зарплатный диапазон','Выше минимальных ожиданий']], note:'Подчеркните запуск новых функций и рост продуктовых метрик в последних проектах.' },
-      project: { score:'89%', title:'Project Manager', summary:'Сильное совпадение по управлению командами, сроками и коммуникации с заказчиками.', reasons:[['Управление проектами','Agile, Scrum, планирование'],['Опыт команды','Кросс-функциональные команды до 12 человек'],['Подходит формат','Гибридный график']], note:'Добавьте измеримые результаты: сроки, бюджет и размер команды.' },
-      analyst: { score:'84%', title:'Бизнес-аналитик', summary:'Подходит аналитический опыт и умение переводить бизнес-задачи в требования для команды разработки.', reasons:[['Аналитические навыки','SQL, метрики, постановка задач'],['Опыт процессов','Описание и оптимизация процессов'],['Формат работы','Полностью удалённо']], note:'Усильте раздел с SQL и примерами улучшения бизнес-процессов.' }
-    };
-    let index=0, timer=null, pausedUntil=0;
-    const render=(key,manual=false)=>{
-      const item=data[key]; if(!item) return;
+    const bestScore = matchWorkspace.querySelector('[data-match-best-score]');
+    let index = 0;
+    let timer = null;
+    let pausedUntil = 0;
+    let changing = false;
+
+    const activate = (nextIndex, manual = false) => {
+      if (changing || nextIndex === index) {
+        if (manual) pausedUntil = Date.now() + 120000;
+        return;
+      }
+      changing = true;
       matchWorkspace.classList.add('is-changing');
-      window.setTimeout(()=>{
-        jobs.forEach((job,i)=>{ const active=job.dataset.matchJob===key; job.classList.toggle('is-active',active); job.setAttribute('aria-selected',String(active)); if(active) index=i; });
-        title.textContent=item.title; score.textContent=item.score; summary.textContent=item.summary; note.textContent=item.note;
-        reasons.innerHTML=item.reasons.map(([a,b])=>`<div><i>✓</i><span><strong>${a}</strong><small>${b}</small></span></div>`).join('');
+      window.setTimeout(() => {
+        index = nextIndex;
+        jobs.forEach((job, i) => {
+          const active = i === index;
+          job.classList.toggle('is-active', active);
+          job.setAttribute('aria-selected', String(active));
+        });
+        const activeScore = jobs[index].querySelector('.match-job-main > b');
+        if (bestScore && activeScore) bestScore.textContent = activeScore.textContent;
+        jobs[index].scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'nearest', inline: 'center' });
         matchWorkspace.classList.remove('is-changing');
-      },180);
-      if(manual) pausedUntil=Date.now()+120000;
+        changing = false;
+      }, 260);
+      if (manual) pausedUntil = Date.now() + 120000;
     };
-    jobs.forEach(job=>job.addEventListener('click',()=>render(job.dataset.matchJob,true)));
-    if(!window.matchMedia('(prefers-reduced-motion: reduce)').matches){
-      timer=window.setInterval(()=>{ if(Date.now()<pausedUntil || document.hidden) return; const next=(index+1)%jobs.length; render(jobs[next].dataset.matchJob,false); },8000);
+
+    jobs.forEach((job, i) => job.addEventListener('click', () => activate(i, true)));
+    if (!reduceMotion) {
+      timer = window.setInterval(() => {
+        if (Date.now() < pausedUntil || document.hidden || changing) return;
+        activate((index + 1) % jobs.length, false);
+      }, 8000);
     }
   }
 
