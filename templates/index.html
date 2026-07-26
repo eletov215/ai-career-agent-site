@@ -270,56 +270,63 @@
 
   <section class="match-demo-section scroll-story-section" data-reveal-section>
     <div class="container">
-      <div class="section-heading centered-heading scroll-reveal" data-reveal="rise">
-        <span class="section-kicker">Что получает пользователь</span>
-        <h2>Не просто список вакансий, а понятное объяснение совпадения</h2>
-        <p>Профиль кандидата, найденные предложения и причины соответствия собраны в одном рабочем экране.</p>
-      </div>
-
-      <div class="match-workspace scroll-reveal" data-reveal="shell" data-match-workspace>
-        <aside class="candidate-summary" aria-label="Профиль кандидата">
-          <div class="candidate-summary__header">
-            <span class="candidate-avatar" aria-hidden="true">АК</span>
-            <div><strong>Алексей К.</strong><small>Product / Project Manager</small></div>
+      <div class="match-editorial scroll-reveal" data-reveal="shell" data-match-workspace>
+        <div class="match-editorial__visual" aria-label="Пример результата AI-подбора">
+          <div class="match-resume-sheet" aria-hidden="true">
+            <div class="match-resume-sheet__profile">
+              <span class="candidate-avatar">АК</span>
+              <div><strong>Алексей К.</strong><small>Product / Project Manager</small></div>
+            </div>
+            <span class="resume-line resume-line--wide"></span>
+            <span class="resume-line resume-line--short"></span>
+            <span class="resume-line"></span>
+            <span class="resume-line resume-line--mid"></span>
+            <div class="match-resume-sheet__skills"><span>Product</span><span>Agile</span><span>SQL</span></div>
           </div>
-          <dl class="candidate-summary__facts">
-            <div><dt>Опыт</dt><dd>5 лет</dd></div>
-            <div><dt>Формат</dt><dd>Удалённо</dd></div>
-            <div><dt>Регион</dt><dd>Москва</dd></div>
-            <div><dt>Ожидания</dt><dd>от 180 000 ₽</dd></div>
-          </dl>
-          <div class="candidate-summary__skills"><span>Product</span><span>Аналитика</span><span>Agile</span><span>SQL</span></div>
-        </aside>
 
-        <div class="match-vacancies" role="listbox" aria-label="Подходящие вакансии">
-          <div class="match-vacancies__head"><span>Подходящие вакансии</span><b>3 предложения</b></div>
-          <button class="match-vacancy is-active" type="button" role="option" aria-selected="true" data-match-job="product">
-            <img src="{{ url_for('static', filename='images/sources/hh.svg') }}" alt="HeadHunter">
-            <span><strong>Senior Product Manager</strong><small>FinTech Lab · Москва · удалённо</small><em>220 000–280 000 ₽</em></span>
-            <b>94%</b>
-          </button>
-          <button class="match-vacancy" type="button" role="option" aria-selected="false" data-match-job="project">
-            <img src="{{ url_for('static', filename='images/sources/superjob.svg') }}" alt="SuperJob">
-            <span><strong>Project Manager</strong><small>Digital Team · гибридный формат</small><em>180 000–230 000 ₽</em></span>
-            <b>89%</b>
-          </button>
-          <button class="match-vacancy" type="button" role="option" aria-selected="false" data-match-job="analyst">
-            <img src="{{ url_for('static', filename='images/sources/trudvsem.svg') }}" alt="Работа России">
-            <span><strong>Бизнес-аналитик</strong><small>Технологическая компания · удалённо</small><em>160 000–210 000 ₽</em></span>
-            <b>84%</b>
-          </button>
+          <div class="match-ai-orb" aria-hidden="true">
+            <svg viewBox="0 0 48 48" fill="none"><path d="M24 7c1.6 8.1 5.9 12.4 14 14-8.1 1.6-12.4 5.9-14 14-1.6-8.1-5.9-12.4-14-14 8.1-1.6 12.4-5.9 14-14Z" fill="currentColor"/><path d="M37 6c.7 3.7 2.6 5.6 6.3 6.3-3.7.7-5.6 2.6-6.3 6.3-.7-3.7-2.6-5.6-6.3-6.3C34.4 11.6 36.3 9.7 37 6Z" fill="currentColor" opacity=".8"/></svg>
+          </div>
+
+          <div class="match-floating-card">
+            <div class="match-floating-card__top">
+              <img src="{{ url_for('static', filename='images/sources/hh.svg') }}" alt="HeadHunter">
+              <div><small>Лучшее совпадение</small><strong data-match-title>Senior Product Manager</strong></div>
+              <b data-match-score>94%</b>
+            </div>
+            <p data-match-summary>Ваш опыт управления продуктом и аналитический бэкграунд совпадают с ключевыми требованиями вакансии.</p>
+          </div>
+
+          <div class="match-source-switcher" role="listbox" aria-label="Подходящие вакансии">
+            <button class="match-vacancy is-active" type="button" role="option" aria-selected="true" data-match-job="product" aria-label="Senior Product Manager, HeadHunter">
+              <img src="{{ url_for('static', filename='images/sources/hh.svg') }}" alt=""><span>HH</span><b>94%</b>
+            </button>
+            <button class="match-vacancy" type="button" role="option" aria-selected="false" data-match-job="project" aria-label="Project Manager, SuperJob">
+              <img src="{{ url_for('static', filename='images/sources/superjob.svg') }}" alt=""><span>SuperJob</span><b>89%</b>
+            </button>
+            <button class="match-vacancy" type="button" role="option" aria-selected="false" data-match-job="analyst" aria-label="Бизнес-аналитик, Работа России">
+              <img src="{{ url_for('static', filename='images/sources/trudvsem.svg') }}" alt=""><span>Работа России</span><b>84%</b>
+            </button>
+          </div>
         </div>
 
-        <article class="match-analysis" aria-live="polite">
-          <div class="match-analysis__top"><span>Почему подходит</span><div class="match-ring" data-match-score>94%</div></div>
-          <h3 data-match-title>Senior Product Manager</h3>
-          <p data-match-summary>Ваш опыт управления продуктом и аналитический бэкграунд совпадают с ключевыми требованиями вакансии.</p>
+        <article class="match-editorial__content" aria-live="polite">
+          <span class="section-kicker">AI-подбор вакансий</span>
+          <h2>Покажем не просто вакансию, а почему она подходит</h2>
+          <p class="match-editorial__lead">AI Career Agent сопоставляет опыт, навыки, формат работы и зарплатные ожидания с требованиями работодателя.</p>
+
           <div class="match-reasons" data-match-reasons>
             <div><i>✓</i><span><strong>Совпадение навыков</strong><small>Product strategy, Agile, аналитика</small></span></div>
             <div><i>✓</i><span><strong>Подходит формат</strong><small>Удалённая работа и гибкий график</small></span></div>
             <div><i>✓</i><span><strong>Зарплатный диапазон</strong><small>Выше минимальных ожиданий</small></span></div>
           </div>
-          <div class="match-analysis__note"><span>AI-рекомендация</span><p data-match-note>Подчеркните запуск новых функций и рост продуктовых метрик в последних проектах.</p></div>
+
+          <div class="match-editorial__note">
+            <span>AI-рекомендация</span>
+            <p data-match-note>Подчеркните запуск новых функций и рост продуктовых метрик в последних проектах.</p>
+          </div>
+
+          <div class="match-editorial__metric"><b data-match-score>94%</b><span>совпадение профиля и вакансии</span></div>
         </article>
       </div>
     </div>
