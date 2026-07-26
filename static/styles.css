@@ -3564,3 +3564,36 @@ body.resume-reader-open{overflow:hidden}
 @media(max-width:1100px){.match-editorial{grid-template-columns:1fr;gap:42px}.match-editorial__visual{min-height:460px}.match-editorial__content{padding:0}.match-editorial__content h2{max-width:760px}.match-editorial__content .match-reasons{grid-template-columns:repeat(3,1fr)}}
 @media(max-width:720px){.match-demo-section{padding:78px 0}.match-editorial{gap:32px}.match-editorial__visual{min-height:430px;border-radius:26px}.match-resume-sheet{left:5%;top:13%;width:78%;height:69%;padding:24px}.match-ai-orb{width:76px;height:76px;right:5%;top:6%}.match-ai-orb svg{width:42px;height:42px}.match-floating-card{left:7%;bottom:14%;width:86%;padding:17px}.match-floating-card__top{grid-template-columns:40px minmax(0,1fr) auto}.match-floating-card__top img{width:36px;height:36px}.match-floating-card__top strong{font-size:13px}.match-floating-card__top>b{font-size:21px}.match-floating-card p{display:none}.match-source-switcher{left:7%;right:7%;bottom:4%;display:flex;overflow-x:auto;scrollbar-width:none}.match-source-switcher::-webkit-scrollbar{display:none}.match-source-switcher .match-vacancy{min-width:146px;grid-template-columns:28px minmax(0,1fr) auto}.match-source-switcher .match-vacancy.is-active{transform:none}.match-editorial__content h2{font-size:clamp(32px,10vw,46px)}.match-editorial__lead{font-size:16px}.match-editorial__content .match-reasons{grid-template-columns:1fr;gap:10px}.match-editorial__content .match-reasons>div{display:grid;grid-template-columns:28px 1fr;gap:10px}.match-editorial__content .match-reasons i{margin:0}.match-editorial__metric{width:100%;justify-content:center}}
 @media(prefers-reduced-motion:reduce){.match-floating-card,.match-editorial__note,.match-editorial__metric,.match-source-switcher .match-vacancy{transition:none!important}}
+
+
+/* Stage 4 profile visual polish */
+.match-editorial__visual{background:
+  radial-gradient(circle at 82% 14%,rgba(132,89,255,.17),transparent 24%),
+  radial-gradient(circle at 14% 88%,rgba(89,126,247,.12),transparent 30%),
+  linear-gradient(145deg,#f8f9fd 0%,#f3f1ff 100%)}
+.match-editorial__visual:after{content:"";position:absolute;inset:18px;border:1px solid rgba(255,255,255,.72);border-radius:26px;pointer-events:none}
+.match-resume-sheet{overflow:hidden;border:1px solid rgba(255,255,255,.92);background:linear-gradient(160deg,rgba(255,255,255,.98),rgba(251,250,255,.94));box-shadow:0 28px 68px rgba(61,53,112,.13),inset 0 1px 0 #fff}
+.match-resume-sheet:before{content:"";position:absolute;left:0;right:0;top:0;height:5px;background:linear-gradient(90deg,#7652f6,#557cf7,#d94ee8)}
+.match-resume-sheet__profile{position:relative;z-index:1}
+.candidate-avatar{display:block;flex:0 0 auto;width:66px;height:66px;border-radius:21px;padding:3px;background:linear-gradient(135deg,#7652f6,#557cf7 60%,#df4be4);box-shadow:0 14px 30px rgba(101,79,219,.22)}
+.candidate-avatar img{display:block;width:100%;height:100%;border-radius:18px;object-fit:cover;object-position:50% 28%;background:#fff}
+.match-resume-sheet__profile strong{font-size:16px;color:#222238}
+.match-resume-sheet__profile small{font-size:12px}
+.candidate-status{display:inline-flex;align-items:center;gap:6px;margin-top:8px;padding:5px 8px;border-radius:999px;background:#f0edff;color:#664be1;font-size:9px;font-weight:900;letter-spacing:.04em;text-transform:uppercase}
+.candidate-status:before{content:"";width:6px;height:6px;border-radius:50%;background:#7254ef;box-shadow:0 0 0 4px rgba(114,84,239,.12)}
+.resume-line{background:linear-gradient(90deg,#e8e6fb 0%,#f3f2f9 70%,#fafafe 100%)}
+.match-resume-sheet__skills span{border:1px solid rgba(106,75,234,.08);box-shadow:0 6px 14px rgba(101,79,219,.06)}
+.match-ai-orb{animation:matchOrbFloat 5s ease-in-out infinite}
+.match-floating-card{border:1px solid rgba(255,255,255,.96);backdrop-filter:blur(16px);box-shadow:0 28px 68px rgba(58,48,116,.18),0 0 0 1px rgba(101,79,219,.05)}
+.match-source-switcher .match-vacancy{transition:transform .45s cubic-bezier(.22,1,.36,1),box-shadow .45s ease,border-color .45s ease,opacity .45s ease}
+.match-source-switcher .match-vacancy:not(.is-active){opacity:.72}
+.match-source-switcher .match-vacancy.is-active{opacity:1;transform:translateX(-10px) scale(1.025)}
+@keyframes matchOrbFloat{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-8px) rotate(2deg)}}
+@media(max-width:720px){
+  .candidate-avatar{width:58px;height:58px;border-radius:18px}
+  .candidate-avatar img{border-radius:15px;object-position:50% 24%}
+  .candidate-status{font-size:8px}
+  .match-editorial__visual:after{inset:12px;border-radius:20px}
+  .match-ai-orb{animation-duration:6s}
+}
+@media(prefers-reduced-motion:reduce){.match-ai-orb{animation:none!important}}
