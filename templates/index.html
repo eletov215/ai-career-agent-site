@@ -315,21 +315,67 @@
     let workflowVisible = false;
 
     const activeIndex = () => Math.max(0, tabs.findIndex((tab) => tab.classList.contains('is-active')));
+    let panelTransitionTimer = null;
 
-    const activateWorkflow = (key, focusTab = false) => {
+    const positionWorkflowTabs = (selectedIndex) => {
+      tabs.forEach((tab, index) => {
+        let position = (index - selectedIndex + tabs.length) % tabs.length;
+        if (position > Math.floor(tabs.length / 2)) position -= tabs.length;
+        if (tabs.length % 2 === 0 && position === tabs.length / 2) position = 2;
+        tab.style.setProperty('--workflow-position', position);
+        tab.style.setProperty('--workflow-distance', Math.abs(position));
+        tab.dataset.position = String(position);
+      });
+      workflowConsole.dataset.activeIndex = String(selectedIndex);
+    };
+
+    const activateWorkflow = (key, focusTab = false, direction = 'auto') => {
+      const previousIndex = activeIndex();
+      const nextIndex = tabs.findIndex((tab) => tab.dataset.workflowTab === key);
+      if (nextIndex < 0) return;
+
+      const previousPanel = panels.find((panel) => panel.classList.contains('is-active'));
+      const nextPanel = panels.find((panel) => panel.dataset.workflowPanel === key);
+      const samePanel = previousPanel === nextPanel;
+
+      if (direction === 'auto') {
+        const forwardDistance = (nextIndex - previousIndex + tabs.length) % tabs.length;
+        direction = forwardDistance === 0 || forwardDistance <= tabs.length / 2 ? 'forward' : 'backward';
+      }
+      workflowConsole.dataset.direction = direction;
+      positionWorkflowTabs(nextIndex);
+
       tabs.forEach((tab) => {
         const active = tab.dataset.workflowTab === key;
         tab.classList.toggle('is-active', active);
         tab.setAttribute('aria-selected', String(active));
         tab.tabIndex = active ? 0 : -1;
-        if (active && focusTab) tab.focus();
+        if (active && focusTab) tab.focus({ preventScroll: true });
       });
-      panels.forEach((panel) => {
-        const active = panel.dataset.workflowPanel === key;
-        panel.hidden = !active;
-        panel.classList.toggle('is-active', active);
-      });
+
+      if (!samePanel && nextPanel) {
+        if (panelTransitionTimer) window.clearTimeout(panelTransitionTimer);
+        if (previousPanel) {
+          previousPanel.classList.remove('is-active');
+          previousPanel.classList.add('is-leaving');
+        }
+        nextPanel.hidden = false;
+        nextPanel.classList.remove('is-leaving');
+        void nextPanel.offsetWidth;
+        nextPanel.classList.add('is-active');
+
+        panelTransitionTimer = window.setTimeout(() => {
+          panels.forEach((panel) => {
+            const active = panel === nextPanel;
+            panel.hidden = !active;
+            panel.classList.toggle('is-active', active);
+            panel.classList.remove('is-leaving');
+          });
+        }, reduceMotion ? 0 : 720);
+      }
     };
+
+    positionWorkflowTabs(activeIndex());
 
     const clearAutoTimer = () => {
       if (autoTimer) window.clearTimeout(autoTimer);
@@ -348,7 +394,7 @@
 
       autoTimer = window.setTimeout(() => {
         const nextIndex = (activeIndex() + 1) % tabs.length;
-        activateWorkflow(tabs[nextIndex].dataset.workflowTab);
+        activateWorkflow(tabs[nextIndex].dataset.workflowTab, false, 'forward');
         scheduleAutoAdvance();
       }, autoDelay);
     };
@@ -360,18 +406,22 @@
 
     tabs.forEach((tab, index) => {
       tab.addEventListener('click', () => {
-        activateWorkflow(tab.dataset.workflowTab);
+        const currentIndex = activeIndex();
+        const forwardDistance = (index - currentIndex + tabs.length) % tabs.length;
+        const direction = forwardDistance === 0 || forwardDistance <= tabs.length / 2 ? 'forward' : 'backward';
+        activateWorkflow(tab.dataset.workflowTab, false, direction);
         pauseAfterManualChoice();
       });
       tab.addEventListener('keydown', (event) => {
         if (!['ArrowDown', 'ArrowUp', 'ArrowRight', 'ArrowLeft', 'Home', 'End'].includes(event.key)) return;
         event.preventDefault();
         let nextIndex = index;
-        if (event.key === 'Home') nextIndex = 0;
-        else if (event.key === 'End') nextIndex = tabs.length - 1;
+        let direction = 'forward';
+        if (event.key === 'Home') { nextIndex = 0; direction = 'backward'; }
+        else if (event.key === 'End') { nextIndex = tabs.length - 1; direction = 'forward'; }
         else if (event.key === 'ArrowDown' || event.key === 'ArrowRight') nextIndex = (index + 1) % tabs.length;
-        else nextIndex = (index - 1 + tabs.length) % tabs.length;
-        activateWorkflow(tabs[nextIndex].dataset.workflowTab, true);
+        else { nextIndex = (index - 1 + tabs.length) % tabs.length; direction = 'backward'; }
+        activateWorkflow(tabs[nextIndex].dataset.workflowTab, true, direction);
         pauseAfterManualChoice();
       });
     });

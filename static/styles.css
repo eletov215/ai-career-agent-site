@@ -3313,3 +3313,128 @@ body.resume-reader-open{overflow:hidden}
 @media(max-width:720px){.workflow-console{padding:10px;border-radius:24px}.workflow-tabs{grid-template-columns:none;grid-auto-flow:column;grid-auto-columns:minmax(178px,78vw);margin:0 -2px}.workflow-tab{padding:12px;min-width:0}.workflow-tab__icon{width:38px;height:38px}.workflow-preview{min-height:0;border-radius:19px}.workflow-preview__topbar{height:40px}.workflow-panel{min-height:0;grid-template-columns:1fr;gap:18px;padding:24px 18px 22px}.workflow-panel__copy h3{font-size:26px}.workflow-panel__copy p{font-size:13px}.workflow-mock{min-height:235px}.workflow-upload-drop{min-height:210px}.workflow-mock--analysis{min-height:250px}.workflow-mock--response{grid-template-columns:1fr auto}.response-doc{min-height:220px;padding:22px}.response-check{width:58px;height:58px}}
 @media(hover:none){.workflow-tab:hover{transform:none;background:transparent}.workflow-tab.is-active:hover{background:linear-gradient(135deg,#f6f3ff,#fff)}}
 @media(prefers-reduced-motion:reduce){.workflow-panel.is-active{animation:none}.workflow-tab{transition:none}}
+
+/* ===== Workflow depth carousel: unified scrolling field ===== */
+.workflow-console{
+  grid-template-columns:minmax(292px,.78fr) minmax(0,1.42fr);
+  gap:0;
+  padding:12px;
+  overflow:hidden;
+  background:linear-gradient(135deg,rgba(249,247,255,.96),rgba(255,255,255,.92));
+}
+.workflow-tabs{
+  position:relative;
+  height:446px;
+  overflow:hidden;
+  padding:34px 0 34px 8px;
+  border-radius:22px 0 0 22px;
+  background:linear-gradient(180deg,rgba(246,243,255,.72),rgba(250,249,255,.4));
+  -webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 9%,#000 91%,transparent 100%);
+  mask-image:linear-gradient(to bottom,transparent 0,#000 9%,#000 91%,transparent 100%);
+}
+.workflow-tab{
+  --workflow-position:0;
+  position:absolute;
+  z-index:calc(20 - (var(--workflow-distance, 0) * 2));
+  top:50%;
+  left:8px;
+  width:calc(100% - 8px);
+  min-height:88px;
+  transform:translateY(calc(-50% + (var(--workflow-position) * 104px))) scale(calc(1 - (var(--workflow-distance, 0) * .045)));
+  transform-origin:right center;
+  opacity:calc(1 - (var(--workflow-distance, 0) * .28));
+  filter:saturate(calc(1 - (var(--workflow-distance, 0) * .18)));
+  transition:transform .72s cubic-bezier(.22,1,.36,1),opacity .55s ease,filter .55s ease,background .45s ease,border-color .45s ease,box-shadow .45s ease,color .45s ease;
+  will-change:transform,opacity;
+}
+.workflow-tab.is-active{
+  z-index:30;
+  width:calc(100% + 18px);
+  padding-right:30px;
+  border-right-color:transparent;
+  border-radius:19px 0 0 19px;
+  background:linear-gradient(105deg,#f4f0ff 0%,#fbfaff 72%,#fcfbff 100%);
+  box-shadow:-12px 16px 34px rgba(73,51,157,.12);
+  opacity:1;
+  filter:none;
+}
+.workflow-tab:not(.is-active){
+  pointer-events:auto;
+}
+.workflow-tab:hover:not(.is-active){
+  transform:translateY(calc(-50% + (var(--workflow-position) * 104px))) translateX(3px) scale(calc(1 - (var(--workflow-distance, 0) * .045)));
+}
+.workflow-preview{
+  z-index:2;
+  margin-left:-1px;
+  min-height:470px;
+  border-radius:0 23px 23px 0;
+  box-shadow:-10px 0 28px rgba(83,62,164,.045);
+}
+.workflow-panel{
+  transform-origin:center;
+}
+.workflow-panel.is-active{
+  animation:workflowPanelScrollIn .7s cubic-bezier(.22,1,.36,1) both;
+}
+.workflow-panel.is-leaving{
+  display:grid!important;
+  position:absolute;
+  z-index:0;
+  left:0;
+  right:0;
+  top:44px;
+  min-height:426px;
+  pointer-events:none;
+  animation:workflowPanelScrollOut .52s cubic-bezier(.55,0,.8,.45) both;
+}
+.workflow-console[data-direction="backward"] .workflow-panel.is-active{animation-name:workflowPanelScrollInReverse}
+.workflow-console[data-direction="backward"] .workflow-panel.is-leaving{animation-name:workflowPanelScrollOutReverse}
+@keyframes workflowPanelScrollIn{from{opacity:0;transform:translateY(34px) scale(.985);filter:blur(3px)}to{opacity:1;transform:none;filter:none}}
+@keyframes workflowPanelScrollOut{from{opacity:1;transform:none;filter:none}to{opacity:0;transform:translateY(-28px) scale(.985);filter:blur(2px)}}
+@keyframes workflowPanelScrollInReverse{from{opacity:0;transform:translateY(-34px) scale(.985);filter:blur(3px)}to{opacity:1;transform:none;filter:none}}
+@keyframes workflowPanelScrollOutReverse{from{opacity:1;transform:none;filter:none}to{opacity:0;transform:translateY(28px) scale(.985);filter:blur(2px)}}
+
+@media(max-width:980px){
+  .workflow-console{grid-template-columns:1fr;gap:0;padding:10px}
+  .workflow-tabs{
+    height:112px;
+    padding:8px 36px;
+    border-radius:20px 20px 0 0;
+    -webkit-mask-image:linear-gradient(to right,transparent 0,#000 8%,#000 92%,transparent 100%);
+    mask-image:linear-gradient(to right,transparent 0,#000 8%,#000 92%,transparent 100%);
+  }
+  .workflow-tab{
+    top:8px;
+    left:50%;
+    width:min(310px,70vw);
+    min-height:92px;
+    transform:translateX(calc(-50% + (var(--workflow-position) * 236px))) scale(calc(1 - (var(--workflow-distance, 0) * .055)));
+    transform-origin:center bottom;
+  }
+  .workflow-tab.is-active{width:min(330px,76vw);padding-right:14px;border-radius:18px 18px 0 0;border-bottom-color:transparent}
+  .workflow-tab:hover:not(.is-active){transform:translateX(calc(-50% + (var(--workflow-position) * 236px))) translateY(-2px) scale(calc(1 - (var(--workflow-distance, 0) * .055)))}
+  .workflow-preview{margin-left:0;margin-top:-1px;border-radius:0 0 21px 21px}
+  .workflow-panel.is-leaving{top:40px;min-height:376px}
+}
+@media(max-width:720px){
+  .workflow-tabs{height:96px;padding:7px 25px}
+  .workflow-tab{top:7px;width:min(272px,76vw);min-height:82px;transform:translateX(calc(-50% + (var(--workflow-position) * 205px))) scale(calc(1 - (var(--workflow-distance, 0) * .06)))}
+  .workflow-tab.is-active{width:min(292px,82vw)}
+  .workflow-tab:hover:not(.is-active){transform:translateX(calc(-50% + (var(--workflow-position) * 205px))) scale(calc(1 - (var(--workflow-distance, 0) * .06)))}
+  .workflow-tab small{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .workflow-panel.is-leaving{min-height:0}
+}
+@media(hover:none){
+  .workflow-tab:hover:not(.is-active){background:transparent;transform:translateY(calc(-50% + (var(--workflow-position) * 104px))) scale(calc(1 - (var(--workflow-distance, 0) * .045)))}
+}
+@media(max-width:980px) and (hover:none){
+  .workflow-tab:hover:not(.is-active){transform:translateX(calc(-50% + (var(--workflow-position) * 236px))) scale(calc(1 - (var(--workflow-distance, 0) * .055)))}
+}
+@media(max-width:720px) and (hover:none){
+  .workflow-tab:hover:not(.is-active){transform:translateX(calc(-50% + (var(--workflow-position) * 205px))) scale(calc(1 - (var(--workflow-distance, 0) * .06)))}
+}
+@media(prefers-reduced-motion:reduce){
+  .workflow-tab{transition:none!important}
+  .workflow-panel.is-active,.workflow-panel.is-leaving{animation:none!important;filter:none!important}
+}
