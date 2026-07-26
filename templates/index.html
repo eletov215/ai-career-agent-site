@@ -280,10 +280,10 @@
             <span class="match-profile-ai" aria-hidden="true">
               <svg viewBox="0 0 48 48" fill="none"><path d="M24 7c1.6 8.1 5.9 12.4 14 14-8.1 1.6-12.4 5.9-14 14-1.6-8.1-5.9-12.4-14-14 8.1-1.6 12.4-5.9 14-14Z" fill="currentColor"/><path d="M37 6c.7 3.7 2.6 5.6 6.3 6.3-3.7.7-5.6 2.6-6.3 6.3-.7-3.7-2.6-5.6-6.3-6.3C34.4 11.6 36.3 9.7 37 6Z" fill="currentColor" opacity=".8"/></svg>
             </span>
+            <span class="match-profile-chip match-profile-chip--resume"><b>Резюме</b><small>проанализировано ИИ</small></span>
+            <span class="match-profile-chip match-profile-chip--skills"><b>12 сильных навыков</b><small>найдено в профиле</small></span>
+            <span class="match-profile-chip match-profile-chip--ready"><b>Профиль готов</b><small>к умному подбору</small></span>
           </div>
-          <span class="match-profile-chip match-profile-chip--resume"><b>Резюме</b><small>проанализировано ИИ</small></span>
-          <span class="match-profile-chip match-profile-chip--skills"><b>12 сильных навыков</b><small>найдено в профиле</small></span>
-          <span class="match-profile-chip match-profile-chip--ready"><b>Профиль готов</b><small>к умному подбору</small></span>
           <div class="match-profile-status">
             <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m7 12 3 3 7-7"/><circle cx="12" cy="12" r="9"/></svg>
             <span>Профиль проанализирован ИИ</span>
@@ -728,26 +728,54 @@
         if (manual) pausedUntil = Date.now() + 120000;
         return;
       }
+
       changing = true;
-      const current = jobs[index];
-      const next = jobs[nextIndex];
-      current.classList.add('is-stack-up');
-      next.classList.add('is-stack-in');
       matchWorkspace.classList.add('is-changing');
-      window.setTimeout(() => {
-        index = nextIndex;
-        jobs.forEach((job, i) => {
-          const active = i === index;
-          job.classList.toggle('is-active', active);
-          job.setAttribute('aria-selected', String(active));
-          job.classList.remove('is-stack-up', 'is-stack-in');
+      const firstRects = jobs.map((job) => job.getBoundingClientRect());
+
+      index = nextIndex;
+      jobs.forEach((job, i) => {
+        const active = i === index;
+        job.classList.toggle('is-active', active);
+        job.setAttribute('aria-selected', String(active));
+      });
+
+      const activeScore = jobs[index].querySelector('.match-job-main > b');
+      if (bestScore && activeScore) bestScore.textContent = activeScore.textContent;
+
+      // FLIP: cards change size and position as one continuous, physical stack.
+      const animations = jobs.map((job, i) => {
+        const last = job.getBoundingClientRect();
+        const first = firstRects[i];
+        const dx = first.left - last.left;
+        const dy = first.top - last.top;
+        const sx = first.width / Math.max(last.width, 1);
+        const sy = first.height / Math.max(last.height, 1);
+        if (reduceMotion || (Math.abs(dx) < 0.5 && Math.abs(dy) < 0.5 && Math.abs(sx - 1) < 0.01 && Math.abs(sy - 1) < 0.01)) return null;
+        return job.animate([
+          { transform: `translate(${dx}px, ${dy}px) scale(${sx}, ${sy})`, opacity: i === index ? 0.68 : 0.82 },
+          { transform: 'translate(0, 0) scale(1, 1)', opacity: i === index ? 1 : 0.78 }
+        ], {
+          duration: 1050,
+          easing: 'cubic-bezier(0.22, 1, 0.36, 1)',
+          fill: 'both'
         });
-        const activeScore = jobs[index].querySelector('.match-job-main > b');
-        if (bestScore && activeScore) bestScore.textContent = activeScore.textContent;
+      }).filter(Boolean);
+
+      if (window.matchMedia('(max-width: 780px)').matches) {
         jobs[index].scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'nearest', inline: 'center' });
+      }
+
+      Promise.allSettled(animations.map((animation) => animation.finished)).finally(() => {
+        animations.forEach((animation) => animation.cancel());
         matchWorkspace.classList.remove('is-changing');
         changing = false;
-      }, 720);
+      });
+
+      if (!animations.length) {
+        matchWorkspace.classList.remove('is-changing');
+        changing = false;
+      }
       if (manual) pausedUntil = Date.now() + 120000;
     };
 

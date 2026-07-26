@@ -3680,3 +3680,129 @@ body.resume-reader-open{overflow:hidden}
 @media(max-width:1100px){.match-profile-chip--resume{left:-12px}.match-profile-chip--skills{left:-8px}.match-profile-chip--ready{right:-18px}}
 @media(max-width:780px){.match-profile-chip{display:none}.match-job-reasons{display:grid;grid-template-columns:1fr}.match-score-ring{width:48px;height:48px;right:12px;top:44px}.match-showcase__particles{opacity:.55}}
 @media(prefers-reduced-motion:reduce){.match-showcase__particles i,.match-profile-ring,.match-profile-ring:before,.match-profile-ai,.match-job-card.is-active,.match-showcase__glow{animation:none!important}.match-profile-chip,.match-showcase__stats>div,.match-job-reasons span{opacity:1!important;transform:none!important}.match-score-ring__progress{stroke-dashoffset:9!important}}
+
+/* Stage 4 animation corrections: anchored profile labels, visible ambient field and fluid vacancy stack */
+.match-showcase{
+  background:
+    radial-gradient(circle at 16% 22%,rgba(115,79,244,.13),transparent 26%),
+    radial-gradient(circle at 82% 18%,rgba(89,137,255,.10),transparent 28%),
+    radial-gradient(circle at 68% 78%,rgba(224,77,232,.08),transparent 30%),
+    linear-gradient(145deg,rgba(255,255,255,.98),rgba(247,246,255,.97));
+  background-size:125% 125%,130% 130%,135% 135%,100% 100%;
+  animation:matchAmbientDrift 16s ease-in-out infinite alternate;
+}
+.match-showcase:after{
+  content:"";
+  position:absolute;
+  z-index:0;
+  inset:-28%;
+  pointer-events:none;
+  opacity:.52;
+  background:
+    repeating-radial-gradient(ellipse at 26% 36%,transparent 0 47px,rgba(116,80,238,.075) 48px 49px,transparent 50px 72px),
+    conic-gradient(from 30deg at 28% 34%,transparent 0 20%,rgba(110,80,239,.06) 24%,transparent 30% 100%);
+  transform-origin:28% 34%;
+  animation:matchFieldRotate 34s linear infinite;
+}
+.match-showcase__particles{opacity:1}
+.match-showcase__particles i{
+  width:var(--particle-size,7px);
+  height:var(--particle-size,7px);
+  opacity:.44;
+  background:radial-gradient(circle,#fff 0 18%,rgba(119,83,245,.9) 25%,rgba(119,83,245,.12) 72%,transparent 74%);
+  box-shadow:0 0 10px rgba(119,83,245,.75),0 0 28px rgba(119,83,245,.45);
+  animation-duration:8.5s;
+}
+.match-showcase__particles i:nth-child(2n){--particle-size:10px;animation-duration:11s}
+.match-showcase__particles i:nth-child(3n){--particle-size:5px;animation-duration:6.8s}
+.match-showcase__particles i:nth-child(4n){background:radial-gradient(circle,#fff 0 20%,rgba(80,146,255,.92) 27%,rgba(80,146,255,.1) 72%,transparent 74%)}
+
+.match-profile-photo-wrap{isolation:isolate}
+.match-profile-chip{
+  z-index:7;
+  min-width:132px;
+  width:max-content;
+  max-width:166px;
+  padding:10px 12px;
+  pointer-events:none;
+}
+.match-profile-chip--resume{left:-92px;top:18px}
+.match-profile-chip--skills{left:-78px;bottom:34px}
+.match-profile-chip--ready{right:-105px;bottom:12px}
+
+.match-job-card{
+  overflow:hidden;
+  will-change:transform,opacity,height;
+  transition:
+    padding .9s cubic-bezier(.22,1,.36,1),
+    border-color .75s ease,
+    box-shadow .9s cubic-bezier(.22,1,.36,1),
+    background .75s ease,
+    opacity .75s ease;
+}
+.match-job-card .match-job-badge,
+.match-job-card .match-job-meta,
+.match-job-card .match-job-summary,
+.match-job-card .match-job-reasons,
+.match-job-card .match-score-ring{
+  transition:
+    opacity .58s ease,
+    transform .82s cubic-bezier(.22,1,.36,1),
+    max-height .9s cubic-bezier(.22,1,.36,1),
+    margin .9s cubic-bezier(.22,1,.36,1),
+    visibility 0s linear .72s;
+}
+.match-job-card:not(.is-active) .match-job-badge,
+.match-job-card:not(.is-active) .match-job-meta,
+.match-job-card:not(.is-active) .match-job-summary,
+.match-job-card:not(.is-active) .match-job-reasons,
+.match-job-card:not(.is-active) .match-score-ring{
+  display:flex;
+  opacity:0;
+  visibility:hidden;
+  max-height:0;
+  margin-top:0;
+  margin-bottom:0;
+  transform:translateY(-10px) scale(.98);
+  pointer-events:none;
+  overflow:hidden;
+}
+.match-job-card:not(.is-active) .match-job-badge,.match-job-card:not(.is-active) .match-score-ring{display:block}
+.match-job-card.is-active .match-job-badge,
+.match-job-card.is-active .match-job-meta,
+.match-job-card.is-active .match-job-summary,
+.match-job-card.is-active .match-job-reasons,
+.match-job-card.is-active .match-score-ring{
+  opacity:1;
+  visibility:visible;
+  transform:none;
+  transition-delay:.12s,0s,0s,0s,0s;
+}
+.match-job-card.is-active .match-job-meta{max-height:80px}
+.match-job-card.is-active .match-job-summary{max-height:110px}
+.match-job-card.is-active .match-job-reasons{max-height:90px}
+.match-job-card.is-active .match-job-badge,.match-job-card.is-active .match-score-ring{max-height:80px}
+.match-showcase.is-changing .match-job-card.is-active{opacity:1;transform:none}
+
+@keyframes matchAmbientDrift{
+  0%{background-position:0% 0%,100% 0%,70% 100%,0 0}
+  100%{background-position:8% 7%,92% 9%,62% 88%,0 0}
+}
+@keyframes matchFieldRotate{to{transform:rotate(360deg) scale(1.03)}}
+
+@media(max-width:1100px){
+  .match-profile-chip--resume{left:-48px}
+  .match-profile-chip--skills{left:-42px}
+  .match-profile-chip--ready{right:-56px}
+}
+@media(max-width:780px){
+  .match-showcase{animation-duration:22s}
+  .match-showcase:after{opacity:.32}
+  .match-showcase__particles{opacity:.72}
+  .match-job-card:not(.is-active) .match-job-meta,
+  .match-job-card:not(.is-active) .match-job-summary,
+  .match-job-card:not(.is-active) .match-job-reasons{display:flex}
+}
+@media(prefers-reduced-motion:reduce){
+  .match-showcase,.match-showcase:after{animation:none!important}
+}
