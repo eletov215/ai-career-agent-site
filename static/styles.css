@@ -3115,7 +3115,7 @@ body.resume-reader-open{overflow:hidden}
   }
   .nav-item-icon svg{width:19px;height:19px;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
   .nav-item-icon--career{background:#f0edff;color:#6250d9}
-  .nav-item-icon--search{background:#f3f5fa;color:#39384d}
+  .nav-item-icon--search{background:#f0edff;color:#6250d9}
   .nav-item-icon--logo{overflow:hidden;background:#fff;box-shadow:inset 0 0 0 1px rgba(45,46,74,.06)}
   .nav-item-icon--logo img{display:block;width:24px;height:24px;object-fit:contain}
   .site-nav .nav-links .nav-cta{
