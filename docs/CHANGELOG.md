@@ -139,3 +139,10 @@
 - Кнопки переключения страниц увеличены и приведены к фирменному круглому стилю.
 - Панель навигации вынесена ниже листа A4, чтобы не перекрывать текст предпросмотра.
 - Добавлены адаптивные отступы для телефона и планшета.
+
+## Mobile resume preview refinement
+- Reduced the mobile preview toolbar height and placed Open/PDF actions in one compact row.
+- Added safe margins around the A4 thumbnail on phones and tablets.
+- Removed excess internal spacing from the preview panel.
+- Reduced the mobile “Continue interview” area to a compact action button.
+- Kept page navigation hidden when the resume has only one page.

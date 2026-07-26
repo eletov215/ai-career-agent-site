@@ -2685,3 +2685,113 @@ body.resume-reader-open{overflow:hidden}
   color:#fff;
   border-color:transparent;
 }
+
+/* Mobile resume preview: compact A4 thumbnail and controls */
+@media (max-width:900px){
+  .resume-preview-panel{
+    min-height:0!important;
+    grid-template-rows:auto auto auto auto!important;
+    align-content:start;
+  }
+  .resume-preview-toolbar{
+    min-height:58px;
+    padding:10px 12px!important;
+    gap:10px;
+  }
+  .resume-preview-toolbar>div:first-child{
+    gap:0;
+    min-width:0;
+  }
+  .resume-preview-toolbar>div:first-child>span{display:none}
+  .resume-preview-toolbar>div:first-child>strong{
+    font-size:17px!important;
+    line-height:1.15;
+    white-space:nowrap;
+  }
+  .resume-preview-toolbar-actions{
+    margin-left:auto;
+    gap:6px!important;
+    flex:0 0 auto;
+  }
+  .resume-preview-open-button,
+  .resume-download-button{
+    min-height:36px!important;
+    height:36px;
+    border-radius:11px!important;
+    padding:0 10px!important;
+    gap:6px!important;
+    font-size:11px!important;
+  }
+  .resume-preview-open-button svg{
+    width:16px!important;
+    height:16px!important;
+  }
+  .resume-download-button>.resume-download-icon{
+    width:18px!important;
+    height:18px!important;
+    min-width:18px!important;
+    min-height:18px!important;
+    flex-basis:18px!important;
+    padding:2px!important;
+  }
+  .resume-preview-viewport{
+    width:auto!important;
+    margin:12px 12px 0;
+    padding:12px!important;
+    aspect-ratio:794/1123!important;
+    border-radius:14px;
+    background:radial-gradient(circle at top,#f8f9fc 0,#e9eef6 74%)!important;
+    box-sizing:border-box;
+  }
+  .resume-preview-pagination-wrap{
+    min-height:0!important;
+    padding:10px 12px 2px!important;
+    background:transparent!important;
+  }
+  .resume-preview-pagination[hidden]{display:none!important}
+  .resume-mobile-return{
+    width:auto;
+    min-height:48px;
+    margin:12px 14px 14px!important;
+    padding:0 18px!important;
+    border-radius:14px!important;
+    font:800 14px/1 "Manrope",Inter,sans-serif!important;
+    box-shadow:0 9px 22px rgba(84,72,220,.2);
+  }
+}
+
+@media (max-width:620px){
+  .resume-preview-toolbar{
+    min-height:54px;
+    padding:8px 10px!important;
+  }
+  .resume-preview-toolbar>div:first-child>strong{font-size:16px!important}
+  .resume-preview-open-button,
+  .resume-download-button{
+    min-height:34px!important;
+    height:34px;
+    padding:0 8px!important;
+    border-radius:10px!important;
+  }
+  .resume-preview-open-button span{display:inline!important;font-size:10px}
+  .resume-download-button span{font-size:10px!important}
+  .resume-preview-viewport{
+    margin:10px 10px 0;
+    padding:10px!important;
+    border-radius:12px;
+  }
+  .resume-preview-pagination-wrap{padding-top:8px!important}
+  .resume-mobile-return{
+    min-height:46px;
+    margin:10px 12px 12px!important;
+    font-size:13px!important;
+  }
+}
+
+@media (max-width:390px){
+  .resume-preview-toolbar>div:first-child>strong{font-size:15px!important}
+  .resume-preview-open-button{width:34px!important;padding:0!important}
+  .resume-preview-open-button span{display:none!important}
+  .resume-download-button{padding:0 8px!important}
+  .resume-download-button span{font-size:9.5px!important}
+}
