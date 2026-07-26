@@ -22,9 +22,14 @@
 
         <div class="orbit-hero__actions">
           <a class="btn orbit-primary" href="{{ url_for('ai_career') }}">
-            <span class="orbit-primary__icon" aria-hidden="true">↑</span>
+            <span class="orbit-primary__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none">
+                <path d="M12 16V4"/>
+                <path d="m7.5 8.5 4.5-4.5 4.5 4.5"/>
+                <path d="M5 14.5v3A2.5 2.5 0 0 0 7.5 20h9a2.5 2.5 0 0 0 2.5-2.5v-3"/>
+              </svg>
+            </span>
             Загрузить резюме
-            <span aria-hidden="true">→</span>
           </a>
           <a class="btn orbit-secondary" href="{{ url_for('vacancies') }}">Найти вакансии</a>
         </div>
