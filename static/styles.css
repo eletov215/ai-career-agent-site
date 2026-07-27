@@ -6019,3 +6019,62 @@ body.resume-reader-open{overflow:hidden}
   .quick-start-card{flex-basis:88%;padding:16px}
 }
 @media(prefers-reduced-motion:reduce){.quick-start-card,.quick-start-card__arrow{transition:none!important}}
+
+/* Unified landing-page background */
+.landing-v2{
+  position:relative;
+  isolation:isolate;
+  background:#f8f7ff;
+}
+.landing-v2::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  z-index:-2;
+  pointer-events:none;
+  background:url('images/cosmic-background.png') center top / cover no-repeat;
+  opacity:.18;
+  filter:saturate(.88) brightness(.8);
+  transform:scale(1.02);
+  transform-origin:center top;
+}
+.landing-v2::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  z-index:-1;
+  pointer-events:none;
+  background:
+    linear-gradient(rgba(108,82,239,.022) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(108,82,239,.022) 1px,transparent 1px),
+    radial-gradient(circle at 78% 10%,rgba(132,103,255,.14),transparent 25%),
+    radial-gradient(circle at 14% 38%,rgba(90,144,255,.08),transparent 28%),
+    radial-gradient(circle at 84% 78%,rgba(126,94,250,.08),transparent 24%),
+    linear-gradient(180deg,rgba(255,255,255,.88) 0%,rgba(251,250,255,.92) 46%,rgba(247,245,255,.94) 100%);
+  background-size:44px 44px,44px 44px,auto,auto,auto,auto;
+  mask-image:linear-gradient(to bottom,rgba(0,0,0,.98),rgba(0,0,0,.94) 72%,rgba(0,0,0,.88) 100%);
+}
+.landing-v2 > .orbit-hero,
+.landing-v2 > .quick-start-section,
+.landing-v2 > .workflow-section,
+.landing-v2 > .workflow-showcase,
+.landing-v2 > .match-demo-section,
+.landing-v2 > .capabilities-section,
+.landing-v2 > .sources-compare-section,
+.landing-v2 > .trust-section,
+.landing-v2 > .final-cta-section,
+.landing-v2 > .hero-metrics{
+  background:transparent!important;
+}
+.landing-v2 > .capabilities-section::before{
+  opacity:.18;
+}
+
+@media(max-width:900px){
+  .landing-v2::before{background-position:center center;opacity:.16}
+  .landing-v2::after{background-size:36px 36px,36px 36px,auto,auto,auto,auto}
+}
+@media(max-width:640px){
+  .landing-v2::before{opacity:.13;transform:none}
+  .landing-v2::after{background-size:30px 30px,30px 30px,auto,auto,auto,auto}
+}
