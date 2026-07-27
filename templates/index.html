@@ -298,8 +298,8 @@
           </div>
         </div>
 
-        <div class="match-showcase__jobs" role="listbox" aria-label="Подходящие вакансии">
-          <button class="match-job-card is-active" type="button" role="option" aria-selected="true" data-match-job="product">
+        <div class="match-showcase__jobs" aria-label="Пример подходящих вакансий">
+          <button class="match-job-card is-active" type="button" aria-disabled="true" data-match-job="product">
             <span class="match-job-badge">✦ Лучшее совпадение</span>
             <span class="match-job-main">
               <img src="{{ url_for('static', filename='images/sources/hh.svg') }}" alt="HeadHunter">
@@ -315,7 +315,7 @@
             </span>
           </button>
 
-          <button class="match-job-card" type="button" role="option" aria-selected="false" data-match-job="project">
+          <button class="match-job-card" type="button" aria-disabled="true" data-match-job="project">
             <span class="match-job-badge">✦ Лучшее совпадение</span>
             <span class="match-job-main">
               <img src="{{ url_for('static', filename='images/sources/superjob.svg') }}" alt="SuperJob">
@@ -327,7 +327,7 @@
             <span class="match-job-reasons"><span><i>✓</i><b>Управление командами</b><small>Подходит ваш опыт координации проектов</small></span><span><i>✓</i><b>Формат подходит</b><small>Гибридный график соответствует предпочтениям</small></span><span><i>✓</i><b>Рост дохода</b><small>Предложение находится в ожидаемом диапазоне</small></span></span>
           </button>
 
-          <button class="match-job-card" type="button" role="option" aria-selected="false" data-match-job="analyst">
+          <button class="match-job-card" type="button" aria-disabled="true" data-match-job="analyst">
             <span class="match-job-badge">✦ Лучшее совпадение</span>
             <span class="match-job-main">
               <img src="{{ url_for('static', filename='images/sources/reed.svg') }}" alt="Reed">
@@ -700,14 +700,7 @@
 
   const matchWorkspace = document.querySelector('[data-match-workspace]');
   if (matchWorkspace) {
-    const jobs = Array.from(matchWorkspace.querySelectorAll('[data-match-job]'));
-    const bestScore = matchWorkspace.querySelector('[data-match-best-score]');
     const statNumbers = Array.from(matchWorkspace.querySelectorAll('.match-showcase__stats b'));
-    let index = 0;
-    let timer = null;
-    let pausedUntil = 0;
-    let changing = false;
-    let visible = false;
 
     const animateNumber = (element) => {
       if (!element || element.dataset.counted === 'true' || reduceMotion) return;
@@ -717,96 +710,28 @@
       const target = Number(match[1].replace(/\s/g, ''));
       const suffix = match[2];
       const start = performance.now();
-      const duration = 900;
+      const duration = 850;
       element.dataset.counted = 'true';
       const frame = (now) => {
         const progress = Math.min(1, (now - start) / duration);
         const eased = 1 - Math.pow(1 - progress, 3);
-        const current = Math.round(target * eased).toLocaleString('ru-RU');
-        element.textContent = `${current}${suffix}`;
+        element.textContent = `${Math.round(target * eased).toLocaleString('ru-RU')}${suffix}`;
         if (progress < 1) requestAnimationFrame(frame);
       };
       requestAnimationFrame(frame);
     };
 
-    const activate = (nextIndex, manual = false) => {
-      if (changing || nextIndex === index) {
-        if (manual) pausedUntil = Date.now() + 120000;
-        return;
-      }
-
-      changing = true;
-      matchWorkspace.classList.add('is-changing');
-      const firstRects = jobs.map((job) => job.getBoundingClientRect());
-
-      index = nextIndex;
-      jobs.forEach((job, i) => {
-        const active = i === index;
-        job.classList.toggle('is-active', active);
-        job.setAttribute('aria-selected', String(active));
-      });
-
-      const activeScore = jobs[index].querySelector('.match-job-main > b');
-      if (bestScore && activeScore) bestScore.textContent = activeScore.textContent;
-
-      // FLIP: cards change size and position as one continuous, physical stack.
-      const animations = jobs.map((job, i) => {
-        const last = job.getBoundingClientRect();
-        const first = firstRects[i];
-        const dx = first.left - last.left;
-        const dy = first.top - last.top;
-        const sx = first.width / Math.max(last.width, 1);
-        const sy = first.height / Math.max(last.height, 1);
-        if (reduceMotion || (Math.abs(dx) < 0.5 && Math.abs(dy) < 0.5 && Math.abs(sx - 1) < 0.01 && Math.abs(sy - 1) < 0.01)) return null;
-        return job.animate([
-          { transform: `translate(${dx}px, ${dy}px) scale(${sx}, ${sy})`, opacity: i === index ? 0.68 : 0.82 },
-          { transform: 'translate(0, 0) scale(1, 1)', opacity: i === index ? 1 : 0.78 }
-        ], {
-          duration: 1050,
-          easing: 'cubic-bezier(0.22, 1, 0.36, 1)',
-          fill: 'both'
-        });
-      }).filter(Boolean);
-
-      if (window.matchMedia('(max-width: 780px)').matches) {
-        jobs[index].scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'nearest', inline: 'center' });
-      }
-
-      Promise.allSettled(animations.map((animation) => animation.finished)).finally(() => {
-        animations.forEach((animation) => animation.cancel());
-        matchWorkspace.classList.remove('is-changing');
-        changing = false;
-      });
-
-      if (!animations.length) {
-        matchWorkspace.classList.remove('is-changing');
-        changing = false;
-      }
-      if (manual) pausedUntil = Date.now() + 120000;
-    };
-
-    jobs.forEach((job, i) => job.addEventListener('click', () => activate(i, true)));
-
     if ('IntersectionObserver' in window) {
       const observer = new IntersectionObserver((entries) => {
-        visible = entries.some((entry) => entry.isIntersecting);
-        if (visible) {
-          matchWorkspace.classList.add('is-inview');
-          statNumbers.forEach((number, i) => window.setTimeout(() => animateNumber(number), 1500 + i * 180));
-        }
-      }, { threshold: 0.28 });
+        if (!entries.some((entry) => entry.isIntersecting)) return;
+        matchWorkspace.classList.add('is-inview');
+        statNumbers.forEach((number, i) => window.setTimeout(() => animateNumber(number), 350 + i * 120));
+        observer.disconnect();
+      }, { threshold: 0.25 });
       observer.observe(matchWorkspace);
     } else {
-      visible = true;
       matchWorkspace.classList.add('is-inview');
       statNumbers.forEach(animateNumber);
-    }
-
-    if (!reduceMotion) {
-      timer = window.setInterval(() => {
-        if (!visible || Date.now() < pausedUntil || document.hidden || changing) return;
-        activate((index + 1) % jobs.length, false);
-      }, 9000);
     }
   }
 

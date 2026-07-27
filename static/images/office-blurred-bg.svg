@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#dfe7f4"/>
+      <stop offset="0.48" stop-color="#f4f3fa"/>
+      <stop offset="1" stop-color="#d8e2ed"/>
+    </linearGradient>
+    <linearGradient id="window" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f9fcff" stop-opacity=".96"/>
+      <stop offset="1" stop-color="#bfcfe0" stop-opacity=".55"/>
+    </linearGradient>
+    <filter id="soft" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="9"/>
+    </filter>
+    <filter id="softer" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="18"/>
+    </filter>
+  </defs>
+  <rect width="1600" height="900" fill="url(#bg)"/>
+  <g filter="url(#soft)" opacity=".92">
+    <rect x="40" y="20" width="420" height="515" rx="22" fill="url(#window)"/>
+    <rect x="485" y="20" width="420" height="515" rx="22" fill="url(#window)"/>
+    <rect x="930" y="20" width="420" height="515" rx="22" fill="url(#window)"/>
+    <rect x="1375" y="20" width="210" height="515" rx="22" fill="url(#window)"/>
+    <g stroke="#8ea2ba" stroke-opacity=".38" stroke-width="14">
+      <path d="M250 30v500M695 30v500M1140 30v500M1480 30v500"/>
+      <path d="M45 275h1540"/>
+    </g>
+    <rect x="60" y="570" width="650" height="72" rx="24" fill="#8f8a9d" fill-opacity=".34"/>
+    <rect x="830" y="585" width="650" height="68" rx="24" fill="#868395" fill-opacity=".3"/>
+    <rect x="185" y="645" width="24" height="180" rx="12" fill="#777485" fill-opacity=".34"/>
+    <rect x="570" y="645" width="24" height="180" rx="12" fill="#777485" fill-opacity=".34"/>
+    <rect x="970" y="650" width="24" height="170" rx="12" fill="#777485" fill-opacity=".32"/>
+    <rect x="1375" y="650" width="24" height="170" rx="12" fill="#777485" fill-opacity=".32"/>
+    <rect x="250" y="505" width="190" height="102" rx="16" fill="#677589" fill-opacity=".26"/>
+    <rect x="1030" y="520" width="210" height="105" rx="16" fill="#66758b" fill-opacity=".24"/>
+  </g>
+  <g filter="url(#softer)" opacity=".72">
+    <ellipse cx="1500" cy="650" rx="90" ry="170" fill="#5f8b73"/>
+    <ellipse cx="1435" cy="590" rx="70" ry="125" fill="#6fa080"/>
+    <ellipse cx="1540" cy="540" rx="65" ry="115" fill="#7ba48a"/>
+    <rect x="1482" y="650" width="30" height="165" rx="15" fill="#56685a"/>
+    <ellipse cx="85" cy="680" rx="85" ry="155" fill="#769382"/>
+    <ellipse cx="130" cy="610" rx="68" ry="120" fill="#86a28e"/>
+  </g>
+  <rect width="1600" height="900" fill="#ffffff" fill-opacity=".34"/>
+  <rect width="1600" height="900" fill="url(#bg)" fill-opacity=".12"/>
+</svg>
