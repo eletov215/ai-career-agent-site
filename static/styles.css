@@ -6020,39 +6020,49 @@ body.resume-reader-open{overflow:hidden}
 }
 @media(prefers-reduced-motion:reduce){.quick-start-card,.quick-start-card__arrow{transition:none!important}}
 
-/* Unified landing-page background */
+
+/* Stage 8: light cosmic depth background — variant 2 */
 .landing-v2{
   position:relative;
   isolation:isolate;
-  background:#f8f7ff;
+  overflow:clip;
+  background:#f8f6ff;
 }
-.landing-v2::before{
-  content:"";
+.landing-cosmos{
+  position:fixed;
+  inset:0;
+  z-index:0;
+  pointer-events:none;
+  overflow:hidden;
+}
+.landing-cosmos__image,
+.landing-cosmos__veil,
+.landing-cosmos__glow{
   position:absolute;
   inset:0;
-  z-index:-2;
-  pointer-events:none;
-  background:url('images/cosmic-background.png') center top / cover no-repeat;
-  opacity:.18;
-  filter:saturate(.88) brightness(.8);
-  transform:scale(1.02);
-  transform-origin:center top;
 }
-.landing-v2::after{
-  content:"";
-  position:absolute;
-  inset:0;
-  z-index:-1;
-  pointer-events:none;
+.landing-cosmos__image{
+  inset:-4%;
+  background:url("images/backgrounds/cosmic-depth-variant-2.webp") center center / cover no-repeat;
+  opacity:.34;
+  filter:saturate(.82) brightness(1.06) contrast(.92) blur(.35px);
+  transform:scale(1.05);
+}
+.landing-cosmos__veil{
   background:
-    linear-gradient(rgba(108,82,239,.022) 1px,transparent 1px),
-    linear-gradient(90deg,rgba(108,82,239,.022) 1px,transparent 1px),
-    radial-gradient(circle at 78% 10%,rgba(132,103,255,.14),transparent 25%),
-    radial-gradient(circle at 14% 38%,rgba(90,144,255,.08),transparent 28%),
-    radial-gradient(circle at 84% 78%,rgba(126,94,250,.08),transparent 24%),
-    linear-gradient(180deg,rgba(255,255,255,.88) 0%,rgba(251,250,255,.92) 46%,rgba(247,245,255,.94) 100%);
-  background-size:44px 44px,44px 44px,auto,auto,auto,auto;
-  mask-image:linear-gradient(to bottom,rgba(0,0,0,.98),rgba(0,0,0,.94) 72%,rgba(0,0,0,.88) 100%);
+    linear-gradient(180deg,rgba(255,255,255,.72) 0%,rgba(251,249,255,.76) 46%,rgba(248,246,255,.80) 100%),
+    radial-gradient(circle at 50% 18%,rgba(255,255,255,.46),transparent 34%),
+    radial-gradient(circle at 14% 68%,rgba(255,255,255,.38),transparent 28%);
+}
+.landing-cosmos__glow{
+  background:
+    radial-gradient(circle at 82% 14%,rgba(115,78,242,.10),transparent 22%),
+    radial-gradient(circle at 18% 46%,rgba(87,135,255,.07),transparent 24%),
+    radial-gradient(circle at 76% 78%,rgba(131,92,248,.08),transparent 26%);
+}
+.landing-v2 > section{
+  position:relative;
+  z-index:1;
 }
 .landing-v2 > .orbit-hero,
 .landing-v2 > .quick-start-section,
@@ -6066,15 +6076,13 @@ body.resume-reader-open{overflow:hidden}
 .landing-v2 > .hero-metrics{
   background:transparent!important;
 }
-.landing-v2 > .capabilities-section::before{
-  opacity:.18;
+.landing-v2 > .orbit-hero::before{opacity:.34}
+.landing-v2 > .capabilities-section::before{opacity:.13}
+@media(max-width:1024px){
+  .landing-cosmos__image{opacity:.29;transform:scale(1.08);background-position:center center}
+  .landing-cosmos__veil{background:linear-gradient(180deg,rgba(255,255,255,.78),rgba(249,247,255,.82))}
 }
-
-@media(max-width:900px){
-  .landing-v2::before{background-position:center center;opacity:.16}
-  .landing-v2::after{background-size:36px 36px,36px 36px,auto,auto,auto,auto}
-}
-@media(max-width:640px){
-  .landing-v2::before{opacity:.13;transform:none}
-  .landing-v2::after{background-size:30px 30px,30px 30px,auto,auto,auto,auto}
+@media(max-width:720px){
+  .landing-cosmos__image{opacity:.22;filter:saturate(.78) brightness(1.08) contrast(.9) blur(.5px);transform:scale(1.12)}
+  .landing-cosmos__veil{background:linear-gradient(180deg,rgba(255,255,255,.84),rgba(248,246,255,.87))}
 }
