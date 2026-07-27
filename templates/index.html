@@ -426,6 +426,70 @@
     </div>
   </section>
 
+  <section class="sources-compare-section scroll-story-section" data-reveal-section>
+    <div class="container">
+      <div class="section-heading centered-heading sources-compare-heading scroll-reveal" data-reveal="rise">
+        <span class="section-kicker">Все источники в одном месте</span>
+        <h2>Один запрос вместо десятков открытых вкладок</h2>
+        <p>AI Career Agent собирает вакансии из разных источников, приводит их к единому формату и помогает быстрее сравнивать подходящие предложения.</p>
+      </div>
+
+      <div class="sources-compare scroll-reveal" data-reveal="shell" data-sources-compare>
+        <div class="sources-compare__switch" role="tablist" aria-label="Сравнение способов поиска вакансий">
+          <button class="is-active" type="button" role="tab" aria-selected="true" data-compare-tab="manual">Обычный поиск</button>
+          <button type="button" role="tab" aria-selected="false" data-compare-tab="agent">С AI Career Agent</button>
+        </div>
+
+        <article class="sources-compare__panel sources-compare__panel--manual is-active" data-compare-panel="manual">
+          <div class="sources-compare__label"><span class="sources-compare__label-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 5.5h16v13H4z"/><path d="M4 9h16M7 7h.01M10 7h.01M13 7h.01"/></svg></span><span><b>Обычный поиск</b><small>Разные сайты, фильтры и форматы</small></span></div>
+          <div class="manual-browser-stack" aria-hidden="true">
+            <div class="manual-browser manual-browser--hh">
+              <div class="manual-browser__top"><i></i><i></i><i></i><img src="{{ url_for('static', filename='images/sources/hh.svg') }}" alt=""></div>
+              <div class="manual-browser__body"><span class="manual-search">Product manager</span><span class="manual-line manual-line--wide"></span><span class="manual-line"></span><span class="manual-line manual-line--short"></span></div>
+            </div>
+            <div class="manual-browser manual-browser--sj">
+              <div class="manual-browser__top"><i></i><i></i><i></i><img src="{{ url_for('static', filename='images/sources/superjob.svg') }}" alt=""></div>
+              <div class="manual-browser__body"><span class="manual-search">Product manager</span><span class="manual-line manual-line--wide"></span><span class="manual-line"></span><span class="manual-line manual-line--short"></span></div>
+            </div>
+            <div class="manual-browser manual-browser--reed">
+              <div class="manual-browser__top"><i></i><i></i><i></i><img src="{{ url_for('static', filename='images/sources/reed.svg') }}" alt=""></div>
+              <div class="manual-browser__body"><span class="manual-search">Product manager</span><span class="manual-line manual-line--wide"></span><span class="manual-line"></span><span class="manual-line manual-line--short"></span></div>
+            </div>
+          </div>
+          <ul class="sources-compare__points">
+            <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7l10 10M17 7 7 17"/></svg>Повторяющиеся фильтры и запросы</li>
+            <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7l10 10M17 7 7 17"/></svg>Разные форматы карточек и зарплат</li>
+            <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7l10 10M17 7 7 17"/></svg>Ручное сравнение каждого предложения</li>
+          </ul>
+        </article>
+
+        <div class="sources-compare__bridge" aria-hidden="true">
+          <span><svg viewBox="0 0 24 24"><path d="M5 12h14M14 7l5 5-5 5"/></svg></span>
+          <small>Собираем в одну ленту</small>
+        </div>
+
+        <article class="sources-compare__panel sources-compare__panel--agent" data-compare-panel="agent">
+          <div class="sources-compare__label"><span class="sources-compare__label-icon sources-compare__label-icon--brand" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3 13.7 9.3 20 11l-6.3 1.7L12 19l-1.7-6.3L4 11l6.3-1.7z"/></svg></span><span><b>AI Career Agent</b><small>Один интерфейс для всех источников</small></span></div>
+          <div class="agent-search-board" aria-hidden="true">
+            <div class="agent-search-board__toolbar"><span><svg viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6"/><path d="m15 15 4 4"/></svg>Product manager</span><i>Удалённо</i><i>от 150 000 ₽</i></div>
+            <div class="agent-source-strip"><span><img src="{{ url_for('static', filename='images/sources/hh.svg') }}" alt=""></span><span><img src="{{ url_for('static', filename='images/sources/superjob.svg') }}" alt=""></span><span class="agent-source-strip__reed"><img src="{{ url_for('static', filename='images/sources/reed.svg') }}" alt=""></span><span class="agent-source-strip__more"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M4 12h16M12 4c2.2 2.4 3.3 5.1 3.3 8S14.2 17.6 12 20M12 4C9.8 6.4 8.7 9.1 8.7 12S9.8 17.6 12 20"/></svg></span><small>и другие источники</small></div>
+            <div class="agent-result-list">
+              <div class="agent-result is-best"><span><b>Senior Product Manager</b><small>HeadHunter · удалённо</small></span><em>94%</em></div>
+              <div class="agent-result"><span><b>Product Manager</b><small>SuperJob · гибрид</small></span><em>89%</em></div>
+              <div class="agent-result"><span><b>Product Lead</b><small>Reed · remote</small></span><em>86%</em></div>
+            </div>
+          </div>
+          <ul class="sources-compare__points sources-compare__points--positive">
+            <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.2 4.2L19 7"/></svg>Один набор фильтров для всех источников</li>
+            <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.2 4.2L19 7"/></svg>Единый формат и понятное сравнение</li>
+            <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.2 4.2L19 7"/></svg>Новые источники без изменения привычного интерфейса</li>
+          </ul>
+          <p class="sources-compare__expand"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 13.6 9.4 20 11l-6.4 1.6L12 19l-1.6-6.4L4 11l6.4-1.6z"/></svg>Поддерживаемые источники расширяются</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
   <section class="landing-cta-section scroll-story-section" data-reveal-section>
     <div class="container landing-cta scroll-reveal" data-reveal="cta">
       <div>
@@ -818,6 +882,34 @@
         activateCapability(capabilityTabs[nextIndex].dataset.capabilityTab, true);
       });
     });
+  }
+
+  const sourcesCompare = document.querySelector('[data-sources-compare]');
+  if (sourcesCompare) {
+    const compareTabs = Array.from(sourcesCompare.querySelectorAll('[data-compare-tab]'));
+    const comparePanels = Array.from(sourcesCompare.querySelectorAll('[data-compare-panel]'));
+
+    const activateComparePanel = (key) => {
+      compareTabs.forEach((tab) => {
+        const active = tab.dataset.compareTab === key;
+        tab.classList.toggle('is-active', active);
+        tab.setAttribute('aria-selected', String(active));
+      });
+      comparePanels.forEach((panel) => panel.classList.toggle('is-active', panel.dataset.comparePanel === key));
+    };
+
+    compareTabs.forEach((tab) => tab.addEventListener('click', () => activateComparePanel(tab.dataset.compareTab)));
+
+    if ('IntersectionObserver' in window) {
+      const compareObserver = new IntersectionObserver((entries) => {
+        if (!entries.some((entry) => entry.isIntersecting)) return;
+        sourcesCompare.classList.add('is-inview');
+        compareObserver.disconnect();
+      }, { threshold: 0.22 });
+      compareObserver.observe(sourcesCompare);
+    } else {
+      sourcesCompare.classList.add('is-inview');
+    }
   }
 
   const matchWorkspace = document.querySelector('[data-match-workspace]');
