@@ -4111,3 +4111,252 @@ body.resume-reader-open{overflow:hidden}
   .match-profile-chip{min-height:54px;padding:9px 10px}
   .match-profile-chip__icon{width:30px;height:30px;flex-basis:30px}
 }
+
+
+/* Stage 4 polish: stable profile badges and source-neutral stats copy */
+.match-showcase.match-showcase--office .match-showcase__profile{
+  overflow:hidden;
+}
+.match-showcase.match-showcase--office .match-profile-chips{
+  position:static;
+  inset:auto;
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:9px;
+  width:100%;
+  margin:12px 0 14px;
+  z-index:8;
+  pointer-events:none;
+}
+.match-showcase.match-showcase--office .match-profile-chip,
+.match-showcase.match-showcase--office .match-profile-chip--resume,
+.match-showcase.match-showcase--office .match-profile-chip--skills,
+.match-showcase.match-showcase--office .match-profile-chip--ready{
+  position:static;
+  inset:auto;
+  width:100%;
+  min-width:0;
+  max-width:none;
+  min-height:58px;
+  padding:9px 10px;
+  transform:none!important;
+  opacity:1!important;
+  animation:none!important;
+  box-sizing:border-box;
+}
+.match-showcase.match-showcase--office .match-profile-chip b{
+  min-width:0;
+  overflow-wrap:anywhere;
+  font-size:10.5px;
+  line-height:1.25;
+}
+.match-showcase.match-showcase--office .match-profile-status{
+  margin-top:0;
+}
+@media (min-width:1121px){
+  .match-showcase.match-showcase--office .match-profile-photo-wrap{
+    margin-inline:auto;
+  }
+}
+@media (max-width:1120px){
+  .match-showcase.match-showcase--office .match-profile-chips{
+    grid-template-columns:1fr;
+    max-width:320px;
+    margin-inline:auto;
+  }
+  .match-showcase.match-showcase--office .match-profile-chip{
+    min-height:50px;
+  }
+}
+@media (max-width:780px){
+  .match-showcase.match-showcase--office .match-profile-chips{
+    display:grid;
+    grid-template-columns:1fr;
+    width:min(100%,340px);
+    margin:10px auto 14px;
+  }
+}
+
+/* Stage 4: orbit markers on desktop, unified analysis panel on compact screens */
+@media (min-width:1121px){
+  .match-showcase.match-showcase--office .match-showcase__profile{
+    position:relative;
+    overflow:visible;
+  }
+  .match-showcase.match-showcase--office .match-profile-photo-wrap{
+    width:248px;
+    height:248px;
+    margin:0 auto 28px;
+  }
+  .match-showcase.match-showcase--office .match-profile-chips{
+    position:absolute;
+    top:0;
+    left:50%;
+    width:248px;
+    height:248px;
+    margin:0;
+    display:block;
+    transform:translateX(-50%);
+    pointer-events:auto;
+    z-index:12;
+  }
+  .match-showcase.match-showcase--office .match-profile-chip,
+  .match-showcase.match-showcase--office .match-profile-chip--resume,
+  .match-showcase.match-showcase--office .match-profile-chip--skills,
+  .match-showcase.match-showcase--office .match-profile-chip--ready{
+    position:absolute;
+    inset:auto;
+    width:42px;
+    height:42px;
+    min-width:42px;
+    min-height:42px;
+    max-width:none;
+    padding:0;
+    border-radius:50%;
+    justify-content:center;
+    border:1px solid rgba(112,78,236,.22);
+    background:rgba(255,255,255,.96);
+    box-shadow:0 12px 28px rgba(73,52,156,.18),0 0 0 5px rgba(122,84,246,.08);
+    cursor:default;
+    pointer-events:auto;
+    transition:transform .28s ease,box-shadow .28s ease;
+  }
+  .match-showcase.match-showcase--office .match-profile-chip:hover,
+  .match-showcase.match-showcase--office .match-profile-chip:focus-within{
+    transform:translateY(-3px)!important;
+    box-shadow:0 16px 34px rgba(73,52,156,.24),0 0 0 7px rgba(122,84,246,.1);
+  }
+  .match-showcase.match-showcase--office .match-profile-chip__icon{
+    width:42px;
+    height:42px;
+    flex:0 0 42px;
+    background:transparent;
+  }
+  .match-showcase.match-showcase--office .match-profile-chip__icon svg{
+    width:20px;
+    height:20px;
+  }
+  .match-showcase.match-showcase--office .match-profile-chip b{
+    position:absolute;
+    left:50%;
+    top:calc(100% + 12px);
+    min-width:154px;
+    max-width:174px;
+    padding:10px 12px;
+    border:1px solid rgba(102,74,218,.14);
+    border-radius:13px;
+    background:rgba(255,255,255,.97);
+    box-shadow:0 14px 34px rgba(55,42,118,.16);
+    color:#202239;
+    font-size:11px;
+    line-height:1.35;
+    text-align:center;
+    white-space:normal;
+    opacity:0;
+    visibility:hidden;
+    transform:translate(-50%,-4px);
+    transition:opacity .24s ease,transform .24s ease,visibility .24s ease;
+    pointer-events:none;
+  }
+  .match-showcase.match-showcase--office .match-profile-chip:hover b,
+  .match-showcase.match-showcase--office .match-profile-chip:focus-within b{
+    opacity:1;
+    visibility:visible;
+    transform:translate(-50%,0);
+  }
+  .match-showcase.match-showcase--office .match-profile-chip--resume{
+    left:8px;
+    top:38px;
+  }
+  .match-showcase.match-showcase--office .match-profile-chip--skills{
+    left:28px;
+    bottom:24px;
+  }
+  .match-showcase.match-showcase--office .match-profile-chip--ready{
+    right:8px;
+    bottom:42px;
+  }
+  .match-showcase.match-showcase--office .match-profile-status{
+    margin-top:0;
+  }
+}
+
+@media (max-width:1120px){
+  .match-showcase.match-showcase--office .match-showcase__profile{
+    overflow:hidden;
+  }
+  .match-showcase.match-showcase--office .match-profile-chips{
+    position:static;
+    width:min(100%,390px);
+    margin:12px auto 16px;
+    padding:14px 15px;
+    display:grid;
+    grid-template-columns:1fr;
+    gap:0;
+    transform:none;
+    border:1px solid rgba(100,73,214,.14);
+    border-radius:18px;
+    background:linear-gradient(145deg,rgba(255,255,255,.94),rgba(246,242,255,.9));
+    box-shadow:0 18px 42px rgba(62,48,118,.11);
+    pointer-events:none;
+  }
+  .match-showcase.match-showcase--office .match-profile-chips::before{
+    content:"Результат анализа";
+    display:block;
+    margin:0 0 8px;
+    color:#252741;
+    font-size:13px;
+    font-weight:800;
+    letter-spacing:-.01em;
+  }
+  .match-showcase.match-showcase--office .match-profile-chip,
+  .match-showcase.match-showcase--office .match-profile-chip--resume,
+  .match-showcase.match-showcase--office .match-profile-chip--skills,
+  .match-showcase.match-showcase--office .match-profile-chip--ready{
+    position:static;
+    width:100%;
+    min-width:0;
+    max-width:none;
+    min-height:0;
+    padding:8px 0;
+    display:flex;
+    justify-content:flex-start;
+    border:0;
+    border-radius:0;
+    background:transparent;
+    box-shadow:none;
+  }
+  .match-showcase.match-showcase--office .match-profile-chip + .match-profile-chip{
+    border-top:1px solid rgba(102,74,218,.1);
+  }
+  .match-showcase.match-showcase--office .match-profile-chip__icon{
+    width:30px;
+    height:30px;
+    flex:0 0 30px;
+  }
+  .match-showcase.match-showcase--office .match-profile-chip b{
+    position:static;
+    min-width:0;
+    max-width:none;
+    padding:0;
+    border:0;
+    background:transparent;
+    box-shadow:none;
+    color:#34374f;
+    font-size:12px;
+    line-height:1.35;
+    text-align:left;
+    white-space:normal;
+    opacity:1;
+    visibility:visible;
+    transform:none;
+  }
+}
+
+@media (max-width:780px){
+  .match-showcase.match-showcase--office .match-profile-chips{
+    width:min(100%,340px);
+    padding:13px 14px;
+    border-radius:16px;
+  }
+}
