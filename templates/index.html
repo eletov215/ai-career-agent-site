@@ -350,6 +350,82 @@
     </div>
   </section>
 
+
+  <section class="capabilities-section scroll-story-section" data-reveal-section>
+    <div class="container">
+      <div class="capabilities-heading scroll-reveal">
+        <span class="section-kicker">Возможности AI Career Agent</span>
+        <h2>Всё необходимое для поиска работы — в одном сервисе</h2>
+        <p>Находите вакансии, улучшайте резюме, оценивайте соответствие и держите процесс откликов под контролем.</p>
+      </div>
+
+      <div class="capabilities-console scroll-reveal" data-capabilities-console>
+        <div class="capabilities-tabs" role="tablist" aria-label="Возможности AI Career Agent">
+          <button class="capability-tab is-active" type="button" role="tab" aria-selected="true" aria-controls="capability-panel-search" id="capability-tab-search" data-capability-tab="search">
+            <span class="capability-tab__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m15.5 15.5 4 4M5 7h11M5 10.5h7"/></svg></span>
+            <span><b>Единый поиск вакансий</b><small>Все источники в одной ленте</small></span>
+          </button>
+          <button class="capability-tab" type="button" role="tab" aria-selected="false" aria-controls="capability-panel-resume" id="capability-tab-resume" data-capability-tab="resume" tabindex="-1">
+            <span class="capability-tab__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 3.5h8l4 4V20H6z"/><path d="M14 3.5V8h4M9 12h6M9 15.5h4"/></svg></span>
+            <span><b>Анализ резюме</b><small>Сильные стороны и рекомендации</small></span>
+          </button>
+          <button class="capability-tab" type="button" role="tab" aria-selected="false" aria-controls="capability-panel-match" id="capability-tab-match" data-capability-tab="match" tabindex="-1">
+            <span class="capability-tab__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3.5"/><path d="m15.5 8.5 4-4M16.5 4.5h3v3"/></svg></span>
+            <span><b>Оценка соответствия</b><small>Понятное объяснение совпадения</small></span>
+          </button>
+          <button class="capability-tab" type="button" role="tab" aria-selected="false" aria-controls="capability-panel-letter" id="capability-tab-letter" data-capability-tab="letter" tabindex="-1">
+            <span class="capability-tab__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 5.5h16v13H4z"/><path d="m5 7 7 5 7-5M15.5 16.5l2-2"/></svg></span>
+            <span><b>Сопроводительные письма</b><small>Персональный текст под вакансию</small></span>
+          </button>
+          <button class="capability-tab" type="button" role="tab" aria-selected="false" aria-controls="capability-panel-saved" id="capability-tab-saved" data-capability-tab="saved" tabindex="-1">
+            <span class="capability-tab__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 4h12v17l-6-3.5L6 21z"/><path d="M9 8h6"/></svg></span>
+            <span><b>Сохранённые вакансии</b><small>Важные предложения под рукой</small></span>
+          </button>
+          <button class="capability-tab" type="button" role="tab" aria-selected="false" aria-controls="capability-panel-tracker" id="capability-tab-tracker" data-capability-tab="tracker" tabindex="-1">
+            <span class="capability-tab__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3.5" y="4" width="17" height="16" rx="3"/><path d="M8 9h8M8 13h5M8 17h8"/></svg></span>
+            <span><b>Контроль откликов</b><small>Статусы и следующие действия</small></span>
+          </button>
+        </div>
+
+        <div class="capabilities-stage">
+          <article class="capability-panel is-active" role="tabpanel" id="capability-panel-search" aria-labelledby="capability-tab-search" data-capability-panel="search">
+            <div class="capability-panel__copy"><span>Единый поиск</span><h3>Вакансии из разных источников — в одной ленте</h3><p>Настройте запрос один раз и сравнивайте предложения без десятков открытых вкладок.</p></div>
+            <div class="product-preview product-preview--search" aria-hidden="true">
+              <div class="preview-toolbar"><span class="preview-search"><svg viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6"/><path d="m15 15 4 4"/></svg>Product manager</span><span class="preview-filter">Удалённо</span><span class="preview-filter">от 150 000 ₽</span></div>
+              <div class="source-row"><span class="source-pill source-pill--hh">hh</span><span class="source-pill source-pill--sj">SJ</span><span class="source-pill source-pill--reed">Reed</span><small>Найдено 124 предложения</small></div>
+              <div class="vacancy-demo-list"><div><b>Senior Product Manager</b><span>180 000–230 000 ₽</span><em>94%</em></div><div><b>Product Manager</b><span>Гибрид · SuperJob</span><em>89%</em></div><div><b>Product Lead</b><span>Удалённо · Reed</span><em>86%</em></div></div>
+            </div>
+          </article>
+
+          <article class="capability-panel" role="tabpanel" id="capability-panel-resume" aria-labelledby="capability-tab-resume" data-capability-panel="resume" hidden>
+            <div class="capability-panel__copy"><span>Анализ резюме</span><h3>Поймите, что в резюме уже работает, а что стоит усилить</h3><p>AI выделит сильные стороны, ключевые навыки и даст практичные рекомендации.</p></div>
+            <div class="product-preview product-preview--resume" aria-hidden="true"><div class="resume-sheet"><div class="resume-avatar"></div><div class="resume-lines"><i></i><i></i><i></i></div><div class="resume-score">82<small>/100</small></div></div><div class="resume-insights"><span><b>12</b> сильных навыков</span><span><b>3</b> рекомендации</span><span><b>Высокая</b> читаемость</span></div><div class="recommendation-card"><svg viewBox="0 0 24 24"><path d="M12 3 14 9l6 2-6 2-2 6-2-6-6-2 6-2z"/></svg><p><b>Усилите описание результатов</b><small>Добавьте измеримые достижения в двух последних местах работы.</small></p></div></div>
+          </article>
+
+          <article class="capability-panel" role="tabpanel" id="capability-panel-match" aria-labelledby="capability-tab-match" data-capability-panel="match" hidden>
+            <div class="capability-panel__copy"><span>Оценка соответствия</span><h3>Сразу видьте, почему вакансия подходит именно вам</h3><p>Не только процент — AI объяснит совпадения и покажет возможные пробелы.</p></div>
+            <div class="product-preview product-preview--match" aria-hidden="true"><div class="match-score"><strong>92%</strong><small>совпадение</small></div><div class="match-reasons"><span class="is-positive">Навыки совпадают</span><span class="is-positive">Опыт подходит</span><span class="is-positive">Доход соответствует</span><span class="is-neutral">Английский B2 желателен</span></div><div class="match-summary">Вы соответствуете 8 из 9 ключевых требований вакансии.</div></div>
+          </article>
+
+          <article class="capability-panel" role="tabpanel" id="capability-panel-letter" aria-labelledby="capability-tab-letter" data-capability-panel="letter" hidden>
+            <div class="capability-panel__copy"><span>Сопроводительное письмо</span><h3>Персональный отклик без шаблонных фраз</h3><p>AI учитывает ваш опыт и требования вакансии. Финальный текст всегда остаётся под вашим контролем.</p></div>
+            <div class="product-preview product-preview--letter" aria-hidden="true"><div class="letter-header"><span>Для вакансии: Senior Product Manager</span><div><b>Деловой</b><b>Краткий</b></div></div><div class="letter-sheet"><p>Здравствуйте!</p><p>Меня заинтересовала позиция Senior Product Manager. Мой опыт запуска B2B-продуктов и работы с аналитикой соответствует ключевым задачам роли…</p><i></i><i></i></div><div class="letter-actions"><span>Сгенерировано AI</span><button type="button">Редактировать</button></div></div>
+          </article>
+
+          <article class="capability-panel" role="tabpanel" id="capability-panel-saved" aria-labelledby="capability-tab-saved" data-capability-panel="saved" hidden>
+            <div class="capability-panel__copy"><span>Сохранённые вакансии</span><h3>Собирайте лучшие варианты и возвращайтесь к ним позже</h3><p>Все важные предложения хранятся в одном месте вместе с заметками и сроками.</p></div>
+            <div class="product-preview product-preview--saved" aria-hidden="true"><div class="saved-card"><span class="saved-logo saved-logo--hh">hh</span><p><b>Senior Product Manager</b><small>До 230 000 ₽ · удалённо</small></p><em>Сегодня</em></div><div class="saved-card"><span class="saved-logo saved-logo--sj">SJ</span><p><b>Product Manager</b><small>Гибрид · Москва</small></p><em>Вчера</em></div><div class="saved-card"><span class="saved-logo saved-logo--reed">R</span><p><b>Product Lead</b><small>Remote · United Kingdom</small></p><em>2 дня</em></div></div>
+          </article>
+
+          <article class="capability-panel" role="tabpanel" id="capability-panel-tracker" aria-labelledby="capability-tab-tracker" data-capability-panel="tracker" hidden>
+            <div class="capability-panel__copy"><span>Контроль откликов</span><h3>Весь путь от сохранения до собеседования — перед глазами</h3><p>Статусы, сроки и следующие действия помогают не потерять перспективные возможности.</p></div>
+            <div class="product-preview product-preview--tracker" aria-hidden="true"><div class="tracker-flow"><span class="is-done"><i>3</i>Сохранено</span><span class="is-done"><i>2</i>Отклик отправлен</span><span class="is-current"><i>1</i>Просмотрено</span><span><i>0</i>Собеседование</span></div><div class="tracker-note"><b>Следующее действие</b><span>Напомнить о вакансии Product Manager через 2 дня</span></div></div>
+          </article>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <section class="landing-cta-section scroll-story-section" data-reveal-section>
     <div class="container landing-cta scroll-reveal" data-reveal="cta">
       <div>
@@ -694,6 +770,53 @@
       targetY = 0;
       orbitScene.classList.remove('is-parallax-active');
       requestParallaxFrame();
+    });
+  }
+
+
+  const capabilitiesConsole = document.querySelector('[data-capabilities-console]');
+  if (capabilitiesConsole) {
+    const capabilityTabs = Array.from(capabilitiesConsole.querySelectorAll('[data-capability-tab]'));
+    const capabilityPanels = Array.from(capabilitiesConsole.querySelectorAll('[data-capability-panel]'));
+
+    const activateCapability = (key, focusTab = false) => {
+      const selectedTab = capabilityTabs.find((tab) => tab.dataset.capabilityTab === key);
+      const selectedPanel = capabilityPanels.find((panel) => panel.dataset.capabilityPanel === key);
+      if (!selectedTab || !selectedPanel || selectedTab.classList.contains('is-active')) return;
+
+      capabilityTabs.forEach((tab) => {
+        const active = tab === selectedTab;
+        tab.classList.toggle('is-active', active);
+        tab.setAttribute('aria-selected', String(active));
+        tab.tabIndex = active ? 0 : -1;
+      });
+
+      capabilityPanels.forEach((panel) => {
+        panel.classList.remove('is-active', 'is-entering');
+        panel.hidden = panel !== selectedPanel;
+      });
+
+      selectedPanel.hidden = false;
+      selectedPanel.classList.add('is-active');
+      if (!reduceMotion) {
+        void selectedPanel.offsetWidth;
+        selectedPanel.classList.add('is-entering');
+      }
+      if (focusTab) selectedTab.focus({ preventScroll: true });
+    };
+
+    capabilityTabs.forEach((tab, index) => {
+      tab.addEventListener('click', () => activateCapability(tab.dataset.capabilityTab));
+      tab.addEventListener('keydown', (event) => {
+        if (!['ArrowDown', 'ArrowUp', 'ArrowRight', 'ArrowLeft', 'Home', 'End'].includes(event.key)) return;
+        event.preventDefault();
+        let nextIndex = index;
+        if (event.key === 'Home') nextIndex = 0;
+        else if (event.key === 'End') nextIndex = capabilityTabs.length - 1;
+        else if (event.key === 'ArrowDown' || event.key === 'ArrowRight') nextIndex = (index + 1) % capabilityTabs.length;
+        else nextIndex = (index - 1 + capabilityTabs.length) % capabilityTabs.length;
+        activateCapability(capabilityTabs[nextIndex].dataset.capabilityTab, true);
+      });
     });
   }
 
