@@ -1,0 +1,74 @@
+/* Stage 8 — cosmic background enhancement */
+body.landing-body{
+  --site-cosmic-shift:0px;
+  background:#f7f6ff;
+  position:relative;
+  isolation:isolate;
+}
+body.landing-body > *:not(.site-cosmic-bg){
+  position:relative;
+  z-index:1;
+}
+.site-cosmic-bg{
+  position:fixed;
+  inset:0;
+  z-index:0;
+  pointer-events:none;
+  overflow:hidden;
+  opacity:0;
+  transition:opacity .45s ease;
+}
+body.landing-body .site-cosmic-bg{opacity:1;}
+.site-cosmic-bg__image,
+.site-cosmic-bg__veil,
+.site-cosmic-bg__grid,
+.site-cosmic-bg__glow{
+  position:absolute;
+  inset:0;
+}
+.site-cosmic-bg__image{
+  inset:-8% 0 -8%;
+  background:url("images/backgrounds/cosmic-background.webp") center top / cover no-repeat;
+  opacity:.42;
+  filter:saturate(1.08) brightness(.8) contrast(1.03) blur(.6px);
+  transform:translate3d(0,var(--site-cosmic-shift),0) scale(1.08);
+  transform-origin:center top;
+  will-change:transform;
+}
+.site-cosmic-bg__veil{
+  background:
+    linear-gradient(180deg, rgba(250,249,255,.72) 0%, rgba(248,246,255,.74) 24%, rgba(246,244,255,.76) 100%),
+    radial-gradient(circle at 78% 14%, rgba(127,97,255,.17), transparent 22%),
+    radial-gradient(circle at 20% 18%, rgba(120,82,255,.11), transparent 20%),
+    radial-gradient(circle at 80% 62%, rgba(114,79,246,.13), transparent 26%),
+    radial-gradient(circle at 28% 74%, rgba(85,141,255,.08), transparent 18%);
+}
+.site-cosmic-bg__grid{
+  background-image:
+    linear-gradient(rgba(104,81,229,.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(104,81,229,.05) 1px, transparent 1px);
+  background-size:44px 44px;
+  mask-image:linear-gradient(to bottom, rgba(0,0,0,.88), rgba(0,0,0,.74) 70%, rgba(0,0,0,.48) 100%);
+}
+.site-cosmic-bg__glow{
+  background:
+    radial-gradient(circle at 65% 22%, rgba(120,88,255,.16), transparent 20%),
+    radial-gradient(circle at 84% 44%, rgba(136,111,255,.12), transparent 18%),
+    radial-gradient(circle at 12% 32%, rgba(128,102,255,.09), transparent 16%);
+}
+@media (max-width: 1024px){
+  .site-cosmic-bg__image{opacity:.36; transform:translate3d(0,calc(var(--site-cosmic-shift) * .65),0) scale(1.08);}
+  .site-cosmic-bg__grid{background-size:36px 36px;}
+}
+@media (max-width: 767px){
+  .site-cosmic-bg__image{opacity:.28; filter:saturate(1.03) brightness(.82) blur(.8px); transform:translate3d(0,calc(var(--site-cosmic-shift) * .45),0) scale(1.06);}
+  .site-cosmic-bg__veil{background:
+    linear-gradient(180deg, rgba(250,249,255,.82) 0%, rgba(248,246,255,.84) 100%),
+    radial-gradient(circle at 80% 16%, rgba(127,97,255,.12), transparent 20%),
+    radial-gradient(circle at 22% 74%, rgba(85,141,255,.06), transparent 16%);
+  }
+  .site-cosmic-bg__grid{background-size:28px 28px; opacity:.72;}
+}
+@media (prefers-reduced-motion: reduce){
+  .site-cosmic-bg__image{transform:scale(1.08)!important;}
+}

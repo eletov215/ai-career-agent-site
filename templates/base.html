@@ -11,8 +11,15 @@
   <script>document.documentElement.classList.add("js");</script>
   <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='theme.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='landing-cosmic.css') }}">
 </head>
-<body>
+<body class="{% block body_class %}{% endblock %}">
+  <div class="site-cosmic-bg" aria-hidden="true">
+    <div class="site-cosmic-bg__image"></div>
+    <div class="site-cosmic-bg__veil"></div>
+    <div class="site-cosmic-bg__grid"></div>
+    <div class="site-cosmic-bg__glow"></div>
+  </div>
   <nav class="nav site-nav">
     <div class="site-nav-cosmos" aria-hidden="true">
       <span></span><span></span><span></span><span></span><span></span>
@@ -136,6 +143,7 @@
     });
   })();
   </script>
+  <script src="{{ url_for('static', filename='landing-cosmic.js') }}" defer></script>
   {% block scripts %}{% endblock %}
 </body>
 </html>
