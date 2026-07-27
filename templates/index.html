@@ -464,8 +464,19 @@
         </article>
 
         <div class="sources-compare__bridge" aria-hidden="true">
-          <span><svg viewBox="0 0 24 24"><path d="M5 12h14M14 7l5 5-5 5"/></svg></span>
-          <small>Собираем в одну ленту</small>
+          <div class="sources-flow">
+            <span class="sources-flow__source sources-flow__source--one"></span>
+            <span class="sources-flow__source sources-flow__source--two"></span>
+            <span class="sources-flow__source sources-flow__source--three"></span>
+            <span class="sources-flow__beam sources-flow__beam--left"></span>
+            <span class="sources-flow__hub">
+              <svg viewBox="0 0 24 24"><path d="M12 3 13.7 9.3 20 11l-6.3 1.7L12 19l-1.7-6.3L4 11l6.3-1.7z"/></svg>
+            </span>
+            <span class="sources-flow__beam sources-flow__beam--right"></span>
+            <span class="sources-flow__spark sources-flow__spark--one"></span>
+            <span class="sources-flow__spark sources-flow__spark--two"></span>
+          </div>
+          <small>AI объединяет источники в одну ленту</small>
         </div>
 
         <article class="sources-compare__panel sources-compare__panel--agent" data-compare-panel="agent">

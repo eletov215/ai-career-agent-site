@@ -5338,7 +5338,7 @@ body.resume-reader-open{overflow:hidden}
 .sources-compare{
   position:relative;
   display:grid;
-  grid-template-columns:minmax(0,1fr) 82px minmax(0,1fr);
+  grid-template-columns:minmax(0,1fr) 118px minmax(0,1fr);
   align-items:stretch;
   gap:18px;
   padding:24px;
@@ -5390,10 +5390,22 @@ body.resume-reader-open{overflow:hidden}
 .sources-compare__points svg{width:18px;height:18px;flex:0 0 18px;fill:none;stroke:#a0a3af;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .sources-compare__points--positive svg{stroke:#19a874}
 .sources-compare__points--positive li{color:#50566e}
-.sources-compare__bridge{position:relative;z-index:1;display:grid;place-items:center;align-content:center;gap:10px;text-align:center}
-.sources-compare__bridge span{display:grid;place-items:center;width:58px;height:58px;border-radius:50%;background:linear-gradient(145deg,#7a59f3,#5746e4);color:white;box-shadow:0 18px 36px rgba(91,67,234,.28)}
-.sources-compare__bridge svg{width:28px;height:28px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-.sources-compare__bridge small{max-width:74px;color:#6f7488;font-size:9px;line-height:1.4;font-weight:700}
+.sources-compare__bridge{position:relative;z-index:1;display:grid;place-items:center;align-content:center;gap:12px;text-align:center;padding-inline:4px}
+.sources-flow{position:relative;width:100%;height:92px}
+.sources-flow__source,.sources-flow__hub,.sources-flow__spark{position:absolute;display:block}
+.sources-flow__source{left:8px;width:10px;height:10px;border-radius:50%;background:linear-gradient(145deg,#8d74ff,#5a46e4);box-shadow:0 0 0 6px rgba(111,78,232,.08)}
+.sources-flow__source--one{top:14px}
+.sources-flow__source--two{top:40px}
+.sources-flow__source--three{top:66px}
+.sources-flow__hub{left:50%;top:50%;transform:translate(-50%,-50%);display:grid;place-items:center;width:60px;height:60px;border-radius:50%;background:linear-gradient(145deg,#7a59f3,#5746e4);color:#fff;box-shadow:0 18px 36px rgba(91,67,234,.24),0 0 0 10px rgba(111,78,232,.08)}
+.sources-flow__hub svg{width:28px;height:28px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.sources-flow__beam{position:absolute;display:block;height:2px;border-radius:999px;background:linear-gradient(90deg,rgba(111,78,232,.35),rgba(111,78,232,.9))}
+.sources-flow__beam--left{left:18px;right:52%;top:50%;transform:translateY(-50%)}
+.sources-flow__beam--right{left:52%;right:8px;top:50%;transform:translateY(-50%);background:linear-gradient(90deg,rgba(111,78,232,.95),rgba(111,78,232,.25))}
+.sources-flow__spark{width:8px;height:8px;border-radius:50%;background:#fff;box-shadow:0 0 0 4px rgba(255,255,255,.22),0 0 12px rgba(111,78,232,.35)}
+.sources-flow__spark--one{left:40%;top:22px;animation:sourcesFlowPulse 2.6s ease-in-out infinite}
+.sources-flow__spark--two{left:72%;top:56px;animation:sourcesFlowPulse 2.6s ease-in-out 1s infinite}
+.sources-compare__bridge small{max-width:110px;color:#6f7488;font-size:10px;line-height:1.45;font-weight:700}
 .agent-search-board{padding:14px;border-radius:22px;background:linear-gradient(145deg,#f3efff,#fbfaff);border:1px solid rgba(104,72,225,.10);box-shadow:inset 0 1px 0 rgba(255,255,255,.8);margin-bottom:17px}
 .agent-search-board__toolbar{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:8px;padding:10px;border-radius:14px;background:rgba(255,255,255,.82)}
 .agent-search-board__toolbar span,.agent-search-board__toolbar i{display:flex;align-items:center;min-height:34px;padding:8px 10px;border-radius:10px;background:white;border:1px solid rgba(102,74,218,.10);font-style:normal;font-size:9px;color:#656a7f}
@@ -5406,9 +5418,21 @@ body.resume-reader-open{overflow:hidden}
 @keyframes manualTabTwo{from{opacity:0;transform:translate(18px,20px) rotate(7deg)}to{opacity:.9;transform:rotate(4deg)}}
 @keyframes manualTabThree{from{opacity:0;transform:translateY(26px) rotate(-3deg)}to{opacity:1;transform:rotate(-1deg)}}
 @keyframes agentBoardIn{from{opacity:0;transform:translateY(22px) scale(.98)}to{opacity:1;transform:none}}
+@keyframes sourcesFlowPulse{0%,100%{opacity:.45;transform:scale(.8)}50%{opacity:1;transform:scale(1.05)}}
 @media(max-width:980px){
   .sources-compare{grid-template-columns:1fr;padding:20px;gap:14px}
-  .sources-compare__bridge{grid-template-columns:auto 1fr;justify-content:center;padding:2px 0}.sources-compare__bridge span{width:48px;height:48px;transform:rotate(90deg)}.sources-compare__bridge small{max-width:none;text-align:left;font-size:10px}
+  .sources-compare__bridge{grid-template-columns:auto 1fr;justify-content:center;align-items:center;padding:2px 0;text-align:left}
+  .sources-flow{width:132px;height:58px}
+  .sources-flow__source{top:50%;transform:translateY(-50%)}
+  .sources-flow__source--one{left:2px}
+  .sources-flow__source--two{left:16px}
+  .sources-flow__source--three{left:30px}
+  .sources-flow__hub{left:62%;top:50%}
+  .sources-flow__beam--left{left:36px;right:44%;top:50%}
+  .sources-flow__beam--right{left:68%;right:4px;top:50%}
+  .sources-flow__spark--one{left:46%;top:12px}
+  .sources-flow__spark--two{left:84%;top:36px}
+  .sources-compare__bridge small{max-width:none;text-align:left;font-size:10px}
   .sources-compare__panel{padding:20px}.manual-browser-stack{min-height:275px}.manual-browser{height:175px;width:72%}
 }
 @media(max-width:720px){
@@ -5418,4 +5442,4 @@ body.resume-reader-open{overflow:hidden}
 @media(max-width:460px){
   .sources-compare-heading h2{font-size:30px}.sources-compare-heading p{font-size:13px}.manual-browser-stack{min-height:235px}.manual-browser{height:150px;width:86%}.manual-browser__body{padding:13px}.sources-compare__label b{font-size:14px}.sources-compare__label small,.sources-compare__points li{font-size:10px}.agent-result{min-height:58px;padding:10px 11px}.agent-result b{font-size:11px}.agent-result em{font-size:18px}.agent-search-board{padding:10px}
 }
-@media(prefers-reduced-motion:reduce){.sources-compare.is-inview .manual-browser,.sources-compare.is-inview .agent-search-board{animation:none!important}}
+@media(prefers-reduced-motion:reduce){.sources-compare.is-inview .manual-browser,.sources-compare.is-inview .agent-search-board,.sources-flow__spark{animation:none!important}}
