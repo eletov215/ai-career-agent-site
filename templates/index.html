@@ -271,14 +271,6 @@
   <section class="match-demo-section scroll-story-section" data-reveal-section>
     <div class="container">
       <div class="match-showcase match-showcase--office scroll-reveal" data-reveal="shell" data-match-workspace>
-        <div class="match-office-scene" aria-hidden="true">
-          <span class="match-office-window match-office-window--one"></span>
-          <span class="match-office-window match-office-window--two"></span>
-          <span class="match-office-window match-office-window--three"></span>
-          <span class="match-office-desk match-office-desk--one"></span>
-          <span class="match-office-desk match-office-desk--two"></span>
-          <span class="match-office-plant"></span>
-        </div>
         <div class="match-showcase__veil" aria-hidden="true"></div>
         <div class="match-showcase__particles" aria-hidden="true"><i style="--x:8%;--y:18%;--d:0s"></i><i style="--x:16%;--y:72%;--d:.7s"></i><i style="--x:28%;--y:10%;--d:1.2s"></i><i style="--x:38%;--y:42%;--d:.3s"></i><i style="--x:48%;--y:84%;--d:1.8s"></i><i style="--x:61%;--y:20%;--d:.9s"></i><i style="--x:72%;--y:74%;--d:1.4s"></i><i style="--x:83%;--y:34%;--d:.5s"></i><i style="--x:92%;--y:66%;--d:1.1s"></i></div>
 
@@ -286,67 +278,74 @@
           <div class="match-profile-photo-wrap">
             <span class="match-profile-ring" aria-hidden="true"></span>
             <img class="match-profile-photo" src="{{ url_for('static', filename='images/profile/alexey-profile-business.png') }}" alt="Профиль кандидата">
-            <span class="match-profile-chip match-profile-chip--resume"><span class="match-profile-chip__icon">▣</span><b>Резюме<br>проанализировано ИИ</b></span>
-            <span class="match-profile-chip match-profile-chip--skills"><span class="match-profile-chip__icon match-profile-chip__icon--green">★</span><b>12 сильных<br>навыков</b></span>
-            <span class="match-profile-chip match-profile-chip--ready"><span class="match-profile-chip__icon">✓</span><b>Профиль готов<br>к умному подбору</b></span>
+            <div class="match-profile-chips" aria-label="Результаты анализа профиля">
+              <span class="match-profile-chip match-profile-chip--resume">
+                <span class="match-profile-chip__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6.75 3.75h7.5l3 3v13.5H6.75z"/><path d="M14.25 3.75v3h3M9 11.25h6M9 14.25h4.5"/></svg></span>
+                <b>Резюме<br>проанализировано</b>
+              </span>
+              <span class="match-profile-chip match-profile-chip--skills">
+                <span class="match-profile-chip__icon match-profile-chip__icon--green" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m12 3 2.3 4.66 5.14.75-3.72 3.62.88 5.12L12 14.73l-4.6 2.42.88-5.12-3.72-3.62 5.14-.75z"/></svg></span>
+                <b>12 сильных<br>навыков</b>
+              </span>
+              <span class="match-profile-chip match-profile-chip--ready">
+                <span class="match-profile-chip__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m5 12.5 4.2 4.2L19 7"/></svg></span>
+                <b>Профиль готов<br>к подбору</b>
+              </span>
+            </div>
           </div>
-          <div class="match-profile-status"><span>✓</span> Профиль проанализирован ИИ</div>
+          <div class="match-profile-status"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="m8 12.4 2.5 2.5 5.6-6"/></svg> Анализ профиля завершён</div>
           <div class="match-profile-copy">
-            <h2>Не просто вакансии —<br>предложения, которые<br><strong>подходят вам</strong></h2>
-            <p>AI Career Agent анализирует ваш опыт, навыки и предпочтения, сравнивает с требованиями работодателей и показывает лучшие возможности на рынке.</p>
-            <div class="match-profile-note"><span>✦</span><p>Экономьте время. Получайте только релевантные вакансии и понимайте, <b>почему они вам подходят.</b></p></div>
+            <h2>Ваш опыт превращается<br>в <strong>точные карьерные совпадения</strong></h2>
+            <p>AI Career Agent сопоставляет ваш опыт, навыки и карьерные цели с требованиями работодателей — и показывает предложения, на которые действительно стоит обратить внимание.</p>
+            <div class="match-profile-note"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.8 13.7 9l6.2 1.7-6.2 1.7L12 18.6l-1.7-6.2-6.2-1.7L10.3 9z"/></svg><p>Меньше ручного поиска. Больше вакансий, которые действительно соответствуют вашему профилю.</p></div>
           </div>
         </div>
 
         <div class="match-showcase__jobs" aria-label="Пример подходящих вакансий">
-          <button class="match-job-card is-active" type="button" aria-disabled="true" data-match-job="product">
-            <span class="match-job-badge">✦ Лучшее совпадение</span>
+          <article class="match-job-card is-active">
+            <span class="match-job-badge"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 13.6 9.4 20 11l-6.4 1.6L12 19l-1.6-6.4L4 11l6.4-1.6z"/></svg> Лучшее совпадение</span>
             <span class="match-job-main">
               <img src="{{ url_for('static', filename='images/sources/hh.svg') }}" alt="HeadHunter">
               <span><strong>Senior Product Manager</strong><small>HeadHunter</small></span>
               <b>94%<small>совпадение</small></b>
             </span>
-            <span class="match-job-meta"><span>▣ 180 000 – 230 000 ₽</span><span>⌖ Удалённо</span><span>▢ Полная занятость</span></span>
+            <span class="match-job-meta">
+              <span><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="6.5" width="17" height="12" rx="2"/><path d="M8 6.5v-2h8v2M3.5 11h17"/></svg>180 000 – 230 000 ₽</span>
+              <span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s6-5.2 6-11a6 6 0 1 0-12 0c0 5.8 6 11 6 11z"/><circle cx="12" cy="10" r="2"/></svg>Удалённо</span>
+              <span><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="6" width="16" height="14" rx="2"/><path d="M8 6V4h8v2M8 11h8"/></svg>Полная занятость</span>
+            </span>
             <span class="match-job-summary">Ваш опыт управления продуктом и аналитический бэкграунд совпадают с ключевыми требованиями вакансии.</span>
             <span class="match-job-reasons" aria-label="Почему вакансия подходит">
-              <span><i>✓</i><b>Навыки совпадают</b><small>Ваши навыки полностью соответствуют требованиям</small></span>
-              <span><i>✓</i><b>Опыт подходит</b><small>Релевантный опыт в похожих проектах</small></span>
-              <span><i>✓</i><b>Зарплата соответствует</b><small>Ожидания и предложение на одном уровне</small></span>
+              <span><i><svg viewBox="0 0 24 24"><path d="m5 12.5 4.2 4.2L19 7"/></svg></i><b>Навыки совпадают</b><small>Компетенции соответствуют ключевым требованиям</small></span>
+              <span><i><svg viewBox="0 0 24 24"><path d="m5 12.5 4.2 4.2L19 7"/></svg></i><b>Опыт подходит</b><small>Есть релевантный опыт в похожих проектах</small></span>
+              <span><i><svg viewBox="0 0 24 24"><path d="m5 12.5 4.2 4.2L19 7"/></svg></i><b>Доход соответствует</b><small>Предложение совпадает с ожиданиями</small></span>
             </span>
-          </button>
+          </article>
 
-          <button class="match-job-card" type="button" aria-disabled="true" data-match-job="project">
-            <span class="match-job-badge">✦ Лучшее совпадение</span>
+          <article class="match-job-card match-job-card--compact">
             <span class="match-job-main">
               <img src="{{ url_for('static', filename='images/sources/superjob.svg') }}" alt="SuperJob">
               <span><strong>Project Manager</strong><small>SuperJob</small></span>
               <b>89%<small>совпадение</small></b>
             </span>
-            <span class="match-job-meta"><span>▣ 150 000 – 200 000 ₽</span><span>⌖ Гибрид</span><span>▢ Полная занятость</span></span>
-            <span class="match-job-summary">Сильное совпадение по управлению командами, сроками и коммуникации с заказчиками.</span>
-            <span class="match-job-reasons"><span><i>✓</i><b>Управление командами</b><small>Подходит ваш опыт координации проектов</small></span><span><i>✓</i><b>Формат подходит</b><small>Гибридный график соответствует предпочтениям</small></span><span><i>✓</i><b>Рост дохода</b><small>Предложение находится в ожидаемом диапазоне</small></span></span>
-          </button>
+          </article>
 
-          <button class="match-job-card" type="button" aria-disabled="true" data-match-job="analyst">
-            <span class="match-job-badge">✦ Лучшее совпадение</span>
+          <article class="match-job-card match-job-card--compact">
             <span class="match-job-main">
               <img src="{{ url_for('static', filename='images/sources/reed.svg') }}" alt="Reed">
               <span><strong>Python Developer</strong><small>Reed</small></span>
               <b>84%<small>совпадение</small></b>
             </span>
-            <span class="match-job-meta"><span>▣ £45 000 – £55 000</span><span>⌖ Офис</span><span>▢ Полная занятость</span></span>
-            <span class="match-job-summary">Подходит опыт Python-разработки, API и работы с backend-сервисами.</span>
-            <span class="match-job-reasons"><span><i>✓</i><b>Python и API</b><small>Технологический стек совпадает с вашим опытом</small></span><span><i>✓</i><b>Backend-проекты</b><small>Есть опыт решения похожих задач</small></span><span><i>✓</i><b>Международный рынок</b><small>Вакансия открывает новые карьерные возможности</small></span></span>
-          </button>
+          </article>
         </div>
 
         <div class="match-showcase__stats" aria-label="Результаты AI-подбора">
-          <div><span class="match-stat-icon">▣</span><p><b>24</b><small>подходящие вакансии<br>найдены для вас</small></p></div>
-          <div><span class="match-stat-icon">◎</span><p><b data-match-best-score>94%</b><small>лучшее совпадение<br>с вашей карьерой</small></p></div>
-          <div><span class="match-stat-icon">◎</span><p><b>3 площадки</b><small>HeadHunter, SuperJob<br>и Reed в одном поиске</small></p></div>
-          <div><span class="match-stat-icon">↻</span><p><b>Ежедневно</b><small>обновляем результаты<br>по новым вакансиям</small></p></div>
+          <div><span class="match-stat-icon"><svg viewBox="0 0 24 24"><rect x="3.5" y="7" width="17" height="12" rx="2"/><path d="M8 7V4.5h8V7M3.5 11.5h17"/></svg></span><p><b>24</b><small>подходящие вакансии<br>найдены для вас</small></p></div>
+          <div><span class="match-stat-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/><path d="m15.2 8.8 4.3-4.3M16.4 4.5h3v3"/></svg></span><p><b data-match-best-score>94%</b><small>лучшее совпадение<br>с вашим профилем</small></p></div>
+          <div><span class="match-stat-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.4 2.5 3.6 5.5 3.6 9S14.4 18.5 12 21M12 3C9.6 5.5 8.4 8.5 8.4 12s1.2 6.5 3.6 9"/></svg></span><p><b>3 площадки</b><small>HeadHunter, SuperJob<br>и Reed в одном поиске</small></p></div>
+          <div><span class="match-stat-icon"><svg viewBox="0 0 24 24"><path d="M20 7v5h-5M4 17v-5h5"/><path d="M6.2 8.3A7 7 0 0 1 18.7 7M17.8 15.7A7 7 0 0 1 5.3 17"/></svg></span><p><b>Ежедневно</b><small>обновляем подборку<br>по новым вакансиям</small></p></div>
         </div>
-        <p class="match-showcase__footnote">♢ Ваши данные защищены и используются только для подбора подходящих вакансий</p>
+        <p class="match-showcase__footnote"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 5.5 5.5v5.3c0 4.2 2.6 7.9 6.5 9.2 3.9-1.3 6.5-5 6.5-9.2V5.5z"/><path d="m9 12 2 2 4-4"/></svg> Ваши данные защищены и используются только для подбора подходящих вакансий</p>
       </div>
     </div>
   </section>
