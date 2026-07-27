@@ -135,54 +135,48 @@
     </div>
   </section>
 
-  <section class="hero-metrics scroll-story-section" data-reveal-section aria-label="Ключевые показатели сервиса">
+  <section class="quick-start-section scroll-story-section" data-reveal-section aria-labelledby="quick-start-title">
     <div class="container">
-      <div class="hero-metrics__panel scroll-reveal" data-reveal="rise">
-        <div class="hero-metric">
-          <span class="hero-metric__icon" aria-hidden="true">▣</span>
-          <div><strong>700K+</strong><small>актуальных вакансий</small></div>
+      <div class="quick-start-panel scroll-reveal" data-reveal="shell">
+        <div class="quick-start-heading">
+          <span class="section-kicker">Быстрый старт</span>
+          <h2 id="quick-start-title">С чего начнём?</h2>
+          <p>Выберите ближайшую задачу — AI Career Agent проведёт вас дальше.</p>
         </div>
-        <div class="hero-metric">
-          <span class="hero-metric__icon" aria-hidden="true">⌁</span>
-          <div><strong>92%</strong><small>точность подбора</small></div>
-        </div>
-        <div class="hero-metric">
-          <span class="hero-metric__icon" aria-hidden="true">◷</span>
-          <div><strong>24/7</strong><small>мониторинг рынка</small></div>
-        </div>
-      </div>
-    </div>
-  </section>
 
-  <section class="landing-section scroll-story-section" data-reveal-section>
-    <div class="container">
-      <div class="section-heading centered-heading scroll-reveal" data-reveal="rise">
-        <span class="section-kicker">Всё необходимое в одном сервисе</span>
-        <h2>Меньше рутины. Больше подходящих возможностей.</h2>
-        <p>Платформа помогает пройти весь путь поиска работы последовательно и без десятков открытых вкладок.</p>
-      </div>
-      <div class="feature-workspace scroll-reveal" data-reveal="workspace" aria-label="Возможности платформы">
-        <div class="feature-workspace__glow" aria-hidden="true"></div>
-        <div class="feature-workspace__grid" aria-hidden="true"></div>
-        <div class="feature-grid">
-          <article class="feature-card feature-card-primary scroll-reveal" data-reveal="workspace-card" data-reveal-delay="1">
-            <div class="feature-icon">01</div>
-            <h3>Анализ резюме</h3>
-            <p>Раздел для проверки структуры профиля, навыков и направлений дальнейшего развития.</p>
-            <a href="{{ url_for('ai_career') }}">Открыть раздел <span>→</span></a>
-          </article>
-          <article class="feature-card scroll-reveal" data-reveal="workspace-card" data-reveal-delay="2">
-            <div class="feature-icon">02</div>
-            <h3>Единый поиск вакансий</h3>
-            <p>Предложения с нескольких площадок собраны в одном удобном формате.</p>
-            <a href="{{ url_for('vacancies') }}">Перейти к поиску <span>→</span></a>
-          </article>
-          <article class="feature-card scroll-reveal" data-reveal="workspace-card" data-reveal-delay="3">
-            <div class="feature-icon">03</div>
-            <h3>Умное совпадение</h3>
-            <p>Будущий инструмент сопоставления вакансий с опытом, навыками и карьерными целями.</p>
-            <span class="feature-status">В разработке</span>
-          </article>
+        <div class="quick-start-grid" aria-label="Основные действия">
+          <a class="quick-start-card" href="{{ url_for('ai_career') }}">
+            <span class="quick-start-card__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="M7 3.5h7l4 4V20H7z"/><path d="M14 3.5V8h4M10 12h5M10 15.5h3.5"/><path d="m4.5 15.5 1.7 1.7 3-3"/></svg>
+            </span>
+            <span class="quick-start-card__copy">
+              <b>Проверить резюме</b>
+              <small>Найти слабые места и улучшить структуру профиля.</small>
+            </span>
+            <span class="quick-start-card__arrow" aria-hidden="true">→</span>
+          </a>
+
+          <a class="quick-start-card quick-start-card--primary" href="{{ url_for('vacancies') }}">
+            <span class="quick-start-card__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6"/><path d="m15 15 4 4M7.5 10.5h6M10.5 7.5v6"/></svg>
+            </span>
+            <span class="quick-start-card__copy">
+              <b>Найти вакансии</b>
+              <small>Запустить единый поиск по подключённым источникам.</small>
+            </span>
+            <span class="quick-start-card__arrow" aria-hidden="true">→</span>
+          </a>
+
+          <a class="quick-start-card" href="#capabilities">
+            <span class="quick-start-card__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="M4 17.5 9 12l3.3 3.3L20 7.5"/><path d="M15.5 7.5H20V12"/><circle cx="9" cy="12" r="1.5"/><circle cx="12.3" cy="15.3" r="1.5"/></svg>
+            </span>
+            <span class="quick-start-card__copy">
+              <b>Оценить совпадение</b>
+              <small>Понять, насколько вакансия соответствует вашему опыту.</small>
+            </span>
+            <span class="quick-start-card__arrow" aria-hidden="true">→</span>
+          </a>
         </div>
       </div>
     </div>
@@ -351,7 +345,7 @@
   </section>
 
 
-  <section class="capabilities-section scroll-story-section" data-reveal-section>
+  <section class="capabilities-section scroll-story-section" id="capabilities" data-reveal-section>
     <div class="container">
       <div class="capabilities-heading scroll-reveal">
         <span class="section-kicker">Возможности AI Career Agent</span>
