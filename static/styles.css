@@ -5281,3 +5281,43 @@ body.resume-reader-open{overflow:hidden}
     min-height:unset;
   }
 }
+
+/* Stage 5 refinement: brand source pills in unified search */
+.source-pill--brand{
+  width:40px;
+  height:40px;
+  border-radius:14px;
+  background:linear-gradient(145deg,#f4f1ff 0%,#ffffff 100%);
+  border:1px solid rgba(106,79,242,.12);
+  box-shadow:0 12px 24px rgba(91,67,234,.10);
+  overflow:hidden;
+}
+.source-pill--brand img{
+  display:block;
+  width:24px;
+  height:24px;
+  object-fit:contain;
+}
+.source-pill--brand-reed{
+  width:56px;
+}
+.source-pill--brand-reed img{
+  width:32px;
+}
+@media(max-width:780px){
+  .source-pill--brand{
+    width:36px;
+    height:36px;
+    border-radius:12px;
+  }
+  .source-pill--brand img{
+    width:22px;
+    height:22px;
+  }
+  .source-pill--brand-reed{
+    width:48px;
+  }
+  .source-pill--brand-reed img{
+    width:28px;
+  }
+}
