@@ -362,27 +362,27 @@
       <div class="capabilities-console scroll-reveal" data-capabilities-console>
         <div class="capabilities-tabs" role="tablist" aria-label="Возможности AI Career Agent">
           <button class="capability-tab is-active" type="button" role="tab" aria-selected="true" aria-controls="capability-panel-search" id="capability-tab-search" data-capability-tab="search">
-            <span class="capability-tab__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m15.5 15.5 4 4M5 7h11M5 10.5h7"/></svg></span>
+            <span class="capability-tab__icon" aria-hidden="true"><img src="{{ url_for('static', filename='images/capabilities/search.svg') }}" alt=""></span>
             <span><b>Единый поиск вакансий</b><small>Все источники в одной ленте</small></span>
           </button>
           <button class="capability-tab" type="button" role="tab" aria-selected="false" aria-controls="capability-panel-resume" id="capability-tab-resume" data-capability-tab="resume" tabindex="-1">
-            <span class="capability-tab__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 3.5h8l4 4V20H6z"/><path d="M14 3.5V8h4M9 12h6M9 15.5h4"/></svg></span>
+            <span class="capability-tab__icon" aria-hidden="true"><img src="{{ url_for('static', filename='images/capabilities/resume.svg') }}" alt=""></span>
             <span><b>Анализ резюме</b><small>Сильные стороны и рекомендации</small></span>
           </button>
           <button class="capability-tab" type="button" role="tab" aria-selected="false" aria-controls="capability-panel-match" id="capability-tab-match" data-capability-tab="match" tabindex="-1">
-            <span class="capability-tab__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3.5"/><path d="m15.5 8.5 4-4M16.5 4.5h3v3"/></svg></span>
+            <span class="capability-tab__icon" aria-hidden="true"><img src="{{ url_for('static', filename='images/capabilities/match.svg') }}" alt=""></span>
             <span><b>Оценка соответствия</b><small>Понятное объяснение совпадения</small></span>
           </button>
           <button class="capability-tab" type="button" role="tab" aria-selected="false" aria-controls="capability-panel-letter" id="capability-tab-letter" data-capability-tab="letter" tabindex="-1">
-            <span class="capability-tab__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 5.5h16v13H4z"/><path d="m5 7 7 5 7-5M15.5 16.5l2-2"/></svg></span>
+            <span class="capability-tab__icon" aria-hidden="true"><img src="{{ url_for('static', filename='images/capabilities/letter.svg') }}" alt=""></span>
             <span><b>Сопроводительные письма</b><small>Персональный текст под вакансию</small></span>
           </button>
           <button class="capability-tab" type="button" role="tab" aria-selected="false" aria-controls="capability-panel-saved" id="capability-tab-saved" data-capability-tab="saved" tabindex="-1">
-            <span class="capability-tab__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 4h12v17l-6-3.5L6 21z"/><path d="M9 8h6"/></svg></span>
+            <span class="capability-tab__icon" aria-hidden="true"><img src="{{ url_for('static', filename='images/capabilities/saved.svg') }}" alt=""></span>
             <span><b>Сохранённые вакансии</b><small>Важные предложения под рукой</small></span>
           </button>
           <button class="capability-tab" type="button" role="tab" aria-selected="false" aria-controls="capability-panel-tracker" id="capability-tab-tracker" data-capability-tab="tracker" tabindex="-1">
-            <span class="capability-tab__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3.5" y="4" width="17" height="16" rx="3"/><path d="M8 9h8M8 13h5M8 17h8"/></svg></span>
+            <span class="capability-tab__icon" aria-hidden="true"><img src="{{ url_for('static', filename='images/capabilities/tracker.svg') }}" alt=""></span>
             <span><b>Контроль откликов</b><small>Статусы и следующие действия</small></span>
           </button>
         </div>
@@ -409,7 +409,7 @@
 
           <article class="capability-panel" role="tabpanel" id="capability-panel-letter" aria-labelledby="capability-tab-letter" data-capability-panel="letter" hidden>
             <div class="capability-panel__copy"><span>Сопроводительное письмо</span><h3>Персональный отклик без шаблонных фраз</h3><p>AI учитывает ваш опыт и требования вакансии. Финальный текст всегда остаётся под вашим контролем.</p></div>
-            <div class="product-preview product-preview--letter" aria-hidden="true"><div class="letter-header"><span>Для вакансии: Senior Product Manager</span><div><b>Деловой</b><b>Краткий</b></div></div><div class="letter-sheet"><p>Здравствуйте!</p><p>Меня заинтересовала позиция Senior Product Manager. Мой опыт запуска B2B-продуктов и работы с аналитикой соответствует ключевым задачам роли…</p><i></i><i></i></div><div class="letter-actions"><span>Сгенерировано AI</span><button type="button">Редактировать</button></div></div>
+            <div class="product-preview product-preview--letter" aria-hidden="true"><div class="letter-header"><span>Для вакансии: Senior Product Manager</span><div><b>Деловой</b><b>Краткий</b></div></div><div class="letter-sheet"><p>Здравствуйте!</p><p>Меня заинтересовала позиция Senior Product Manager. Мой опыт запуска B2B-продуктов и работы с аналитикой соответствует ключевым задачам роли…</p><i></i><i></i></div><div class="letter-actions"><span>Сгенерировано AI</span><button type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 20 4.2-1 10.7-10.7-3.2-3.2L5 15.8 4 20z"/><path d="m14.8 6 3.2 3.2"/></svg>Редактировать</button></div></div>
           </article>
 
           <article class="capability-panel" role="tabpanel" id="capability-panel-saved" aria-labelledby="capability-tab-saved" data-capability-panel="saved" hidden>
