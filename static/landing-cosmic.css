@@ -72,3 +72,47 @@ body.landing-body .site-cosmic-bg{opacity:1;}
 @media (prefers-reduced-motion: reduce){
   .site-cosmic-bg__image{transform:scale(1.08)!important;}
 }
+
+/* Force the landing content to reveal the shared cosmic layer. */
+body.landing-body .landing-v2{
+  position:relative;
+  isolation:auto;
+  background:transparent!important;
+}
+body.landing-body .landing-v2::before,
+body.landing-body .landing-v2::after{
+  content:none!important;
+  display:none!important;
+}
+body.landing-body .landing-v2 > .orbit-hero,
+body.landing-body .landing-v2 > .quick-start-section,
+body.landing-body .landing-v2 > .workflow-section,
+body.landing-body .landing-v2 > .workflow-showcase,
+body.landing-body .landing-v2 > .match-demo-section,
+body.landing-body .landing-v2 > .capabilities-section,
+body.landing-body .landing-v2 > .sources-compare-section,
+body.landing-body .landing-v2 > .trust-section,
+body.landing-body .landing-v2 > .final-cta-section,
+body.landing-body .landing-v2 > .hero-metrics{
+  background:transparent!important;
+}
+
+/* More visible, but still subordinate to the interface. */
+body.landing-body .site-cosmic-bg__image{
+  opacity:.64;
+  filter:saturate(1.12) brightness(.72) contrast(1.08) blur(.35px);
+}
+body.landing-body .site-cosmic-bg__veil{
+  background:
+    linear-gradient(180deg,rgba(250,249,255,.58) 0%,rgba(248,246,255,.62) 30%,rgba(246,244,255,.68) 100%),
+    radial-gradient(circle at 78% 14%,rgba(127,97,255,.13),transparent 22%),
+    radial-gradient(circle at 20% 18%,rgba(120,82,255,.08),transparent 20%),
+    radial-gradient(circle at 80% 62%,rgba(114,79,246,.10),transparent 26%);
+}
+@media(max-width:1024px){
+  body.landing-body .site-cosmic-bg__image{opacity:.52}
+}
+@media(max-width:767px){
+  body.landing-body .site-cosmic-bg__image{opacity:.40}
+  body.landing-body .site-cosmic-bg__veil{background:linear-gradient(180deg,rgba(250,249,255,.70),rgba(248,246,255,.76))}
+}
