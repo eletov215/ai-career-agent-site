@@ -675,8 +675,11 @@
     const activeIndex = () => Math.max(0, tabs.findIndex((tab) => tab.classList.contains('is-active')));
 
     const moveTabIntoView = (tab) => {
-      if (window.innerWidth > 900) return;
-      tab.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'nearest', inline: 'start' });
+      if (window.innerWidth > 900 || !tab) return;
+      const rail = tab.parentElement;
+      if (!rail) return;
+      const targetLeft = Math.max(0, tab.offsetLeft - rail.offsetLeft - 2);
+      rail.scrollTo({ left: targetLeft, behavior: reduceMotion ? 'auto' : 'smooth' });
     };
 
     const updateNavigation = (index) => {
@@ -932,7 +935,11 @@
         selectedPanel.classList.add('is-entering');
       }
       if (window.innerWidth <= 900) {
-        selectedTab.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'nearest', inline: 'start' });
+        const rail = selectedTab.parentElement;
+        if (rail) {
+          const targetLeft = Math.max(0, selectedTab.offsetLeft - rail.offsetLeft - 2);
+          rail.scrollTo({ left: targetLeft, behavior: reduceMotion ? 'auto' : 'smooth' });
+        }
       }
       if (focusTab) selectedTab.focus({ preventScroll: true });
     };
