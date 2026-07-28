@@ -6387,7 +6387,7 @@ body.resume-reader-open{overflow:hidden}
   .site-nav.is-menu-open .nav-links{
     left:auto !important;
     right:12px !important;
-    width:250px !important;
+    width:190px !important;
     max-width:calc(100vw - 24px) !important;
     padding:12px !important;
     transform-origin:top right;
