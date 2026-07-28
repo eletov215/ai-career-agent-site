@@ -6387,7 +6387,7 @@ body.resume-reader-open{overflow:hidden}
   .site-nav.is-menu-open .nav-links{
     left:auto !important;
     right:12px !important;
-    width:292px !important;
+    width:250px !important;
     max-width:calc(100vw - 24px) !important;
     padding:12px !important;
     transform-origin:top right;
@@ -6402,6 +6402,8 @@ body.resume-reader-open{overflow:hidden}
     width:100% !important;
     min-width:0 !important;
     margin:4px 0 0 !important;
+    padding-inline:12px !important;
+    font-size:12px !important;
   }
 }
 @media (max-width:330px){
