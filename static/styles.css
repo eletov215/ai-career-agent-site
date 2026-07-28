@@ -6352,3 +6352,32 @@ body.resume-reader-open{overflow:hidden}
     max-width:calc(100vw - 20px);
   }
 }
+
+/* Mobile dropdown final alignment: compact panel anchored to the right */
+@media (max-width:720px){
+  .site-nav.is-menu-open .nav-links{
+    left:auto !important;
+    right:12px !important;
+    width:min(328px,calc(100vw - 24px)) !important;
+    max-width:calc(100vw - 24px) !important;
+    padding:12px 12px 13px 16px !important;
+    transform-origin:top right;
+  }
+  .site-nav.is-menu-open .nav-links a:not(.nav-cta){
+    padding-left:8px !important;
+    padding-right:8px !important;
+    column-gap:12px;
+  }
+  .site-nav.is-menu-open .nav-links .nav-cta{
+    width:100%;
+    margin-inline:0;
+  }
+}
+
+@media (max-width:360px){
+  .site-nav.is-menu-open .nav-links{
+    right:8px !important;
+    width:calc(100vw - 16px) !important;
+    max-width:calc(100vw - 16px) !important;
+  }
+}
