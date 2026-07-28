@@ -6482,3 +6482,36 @@ body.resume-reader-open{overflow:hidden}
     align-self:center !important;
   }
 }
+
+/* Mobile dropdown CTA: center the label on the panel axis */
+@media (max-width:720px){
+  .site-nav.is-menu-open .nav-links .nav-cta{
+    display:grid !important;
+    grid-template-columns:28px minmax(0,1fr) 28px !important;
+    align-items:center !important;
+    justify-items:center !important;
+    width:268px !important;
+    max-width:100% !important;
+    margin:6px auto 0 !important;
+    padding-inline:14px !important;
+    column-gap:4px !important;
+    text-align:center !important;
+  }
+  .site-nav.is-menu-open .nav-links .nav-cta-spark{
+    grid-column:1 !important;
+    justify-self:center !important;
+  }
+  .site-nav.is-menu-open .nav-links .nav-cta-desktop,
+  .site-nav.is-menu-open .nav-links .nav-cta-mobile{
+    grid-column:2 !important;
+    width:100% !important;
+    justify-self:stretch !important;
+    text-align:center !important;
+  }
+  .site-nav.is-menu-open .nav-links .nav-cta::after{
+    content:"";
+    grid-column:3;
+    width:28px;
+    height:1px;
+  }
+}
