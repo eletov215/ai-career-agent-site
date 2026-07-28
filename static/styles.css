@@ -6328,3 +6328,27 @@ body.resume-reader-open{overflow:hidden}
     margin-right:2px;
   }
 }
+
+/* Mobile dropdown: size the panel around the primary CTA */
+@media (max-width:720px){
+  .site-nav.is-menu-open .nav-links{
+    left:auto;
+    right:14px;
+    width:min(304px,calc(100vw - 28px));
+    max-width:calc(100vw - 28px);
+    padding:10px;
+  }
+  .site-nav.is-menu-open .nav-links .nav-cta{
+    width:100%;
+    min-width:0;
+    margin-inline:0;
+  }
+}
+
+@media (max-width:360px){
+  .site-nav.is-menu-open .nav-links{
+    right:10px;
+    width:calc(100vw - 20px);
+    max-width:calc(100vw - 20px);
+  }
+}
