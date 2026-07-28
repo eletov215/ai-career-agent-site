@@ -6381,3 +6381,33 @@ body.resume-reader-open{overflow:hidden}
     max-width:calc(100vw - 16px) !important;
   }
 }
+
+/* Mobile dropdown width correction: only slightly wider than the CTA */
+@media (max-width:720px){
+  .site-nav.is-menu-open .nav-links{
+    left:auto !important;
+    right:12px !important;
+    width:292px !important;
+    max-width:calc(100vw - 24px) !important;
+    padding:12px !important;
+    transform-origin:top right;
+  }
+  .site-nav.is-menu-open .nav-links a:not(.nav-cta){
+    width:100% !important;
+    grid-template-columns:36px minmax(0,1fr) !important;
+    column-gap:10px !important;
+    padding-inline:8px !important;
+  }
+  .site-nav.is-menu-open .nav-links .nav-cta{
+    width:100% !important;
+    min-width:0 !important;
+    margin:4px 0 0 !important;
+  }
+}
+@media (max-width:330px){
+  .site-nav.is-menu-open .nav-links{
+    right:8px !important;
+    width:calc(100vw - 16px) !important;
+    max-width:calc(100vw - 16px) !important;
+  }
+}
