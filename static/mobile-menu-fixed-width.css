@@ -1,0 +1,39 @@
+/* Final mobile navigation override. Loaded after all project styles. */
+@media (max-width: 720px) {
+  #primary-navigation.nav-links,
+  .site-nav #primary-navigation.nav-links,
+  .site-nav.is-menu-open #primary-navigation.nav-links {
+    position: absolute !important;
+    left: auto !important;
+    right: 12px !important;
+    width: 284px !important;
+    min-width: 284px !important;
+    max-width: 284px !important;
+    inline-size: 284px !important;
+    flex: 0 0 284px !important;
+    box-sizing: border-box !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+
+  .site-nav.is-menu-open #primary-navigation.nav-links .nav-cta {
+    width: 240px !important;
+    max-width: 240px !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    box-sizing: border-box !important;
+  }
+}
+
+@media (max-width: 308px) {
+  #primary-navigation.nav-links,
+  .site-nav #primary-navigation.nav-links,
+  .site-nav.is-menu-open #primary-navigation.nav-links {
+    right: 8px !important;
+    width: calc(100vw - 16px) !important;
+    min-width: 0 !important;
+    max-width: calc(100vw - 16px) !important;
+    inline-size: calc(100vw - 16px) !important;
+    flex-basis: auto !important;
+  }
+}
