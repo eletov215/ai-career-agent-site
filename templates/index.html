@@ -137,32 +137,6 @@
         <div class="orbit-result orbit-result--top">+538 вакансий</div>
         </div>
       </div>
-
-      <div class="mobile-source-flow" aria-label="Источники вакансий передают предложения в единый AI-подбор">
-        <div class="mobile-source-flow__rail" role="list">
-          <article class="mobile-source-card is-active" role="listitem">
-            <img src="{{ url_for('static', filename='images/logos/hh.svg') }}" alt="HeadHunter">
-            <span><b>HeadHunter</b><small>+340 вакансий</small></span>
-          </article>
-          <article class="mobile-source-card" role="listitem">
-            <img src="{{ url_for('static', filename='images/logos/superjob.svg') }}" alt="SuperJob">
-            <span><b>SuperJob</b><small>+82 вакансии</small></span>
-          </article>
-          <article class="mobile-source-card" role="listitem">
-            <img src="{{ url_for('static', filename='images/logos/trudvsem.svg') }}" alt="Работа России">
-            <span><b>Работа России</b><small>+116 вакансий</small></span>
-          </article>
-        </div>
-        <div class="mobile-source-flow__connector" aria-hidden="true"><span></span><i></i></div>
-        <div class="mobile-source-flow__resume">
-          <span class="mobile-source-flow__ai">✦ AI анализирует</span>
-          <div class="mobile-source-flow__document" aria-hidden="true"><i></i><i></i><i></i><b></b><b></b></div>
-          <strong>Ваше резюме</strong>
-          <small>Все источники в одном подборе</small>
-          <em>538 подходящих вакансий</em>
-        </div>
-        <p>Вакансии с разных площадок последовательно попадают в единый AI-подбор.</p>
-      </div>
     </div>
   </section>
 
@@ -251,12 +225,6 @@
             </span>
             <span><strong>Подготовьте отклик</strong><small>Резюме и сопроводительное письмо</small></span>
           </button>
-        </div>
-        <div class="workflow-mobile-nav" aria-label="Переключение этапов">
-          <button type="button" data-workflow-prev aria-label="Предыдущий этап"><svg viewBox="0 0 24 24"><path d="m15 5-7 7 7 7"/></svg></button>
-          <span><b data-workflow-current>1</b><i>/</i><b>4</b></span>
-          <div class="workflow-mobile-dots" aria-hidden="true"><i class="is-active"></i><i></i><i></i><i></i></div>
-          <button type="button" data-workflow-next aria-label="Следующий этап"><svg viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></svg></button>
         </div>
 
         <div class="workflow-preview" aria-live="polite">
@@ -665,63 +633,114 @@
   if (workflowConsole) {
     const tabs = Array.from(workflowConsole.querySelectorAll('[data-workflow-tab]'));
     const panels = Array.from(workflowConsole.querySelectorAll('[data-workflow-panel]'));
-    const prevButton = workflowConsole.querySelector('[data-workflow-prev]');
-    const nextButton = workflowConsole.querySelector('[data-workflow-next]');
-    const currentLabel = workflowConsole.querySelector('[data-workflow-current]');
-    const dots = Array.from(workflowConsole.querySelectorAll('.workflow-mobile-dots i'));
+    const autoDelay = 6000;
+    const manualPause = 120000;
+    const transitionDuration = 1050;
+    let autoTimer = null;
     let transitionTimer = null;
+    let pausedUntil = 0;
+    let workflowVisible = false;
     let isTransitioning = false;
+    let queuedChoice = null;
 
     const activeIndex = () => Math.max(0, tabs.findIndex((tab) => tab.classList.contains('is-active')));
 
-    const moveTabIntoView = (tab) => {
-      if (window.innerWidth > 900 || !tab) return;
-      const rail = tab.parentElement;
-      if (!rail) return;
-      const targetLeft = Math.max(0, tab.offsetLeft - rail.offsetLeft - 2);
-      rail.scrollTo({ left: targetLeft, behavior: reduceMotion ? 'auto' : 'smooth' });
+    const clearAutoTimer = () => {
+      if (autoTimer) window.clearTimeout(autoTimer);
+      autoTimer = null;
     };
 
-    const updateNavigation = (index) => {
-      if (currentLabel) currentLabel.textContent = String(index + 1);
-      dots.forEach((dot, dotIndex) => dot.classList.toggle('is-active', dotIndex === index));
-      if (prevButton) prevButton.disabled = index === 0;
-      if (nextButton) nextButton.disabled = index === tabs.length - 1;
+    const positionWorkflowTabs = (selectedIndex) => {
+      tabs.forEach((tab, index) => {
+        let position = (index - selectedIndex + tabs.length) % tabs.length;
+        if (position > Math.floor(tabs.length / 2)) position -= tabs.length;
+        if (tabs.length % 2 === 0 && position === tabs.length / 2) position = 2;
+        tab.style.setProperty('--workflow-position', position);
+        tab.style.setProperty('--workflow-distance', Math.abs(position));
+        tab.dataset.position = String(position);
+      });
+      workflowConsole.dataset.activeIndex = String(selectedIndex);
     };
 
-    const activateWorkflow = (key, focusTab = false) => {
-      const nextIndex = tabs.findIndex((tab) => tab.dataset.workflowTab === key);
-      if (nextIndex < 0 || isTransitioning) return;
-      const nextPanel = panels.find((panel) => panel.dataset.workflowPanel === key);
-      const previousPanel = panels.find((panel) => panel.classList.contains('is-active'));
-      if (!nextPanel) return;
+    const scheduleAutoAdvance = () => {
+      clearAutoTimer();
+      if (reduceMotion || !workflowVisible || document.hidden || isTransitioning) return;
 
-      if (previousPanel === nextPanel) {
-        moveTabIntoView(tabs[nextIndex]);
+      const remainingPause = pausedUntil - Date.now();
+      if (remainingPause > 0) {
+        autoTimer = window.setTimeout(scheduleAutoAdvance, remainingPause);
         return;
       }
 
+      autoTimer = window.setTimeout(() => {
+        const nextIndex = (activeIndex() + 1) % tabs.length;
+        activateWorkflow(tabs[nextIndex].dataset.workflowTab, false, 'forward');
+      }, autoDelay);
+    };
+
+    const finishTransition = () => {
+      isTransitioning = false;
+      workflowConsole.classList.remove('is-switching');
+      panels.forEach((panel) => panel.classList.remove('is-leaving'));
+
+      if (queuedChoice) {
+        const queued = queuedChoice;
+        queuedChoice = null;
+        activateWorkflow(queued.key, queued.focusTab, queued.direction);
+        return;
+      }
+      scheduleAutoAdvance();
+    };
+
+    const activateWorkflow = (key, focusTab = false, direction = 'auto') => {
+      const previousIndex = activeIndex();
+      const nextIndex = tabs.findIndex((tab) => tab.dataset.workflowTab === key);
+      if (nextIndex < 0) return;
+
+      if (isTransitioning) {
+        queuedChoice = { key, focusTab, direction };
+        return;
+      }
+
+      const previousPanel = panels.find((panel) => panel.classList.contains('is-active'));
+      const nextPanel = panels.find((panel) => panel.dataset.workflowPanel === key);
+      const samePanel = previousPanel === nextPanel;
+      if (samePanel) {
+        if (focusTab) tabs[nextIndex].focus({ preventScroll: true });
+        scheduleAutoAdvance();
+        return;
+      }
+
+      if (direction === 'auto') {
+        const forwardDistance = (nextIndex - previousIndex + tabs.length) % tabs.length;
+        direction = forwardDistance === 0 || forwardDistance <= tabs.length / 2 ? 'forward' : 'backward';
+      }
+
+      clearAutoTimer();
       isTransitioning = true;
       workflowConsole.classList.add('is-switching');
+      workflowConsole.dataset.direction = direction;
+
       if (transitionTimer) window.clearTimeout(transitionTimer);
 
       if (previousPanel) {
         previousPanel.classList.remove('is-active');
         previousPanel.classList.add('is-leaving');
       }
-      nextPanel.hidden = false;
-      void nextPanel.offsetWidth;
 
-      tabs.forEach((tab, index) => {
-        const active = index === nextIndex;
+      nextPanel.hidden = false;
+      nextPanel.classList.remove('is-leaving');
+      void workflowConsole.offsetWidth;
+
+      positionWorkflowTabs(nextIndex);
+      tabs.forEach((tab) => {
+        const active = tab.dataset.workflowTab === key;
         tab.classList.toggle('is-active', active);
         tab.setAttribute('aria-selected', String(active));
         tab.tabIndex = active ? 0 : -1;
+        if (active && focusTab) tab.focus({ preventScroll: true });
       });
       nextPanel.classList.add('is-active');
-      updateNavigation(nextIndex);
-      moveTabIntoView(tabs[nextIndex]);
-      if (focusTab) tabs[nextIndex].focus({ preventScroll: true });
 
       transitionTimer = window.setTimeout(() => {
         panels.forEach((panel) => {
@@ -730,36 +749,52 @@
           panel.classList.toggle('is-active', active);
           panel.classList.remove('is-leaving');
         });
-        workflowConsole.classList.remove('is-switching');
-        isTransitioning = false;
-      }, reduceMotion ? 0 : 420);
+        finishTransition();
+      }, reduceMotion ? 0 : transitionDuration);
+    };
+
+    positionWorkflowTabs(activeIndex());
+
+    const pauseAfterManualChoice = () => {
+      pausedUntil = Date.now() + manualPause;
+      clearAutoTimer();
+      if (!isTransitioning) scheduleAutoAdvance();
     };
 
     tabs.forEach((tab, index) => {
-      tab.addEventListener('click', () => activateWorkflow(tab.dataset.workflowTab));
+      tab.addEventListener('click', () => {
+        const currentIndex = activeIndex();
+        const forwardDistance = (index - currentIndex + tabs.length) % tabs.length;
+        const direction = forwardDistance === 0 || forwardDistance <= tabs.length / 2 ? 'forward' : 'backward';
+        pauseAfterManualChoice();
+        activateWorkflow(tab.dataset.workflowTab, false, direction);
+      });
       tab.addEventListener('keydown', (event) => {
         if (!['ArrowDown', 'ArrowUp', 'ArrowRight', 'ArrowLeft', 'Home', 'End'].includes(event.key)) return;
         event.preventDefault();
         let nextIndex = index;
-        if (event.key === 'Home') nextIndex = 0;
-        else if (event.key === 'End') nextIndex = tabs.length - 1;
-        else if (event.key === 'ArrowDown' || event.key === 'ArrowRight') nextIndex = Math.min(tabs.length - 1, index + 1);
-        else nextIndex = Math.max(0, index - 1);
-        activateWorkflow(tabs[nextIndex].dataset.workflowTab, true);
+        let direction = 'forward';
+        if (event.key === 'Home') { nextIndex = 0; direction = 'backward'; }
+        else if (event.key === 'End') { nextIndex = tabs.length - 1; direction = 'forward'; }
+        else if (event.key === 'ArrowDown' || event.key === 'ArrowRight') nextIndex = (index + 1) % tabs.length;
+        else { nextIndex = (index - 1 + tabs.length) % tabs.length; direction = 'backward'; }
+        pauseAfterManualChoice();
+        activateWorkflow(tabs[nextIndex].dataset.workflowTab, true, direction);
       });
     });
 
-    prevButton?.addEventListener('click', () => {
-      const index = Math.max(0, activeIndex() - 1);
-      activateWorkflow(tabs[index].dataset.workflowTab);
-    });
-    nextButton?.addEventListener('click', () => {
-      const index = Math.min(tabs.length - 1, activeIndex() + 1);
-      activateWorkflow(tabs[index].dataset.workflowTab);
-    });
+    if ('IntersectionObserver' in window) {
+      const workflowObserver = new IntersectionObserver((entries) => {
+        workflowVisible = entries.some((entry) => entry.isIntersecting);
+        scheduleAutoAdvance();
+      }, { threshold: 0.25 });
+      workflowObserver.observe(workflowConsole);
+    } else {
+      workflowVisible = true;
+      scheduleAutoAdvance();
+    }
 
-    updateNavigation(activeIndex());
-    window.addEventListener('resize', () => moveTabIntoView(tabs[activeIndex()]));
+    document.addEventListener('visibilitychange', scheduleAutoAdvance);
   }
 
   const hero = document.querySelector('.orbit-hero');
@@ -933,13 +968,6 @@
       if (!reduceMotion) {
         void selectedPanel.offsetWidth;
         selectedPanel.classList.add('is-entering');
-      }
-      if (window.innerWidth <= 900) {
-        const rail = selectedTab.parentElement;
-        if (rail) {
-          const targetLeft = Math.max(0, selectedTab.offsetLeft - rail.offsetLeft - 2);
-          rail.scrollTo({ left: targetLeft, behavior: reduceMotion ? 'auto' : 'smooth' });
-        }
       }
       if (focusTab) selectedTab.focus({ preventScroll: true });
     };
