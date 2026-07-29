@@ -330,3 +330,69 @@
     height:38px!important;
   }
 }
+
+/* Stage 17: keep mobile step labels below the numbered circles */
+@media (max-width:1024px){
+  .workflow-tab,
+  .workflow-tab.is-active{
+    display:grid!important;
+    grid-template-columns:1fr!important;
+    grid-template-rows:auto auto!important;
+    align-content:start!important;
+    justify-items:center!important;
+    gap:7px!important;
+  }
+  .workflow-tab__number{
+    grid-row:1!important;
+    grid-column:1!important;
+    position:relative!important;
+    z-index:2!important;
+    margin:0!important;
+    flex:none!important;
+  }
+  .workflow-tab__icon{display:none!important}
+  .workflow-tab > span:last-child{
+    grid-row:2!important;
+    grid-column:1!important;
+    display:block!important;
+    width:100%!important;
+    min-width:0!important;
+    margin:0!important;
+    text-align:center!important;
+  }
+  .workflow-tab strong{
+    display:-webkit-box!important;
+    width:100%!important;
+    max-width:112px!important;
+    min-height:2.25em!important;
+    margin:0 auto!important;
+    overflow:hidden!important;
+    white-space:normal!important;
+    text-overflow:ellipsis!important;
+    -webkit-box-orient:vertical!important;
+    -webkit-line-clamp:2!important;
+    line-clamp:2!important;
+    text-align:center!important;
+    line-height:1.12!important;
+  }
+  .workflow-tab small{display:none!important}
+}
+
+@media (max-width:620px){
+  .workflow-tabs{
+    min-height:82px!important;
+    margin-bottom:14px!important;
+  }
+  .workflow-tab,
+  .workflow-tab.is-active{
+    min-height:78px!important;
+    padding:0 2px!important;
+    gap:6px!important;
+  }
+  .workflow-tab strong{
+    max-width:76px!important;
+    min-height:2.3em!important;
+    font-size:8px!important;
+    line-height:1.15!important;
+  }
+}
