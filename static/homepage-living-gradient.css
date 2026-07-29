@@ -1,14 +1,14 @@
-/* Homepage background: living light gradient. This is the only landing-page background layer. */
+/* Homepage background: extra-light living gradient. This is the only landing-page background layer. */
 .landing-page.landing-v2{
   position:relative;
   isolation:isolate;
   overflow:clip;
   background:
-    radial-gradient(circle at 10% 12%,rgba(113,76,255,.27) 0,rgba(113,76,255,.14) 18%,transparent 42%),
-    radial-gradient(circle at 90% 20%,rgba(42,125,255,.23) 0,rgba(42,125,255,.11) 20%,transparent 44%),
-    radial-gradient(circle at 76% 63%,rgba(232,83,209,.18) 0,rgba(232,83,209,.08) 20%,transparent 45%),
-    radial-gradient(circle at 18% 82%,rgba(66,190,242,.14) 0,transparent 38%),
-    linear-gradient(180deg,#fbfaff 0%,#f3f0ff 35%,#f7f5ff 68%,#fbfcff 100%) !important;
+    radial-gradient(circle at 10% 12%,rgba(113,76,255,.16) 0,rgba(113,76,255,.07) 18%,transparent 42%),
+    radial-gradient(circle at 90% 20%,rgba(42,125,255,.14) 0,rgba(42,125,255,.06) 20%,transparent 44%),
+    radial-gradient(circle at 76% 63%,rgba(232,83,209,.10) 0,rgba(232,83,209,.04) 20%,transparent 45%),
+    radial-gradient(circle at 18% 82%,rgba(66,190,242,.08) 0,transparent 38%),
+    linear-gradient(180deg,#ffffff 0%,#faf9ff 35%,#fbfaff 68%,#ffffff 100%) !important;
   background-attachment:scroll;
 }
 
@@ -24,20 +24,20 @@
 .landing-page.landing-v2::before{
   inset:-10% -12%;
   background:
-    radial-gradient(ellipse at 24% 28%,rgba(128,91,255,.18),transparent 37%),
-    radial-gradient(ellipse at 76% 34%,rgba(63,130,255,.16),transparent 38%),
-    radial-gradient(ellipse at 66% 78%,rgba(231,87,212,.12),transparent 40%);
-  filter:blur(38px);
-  opacity:.92;
+    radial-gradient(ellipse at 24% 28%,rgba(128,91,255,.10),transparent 37%),
+    radial-gradient(ellipse at 76% 34%,rgba(63,130,255,.09),transparent 38%),
+    radial-gradient(ellipse at 66% 78%,rgba(231,87,212,.07),transparent 40%);
+  filter:blur(44px);
+  opacity:.64;
   transform:translate3d(0,0,0) scale(1.03);
   animation:homepageGradientDrift 22s ease-in-out infinite alternate;
 }
 
 .landing-page.landing-v2::after{
   background:
-    linear-gradient(115deg,transparent 0 34%,rgba(255,255,255,.32) 45%,transparent 58%),
-    radial-gradient(circle at 50% 6%,rgba(255,255,255,.58),transparent 24%);
-  opacity:.7;
+    linear-gradient(115deg,transparent 0 34%,rgba(255,255,255,.54) 45%,transparent 58%),
+    radial-gradient(circle at 50% 6%,rgba(255,255,255,.82),transparent 24%);
+  opacity:.82;
 }
 
 .landing-page.landing-v2 > section{
@@ -77,24 +77,24 @@
 @media(max-width:1024px){
   .landing-page.landing-v2{
     background:
-      radial-gradient(circle at 5% 10%,rgba(113,76,255,.21),transparent 36%),
-      radial-gradient(circle at 96% 22%,rgba(42,125,255,.18),transparent 38%),
-      radial-gradient(circle at 75% 65%,rgba(232,83,209,.13),transparent 42%),
-      linear-gradient(180deg,#fbfaff 0%,#f4f1ff 46%,#fafbff 100%) !important;
+      radial-gradient(circle at 5% 10%,rgba(113,76,255,.12),transparent 36%),
+      radial-gradient(circle at 96% 22%,rgba(42,125,255,.10),transparent 38%),
+      radial-gradient(circle at 75% 65%,rgba(232,83,209,.07),transparent 42%),
+      linear-gradient(180deg,#ffffff 0%,#faf9ff 46%,#ffffff 100%) !important;
   }
-  .landing-page.landing-v2::before{filter:blur(46px);opacity:.72}
+  .landing-page.landing-v2::before{filter:blur(52px);opacity:.48}
 }
 
 @media(max-width:720px){
   .landing-page.landing-v2{
     background:
-      radial-gradient(circle at 0 9%,rgba(113,76,255,.18),transparent 32%),
-      radial-gradient(circle at 100% 24%,rgba(42,125,255,.15),transparent 34%),
-      radial-gradient(circle at 78% 70%,rgba(232,83,209,.10),transparent 38%),
-      linear-gradient(180deg,#fbfaff 0%,#f5f2ff 52%,#fbfcff 100%) !important;
+      radial-gradient(circle at 0 9%,rgba(113,76,255,.10),transparent 32%),
+      radial-gradient(circle at 100% 24%,rgba(42,125,255,.08),transparent 34%),
+      radial-gradient(circle at 78% 70%,rgba(232,83,209,.05),transparent 38%),
+      linear-gradient(180deg,#ffffff 0%,#fbfaff 52%,#ffffff 100%) !important;
   }
-  .landing-page.landing-v2::before{opacity:.58;animation-duration:28s}
-  .landing-page.landing-v2::after{opacity:.5}
+  .landing-page.landing-v2::before{opacity:.38;animation-duration:28s}
+  .landing-page.landing-v2::after{opacity:.68}
 }
 
 @media(prefers-reduced-motion:reduce){
