@@ -167,7 +167,7 @@
               <article class="mobile-vacancy-card is-active">
                 <div class="mobile-vacancy-card__top"><span>Лучшее совпадение</span><b>93%<small>совпадение</small></b></div>
                 <h2>Аналитик данных</h2>
-                <p class="mobile-vacancy-card__company">Skyeng</p>
+                <div class="mobile-vacancy-card__source" aria-label="Источник вакансии"><img src="{{ url_for('static', filename='images/logos/sources.svg') }}" alt="Агрегатор вакансий"></div>
                 <ul><li>Москва, гибрид</li><li>Опыт: 2–4 года</li></ul>
                 <div class="mobile-vacancy-card__salary"><strong>150 000–200 000 ₽</strong><small>на руки</small></div>
                 <div class="mobile-vacancy-card__actions"><a href="{{ url_for('vacancies') }}">Откликнуться</a><button type="button" aria-label="Добавить вакансию в избранное">♡</button></div>
@@ -175,7 +175,7 @@
               <article class="mobile-vacancy-card">
                 <div class="mobile-vacancy-card__top"><span>Высокое совпадение</span><b>89%<small>совпадение</small></b></div>
                 <h2>Product Manager</h2>
-                <p class="mobile-vacancy-card__company">HeadHunter</p>
+                <div class="mobile-vacancy-card__source" aria-label="Источник вакансии"><img src="{{ url_for('static', filename='images/logos/hh.svg') }}" alt="HeadHunter"></div>
                 <ul><li>Москва, удалённо</li><li>Опыт: от 2 лет</li></ul>
                 <div class="mobile-vacancy-card__salary"><strong>180 000–240 000 ₽</strong><small>до вычета налогов</small></div>
                 <div class="mobile-vacancy-card__actions"><a href="{{ url_for('vacancies') }}">Откликнуться</a><button type="button" aria-label="Добавить вакансию в избранное">♡</button></div>
@@ -183,7 +183,7 @@
               <article class="mobile-vacancy-card">
                 <div class="mobile-vacancy-card__top"><span>Подходит вам</span><b>86%<small>совпадение</small></b></div>
                 <h2>Бизнес-аналитик</h2>
-                <p class="mobile-vacancy-card__company">SuperJob</p>
+                <div class="mobile-vacancy-card__source" aria-label="Источник вакансии"><img src="{{ url_for('static', filename='images/logos/superjob.svg') }}" alt="SuperJob"></div>
                 <ul><li>Санкт-Петербург, гибрид</li><li>Опыт: 1–3 года</li></ul>
                 <div class="mobile-vacancy-card__salary"><strong>140 000–190 000 ₽</strong><small>на руки</small></div>
                 <div class="mobile-vacancy-card__actions"><a href="{{ url_for('vacancies') }}">Откликнуться</a><button type="button" aria-label="Добавить вакансию в избранное">♡</button></div>
@@ -1129,31 +1129,44 @@
 
   const mobileCarousel = document.querySelector('[data-mobile-vacancy-carousel]');
   if (mobileCarousel) {
-    const track = mobileCarousel.querySelector('.mobile-vacancy-carousel__track');
+    const viewport = mobileCarousel.querySelector('.mobile-vacancy-carousel__viewport');
     const cards = Array.from(mobileCarousel.querySelectorAll('.mobile-vacancy-card'));
     const dots = Array.from(mobileCarousel.querySelectorAll('.mobile-vacancy-carousel__dots button'));
     const previous = mobileCarousel.querySelector('.mobile-vacancy-carousel__arrow--prev');
     const next = mobileCarousel.querySelector('.mobile-vacancy-carousel__arrow--next');
     let activeIndex = 0;
-    let touchStartX = 0;
+    let scrollTimer = 0;
 
-    const showCard = (index) => {
-      activeIndex = (index + cards.length) % cards.length;
-      track.style.transform = `translate3d(${-activeIndex * 100}%,0,0)`;
+    const cardLeft = (index) => cards[index].offsetLeft;
+    const setActive = (index) => {
+      activeIndex = Math.max(0, Math.min(cards.length - 1, index));
       cards.forEach((card, cardIndex) => card.classList.toggle('is-active', cardIndex === activeIndex));
       dots.forEach((dot, dotIndex) => dot.classList.toggle('is-active', dotIndex === activeIndex));
+      previous.disabled = activeIndex === 0;
+      next.disabled = activeIndex === cards.length - 1;
+    };
+    const showCard = (index) => {
+      const nextIndex = Math.max(0, Math.min(cards.length - 1, index));
+      viewport.scrollTo({ left: cardLeft(nextIndex), behavior: 'smooth' });
+      setActive(nextIndex);
     };
 
     previous.addEventListener('click', () => showCard(activeIndex - 1));
     next.addEventListener('click', () => showCard(activeIndex + 1));
     dots.forEach((dot, index) => dot.addEventListener('click', () => showCard(index)));
-    track.addEventListener('touchstart', (event) => { touchStartX = event.touches[0].clientX; }, { passive: true });
-    track.addEventListener('touchend', (event) => {
-      const distance = event.changedTouches[0].clientX - touchStartX;
-      if (Math.abs(distance) < 45) return;
-      showCard(activeIndex + (distance < 0 ? 1 : -1));
+    viewport.addEventListener('scroll', () => {
+      window.clearTimeout(scrollTimer);
+      scrollTimer = window.setTimeout(() => {
+        const nearest = cards.reduce((best, card, index) => {
+          const distance = Math.abs(card.offsetLeft - viewport.scrollLeft);
+          return distance < best.distance ? { index, distance } : best;
+        }, { index: 0, distance: Number.POSITIVE_INFINITY });
+        setActive(nearest.index);
+      }, 70);
     }, { passive: true });
+    setActive(0);
   }
+
 
 })();
 </script>
