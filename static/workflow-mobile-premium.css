@@ -441,3 +441,40 @@
     line-height:1.12!important;
   }
 }
+
+/* Stage 19: place the profile quality label below the donut */
+@media (max-width:1024px){
+  .workflow-mock--analysis .analysis-score{
+    margin-bottom:42px!important;
+  }
+  .workflow-mock--analysis .analysis-score b{
+    transform:none!important;
+    line-height:1!important;
+  }
+  .workflow-mock--analysis .analysis-score small{
+    top:calc(100% + 12px)!important;
+    bottom:auto!important;
+    left:50%!important;
+    width:max-content!important;
+    max-width:180px!important;
+    transform:translateX(-50%)!important;
+    color:#4f5364!important;
+    font-size:14px!important;
+    font-weight:700!important;
+    line-height:1.2!important;
+    letter-spacing:.01em!important;
+    white-space:nowrap!important;
+    text-shadow:0 1px 0 rgba(255,255,255,.9)!important;
+  }
+}
+
+@media (max-width:620px){
+  .workflow-mock--analysis .analysis-score{
+    margin-bottom:38px!important;
+  }
+  .workflow-mock--analysis .analysis-score small{
+    top:calc(100% + 10px)!important;
+    max-width:160px!important;
+    font-size:12px!important;
+  }
+}
