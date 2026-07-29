@@ -137,6 +137,67 @@
         <div class="orbit-result orbit-result--top">+538 вакансий</div>
         </div>
       </div>
+
+      <section class="mobile-match-showcase" aria-label="Мобильный подбор вакансий по резюме">
+        <a class="mobile-match-resume" href="{{ url_for('ai_career') }}">
+          <span class="mobile-match-resume__icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M7 3.5h7l4 4V20H7z"/><path d="M14 3.5V8h4M10 12h5M10 15.5h3.5"/></svg>
+          </span>
+          <span class="mobile-match-resume__copy">
+            <strong>Моё резюме</strong>
+            <small>Профиль готов к подбору</small>
+            <span class="mobile-match-resume__progress"><i></i></span>
+          </span>
+          <b>82%</b>
+        </a>
+
+        <div class="mobile-match-orbit" aria-hidden="true">
+          <span class="mobile-match-orbit__ring"></span>
+          <span class="mobile-match-orbit__core">AI</span>
+          <span class="mobile-match-source mobile-match-source--hh"><img src="{{ url_for('static', filename='images/logos/hh.svg') }}" alt=""></span>
+          <span class="mobile-match-source mobile-match-source--sj"><img src="{{ url_for('static', filename='images/logos/superjob.svg') }}" alt=""></span>
+          <span class="mobile-match-source mobile-match-source--other"><img src="{{ url_for('static', filename='images/logos/sources.svg') }}" alt=""></span>
+        </div>
+
+        <div class="mobile-match-count"><span aria-hidden="true">✦</span> Найдено <b>24 совпадения</b></div>
+
+        <div class="mobile-vacancy-carousel" data-mobile-vacancy-carousel>
+          <div class="mobile-vacancy-carousel__viewport">
+            <div class="mobile-vacancy-carousel__track">
+              <article class="mobile-vacancy-card is-active">
+                <div class="mobile-vacancy-card__top"><span>Лучшее совпадение</span><b>93%<small>совпадение</small></b></div>
+                <h2>Аналитик данных</h2>
+                <p class="mobile-vacancy-card__company">Skyeng</p>
+                <ul><li>Москва, гибрид</li><li>Опыт: 2–4 года</li></ul>
+                <div class="mobile-vacancy-card__salary"><strong>150 000–200 000 ₽</strong><small>на руки</small></div>
+                <div class="mobile-vacancy-card__actions"><a href="{{ url_for('vacancies') }}">Откликнуться</a><button type="button" aria-label="Добавить вакансию в избранное">♡</button></div>
+              </article>
+              <article class="mobile-vacancy-card">
+                <div class="mobile-vacancy-card__top"><span>Высокое совпадение</span><b>89%<small>совпадение</small></b></div>
+                <h2>Product Manager</h2>
+                <p class="mobile-vacancy-card__company">HeadHunter</p>
+                <ul><li>Москва, удалённо</li><li>Опыт: от 2 лет</li></ul>
+                <div class="mobile-vacancy-card__salary"><strong>180 000–240 000 ₽</strong><small>до вычета налогов</small></div>
+                <div class="mobile-vacancy-card__actions"><a href="{{ url_for('vacancies') }}">Откликнуться</a><button type="button" aria-label="Добавить вакансию в избранное">♡</button></div>
+              </article>
+              <article class="mobile-vacancy-card">
+                <div class="mobile-vacancy-card__top"><span>Подходит вам</span><b>86%<small>совпадение</small></b></div>
+                <h2>Бизнес-аналитик</h2>
+                <p class="mobile-vacancy-card__company">SuperJob</p>
+                <ul><li>Санкт-Петербург, гибрид</li><li>Опыт: 1–3 года</li></ul>
+                <div class="mobile-vacancy-card__salary"><strong>140 000–190 000 ₽</strong><small>на руки</small></div>
+                <div class="mobile-vacancy-card__actions"><a href="{{ url_for('vacancies') }}">Откликнуться</a><button type="button" aria-label="Добавить вакансию в избранное">♡</button></div>
+              </article>
+            </div>
+          </div>
+          <button class="mobile-vacancy-carousel__arrow mobile-vacancy-carousel__arrow--prev" type="button" aria-label="Предыдущая вакансия">‹</button>
+          <button class="mobile-vacancy-carousel__arrow mobile-vacancy-carousel__arrow--next" type="button" aria-label="Следующая вакансия">›</button>
+          <div class="mobile-vacancy-carousel__dots" aria-label="Выбор вакансии">
+            <button class="is-active" type="button" aria-label="Вакансия 1"></button><button type="button" aria-label="Вакансия 2"></button><button type="button" aria-label="Вакансия 3"></button>
+          </div>
+        </div>
+        <p class="mobile-match-note"><span aria-hidden="true">✦</span> AI анализирует вакансии и находит лучшие возможности специально для вас</p>
+      </section>
     </div>
   </section>
 
@@ -1064,6 +1125,34 @@
       matchWorkspace.classList.add('is-inview');
       statNumbers.forEach(animateNumber);
     }
+  }
+
+  const mobileCarousel = document.querySelector('[data-mobile-vacancy-carousel]');
+  if (mobileCarousel) {
+    const track = mobileCarousel.querySelector('.mobile-vacancy-carousel__track');
+    const cards = Array.from(mobileCarousel.querySelectorAll('.mobile-vacancy-card'));
+    const dots = Array.from(mobileCarousel.querySelectorAll('.mobile-vacancy-carousel__dots button'));
+    const previous = mobileCarousel.querySelector('.mobile-vacancy-carousel__arrow--prev');
+    const next = mobileCarousel.querySelector('.mobile-vacancy-carousel__arrow--next');
+    let activeIndex = 0;
+    let touchStartX = 0;
+
+    const showCard = (index) => {
+      activeIndex = (index + cards.length) % cards.length;
+      track.style.transform = `translate3d(${-activeIndex * 100}%,0,0)`;
+      cards.forEach((card, cardIndex) => card.classList.toggle('is-active', cardIndex === activeIndex));
+      dots.forEach((dot, dotIndex) => dot.classList.toggle('is-active', dotIndex === activeIndex));
+    };
+
+    previous.addEventListener('click', () => showCard(activeIndex - 1));
+    next.addEventListener('click', () => showCard(activeIndex + 1));
+    dots.forEach((dot, index) => dot.addEventListener('click', () => showCard(index)));
+    track.addEventListener('touchstart', (event) => { touchStartX = event.touches[0].clientX; }, { passive: true });
+    track.addEventListener('touchend', (event) => {
+      const distance = event.changedTouches[0].clientX - touchStartX;
+      if (Math.abs(distance) < 45) return;
+      showCard(activeIndex + (distance < 0 ? 1 : -1));
+    }, { passive: true });
   }
 
 })();
