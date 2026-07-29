@@ -114,16 +114,16 @@ input:focus,select:focus,textarea:focus{outline:3px solid rgba(109,91,255,.14);b
 .resume-dropzone{background:var(--surface-soft);border-color:var(--line-strong)}
 .resume-dropzone:hover,.resume-dropzone.is-dragover{border-color:var(--primary);background:var(--primary-soft)}
 .resume-upload-illustration,.resume-dropzone-hint span{color:var(--primary-solid)}
-.career-flow>div>span{background:var(--primary-soft);color:var(--primary-solid)}
+
 
 /* Search and vacancies */
-.source-superjob,.source-hh,.source-trudvsem,.source-reed{color:var(--primary-solid)}
+
 .source-option:has(input:checked){border-color:var(--primary-border);background:var(--primary-soft)}
 .link-button{color:var(--primary-solid)}
 
 /* Semantic states */
 .success-text,.status.success h1,.status-pill.connected{color:var(--success)}
-.status-pill.connected{background:var(--success-soft);border-color:#c9efda}
+
 .error-box{color:var(--danger);background:var(--danger-soft);border-color:#ffd2d5}
 
 @media(max-width:720px){
@@ -373,12 +373,9 @@ input:focus,select:focus,textarea:focus{outline:3px solid rgba(109,91,255,.14);b
   max-width:100%;
   white-space:nowrap;
 }
-.resume-quick-analysis{
-  padding:13px;
-  gap:10px;
-}
-.resume-quick-grid{gap:8px}
-.resume-quick-grid>div{padding:10px}
+
+
+
 .resume-upload-card .career-main-action{
   flex:0 0 auto;
   width:100%;
@@ -428,7 +425,7 @@ input:focus,select:focus,textarea:focus{outline:3px solid rgba(109,91,255,.14);b
     width:100%;
     padding:9px 8px;
   }
-  .resume-quick-grid{grid-template-columns:1fr}
+  
 }
 
 /* Stage 6: readable in-card recommendation badge.
@@ -1706,19 +1703,13 @@ input:focus,select:focus,textarea:focus{outline:3px solid rgba(109,91,255,.14);b
   height:27px;
   transform:translateX(1px);
 }
-.source-option--superjob .source-option__mark img{
-  width:27px;
-  height:27px;
-}
+
 .source-option--reed .source-option__mark img{
   width:24px;
   height:27px;
   transform:translateY(0);
 }
-.source-option--hh .source-option__mark img{
-  width:29px;
-  height:29px;
-}
+
 
 @media(max-width:620px){
   .source-picker__grid{gap:10px}
@@ -1735,9 +1726,9 @@ input:focus,select:focus,textarea:focus{outline:3px solid rgba(109,91,255,.14);b
     border-radius:13px;
   }
   .source-option--trudvsem .source-option__mark img{width:24px;height:24px}
-  .source-option--superjob .source-option__mark img{width:24px;height:24px}
+  
   .source-option--reed .source-option__mark img{width:21px;height:24px}
-  .source-option--hh .source-option__mark img{width:26px;height:26px}
+  
 }
 
 @media(max-width:460px){
@@ -2283,7 +2274,7 @@ input:focus,select:focus,textarea:focus{outline:3px solid rgba(109,91,255,.14);b
   .vacancy-loading-source{min-height:30px;padding:5px 9px;font-size:11px}
   .vacancy-loading-state__skeletons{grid-template-columns:1fr;margin-top:16px}
   .vacancy-loading-card{padding:16px}
-  .vacancy-loading-card:nth-child(n+2){display:none}
+  .vacancy-loading-card:nth-child(n/**/+2){display:none}
 }
 @media(prefers-reduced-motion:reduce){
   .vacancy-loading-state__spinner,.vacancy-loading-source i,.vacancy-loading-line::after,.vacancy-loading-card__tags span::after{animation:none}

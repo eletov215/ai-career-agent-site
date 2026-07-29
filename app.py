@@ -907,7 +907,6 @@ def vacancies():
     if not selected_sources:
         selected_sources = ["trudvsem"]
 
-    hh_row = hh_account()
     providers = {
         "hh": HeadHunterProvider(
             HH_VACANCIES_URL,
