@@ -396,3 +396,48 @@
     line-height:1.15!important;
   }
 }
+
+/* Stage 18: separate the profile score label from the numeric value */
+@media (max-width:1024px){
+  .workflow-mock--analysis .analysis-score{
+    position:relative!important;
+    display:flex!important;
+    flex-direction:column!important;
+    align-items:center!important;
+    justify-content:center!important;
+    overflow:visible!important;
+  }
+  .workflow-mock--analysis .analysis-score b{
+    display:block!important;
+    margin:0!important;
+    line-height:.9!important;
+    transform:translateY(-13px)!important;
+  }
+  .workflow-mock--analysis .analysis-score small{
+    position:absolute!important;
+    left:50%!important;
+    bottom:25px!important;
+    width:112px!important;
+    max-width:none!important;
+    margin:0!important;
+    transform:translateX(-50%)!important;
+    color:#7c8192!important;
+    font-size:11px!important;
+    font-weight:600!important;
+    line-height:1.15!important;
+    text-align:center!important;
+    white-space:normal!important;
+  }
+}
+
+@media (max-width:620px){
+  .workflow-mock--analysis .analysis-score b{
+    transform:translateY(-11px)!important;
+  }
+  .workflow-mock--analysis .analysis-score small{
+    bottom:19px!important;
+    width:92px!important;
+    font-size:9px!important;
+    line-height:1.12!important;
+  }
+}
