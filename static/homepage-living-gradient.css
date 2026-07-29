@@ -60,7 +60,13 @@
 }
 
 /* Neutralize obsolete decorative background layers from earlier versions. */
-
+.landing-page .landing-cosmos,
+.landing-page .landing-cosmos__image,
+.landing-page .landing-cosmos__veil,
+.landing-page .landing-cosmos__glow{
+  display:none !important;
+  background:none !important;
+}
 
 @keyframes homepageGradientDrift{
   0%{transform:translate3d(-1.5%,-1%,0) scale(1.03)}

@@ -228,6 +228,8 @@
   const skip = document.getElementById('builderSkip');
   const reset = document.getElementById('builderReset');
   const layout = document.getElementById('resumeBuilderLayout');
+  const pages = [...document.querySelectorAll('[data-resume-page]')];
+  let currentPage = 0;
   let state = {index:0, answers:{}, messages:[], photo:'', universityLogo:''};
   try { const saved = JSON.parse(localStorage.getItem(storageKey) || 'null'); if (saved && saved.answers) state = {...state, ...saved, photo:saved.photo || '', universityLogo:saved.universityLogo || ''}; } catch (_) {}
   const photoInput = document.getElementById('resumePhotoInput');

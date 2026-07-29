@@ -91,7 +91,7 @@
     color:#fff!important;
     box-shadow:0 0 0 7px rgba(113,79,235,.10),0 12px 26px rgba(84,61,220,.27)!important;
   }
-  
+  .workflow-tab__icon{display:none!important}
   .workflow-tab > span:last-child{display:block!important;min-width:0!important}
   .workflow-tab strong{
     display:block!important;
@@ -105,7 +105,7 @@
     white-space:nowrap;
   }
   .workflow-tab.is-active strong{color:#6847e8!important}
-  
+  .workflow-tab small{display:none!important}
 
   .workflow-preview{
     position:relative;
