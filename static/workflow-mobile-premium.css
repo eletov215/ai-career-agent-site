@@ -244,3 +244,89 @@
 @media (prefers-reduced-motion:reduce){
   .workflow-tab,.workflow-preview{transition:none!important}
 }
+
+/* Stage 16: reliable mobile step navigation and visible stage rail */
+@media (max-width:1024px){
+  .workflow-tabs{
+    position:relative!important;
+    display:grid!important;
+    grid-template-columns:repeat(4,minmax(0,1fr))!important;
+    grid-auto-flow:row!important;
+    width:min(100%,620px)!important;
+    height:auto!important;
+    min-height:74px!important;
+    margin:0 auto 18px!important;
+    padding:0!important;
+    overflow:visible!important;
+    border-radius:0!important;
+    -webkit-mask-image:none!important;
+    mask-image:none!important;
+  }
+  .workflow-tabs::before{
+    top:22px!important;
+    left:12.5%!important;
+    right:12.5%!important;
+  }
+  .workflow-tab,
+  .workflow-tab.is-active{
+    position:relative!important;
+    inset:auto!important;
+    top:auto!important;
+    left:auto!important;
+    right:auto!important;
+    bottom:auto!important;
+    z-index:1!important;
+    width:auto!important;
+    min-width:0!important;
+    max-width:none!important;
+    min-height:70px!important;
+    padding:0 3px!important;
+    border:0!important;
+    border-radius:0!important;
+    background:transparent!important;
+    box-shadow:none!important;
+    opacity:1!important;
+    filter:none!important;
+    transform:none!important;
+    transform-origin:center!important;
+    pointer-events:auto!important;
+    visibility:visible!important;
+  }
+  .workflow-tab.is-active{z-index:2!important}
+  .workflow-tab.is-active::after{display:none!important}
+  .workflow-tab strong{
+    display:block!important;
+    width:100%!important;
+    max-width:120px!important;
+    margin-inline:auto!important;
+    overflow:hidden!important;
+    text-overflow:ellipsis!important;
+    white-space:nowrap!important;
+  }
+  .workflow-preview{
+    touch-action:pan-y!important;
+    -webkit-user-select:none;
+    user-select:none;
+    overscroll-behavior-x:contain;
+  }
+  .workflow-console.is-switching .workflow-tab{pointer-events:auto!important}
+}
+
+@media (max-width:620px){
+  .workflow-tabs{
+    min-height:66px!important;
+    margin-bottom:12px!important;
+  }
+  .workflow-tabs::before{top:19px!important}
+  .workflow-tab,
+  .workflow-tab.is-active{min-height:62px!important}
+  .workflow-tab strong{
+    max-width:68px!important;
+    font-size:9px!important;
+    line-height:1.18!important;
+  }
+  .workflow-tab__number{
+    width:38px!important;
+    height:38px!important;
+  }
+}

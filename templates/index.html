@@ -697,7 +697,7 @@
     const panels = Array.from(workflowConsole.querySelectorAll('[data-workflow-panel]'));
     const autoDelay = 6000;
     const manualPause = 120000;
-    const transitionDuration = 1050;
+    const transitionDuration = window.matchMedia('(max-width: 1024px)').matches ? 420 : 760;
     let autoTimer = null;
     let transitionTimer = null;
     let pausedUntil = 0;
@@ -822,6 +822,68 @@
       clearAutoTimer();
       if (!isTransitioning) scheduleAutoAdvance();
     };
+
+    const swipeSurface = workflowConsole.querySelector('.workflow-preview');
+    if (swipeSurface) {
+      let swipePointerId = null;
+      let swipeStartX = 0;
+      let swipeStartY = 0;
+      let swipeStartTime = 0;
+      let swipeLockedAxis = null;
+
+      const resetSwipe = () => {
+        swipePointerId = null;
+        swipeLockedAxis = null;
+        swipeSurface.classList.remove('is-swiping');
+      };
+
+      swipeSurface.addEventListener('pointerdown', (event) => {
+        if (event.pointerType === 'mouse' && event.button !== 0) return;
+        swipePointerId = event.pointerId;
+        swipeStartX = event.clientX;
+        swipeStartY = event.clientY;
+        swipeStartTime = performance.now();
+        swipeLockedAxis = null;
+        swipeSurface.setPointerCapture?.(event.pointerId);
+      }, { passive: true });
+
+      swipeSurface.addEventListener('pointermove', (event) => {
+        if (event.pointerId !== swipePointerId) return;
+        const dx = event.clientX - swipeStartX;
+        const dy = event.clientY - swipeStartY;
+        if (!swipeLockedAxis && Math.max(Math.abs(dx), Math.abs(dy)) > 9) {
+          swipeLockedAxis = Math.abs(dx) > Math.abs(dy) * 1.12 ? 'x' : 'y';
+          swipeSurface.classList.toggle('is-swiping', swipeLockedAxis === 'x');
+        }
+      }, { passive: true });
+
+      const finishSwipe = (event) => {
+        if (event.pointerId !== swipePointerId) return;
+        const dx = event.clientX - swipeStartX;
+        const dy = event.clientY - swipeStartY;
+        const elapsed = Math.max(1, performance.now() - swipeStartTime);
+        const velocity = Math.abs(dx) / elapsed;
+        const horizontal = swipeLockedAxis === 'x' || Math.abs(dx) > Math.abs(dy) * 1.2;
+        const accepted = horizontal && (Math.abs(dx) >= 42 || (Math.abs(dx) >= 26 && velocity >= 0.35));
+
+        if (accepted && !isTransitioning) {
+          const currentIndex = activeIndex();
+          const direction = dx < 0 ? 'forward' : 'backward';
+          const nextIndex = direction === 'forward'
+            ? Math.min(tabs.length - 1, currentIndex + 1)
+            : Math.max(0, currentIndex - 1);
+          if (nextIndex !== currentIndex) {
+            pauseAfterManualChoice();
+            activateWorkflow(tabs[nextIndex].dataset.workflowTab, false, direction);
+          }
+        }
+        resetSwipe();
+      };
+
+      swipeSurface.addEventListener('pointerup', finishSwipe, { passive: true });
+      swipeSurface.addEventListener('pointercancel', resetSwipe, { passive: true });
+      swipeSurface.addEventListener('lostpointercapture', resetSwipe, { passive: true });
+    }
 
     tabs.forEach((tab, index) => {
       tab.addEventListener('click', () => {
