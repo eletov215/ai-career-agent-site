@@ -211,9 +211,9 @@
         </div>
 
         <div class="quick-start-grid" aria-label="Основные действия">
-          <a class="quick-start-card" href="{{ url_for('ai_career') }}">
-            <span class="quick-start-card__icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24"><path d="M7 3.5h7l4 4V20H7z"/><path d="M14 3.5V8h4M10 12h5M10 15.5h3.5"/><path d="m4.5 15.5 1.7 1.7 3-3"/></svg>
+          <a class="quick-start-card quick-start-card--illustrated quick-start-card--resume" href="{{ url_for('ai_career') }}">
+            <span class="quick-start-card__visual" aria-hidden="true">
+              <img src="{{ url_for('static', filename='images/quick-start/resume-review.svg') }}" alt="">
             </span>
             <span class="quick-start-card__copy">
               <b>Проверить резюме</b>
@@ -222,9 +222,9 @@
             <span class="quick-start-card__arrow" aria-hidden="true">→</span>
           </a>
 
-          <a class="quick-start-card quick-start-card--primary" href="{{ url_for('vacancies') }}">
-            <span class="quick-start-card__icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6"/><path d="m15 15 4 4M7.5 10.5h6M10.5 7.5v6"/></svg>
+          <a class="quick-start-card quick-start-card--primary quick-start-card--illustrated quick-start-card--vacancies" href="{{ url_for('vacancies') }}">
+            <span class="quick-start-card__visual" aria-hidden="true">
+              <img src="{{ url_for('static', filename='images/quick-start/vacancy-search.svg') }}" alt="">
             </span>
             <span class="quick-start-card__copy">
               <b>Найти вакансии</b>
@@ -233,9 +233,9 @@
             <span class="quick-start-card__arrow" aria-hidden="true">→</span>
           </a>
 
-          <a class="quick-start-card" href="#capabilities">
-            <span class="quick-start-card__icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24"><path d="M4 17.5 9 12l3.3 3.3L20 7.5"/><path d="M15.5 7.5H20V12"/><circle cx="9" cy="12" r="1.5"/><circle cx="12.3" cy="15.3" r="1.5"/></svg>
+          <a class="quick-start-card quick-start-card--illustrated quick-start-card--match" href="#capabilities">
+            <span class="quick-start-card__visual" aria-hidden="true">
+              <img src="{{ url_for('static', filename='images/quick-start/match-score.svg') }}" alt="">
             </span>
             <span class="quick-start-card__copy">
               <b>Оценить совпадение</b>
@@ -244,6 +244,7 @@
             <span class="quick-start-card__arrow" aria-hidden="true">→</span>
           </a>
         </div>
+        <p class="quick-start-note"><span aria-hidden="true">✦</span> AI работает — вы принимаете решение</p>
       </div>
     </div>
   </section>

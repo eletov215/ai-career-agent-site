@@ -6569,3 +6569,19 @@ body.resume-reader-open{overflow:hidden}
     max-width:calc(100vw - 16px) !important;
   }
 }
+
+/* Quick-start icons: clean, non-overlapping stroke geometry */
+.quick-start-card__icon svg{
+  width:24px;
+  height:24px;
+  overflow:visible;
+  fill:none;
+  stroke:currentColor;
+  stroke-width:1.65;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+  shape-rendering:geometricPrecision;
+}
+.quick-start-card__icon svg *{
+  vector-effect:non-scaling-stroke;
+}
