@@ -169,7 +169,7 @@
                 <h2>Аналитик данных</h2>
                 <div class="mobile-vacancy-card__source" aria-label="Источник вакансии"><img src="{{ url_for('static', filename='images/logos/sources.svg') }}" alt="Агрегатор вакансий"></div>
                 <ul><li>Москва, гибрид</li><li>Опыт: 2–4 года</li></ul>
-                <div class="mobile-vacancy-card__salary"><strong>150 000–200 000 ₽</strong><small>на руки</small></div>
+                <div class="mobile-vacancy-card__salary"><strong class="salary-value">150&nbsp;000&nbsp;–&nbsp;200&nbsp;000&nbsp;₽</strong><small>на руки</small></div>
                 <div class="mobile-vacancy-card__actions"><a href="{{ url_for('vacancies') }}">Откликнуться</a><button type="button" aria-label="Добавить вакансию в избранное">♡</button></div>
               </article>
               <article class="mobile-vacancy-card">
@@ -177,7 +177,7 @@
                 <h2>Product Manager</h2>
                 <div class="mobile-vacancy-card__source" aria-label="Источник вакансии"><img src="{{ url_for('static', filename='images/logos/hh.svg') }}" alt="HeadHunter"></div>
                 <ul><li>Москва, удалённо</li><li>Опыт: от 2 лет</li></ul>
-                <div class="mobile-vacancy-card__salary"><strong>180 000–240 000 ₽</strong><small>до вычета налогов</small></div>
+                <div class="mobile-vacancy-card__salary"><strong class="salary-value">180&nbsp;000&nbsp;–&nbsp;240&nbsp;000&nbsp;₽</strong><small>до вычета налогов</small></div>
                 <div class="mobile-vacancy-card__actions"><a href="{{ url_for('vacancies') }}">Откликнуться</a><button type="button" aria-label="Добавить вакансию в избранное">♡</button></div>
               </article>
               <article class="mobile-vacancy-card">
@@ -185,7 +185,7 @@
                 <h2>Бизнес-аналитик</h2>
                 <div class="mobile-vacancy-card__source" aria-label="Источник вакансии"><img src="{{ url_for('static', filename='images/logos/superjob.svg') }}" alt="SuperJob"></div>
                 <ul><li>Санкт-Петербург, гибрид</li><li>Опыт: 1–3 года</li></ul>
-                <div class="mobile-vacancy-card__salary"><strong>140 000–190 000 ₽</strong><small>на руки</small></div>
+                <div class="mobile-vacancy-card__salary"><strong class="salary-value">140&nbsp;000&nbsp;–&nbsp;190&nbsp;000&nbsp;₽</strong><small>на руки</small></div>
                 <div class="mobile-vacancy-card__actions"><a href="{{ url_for('vacancies') }}">Откликнуться</a><button type="button" aria-label="Добавить вакансию в избранное">♡</button></div>
               </article>
             </div>
@@ -213,7 +213,7 @@
         <div class="quick-start-grid" aria-label="Основные действия">
           <a class="quick-start-card quick-start-card--illustrated quick-start-card--resume" href="{{ url_for('ai_career') }}">
             <span class="quick-start-card__visual" aria-hidden="true">
-              <img src="{{ url_for('static', filename='images/quick-start/resume-review.png') }}" alt="">
+              <img src="{{ url_for('static', filename='images/quick-start/resume-review.svg') }}" alt="">
             </span>
             <span class="quick-start-card__copy">
               <b>Проверить резюме</b>
@@ -224,7 +224,7 @@
 
           <a class="quick-start-card quick-start-card--primary quick-start-card--illustrated quick-start-card--vacancies" href="{{ url_for('vacancies') }}">
             <span class="quick-start-card__visual" aria-hidden="true">
-              <img src="{{ url_for('static', filename='images/quick-start/vacancy-search.png') }}" alt="">
+              <img src="{{ url_for('static', filename='images/quick-start/vacancy-search.svg') }}" alt="">
             </span>
             <span class="quick-start-card__copy">
               <b>Найти вакансии</b>
@@ -235,7 +235,7 @@
 
           <a class="quick-start-card quick-start-card--illustrated quick-start-card--match" href="#capabilities">
             <span class="quick-start-card__visual" aria-hidden="true">
-              <img src="{{ url_for('static', filename='images/quick-start/match-score.png') }}" alt="">
+              <img src="{{ url_for('static', filename='images/quick-start/match-score.svg') }}" alt="">
             </span>
             <span class="quick-start-card__copy">
               <b>Оценить совпадение</b>
