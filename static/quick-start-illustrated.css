@@ -93,3 +93,53 @@
 }
 
 @media(prefers-reduced-motion:reduce){.quick-start-card.quick-start-card--illustrated{transition:none!important}}
+
+/* Stage 13 desktop layout fix: keep illustrations and copy in separate columns */
+@media (min-width:1025px){
+  .quick-start-card.quick-start-card--illustrated{
+    grid-template-columns:122px minmax(0,1fr) 34px!important;
+    grid-template-rows:auto!important;
+    align-items:center!important;
+    min-height:196px!important;
+    padding:22px 18px!important;
+    gap:14px!important;
+  }
+  .quick-start-card__visual{
+    grid-column:1!important;
+    grid-row:1!important;
+    width:122px!important;
+    height:142px!important;
+    overflow:hidden!important;
+    align-self:center!important;
+  }
+  .quick-start-card__visual img{
+    width:122px!important;
+    height:142px!important;
+    max-width:122px!important;
+    object-fit:contain!important;
+    object-position:center!important;
+  }
+  .quick-start-card__copy{
+    position:relative!important;
+    z-index:2!important;
+    grid-column:2!important;
+    grid-row:1!important;
+    align-self:center!important;
+    min-width:0!important;
+  }
+  .quick-start-card__copy b{
+    font-size:16px!important;
+  }
+  .quick-start-card__copy small{
+    max-width:none!important;
+    font-size:11px!important;
+    line-height:1.45!important;
+  }
+  .quick-start-card__arrow{
+    position:relative!important;
+    z-index:2!important;
+    grid-column:3!important;
+    grid-row:1!important;
+    align-self:center!important;
+  }
+}
