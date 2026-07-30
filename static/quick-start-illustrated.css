@@ -48,15 +48,15 @@
   .quick-start-grid::-webkit-scrollbar{display:none}
   .quick-start-card.quick-start-card--illustrated{
     flex:0 0 min(760px,calc(100vw - 40px));scroll-snap-align:center;
-    grid-template-columns:minmax(0,1fr) minmax(210px,42%) 32px!important;grid-template-rows:auto!important;
-    min-height:210px!important;padding:28px 18px 24px 26px!important;border-radius:24px!important;gap:14px!important;
+    grid-template-columns:minmax(0,1fr) minmax(250px,46%) 32px!important;grid-template-rows:auto!important;
+    min-height:228px!important;padding:28px 18px 24px 26px!important;border-radius:24px!important;gap:14px!important;
   }
   .quick-start-card__number{left:18px;top:18px;width:34px;height:34px}
   .quick-start-card__copy{grid-column:1;grid-row:1;align-self:center;padding-left:26px!important}
   .quick-start-card__copy b{font-size:22px!important;max-width:260px}
   .quick-start-card__copy small{font-size:13px!important;line-height:1.5!important;max-width:290px}
-  .quick-start-card__visual{grid-column:2;grid-row:1;width:100%;height:188px;align-self:center}
-  .quick-start-card__visual img{width:100%;max-width:380px;max-height:194px}
+  .quick-start-card__visual{grid-column:2;grid-row:1;width:100%;height:208px;align-self:center}
+  .quick-start-card__visual img{width:100%;max-width:430px;max-height:214px}
   .quick-start-card__arrow{grid-column:3;grid-row:1;width:30px;height:30px;font-size:18px!important}
 }
 
@@ -67,16 +67,16 @@
   .quick-start-heading p{max-width:315px!important;font-size:12px!important}
   .quick-start-grid{gap:10px!important;padding:3px 14px 16px!important;scroll-padding-inline:14px}
   .quick-start-card.quick-start-card--illustrated{
-    flex-basis:calc(100vw - 28px);grid-template-columns:minmax(0,42%) minmax(0,1fr) 24px!important;
-    min-height:166px!important;padding:22px 11px 16px 14px!important;border-radius:20px!important;gap:8px!important;
+    flex-basis:calc(100vw - 28px);grid-template-columns:minmax(0,40%) minmax(0,1fr) 24px!important;
+    min-height:184px!important;padding:22px 11px 16px 14px!important;border-radius:20px!important;gap:8px!important;
     box-shadow:0 12px 28px rgba(57,42,119,.08),inset 0 1px 0 rgba(255,255,255,.96)!important;
   }
   .quick-start-card__number{left:12px;top:12px;width:30px;height:30px;border-radius:10px;font-size:14px}
   .quick-start-card__copy{grid-column:1;grid-row:1;padding-left:0!important;padding-top:26px!important;align-self:center}
   .quick-start-card__copy b{font-size:18px!important;line-height:1.2!important}
   .quick-start-card__copy small{margin-top:6px!important;font-size:11px!important;line-height:1.45!important}
-  .quick-start-card__visual{grid-column:2;grid-row:1;height:148px}
-  .quick-start-card__visual img{width:100%;max-width:236px;max-height:146px}
+  .quick-start-card__visual{grid-column:2;grid-row:1;height:164px}
+  .quick-start-card__visual img{width:100%;max-width:262px;max-height:162px}
   .quick-start-card__arrow{grid-column:3;grid-row:1;width:24px;height:24px;font-size:14px!important}
   .quick-start-note{margin-top:10px;font-size:10px}
 }
