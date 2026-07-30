@@ -57,8 +57,8 @@
   .quick-start-card__copy small{font-size:13px!important;line-height:1.5!important;max-width:290px}
   .quick-start-card__visual{grid-column:2;grid-row:1;width:100%;height:198px;align-self:center}
   .quick-start-card__visual img{width:100%;max-width:420px;max-height:198px}
-  .quick-start-card--vacancies .quick-start-card__visual img{width:auto;height:120px;max-width:none;max-height:none}
-  .quick-start-card--match .quick-start-card__visual img{width:auto;height:116px;max-width:none;max-height:none}
+  .quick-start-card--vacancies .quick-start-card__visual img{width:auto;height:105px;max-width:none;max-height:none}
+  .quick-start-card--match .quick-start-card__visual img{width:auto;height:111px;max-width:none;max-height:none}
   .quick-start-card__arrow{grid-column:3;grid-row:1;width:30px;height:30px;font-size:18px!important}
 }
 
@@ -79,8 +79,8 @@
   .quick-start-card__copy small{margin-top:6px!important;font-size:11px!important;line-height:1.45!important}
   .quick-start-card__visual{grid-column:2;grid-row:1;height:154px}
   .quick-start-card__visual img{width:100%;max-width:250px;max-height:152px}
-  .quick-start-card--vacancies .quick-start-card__visual img{width:auto;height:88px;max-width:none;max-height:none}
-  .quick-start-card--match .quick-start-card__visual img{width:auto;height:86px;max-width:none;max-height:none}
+  .quick-start-card--vacancies .quick-start-card__visual img{width:auto;height:73px;max-width:none;max-height:none}
+  .quick-start-card--match .quick-start-card__visual img{width:auto;height:81px;max-width:none;max-height:none}
   .quick-start-card__arrow{grid-column:3;grid-row:1;width:24px;height:24px;font-size:14px!important}
   .quick-start-note{margin-top:10px;font-size:10px}
 }
