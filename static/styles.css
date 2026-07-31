@@ -6562,3 +6562,85 @@ body.resume-reader-open{overflow:hidden}
     align-self:stretch;
   }
 }
+
+/* Stage 40: desktop manual comparison is integrated into the outer container */
+@media (min-width:981px){
+  .sources-compare{
+    align-items:stretch;
+  }
+  .sources-compare__panel--manual{
+    display:flex;
+    flex-direction:column;
+    align-self:stretch;
+    min-height:100%;
+    height:auto;
+    padding:22px 10px 8px 10px;
+    border:0;
+    border-radius:0;
+    background:transparent;
+    box-shadow:none;
+  }
+  .sources-compare__panel--manual .manual-browser-stack{
+    margin-bottom:18px;
+  }
+  .sources-compare__panel--manual .sources-compare__points{
+    margin-top:auto;
+    padding:0 8px 2px;
+  }
+}
+
+/* Stage 41: desktop manual panel matches agent panel and fills its space cleanly */
+@media (min-width:981px){
+  .sources-compare__panel--manual{
+    display:flex;
+    flex-direction:column;
+    align-self:stretch;
+    min-height:100%;
+    height:auto;
+    padding:22px;
+    border:1px solid rgba(101,75,222,.10);
+    border-radius:26px;
+    background:linear-gradient(160deg,rgba(248,248,252,.95),rgba(242,241,248,.88));
+    box-shadow:0 20px 50px rgba(48,40,100,.07);
+  }
+  .sources-compare__panel--manual .manual-browser-stack{
+    flex:1 1 auto;
+    min-height:360px;
+    margin:6px 0 20px;
+  }
+  .sources-compare__panel--manual .manual-browser{
+    width:88%;
+    height:220px;
+  }
+  .sources-compare__panel--manual .manual-browser--hh{
+    left:0;
+    top:4px;
+  }
+  .sources-compare__panel--manual .manual-browser--sj{
+    right:0;
+    top:66px;
+  }
+  .sources-compare__panel--manual .manual-browser--reed{
+    left:7%;
+    top:132px;
+  }
+  .sources-compare__panel--manual .manual-browser__top{
+    height:42px;
+  }
+  .sources-compare__panel--manual .manual-browser__body{
+    gap:15px;
+    padding:20px;
+  }
+  .sources-compare__panel--manual .manual-search{
+    height:34px;
+    padding:10px 12px;
+    font-size:10px;
+  }
+  .sources-compare__panel--manual .manual-line{
+    height:12px;
+  }
+  .sources-compare__panel--manual .sources-compare__points{
+    margin-top:auto;
+    padding:0;
+  }
+}
