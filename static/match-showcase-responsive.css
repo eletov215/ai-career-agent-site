@@ -484,12 +484,15 @@
     inset: -3px !important;
   }
 
-  .match-demo-section .match-showcase.match-showcase--office .match-profile-photo,
-  .match-demo-section .match-showcase.match-showcase--office .match-profile-photo img {
-    width: 100% !important;
-    height: 100% !important;
-    max-width: 100% !important;
+  .match-demo-section .match-showcase.match-showcase--office .match-profile-photo {
+    inset: 6px !important;
+    width: calc(100% - 12px) !important;
+    height: calc(100% - 12px) !important;
+    max-width: none !important;
+    border-radius: 50% !important;
     object-fit: cover !important;
+    object-position: center 32% !important;
+    clip-path: circle(50% at 50% 50%) !important;
   }
 
   .match-demo-section .match-showcase.match-showcase--office .match-profile-chips {
