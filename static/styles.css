@@ -6530,3 +6530,35 @@ body.resume-reader-open{overflow:hidden}
     margin-bottom:20px;
   }
 }
+
+/* Stage 38: end the mobile comparison panel immediately after its content */
+@media (max-width:720px){
+  .sources-compare__panel--manual{
+    min-height:0 !important;
+    height:auto !important;
+    padding-bottom:18px !important;
+  }
+}
+
+@media (max-width:460px){
+  .sources-compare__panel--manual{
+    min-height:0 !important;
+    height:auto !important;
+    padding-bottom:16px !important;
+  }
+}
+
+/* Stage 39: desktop comparison panels use their natural content height */
+@media (min-width:981px){
+  .sources-compare{
+    align-items:start;
+  }
+  .sources-compare__panel--manual{
+    min-height:0;
+    height:auto;
+    align-self:start;
+  }
+  .sources-compare__bridge{
+    align-self:stretch;
+  }
+}
