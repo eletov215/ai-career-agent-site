@@ -449,3 +449,92 @@
     line-height: 1.45 !important;
   }
 }
+
+/* Stage 35: hard mobile fit override. Keeps the portrait and analysis card fully inside the showcase. */
+@media (max-width: 640px) {
+  .match-demo-section .match-showcase.match-showcase--office .match-showcase__profile {
+    box-sizing: border-box !important;
+    grid-template-columns: 84px minmax(0, 1fr) !important;
+    column-gap: 8px !important;
+    row-gap: 10px !important;
+    width: 100% !important;
+    padding: 8px 2px 0 !important;
+    overflow: visible !important;
+  }
+
+  .match-demo-section .match-showcase.match-showcase--office .match-profile-photo-wrap {
+    box-sizing: border-box !important;
+    width: 78px !important;
+    height: 78px !important;
+    min-width: 78px !important;
+    max-width: 78px !important;
+    margin: 0 auto !important;
+    transform: none !important;
+  }
+
+  .match-demo-section .match-showcase.match-showcase--office .match-profile-photo-wrap::before {
+    inset: -7px !important;
+  }
+
+  .match-demo-section .match-showcase.match-showcase--office .match-profile-photo-wrap::after {
+    inset: -12px !important;
+  }
+
+  .match-demo-section .match-showcase.match-showcase--office .match-profile-ring {
+    inset: -3px !important;
+  }
+
+  .match-demo-section .match-showcase.match-showcase--office .match-profile-photo,
+  .match-demo-section .match-showcase.match-showcase--office .match-profile-photo img {
+    width: 100% !important;
+    height: 100% !important;
+    max-width: 100% !important;
+    object-fit: cover !important;
+  }
+
+  .match-demo-section .match-showcase.match-showcase--office .match-profile-chips {
+    box-sizing: border-box !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 8px 9px !important;
+    border-radius: 14px !important;
+  }
+
+  .match-demo-section .match-showcase.match-showcase--office .match-profile-chips::before {
+    margin-bottom: 3px !important;
+    font-size: 11px !important;
+    line-height: 1.2 !important;
+  }
+
+  .match-demo-section .match-showcase.match-showcase--office .match-profile-chip,
+  .match-demo-section .match-showcase.match-showcase--office .match-profile-chip--resume,
+  .match-demo-section .match-showcase.match-showcase--office .match-profile-chip--skills,
+  .match-demo-section .match-showcase.match-showcase--office .match-profile-chip--ready {
+    min-height: 29px !important;
+    gap: 6px !important;
+    padding: 3px 0 !important;
+  }
+
+  .match-demo-section .match-showcase.match-showcase--office .match-profile-chip__icon {
+    width: 21px !important;
+    height: 21px !important;
+    flex-basis: 21px !important;
+  }
+
+  .match-demo-section .match-showcase.match-showcase--office .match-profile-chip__icon svg {
+    width: 13px !important;
+    height: 13px !important;
+  }
+
+  .match-demo-section .match-showcase.match-showcase--office .match-profile-chip b {
+    font-size: 8.5px !important;
+    line-height: 1.15 !important;
+  }
+
+  .match-demo-section .match-showcase.match-showcase--office .match-profile-status {
+    margin-top: 2px !important;
+    padding: 8px 13px !important;
+  }
+}
