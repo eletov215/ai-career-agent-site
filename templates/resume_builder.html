@@ -1,0 +1,968 @@
+{% extends "base.html" %}
+{% block title %}Создание резюме — AI Career Agent{% endblock %}
+{% block content %}
+<main class="section resume-builder-page">
+  <div class="container resume-builder-shell">
+    <div class="resume-builder-topbar">
+      <a href="{{ url_for('ai_career') }}" class="resume-builder-back" aria-label="Вернуться к выбору способа создания резюме">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 18l-6-6 6-6"></path></svg>
+        <span>Назад</span>
+      </a>
+      <div class="resume-builder-progress">
+        <span id="builderProgressText">Шаг 1 из 8</span>
+        <div aria-hidden="true"><i id="builderProgressBar"></i></div>
+      </div>
+      <span class="resume-builder-save" id="builderSaveStatus">Черновик сохраняется</span>
+    </div>
+
+    <div class="resume-builder-mobile-tabs" role="tablist" aria-label="Режим создания резюме">
+      <button type="button" class="is-active" data-builder-tab="chat" role="tab" aria-selected="true">Интервью</button>
+      <button type="button" data-builder-tab="preview" role="tab" aria-selected="false">Резюме <span id="mobileProfilePercent">0%</span></button>
+    </div>
+
+    <div class="resume-builder-layout" id="resumeBuilderLayout" data-mobile-view="chat">
+      <section class="card resume-chat-card" data-builder-panel="chat">
+        <div class="resume-chat-head">
+          <div class="resume-ai-avatar">✦</div>
+          <div><strong>AI-консультант</strong><span>Помогу создать ваше резюме</span></div>
+          <button type="button" class="resume-chat-preview-button" data-builder-tab-target="preview">Посмотреть резюме · <span id="chatProfilePercent">0%</span></button>
+        </div>
+        <div class="resume-chat" id="resumeChat" aria-live="polite"></div>
+        <form class="resume-chat-compose" id="resumeChatForm">
+          <textarea id="resumeChatInput" rows="2" placeholder="Введите ответ…" required></textarea>
+          <button class="resume-chat-send" type="submit" aria-label="Отправить ответ" title="Отправить">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M5 12h12"></path>
+              <path d="m13 6 6 6-6 6"></path>
+            </svg>
+          </button>
+        </form>
+        <div class="resume-photo-upload" id="resumePhotoUpload">
+          <div class="resume-photo-upload-preview" id="resumePhotoUploadPreview">
+            <img id="resumePhotoInitials" class="resume-photo-placeholder" src="{{ url_for('static', filename='images/profile-photo-upload-icon.png') }}" alt="Загрузить фотографию профиля">
+            <img id="resumePhotoThumb" alt="Предпросмотр загруженной фотографии профиля" hidden>
+          </div>
+          <div class="resume-photo-upload-copy">
+            <strong>Фотография профиля</strong>
+            <span>JPG, PNG или WebP, до 5 МБ. Фото автоматически кадрируется под шаблон.</span>
+            <div class="resume-photo-upload-actions">
+              <label class="resume-photo-button" for="resumePhotoInput">Загрузить фото</label>
+              <button type="button" class="resume-photo-remove" id="resumePhotoRemove" hidden>Удалить</button>
+            </div>
+            <input id="resumePhotoInput" type="file" accept="image/jpeg,image/png,image/webp" hidden>
+            <p class="resume-photo-error" id="resumePhotoError" role="alert" hidden></p>
+          </div>
+        </div>
+
+        <div class="resume-chat-actions"><button type="button" id="builderSkip">Пропустить вопрос</button><button type="button" id="builderReset">Начать заново</button></div>
+      </section>
+
+      <section class="card resume-preview-panel" data-builder-panel="preview">
+        <div class="resume-preview-toolbar">
+          <div>
+            <span>Живой предпросмотр</span>
+            <strong>Ваше резюме</strong>
+          </div>
+          <div class="resume-preview-toolbar-actions">
+            <button type="button" class="resume-download-button" id="resumeDownloadPdf">
+              <svg class="resume-download-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path class="resume-download-icon__arrow" d="M12 4.5v10.2m0 0 3.4-3.4M12 14.7l-3.4-3.4"></path>
+                <path class="resume-download-icon__tray" d="M5.5 17.2v1.3c0 .8.7 1.5 1.5 1.5h10c.8 0 1.5-.7 1.5-1.5v-1.3"></path>
+                <path class="resume-download-icon__spark" d="M18.4 4.2v2.2M17.3 5.3h2.2"></path>
+              </svg>
+              <span>Скачать PDF</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="resume-preview-viewport" id="resumePreviewViewport">
+          <div class="resume-paper-stage" id="resumePaperStage">
+            <article class="resume-paper resume-paper-modern is-active resume-preview-source" data-resume-page="0">
+              <header class="resume-modern-header">
+                <div class="resume-modern-photo" id="previewPhotoWrap" hidden>
+                  <img id="previewPhoto" alt="Фотография владельца резюме">
+                </div>
+                <div class="resume-modern-identity">
+                  <span class="resume-modern-kicker">Резюме</span>
+                  <h1 id="previewName">Ваше имя</h1>
+                  <p id="previewRole">Желаемая должность</p>
+                </div>
+                <div class="resume-modern-contact-card">
+                  <span>Контакты</span>
+                  <div id="previewContacts">Телефон · Email · Портфолио</div>
+                </div>
+              </header>
+
+              <div class="resume-modern-layout">
+                <aside class="resume-modern-sidebar">
+                  <section class="resume-modern-section resume-modern-section-compact">
+                    <h2>Навыки</h2>
+                    <div class="resume-paper-skills" id="previewSkills"><span>Ваши навыки</span></div>
+                  </section>
+
+                  <section class="resume-modern-section resume-modern-section-compact">
+                    <h2>Образование</h2>
+                    <div class="resume-modern-education-row">
+                      <div class="resume-modern-university-logo" id="previewUniversityLogoWrap" hidden>
+                        <img id="previewUniversityLogo" alt="Эмблема учебного заведения">
+                      </div>
+                      <div class="resume-modern-side-entry">
+                        <strong id="previewEducationTitle">Образование пока не указано</strong>
+                        <p id="previewEducation">Учебное заведение, специальность, курсы и годы обучения появятся здесь.</p>
+                        <span class="resume-university-logo-status" id="universityLogoStatus" hidden></span>
+                      </div>
+                    </div>
+                  </section>
+
+                  <section class="resume-modern-section resume-modern-section-compact">
+                    <h2>Предпочтения</h2>
+                    <p id="previewGoal">Формат работы, график, желаемая зарплата и другие условия.</p>
+                  </section>
+                </aside>
+
+                <main class="resume-modern-main">
+                  <section class="resume-modern-section resume-modern-profile">
+                    <h2>Профессиональный профиль</h2>
+                    <p id="previewSummary">Здесь появится краткое профессиональное описание на основе ваших ответов.</p>
+                  </section>
+
+                  <section class="resume-modern-section">
+                    <h2>Опыт работы</h2>
+                    <div class="resume-modern-experience">
+                      <div class="resume-modern-experience-head">
+                        <div>
+                          <strong id="previewExperienceTitle">Опыт пока не указан</strong>
+                          <span>Профессиональный опыт</span>
+                        </div>
+                        <span class="resume-modern-period">Период</span>
+                      </div>
+                      <p id="previewExperience">Расскажите, где вы работали, какую должность занимали и чем занимались.</p>
+                      <div class="resume-modern-achievements">
+                        <h3>Ключевые результаты</h3>
+                        <ul id="previewAchievements"><li>Достижения и результаты появятся после ответа на соответствующий вопрос.</li></ul>
+                      </div>
+                    </div>
+                  </section>
+                </main>
+              </div>
+            </article>
+          </div>
+        </div>
+
+        <div class="resume-preview-pagination-wrap">
+          <div class="resume-preview-pagination" id="resumePreviewPagination" hidden>
+            <button type="button" class="resume-preview-page-arrow" id="resumePreviewPrev" aria-label="Предыдущая страница">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M19 12H7"></path>
+                <path d="m11 6-6 6 6 6"></path>
+              </svg>
+            </button>
+            <span id="resumePreviewPageLabel" class="resume-preview-page-count" aria-live="polite" aria-atomic="true">1 / 1</span>
+            <button type="button" class="resume-preview-page-arrow" id="resumePreviewNext" aria-label="Следующая страница">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M5 12h12"></path>
+                <path d="m13 6 6 6-6 6"></path>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <button type="button" class="resume-mobile-return" data-builder-tab-target="chat">Продолжить интервью</button>
+      </section>
+
+
+    </div>
+  </div>
+</main>
+
+<div class="resume-reader" id="resumeReader" hidden aria-hidden="true">
+  <div class="resume-reader-backdrop" data-resume-reader-close></div>
+  <section class="resume-reader-dialog" role="dialog" aria-modal="true" aria-labelledby="resumeReaderTitle">
+    <header class="resume-reader-toolbar">
+      <div>
+        <span>Предпросмотр документа</span>
+        <strong id="resumeReaderTitle">Ваше резюме</strong>
+      </div>
+      <div class="resume-reader-actions">
+        <button type="button" class="resume-reader-download" id="resumeReaderDownload">
+          <svg class="resume-download-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path class="resume-download-icon__arrow" d="M12 4.5v10.2m0 0 3.4-3.4M12 14.7l-3.4-3.4"></path>
+                <path class="resume-download-icon__tray" d="M5.5 17.2v1.3c0 .8.7 1.5 1.5 1.5h10c.8 0 1.5-.7 1.5-1.5v-1.3"></path>
+                <path class="resume-download-icon__spark" d="M18.4 4.2v2.2M17.3 5.3h2.2"></path>
+              </svg>
+          <span>Скачать PDF</span>
+        </button>
+        <button type="button" class="resume-reader-close" data-resume-reader-close aria-label="Закрыть предпросмотр">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"></path></svg>
+        </button>
+      </div>
+    </header>
+    <div class="resume-reader-body">
+      <div class="resume-reader-stage" id="resumeReaderStage"></div>
+    </div>
+  </section>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>
+(() => {
+  const questions = [
+    {key:'name', text:'Привет! Я помогу создать профессиональное резюме. Для начала, как вас зовут?', placeholder:'Например: Иван Петров'},
+    {key:'role', text:'На какую должность вы хотите устроиться?', placeholder:'Например: Python-разработчик'},
+    {key:'experience', text:'Расскажите о вашем опыте работы. Где вы работали и сколько времени?', placeholder:'Компания, должность, период'},
+    {key:'achievements', text:'Какие задачи или достижения с прошлого места работы вы считаете самыми важными?', placeholder:'Опишите 2–3 сильных результата'},
+    {key:'skills', text:'Какими профессиональными навыками, инструментами или технологиями вы владеете?', placeholder:'Например: Python, Flask, PostgreSQL'},
+    {key:'education', text:'Расскажите об образовании, курсах или профессиональной подготовке.', placeholder:'Учебное заведение, специальность, год'},
+    {key:'contacts', text:'Какие контакты добавить в резюме? Укажите телефон, email и при желании ссылку на портфолио.', placeholder:'Телефон, email, GitHub или портфолио'},
+    {key:'goal', text:'Что для вас важно в новой работе: формат, график, зарплата, город или другие условия?', placeholder:'Например: удалённо, полная занятость'}
+  ];
+  const storageKey = 'aiCareerResumeDraftV1';
+  const chat = document.getElementById('resumeChat');
+  const form = document.getElementById('resumeChatForm');
+  const input = document.getElementById('resumeChatInput');
+  const progressText = document.getElementById('builderProgressText');
+  const progressBar = document.getElementById('builderProgressBar');
+  const saveStatus = document.getElementById('builderSaveStatus');
+  const skip = document.getElementById('builderSkip');
+  const reset = document.getElementById('builderReset');
+  const layout = document.getElementById('resumeBuilderLayout');
+  const pages = [...document.querySelectorAll('[data-resume-page]')];
+  let currentPage = 0;
+  let state = {index:0, answers:{}, messages:[], photo:'', universityLogo:''};
+  try { const saved = JSON.parse(localStorage.getItem(storageKey) || 'null'); if (saved && saved.answers) state = {...state, ...saved, photo:saved.photo || '', universityLogo:saved.universityLogo || ''}; } catch (_) {}
+  const photoInput = document.getElementById('resumePhotoInput');
+  const photoThumb = document.getElementById('resumePhotoThumb');
+  const photoInitials = document.getElementById('resumePhotoInitials');
+  const photoRemove = document.getElementById('resumePhotoRemove');
+  const photoError = document.getElementById('resumePhotoError');
+  const previewPhoto = document.getElementById('previewPhoto');
+  const previewPhotoWrap = document.getElementById('previewPhotoWrap');
+  const previewUniversityLogo = document.getElementById('previewUniversityLogo');
+  const previewUniversityLogoWrap = document.getElementById('previewUniversityLogoWrap');
+  const universityLogoStatus = document.getElementById('universityLogoStatus');
+  let universityLogoRequestId = 0;
+  const previewStage = document.getElementById('resumePaperStage');
+  const previewPagination = document.getElementById('resumePreviewPagination');
+  const previewPrevButton = document.getElementById('resumePreviewPrev');
+  const previewNextButton = document.getElementById('resumePreviewNext');
+  const previewPageLabel = document.getElementById('resumePreviewPageLabel');
+  const previewDownloadButton = document.getElementById('resumeDownloadPdf');
+  const reader = document.getElementById('resumeReader');
+  const readerStage = document.getElementById('resumeReaderStage');
+  const readerDownloadButton = document.getElementById('resumeReaderDownload');
+  let readerLastFocus = null;
+  let isDownloadingPdf = false;
+  let previewPageIndex = 0;
+  let previewPageCount = 1;
+  let previewRenderTimer = 0;
+  let previewRenderToken = 0;
+
+  const setText = (id, value, fallback) => { document.getElementById(id).textContent = value || fallback; };
+  const addMessage = (type, text) => { const item = document.createElement('div'); item.className = `resume-message ${type}`; item.innerHTML = type === 'ai' ? `<span class="resume-ai-mini">✦</span><p></p>` : '<p></p>'; item.querySelector('p').textContent = text; chat.appendChild(item); chat.scrollTop = chat.scrollHeight; };
+  const save = () => { localStorage.setItem(storageKey, JSON.stringify(state)); saveStatus.textContent = 'Черновик сохранён'; window.setTimeout(() => saveStatus.textContent = 'Черновик сохраняется', 1400); };
+
+  const updatePhotoPreview = () => {
+    const hasPhoto = Boolean(state.photo);
+    previewPhotoWrap.hidden = !hasPhoto;
+    photoThumb.hidden = !hasPhoto;
+    photoInitials.hidden = hasPhoto;
+    photoRemove.hidden = !hasPhoto;
+    if (hasPhoto) {
+      previewPhoto.src = state.photo;
+      photoThumb.src = state.photo;
+    } else {
+      previewPhoto.removeAttribute('src');
+      photoThumb.removeAttribute('src');
+    }
+  };
+
+  const updateUniversityLogoPreview = () => {
+    const hasLogo = Boolean(state.universityLogo);
+    previewUniversityLogoWrap.hidden = !hasLogo;
+    if (hasLogo) {
+      previewUniversityLogo.src = state.universityLogo;
+    } else {
+      previewUniversityLogo.removeAttribute('src');
+    }
+  };
+
+
+  const setUniversityLogoStatus = (text, type = '') => {
+    universityLogoStatus.textContent = text || '';
+    universityLogoStatus.hidden = !text;
+    universityLogoStatus.dataset.type = type;
+  };
+
+  const findUniversityLogo = async (educationText) => {
+    const requestId = ++universityLogoRequestId;
+    const query = String(educationText || '').trim();
+    if (!query) {
+      state.universityLogo = '';
+      state.universityLogoFor = '';
+      setUniversityLogoStatus('');
+      updateUniversityLogoPreview();
+      save();
+      return;
+    }
+
+    setUniversityLogoStatus('Ищу официальную эмблему…', 'loading');
+    try {
+      const response = await fetch('/api/university/logo', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({name: query})
+      });
+      const result = await response.json().catch(() => ({}));
+      if (requestId !== universityLogoRequestId) return;
+      if (!response.ok || !result.ok) throw new Error(result.error || 'Не удалось выполнить поиск.');
+      if (result.found && result.image_data) {
+        state.universityLogo = result.image_data;
+        state.universityLogoFor = query;
+        state.universityResolvedName = result.university_name || '';
+        setUniversityLogoStatus('Официальная эмблема найдена', 'success');
+      } else {
+        state.universityLogo = '';
+        state.universityLogoFor = query;
+        state.universityResolvedName = result.university_name || '';
+        setUniversityLogoStatus('Эмблема не найдена — резюме останется без неё', 'muted');
+      }
+      save();
+      updateUniversityLogoPreview();
+      fitResumePreview();
+    } catch (error) {
+      if (requestId !== universityLogoRequestId) return;
+      state.universityLogo = '';
+      state.universityLogoFor = query;
+      save();
+      updateUniversityLogoPreview();
+      setUniversityLogoStatus(error.message || 'Не удалось найти эмблему.', 'error');
+    }
+  };
+
+  const resizeProfilePhoto = file => new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error('Не удалось прочитать файл.'));
+    reader.onload = () => {
+      const image = new Image();
+      image.onerror = () => reject(new Error('Не удалось открыть изображение.'));
+      image.onload = () => {
+        const targetWidth = 480;
+        const targetHeight = 600;
+        const sourceRatio = image.width / image.height;
+        const targetRatio = targetWidth / targetHeight;
+        let sx = 0, sy = 0, sw = image.width, sh = image.height;
+        if (sourceRatio > targetRatio) {
+          sw = image.height * targetRatio;
+          sx = (image.width - sw) / 2;
+        } else {
+          sh = image.width / targetRatio;
+          sy = (image.height - sh) / 2;
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = targetWidth;
+        canvas.height = targetHeight;
+        const context = canvas.getContext('2d');
+        context.drawImage(image, sx, sy, sw, sh, 0, 0, targetWidth, targetHeight);
+        resolve(canvas.toDataURL('image/jpeg', 0.86));
+      };
+      image.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
+
+  const updatePreview = () => {
+    const a = state.answers;
+    updatePhotoPreview();
+    updateUniversityLogoPreview();
+    setText('previewName', a.name, 'Ваше имя');
+    setText('previewRole', a.role, 'Желаемая должность');
+    setText('previewContacts', a.contacts, 'Телефон · Email · Портфолио');
+    setText('previewExperienceTitle', a.role, 'Опыт пока не указан');
+    setText('previewExperience', a.experience, 'Расскажите, где вы работали, какую должность занимали и чем занимались.');
+    setText('previewEducationTitle', a.education, 'Образование пока не указано');
+    setText('previewEducation', a.education, 'Учебное заведение, специальность, курсы и годы обучения появятся здесь.');
+    setText('previewGoal', a.goal, 'Формат работы, график, желаемая зарплата и другие условия.');
+
+    const summaryParts = [a.role && `Специалист в направлении «${a.role}».`, a.experience, a.goal].filter(Boolean);
+    setText('previewSummary', summaryParts.join(' ') || '', 'Здесь появится краткое профессиональное описание на основе ваших ответов.');
+
+    const achievements = document.getElementById('previewAchievements'); achievements.replaceChildren();
+    const achievementItems = (a.achievements || '').split(/[\n;]+/).map(v => v.trim()).filter(Boolean);
+    (achievementItems.length ? achievementItems : ['Достижения и результаты появятся после ответа на соответствующий вопрос.']).slice(0,4).forEach(value => { const li = document.createElement('li'); li.textContent = value; achievements.appendChild(li); });
+
+    const skills = document.getElementById('previewSkills'); skills.replaceChildren();
+    const skillItems = (a.skills || '').split(/[,;\n]/).map(v => v.trim()).filter(Boolean).slice(0,12);
+    (skillItems.length ? skillItems : ['Ваши навыки']).forEach(value => { const span = document.createElement('span'); span.textContent = value; skills.appendChild(span); });
+
+    const completed = Object.values(a).filter(Boolean).length;
+    const percent = Math.round(completed / questions.length * 100);
+    ['mobileProfilePercent','chatProfilePercent'].forEach(id => document.getElementById(id).textContent = `${percent}%`);
+    schedulePagedPreview();
+  };
+
+  const renderHistory = () => { chat.replaceChildren(); state.messages.forEach(m => addMessage(m.type, m.text)); };
+  const askCurrent = () => {
+    if (state.index >= questions.length) {
+      const text = 'Отлично! Основная информация собрана. На следующем этапе AI улучшит формулировки и подготовит готовое резюме.';
+      if (!state.messages.length || state.messages[state.messages.length-1].text !== text) { state.messages.push({type:'ai',text}); addMessage('ai',text); save(); }
+      input.placeholder = 'Интервью завершено'; input.disabled = true; form.querySelector('button').disabled = true; skip.hidden = true;
+      progressText.textContent = 'Интервью завершено'; progressBar.style.width = '100%'; updatePreview(); return;
+    }
+    const q = questions[state.index];
+    const last = state.messages[state.messages.length-1];
+    if (!last || last.type !== 'ai' || last.text !== q.text) { state.messages.push({type:'ai',text:q.text}); addMessage('ai',q.text); save(); }
+    input.placeholder = q.placeholder; input.focus();
+    progressText.textContent = `Шаг ${state.index + 1} из ${questions.length}`;
+    progressBar.style.width = `${(state.index / questions.length) * 100}%`;
+  };
+
+  const fitResumePreview = () => {
+    const viewport = document.getElementById('resumePreviewViewport');
+    const stage = viewport && viewport.querySelector('.resume-paper-stage');
+    if (!viewport || !stage) return;
+
+    const styles = getComputedStyle(viewport);
+    const horizontalPadding = parseFloat(styles.paddingLeft) + parseFloat(styles.paddingRight);
+    const verticalPadding = parseFloat(styles.paddingTop) + parseFloat(styles.paddingBottom);
+    const availableWidth = Math.max(0, viewport.clientWidth - horizontalPadding);
+    const availableHeight = Math.max(0, viewport.clientHeight - verticalPadding);
+    const widthScale = availableWidth / 794;
+    const heightScale = availableHeight > 0 ? availableHeight / 1123 : widthScale;
+    const fit = Math.min(1, widthScale, heightScale);
+
+    stage.style.setProperty('--resume-fit', String(Math.max(0.2, fit)));
+  };
+
+  const showPreviewPage = (index) => {
+    const generatedPages = [...previewStage.querySelectorAll('.resume-preview-page')];
+    previewPageIndex = Math.max(0, Math.min(generatedPages.length - 1, index));
+    generatedPages.forEach((page, pageIndex) => page.classList.toggle('is-active', pageIndex === previewPageIndex));
+    previewPageCount = Math.max(1, generatedPages.length);
+    previewPageLabel.textContent = `${previewPageIndex + 1} / ${previewPageCount}`;
+    previewPrevButton.disabled = previewPageIndex <= 0;
+    previewNextButton.disabled = previewPageIndex >= previewPageCount - 1;
+    previewPagination.hidden = previewPageCount <= 1;
+    fitResumePreview();
+  };
+
+  const isResumeElementVisible = element => {
+    if (!element || element.closest('[hidden]')) return false;
+    const styles = getComputedStyle(element);
+    return styles.display !== 'none'
+      && styles.visibility !== 'hidden'
+      && Number.parseFloat(styles.opacity || '1') > 0;
+  };
+
+  const getResumeRenderableRects = flow => {
+    const rects = [];
+    const walker = document.createTreeWalker(flow, NodeFilter.SHOW_TEXT);
+    let textNode = walker.nextNode();
+    while (textNode) {
+      if (String(textNode.nodeValue || '').trim() && isResumeElementVisible(textNode.parentElement)) {
+        const range = document.createRange();
+        range.selectNodeContents(textNode);
+        [...range.getClientRects()].forEach(rect => {
+          if (rect.width > 0.5 && rect.height > 0.5) rects.push(rect);
+        });
+        if (typeof range.detach === 'function') range.detach();
+      }
+      textNode = walker.nextNode();
+    }
+
+    flow.querySelectorAll('img').forEach(image => {
+      if (!image.getAttribute('src') || !isResumeElementVisible(image)) return;
+      const rect = image.getBoundingClientRect();
+      if (rect.width > 0.5 && rect.height > 0.5) rects.push(rect);
+    });
+    return rects;
+  };
+
+  const measureResumeContentHeight = flow => {
+    const flowRect = flow.getBoundingClientRect();
+    let meaningfulBottom = 0;
+    getResumeRenderableRects(flow).forEach(rect => {
+      meaningfulBottom = Math.max(meaningfulBottom, rect.bottom - flowRect.top);
+    });
+
+    // Считаем страницы по последней строке или изображению, а не по нижнему
+    // padding колонок. Иначе один только служебный отступ создаёт пустой лист.
+    return Math.max(1, Math.ceil(meaningfulBottom + 6));
+  };
+
+  const renderPagedPreview = async () => {
+    const token = ++previewRenderToken;
+    const source = previewStage.querySelector('.resume-preview-source');
+    if (!source) return;
+    const pageWidthPx = 794;
+    const pageHeightPx = 1123;
+    const pageTopPaddingPx = 48;
+    const pageBottomPaddingPx = 52;
+    const pageContentHeightPx = pageHeightPx - pageTopPaddingPx - pageBottomPaddingPx;
+    const host = document.createElement('div');
+    host.className = 'resume-preview-measure-host';
+    host.setAttribute('aria-hidden', 'true');
+    const flow = prepareResumeForPdf(source);
+    host.appendChild(flow);
+    document.body.appendChild(host);
+    try {
+      if (document.fonts && document.fonts.ready) await document.fonts.ready;
+      await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+      keepPdfBlocksTogether(flow, pageContentHeightPx);
+      keepPdfBlocksTogether(flow, pageContentHeightPx);
+      await new Promise(resolve => requestAnimationFrame(resolve));
+      if (token !== previewRenderToken) return;
+      // У шаблона есть минимальная высота A4 для красивого фона первой страницы.
+      // Для подсчёта страниц измеряем только реальное содержимое колонок, иначе
+      // короткое резюме ошибочно превращается в два листа из-за внутренних полей.
+      const measuredHeight = measureResumeContentHeight(flow);
+      const pageCount = Math.max(1, Math.ceil(Math.max(pageContentHeightPx, measuredHeight) / pageContentHeightPx));
+      const flowHeight = Math.max(pageHeightPx, pageCount * pageContentHeightPx);
+      flow.style.height = `${flowHeight}px`;
+      flow.style.minHeight = `${flowHeight}px`;
+
+      previewStage.querySelectorAll('.resume-preview-page').forEach(node => node.remove());
+      for (let index = 0; index < pageCount; index += 1) {
+        const page = document.createElement('div');
+        page.className = 'resume-preview-page';
+        page.dataset.previewPage = String(index);
+        const viewport = document.createElement('div');
+        viewport.className = 'resume-preview-page-clip';
+        const pageFlow = flow.cloneNode(true);
+        pageFlow.classList.add('resume-preview-page-flow');
+        // .resume-pdf-flow intentionally uses transform:none!important for export.
+        // Store the page offset in a CSS variable so the preview-specific rule
+        // can apply the translation with the same priority.
+        pageFlow.style.setProperty('--resume-preview-page-offset', `${index * pageContentHeightPx}px`);
+        pageFlow.style.setProperty('--resume-preview-page-padding', `${pageTopPaddingPx}px`);
+        viewport.style.setProperty('--resume-preview-page-top-padding', `${pageTopPaddingPx}px`);
+        viewport.style.setProperty('--resume-preview-page-bottom-padding', `${pageBottomPaddingPx}px`);
+        viewport.appendChild(pageFlow);
+        page.appendChild(viewport);
+        const number = document.createElement('span');
+        number.className = 'resume-preview-page-number';
+        number.textContent = `${index + 1}`;
+        page.appendChild(number);
+        previewStage.appendChild(page);
+      }
+      source.hidden = true;
+      showPreviewPage(Math.min(previewPageIndex, pageCount - 1));
+      syncReaderSheet();
+    } finally {
+      host.remove();
+    }
+  };
+
+  const schedulePagedPreview = () => {
+    window.clearTimeout(previewRenderTimer);
+    previewRenderTimer = window.setTimeout(renderPagedPreview, 120);
+  };
+
+  const previewViewport = document.getElementById('resumePreviewViewport');
+  if ('ResizeObserver' in window && previewViewport) {
+    new ResizeObserver(fitResumePreview).observe(previewViewport);
+  } else {
+    window.addEventListener('resize', fitResumePreview);
+  }
+
+  const syncReaderSheet = () => {
+    if (!readerStage || reader.hidden) return;
+    const generatedPages = [...previewStage.querySelectorAll('.resume-preview-page')];
+    readerStage.replaceChildren();
+    generatedPages.forEach((page, index) => {
+      const clone = page.cloneNode(true);
+      clone.classList.add('is-active', 'resume-reader-page');
+      clone.querySelector('.resume-preview-page-number')?.remove();
+      readerStage.appendChild(clone);
+    });
+  };
+
+  const openResumeReader = () => {
+    readerLastFocus = document.activeElement;
+    reader.hidden = false;
+    reader.setAttribute('aria-hidden', 'false');
+    document.body.classList.add('resume-reader-open');
+    syncReaderSheet();
+    window.requestAnimationFrame(() => {
+      reader.classList.add('is-open');
+      const closeButton = reader.querySelector('.resume-reader-close');
+      if (closeButton) closeButton.focus();
+    });
+  };
+
+  const closeResumeReader = () => {
+    if (reader.hidden) return;
+    reader.classList.remove('is-open');
+    document.body.classList.remove('resume-reader-open');
+    window.setTimeout(() => {
+      reader.hidden = true;
+      reader.setAttribute('aria-hidden', 'true');
+      readerStage.replaceChildren();
+      if (readerLastFocus && typeof readerLastFocus.focus === 'function') readerLastFocus.focus();
+    }, 220);
+  };
+
+  const prepareResumeForPdf = (source) => {
+    const sheet = source.cloneNode(true);
+
+    // Источник скрывается после построения постраничного предпросмотра.
+    // cloneNode() копирует атрибут hidden и класс resume-preview-source,
+    // поэтому без явного сброса html2canvas получает display:none и белый лист.
+    sheet.hidden = false;
+    sheet.removeAttribute('hidden');
+    sheet.removeAttribute('data-resume-page');
+    sheet.classList.remove('is-active', 'resume-reader-paper', 'resume-preview-source');
+    sheet.classList.add('is-active', 'resume-pdf-flow');
+    sheet.style.setProperty('display', 'block', 'important');
+    sheet.style.setProperty('visibility', 'visible', 'important');
+    sheet.style.setProperty('opacity', '1', 'important');
+
+    // В итоговом документе не показываем подсказки и пустые разделы.
+    sheet.querySelectorAll('.resume-university-logo-status').forEach(node => node.remove());
+    const answers = state.answers || {};
+    const hideClosest = (selector, closestSelector = '.resume-modern-section') => {
+      const node = sheet.querySelector(selector);
+      const block = node && node.closest(closestSelector);
+      if (block) block.remove();
+    };
+    if (!String(answers.skills || '').trim()) hideClosest('#previewSkills');
+    if (!String(answers.education || '').trim()) hideClosest('#previewEducation');
+    if (!String(answers.goal || '').trim()) hideClosest('#previewGoal');
+    if (!String(answers.experience || '').trim() && !String(answers.achievements || '').trim()) hideClosest('#previewExperience');
+    if (!String(answers.role || '').trim() && !String(answers.experience || '').trim() && !String(answers.goal || '').trim()) hideClosest('#previewSummary');
+    if (!String(answers.contacts || '').trim()) {
+      const contact = sheet.querySelector('.resume-modern-contact-card');
+      if (contact) contact.remove();
+    }
+    if (!state.photo) {
+      const photo = sheet.querySelector('.resume-modern-photo');
+      if (photo) photo.remove();
+    }
+    if (!state.universityLogo) {
+      const logo = sheet.querySelector('.resume-modern-university-logo');
+      if (logo) logo.remove();
+    }
+    return sheet;
+  };
+
+  const keepPdfBlocksTogether = (sheet, pageHeight) => {
+    // Не разрываем смысловые блоки между страницами: если блок не помещается,
+    // переносим его целиком на следующую страницу с помощью верхнего отступа.
+    const selectors = [
+      '.resume-modern-header',
+      '.resume-modern-sidebar > .resume-modern-section',
+      '.resume-modern-main > .resume-modern-section',
+      '.resume-modern-experience',
+      '.resume-modern-achievements'
+    ];
+    const blocks = [...sheet.querySelectorAll(selectors.join(','))];
+    blocks.forEach(block => {
+      const top = block.offsetTop;
+      const height = block.offsetHeight;
+      if (!height || height >= pageHeight - 80) return;
+      const pageStart = Math.floor(top / pageHeight) * pageHeight;
+      const safeBottom = pageStart + pageHeight - 34;
+      if (top + height > safeBottom) {
+        const shift = pageStart + pageHeight - top + 30;
+        const current = parseFloat(getComputedStyle(block).marginTop) || 0;
+        block.style.marginTop = `${current + shift}px`;
+      }
+    });
+  };
+
+  const resumePageHasVisibleContent = page => {
+    const clip = page.querySelector('.resume-preview-page-clip');
+    const flow = page.querySelector('.resume-preview-page-flow');
+    if (!clip || !flow) return Boolean(String(page.textContent || '').trim());
+
+    const clipRect = clip.getBoundingClientRect();
+    const clipStyles = getComputedStyle(clip);
+    const topPadding = Number.parseFloat(clipStyles.getPropertyValue('--resume-preview-page-top-padding')) || 48;
+    const bottomPadding = Number.parseFloat(clipStyles.getPropertyValue('--resume-preview-page-bottom-padding')) || 52;
+    const visibleTop = clipRect.top + topPadding;
+    const visibleBottom = clipRect.bottom - bottomPadding;
+
+    return getResumeRenderableRects(flow).some(rect => (
+      rect.bottom > visibleTop + 0.5
+      && rect.top < visibleBottom - 0.5
+      && rect.right > clipRect.left + 0.5
+      && rect.left < clipRect.right - 0.5
+    ));
+  };
+
+  const canvasContainsResumeContent = (canvas) => {
+    // Нельзя уменьшать страницу до миниатюры 80x113 для проверки: редкие строки
+    // на последнем листе усредняются до белого и дают ложную ошибку. Проверяем
+    // пиксели исходного canvas с шагом, соответствующим масштабу отрисовки.
+    const context = canvas.getContext('2d', {willReadFrequently:true});
+    if (!context) return true;
+    try {
+      const width = canvas.width;
+      const height = canvas.height;
+      const pixels = context.getImageData(0, 0, width, height).data;
+      const renderScale = Math.max(1, Math.round(Math.min(width / 794, height / 1123)));
+      const step = Math.max(1, Math.min(3, renderScale));
+      let inkPixels = 0;
+
+      for (let y = 0; y < height; y += step) {
+        for (let x = 0; x < width; x += step) {
+          const index = (y * width + x) * 4;
+          const alpha = pixels[index + 3];
+          const red = pixels[index];
+          const green = pixels[index + 1];
+          const blue = pixels[index + 2];
+          if (alpha > 12 && (red < 252 || green < 252 || blue < 252)) {
+            inkPixels += 1;
+            if (inkPixels >= 12) return true;
+          }
+        }
+      }
+      return false;
+    } catch (_) {
+      // Data URL или внешний логотип могут сделать canvas недоступным для чтения.
+      // Сам факт успешной отрисовки в этом случае считаем достаточным.
+      return true;
+    }
+  };
+
+  const normalizePdfCapturePage = page => {
+    const flow = page.querySelector('.resume-preview-page-flow');
+    if (!flow) return;
+    const offset = Number.parseFloat(flow.style.getPropertyValue('--resume-preview-page-offset')) || 0;
+    const padding = Number.parseFloat(flow.style.getPropertyValue('--resume-preview-page-padding')) || 48;
+
+    // Для html2canvas используем явное позиционирование вместо большого
+    // translateY. Это устойчивее на четвёртой и последующих страницах.
+    flow.style.setProperty('transform', 'none', 'important');
+    flow.style.setProperty('inset', `${padding - offset}px auto auto 0`, 'important');
+  };
+
+  const captureResumePageCanvas = (page, scale = 2) => window.html2canvas(page, {
+    scale,
+    useCORS: true,
+    allowTaint: false,
+    backgroundColor: '#ffffff',
+    logging: false,
+    width: 794,
+    height: 1123,
+    windowWidth: 794,
+    windowHeight: 1123,
+    scrollX: 0,
+    scrollY: 0,
+    imageTimeout: 15000
+  });
+
+  const waitForResumeImages = async (root) => {
+    const images = [...root.querySelectorAll('img')];
+    await Promise.all(images.map(async image => {
+      if (!image.getAttribute('src')) return;
+      if (image.complete) {
+        try { await image.decode(); } catch (_) {}
+        return;
+      }
+      await new Promise(resolve => {
+        image.addEventListener('load', resolve, {once:true});
+        image.addEventListener('error', resolve, {once:true});
+      });
+    }));
+  };
+
+  const downloadResumePdf = async (button) => {
+    if (isDownloadingPdf) return;
+    const labelNode = button && button.querySelector('span');
+    const originalLabel = labelNode ? labelNode.textContent : '';
+    isDownloadingPdf = true;
+    if (button) {
+      button.disabled = true;
+      if (labelNode) labelNode.textContent = 'Подготовка…';
+    }
+
+    try {
+      if (!window.html2canvas || !window.jspdf || !window.jspdf.jsPDF) {
+        throw new Error('Модуль PDF ещё не загрузился. Проверьте подключение к интернету и повторите попытку.');
+      }
+      if (document.fonts && document.fonts.ready) await document.fonts.ready;
+
+      // Перед экспортом заново строим актуальный постраничный макет.
+      // Каждая страница A4 снимается отдельно: так html2canvas не создаёт
+      // один сверхвысокий canvas, который в браузере мог стать пустым.
+      window.clearTimeout(previewRenderTimer);
+      await renderPagedPreview();
+      const previewPages = [...previewStage.querySelectorAll('.resume-preview-page')];
+      if (!previewPages.length) throw new Error('Не удалось подготовить страницы резюме.');
+
+      const pageWidthPx = 794;
+      const pageHeightPx = 1123;
+      const printHost = document.createElement('div');
+      printHost.setAttribute('aria-hidden', 'true');
+      printHost.className = 'resume-pdf-host';
+      document.body.appendChild(printHost);
+
+      try {
+        const renderedPages = [];
+
+        for (let pageIndex = 0; pageIndex < previewPages.length; pageIndex += 1) {
+          const capturePage = previewPages[pageIndex].cloneNode(true);
+          capturePage.hidden = false;
+          capturePage.removeAttribute('hidden');
+          capturePage.classList.add('is-active', 'resume-pdf-capture-page');
+          capturePage.querySelector('.resume-preview-page-number')?.remove();
+          normalizePdfCapturePage(capturePage);
+          printHost.replaceChildren(capturePage);
+
+          await waitForResumeImages(capturePage);
+          await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+
+          // Нижний padding колонок раньше мог создать пустой последний лист.
+          // Такой лист не добавляем ни в PDF, ни в итоговую нумерацию.
+          if (!resumePageHasVisibleContent(capturePage)) {
+            console.warn(`Resume PDF: skipped empty generated page ${pageIndex + 1}.`);
+            continue;
+          }
+
+          let canvas = await captureResumePageCanvas(capturePage, 2);
+          if (!canvas.width || !canvas.height || !canvasContainsResumeContent(canvas)) {
+            // На отдельных мобильных браузерах повторная отрисовка после ещё
+            // одного layout-цикла надёжнее первой, особенно для дальних страниц.
+            await new Promise(resolve => window.setTimeout(resolve, 90));
+            normalizePdfCapturePage(capturePage);
+            await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+            canvas = await captureResumePageCanvas(capturePage, 1.5);
+          }
+
+          if (!canvas.width || !canvas.height || !canvasContainsResumeContent(canvas)) {
+            throw new Error(`Не удалось подготовить страницу ${pageIndex + 1} резюме. Повторите скачивание.`);
+          }
+
+          renderedPages.push(canvas.toDataURL('image/jpeg', 0.94));
+          canvas.width = 1;
+          canvas.height = 1;
+        }
+
+        if (!renderedPages.length) {
+          throw new Error('Не удалось подготовить содержимое резюме для PDF.');
+        }
+
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF({orientation:'portrait', unit:'mm', format:'a4', compress:true});
+        renderedPages.forEach((pageImage, pageIndex) => {
+          if (pageIndex > 0) pdf.addPage('a4', 'portrait');
+          pdf.addImage(pageImage, 'JPEG', 0, 0, 210, 297, undefined, 'FAST');
+          if (renderedPages.length > 1) {
+            pdf.setFont('helvetica', 'normal');
+            pdf.setFontSize(8);
+            pdf.setTextColor(130, 138, 158);
+            pdf.text(`${pageIndex + 1} / ${renderedPages.length}`, 105, 293.5, {align:'center'});
+          }
+        });
+
+        const rawName = (state.answers.name || 'resume').trim();
+        const safeName = rawName.replace(/[^a-zA-Zа-яА-ЯёЁ0-9_-]+/g, '_').replace(/^_+|_+$/g, '') || 'resume';
+        pdf.save(`${safeName}_resume.pdf`);
+      } finally {
+        printHost.remove();
+      }
+    } catch (error) {
+      console.error('Resume PDF export failed:', error);
+      alert(error.message || 'Не удалось сформировать PDF.');
+    } finally {
+      isDownloadingPdf = false;
+      if (button) {
+        button.disabled = false;
+        if (labelNode) labelNode.textContent = originalLabel || 'Скачать PDF';
+      }
+    }
+  };
+
+  const switchMobileView = (view) => {
+    layout.dataset.mobileView = view;
+    document.querySelectorAll('[data-builder-tab]').forEach(button => {
+      const active = button.dataset.builderTab === view;
+      button.classList.toggle('is-active', active);
+      button.setAttribute('aria-selected', String(active));
+    });
+    if (view === 'chat') window.setTimeout(() => input.focus(), 100);
+  };
+
+  input.addEventListener('keydown', (event) => {
+    if (event.key !== 'Enter' || event.shiftKey || event.isComposing) return;
+    event.preventDefault();
+    if (!input.value.trim() || input.disabled) return;
+    if (typeof form.requestSubmit === 'function') form.requestSubmit();
+    else form.dispatchEvent(new Event('submit', {bubbles:true, cancelable:true}));
+  });
+
+  form.addEventListener('submit', (event) => {
+    event.preventDefault();
+    const value = input.value.trim();
+    if (!value || state.index >= questions.length) return;
+    const q = questions[state.index];
+    state.answers[q.key] = value;
+    state.messages.push({type:'user',text:value});
+    addMessage('user',value);
+    input.value='';
+    state.index += 1;
+    save();
+    updatePreview();
+    if (q.key === 'education' && state.universityLogoFor !== value) findUniversityLogo(value);
+    window.setTimeout(askCurrent, 250);
+  });
+  skip.addEventListener('click', () => { if (state.index >= questions.length) return; state.index += 1; save(); askCurrent(); });
+  photoInput.addEventListener('change', async () => {
+    const file = photoInput.files && photoInput.files[0];
+    photoError.hidden = true;
+    if (!file) return;
+    if (!['image/jpeg','image/png','image/webp'].includes(file.type)) {
+      photoError.textContent = 'Выберите изображение в формате JPG, PNG или WebP.';
+      photoError.hidden = false;
+      photoInput.value = '';
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      photoError.textContent = 'Размер фотографии не должен превышать 5 МБ.';
+      photoError.hidden = false;
+      photoInput.value = '';
+      return;
+    }
+    try {
+      state.photo = await resizeProfilePhoto(file);
+      save();
+      updatePreview();
+      fitResumePreview();
+    } catch (error) {
+      photoError.textContent = error.message || 'Не удалось обработать фотографию.';
+      photoError.hidden = false;
+    } finally {
+      photoInput.value = '';
+    }
+  });
+  photoRemove.addEventListener('click', () => {
+    state.photo = '';
+    save();
+    updatePreview();
+    fitResumePreview();
+  });
+  reset.addEventListener('click', () => { if (!confirm('Удалить сохранённый черновик и начать заново?')) return; localStorage.removeItem(storageKey); state={index:0,answers:{},messages:[],photo:'',universityLogo:'',universityLogoFor:'',universityResolvedName:''}; input.disabled=false; form.querySelector('button').disabled=false; skip.hidden=false; renderHistory(); updatePreview(); askCurrent(); showPreviewPage(0); });
+  document.querySelectorAll('[data-builder-tab]').forEach(button => button.addEventListener('click', () => switchMobileView(button.dataset.builderTab)));
+  document.querySelectorAll('[data-builder-tab-target]').forEach(button => button.addEventListener('click', () => switchMobileView(button.dataset.builderTabTarget)));
+
+  previewPrevButton.addEventListener('click', event => { event.stopPropagation(); showPreviewPage(previewPageIndex - 1); });
+  previewNextButton.addEventListener('click', event => { event.stopPropagation(); showPreviewPage(previewPageIndex + 1); });
+  // Полноэкранный просмотр оставлен только для настольных экранов.
+  // На телефонах и планшетах лист уже читаем в основном предпросмотре.
+  previewViewport.addEventListener('click', () => {
+    if (window.matchMedia('(min-width: 901px)').matches) openResumeReader();
+  });
+  previewDownloadButton.addEventListener('click', event => { event.stopPropagation(); downloadResumePdf(previewDownloadButton); });
+  readerDownloadButton.addEventListener('click', () => downloadResumePdf(readerDownloadButton));
+  reader.querySelectorAll('[data-resume-reader-close]').forEach(element => element.addEventListener('click', closeResumeReader));
+  document.addEventListener('keydown', event => { if (event.key === 'Escape' && !reader.hidden) closeResumeReader(); });
+
+  renderHistory(); updatePreview();
+  if (state.answers.education && !state.universityLogo && state.universityLogoFor !== state.answers.education) findUniversityLogo(state.answers.education);
+  else if (state.universityLogo) setUniversityLogoStatus('Официальная эмблема найдена', 'success');
+  askCurrent(); showPreviewPage(0); window.requestAnimationFrame(fitResumePreview);
+})();
+</script>
+{% endblock %}
