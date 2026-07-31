@@ -6509,3 +6509,24 @@ body.resume-reader-open{overflow:hidden}
 .quick-start-card__icon svg *{
   vector-effect:non-scaling-stroke;
 }
+
+/* Stage 37: mobile source comparison spacing fix */
+@media (max-width:720px){
+  .sources-compare__panel--manual{
+    min-height:560px;
+  }
+  .manual-browser-stack{
+    min-height:300px;
+    margin-bottom:22px;
+  }
+}
+
+@media (max-width:460px){
+  .sources-compare__panel--manual{
+    min-height:530px;
+  }
+  .manual-browser-stack{
+    min-height:285px;
+    margin-bottom:20px;
+  }
+}
