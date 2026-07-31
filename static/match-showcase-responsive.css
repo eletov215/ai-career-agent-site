@@ -175,9 +175,9 @@
 
   .match-demo-section .match-showcase__profile {
     display: grid !important;
-    grid-template-columns: minmax(112px, 38%) minmax(0, 1fr) !important;
+    grid-template-columns: minmax(104px, 34%) minmax(0, 1fr) !important;
     align-items: center !important;
-    gap: 14px 12px !important;
+    gap: 14px 10px !important;
     padding: 0 !important;
     text-align: left !important;
   }
@@ -185,13 +185,13 @@
   .match-demo-section .match-profile-photo-wrap {
     grid-column: 1 !important;
     grid-row: 1 !important;
-    width: min(34vw, 142px) !important;
-    height: min(34vw, 142px) !important;
+    width: min(29vw, 118px) !important;
+    height: min(29vw, 118px) !important;
     margin: 0 auto !important;
   }
 
   .match-demo-section .match-profile-ring {
-    inset: -7px !important;
+    inset: -5px !important;
   }
 
   .match-demo-section .match-profile-chips {
@@ -202,9 +202,9 @@
     display: grid !important;
     grid-template-columns: 1fr !important;
     gap: 0 !important;
-    padding: 11px 13px !important;
+    padding: 9px 11px !important;
     border: 1px solid rgba(103, 75, 220, .12) !important;
-    border-radius: 18px !important;
+    border-radius: 16px !important;
     background: rgba(255, 255, 255, .92) !important;
     box-shadow: 0 12px 30px rgba(59, 43, 113, .08) !important;
     transform: none !important;
@@ -220,9 +220,9 @@
     width: 100% !important;
     max-width: none !important;
     min-width: 0 !important;
-    min-height: 40px !important;
-    gap: 8px !important;
-    padding: 7px 0 !important;
+    min-height: 36px !important;
+    gap: 7px !important;
+    padding: 5px 0 !important;
     border: 0 !important;
     border-bottom: 1px solid rgba(103, 75, 220, .10) !important;
     border-radius: 0 !important;
@@ -237,14 +237,14 @@
   }
 
   .match-demo-section .match-profile-chip__icon {
-    flex: 0 0 28px !important;
-    width: 28px !important;
-    height: 28px !important;
+    flex: 0 0 25px !important;
+    width: 25px !important;
+    height: 25px !important;
   }
 
   .match-demo-section .match-profile-chip b {
-    font-size: 10px !important;
-    line-height: 1.25 !important;
+    font-size: 9.5px !important;
+    line-height: 1.2 !important;
   }
 
   .match-demo-section .match-profile-status {
