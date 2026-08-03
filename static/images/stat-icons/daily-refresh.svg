@@ -1,0 +1,21 @@
+<svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="calendarGrad" x1="14" y1="12" x2="50" y2="52" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#8B6CFF"/>
+      <stop offset="1" stop-color="#5B43EA"/>
+    </linearGradient>
+    <linearGradient id="sparkGrad" x1="35" y1="23" x2="44" y2="32" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#9C86FF"/>
+      <stop offset="1" stop-color="#6A4FF2"/>
+    </linearGradient>
+  </defs>
+  <rect x="8" y="8" width="48" height="48" rx="16" fill="#F3F0FF"/>
+  <rect x="17" y="19" width="30" height="26" rx="7" fill="white" stroke="url(#calendarGrad)" stroke-width="2.5"/>
+  <path d="M17 26.5H47" stroke="#D2CAFF" stroke-width="2" stroke-linecap="round"/>
+  <path d="M24 16.5V22" stroke="url(#calendarGrad)" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M40 16.5V22" stroke="url(#calendarGrad)" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M38.5 25.2L40.1 28.9L43.8 30.5L40.1 32.1L38.5 35.8L36.9 32.1L33.2 30.5L36.9 28.9L38.5 25.2Z" fill="url(#sparkGrad)"/>
+  <circle cx="26" cy="33" r="2" fill="#E7E1FF"/>
+  <circle cx="22" cy="38" r="2" fill="#E7E1FF"/>
+  <circle cx="30" cy="38" r="2" fill="#E7E1FF"/>
+</svg>
