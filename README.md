@@ -46,3 +46,30 @@ Optional environment variables:
 
 The existing "Обновить данные" link only schedules a background refresh and
 returns immediately.
+
+## Локальная проверка и CI
+
+Тестовые зависимости устанавливаются отдельно от production-зависимостей:
+
+```bash
+python -m pip install -r requirements.txt -r requirements-dev.txt
+```
+
+Перед отправкой изменений в GitHub выполнить:
+
+```bash
+python scripts/check_repository_hygiene.py .
+python -m compileall -q app.py services tests scripts
+python -m pytest
+```
+
+Файл `.github/workflows/ci.yml` повторяет эти проверки в GitHub Actions на Python 3.12 и 3.13. В тестах запрещены непреднамеренные внешние HTTP-запросы: ответы HeadHunter, SuperJob, Reed и Trudvsem подменяются mock-объектами.
+
+`render.yaml` использует `autoDeployTrigger: checksPass`, поэтому Blueprint-конфигурация запрашивает развёртывание только после успешных CI-проверок. Для уже созданного сервиса дополнительно проверьте в Render: **Settings -> Auto-Deploy -> After CI Checks Pass**.
+
+Тестовая среда использует временный `DATA_DIR`, тестовую SQLite-базу и `TRUDVSEM_SYNC_ENABLED=0`, поэтому не должна запускать фоновую синхронизацию и затрагивать production-данные.
+
+## Статус проверки FND-001
+
+Тестовая инфраструктура подготовлена локально. Пункт считается полностью выполненным только после зелёного GitHub Actions и smoke-проверки развёрнутой версии на Render.
+
