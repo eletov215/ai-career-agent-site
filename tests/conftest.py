@@ -38,6 +38,7 @@ for variable in (
     "HH_APP_TOKEN",
     "REED_API_KEY",
     "SYNC_SECRET",
+    "DATABASE_URL",
 ):
     os.environ.pop(variable, None)
 
@@ -58,6 +59,11 @@ def block_unmocked_http(monkeypatch: pytest.MonkeyPatch):
 @pytest.fixture(scope="session")
 def app_module():
     pytest.importorskip("flask", reason="Flask is installed from requirements.txt in CI")
+    from config import load_database_url
+    from database import upgrade_database
+
+    database_url, _explicit = load_database_url()
+    upgrade_database(database_url)
     module = importlib.import_module("app")
     module.app.config.update(
         TESTING=True,
@@ -72,4 +78,7 @@ def client(app_module):
 
 
 def pytest_sessionfinish(session, exitstatus):  # noqa: ANN001
+    module = __import__("sys").modules.get("app")
+    if module is not None and hasattr(module, "DATABASE"):
+        module.DATABASE.dispose()
     shutil.rmtree(_TEST_DATA_DIR, ignore_errors=True)

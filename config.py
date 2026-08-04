@@ -146,6 +146,65 @@ def _environment_name(source: Mapping[str, str]) -> str:
     return environment
 
 
+def _database_url(
+    source: Mapping[str, str],
+    *,
+    environment: str,
+    data_dir_raw: str,
+) -> tuple[str, bool]:
+    """Return a normalized SQLAlchemy URL and whether it was explicitly set."""
+
+    raw = _clean(source.get("DATABASE_URL"))
+    explicit = bool(raw)
+    if raw.startswith("postgres://"):
+        raw = "postgresql+psycopg://" + raw[len("postgres://") :]
+    elif raw.startswith("postgresql://"):
+        raw = "postgresql+psycopg://" + raw[len("postgresql://") :]
+    elif raw.startswith("postgresql+psycopg2://"):
+        raw = "postgresql+psycopg://" + raw[len("postgresql+psycopg2://") :]
+
+    if not raw:
+        sqlite_path = (Path(data_dir_raw).expanduser() / "app.db").resolve()
+        raw = f"sqlite:///{sqlite_path.as_posix()}"
+
+    supported_prefixes = ("sqlite:", "postgresql+psycopg:")
+    if not raw.startswith(supported_prefixes):
+        raise ConfigurationError(
+            "DATABASE_URL использует неподдерживаемый драйвер. "
+            "Разрешены SQLite и PostgreSQL через psycopg 3."
+        )
+
+    if environment == "test" and raw.startswith("postgresql"):
+        # Tests may opt into PostgreSQL explicitly, but the default remains an
+        # isolated SQLite database under the per-session DATA_DIR.
+        return raw, explicit
+    return raw, explicit
+
+
+def load_database_url(
+    environ: Mapping[str, str] | None = None,
+) -> tuple[str, bool]:
+    """Load only database settings without requiring OAuth credentials.
+
+    Alembic and maintenance scripts use this lightweight loader so database
+    operations remain possible even before the Flask application is started.
+    """
+
+    source = dict(os.environ if environ is None else environ)
+    environment = _environment_name(source)
+    default_data_dir = (
+        "/tmp/ai-career-agent-tests"
+        if environment == "test"
+        else "/tmp/ai-career-agent"
+    )
+    data_dir_raw = _clean(source.get("DATA_DIR", default_data_dir)) or default_data_dir
+    return _database_url(
+        source,
+        environment=environment,
+        data_dir_raw=data_dir_raw,
+    )
+
+
 @dataclass(frozen=True, slots=True)
 class AppSettings:
     """Validated runtime settings used by the Flask application."""
@@ -164,6 +223,8 @@ class AppSettings:
     reed_api_key: str | None
     sync_secret: str | None
     data_dir: Path
+    database_url: str
+    database_url_explicit: bool
     vacancy_cache_ttl: int
     vacancy_page_size: int
     trudvsem_sync_interval: int
@@ -242,6 +303,12 @@ def load_settings(environ: Mapping[str, str] | None = None) -> AppSettings:
     flask_debug_default = environment == "development"
     sync_enabled_default = environment != "test"
 
+    database_url_raw, database_url_explicit = _database_url(
+        source,
+        environment=environment,
+        data_dir_raw=data_dir_raw,
+    )
+
     return AppSettings(
         environment=environment,
         flask_secret_key=_required(source, "FLASK_SECRET_KEY"),
@@ -257,6 +324,8 @@ def load_settings(environ: Mapping[str, str] | None = None) -> AppSettings:
         reed_api_key=_optional(source, "REED_API_KEY"),
         sync_secret=_optional(source, "SYNC_SECRET"),
         data_dir=Path(data_dir_raw).expanduser(),
+        database_url=database_url_raw,
+        database_url_explicit=database_url_explicit,
         vacancy_cache_ttl=_int(source, "VACANCY_CACHE_TTL", 1800, minimum=1),
         vacancy_page_size=_int(source, "VACANCY_PAGE_SIZE", 60, minimum=1, maximum=100),
         trudvsem_sync_interval=_int(source, "TRUDVSEM_SYNC_INTERVAL", 1800, minimum=1),
