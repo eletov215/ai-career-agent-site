@@ -119,7 +119,9 @@ def test_one_provider_failure_does_not_hide_another_provider_result(
     assert "provider unavailable" not in body
 
 
-def test_sqlalchemy_account_storage_round_trip(app_module, client):
+def test_sqlalchemy_account_storage_round_trip(app_module):
+    from flask import session
+
     app_module.save_account(
         {"id": 101, "name": "Test SuperJob", "email": "sj@example.test"},
         {
@@ -142,12 +144,15 @@ def test_sqlalchemy_account_storage_round_trip(app_module, client):
         },
     )
 
-    with client.session_transaction() as browser_session:
-        browser_session["superjob_user_id"] = 101
-        browser_session["hh_user_id"] = "hh-101"
+    # account() and hh_account() intentionally read Flask's request-local
+    # session, so the direct helper check must run inside a request context.
+    with app_module.app.test_request_context("/"):
+        session["superjob_user_id"] = 101
+        session["hh_user_id"] = "hh-101"
 
-    superjob = app_module.account()
-    headhunter = app_module.hh_account()
+        superjob = app_module.account()
+        headhunter = app_module.hh_account()
+
     assert superjob["name"] == "Test SuperJob"
     assert headhunter["first_name"] == "Test"
     assert app_module.dec(superjob["access_token"]) == "superjob-access"

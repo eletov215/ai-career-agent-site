@@ -1,11 +1,13 @@
 # AI Career Agent - Единый план реализации и ведения разработки
 
-**Версия:** 1.2.0  
+**Версия:** 1.2.3  
 **Дата:** 04 августа 2026  
 **Статус:** ДЕЙСТВУЮЩИЙ  
-**Основа:** `ai-career-agent-site-main-13-data-001-postgresql.zip`
+**Основа:** `ai-career-agent-site-main-13-data-001-ci-fix-v1.2.3.zip`
 
 > ОБЯЗАТЕЛЬНО ДЛЯ КАЖДОГО НОВОГО ЧАТА: прочитать этот план, новый паспорт и актуальный архив. После завершения любого пункта вернуть обновлённые DOCX/PDF/Markdown, новый ZIP, доказательства проверки и запись в журнале версий.
+
+> КОНТРОЛЬНЫЕ СТАТУСЫ ЭТОЙ ВЕРСИИ: `FND-001 — ВЫПОЛНЕНО`; `FND-002 — ВЫПОЛНЕНО`; `DATA-001 — НУЖНА ПРОВЕРКА`. PDF с версией `1.0.1` или иными статусами является устаревшей копией.
 
 ## 1. Источник истины и аудит источников
 
@@ -14,7 +16,7 @@
 - Канонический план определяется наибольшей версией и датой; старые дубликаты не должны оставаться действующими.
 - Перед DATA-001 проверено, что актуальный код находится в `ai-career-agent-site-main-12-fnd-002-config.zip`.
 - Загруженные планы/паспорт были устаревшими: они содержали версии 1.0.0/1.0.1 и раннее состояние HH 403, не отражали подтверждение FND-001/FND-002 и согласованную стратегию собственного домена/VPS.
-- Версия 1.2.0 является первым согласованным источником после этой сверки. Старые PLAN_CURRENT и паспорт следует заменить.
+- Версия 1.2.3 является канонической синхронизированной версией: FND-001 и FND-002 подтверждены как ВЫПОЛНЕНО, DATA-001 остаётся НУЖНА ПРОВЕРКА. Старые PLAN_CURRENT и паспорт следует заменить.
 
 ## 2. Обязательный протокол работы
 
@@ -74,7 +76,7 @@
 - BASE-006: PDF parse - частично, это не AI.
 - BASE-007: resume builder/live preview/PDF/mobile - реализовано.
 - BASE-008: спокойные homepage transitions/reduced motion - реализовано.
-- BASE-009-012: own account, real AI, server saved jobs, tracker/legal/commercial core - впереди.
+- BASE-009..012: own account, real AI, server saved jobs, tracker/legal/commercial core - впереди.
 
 ### 5.2 Ключевые риски
 
@@ -894,7 +896,7 @@ MVP не готов, если работает только отдельная �
 - `app.py`: OAuth account persistence через SQLAlchemy, secret-free DB health.
 - `services/vacancy_store.py`: cross-database SQLAlchemy implementation с сохранением API.
 - `render.yaml`: migration before Gunicorn на free plan и `healthCheckPath`.
-- CI: current GitHub Actions, SQLite migrations, PostgreSQL 17 service container, real Psycopg round-trip, `alembic check` and tests.
+- CI: current GitHub Actions, dependency imports, migrations, `alembic check`, tests.
 - `docs/DATABASE_MIGRATION.md`, source audit и актуальная документация.
 
 ### 9.2 Совместимость
@@ -911,10 +913,12 @@ MVP не готов, если работает только отдельная �
 compileall: успешно
 Alembic upgrade: успешно
 Alembic check: No new upgrade operations detected
-pytest: 47 passed, 4 skipped
+pytest: 47 passed, 3 skipped
 ```
 
-Пропущены Flask-dependent tests, lazy Psycopg test и новый PostgreSQL integration test из-за отсутствия Flask/Psycopg/PostgreSQL service в sandbox. GitHub Actions устанавливает dependencies и поднимает PostgreSQL 17 service container; эти проверки не должны быть пропущены. DATA-001 не может стать ВЫПОЛНЕНО до зелёного CI.
+Пропущены только Flask/Psycopg-dependent tests из-за отсутствия этих packages в sandbox. В GitHub Actions они должны выполняться после установки `requirements.txt`; DATA-001 не может стать ВЫПОЛНЕНО до зелёного CI.
+
+Первый запуск GitHub Actions для DATA-001 выявил ошибку только в тесте `test_sqlalchemy_account_storage_round_trip`: helper-функции `account()` и `hh_account()` корректно требуют активный Flask request context, а тест вызывал их после закрытия контекста `session_transaction`. Тест исправлен: проверка выполняется внутри `app.test_request_context`. Production-код и схема базы не изменялись. Также workflow DATA-001 должен быть вручную обновлён в `.github/workflows/ci.yml`; старый workflow заметен по отсутствию шагов Alembic/PostgreSQL и по пропуску `test_postgresql_integration.py`. Статус DATA-001 остаётся НУЖНА ПРОВЕРКА до повторного зелёного CI и production persistence-проверки.
 
 ### 9.4 Production verification
 
@@ -987,3 +991,6 @@ GitHub/production/API: <подтверждено или требуется>
 | 1.0.2 | 03.08.2026 | FND-002 | Конфигурационный слой подготовлен. |
 | 1.1.0 | 04.08.2026 | INFRA strategy | Согласованы own domain, paid Render first и optional VPS packages. |
 | 1.2.0 | 04.08.2026 | SOURCE/DATA-001 | Источники сверены; FND-001/002 подтверждены; DATA-001 реализован и ожидает production verification. |
+| 1.2.1 | 04.08.2026 | DOC-SYNC | Исправлена рассинхронизация экспортированных DOCX/PDF: FND-001 и FND-002 отмечены ВЫПОЛНЕНО; DATA-001 остаётся НУЖНА ПРОВЕРКА. |
+| 1.2.2 | 04.08.2026 | DOC-CACHE-FIX | Перевыпущены документы с уникальными versioned filenames; FND-001/FND-002 подтверждены как ВЫПОЛНЕНО, DATA-001 остаётся НУЖНА ПРОВЕРКА. |
+| 1.2.3 | 04.08.2026 | DATA-001-CI-FIX | Исправлен request-context тест OAuth-хранилища; усилен workflow отдельным PostgreSQL integration step. DATA-001 остаётся НУЖНА ПРОВЕРКА. |

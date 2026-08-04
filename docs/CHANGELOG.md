@@ -2,6 +2,20 @@
 
 Все значимые изменения проекта фиксируются в этом файле.
 
+## 04 августа 2026 — DATA-001 CI fix 1.2.3
+
+- Исправлен `tests/test_routes.py::test_sqlalchemy_account_storage_round_trip`: прямой вызов session-dependent helpers теперь выполняется внутри Flask request context.
+- Production-код, OAuth-схема и модели базы не изменялись.
+- GitHub Actions усилен отдельным обязательным PostgreSQL integration step и полным отчётом о skipped/xfail tests.
+- Статус `DATA-001` остаётся **НУЖНА ПРОВЕРКА** до повторного зелёного CI и проверки PostgreSQL на Render.
+
+## 04 августа 2026 — DOC-SYNC 1.2.1
+
+- Исправлена рассинхронизация экспортированных PLAN_CURRENT DOCX/PDF.
+- `FND-001` и `FND-002` зафиксированы как **ВЫПОЛНЕНО**.
+- `DATA-001` остаётся **НУЖНА ПРОВЕРКА** до production PostgreSQL/persistence-проверки.
+- Паспорт обновлён до версии 2.1, связанный план — 1.2.1.
+
 ## Unreleased — DATA-001 (04 августа 2026)
 
 ### Added
@@ -53,3 +67,10 @@
 ## Ранее
 
 История интерфейсных, OAuth-, поиска и конструктора изменений сохранена в Git и предыдущих проектных материалах. Канонический текущий статус находится в `PLAN_CURRENT`.
+
+## 2026-08-04 — Documentation cache-safe reissue
+
+- PLAN_CURRENT updated to v1.2.2.
+- FND-001 and FND-002 are confirmed as COMPLETED.
+- DATA-001 remains NEEDS VERIFICATION.
+- Versioned document filenames are used to prevent stale mobile/PDF cache confusion.
