@@ -28,7 +28,7 @@ jobs:
           --health-retries 5
     env:
       APP_ENV: test
-      DATA_DIR: ${{ runner.temp }}/ai-career-agent-ci
+      DATA_DIR: /tmp/ai-career-agent-ci
       POSTGRES_TEST_URL: postgresql+psycopg://postgres:postgres@127.0.0.1:5432/ai_career_agent_test
       TRUDVSEM_SYNC_ENABLED: "0"
       TRUDVSEM_REQUEST_ATTEMPTS: "1"
@@ -36,6 +36,9 @@ jobs:
       DEBUG_HH: "0"
 
     steps:
+      - name: Prepare test directories
+        run: mkdir -p "$DATA_DIR"
+
       - name: Check out repository
         uses: actions/checkout@v6
 
