@@ -1,76 +1,61 @@
 from __future__ import annotations
 
 import json
-import sqlite3
 import time
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Iterable
 
+from sqlalchemy import Engine, and_, case, func, or_, select, tuple_
+from sqlalchemy.orm import Session, sessionmaker
+
+from database import DatabaseRuntime, create_database
+from models import Vacancy
+
 
 class VacancyStore:
-    def __init__(self, db_path: Path):
-        self.db_path = db_path
+    """Cross-database vacancy cache backed by SQLAlchemy.
 
-    def _connect(self) -> sqlite3.Connection:
-        conn = sqlite3.connect(self.db_path, timeout=10)
-        conn.row_factory = sqlite3.Row
-        conn.execute("PRAGMA journal_mode=WAL")
-        conn.execute("PRAGMA busy_timeout=10000")
-        return conn
+    The constructor keeps the old ``Path`` API used by unit tests, while the
+    application passes the shared ``DatabaseRuntime`` created from
+    ``DATABASE_URL``.
+    """
+
+    def __init__(self, database: DatabaseRuntime | Engine | Path | str):
+        self._owned_runtime: DatabaseRuntime | None = None
+        if isinstance(database, DatabaseRuntime):
+            self.engine = database.engine
+            self._sessions = database.session_factory
+        elif isinstance(database, Engine):
+            self.engine = database
+            self._sessions = sessionmaker(
+                bind=database,
+                autoflush=False,
+                expire_on_commit=False,
+                future=True,
+            )
+        else:
+            raw = str(database)
+            if "://" not in raw:
+                path = Path(raw).expanduser().resolve()
+                raw = f"sqlite:///{path.as_posix()}"
+            runtime = create_database(raw)
+            self._owned_runtime = runtime
+            self.engine = runtime.engine
+            self._sessions = runtime.session_factory
 
     def init(self) -> None:
-        with self._connect() as conn:
-            conn.execute(
-                """
-                CREATE TABLE IF NOT EXISTS vacancies (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    source TEXT NOT NULL,
-                    external_id TEXT NOT NULL,
-                    title TEXT NOT NULL,
-                    company TEXT,
-                    salary_from REAL,
-                    salary_to REAL,
-                    currency TEXT,
-                    location TEXT,
-                    remote INTEGER NOT NULL DEFAULT 0,
-                    schedule TEXT,
-                    employment TEXT,
-                    experience TEXT,
-                    description TEXT,
-                    requirements TEXT,
-                    published_at TEXT,
-                    url TEXT,
-                    search_text TEXT,
-                    raw_json TEXT,
-                    fetched_at INTEGER NOT NULL,
-                    updated_at INTEGER NOT NULL,
-                    UNIQUE(source, external_id)
-                )
-                """
-            )
-            conn.execute(
-                "CREATE INDEX IF NOT EXISTS idx_vacancies_source_fetched ON vacancies(source, fetched_at DESC)"
-            )
-            columns = {row["name"] for row in conn.execute("PRAGMA table_info(vacancies)").fetchall()}
-            if "experience" not in columns:
-                conn.execute("ALTER TABLE vacancies ADD COLUMN experience TEXT")
-            conn.execute(
-                "CREATE INDEX IF NOT EXISTS idx_vacancies_remote ON vacancies(remote)"
-            )
-            conn.execute(
-                "CREATE INDEX IF NOT EXISTS idx_vacancies_location ON vacancies(location)"
-            )
-            stale_rows = conn.execute("SELECT id, raw_json FROM vacancies").fetchall()
-            for row in stale_rows:
-                try:
-                    item = json.loads(row["raw_json"])
-                except (TypeError, json.JSONDecodeError):
-                    continue
-                conn.execute(
-                    "UPDATE vacancies SET search_text = ?, experience = COALESCE(experience, ?) WHERE id = ?",
-                    (self._search_blob(item), item.get("experience"), row["id"]),
-                )
-            conn.commit()
+        """Create only the vacancy table for isolated compatibility tests."""
+
+        Vacancy.__table__.create(self.engine, checkfirst=True)
+        self._backfill_legacy_rows()
+
+    def close(self) -> None:
+        if self._owned_runtime is not None:
+            self._owned_runtime.dispose()
+
+    def _session(self) -> Session:
+        return self._sessions()
 
     @staticmethod
     def _search_blob(item: dict[str, Any]) -> str:
@@ -87,74 +72,102 @@ class VacancyStore:
         ]
         return " ".join(str(value or "") for value in values).lower()
 
+    @staticmethod
+    def _normalize_published_at(value: object | None) -> str | None:
+        if value in (None, ""):
+            return None
+        if isinstance(value, (int, float)):
+            parsed = datetime.fromtimestamp(float(value), tz=timezone.utc)
+        else:
+            raw = str(value).strip()
+            if not raw:
+                return None
+            if raw.isdigit():
+                parsed = datetime.fromtimestamp(float(raw), tz=timezone.utc)
+            else:
+                try:
+                    parsed = datetime.fromisoformat(raw.replace("Z", "+00:00"))
+                except ValueError:
+                    return raw
+                if parsed.tzinfo is None:
+                    parsed = parsed.replace(tzinfo=timezone.utc)
+                parsed = parsed.astimezone(timezone.utc)
+        return parsed.isoformat(timespec="seconds").replace("+00:00", "Z")
+
+    def _backfill_legacy_rows(self) -> None:
+        with self._session() as session:
+            rows = session.scalars(select(Vacancy)).all()
+            changed = False
+            for row in rows:
+                try:
+                    item = json.loads(row.raw_json or "{}")
+                except (TypeError, json.JSONDecodeError):
+                    item = {}
+                if not row.search_text and item:
+                    row.search_text = self._search_blob(item)
+                    changed = True
+                if not row.experience and item.get("experience"):
+                    row.experience = item.get("experience")
+                    changed = True
+                normalized_date = self._normalize_published_at(
+                    row.published_at or item.get("published_at")
+                )
+                if normalized_date != row.published_at:
+                    row.published_at = normalized_date
+                    changed = True
+            if changed:
+                session.commit()
+
     def upsert_many(self, items: Iterable[dict[str, Any]]) -> int:
         now = int(time.time())
-        rows = []
+        payloads: dict[tuple[str, str], dict[str, Any]] = {}
         for item in items:
             external_id = str(item.get("external_id") or "").strip()
             source = str(item.get("source") or "").strip()
             if not source or not external_id:
                 continue
-            rows.append(
-                (
-                    source,
-                    external_id,
-                    item.get("title") or "Без названия",
-                    item.get("company"),
-                    item.get("salary_from"),
-                    item.get("salary_to"),
-                    item.get("currency"),
-                    item.get("location"),
-                    1 if item.get("remote") else 0,
-                    item.get("schedule"),
-                    item.get("employment"),
-                    item.get("experience"),
-                    item.get("description"),
-                    item.get("requirements"),
-                    item.get("published_at"),
-                    item.get("url"),
-                    self._search_blob(item),
-                    json.dumps(item, ensure_ascii=False),
-                    now,
-                    now,
-                )
-            )
-        if not rows:
+            payloads[(source, external_id)] = {
+                "source": source,
+                "external_id": external_id,
+                "title": item.get("title") or "Без названия",
+                "company": item.get("company"),
+                "salary_from": item.get("salary_from"),
+                "salary_to": item.get("salary_to"),
+                "currency": item.get("currency"),
+                "location": item.get("location"),
+                "remote": bool(item.get("remote")),
+                "schedule": item.get("schedule"),
+                "employment": item.get("employment"),
+                "experience": item.get("experience"),
+                "description": item.get("description"),
+                "requirements": item.get("requirements"),
+                "published_at": self._normalize_published_at(item.get("published_at")),
+                "url": item.get("url"),
+                "search_text": self._search_blob(item),
+                "raw_json": json.dumps(item, ensure_ascii=False),
+                "fetched_at": now,
+                "updated_at": now,
+            }
+        if not payloads:
             return 0
 
-        with self._connect() as conn:
-            conn.executemany(
-                """
-                INSERT INTO vacancies (
-                    source, external_id, title, company, salary_from, salary_to,
-                    currency, location, remote, schedule, employment, experience, description,
-                    requirements, published_at, url, search_text, raw_json,
-                    fetched_at, updated_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                ON CONFLICT(source, external_id) DO UPDATE SET
-                    title=excluded.title,
-                    company=excluded.company,
-                    salary_from=excluded.salary_from,
-                    salary_to=excluded.salary_to,
-                    currency=excluded.currency,
-                    location=excluded.location,
-                    remote=excluded.remote,
-                    schedule=excluded.schedule,
-                    employment=excluded.employment,
-                    experience=excluded.experience,
-                    description=excluded.description,
-                    requirements=excluded.requirements,
-                    published_at=excluded.published_at,
-                    url=excluded.url,
-                    search_text=excluded.search_text,
-                    raw_json=excluded.raw_json,
-                    fetched_at=excluded.fetched_at,
-                    updated_at=excluded.updated_at
-                """,
-                rows,
-            )
-            conn.commit()
-        return len(rows)
+        keys = list(payloads)
+        with self._session() as session:
+            existing = session.scalars(
+                select(Vacancy).where(
+                    tuple_(Vacancy.source, Vacancy.external_id).in_(keys)
+                )
+            ).all()
+            by_key = {(row.source, row.external_id): row for row in existing}
+            for key, values in payloads.items():
+                row = by_key.get(key)
+                if row is None:
+                    session.add(Vacancy(**values))
+                    continue
+                for name, value in values.items():
+                    setattr(row, name, value)
+            session.commit()
+        return len(payloads)
 
     @staticmethod
     def _build_conditions(
@@ -170,33 +183,29 @@ class VacancyStore:
         employment: str = "",
         work_format: str = "",
         currency: str = "",
-    ) -> tuple[list[str], list[Any]]:
-        placeholders = ",".join("?" for _ in sources)
-        terms = [term.lower() for term in keyword.split() if term.strip()]
-        conditions = [f"source IN ({placeholders})"]
-        params: list[Any] = list(sources)
-        for term in terms:
-            conditions.append("search_text LIKE ?")
-            params.append(f"%{term}%")
+    ) -> list[Any]:
+        search_text = func.coalesce(Vacancy.search_text, "")
+        conditions: list[Any] = [Vacancy.source.in_(sources)]
+        for term in (term.casefold() for term in keyword.split() if term.strip()):
+            conditions.append(search_text.like(f"%{term}%"))
         if region:
-            conditions.append("search_text LIKE ?")
-            params.append(f"%{region.casefold()}%")
+            conditions.append(search_text.like(f"%{region.casefold()}%"))
         if remote_only or work_format == "remote":
-            conditions.append("remote = 1")
+            conditions.append(Vacancy.remote.is_(True))
         elif work_format == "onsite":
-            conditions.append("remote = 0")
-            conditions.append("search_text NOT LIKE '%гибк%'")
+            conditions.append(Vacancy.remote.is_(False))
+            conditions.append(~search_text.like("%гибк%"))
         elif work_format == "hybrid":
-            conditions.append("search_text LIKE '%гибк%'")
+            conditions.append(search_text.like("%гибк%"))
         if currency:
+            currency_value = func.upper(func.coalesce(Vacancy.currency, ""))
             currency_code = currency.upper()
             if currency_code == "RUB":
-                conditions.append("UPPER(COALESCE(currency, '')) IN ('RUB', 'RUR')")
+                conditions.append(currency_value.in_(("RUB", "RUR")))
             elif currency_code == "BYN":
-                conditions.append("UPPER(COALESCE(currency, '')) IN ('BYN', 'BYR')")
+                conditions.append(currency_value.in_(("BYN", "BYR")))
             else:
-                conditions.append("UPPER(COALESCE(currency, '')) = ?")
-                params.append(currency_code)
+                conditions.append(currency_value == currency_code)
         employment_terms = {
             "full": ("полная", "полный"),
             "part": ("частичная", "неполный"),
@@ -205,8 +214,9 @@ class VacancyStore:
             "volunteer": ("волонт",),
         }.get(employment, ())
         if employment_terms:
-            conditions.append("(" + " OR ".join("search_text LIKE ?" for _ in employment_terms) + ")")
-            params.extend(f"%{term}%" for term in employment_terms)
+            conditions.append(
+                or_(*(search_text.like(f"%{term}%") for term in employment_terms))
+            )
         experience_terms = {
             "no_experience": ("без опыта",),
             "between_1_and_3": ("1 год", "1-3", "от 1"),
@@ -214,17 +224,46 @@ class VacancyStore:
             "more_than_6": ("6 лет", "более 6"),
         }.get(experience, ())
         if experience_terms:
-            conditions.append("(" + " OR ".join("search_text LIKE ?" for _ in experience_terms) + ")")
-            params.extend(f"%{term}%" for term in experience_terms)
+            conditions.append(
+                or_(*(search_text.like(f"%{term}%") for term in experience_terms))
+            )
         if salary_only:
-            conditions.append("(salary_from IS NOT NULL OR salary_to IS NOT NULL)")
+            conditions.append(
+                or_(Vacancy.salary_from.is_not(None), Vacancy.salary_to.is_not(None))
+            )
         if salary_from is not None:
-            conditions.append("COALESCE(salary_to, salary_from, 0) >= ?")
-            params.append(salary_from)
+            conditions.append(
+                func.coalesce(Vacancy.salary_to, Vacancy.salary_from, 0) >= salary_from
+            )
         if period_days > 0:
-            conditions.append("datetime(published_at) >= datetime('now', ?)")
-            params.append(f"-{period_days} days")
-        return conditions, params
+            cutoff = datetime.now(timezone.utc) - timedelta(days=period_days)
+            cutoff_text = cutoff.isoformat(timespec="seconds").replace("+00:00", "Z")
+            conditions.append(Vacancy.published_at >= cutoff_text)
+        return conditions
+
+    @staticmethod
+    def _order_by(sort: str) -> tuple[Any, ...]:
+        published = func.coalesce(Vacancy.published_at, "")
+        salary_value = func.coalesce(Vacancy.salary_to, Vacancy.salary_from, 0)
+        if sort == "salary_desc":
+            return salary_value.desc(), published.desc()
+        if sort == "salary_asc":
+            missing_salary = case(
+                (
+                    and_(
+                        Vacancy.salary_from.is_(None),
+                        Vacancy.salary_to.is_(None),
+                    ),
+                    1,
+                ),
+                else_=0,
+            )
+            return missing_salary.asc(), func.coalesce(
+                Vacancy.salary_from,
+                Vacancy.salary_to,
+                0,
+            ).asc(), published.desc()
+        return published.desc(), Vacancy.fetched_at.desc()
 
     def search(
         self,
@@ -246,7 +285,7 @@ class VacancyStore:
     ) -> list[dict[str, Any]]:
         if not sources:
             return []
-        conditions, params = self._build_conditions(
+        conditions = self._build_conditions(
             keyword=keyword,
             sources=sources,
             remote_only=remote_only,
@@ -259,26 +298,19 @@ class VacancyStore:
             work_format=work_format,
             currency=currency,
         )
-        order_by = {
-            "salary_desc": "COALESCE(salary_to, salary_from, 0) DESC, COALESCE(published_at, '') DESC",
-            "salary_asc": "CASE WHEN salary_from IS NULL AND salary_to IS NULL THEN 1 ELSE 0 END, COALESCE(salary_from, salary_to, 0) ASC, COALESCE(published_at, '') DESC",
-            "relevance": "COALESCE(published_at, '') DESC, fetched_at DESC",
-            "date": "COALESCE(published_at, '') DESC, fetched_at DESC",
-        }.get(sort, "COALESCE(published_at, '') DESC, fetched_at DESC")
-        params.extend([limit, offset])
-        sql = f"""
-            SELECT raw_json
-            FROM vacancies
-            WHERE {' AND '.join(conditions)}
-            ORDER BY {order_by}
-            LIMIT ? OFFSET ?
-        """
-        with self._connect() as conn:
-            rows = conn.execute(sql, params).fetchall()
-        result = []
-        for row in rows:
+        statement = (
+            select(Vacancy.raw_json)
+            .where(*conditions)
+            .order_by(*self._order_by(sort))
+            .limit(limit)
+            .offset(offset)
+        )
+        with self._session() as session:
+            raw_rows = session.scalars(statement).all()
+        result: list[dict[str, Any]] = []
+        for raw_json in raw_rows:
             try:
-                result.append(json.loads(row["raw_json"]))
+                result.append(json.loads(raw_json or "{}"))
             except (TypeError, json.JSONDecodeError):
                 continue
         return result
@@ -300,7 +332,7 @@ class VacancyStore:
     ) -> int:
         if not sources:
             return 0
-        conditions, params = self._build_conditions(
+        conditions = self._build_conditions(
             keyword=keyword,
             sources=sources,
             remote_only=remote_only,
@@ -313,19 +345,14 @@ class VacancyStore:
             work_format=work_format,
             currency=currency,
         )
-        with self._connect() as conn:
-            row = conn.execute(
-                f"SELECT COUNT(*) AS total FROM vacancies WHERE {' AND '.join(conditions)}",
-                params,
-            ).fetchone()
-        return int(row["total"] if row else 0)
+        statement = select(func.count(Vacancy.id)).where(*conditions)
+        with self._session() as session:
+            return int(session.scalar(statement) or 0)
 
     def source_age_seconds(self, source: str) -> int | None:
-        with self._connect() as conn:
-            row = conn.execute(
-                "SELECT MAX(fetched_at) AS fetched_at FROM vacancies WHERE source = ?",
-                (source,),
-            ).fetchone()
-        if not row or row["fetched_at"] is None:
+        statement = select(func.max(Vacancy.fetched_at)).where(Vacancy.source == source)
+        with self._session() as session:
+            fetched_at = session.scalar(statement)
+        if fetched_at is None:
             return None
-        return max(0, int(time.time()) - int(row["fetched_at"]))
+        return max(0, int(time.time()) - int(fetched_at))

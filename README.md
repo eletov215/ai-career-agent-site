@@ -1,30 +1,26 @@
 # AI Career Agent
 
-Flask-приложение с OAuth-интеграциями SuperJob и HeadHunter, единым поиском вакансий, локальным кэшем «Работы России», загрузкой PDF-резюме и конструктором резюме.
+Flask-приложение с OAuth-интеграциями HeadHunter и SuperJob, единым поиском вакансий, кэшем «Работы России», загрузкой PDF-резюме и конструктором резюме.
 
-## Запуск
+## Текущий статус
 
-Production-команда остаётся неизменной:
+- `FND-001` — **ВЫПОЛНЕНО**: базовые тесты и GitHub Actions подтверждены.
+- `FND-002` — **ВЫПОЛНЕНО**: конфигурация `development/test/production` подтверждена CI и Render; `HH_CURRENCY_SCAN_PAGES=20`.
+- `DATA-001` — **НУЖНА ПРОВЕРКА**: SQLAlchemy, Alembic и PostgreSQL-поддержка добавлены; требуется создать PostgreSQL, выполнить deploy и подтвердить постоянное хранение.
 
-```bash
-gunicorn app:app
-```
+Главный рабочий файл остаётся `app.py`. WSGI-приложение остаётся `app:app`; файлы наподобие `app_fixed.py` не используются.
 
-Главный рабочий файл — `app.py`. Файлы наподобие `app_fixed.py` не используются.
+## Конфигурация
 
-## Конфигурация приложения
+Настройки централизованы в `config.py`. Режим задаётся через `APP_ENV`:
 
-Настройки централизованы в `config.py`. Режим выбирается переменной `APP_ENV`:
+| Режим | Назначение |
+|---|---|
+| `production` | Публичный сервис. Используется по умолчанию для обратной совместимости. |
+| `development` | Локальная разработка; секреты задаются явно. |
+| `test` | Автоматические тесты с безопасными фиктивными OAuth-настройками. |
 
-| Режим | Значение | Назначение |
-|---|---|---|
-| Production | `production` | Render и публичный сервис. Это значение используется по умолчанию для обратной совместимости. |
-| Development | `development` | Локальная разработка. Debug включён по умолчанию, но секреты всё равно задаются явно. |
-| Test | `test` | Автоматические тесты. Только в этом режиме используются безопасные фиктивные OAuth-настройки; фоновая синхронизация отключена. |
-
-`render.yaml` явно задаёт `APP_ENV=production`.
-
-### Обязательные переменные для production и development
+### Обязательные переменные production/development
 
 ```text
 FLASK_SECRET_KEY
@@ -38,9 +34,32 @@ HH_REDIRECT_URI
 HH_USER_AGENT
 ```
 
-При отсутствии обязательной переменной приложение завершает запуск с понятным сообщением, в котором перечислены недостающие имена. Значения секретов в ошибку не выводятся.
+### Переменная базы данных
 
-### Необязательные интеграции и технические настройки
+```text
+DATABASE_URL
+```
+
+Поддерживаются:
+
+```text
+postgresql+psycopg://user:password@host:5432/database
+postgresql://user:password@host:5432/database
+postgres://user:password@host:5432/database
+sqlite:////absolute/path/app.db
+```
+
+`postgres://` и `postgresql://` автоматически приводятся к драйверу Psycopg 3.
+
+Если `DATABASE_URL` не задан, приложение временно сохраняет обратную совместимость и использует:
+
+```text
+sqlite:///<DATA_DIR>/app.db
+```
+
+Этот fallback удобен для локальной разработки, но **не является постоянным production-хранилищем на Render**. Для завершения `DATA-001` production должен использовать PostgreSQL.
+
+### Другие необязательные переменные
 
 ```text
 HH_APP_TOKEN
@@ -62,54 +81,99 @@ FLASK_DEBUG
 PORT
 ```
 
-Все числовые и логические значения проверяются в `config.py`. Некорректное значение останавливает запуск до deploy, а не приводит к случайной ошибке во время пользовательского запроса.
+`HH_CURRENCY_SCAN_PAGES` допускает значения от `1` до `20`. Для текущего Render-сервиса используется `20`.
 
-### Локальный development
+## База данных и миграции
 
-Перед запуском задайте `APP_ENV=development` и все обязательные переменные в локальном окружении. Встроенных development-секретов нет.
+`DATA-001` добавляет:
 
-Пример запуска после настройки окружения:
+- SQLAlchemy 2;
+- Alembic;
+- Psycopg 3;
+- модели текущих таблиц `accounts`, `hh_accounts`, `vacancies`;
+- первую миграцию `20260804_0001`;
+- секрет-безопасный статус базы в `/health`;
+- необязательный импорт снимка старой SQLite-базы.
+
+Основные команды:
 
 ```bash
-python app.py
+python scripts/manage_db.py upgrade
+python scripts/manage_db.py current
+python scripts/manage_db.py check
 ```
 
-Не сохраняйте `.env`, OAuth-токены и реальные ключи в репозитории.
-
-## Кэш и синхронизация «Работы России»
-
-Страница вакансий читает данные «Работы России» из локальной SQLite-базы. Текущая версия всё ещё запускает daemon-поток синхронизации внутри веб-процесса; перенос в отдельный Render Cron Job или worker запланирован пакетом `SYNC-001`.
-
-Защищённый технический endpoint:
-
-```text
-POST /sync/trudvsem
-X-Sync-Secret: <SYNC_SECRET>
-```
-
-Если `SYNC_SECRET` не настроен или заголовок неверен, endpoint отвечает `401`.
-
-## Локальная проверка и CI
-
-Установка зависимостей:
+Локальный запуск:
 
 ```bash
 python -m pip install -r requirements.txt -r requirements-dev.txt
+python scripts/manage_db.py upgrade
+python app.py
 ```
 
-Проверки перед push:
+Production start command на текущем бесплатном Render:
 
 ```bash
-python scripts/check_repository_hygiene.py .
-python -m compileall -q app.py config.py services tests scripts
+python scripts/manage_db.py upgrade && gunicorn app:app
+```
+
+После перехода на платный Render или VPS миграцию следует вынести в отдельную pre-deploy/entrypoint-фазу.
+
+## Перенос старой SQLite-базы
+
+Кэш вакансий можно восстановить повторной синхронизацией. Для переноса существующих OAuth-подключений нужен реальный снимок старого `app.db` и тот же `TOKEN_ENCRYPTION_KEY`.
+
+```bash
+DATABASE_URL='postgresql+psycopg://...' \
+python scripts/import_legacy_sqlite.py --source /path/to/app.db
+```
+
+Скрипт выполняет upsert текущих таблиц. Перед переносом production-данных необходимо сделать резервную копию и сначала проверить импорт на тестовой базе.
+
+Подробный порядок: [`docs/DATABASE_MIGRATION.md`](docs/DATABASE_MIGRATION.md).
+
+## Render: завершение DATA-001
+
+1. Создать PostgreSQL в том же регионе, что и web service.
+2. В `Environment` web service добавить `DATABASE_URL` из **Internal Database URL**.
+3. Сохранить прежний `TOKEN_ENCRYPTION_KEY`.
+4. Выполнить deploy текущего commit.
+5. Убедиться, что start command завершил миграцию.
+6. Открыть `/health` и проверить:
+
+```json
+{
+  "status": "ok",
+  "database": {
+    "ok": true,
+    "backend": "postgresql",
+    "persistent": true,
+    "revision": "20260804_0001",
+    "configured": true
+  }
+}
+```
+
+7. Проверить OAuth, поиск вакансий, `/resume-builder` и перезапуск/redeploy.
+
+## Тесты и CI
+
+Перед push:
+
+```bash
+python scripts/check_repository_hygiene.py
+python -m compileall -q app.py config.py database.py models migrations services tests scripts
+python scripts/manage_db.py upgrade
+python -m alembic check
 python -m pytest
 ```
 
-GitHub Actions выполняет те же проверки на Python 3.11. Внешняя сеть в тестах запрещена: HeadHunter, SuperJob, Reed и Trudvsem проверяются mock-ответами.
+GitHub Actions устанавливает production- и test-зависимости, применяет миграции к изолированной SQLite-базе и к отдельному PostgreSQL 17 service container, проверяет отсутствие новых незаписанных миграций и выполняет реальный PostgreSQL round-trip для OAuth-аккаунтов и вакансии. Внешние API в CI заменены mock-ответами.
 
-Тестовое окружение задаёт `APP_ENV=test`, отдельный временный `DATA_DIR` и технические значения, которые отключают фоновую синхронизацию и ускоряют повторные попытки. Реальные OAuth-настройки, API-ключи и Fernet-ключ тестам не требуются: безопасные фиктивные значения создаются только внутри режима `test`.
+## Текущие ограничения
 
-## Статус пакетов
-
-- `FND-001` — **ВЫПОЛНЕНО**: GitHub Actions проверен зелёным запуском, намеренно красным тестом и повторным зелёным запуском; Render smoke-проверка подтверждена.
-- `FND-002` — **НУЖНА ПРОВЕРКА**: централизованная конфигурация и режимы окружения подготовлены локально; требуется зелёный CI и deploy на Render.
+- Фоновая синхронизация Trudvsem пока работает внутри web-процесса; перенос запланирован в `SYNC-001`.
+- Собственный пользователь AI Career Agent ещё не реализован.
+- Реального LLM-провайдера пока нет.
+- Общая межисточниковая дедупликация и стабильная единая пагинация ещё требуют отдельных пакетов.
+- Собственный домен обязателен к коммерческому запуску; код должен оставаться переносимым между Render и VPS.

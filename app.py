@@ -2,7 +2,6 @@ import json
 import secrets
 import socket
 import platform
-import sqlite3
 import time
 import threading
 import logging
@@ -15,6 +14,8 @@ from cryptography.fernet import Fernet, InvalidToken
 from flask import Flask, jsonify, redirect, render_template, request, session, url_for
 from datetime import datetime, timezone
 
+from sqlalchemy import select
+
 from services.hh_provider import HeadHunterProvider
 from services.superjob_provider import SuperJobProvider
 from services.reed_provider import ReedProvider
@@ -25,6 +26,8 @@ from services.vacancy_presenter import present_vacancy
 from services.resume_parser import ResumeParseError, build_resume_preview, parse_resume_pdf
 from services.university_logo import find_university_logo
 from config import AppSettings, load_settings
+from database import create_database, database_health
+from models import HeadHunterAccount, SuperJobAccount
 
 SETTINGS: AppSettings = load_settings()
 
@@ -56,7 +59,7 @@ VACANCIES_URL = "https://api.superjob.ru/2.0/vacancies/"
 
 DATA_DIR = SETTINGS.data_dir
 DATA_DIR.mkdir(parents=True, exist_ok=True)
-DB_PATH = DATA_DIR / "app.db"
+DATABASE = create_database(SETTINGS.database_url)
 VACANCY_CACHE_TTL = SETTINGS.vacancy_cache_ttl
 VACANCY_PAGE_SIZE = SETTINGS.vacancy_page_size
 TRUDVSEM_SYNC_INTERVAL = SETTINGS.trudvsem_sync_interval
@@ -74,47 +77,8 @@ RENDER_REGION = SETTINGS.render_region
 SYNC_SECRET = SETTINGS.sync_secret
 
 
-def db():
-    conn = sqlite3.connect(DB_PATH, timeout=10)
-    conn.row_factory = sqlite3.Row
-    conn.execute("PRAGMA journal_mode=WAL")
-    conn.execute("PRAGMA busy_timeout=10000")
-    return conn
+VACANCY_STORE = VacancyStore(DATABASE)
 
-
-def init_db():
-    with db() as conn:
-        conn.execute("""
-            CREATE TABLE IF NOT EXISTS accounts (
-                user_id INTEGER PRIMARY KEY,
-                name TEXT NOT NULL,
-                email TEXT,
-                access_token TEXT NOT NULL,
-                refresh_token TEXT,
-                expires_at INTEGER,
-                profile_json TEXT NOT NULL,
-                updated_at INTEGER NOT NULL
-            )
-        """)
-        conn.execute("""
-        CREATE TABLE IF NOT EXISTS hh_accounts (
-            user_id TEXT PRIMARY KEY,
-            first_name TEXT,
-            last_name TEXT,
-            email TEXT,
-            access_token TEXT NOT NULL,
-            refresh_token TEXT,
-            expires_at INTEGER,
-            profile_json TEXT NOT NULL,
-            updated_at INTEGER NOT NULL
-        )
-        """)
-        conn.commit()
-
-
-init_db()
-VACANCY_STORE = VacancyStore(DB_PATH)
-VACANCY_STORE.init()
 
 TRUDVSEM_SYNC_EVENT = threading.Event()
 TRUDVSEM_SYNC_LOCK = threading.Lock()
@@ -382,32 +346,44 @@ def account():
     user_id = session.get("superjob_user_id")
     if not user_id:
         return None
-    with db() as conn:
-        return conn.execute("SELECT * FROM accounts WHERE user_id = ?", (user_id,)).fetchone()
+    with DATABASE.connect() as connection:
+        return connection.execute(
+            select(SuperJobAccount.__table__).where(
+                SuperJobAccount.user_id == int(user_id)
+            )
+        ).mappings().first()
 
 
 def save_account(profile, token_data):
     now = int(time.time())
     expires_in = token_data.get("expires_in")
     expires_at = now + int(expires_in) if expires_in else None
-    with db() as conn:
-        conn.execute("""
-            INSERT INTO accounts (user_id, name, email, access_token, refresh_token, expires_at, profile_json, updated_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-            ON CONFLICT(user_id) DO UPDATE SET
-                name=excluded.name,
-                email=excluded.email,
-                access_token=excluded.access_token,
-                refresh_token=COALESCE(excluded.refresh_token, accounts.refresh_token),
-                expires_at=excluded.expires_at,
-                profile_json=excluded.profile_json,
-                updated_at=excluded.updated_at
-        """, (
-            int(profile["id"]), profile.get("name") or "Пользователь SuperJob", profile.get("email"),
-            enc(token_data["access_token"]), enc(token_data.get("refresh_token")), expires_at,
-            json.dumps(profile, ensure_ascii=False), now,
-        ))
-        conn.commit()
+    user_id = int(profile["id"])
+    with DATABASE.session() as database_session:
+        stored = database_session.get(SuperJobAccount, user_id)
+        encrypted_refresh_token = enc(token_data.get("refresh_token"))
+        if stored is None:
+            stored = SuperJobAccount(
+                user_id=user_id,
+                name=profile.get("name") or "Пользователь SuperJob",
+                email=profile.get("email"),
+                access_token=enc(token_data["access_token"]),
+                refresh_token=encrypted_refresh_token,
+                expires_at=expires_at,
+                profile_json=json.dumps(profile, ensure_ascii=False),
+                updated_at=now,
+            )
+            database_session.add(stored)
+        else:
+            stored.name = profile.get("name") or "Пользователь SuperJob"
+            stored.email = profile.get("email")
+            stored.access_token = enc(token_data["access_token"])
+            if encrypted_refresh_token:
+                stored.refresh_token = encrypted_refresh_token
+            stored.expires_at = expires_at
+            stored.profile_json = json.dumps(profile, ensure_ascii=False)
+            stored.updated_at = now
+        database_session.commit()
 
 
 def valid_token(row):
@@ -433,11 +409,12 @@ def hh_account():
     if not user_id:
         return None
 
-    with db() as conn:
-        return conn.execute(
-            "SELECT * FROM hh_accounts WHERE user_id = ?",
-            (str(user_id),),
-        ).fetchone()
+    with DATABASE.connect() as connection:
+        return connection.execute(
+            select(HeadHunterAccount.__table__).where(
+                HeadHunterAccount.user_id == str(user_id)
+            )
+        ).mappings().first()
 
 
 def hh_headers(token=None):
@@ -487,49 +464,34 @@ def save_hh_account(profile, token_data):
     expires_at = now + int(expires_in) if expires_in else None
 
     user_id = str(profile["id"])
+    encrypted_refresh_token = enc(token_data.get("refresh_token"))
 
-    with db() as conn:
-        conn.execute(
-            """
-            INSERT INTO hh_accounts (
-                user_id,
-                first_name,
-                last_name,
-                email,
-                access_token,
-                refresh_token,
-                expires_at,
-                profile_json,
-                updated_at
+    with DATABASE.session() as database_session:
+        stored = database_session.get(HeadHunterAccount, user_id)
+        if stored is None:
+            stored = HeadHunterAccount(
+                user_id=user_id,
+                first_name=profile.get("first_name"),
+                last_name=profile.get("last_name"),
+                email=profile.get("email"),
+                access_token=enc(token_data["access_token"]),
+                refresh_token=encrypted_refresh_token,
+                expires_at=expires_at,
+                profile_json=json.dumps(profile, ensure_ascii=False),
+                updated_at=now,
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-            ON CONFLICT(user_id) DO UPDATE SET
-                first_name = excluded.first_name,
-                last_name = excluded.last_name,
-                email = excluded.email,
-                access_token = excluded.access_token,
-                refresh_token = COALESCE(
-                    excluded.refresh_token,
-                    hh_accounts.refresh_token
-                ),
-                expires_at = excluded.expires_at,
-                profile_json = excluded.profile_json,
-                updated_at = excluded.updated_at
-            """,
-            (
-                user_id,
-                profile.get("first_name"),
-                profile.get("last_name"),
-                profile.get("email"),
-                enc(token_data["access_token"]),
-                enc(token_data.get("refresh_token")),
-                expires_at,
-                json.dumps(profile, ensure_ascii=False),
-                now,
-            ),
-        )
-
-        conn.commit()
+            database_session.add(stored)
+        else:
+            stored.first_name = profile.get("first_name")
+            stored.last_name = profile.get("last_name")
+            stored.email = profile.get("email")
+            stored.access_token = enc(token_data["access_token"])
+            if encrypted_refresh_token:
+                stored.refresh_token = encrypted_refresh_token
+            stored.expires_at = expires_at
+            stored.profile_json = json.dumps(profile, ensure_ascii=False)
+            stored.updated_at = now
+        database_session.commit()
 
 
 def valid_hh_token(row):
@@ -1336,7 +1298,16 @@ def debug_hh():
 
 @app.get("/health")
 def health():
-    return {"status": "ok", "oauth_configured": True, "database": str(DB_PATH)}
+    database_status = database_health(DATABASE)
+    status_code = 200 if database_status["ok"] else 503
+    return {
+        "status": "ok" if database_status["ok"] else "degraded",
+        "oauth_configured": True,
+        "database": {
+            **database_status,
+            "configured": SETTINGS.database_url_explicit,
+        },
+    }, status_code
 
 
 if __name__ == "__main__":

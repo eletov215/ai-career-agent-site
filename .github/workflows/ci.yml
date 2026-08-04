@@ -12,13 +12,38 @@ jobs:
     name: Python tests
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: ai_career_agent_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d ai_career_agent_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      APP_ENV: test
+      DATA_DIR: /tmp/ai-career-agent-ci
+      POSTGRES_TEST_URL: postgresql+psycopg://postgres:postgres@127.0.0.1:5432/ai_career_agent_test
+      TRUDVSEM_SYNC_ENABLED: "0"
+      TRUDVSEM_REQUEST_ATTEMPTS: "1"
+      TRUDVSEM_RETRY_BACKOFF: "0.1"
+      DEBUG_HH: "0"
 
     steps:
+      - name: Prepare test directories
+        run: mkdir -p "$DATA_DIR"
+
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.11"
           cache: pip
@@ -34,13 +59,34 @@ jobs:
 
       - name: Verify production imports
         run: |
-          python -c "import flask, requests, cryptography, pypdf"
+          python -c "import flask, requests, cryptography, pypdf, sqlalchemy, alembic, psycopg"
 
       - name: Check repository hygiene
         run: python scripts/check_repository_hygiene.py
 
       - name: Compile Python files
-        run: python -m compileall -q app.py config.py services tests scripts
+        run: >-
+          python -m compileall -q
+          app.py config.py database.py models migrations services tests scripts
+
+      - name: Apply test database migrations
+        run: python scripts/manage_db.py upgrade
+
+      - name: Verify migration metadata
+        run: python -m alembic check
+
+      - name: Verify PostgreSQL migrations
+        env:
+          DATABASE_URL: ${{ env.POSTGRES_TEST_URL }}
+        run: |
+          python scripts/manage_db.py upgrade
+          python scripts/manage_db.py check
+          python -m alembic check
+
+      - name: Run PostgreSQL integration test
+        run: |
+          python -c "import os; assert os.environ.get('POSTGRES_TEST_URL'), 'POSTGRES_TEST_URL is required'"
+          python -m pytest tests/test_postgresql_integration.py -q
 
       - name: Run tests
-        run: python -m pytest
+        run: python -m pytest -ra

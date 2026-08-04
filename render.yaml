@@ -5,7 +5,14 @@ services:
     plan: free
     autoDeployTrigger: checksPass
     buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn app:app
+    # Render's pre-deploy command is unavailable on the free web plan. The
+    # migration therefore runs before Gunicorn starts. When the service moves
+    # to a paid plan or VPS, move this command into the dedicated pre-deploy
+    # phase/entrypoint.
+    startCommand: python scripts/manage_db.py upgrade && gunicorn app:app
+    healthCheckPath: /health
     envVars:
       - key: APP_ENV
         value: production
+      - key: DATABASE_URL
+        sync: false

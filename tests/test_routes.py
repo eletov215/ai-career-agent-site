@@ -117,3 +117,54 @@ def test_one_provider_failure_does_not_hide_another_provider_result(
     assert "Visible test vacancy" in body
     assert "Один из источников временно не смог выполнить поиск" in body
     assert "provider unavailable" not in body
+
+
+def test_sqlalchemy_account_storage_round_trip(app_module):
+    from flask import session
+
+    app_module.save_account(
+        {"id": 101, "name": "Test SuperJob", "email": "sj@example.test"},
+        {
+            "access_token": "superjob-access",
+            "refresh_token": "superjob-refresh",
+            "expires_in": 3600,
+        },
+    )
+    app_module.save_hh_account(
+        {
+            "id": "hh-101",
+            "first_name": "Test",
+            "last_name": "HH",
+            "email": "hh@example.test",
+        },
+        {
+            "access_token": "hh-access",
+            "refresh_token": "hh-refresh",
+            "expires_in": 3600,
+        },
+    )
+
+    # account() and hh_account() intentionally read Flask's request-local
+    # session, so the direct helper check must run inside a request context.
+    with app_module.app.test_request_context("/"):
+        session["superjob_user_id"] = 101
+        session["hh_user_id"] = "hh-101"
+
+        superjob = app_module.account()
+        headhunter = app_module.hh_account()
+
+    assert superjob["name"] == "Test SuperJob"
+    assert headhunter["first_name"] == "Test"
+    assert app_module.dec(superjob["access_token"]) == "superjob-access"
+    assert app_module.dec(headhunter["access_token"]) == "hh-access"
+
+
+def test_health_reports_migrated_database_without_connection_url(client):
+    response = client.get("/health")
+    payload = response.get_json()
+
+    assert response.status_code == 200
+    assert payload["database"]["ok"] is True
+    assert payload["database"]["backend"] == "sqlite"
+    assert payload["database"]["revision"] == "20260804_0001"
+    assert "sqlite:///" not in response.get_data(as_text=True)

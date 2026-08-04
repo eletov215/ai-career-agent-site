@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from config import ConfigurationError, load_settings
+from config import ConfigurationError, load_database_url, load_settings
 
 
 VALID_FERNET_KEY = "yPWPkxw3j4ZWDVBQ-i3kryGBFjd-5Bjg2tDjCNUMciw="
@@ -75,6 +75,8 @@ def test_production_defaults_preserve_current_runtime_behavior():
 
     assert settings.is_production is True
     assert settings.data_dir == Path("/tmp/ai-career-agent")
+    assert settings.database_url.startswith("sqlite:////tmp/ai-career-agent/app.db")
+    assert settings.database_url_explicit is False
     assert settings.vacancy_cache_ttl == 1800
     assert settings.vacancy_page_size == 60
     assert settings.trudvsem_sync_items == 300
@@ -134,3 +136,34 @@ def test_invalid_fernet_key_is_rejected_without_exposing_secret():
 
     assert "TOKEN_ENCRYPTION_KEY" in str(error.value)
     assert "not-a-fernet-key" not in str(error.value)
+
+
+def test_render_postgres_url_is_normalized_to_psycopg3():
+    settings = load_settings(
+        production_environment(
+            DATABASE_URL="postgresql://user:password@db.example.test/career"
+        )
+    )
+
+    assert settings.database_url.startswith("postgresql+psycopg://")
+    assert settings.database_url_explicit is True
+
+
+def test_database_url_loader_does_not_require_oauth_secrets(tmp_path):
+    database_url, explicit = load_database_url(
+        {"APP_ENV": "development", "DATA_DIR": str(tmp_path)}
+    )
+
+    assert database_url == f"sqlite:///{(tmp_path / 'app.db').resolve().as_posix()}"
+    assert explicit is False
+
+
+def test_unsupported_database_driver_is_rejected_without_echoing_credentials():
+    environment = production_environment(
+        DATABASE_URL="mysql://secret-user:secret-password@example.test/career"
+    )
+    with pytest.raises(ConfigurationError) as error:
+        load_settings(environment)
+
+    assert "DATABASE_URL" in str(error.value)
+    assert "secret-password" not in str(error.value)
