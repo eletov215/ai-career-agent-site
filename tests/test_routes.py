@@ -60,6 +60,14 @@ def test_debug_and_sync_endpoints_have_baseline_access_controls(client):
     assert client.post("/sync/trudvsem").status_code == 401
 
 
+def test_application_uses_explicit_test_configuration(app_module):
+    assert app_module.SETTINGS.is_test is True
+    assert app_module.app.config["APP_ENV"] == "test"
+    assert app_module.app.config["TESTING"] is True
+    assert app_module.SETTINGS.hh_app_token is None
+    assert app_module.SETTINGS.reed_api_key is None
+
+
 def test_background_worker_is_disabled_in_test_environment(app_module, client):
     assert app_module.TRUDVSEM_SYNC_ENABLED is False
     client.get("/")

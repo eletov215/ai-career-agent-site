@@ -1,5 +1,4 @@
 import json
-import os
 import secrets
 import socket
 import platform
@@ -25,25 +24,28 @@ from services.search_filters import VacancySearchFilters, canonical_currency
 from services.vacancy_presenter import present_vacancy
 from services.resume_parser import ResumeParseError, build_resume_preview, parse_resume_pdf
 from services.university_logo import find_university_logo
+from config import AppSettings, load_settings
+
+SETTINGS: AppSettings = load_settings()
 
 app = Flask(__name__)
-app.secret_key = os.environ["FLASK_SECRET_KEY"]
+app.config.from_mapping(SETTINGS.flask_mapping())
 
-CLIENT_ID = os.environ["SUPERJOB_CLIENT_ID"].strip()
-CLIENT_SECRET = os.environ["SUPERJOB_CLIENT_SECRET"].strip()
-REDIRECT_URI = os.environ["SUPERJOB_REDIRECT_URI"].strip()
-HH_CLIENT_ID = os.environ["HH_CLIENT_ID"].strip()
-HH_CLIENT_SECRET = os.environ["HH_CLIENT_SECRET"].strip()
-HH_REDIRECT_URI = os.environ["HH_REDIRECT_URI"].strip()
-HH_USER_AGENT = os.environ["HH_USER_AGENT"].strip()
-HH_APP_TOKEN = os.environ.get("HH_APP_TOKEN", "").strip() or None
-REED_API_KEY = os.environ.get("REED_API_KEY", "").strip() or None
+CLIENT_ID = SETTINGS.superjob_client_id
+CLIENT_SECRET = SETTINGS.superjob_client_secret
+REDIRECT_URI = SETTINGS.superjob_redirect_uri
+HH_CLIENT_ID = SETTINGS.hh_client_id
+HH_CLIENT_SECRET = SETTINGS.hh_client_secret
+HH_REDIRECT_URI = SETTINGS.hh_redirect_uri
+HH_USER_AGENT = SETTINGS.hh_user_agent
+HH_APP_TOKEN = SETTINGS.hh_app_token
+REED_API_KEY = SETTINGS.reed_api_key
 
 HH_AUTHORIZE_URL = "https://hh.ru/oauth/authorize"
 HH_TOKEN_URL = "https://api.hh.ru/token"
 HH_ME_URL = "https://api.hh.ru/me"
 HH_VACANCIES_URL = "https://api.hh.ru/vacancies"
-FERNET = Fernet(os.environ["TOKEN_ENCRYPTION_KEY"].strip().encode())
+FERNET = Fernet(SETTINGS.token_encryption_key.encode("ascii"))
 
 AUTHORIZE_URL = "https://www.superjob.ru/authorize/"
 TOKEN_URL = "https://api.superjob.ru/2.0/oauth2/access_token/"
@@ -52,21 +54,24 @@ CURRENT_USER_URL = "https://api.superjob.ru/2.0/user/current/"
 USER_CVS_URL = "https://api.superjob.ru/2.0/user_cvs/"
 VACANCIES_URL = "https://api.superjob.ru/2.0/vacancies/"
 
-DATA_DIR = Path(os.environ.get("DATA_DIR", "/tmp/ai-career-agent"))
+DATA_DIR = SETTINGS.data_dir
 DATA_DIR.mkdir(parents=True, exist_ok=True)
 DB_PATH = DATA_DIR / "app.db"
-VACANCY_CACHE_TTL = int(os.environ.get("VACANCY_CACHE_TTL", "1800"))
-VACANCY_PAGE_SIZE = 60
-TRUDVSEM_SYNC_INTERVAL = int(os.environ.get("TRUDVSEM_SYNC_INTERVAL", "1800"))
-TRUDVSEM_SYNC_ITEMS = int(os.environ.get("TRUDVSEM_SYNC_ITEMS", "300"))
-TRUDVSEM_SYNC_BATCH = int(os.environ.get("TRUDVSEM_SYNC_BATCH", "10"))
-TRUDVSEM_REQUEST_ATTEMPTS = int(os.environ.get("TRUDVSEM_REQUEST_ATTEMPTS", "5"))
-TRUDVSEM_RETRY_BACKOFF = float(os.environ.get("TRUDVSEM_RETRY_BACKOFF", "1"))
-TRUDVSEM_SYNC_ENABLED = os.environ.get("TRUDVSEM_SYNC_ENABLED", "1").strip().lower() not in {"0", "false", "no"}
+VACANCY_CACHE_TTL = SETTINGS.vacancy_cache_ttl
+VACANCY_PAGE_SIZE = SETTINGS.vacancy_page_size
+TRUDVSEM_SYNC_INTERVAL = SETTINGS.trudvsem_sync_interval
+TRUDVSEM_SYNC_ITEMS = SETTINGS.trudvsem_sync_items
+TRUDVSEM_SYNC_BATCH = SETTINGS.trudvsem_sync_batch
+TRUDVSEM_REQUEST_ATTEMPTS = SETTINGS.trudvsem_request_attempts
+TRUDVSEM_RETRY_BACKOFF = SETTINGS.trudvsem_retry_backoff
+TRUDVSEM_SYNC_ENABLED = SETTINGS.trudvsem_sync_enabled
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
-DEBUG_HH = os.environ.get("DEBUG_HH", "0").strip().lower() in {"1", "true", "yes", "on"}
-MAX_RESUME_UPLOAD_MB = max(1, min(int(os.environ.get("MAX_RESUME_UPLOAD_MB", "8")), 25))
+DEBUG_HH = SETTINGS.debug_hh
+HH_CURRENCY_SCAN_PAGES = SETTINGS.hh_currency_scan_pages
+MAX_RESUME_UPLOAD_MB = SETTINGS.max_resume_upload_mb
+RENDER_REGION = SETTINGS.render_region
+SYNC_SECRET = SETTINGS.sync_secret
 
 
 def db():
@@ -913,6 +918,8 @@ def vacancies():
             HH_VACANCIES_URL,
             hh_headers,
             (lambda: HH_APP_TOKEN) if HH_APP_TOKEN else None,
+            debug=DEBUG_HH,
+            currency_scan_pages=HH_CURRENCY_SCAN_PAGES,
         )
     }
     if REED_API_KEY:
@@ -1119,7 +1126,7 @@ def debug_trudvsem():
     report = {
         "service": "Работа России",
         "api_url": api_url,
-        "render_region": os.environ.get("RENDER_REGION") or "unknown",
+        "render_region": RENDER_REGION,
         "timestamp_unix": int(time.time()),
     }
 
@@ -1217,7 +1224,7 @@ def trudvsem_status():
 
 @app.post("/sync/trudvsem")
 def sync_trudvsem():
-    configured_secret = os.environ.get("SYNC_SECRET", "").strip()
+    configured_secret = SYNC_SECRET or ""
     supplied_secret = request.headers.get("X-Sync-Secret", "").strip()
     if not configured_secret or not secrets.compare_digest(configured_secret, supplied_secret):
         return {"ok": False, "error": "unauthorized"}, 401
@@ -1268,7 +1275,7 @@ def debug_hh():
         "params": params,
         "environment": {
             "debug_hh": DEBUG_HH,
-            "render_region": os.environ.get("RENDER_REGION") or "unknown",
+            "render_region": RENDER_REGION,
             "python": platform.python_version(),
             "requests": requests.__version__,
             "hh_client_id_configured": bool(HH_CLIENT_ID),
@@ -1333,4 +1340,4 @@ def health():
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", "10000")))
+    app.run(host="0.0.0.0", port=SETTINGS.port, debug=SETTINGS.flask_debug)

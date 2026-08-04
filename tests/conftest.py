@@ -8,30 +8,38 @@ from pathlib import Path
 
 import pytest
 import requests
-from cryptography.fernet import Fernet
 
 
 _TEST_DATA_DIR = Path(tempfile.mkdtemp(prefix="ai-career-agent-tests-"))
 
-# app.py reads these values during import. They are intentionally fake and are
-# defined before any test imports the application module.
-os.environ.setdefault("FLASK_SECRET_KEY", "test-only-flask-secret")
-os.environ.setdefault("SUPERJOB_CLIENT_ID", "test-superjob-client")
-os.environ.setdefault("SUPERJOB_CLIENT_SECRET", "test-superjob-secret")
-os.environ.setdefault("SUPERJOB_REDIRECT_URI", "http://localhost/oauth/superjob/callback")
-os.environ.setdefault("HH_CLIENT_ID", "test-hh-client")
-os.environ.setdefault("HH_CLIENT_SECRET", "test-hh-secret")
-os.environ.setdefault("HH_REDIRECT_URI", "http://localhost/oauth/hh/callback")
-os.environ.setdefault("HH_USER_AGENT", "AI-Career-Agent-Test/1.0 (tests@example.invalid)")
-os.environ.setdefault("TOKEN_ENCRYPTION_KEY", Fernet.generate_key().decode("ascii"))
-os.environ.setdefault("HH_APP_TOKEN", "test-hh-app-token")
-os.environ.setdefault("REED_API_KEY", "test-reed-key")
-os.environ.setdefault("SYNC_SECRET", "test-sync-secret")
-os.environ.setdefault("DATA_DIR", str(_TEST_DATA_DIR))
-os.environ.setdefault("TRUDVSEM_SYNC_ENABLED", "0")
-os.environ.setdefault("TRUDVSEM_REQUEST_ATTEMPTS", "1")
-os.environ.setdefault("TRUDVSEM_RETRY_BACKOFF", "0.1")
-os.environ.setdefault("DEBUG_HH", "0")
+# The configuration layer provides deterministic placeholder credentials only
+# in APP_ENV=test. The suite therefore never needs real OAuth or encryption
+# secrets. DATA_DIR remains unique per test session and background sync is
+# explicitly disabled before app.py is imported.
+os.environ["APP_ENV"] = "test"
+os.environ["DATA_DIR"] = str(_TEST_DATA_DIR)
+os.environ["TRUDVSEM_SYNC_ENABLED"] = "0"
+os.environ["TRUDVSEM_REQUEST_ATTEMPTS"] = "1"
+os.environ["TRUDVSEM_RETRY_BACKOFF"] = "0.1"
+os.environ["DEBUG_HH"] = "0"
+
+# Remove accidental developer or CI credentials so the route tests prove that
+# test mode is self-contained.
+for variable in (
+    "FLASK_SECRET_KEY",
+    "TOKEN_ENCRYPTION_KEY",
+    "SUPERJOB_CLIENT_ID",
+    "SUPERJOB_CLIENT_SECRET",
+    "SUPERJOB_REDIRECT_URI",
+    "HH_CLIENT_ID",
+    "HH_CLIENT_SECRET",
+    "HH_REDIRECT_URI",
+    "HH_USER_AGENT",
+    "HH_APP_TOKEN",
+    "REED_API_KEY",
+    "SYNC_SECRET",
+):
+    os.environ.pop(variable, None)
 
 
 @pytest.fixture(autouse=True)
