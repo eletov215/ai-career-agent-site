@@ -6,3 +6,6 @@ services:
     autoDeployTrigger: checksPass
     buildCommand: pip install -r requirements.txt
     startCommand: gunicorn app:app
+    envVars:
+      - key: APP_ENV
+        value: production

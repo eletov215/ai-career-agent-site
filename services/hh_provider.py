@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import logging
-import os
 from typing import Callable
 
 import requests
@@ -10,7 +9,6 @@ from .base_provider import SearchResult, VacancyProvider
 from .search_filters import VacancySearchFilters, canonical_currency
 
 logger = logging.getLogger(__name__)
-DEBUG_HH = os.environ.get("DEBUG_HH", "0").strip().lower() in {"1", "true", "yes", "on"}
 
 
 def _safe_headers(headers: dict | None) -> dict:
@@ -34,12 +32,17 @@ class HeadHunterProvider(VacancyProvider):
         token_factory: Callable[[], str] | None = None,
         per_page: int = 20,
         timeout: int = 15,
+        *,
+        debug: bool = False,
+        currency_scan_pages: int = 20,
     ):
         self.api_url = api_url
         self.header_factory = header_factory
         self.token_factory = token_factory
         self.per_page = per_page
         self.timeout = timeout
+        self.debug = bool(debug)
+        self.currency_scan_pages = max(1, min(int(currency_scan_pages), 20))
 
     @staticmethod
     def _normalize(raw: dict) -> dict:
@@ -82,7 +85,7 @@ class HeadHunterProvider(VacancyProvider):
 
     def _request(self, params: dict, token: str | None, attempt: str) -> requests.Response:
         headers = self.header_factory(token)
-        if DEBUG_HH:
+        if self.debug:
             logger.info(
                 "HH REQUEST attempt=%s method=GET endpoint=%s params=%s headers=%s",
                 attempt,
@@ -98,7 +101,7 @@ class HeadHunterProvider(VacancyProvider):
             timeout=self.timeout,
         )
 
-        if DEBUG_HH:
+        if self.debug:
             logger.info(
                 "HH RESPONSE attempt=%s status=%s url=%s request_headers=%s response_headers=%s body=%s",
                 attempt,
@@ -204,7 +207,7 @@ class HeadHunterProvider(VacancyProvider):
                 matched_items: list[dict] = []
                 api_page = 0
                 api_pages = 1
-                max_scan_pages = max(1, min(int(os.environ.get("HH_CURRENCY_SCAN_PAGES", "20")), 20))
+                max_scan_pages = self.currency_scan_pages
 
                 while api_page < api_pages and api_page < max_scan_pages and len(matched_items) <= logical_limit:
                     scan_params = dict(params)
