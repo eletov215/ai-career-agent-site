@@ -37,6 +37,10 @@ def test_test_environment_requires_no_real_secrets():
     assert settings.hh_user_agent.endswith("tests@example.invalid)")
     assert settings.trudvsem_sync_enabled is False
     assert settings.flask_mapping()["TESTING"] is True
+    assert settings.diagnostics_secret == "test-diagnostics-secret"
+    assert settings.session_cookie_secure is False
+    assert settings.csrf_enabled is True
+    assert settings.rate_limit_enabled is True
 
 
 def test_production_reports_all_missing_required_variables():
@@ -82,7 +86,21 @@ def test_production_defaults_preserve_current_runtime_behavior():
     assert settings.trudvsem_sync_items == 300
     assert settings.trudvsem_sync_batch == 10
     assert settings.max_resume_upload_mb == 8
+    assert settings.max_resume_pages == 30
+    assert settings.max_resume_text_characters == 200_000
     assert settings.hh_currency_scan_pages == 20
+    assert settings.session_cookie_secure is True
+    assert settings.session_cookie_samesite == "Lax"
+    assert settings.csrf_enabled is True
+    assert settings.rate_limit_enabled is True
+    assert settings.security_headers_enabled is True
+    assert settings.rate_limit_storage_uri == "memory://"
+    assert "example.test" in settings.trusted_hosts
+    mapping = settings.flask_mapping()
+    assert mapping["SESSION_COOKIE_HTTPONLY"] is True
+    assert mapping["SESSION_COOKIE_SECURE"] is True
+    assert mapping["SESSION_COOKIE_SAMESITE"] == "Lax"
+    assert mapping["MAX_CONTENT_LENGTH"] == 9 * 1024 * 1024
     assert settings.port == 10000
     assert settings.flask_debug is False
 
@@ -96,6 +114,12 @@ def test_numeric_and_boolean_values_are_validated_centrally(tmp_path):
             TRUDVSEM_RETRY_BACKOFF="0.25",
             HH_CURRENCY_SCAN_PAGES="7",
             MAX_RESUME_UPLOAD_MB="12",
+            MAX_RESUME_PAGES="45",
+            MAX_RESUME_TEXT_CHARACTERS="300000",
+            SESSION_LIFETIME_SECONDS="3600",
+            CSRF_TIME_LIMIT_SECONDS="1800",
+            MAX_FORM_MEMORY_SIZE="131072",
+            MAX_FORM_PARTS="20",
             PORT="11000",
         )
     )
@@ -106,6 +130,12 @@ def test_numeric_and_boolean_values_are_validated_centrally(tmp_path):
     assert settings.trudvsem_retry_backoff == 0.25
     assert settings.hh_currency_scan_pages == 7
     assert settings.max_resume_upload_mb == 12
+    assert settings.max_resume_pages == 45
+    assert settings.max_resume_text_characters == 300_000
+    assert settings.session_lifetime_seconds == 3600
+    assert settings.csrf_time_limit_seconds == 1800
+    assert settings.max_form_memory_size == 131_072
+    assert settings.max_form_parts == 20
     assert settings.port == 11000
 
 
@@ -115,6 +145,9 @@ def test_numeric_and_boolean_values_are_validated_centrally(tmp_path):
         ("TRUDVSEM_SYNC_ENABLED", "sometimes", "true/false"),
         ("VACANCY_PAGE_SIZE", "many", "целое число"),
         ("MAX_RESUME_UPLOAD_MB", "26", "не может быть больше 25"),
+        ("MAX_RESUME_PAGES", "101", "не может быть больше 100"),
+        ("SESSION_COOKIE_SAMESITE", "None", "Разрешены"),
+        ("SESSION_LIFETIME_SECONDS", "60", "не может быть меньше 900"),
         ("PORT", "0", "не может быть меньше 1"),
     ],
 )
@@ -167,3 +200,73 @@ def test_unsupported_database_driver_is_rejected_without_echoing_credentials():
 
     assert "DATABASE_URL" in str(error.value)
     assert "secret-password" not in str(error.value)
+
+
+@pytest.mark.parametrize(
+    "setting",
+    [
+        "SESSION_COOKIE_SECURE",
+        "CSRF_ENABLED",
+        "RATE_LIMIT_ENABLED",
+        "SECURITY_HEADERS_ENABLED",
+    ],
+)
+def test_production_rejects_disabled_security_controls(setting):
+    with pytest.raises(ConfigurationError, match=setting):
+        load_settings(production_environment(**{setting: "0"}))
+
+
+def test_production_requires_lax_same_site_for_oauth_callbacks():
+    with pytest.raises(ConfigurationError, match="SESSION_COOKIE_SAMESITE=Lax"):
+        load_settings(
+            production_environment(SESSION_COOKIE_SAMESITE="Strict")
+        )
+
+
+def test_diagnostics_require_a_separate_secret_when_enabled():
+    with pytest.raises(ConfigurationError, match="DIAGNOSTICS_SECRET"):
+        load_settings(
+            production_environment(
+                DEBUG_DIAGNOSTICS="1",
+                DIAGNOSTICS_SECRET="",
+            )
+        )
+
+
+@pytest.mark.parametrize(
+    ("name", "value", "expected"),
+    [
+        (
+            "HH_REDIRECT_URI",
+            "http://example.test/oauth/hh/callback",
+            "production должен использовать HTTPS",
+        ),
+        (
+            "SUPERJOB_REDIRECT_URI",
+            "https://user:password@example.test/oauth/superjob/callback",
+            "без credentials",
+        ),
+        (
+            "HH_REDIRECT_URI",
+            "https://example.test/oauth/hh/callback#token",
+            "без credentials и fragment",
+        ),
+    ],
+)
+def test_production_rejects_insecure_oauth_redirect_uris(name, value, expected):
+    with pytest.raises(ConfigurationError, match=expected):
+        load_settings(production_environment(**{name: value}))
+
+
+def test_explicit_trusted_hosts_are_combined_with_oauth_hosts():
+    settings = load_settings(
+        production_environment(
+            TRUSTED_HOSTS="ai-career.example,app.ai-career.example"
+        )
+    )
+
+    assert settings.trusted_hosts == (
+        "ai-career.example",
+        "app.ai-career.example",
+        "example.test",
+    )

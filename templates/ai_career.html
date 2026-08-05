@@ -24,6 +24,7 @@
         {% if upload_error %}<div class="error-box spaced">{{ upload_error }}</div>{% endif %}
 
         <form method="post" enctype="multipart/form-data" class="resume-upload-form" id="resumeUploadForm">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <div class="resume-upload-dynamic" id="resumeUploadDynamic">
           <label class="resume-dropzone" id="resumeDropzone" data-max-bytes="{{ max_resume_upload_mb * 1024 * 1024 }}">
             <input id="resumeFileInput" type="file" name="resume" accept="application/pdf,.pdf" required>
@@ -188,7 +189,7 @@
 {% endblock %}
 
 {% block scripts %}
-<script>
+<script nonce="{{ csp_nonce }}">
 (() => {
   const form = document.getElementById('resumeUploadForm');
   const input = document.getElementById('resumeFileInput');
@@ -216,7 +217,7 @@
   const showError = (message) => { inlineError.textContent = message; inlineError.hidden = false; };
   const clearError = () => { inlineError.hidden = true; inlineError.textContent = ''; };
   const resetSelection = () => { if (previewRequest) previewRequest.abort(); emptyState.hidden = false; fileState.hidden = true; progressWrap.hidden = true; submitButton.disabled = true; fileActions.hidden = true; clearError(); dropzone.classList.remove('has-file','is-loading','is-dragover','is-ready'); };
-  const requestPreview = (file) => { const data = new FormData(); data.append('resume', file); previewRequest = new XMLHttpRequest(); previewRequest.open('POST', '{{ url_for("resume_preview_api") }}'); previewRequest.upload.addEventListener('progress', (event) => { if (event.lengthComputable) setProgress((event.loaded / event.total) * 100, 'Анализируем PDF'); }); previewRequest.addEventListener('load', () => { let payload = {}; try { payload = JSON.parse(previewRequest.responseText || '{}'); } catch (_) {} if (previewRequest.status >= 200 && previewRequest.status < 300 && payload.ok) { readyText.textContent = 'Файл готов к анализу'; fileActions.hidden = false; submitButton.disabled = false; dropzone.classList.remove('is-loading'); dropzone.classList.add('is-ready'); hideProgress(); } else { input.value = ''; resetSelection(); showError(payload.error || 'Не удалось прочитать PDF.'); } }); previewRequest.addEventListener('error', () => { input.value = ''; resetSelection(); showError('Ошибка сети при анализе PDF.'); }); previewRequest.send(data); };
+  const requestPreview = (file) => { const data = new FormData(); data.append('resume', file); previewRequest = new XMLHttpRequest(); previewRequest.open('POST', '{{ url_for("resume_preview_api") }}'); previewRequest.setRequestHeader('X-CSRF-Token', document.querySelector('meta[name="csrf-token"]').content); previewRequest.upload.addEventListener('progress', (event) => { if (event.lengthComputable) setProgress((event.loaded / event.total) * 100, 'Анализируем PDF'); }); previewRequest.addEventListener('load', () => { let payload = {}; try { payload = JSON.parse(previewRequest.responseText || '{}'); } catch (_) {} if (previewRequest.status >= 200 && previewRequest.status < 300 && payload.ok) { readyText.textContent = 'Файл готов к анализу'; fileActions.hidden = false; submitButton.disabled = false; dropzone.classList.remove('is-loading'); dropzone.classList.add('is-ready'); hideProgress(); } else { input.value = ''; resetSelection(); showError(payload.error || 'Не удалось прочитать PDF.'); } }); previewRequest.addEventListener('error', () => { input.value = ''; resetSelection(); showError('Ошибка сети при анализе PDF.'); }); previewRequest.send(data); };
   const showSelectedFile = (file) => { if (!file) return resetSelection(); clearError(); const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf'); if (!isPdf) { input.value = ''; resetSelection(); showError('Выберите файл в формате PDF.'); return; } if (maxBytes && file.size > maxBytes) { input.value = ''; resetSelection(); showError('Размер PDF превышает допустимый лимит.'); return; } emptyState.hidden = true; fileState.hidden = false; readyText.textContent = 'Подготовка файла…'; fileName.textContent = file.name; fileMeta.textContent = formatBytes(file.size); submitButton.disabled = true; fileActions.hidden = true; dropzone.classList.add('has-file','is-loading'); setProgress(4, 'Подготовка PDF'); requestPreview(file); };
   input.addEventListener('change', () => showSelectedFile(input.files[0]));
   replaceButton.addEventListener('click', (event) => { event.preventDefault(); event.stopPropagation(); input.click(); });

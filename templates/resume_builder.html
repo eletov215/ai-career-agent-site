@@ -204,9 +204,9 @@
 </div>
 {% endblock %}
 {% block scripts %}
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script>
+<script nonce="{{ csp_nonce }}" src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script nonce="{{ csp_nonce }}" src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script nonce="{{ csp_nonce }}">
 (() => {
   const questions = [
     {key:'name', text:'Привет! Я помогу создать профессиональное резюме. Для начала, как вас зовут?', placeholder:'Например: Иван Петров'},
@@ -311,7 +311,10 @@
     try {
       const response = await fetch('/api/university/logo', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json'},
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content
+        },
         body: JSON.stringify({name: query})
       });
       const result = await response.json().catch(() => ({}));

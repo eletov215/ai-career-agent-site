@@ -12,6 +12,7 @@ from urllib.parse import urlencode
 import requests
 from cryptography.fernet import Fernet, InvalidToken
 from flask import Flask, jsonify, redirect, render_template, request, session, url_for
+from werkzeug.utils import secure_filename
 from datetime import datetime, timezone
 
 
@@ -26,11 +27,13 @@ from services.university_logo import find_university_logo
 from config import AppSettings, load_settings
 from database import create_database, database_health
 from services.storage import StorageServices
+from security import csrf, diagnostics_access_allowed, init_security, limiter
 
 SETTINGS: AppSettings = load_settings()
 
 app = Flask(__name__)
 app.config.from_mapping(SETTINGS.flask_mapping())
+init_security(app, SETTINGS)
 
 CLIENT_ID = SETTINGS.superjob_client_id
 CLIENT_SECRET = SETTINGS.superjob_client_secret
@@ -71,8 +74,11 @@ logger.setLevel(logging.INFO)
 DEBUG_HH = SETTINGS.debug_hh
 HH_CURRENCY_SCAN_PAGES = SETTINGS.hh_currency_scan_pages
 MAX_RESUME_UPLOAD_MB = SETTINGS.max_resume_upload_mb
+MAX_RESUME_PAGES = SETTINGS.max_resume_pages
 RENDER_REGION = SETTINGS.render_region
 SYNC_SECRET = SETTINGS.sync_secret
+
+OAUTH_STATE_TTL_SECONDS = 10 * 60
 
 
 STORAGE = StorageServices.from_database(DATABASE)
@@ -348,6 +354,8 @@ def start_trudvsem_sync_worker():
         "Trudvsem sync thread launched alive=%s",
         TRUDVSEM_SYNC_THREAD.is_alive(),
     )
+
+
 @app.before_request
 def start_background_workers():
     global TRUDVSEM_SYNC_THREAD
@@ -355,6 +363,62 @@ def start_background_workers():
     if TRUDVSEM_SYNC_ENABLED and TRUDVSEM_SYNC_THREAD is None:
         logger.info("Starting background worker from request")
         start_trudvsem_sync_worker()
+
+
+def _remember_oauth_state(prefix: str) -> str:
+    state = secrets.token_urlsafe(32)
+    session[f"{prefix}_oauth_state"] = state
+    session[f"{prefix}_oauth_state_issued_at"] = int(time.time())
+    return state
+
+
+def _consume_oauth_state(prefix: str, received_state: str | None) -> bool:
+    expected_state = session.pop(f"{prefix}_oauth_state", None)
+    issued_at = session.pop(f"{prefix}_oauth_state_issued_at", None)
+    if not expected_state or not received_state or issued_at is None:
+        return False
+    try:
+        age = int(time.time()) - int(issued_at)
+    except (TypeError, ValueError):
+        return False
+    if age < 0 or age > OAUTH_STATE_TTL_SECONDS:
+        return False
+    return secrets.compare_digest(str(expected_state), str(received_state))
+
+
+def _establish_authenticated_session(**identities):
+    """Clear transient session data while preserving connected providers."""
+
+    connected = {
+        "superjob_user_id": session.get("superjob_user_id"),
+        "hh_user_id": session.get("hh_user_id"),
+    }
+    connected.update({key: value for key, value in identities.items() if value is not None})
+    session.clear()
+    for key, value in connected.items():
+        if value is not None:
+            session[key] = value
+    session.permanent = True
+
+
+def _public_trudvsem_status_payload() -> dict:
+    state = trudvsem_sync_status()
+    return {
+        "source": "trudvsem",
+        "available": True,
+        "running": bool(state.get("running")),
+        "queued": bool(state.get("queued") or TRUDVSEM_SYNC_EVENT.is_set()),
+        "progress_percent": max(0, min(int(state.get("progress_percent") or 0), 100)),
+        "cached_total": VACANCY_STORE.count(keyword="", sources=["trudvsem"]),
+        "cache_age_seconds": VACANCY_STORE.source_age_seconds("trudvsem"),
+    }
+
+def _safe_upload_filename(filename: str) -> str:
+    """Return a filesystem-safe display name without trusting client paths."""
+
+    candidate = secure_filename(Path(filename or "").name)
+    return candidate or "resume.pdf"
+
 
 def enc(value):
     return FERNET.encrypt(value.encode()).decode() if value else None
@@ -406,15 +470,47 @@ def valid_token(row):
         refresh_token = dec(row["refresh_token"])
         if not refresh_token:
             raise RuntimeError("Refresh token отсутствует. Подключите SuperJob заново.")
-        response = requests.get(REFRESH_URL, params={
-            "refresh_token": refresh_token,
-            "client_id": CLIENT_ID,
-            "client_secret": CLIENT_SECRET,
-        }, headers={"X-Api-App-Id": CLIENT_SECRET}, timeout=30)
-        response.raise_for_status()
-        token_data = response.json()
+        try:
+            response = requests.get(
+                REFRESH_URL,
+                params={
+                    "refresh_token": refresh_token,
+                    "client_id": CLIENT_ID,
+                    "client_secret": CLIENT_SECRET,
+                },
+                headers={"X-Api-App-Id": CLIENT_SECRET},
+                timeout=30,
+            )
+        except requests.RequestException as exc:
+            logger.warning(
+                "SuperJob token refresh request failed type=%s",
+                type(exc).__name__,
+            )
+            raise RuntimeError(
+                "Не удалось обновить подключение SuperJob. Подключите площадку заново."
+            ) from None
+        if not response.ok:
+            logger.warning(
+                "SuperJob token refresh failed status=%s",
+                response.status_code,
+            )
+            raise RuntimeError(
+                "Не удалось обновить подключение SuperJob. Подключите площадку заново."
+            )
+        try:
+            token_data = response.json()
+        except ValueError as exc:
+            raise RuntimeError(
+                "SuperJob вернул некорректный ответ при обновлении подключения."
+            ) from exc
+        access_token = token_data.get("access_token")
+        if not access_token:
+            raise RuntimeError(
+                "SuperJob не вернул новый токен. Подключите площадку заново."
+            )
+        token_data.setdefault("refresh_token", refresh_token)
         save_account(json.loads(row["profile_json"]), token_data)
-        return token_data["access_token"]
+        return access_token
     return dec(row["access_token"])
 
 
@@ -455,14 +551,30 @@ def _masked_hh_headers(headers):
 
 
 def _hh_response_report(response):
-    """Build a JSON-safe diagnostic report without exposing OAuth secrets."""
+    """Build a bounded diagnostic report without tokens or arbitrary bodies."""
+
+    safe_response_headers = {}
+    for name in ("Content-Type", "Server", "X-Request-Id", "Request-Id"):
+        value = response.headers.get(name)
+        if value:
+            safe_response_headers[name] = value
+
+    error_types = []
+    try:
+        payload = response.json()
+    except ValueError:
+        payload = None
+    if isinstance(payload, dict):
+        for item in payload.get("errors", []):
+            if isinstance(item, dict) and item.get("type"):
+                error_types.append(str(item["type"])[:80])
+
     return {
         "status_code": response.status_code,
         "ok": response.ok,
-        "url": response.url,
         "request_headers": _masked_hh_headers(response.request.headers),
-        "response_headers": dict(response.headers),
-        "body_preview": response.text[:2000],
+        "response_headers": safe_response_headers,
+        "error_types": error_types[:10],
     }
 
 
@@ -498,23 +610,47 @@ def valid_hh_token(row):
     if not refresh_token:
         raise RuntimeError("Refresh token HH отсутствует. Подключите HeadHunter заново.")
 
-    response = requests.post(
-        HH_TOKEN_URL,
-        data={
-            "grant_type": "refresh_token",
-            "refresh_token": refresh_token,
-            "client_id": HH_CLIENT_ID,
-            "client_secret": HH_CLIENT_SECRET,
-        },
-        headers=hh_headers(),
-        timeout=30,
-    )
-    response.raise_for_status()
-    token_data = response.json()
+    try:
+        response = requests.post(
+            HH_TOKEN_URL,
+            data={
+                "grant_type": "refresh_token",
+                "refresh_token": refresh_token,
+                "client_id": HH_CLIENT_ID,
+                "client_secret": HH_CLIENT_SECRET,
+            },
+            headers=hh_headers(),
+            timeout=30,
+        )
+    except requests.RequestException as exc:
+        logger.warning(
+            "HeadHunter token refresh request failed type=%s",
+            type(exc).__name__,
+        )
+        raise RuntimeError(
+            "Не удалось обновить подключение HeadHunter. Подключите площадку заново."
+        ) from None
+    if not response.ok:
+        logger.warning("HeadHunter token refresh failed status=%s", response.status_code)
+        raise RuntimeError(
+            "Не удалось обновить подключение HeadHunter. Подключите площадку заново."
+        )
+    try:
+        token_data = response.json()
+    except ValueError as exc:
+        raise RuntimeError(
+            "HeadHunter вернул некорректный ответ при обновлении подключения."
+        ) from exc
+    access_token = token_data.get("access_token")
+    if not access_token:
+        raise RuntimeError(
+            "HeadHunter не вернул новый токен. Подключите площадку заново."
+        )
+    token_data.setdefault("refresh_token", refresh_token)
 
     profile = json.loads(row["profile_json"])
     save_hh_account(profile, token_data)
-    return token_data["access_token"]
+    return access_token
 
 
 @app.get("/")
@@ -532,9 +668,9 @@ def privacy():
 
 
 @app.get("/oauth/superjob/login")
+@limiter.limit("20 per 10 minutes")
 def login():
-    state = secrets.token_urlsafe(32)
-    session["oauth_state"] = state
+    state = _remember_oauth_state("superjob")
     params = {
         "client_id": CLIENT_ID,
         "redirect_uri": REDIRECT_URI,
@@ -544,28 +680,25 @@ def login():
 
 
 @app.get("/oauth/superjob/callback")
+@limiter.limit("60 per 10 minutes")
 def callback():
-    if request.args.get("error"):
-        return render_template(
-            "message.html",
-            success=False,
-            title="Авторизация отклонена",
-            message=request.args["error"],
-        ), 400
-
-    expected_state = session.pop("oauth_state", None)
+    # Validate and consume state before processing any provider-controlled
+    # response fields, including cancellation/error callbacks.
     received_state = request.args.get("state")
-
-    if (
-        not expected_state
-        or not received_state
-        or not secrets.compare_digest(expected_state, received_state)
-    ):
+    if not _consume_oauth_state("superjob", received_state):
         return render_template(
             "message.html",
             success=False,
             title="Ошибка безопасности",
             message="Начните подключение заново.",
+        ), 400
+
+    if request.args.get("error"):
+        return render_template(
+            "message.html",
+            success=False,
+            title="Авторизация отклонена",
+            message="Подключение SuperJob было отменено. Попробуйте начать его заново.",
         ), 400
 
     code = request.args.get("code")
@@ -601,23 +734,24 @@ def callback():
         profile_response.raise_for_status()
         profile = profile_response.json()
 
-    except (requests.RequestException, ValueError, KeyError) as exc:
+    except (requests.RequestException, ValueError, KeyError):
+        logger.exception("SuperJob OAuth callback failed")
         return render_template(
             "message.html",
             success=False,
             title="Ошибка подключения",
-            message=str(exc),
+            message="Не удалось завершить подключение SuperJob. Повторите попытку позже.",
         ), 502
 
     save_account(profile, token_data)
-    session["superjob_user_id"] = int(profile["id"])
+    _establish_authenticated_session(superjob_user_id=int(profile["id"]))
 
     return redirect(url_for("dashboard"))
 
 @app.get("/oauth/hh/login")
+@limiter.limit("20 per 10 minutes")
 def hh_login():
-    state = secrets.token_urlsafe(32)
-    session["hh_oauth_state"] = state
+    state = _remember_oauth_state("hh")
 
     params = {
         "response_type": "code",
@@ -630,30 +764,24 @@ def hh_login():
 
 
 @app.get("/oauth/hh/callback")
+@limiter.limit("60 per 10 minutes")
 def hh_callback():
-    error = request.args.get("error")
-
-    if error:
-        return render_template(
-            "message.html",
-            success=False,
-            title="Авторизация HH отклонена",
-            message=error,
-        ), 400
-
-    expected_state = session.pop("hh_oauth_state", None)
+    # Validate and consume state for success and error responses alike.
     received_state = request.args.get("state")
-
-    if (
-        not expected_state
-        or not received_state
-        or not secrets.compare_digest(expected_state, received_state)
-    ):
+    if not _consume_oauth_state("hh", received_state):
         return render_template(
             "message.html",
             success=False,
             title="Ошибка безопасности",
             message="Некорректный OAuth state. Начните подключение HH заново.",
+        ), 400
+
+    if request.args.get("error"):
+        return render_template(
+            "message.html",
+            success=False,
+            title="Авторизация HH отклонена",
+            message="Подключение HeadHunter было отменено. Попробуйте начать его заново.",
         ), 400
 
     code = request.args.get("code")
@@ -697,44 +825,40 @@ def hh_callback():
         profile_response.raise_for_status()
         profile = profile_response.json()
 
-    except requests.RequestException as exc:
-        response_text = ""
-
-        if exc.response is not None:
-            response_text = exc.response.text[:1000]
-
-        message = f"{exc}"
-
-        if response_text:
-            message += f"\n\nОтвет HH: {response_text}"
-
+    except requests.RequestException:
+        logger.exception("HeadHunter OAuth callback request failed")
         return render_template(
             "message.html",
             success=False,
             title="Ошибка подключения HH",
-            message=message,
+            message="Не удалось завершить подключение HeadHunter. Повторите попытку позже.",
         ), 502
 
-    except (ValueError, KeyError) as exc:
+    except (ValueError, KeyError):
+        logger.exception("HeadHunter OAuth callback returned an invalid payload")
         return render_template(
             "message.html",
             success=False,
             title="Некорректный ответ HH",
-            message=str(exc),
+            message="HeadHunter вернул неожиданный ответ. Повторите подключение позже.",
         ), 502
 
     save_hh_account(profile, token_data)
 
-    session["hh_user_id"] = str(profile["id"])
+    _establish_authenticated_session(hh_user_id=str(profile["id"]))
 
     return redirect(url_for("dashboard"))
-@app.get("/logout")
+
+
+@app.post("/logout")
+@limiter.limit("20 per 10 minutes")
 def logout():
     session.clear()
     return redirect(url_for("home"))
 
 
 @app.get("/dashboard")
+@limiter.limit("120 per 5 minutes")
 def dashboard():
     superjob_row = account()
     hh_row = hh_account()
@@ -755,7 +879,8 @@ def dashboard():
             response.raise_for_status()
             resumes = response.json().get("objects", [])
         except (requests.RequestException, ValueError, RuntimeError) as exc:
-            error = str(exc)
+            logger.warning("SuperJob resume list unavailable: %s", type(exc).__name__)
+            error = "Не удалось загрузить данные SuperJob. Попробуйте обновить страницу позже."
 
     return render_template(
         "dashboard.html",
@@ -767,12 +892,13 @@ def dashboard():
 
 
 @app.post("/api/resume/preview")
+@limiter.limit("10 per 10 minutes")
 def resume_preview_api():
     uploaded = request.files.get("resume")
     if not uploaded or not uploaded.filename:
         return jsonify({"ok": False, "error": "Выберите PDF-файл с резюме."}), 400
 
-    safe_name = Path(uploaded.filename).name
+    safe_name = _safe_upload_filename(uploaded.filename)
     if not safe_name.lower().endswith(".pdf"):
         return jsonify({"ok": False, "error": "Поддерживаются только файлы PDF."}), 400
 
@@ -782,7 +908,12 @@ def resume_preview_api():
         return jsonify({"ok": False, "error": f"Размер PDF не должен превышать {MAX_RESUME_UPLOAD_MB} МБ."}), 413
 
     try:
-        parsed = parse_resume_pdf(file_bytes, safe_name)
+        parsed = parse_resume_pdf(
+            file_bytes,
+            safe_name,
+            max_pages=MAX_RESUME_PAGES,
+            max_text_characters=SETTINGS.max_resume_text_characters,
+        )
     except ResumeParseError as exc:
         return jsonify({"ok": False, "error": str(exc)}), 400
 
@@ -790,6 +921,7 @@ def resume_preview_api():
 
 
 @app.route("/ai-career", methods=["GET", "POST"])
+@limiter.limit("6 per 10 minutes", methods=["POST"])
 def ai_career():
     parsed_resume = None
     upload_error = None
@@ -799,7 +931,7 @@ def ai_career():
         if not uploaded or not uploaded.filename:
             upload_error = "Выберите PDF-файл с резюме."
         else:
-            safe_name = Path(uploaded.filename).name
+            safe_name = _safe_upload_filename(uploaded.filename)
             if not safe_name.lower().endswith(".pdf"):
                 upload_error = "Поддерживаются только файлы PDF."
             else:
@@ -809,7 +941,12 @@ def ai_career():
                     upload_error = f"Размер PDF не должен превышать {MAX_RESUME_UPLOAD_MB} МБ."
                 else:
                     try:
-                        parsed_resume = parse_resume_pdf(file_bytes, safe_name)
+                        parsed_resume = parse_resume_pdf(
+                            file_bytes,
+                            safe_name,
+                            max_pages=MAX_RESUME_PAGES,
+                            max_text_characters=SETTINGS.max_resume_text_characters,
+                        )
                     except ResumeParseError as exc:
                         upload_error = str(exc)
 
@@ -822,6 +959,7 @@ def ai_career():
 
 
 @app.post("/api/university/logo")
+@limiter.limit("20 per 10 minutes")
 def university_logo_api():
     payload = request.get_json(silent=True) or {}
     university_name = str(payload.get("name") or "").strip()
@@ -851,12 +989,12 @@ def vacancies_redirect():
 
 
 @app.get("/vacancies/internal")
+@limiter.limit("60 per 5 minutes")
 def vacancies():
     filters = VacancySearchFilters.from_query(request.args)
     keyword = filters.keyword
     remote_only = filters.remote_only
     search_requested = request.args.get("search") == "1"
-    force_refresh = request.args.get("refresh") == "1"
     sync_queued = request.args.get("sync") == "queued"
     try:
         page = max(int(request.args.get("page", "0") or 0), 0)
@@ -898,9 +1036,6 @@ def vacancies():
         # Работа России is always searched locally. Network synchronization
         # runs in a daemon thread and never blocks page navigation.
         if "trudvsem" in selected_sources:
-            if force_refresh:
-                request_trudvsem_sync()
-
             offset = page * VACANCY_PAGE_SIZE
             cached_items = VACANCY_STORE.search(
                 keyword=keyword,
@@ -936,7 +1071,7 @@ def vacancies():
 
             if sync_state["running"]:
                 cache_note = "Данные «Работы России» обновляются в фоне. Сайт продолжает работать без ожидания API."
-            elif force_refresh or sync_queued:
+            elif sync_queued:
                 cache_note = "Фоновое обновление «Работы России» запущено. Новые вакансии появятся после обновления страницы."
             elif cache_age is None:
                 request_trudvsem_sync()
@@ -981,8 +1116,9 @@ def vacancies():
                     source_key = tasks[future]
                     try:
                         result = future.result()
-                    except Exception as exc:
-                        errors.append(f"{source_key}: {exc}")
+                    except Exception:
+                        logger.exception("Vacancy provider failed source=%s", source_key)
+                        errors.append(f"{source_key}: unavailable")
                         continue
                     source_results[source_key] = result
                     all_items.extend(result.items)
@@ -1040,13 +1176,13 @@ def vacancies():
             "key": "reed",
             "title": "Reed.co.uk",
             "available": bool(REED_API_KEY),
-            "note": None if REED_API_KEY else "Не настроен REED_API_KEY",
+            "note": None if REED_API_KEY else "Источник временно недоступен",
         },
         {
             "key": "hh",
             "title": "HeadHunter",
             "available": bool(HH_APP_TOKEN),
-            "note": None if HH_APP_TOKEN else "Не настроен токен приложения",
+            "note": None if HH_APP_TOKEN else "Источник временно недоступен",
         },
     ]
 
@@ -1071,12 +1207,16 @@ def vacancies():
         search_requested=search_requested,
         cache_note=cache_note,
         filter_query=filter_query,
+        show_manual_refresh=not SETTINGS.is_production,
     )
 
 
 @app.get("/debug/trudvsem")
+@limiter.limit("20 per 5 minutes")
 def debug_trudvsem():
     """Diagnose Render -> Работа России connectivity without exposing secrets."""
+    if not diagnostics_access_allowed(SETTINGS):
+        return {"ok": False, "error": "not found"}, 404
     host = "opendata.trudvsem.ru"
     api_url = f"https://{host}/api/v1/vacancies"
     report = {
@@ -1156,8 +1296,15 @@ def debug_trudvsem():
 
 
 @app.post("/trudvsem/refresh")
+@csrf.exempt
+@limiter.limit("3 per 10 minutes")
 def refresh_trudvsem_cache():
-    """Queue a refresh and return immediately; never wait for the API."""
+    """Queue a development refresh without exposing a production control."""
+    if SETTINGS.is_production:
+        return {"ok": False, "error": "not found"}, 404
+    # The route is globally exempt so production can return a neutral 404
+    # before CSRF validation. Development/test still require a valid token.
+    csrf.protect()
     request_trudvsem_sync()
     filters = VacancySearchFilters.from_query(request.form)
     sources = request.form.getlist("source") or ["trudvsem"]
@@ -1167,8 +1314,19 @@ def refresh_trudvsem_cache():
     return redirect(url_for("vacancies") + "?" + urlencode(params))
 
 
+@app.get("/api/sources/trudvsem/status")
+@limiter.limit("120 per 5 minutes")
+def trudvsem_public_status():
+    """Return only fields needed by the public vacancy interface."""
+
+    return _public_trudvsem_status_payload(), 200
+
+
 @app.get("/trudvsem/status")
+@limiter.limit("60 per 5 minutes")
 def trudvsem_status():
+    if not diagnostics_access_allowed(SETTINGS):
+        return {"ok": False, "error": "not found"}, 404
     state = trudvsem_sync_status()
     state["cache_age_seconds"] = VACANCY_STORE.source_age_seconds("trudvsem")
     state["cached_total"] = VACANCY_STORE.count(keyword="", sources=["trudvsem"])
@@ -1182,6 +1340,8 @@ def trudvsem_status():
 
 
 @app.post("/sync/trudvsem")
+@csrf.exempt
+@limiter.limit("10 per 5 minutes")
 def sync_trudvsem():
     configured_secret = SYNC_SECRET or ""
     supplied_secret = request.headers.get("X-Sync-Secret", "").strip()
@@ -1193,7 +1353,10 @@ def sync_trudvsem():
         "ok": True,
         "source": "trudvsem",
         "message": "background sync scheduled",
-        "status": trudvsem_sync_status(),
+        "status": {
+            "running": bool(trudvsem_sync_status().get("running")),
+            "queued": True,
+        },
     }, 202
 
 
@@ -1212,13 +1375,11 @@ def hh_vacancies_redirect():
 
 
 @app.get("/debug/hh")
+@limiter.limit("20 per 5 minutes")
 def debug_hh():
     """Run safe HH API diagnostics. Enabled only when DEBUG_HH=1."""
-    if not DEBUG_HH:
-        return {
-            "ok": False,
-            "error": "HH diagnostics are disabled. Set DEBUG_HH=1 in Render and redeploy.",
-        }, 404
+    if not DEBUG_HH or not diagnostics_access_allowed(SETTINGS):
+        return {"ok": False, "error": "not found"}, 404
 
     row = hh_account()
     params = {
@@ -1272,13 +1433,13 @@ def debug_hh():
             }
             report["attempts"].append(attempt)
             logger.info(
-                "HH DEBUG attempt=%s status=%s url=%s request_headers=%s response_headers=%s body=%s",
+                "HH DEBUG attempt=%s status=%s request_id=%s content_type=%s",
                 name,
                 response.status_code,
-                response.url,
-                _masked_hh_headers(response.request.headers),
-                dict(response.headers),
-                response.text[:2000],
+                response.headers.get("X-Request-Id")
+                or response.headers.get("Request-Id")
+                or response.headers.get("X-Request-ID"),
+                response.headers.get("Content-Type"),
             )
         except requests.RequestException as exc:
             report["attempts"].append({
@@ -1294,6 +1455,7 @@ def debug_hh():
 
 
 @app.get("/health")
+@limiter.limit("300 per minute")
 def health():
     database_status = database_health(DATABASE)
     status_code = 200 if database_status["ok"] else 503
@@ -1305,6 +1467,44 @@ def health():
             "configured": SETTINGS.database_url_explicit,
         },
     }, status_code
+
+
+def _generic_error_response(status_code: int, title: str, message: str):
+    if request.path.startswith("/api/") or request.is_json:
+        return jsonify({"ok": False, "error": message}), status_code
+    return render_template(
+        "message.html",
+        success=False,
+        title=title,
+        message=message,
+    ), status_code
+
+
+@app.errorhandler(400)
+def bad_request_error(_error):
+    return _generic_error_response(
+        400,
+        "Некорректный запрос",
+        "Проверьте введённые данные и повторите действие.",
+    )
+
+
+@app.errorhandler(404)
+def not_found_error(_error):
+    return _generic_error_response(
+        404,
+        "Страница не найдена",
+        "Проверьте адрес или вернитесь на главную страницу.",
+    )
+
+
+@app.errorhandler(405)
+def method_not_allowed_error(_error):
+    return _generic_error_response(
+        405,
+        "Действие недоступно",
+        "Обновите страницу и повторите действие правильным способом.",
+    )
 
 
 if __name__ == "__main__":

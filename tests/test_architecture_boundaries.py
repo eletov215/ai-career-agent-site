@@ -39,3 +39,19 @@ def test_repository_layer_is_the_only_application_layer_importing_models():
         if "from models" in source or "import models" in source:
             violations.append(str(path.relative_to(ROOT)))
     assert violations == []
+
+
+def test_inline_scripts_are_nonce_protected_and_event_handlers_are_absent():
+    import re
+
+    violations: list[str] = []
+    event_handler_pattern = re.compile(r"\son[a-z]+\s*=", re.IGNORECASE)
+    for path in sorted((ROOT / "templates").glob("*.html")):
+        source = path.read_text(encoding="utf-8")
+        for tag in re.findall(r"<script\b[^>]*>", source, flags=re.IGNORECASE):
+            if 'nonce="{{ csp_nonce }}"' not in tag:
+                violations.append(f"{path.name}: missing nonce in {tag}")
+        if event_handler_pattern.search(source):
+            violations.append(f"{path.name}: inline event handler")
+
+    assert violations == []

@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import importlib
+import html
 import os
+import re
 import shutil
 import tempfile
 from pathlib import Path
@@ -22,6 +24,8 @@ os.environ["TRUDVSEM_SYNC_ENABLED"] = "0"
 os.environ["TRUDVSEM_REQUEST_ATTEMPTS"] = "1"
 os.environ["TRUDVSEM_RETRY_BACKOFF"] = "0.1"
 os.environ["DEBUG_HH"] = "0"
+os.environ["DEBUG_DIAGNOSTICS"] = "1"
+os.environ["RATE_LIMIT_ENABLED"] = "1"
 
 # Remove accidental developer or CI credentials so the route tests prove that
 # test mode is self-contained.
@@ -38,7 +42,10 @@ for variable in (
     "HH_APP_TOKEN",
     "REED_API_KEY",
     "SYNC_SECRET",
+    "DIAGNOSTICS_SECRET",
     "DATABASE_URL",
+    "TRUSTED_HOSTS",
+    "RATELIMIT_STORAGE_URI",
 ):
     os.environ.pop(variable, None)
 
@@ -74,7 +81,28 @@ def app_module():
 
 @pytest.fixture()
 def client(app_module):
-    return app_module.app.test_client()
+    from security import limiter
+
+    limiter.reset()
+    test_client = app_module.app.test_client()
+    yield test_client
+    limiter.reset()
+
+
+@pytest.fixture()
+def csrf_token(client):
+    response = client.get("/")
+    match = re.search(
+        r'<meta name="csrf-token" content="([^"]+)"',
+        response.get_data(as_text=True),
+    )
+    assert match, "CSRF token meta tag is missing"
+    return html.unescape(match.group(1))
+
+
+@pytest.fixture()
+def diagnostics_headers():
+    return {"X-Diagnostics-Secret": "test-diagnostics-secret"}
 
 
 def pytest_sessionfinish(session, exitstatus):  # noqa: ANN001

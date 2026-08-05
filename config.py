@@ -10,8 +10,10 @@ from __future__ import annotations
 
 import os
 from dataclasses import dataclass
+from datetime import timedelta
 from pathlib import Path
 from typing import Mapping
+from urllib.parse import urlparse
 
 from cryptography.fernet import Fernet
 
@@ -52,6 +54,7 @@ _TEST_DEFAULTS = {
     "HH_REDIRECT_URI": "http://localhost/oauth/hh/callback",
     "HH_USER_AGENT": "AI-Career-Agent-Test/1.0 (tests@example.invalid)",
     "SYNC_SECRET": "test-sync-secret",
+    "DIAGNOSTICS_SECRET": "test-diagnostics-secret",
 }
 
 
@@ -62,6 +65,100 @@ def _clean(value: object | None) -> str:
 def _optional(source: Mapping[str, str], name: str, default: str = "") -> str | None:
     value = _clean(source.get(name, default))
     return value or None
+
+
+def _csv(source: Mapping[str, str], name: str) -> tuple[str, ...]:
+    raw = _clean(source.get(name))
+    if not raw:
+        return ()
+    values: list[str] = []
+    for item in raw.split(","):
+        value = item.strip()
+        if value and value not in values:
+            values.append(value)
+    return tuple(values)
+
+
+def _choice(
+    source: Mapping[str, str],
+    name: str,
+    default: str,
+    *,
+    choices: set[str],
+) -> str:
+    value = _clean(source.get(name, default)) or default
+    if value not in choices:
+        allowed = ", ".join(sorted(choices))
+        raise ConfigurationError(
+            f"Некорректное значение {name}={value!r}. Разрешены: {allowed}."
+        )
+    return value
+
+
+def _validated_redirect_uri(
+    name: str,
+    value: str,
+    *,
+    environment: str,
+) -> str:
+    try:
+        parsed = urlparse(value)
+        port = parsed.port
+    except ValueError as exc:
+        raise ConfigurationError(
+            f"{name} имеет некорректный URL."
+        ) from exc
+    if (
+        parsed.scheme not in {"http", "https"}
+        or not parsed.hostname
+        or parsed.username
+        or parsed.password
+        or parsed.fragment
+    ):
+        raise ConfigurationError(
+            f"{name} должен быть абсолютным HTTP(S) callback URL без credentials и fragment."
+        )
+    if environment == "production" and parsed.scheme != "https":
+        raise ConfigurationError(
+            f"{name} в production должен использовать HTTPS."
+        )
+    if port is not None and not (1 <= port <= 65535):
+        raise ConfigurationError(f"{name} содержит недопустимый port.")
+    return value
+
+
+def _hostname_from_url(value: str) -> str | None:
+    try:
+        parsed = urlparse(value)
+    except ValueError:
+        return None
+    hostname = (parsed.hostname or "").strip().lower()
+    return hostname or None
+
+
+def _trusted_hosts(
+    source: Mapping[str, str],
+    *,
+    environment: str,
+    redirect_uris: tuple[str, ...],
+) -> tuple[str, ...]:
+    hosts = list(_csv(source, "TRUSTED_HOSTS"))
+    render_hostname = _clean(source.get("RENDER_EXTERNAL_HOSTNAME"))
+    if render_hostname and render_hostname not in hosts:
+        hosts.append(render_hostname)
+    for redirect_uri in redirect_uris:
+        hostname = _hostname_from_url(redirect_uri)
+        if hostname and hostname not in hosts:
+            hosts.append(hostname)
+    if environment in {"development", "test"}:
+        for hostname in ("localhost", "127.0.0.1", "::1"):
+            if hostname not in hosts:
+                hosts.append(hostname)
+    if environment == "production" and not hosts:
+        raise ConfigurationError(
+            "Не удалось определить TRUSTED_HOSTS. Укажите TRUSTED_HOSTS или корректные OAuth redirect URI."
+        )
+    return tuple(hosts)
 
 
 def _required(source: Mapping[str, str], name: str) -> str:
@@ -236,6 +333,23 @@ class AppSettings:
     debug_hh: bool
     hh_currency_scan_pages: int
     max_resume_upload_mb: int
+    max_resume_pages: int
+    max_resume_text_characters: int
+    session_cookie_secure: bool
+    session_cookie_samesite: str
+    session_lifetime_seconds: int
+    csrf_enabled: bool
+    csrf_time_limit_seconds: int
+    rate_limit_enabled: bool
+    rate_limit_storage_uri: str
+    trusted_hosts: tuple[str, ...]
+    trust_proxy_headers: bool
+    security_headers_enabled: bool
+    hsts_seconds: int
+    max_form_memory_size: int
+    max_form_parts: int
+    debug_diagnostics: bool
+    diagnostics_secret: str | None
     render_region: str
     port: int
     flask_debug: bool
@@ -260,6 +374,33 @@ class AppSettings:
             "TESTING": self.is_test,
             "DEBUG": self.flask_debug,
             "SECRET_KEY": self.flask_secret_key,
+            "SESSION_COOKIE_NAME": "aca_session",
+            "SESSION_COOKIE_SECURE": self.session_cookie_secure,
+            "SESSION_COOKIE_HTTPONLY": True,
+            "SESSION_COOKIE_SAMESITE": self.session_cookie_samesite,
+            "SESSION_COOKIE_PARTITIONED": False,
+            "SESSION_REFRESH_EACH_REQUEST": False,
+            "PERMANENT_SESSION_LIFETIME": timedelta(
+                seconds=self.session_lifetime_seconds
+            ),
+            "PREFERRED_URL_SCHEME": "https" if self.is_production else "http",
+            "TRUSTED_HOSTS": list(self.trusted_hosts),
+            "WTF_CSRF_ENABLED": self.csrf_enabled,
+            "WTF_CSRF_TIME_LIMIT": timedelta(
+                seconds=self.csrf_time_limit_seconds
+            ),
+            "WTF_CSRF_HEADERS": ["X-CSRFToken", "X-CSRF-Token"],
+            "WTF_CSRF_METHODS": {"POST", "PUT", "PATCH", "DELETE"},
+            "WTF_CSRF_SSL_STRICT": self.is_production,
+            "RATELIMIT_ENABLED": self.rate_limit_enabled,
+            "RATELIMIT_STORAGE_URI": self.rate_limit_storage_uri,
+            "RATELIMIT_HEADERS_ENABLED": True,
+            "RATELIMIT_KEY_PREFIX": "ai-career-agent",
+            "MAX_CONTENT_LENGTH": (
+                self.max_resume_upload_mb * 1024 * 1024 + 1024 * 1024
+            ),
+            "MAX_FORM_MEMORY_SIZE": self.max_form_memory_size,
+            "MAX_FORM_PARTS": self.max_form_parts,
         }
 
 
@@ -309,16 +450,73 @@ def load_settings(environ: Mapping[str, str] | None = None) -> AppSettings:
         data_dir_raw=data_dir_raw,
     )
 
+    session_cookie_secure = _bool(
+        source,
+        "SESSION_COOKIE_SECURE",
+        environment == "production",
+    )
+    session_cookie_samesite = _choice(
+        source,
+        "SESSION_COOKIE_SAMESITE",
+        "Lax",
+        choices={"Lax", "Strict"},
+    )
+    csrf_enabled = _bool(source, "CSRF_ENABLED", True)
+    rate_limit_enabled = _bool(source, "RATE_LIMIT_ENABLED", True)
+    security_headers_enabled = _bool(source, "SECURITY_HEADERS_ENABLED", True)
+    debug_diagnostics = _bool(source, "DEBUG_DIAGNOSTICS", False)
+    diagnostics_secret = _optional(source, "DIAGNOSTICS_SECRET")
+
+    if environment == "production":
+        insecure_controls = []
+        if not session_cookie_secure:
+            insecure_controls.append("SESSION_COOKIE_SECURE")
+        if not csrf_enabled:
+            insecure_controls.append("CSRF_ENABLED")
+        if not rate_limit_enabled:
+            insecure_controls.append("RATE_LIMIT_ENABLED")
+        if not security_headers_enabled:
+            insecure_controls.append("SECURITY_HEADERS_ENABLED")
+        if session_cookie_samesite != "Lax":
+            insecure_controls.append("SESSION_COOKIE_SAMESITE=Lax")
+        if insecure_controls:
+            raise ConfigurationError(
+                "Production не может запускаться с отключёнными контролями безопасности: "
+                + ", ".join(insecure_controls)
+                + "."
+            )
+
+    if debug_diagnostics and not diagnostics_secret:
+        raise ConfigurationError(
+            "DEBUG_DIAGNOSTICS требует DIAGNOSTICS_SECRET."
+        )
+
+    superjob_redirect_uri = _validated_redirect_uri(
+        "SUPERJOB_REDIRECT_URI",
+        _required(source, "SUPERJOB_REDIRECT_URI"),
+        environment=environment,
+    )
+    hh_redirect_uri = _validated_redirect_uri(
+        "HH_REDIRECT_URI",
+        _required(source, "HH_REDIRECT_URI"),
+        environment=environment,
+    )
+    trusted_hosts = _trusted_hosts(
+        source,
+        environment=environment,
+        redirect_uris=(superjob_redirect_uri, hh_redirect_uri),
+    )
+
     return AppSettings(
         environment=environment,
         flask_secret_key=_required(source, "FLASK_SECRET_KEY"),
         token_encryption_key=token_encryption_key,
         superjob_client_id=_required(source, "SUPERJOB_CLIENT_ID"),
         superjob_client_secret=_required(source, "SUPERJOB_CLIENT_SECRET"),
-        superjob_redirect_uri=_required(source, "SUPERJOB_REDIRECT_URI"),
+        superjob_redirect_uri=superjob_redirect_uri,
         hh_client_id=_required(source, "HH_CLIENT_ID"),
         hh_client_secret=_required(source, "HH_CLIENT_SECRET"),
-        hh_redirect_uri=_required(source, "HH_REDIRECT_URI"),
+        hh_redirect_uri=hh_redirect_uri,
         hh_user_agent=_required(source, "HH_USER_AGENT"),
         hh_app_token=_optional(source, "HH_APP_TOKEN"),
         reed_api_key=_optional(source, "REED_API_KEY"),
@@ -365,6 +563,72 @@ def load_settings(environ: Mapping[str, str] | None = None) -> AppSettings:
             minimum=1,
             maximum=25,
         ),
+        max_resume_pages=_int(
+            source,
+            "MAX_RESUME_PAGES",
+            30,
+            minimum=1,
+            maximum=100,
+        ),
+        max_resume_text_characters=_int(
+            source,
+            "MAX_RESUME_TEXT_CHARACTERS",
+            200_000,
+            minimum=10_000,
+            maximum=2_000_000,
+        ),
+        session_cookie_secure=session_cookie_secure,
+        session_cookie_samesite=session_cookie_samesite,
+        session_lifetime_seconds=_int(
+            source,
+            "SESSION_LIFETIME_SECONDS",
+            43_200,
+            minimum=900,
+            maximum=604_800,
+        ),
+        csrf_enabled=csrf_enabled,
+        csrf_time_limit_seconds=_int(
+            source,
+            "CSRF_TIME_LIMIT_SECONDS",
+            7_200,
+            minimum=300,
+            maximum=86_400,
+        ),
+        rate_limit_enabled=rate_limit_enabled,
+        rate_limit_storage_uri=_clean(
+            source.get("RATELIMIT_STORAGE_URI", "memory://")
+        )
+        or "memory://",
+        trusted_hosts=trusted_hosts,
+        trust_proxy_headers=_bool(
+            source,
+            "TRUST_PROXY_HEADERS",
+            environment == "production",
+        ),
+        security_headers_enabled=security_headers_enabled,
+        hsts_seconds=_int(
+            source,
+            "HSTS_SECONDS",
+            31_536_000,
+            minimum=0,
+            maximum=63_072_000,
+        ),
+        max_form_memory_size=_int(
+            source,
+            "MAX_FORM_MEMORY_SIZE",
+            262_144,
+            minimum=16_384,
+            maximum=2_097_152,
+        ),
+        max_form_parts=_int(
+            source,
+            "MAX_FORM_PARTS",
+            32,
+            minimum=4,
+            maximum=256,
+        ),
+        debug_diagnostics=debug_diagnostics,
+        diagnostics_secret=diagnostics_secret,
         render_region=_clean(source.get("RENDER_REGION", "unknown")) or "unknown",
         port=_int(source, "PORT", 10000, minimum=1, maximum=65535),
         flask_debug=_bool(source, "FLASK_DEBUG", flask_debug_default),

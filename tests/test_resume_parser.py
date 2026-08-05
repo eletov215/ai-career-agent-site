@@ -65,6 +65,24 @@ def test_parse_resume_rejects_image_only_or_blank_pdf():
         parse_resume_pdf(buffer.getvalue(), "blank.pdf")
 
 
+def test_parse_resume_enforces_page_and_text_limits():
+    writer = PdfWriter()
+    writer.add_blank_page(width=612, height=792)
+    writer.add_blank_page(width=612, height=792)
+    buffer = BytesIO()
+    writer.write(buffer)
+
+    with pytest.raises(ResumeParseError, match="Максимум: 1"):
+        parse_resume_pdf(buffer.getvalue(), "many-pages.pdf", max_pages=1)
+
+    with pytest.raises(ResumeParseError, match="слишком много текста"):
+        parse_resume_pdf(
+            make_text_pdf("Python developer experience 5 years"),
+            "long.pdf",
+            max_text_characters=10,
+        )
+
+
 def test_build_resume_preview_detects_role_experience_and_skills():
     parsed = ParsedResume(
         filename="resume.pdf",
