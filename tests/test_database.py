@@ -4,16 +4,17 @@ import json
 import sqlite3
 from pathlib import Path
 
-from sqlalchemy import inspect, select
+from sqlalchemy import inspect, select, text
 
 from database import (
+    CURRENT_REVISION,
     INITIAL_REVISION,
     create_database,
     current_revision,
     database_health,
     upgrade_database,
 )
-from models import Vacancy
+from models import OAuthConnection, Vacancy, VacancySourceRecord
 
 
 def sqlite_url(path: Path) -> str:
@@ -29,13 +30,22 @@ def test_sqlite_migration_is_repeatable_and_health_is_secret_free(tmp_path):
     runtime = create_database(database_url)
     try:
         tables = set(inspect(runtime.engine).get_table_names())
-        assert {"accounts", "hh_accounts", "vacancies", "alembic_version"} <= tables
-        assert current_revision(runtime.engine) == INITIAL_REVISION
+        assert {
+            "accounts",
+            "hh_accounts",
+            "users",
+            "oauth_connections",
+            "vacancies",
+            "vacancy_source_records",
+            "sync_runs",
+            "alembic_version",
+        } <= tables
+        assert current_revision(runtime.engine) == CURRENT_REVISION
         assert database_health(runtime) == {
             "ok": True,
             "backend": "sqlite",
             "persistent": False,
-            "revision": INITIAL_REVISION,
+            "revision": CURRENT_REVISION,
         }
     finally:
         runtime.dispose()
@@ -54,7 +64,7 @@ def test_postgresql_runtime_is_lazy_and_marked_persistent():
         runtime.dispose()
 
 
-def test_initial_migration_adopts_legacy_sqlite_without_losing_rows(tmp_path):
+def test_migrations_adopt_legacy_sqlite_without_losing_vacancy_rows(tmp_path):
     path = tmp_path / "legacy.db"
     connection = sqlite3.connect(path)
     try:
@@ -116,13 +126,63 @@ def test_initial_migration_adopts_legacy_sqlite_without_losing_rows(tmp_path):
     runtime = create_database(database_url)
     try:
         with runtime.session() as session:
-            vacancy = session.scalar(
-                select(Vacancy).where(Vacancy.external_id == "legacy-1")
+            source_record = session.scalar(
+                select(VacancySourceRecord).where(
+                    VacancySourceRecord.external_id == "legacy-1"
+                )
             )
-            assert vacancy is not None
-            assert vacancy.experience == "Без опыта"
-            assert "legacy python role" in (vacancy.search_text or "")
-            assert vacancy.published_at == "2026-08-04T07:00:00Z"
-        assert current_revision(runtime.engine) == INITIAL_REVISION
+            assert source_record is not None
+            assert source_record.experience == "Без опыта"
+            assert "legacy python role" in (source_record.search_text or "")
+            assert source_record.published_at == "2026-08-04T07:00:00Z"
+            canonical = session.get(Vacancy, source_record.vacancy_id)
+            assert canonical is not None
+            assert canonical.title == "Legacy Python role"
+            assert canonical.experience == "Без опыта"
+        assert current_revision(runtime.engine) == CURRENT_REVISION
+    finally:
+        runtime.dispose()
+
+
+def test_domain_migration_copies_legacy_oauth_rows(tmp_path):
+    database_url = sqlite_url(tmp_path / "oauth.db")
+    upgrade_database(database_url, INITIAL_REVISION)
+    runtime = create_database(database_url)
+    try:
+        with runtime.engine.begin() as connection:
+            connection.execute(
+                text(
+                    """
+                    INSERT INTO accounts (
+                        user_id, name, email, access_token, refresh_token,
+                        expires_at, profile_json, updated_at
+                    ) VALUES (1, 'SJ', 'sj@example.test', 'enc-a', 'enc-r', 10, '{}', 5)
+                    """
+                )
+            )
+            connection.execute(
+                text(
+                    """
+                    INSERT INTO hh_accounts (
+                        user_id, first_name, last_name, email, access_token,
+                        refresh_token, expires_at, profile_json, updated_at
+                    ) VALUES ('hh-1', 'H', 'H', 'hh@example.test', 'enc-a', 'enc-r', 10, '{}', 5)
+                    """
+                )
+            )
+    finally:
+        runtime.dispose()
+
+    upgrade_database(database_url)
+    runtime = create_database(database_url)
+    try:
+        with runtime.session() as session:
+            rows = session.scalars(select(OAuthConnection)).all()
+            assert {(row.provider, row.external_user_id) for row in rows} == {
+                ("superjob", "1"),
+                ("headhunter", "hh-1"),
+            }
+            assert all(row.user_id is None for row in rows)
+        assert current_revision(runtime.engine) == CURRENT_REVISION
     finally:
         runtime.dispose()

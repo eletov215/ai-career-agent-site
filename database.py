@@ -2,6 +2,7 @@
 
 DATA-001 keeps application behavior compatible with the legacy SQLite file
 while allowing the same code to run on PostgreSQL through ``DATABASE_URL``.
+DATA-002 adds the repository-ready domain schema on top of that runtime.
 No connection URL or password is exposed through logs or health responses.
 """
 
@@ -23,6 +24,7 @@ from models import Base
 
 
 INITIAL_REVISION = "20260804_0001"
+CURRENT_REVISION = "20260804_0002"
 
 
 class DatabaseConfigurationError(RuntimeError):

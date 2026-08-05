@@ -14,20 +14,18 @@ from cryptography.fernet import Fernet, InvalidToken
 from flask import Flask, jsonify, redirect, render_template, request, session, url_for
 from datetime import datetime, timezone
 
-from sqlalchemy import select
 
 from services.hh_provider import HeadHunterProvider
 from services.superjob_provider import SuperJobProvider
 from services.reed_provider import ReedProvider
 from services.trudvsem_provider import TrudvsemProvider
-from services.vacancy_store import VacancyStore
 from services.search_filters import VacancySearchFilters, canonical_currency
 from services.vacancy_presenter import present_vacancy
 from services.resume_parser import ResumeParseError, build_resume_preview, parse_resume_pdf
 from services.university_logo import find_university_logo
 from config import AppSettings, load_settings
 from database import create_database, database_health
-from models import HeadHunterAccount, SuperJobAccount
+from services.storage import StorageServices
 
 SETTINGS: AppSettings = load_settings()
 
@@ -77,7 +75,11 @@ RENDER_REGION = SETTINGS.render_region
 SYNC_SECRET = SETTINGS.sync_secret
 
 
-VACANCY_STORE = VacancyStore(DATABASE)
+STORAGE = StorageServices.from_database(DATABASE)
+OAUTH_CONNECTIONS = STORAGE.oauth_connections
+SYNC_RUNS = STORAGE.sync_runs
+USERS = STORAGE.users
+VACANCY_STORE = STORAGE.vacancies
 
 
 TRUDVSEM_SYNC_EVENT = threading.Event()
@@ -142,8 +144,20 @@ def _run_trudvsem_sync():
     saved = 0
     processed = 0
     error = None
+    sync_run_id = None
 
     try:
+        try:
+            persisted_run = SYNC_RUNS.start(
+                source="trudvsem",
+                trigger="background",
+                target=target,
+                details={"previous_success": previous_success},
+            )
+            sync_run_id = persisted_run.id
+        except Exception:
+            logger.exception("Could not persist Trudvsem sync start")
+
         logger.info(
             "Trudvsem provider init previous_success=%s",
             previous_success,
@@ -267,7 +281,27 @@ def _run_trudvsem_sync():
             )
             if error is None:
                 TRUDVSEM_SYNC_STATE["last_success"] = finished_at
-        
+
+        if sync_run_id:
+            try:
+                error_type = None
+                error_message = None
+                if error:
+                    error_type, separator, error_message = error.partition(": ")
+                    if not separator:
+                        error_message = error
+                SYNC_RUNS.finish(
+                    sync_run_id,
+                    status="failed" if error else "succeeded",
+                    processed=processed,
+                    saved=saved,
+                    cursor=str(processed),
+                    error_type=error_type,
+                    error_message=error_message,
+                )
+            except Exception:
+                logger.exception("Could not persist Trudvsem sync completion")
+
 def _trudvsem_sync_worker():
     logger.info("Trudvsem sync worker started")
     time.sleep(2)
@@ -346,44 +380,25 @@ def account():
     user_id = session.get("superjob_user_id")
     if not user_id:
         return None
-    with DATABASE.connect() as connection:
-        return connection.execute(
-            select(SuperJobAccount.__table__).where(
-                SuperJobAccount.user_id == int(user_id)
-            )
-        ).mappings().first()
+    connection = OAUTH_CONNECTIONS.get("superjob", str(user_id))
+    return connection.as_legacy_mapping() if connection else None
 
 
 def save_account(profile, token_data):
     now = int(time.time())
     expires_in = token_data.get("expires_in")
     expires_at = now + int(expires_in) if expires_in else None
-    user_id = int(profile["id"])
-    with DATABASE.session() as database_session:
-        stored = database_session.get(SuperJobAccount, user_id)
-        encrypted_refresh_token = enc(token_data.get("refresh_token"))
-        if stored is None:
-            stored = SuperJobAccount(
-                user_id=user_id,
-                name=profile.get("name") or "Пользователь SuperJob",
-                email=profile.get("email"),
-                access_token=enc(token_data["access_token"]),
-                refresh_token=encrypted_refresh_token,
-                expires_at=expires_at,
-                profile_json=json.dumps(profile, ensure_ascii=False),
-                updated_at=now,
-            )
-            database_session.add(stored)
-        else:
-            stored.name = profile.get("name") or "Пользователь SuperJob"
-            stored.email = profile.get("email")
-            stored.access_token = enc(token_data["access_token"])
-            if encrypted_refresh_token:
-                stored.refresh_token = encrypted_refresh_token
-            stored.expires_at = expires_at
-            stored.profile_json = json.dumps(profile, ensure_ascii=False)
-            stored.updated_at = now
-        database_session.commit()
+    OAUTH_CONNECTIONS.upsert(
+        provider="superjob",
+        external_user_id=str(profile["id"]),
+        display_name=profile.get("name") or "Пользователь SuperJob",
+        email=profile.get("email"),
+        access_token=enc(token_data["access_token"]),
+        refresh_token=enc(token_data.get("refresh_token")),
+        expires_at=expires_at,
+        profile_json=json.dumps(profile, ensure_ascii=False),
+        updated_at=now,
+    )
 
 
 def valid_token(row):
@@ -405,16 +420,10 @@ def valid_token(row):
 
 def hh_account():
     user_id = session.get("hh_user_id")
-
     if not user_id:
         return None
-
-    with DATABASE.connect() as connection:
-        return connection.execute(
-            select(HeadHunterAccount.__table__).where(
-                HeadHunterAccount.user_id == str(user_id)
-            )
-        ).mappings().first()
+    connection = OAUTH_CONNECTIONS.get("headhunter", str(user_id))
+    return connection.as_legacy_mapping() if connection else None
 
 
 def hh_headers(token=None):
@@ -459,39 +468,24 @@ def _hh_response_report(response):
 
 def save_hh_account(profile, token_data):
     now = int(time.time())
-
     expires_in = token_data.get("expires_in")
     expires_at = now + int(expires_in) if expires_in else None
-
-    user_id = str(profile["id"])
-    encrypted_refresh_token = enc(token_data.get("refresh_token"))
-
-    with DATABASE.session() as database_session:
-        stored = database_session.get(HeadHunterAccount, user_id)
-        if stored is None:
-            stored = HeadHunterAccount(
-                user_id=user_id,
-                first_name=profile.get("first_name"),
-                last_name=profile.get("last_name"),
-                email=profile.get("email"),
-                access_token=enc(token_data["access_token"]),
-                refresh_token=encrypted_refresh_token,
-                expires_at=expires_at,
-                profile_json=json.dumps(profile, ensure_ascii=False),
-                updated_at=now,
-            )
-            database_session.add(stored)
-        else:
-            stored.first_name = profile.get("first_name")
-            stored.last_name = profile.get("last_name")
-            stored.email = profile.get("email")
-            stored.access_token = enc(token_data["access_token"])
-            if encrypted_refresh_token:
-                stored.refresh_token = encrypted_refresh_token
-            stored.expires_at = expires_at
-            stored.profile_json = json.dumps(profile, ensure_ascii=False)
-            stored.updated_at = now
-        database_session.commit()
+    display_name = " ".join(
+        part for part in (profile.get("first_name"), profile.get("last_name")) if part
+    ) or None
+    OAUTH_CONNECTIONS.upsert(
+        provider="headhunter",
+        external_user_id=str(profile["id"]),
+        display_name=display_name,
+        first_name=profile.get("first_name"),
+        last_name=profile.get("last_name"),
+        email=profile.get("email"),
+        access_token=enc(token_data["access_token"]),
+        refresh_token=enc(token_data.get("refresh_token")),
+        expires_at=expires_at,
+        profile_json=json.dumps(profile, ensure_ascii=False),
+        updated_at=now,
+    )
 
 
 def valid_hh_token(row):
@@ -1181,6 +1175,9 @@ def trudvsem_status():
     state["sync_enabled"] = TRUDVSEM_SYNC_ENABLED
     state["worker_alive"] = bool(TRUDVSEM_SYNC_THREAD and TRUDVSEM_SYNC_THREAD.is_alive())
     state["queued"] = bool(state.get("queued") or TRUDVSEM_SYNC_EVENT.is_set())
+    latest_run = SYNC_RUNS.latest("trudvsem")
+    if latest_run:
+        state["persisted_run"] = latest_run.public_summary()
     return state, 200
 
 

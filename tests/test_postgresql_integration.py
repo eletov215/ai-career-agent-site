@@ -1,13 +1,29 @@
 from __future__ import annotations
 
+import json
 import os
 import uuid
 
 import pytest
-from sqlalchemy import delete, select
+from sqlalchemy import func, select, text
 
-from database import INITIAL_REVISION, create_database, current_revision, upgrade_database
-from models import HeadHunterAccount, SuperJobAccount, Vacancy
+from database import (
+    CURRENT_REVISION,
+    create_database,
+    current_revision,
+    downgrade_database,
+    upgrade_database,
+)
+from models import (
+    HeadHunterAccount,
+    OAuthConnection,
+    SuperJobAccount,
+    SyncRun,
+    User,
+    Vacancy,
+    VacancySourceRecord,
+)
+from repositories import OAuthConnectionRepository, SyncRunRepository, UserRepository
 from services.vacancy_store import VacancyStore
 
 
@@ -16,49 +32,183 @@ from services.vacancy_store import VacancyStore
     reason="POSTGRES_TEST_URL is provided by the GitHub Actions PostgreSQL service",
 )
 def test_postgresql_migration_and_persistence_round_trip():
-    """Exercise the real psycopg/PostgreSQL path used by production."""
+    """Exercise legacy migration, repositories, sequences, and reconnect."""
 
     database_url = os.environ["POSTGRES_TEST_URL"]
+    suffix = uuid.uuid4().hex
+    legacy_vacancy_id = 0
+    legacy_superjob_id = 0
+    legacy_hh_id = f"legacy-hh-{suffix}"
+    legacy_external_id = f"legacy-vacancy-{suffix}"
+
+    # CI first upgrades a clean PostgreSQL database.  Move it back to the
+    # production pre-DATA-002 revision, seed real legacy rows, then migrate
+    # forward.  This is the path the current Render database will execute.
+    upgrade_database(database_url)
+    downgrade_database(database_url, "20260804_0001")
+    legacy_runtime = create_database(database_url)
+    try:
+        payload = {
+            "source": "trudvsem",
+            "external_id": legacy_external_id,
+            "title": "Legacy PostgreSQL vacancy",
+            "company": "AI Career Agent migration test",
+            "experience": "Без опыта",
+            "published_at": "2026-08-04T07:00:00Z",
+        }
+        with legacy_runtime.engine.begin() as connection:
+            legacy_vacancy_id = int(
+                connection.scalar(text("SELECT COALESCE(MAX(id), 0) FROM vacancies")) or 0
+            ) + 100
+            legacy_superjob_id = int(
+                connection.scalar(text("SELECT COALESCE(MAX(user_id), 0) FROM accounts")) or 0
+            ) + 100
+            connection.execute(
+                text(
+                    """
+                    INSERT INTO accounts (
+                        user_id, name, email, access_token, refresh_token,
+                        expires_at, profile_json, updated_at
+                    ) VALUES (
+                        :user_id, :name, :email, :access_token, :refresh_token,
+                        :expires_at, :profile_json, :updated_at
+                    )
+                    """
+                ),
+                {
+                    "user_id": legacy_superjob_id,
+                    "name": "Legacy SuperJob",
+                    "email": "legacy-sj@example.test",
+                    "access_token": "encrypted-legacy-sj-access",
+                    "refresh_token": "encrypted-legacy-sj-refresh",
+                    "expires_at": 1_900_000_000,
+                    "profile_json": "{}",
+                    "updated_at": 1_785_853_489,
+                },
+            )
+            connection.execute(
+                text(
+                    """
+                    INSERT INTO hh_accounts (
+                        user_id, first_name, last_name, email, access_token,
+                        refresh_token, expires_at, profile_json, updated_at
+                    ) VALUES (
+                        :user_id, :first_name, :last_name, :email, :access_token,
+                        :refresh_token, :expires_at, :profile_json, :updated_at
+                    )
+                    """
+                ),
+                {
+                    "user_id": legacy_hh_id,
+                    "first_name": "Legacy",
+                    "last_name": "HeadHunter",
+                    "email": "legacy-hh@example.test",
+                    "access_token": "encrypted-legacy-hh-access",
+                    "refresh_token": "encrypted-legacy-hh-refresh",
+                    "expires_at": 1_900_000_000,
+                    "profile_json": "{}",
+                    "updated_at": 1_785_853_489,
+                },
+            )
+            connection.execute(
+                text(
+                    """
+                    INSERT INTO vacancies (
+                        id, source, external_id, title, company, salary_from,
+                        salary_to, currency, location, remote, schedule,
+                        employment, experience, description, requirements,
+                        published_at, url, search_text, raw_json, fetched_at,
+                        updated_at
+                    ) VALUES (
+                        :id, :source, :external_id, :title, :company, NULL,
+                        NULL, 'RUB', 'Oregon', false, NULL, NULL, :experience,
+                        NULL, NULL, :published_at, :url, :search_text, :raw_json,
+                        :fetched_at, :updated_at
+                    )
+                    """
+                ),
+                {
+                    "id": legacy_vacancy_id,
+                    "source": "trudvsem",
+                    "external_id": legacy_external_id,
+                    "title": payload["title"],
+                    "company": payload["company"],
+                    "experience": payload["experience"],
+                    "published_at": payload["published_at"],
+                    "url": f"https://example.test/{legacy_external_id}",
+                    "search_text": "legacy postgresql vacancy",
+                    "raw_json": json.dumps(payload),
+                    "fetched_at": 1_785_853_489,
+                    "updated_at": 1_785_853_489,
+                },
+            )
+    finally:
+        legacy_runtime.dispose()
+
     upgrade_database(database_url)
     runtime = create_database(database_url)
-    suffix = uuid.uuid4().hex
-    sj_user_id = int(suffix[:12], 16)
-    hh_user_id = f"hh-{suffix}"
-    external_id = f"vacancy-{suffix}"
-
     try:
         assert runtime.backend == "postgresql"
         assert runtime.persistent is True
-        assert current_revision(runtime.engine) == INITIAL_REVISION
+        assert current_revision(runtime.engine) == CURRENT_REVISION
+
+        oauth = OAuthConnectionRepository(runtime)
+        migrated_sj = oauth.get("superjob", str(legacy_superjob_id))
+        migrated_hh = oauth.get("headhunter", legacy_hh_id)
+        assert migrated_sj is not None
+        assert migrated_sj.refresh_token == "encrypted-legacy-sj-refresh"
+        assert migrated_hh is not None
+        assert migrated_hh.last_name == "HeadHunter"
 
         with runtime.session() as session:
-            session.add(
-                SuperJobAccount(
-                    user_id=sj_user_id,
-                    name="CI SuperJob",
-                    email="sj-ci@example.test",
-                    access_token="encrypted-ci-token",
-                    refresh_token=None,
-                    expires_at=None,
-                    profile_json="{}",
-                    updated_at=1,
+            migrated_source = session.scalar(
+                select(VacancySourceRecord).where(
+                    VacancySourceRecord.source == "trudvsem",
+                    VacancySourceRecord.external_id == legacy_external_id,
                 )
             )
-            session.add(
-                HeadHunterAccount(
-                    user_id=hh_user_id,
-                    first_name="CI",
-                    last_name="HeadHunter",
-                    email="hh-ci@example.test",
-                    access_token="encrypted-ci-token",
-                    refresh_token=None,
-                    expires_at=None,
-                    profile_json="{}",
-                    updated_at=1,
-                )
+            assert migrated_source is not None
+            assert migrated_source.id == legacy_vacancy_id
+            migrated_canonical = session.get(Vacancy, migrated_source.vacancy_id)
+            assert migrated_canonical is not None
+            assert migrated_canonical.title == "Legacy PostgreSQL vacancy"
+            max_source_id = int(
+                session.scalar(select(func.max(VacancySourceRecord.id))) or 0
             )
-            session.commit()
 
+        users = UserRepository(runtime)
+        sync_runs = SyncRunRepository(runtime)
+        user_email = f"ci-{suffix}@example.test"
+        user = users.create(email=user_email, display_name="CI User", status="active")
+
+        numeric_external_id = str(20_000_000 + int(suffix[14:21], 16))
+        connection = oauth.upsert(
+            provider="superjob",
+            external_user_id=numeric_external_id,
+            display_name="CI SuperJob",
+            email=user_email,
+            access_token="encrypted-ci-token",
+            refresh_token="encrypted-ci-refresh",
+            expires_at=None,
+            profile_json="{}",
+            user_id=user.id,
+        )
+        assert connection.user_id == user.id
+
+        sync_run = sync_runs.start(
+            source="ci-postgresql",
+            trigger="integration-test",
+            target=1,
+        )
+        sync_runs.finish(
+            sync_run.id,
+            status="succeeded",
+            processed=1,
+            saved=1,
+            cursor="1",
+        )
+
+        external_id = f"vacancy-{suffix}"
         store = VacancyStore(runtime)
         assert store.upsert_many(
             [
@@ -74,33 +224,46 @@ def test_postgresql_migration_and_persistence_round_trip():
             ]
         ) == 1
 
+        inserted_source = store.repository.get_source("ci-postgresql", external_id)
+        assert inserted_source is not None
+        assert inserted_source.id > max_source_id
+        inserted_canonical = store.repository.get_canonical(inserted_source.vacancy_id)
+        assert inserted_canonical is not None
+        assert inserted_canonical.title == "PostgreSQL integration vacancy"
+
+        with runtime.session() as session:
+            legacy_mirror = session.get(SuperJobAccount, int(numeric_external_id))
+            assert legacy_mirror is not None
+            assert legacy_mirror.access_token == "encrypted-ci-token"
+
+        # Dispose/recreate the engine to prove data is committed, detached from
+        # ORM sessions, and accessible through the repository contracts.
         runtime.dispose()
         runtime = create_database(database_url)
 
-        with runtime.session() as session:
-            assert session.get(SuperJobAccount, sj_user_id) is not None
-            assert session.get(HeadHunterAccount, hh_user_id) is not None
-            vacancy = session.scalar(
-                select(Vacancy).where(
-                    Vacancy.source == "ci-postgresql",
-                    Vacancy.external_id == external_id,
-                )
-            )
-            assert vacancy is not None
-            assert vacancy.title == "PostgreSQL integration vacancy"
+        assert UserRepository(runtime).find_by_email(user_email) is not None
+        persisted_connection = OAuthConnectionRepository(runtime).get(
+            "superjob", numeric_external_id
+        )
+        assert persisted_connection is not None
+        assert persisted_connection.user_id == user.id
+        latest_run = SyncRunRepository(runtime).latest("ci-postgresql")
+        assert latest_run is not None
+        assert latest_run.status == "succeeded"
+        persisted_source = VacancyStore(runtime).repository.get_source(
+            "ci-postgresql", external_id
+        )
+        assert persisted_source is not None
+        assert persisted_source.vacancy_id == inserted_source.vacancy_id
 
-            session.execute(
-                delete(Vacancy).where(
-                    Vacancy.source == "ci-postgresql",
-                    Vacancy.external_id == external_id,
+        with runtime.session() as session:
+            assert session.scalar(
+                select(OAuthConnection).where(
+                    OAuthConnection.id == connection.id
                 )
-            )
-            session.execute(
-                delete(SuperJobAccount).where(SuperJobAccount.user_id == sj_user_id)
-            )
-            session.execute(
-                delete(HeadHunterAccount).where(HeadHunterAccount.user_id == hh_user_id)
-            )
-            session.commit()
+            ) is not None
+            assert session.get(User, user.id) is not None
+            assert session.get(SyncRun, sync_run.id) is not None
+            assert session.get(HeadHunterAccount, legacy_hh_id) is not None
     finally:
         runtime.dispose()
