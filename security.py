@@ -197,11 +197,16 @@ def init_security(app: Flask, settings: AppSettings) -> None:
 
     @app.errorhandler(SecurityError)
     def handle_invalid_host(_error: SecurityError):
-        return _error_response(
-            title="Некорректный запрос",
-            message="Адрес запроса не разрешён для этого сервиса.",
-            status=400,
+        # Host validation can fail before Flask creates a URL adapter.
+        # Rendering the regular template would call url_for() from base.html
+        # and fail with ``NoneType has no attribute build``. Return a minimal
+        # neutral response that does not reflect the untrusted Host value.
+        response = make_response(
+            "Некорректный запрос. Адрес запроса не разрешён для этого сервиса.",
+            400,
         )
+        response.mimetype = "text/plain"
+        return response
 
     @app.errorhandler(429)
     def handle_rate_limit(error):  # noqa: ANN001

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import timedelta
 from pathlib import Path
 
 import pytest
@@ -100,6 +101,9 @@ def test_production_defaults_preserve_current_runtime_behavior():
     assert mapping["SESSION_COOKIE_HTTPONLY"] is True
     assert mapping["SESSION_COOKIE_SECURE"] is True
     assert mapping["SESSION_COOKIE_SAMESITE"] == "Lax"
+    assert mapping["PERMANENT_SESSION_LIFETIME"] == timedelta(hours=12)
+    assert mapping["WTF_CSRF_TIME_LIMIT"] == 7200
+    assert isinstance(mapping["WTF_CSRF_TIME_LIMIT"], int)
     assert mapping["MAX_CONTENT_LENGTH"] == 9 * 1024 * 1024
     assert settings.port == 10000
     assert settings.flask_debug is False

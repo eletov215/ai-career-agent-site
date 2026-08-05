@@ -386,9 +386,10 @@ class AppSettings:
             "PREFERRED_URL_SCHEME": "https" if self.is_production else "http",
             "TRUSTED_HOSTS": list(self.trusted_hosts),
             "WTF_CSRF_ENABLED": self.csrf_enabled,
-            "WTF_CSRF_TIME_LIMIT": timedelta(
-                seconds=self.csrf_time_limit_seconds
-            ),
+            # Flask-WTF 1.3 expects the CSRF max age as an integer number
+            # of seconds. Passing datetime.timedelta reaches itsdangerous
+            # unchanged and raises a TypeError during token validation.
+            "WTF_CSRF_TIME_LIMIT": self.csrf_time_limit_seconds,
             "WTF_CSRF_HEADERS": ["X-CSRFToken", "X-CSRF-Token"],
             "WTF_CSRF_METHODS": {"POST", "PUT", "PATCH", "DELETE"},
             "WTF_CSRF_SSL_STRICT": self.is_production,
