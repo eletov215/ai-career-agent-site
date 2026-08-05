@@ -1,22 +1,22 @@
 # AI Career Agent - Единый план реализации и ведения разработки
 
-**Версия:** 1.2.3  
+**Версия:** 1.2.6  
 **Дата:** 04 августа 2026  
 **Статус:** ДЕЙСТВУЮЩИЙ  
-**Основа:** `ai-career-agent-site-main-13-data-001-ci-fix-v1.2.3.zip`
+**Основа:** `ai-career-agent-site-main-14-data-002-domain-repositories-v1.2.6.zip`
 
 > ОБЯЗАТЕЛЬНО ДЛЯ КАЖДОГО НОВОГО ЧАТА: прочитать этот план, новый паспорт и актуальный архив. После завершения любого пункта вернуть обновлённые DOCX/PDF/Markdown, новый ZIP, доказательства проверки и запись в журнале версий.
 
-> КОНТРОЛЬНЫЕ СТАТУСЫ ЭТОЙ ВЕРСИИ: `FND-001 — ВЫПОЛНЕНО`; `FND-002 — ВЫПОЛНЕНО`; `DATA-001 — НУЖНА ПРОВЕРКА`. PDF с версией `1.0.1` или иными статусами является устаревшей копией.
+> КОНТРОЛЬНЫЕ СТАТУСЫ ЭТОЙ ВЕРСИИ: `FND-001 — ВЫПОЛНЕНО`; `FND-002 — ВЫПОЛНЕНО`; `DATA-001 — ВЫПОЛНЕНО`; `DATA-002 — НУЖНА ПРОВЕРКА`; `DOMAIN-001 — ЗАПЛАНИРОВАНО, ЭТАП 6, ОБЯЗАТЕЛЕН ДО BETA`. PDF с версией `1.0.1` или иными статусами является устаревшей копией.
 
 ## 1. Источник истины и аудит источников
 
 - GitHub является главным источником актуального кода.
 - Если в текущем чате загружен более новый ZIP, он является рабочей основой этого чата.
 - Канонический план определяется наибольшей версией и датой; старые дубликаты не должны оставаться действующими.
-- Перед DATA-001 проверено, что актуальный код находится в `ai-career-agent-site-main-12-fnd-002-config.zip`.
+- Перед DATA-002 проверено, что актуальный код находится в `ai-career-agent-site-main (1).zip` и соответствует завершённому DATA-001.
 - Загруженные планы/паспорт были устаревшими: они содержали версии 1.0.0/1.0.1 и раннее состояние HH 403, не отражали подтверждение FND-001/FND-002 и согласованную стратегию собственного домена/VPS.
-- Версия 1.2.3 является канонической синхронизированной версией: FND-001 и FND-002 подтверждены как ВЫПОЛНЕНО, DATA-001 остаётся НУЖНА ПРОВЕРКА. Старые PLAN_CURRENT и паспорт следует заменить.
+- Версия 1.2.6 является канонической candidate-версией: FND-001, FND-002 и DATA-001 подтверждены как ВЫПОЛНЕНО; DATA-002 реализован и имеет статус НУЖНА ПРОВЕРКА до GitHub/Render подтверждения. DOMAIN-001 подтверждён как отдельный пакет этапа 6.
 
 ## 2. Обязательный протокол работы
 
@@ -59,7 +59,7 @@
 |---|---|
 | Запуск | Flask + Gunicorn, WSGI `app:app`. |
 | Конфигурация | `config.py`, `APP_ENV=production/development/test`, ранняя валидация. |
-| База | DATA-001 добавляет SQLAlchemy/Alembic/PostgreSQL; до production verification возможен SQLite fallback. |
+| База | Production работает на PostgreSQL 17 через SQLAlchemy/Alembic; SQLite оставлен только как local/test fallback. |
 | OAuth | HeadHunter и SuperJob, Fernet encryption, пока не привязаны к собственному User. |
 | Вакансии | Trudvsem cache, HH, Reed, conditional SuperJob; остаются dedup/pagination задачи. |
 | Резюме | PDF extraction на pypdf и browser resume builder; LLM пока нет. |
@@ -82,7 +82,7 @@
 
 | ID | Уровень | Риск |
 |---|---|---|
-| R-01 | Критический до DATA-001 verify | SQLite на ephemeral disk может потерять данные. |
+| R-01 | Закрыт 04.08.2026 | Production переведён на PostgreSQL; restart подтвердил сохранность кэша и служебного состояния. |
 | R-02 | Высокий | Trudvsem daemon thread зависит от Gunicorn. |
 | R-03 | Высокий | Публичные technical endpoints/forms/sessions требуют SEC-001. |
 | R-04 | Высокий | Межисточниковые дубли и нестабильный total/pagination. |
@@ -108,8 +108,8 @@ MVP не готов, если работает только отдельная �
 |---|---|---|---|
 | FND-001 | P0 | ВЫПОЛНЕНО | Базовые тесты и CI перед архитектурными изменениями |
 | FND-002 | P0 | ВЫПОЛНЕНО | Конфигурация приложения и разделение development/test/production |
-| DATA-001 | P0 | НУЖНА ПРОВЕРКА | Переход с временной SQLite на PostgreSQL и миграции |
-| DATA-002 | P0 | ЗАПЛАНИРОВАНО | Базовая доменная модель и слой доступа к данным |
+| DATA-001 | P0 | ВЫПОЛНЕНО | Переход с временной SQLite на PostgreSQL и миграции |
+| DATA-002 | P0 | НУЖНА ПРОВЕРКА | Базовая доменная модель и слой доступа к данным |
 | SEC-001 | P0 | ЗАПЛАНИРОВАНО | Базовое усиление безопасности |
 | OPS-001 | P0 | ЗАПЛАНИРОВАНО | Наблюдаемость, безопасные логи и резервное восстановление |
 | DOC-001 | P0 | ЗАПЛАНИРОВАНО | Синхронизация README, ROADMAP, CHANGELOG и фактического кода |
@@ -214,7 +214,7 @@ MVP не готов, если работает только отдельная �
 #### DATA-001 - Переход с временной SQLite на PostgreSQL и миграции
 
 **Приоритет:** P0  
-**Статус:** НУЖНА ПРОВЕРКА
+**Статус:** ВЫПОЛНЕНО
 
 **Цель:** Исключить потерю OAuth-подключений, кэша и будущих пользовательских данных после restart/redeploy.
 
@@ -224,24 +224,24 @@ MVP не готов, если работает только отдельная �
 
 **Влияние на сайт:** Визуально ничего не меняется. После подключения PostgreSQL данные должны переживать restart/redeploy. /health показывает backend и revision без секретов.
 
-**Критерии готовности:** Зелёный CI; production /health: postgresql, persistent=true, configured=true, revision=20260804_0001; повторная миграция и persistence подтверждены; rollback понятен.
+**Критерии готовности:** ВЫПОЛНЕНО: зелёный CI; production `/health` подтверждает PostgreSQL и revision `20260804_0001`; повторная миграция прошла; после restart сохранились `cached_total=24`, `current_offset=100` и служебные отметки синхронизации.
 
 **Зависимости:** FND-001, FND-002.
 
 #### DATA-002 - Базовая доменная модель и слой доступа к данным
 
 **Приоритет:** P0  
-**Статус:** ЗАПЛАНИРОВАНО
+**Статус:** НУЖНА ПРОВЕРКА
 
 **Цель:** Отделить persistence от Flask routes и подготовить данные для аккаунта, профиля, вакансий и синхронизаций.
 
-**Реализация:** Создать User, OAuthConnection, Vacancy, SourceRecord, SyncRun и repository/service layer; постепенно убрать ORM-детали из app.py.
+**Реализация:** Добавлены User, unified OAuthConnection, canonical Vacancy, VacancySourceRecord, SyncRun, immutable User/OAuth/Vacancy/Source/SyncRun records, repositories и StorageServices. Migration `20260804_0002` копирует legacy OAuth rows, преобразует source-only vacancies без потери raw data и выравнивает PostgreSQL sequence. app.py больше не импортирует SQLAlchemy/ORM/concrete repositories; OAuth writes временно dual-write в legacy tables; VacancyStore делегирует SQL; Trudvsem сохраняет sync lifecycle.
 
-**Влияние на код:** models/, repositories/, services/storage/, app.py, миграции, tests.
+**Влияние на код:** domain/, models/, repositories/, services/storage.py, services/vacancy_store.py, app.py, migration 0002, legacy importer, CI, tests и документация.
 
-**Влияние на сайт:** Сразу видимых функций мало; последующие аккаунт, профиль и tracker строятся без raw persistence в routes.
+**Влияние на сайт:** Визуально ничего не меняется. Existing OAuth/session/templates и search payload совместимы. `/trudvsem/status` после sync может показать persisted_run.
 
-**Критерии готовности:** Routes не знают SQL; ограничения и связи проверены миграциями/tests; текущий OAuth и поиск совместимы.
+**Критерии готовности:** Локально migration/rollback/alembic check и 55 tests пройдены; требуется зелёный GitHub Actions, PostgreSQL legacy migration/integration без skip, Render `/health` revision `20260804_0002`, OAuth/search smoke и restart persistence.
 
 **Зависимости:** DATA-001.
 
@@ -704,6 +704,8 @@ MVP не готов, если работает только отдельная �
 
 **Цель:** Дать продукту постоянный адрес, независимый от Render/VPS.
 
+**Трассировка:** Пакет не потерян и не интегрирован в DATA-002. Он добавлен в версии 1.1.0, остаётся отдельным пунктом этапа 6 и выполняется после SEC-001/OPS-001 до публичной beta.
+
 **Реализация:** Register domain, DNS, TLS, PUBLIC_BASE_URL, OAuth callbacks, cookie/CSRF trusted origins, email DNS.
 
 **Влияние на код:** config, routes generating absolute URLs, hosting/DNS docs, OAuth provider settings.
@@ -920,17 +922,23 @@ pytest: 47 passed, 3 skipped
 
 Первый запуск GitHub Actions для DATA-001 выявил ошибку только в тесте `test_sqlalchemy_account_storage_round_trip`: helper-функции `account()` и `hh_account()` корректно требуют активный Flask request context, а тест вызывал их после закрытия контекста `session_transaction`. Тест исправлен: проверка выполняется внутри `app.test_request_context`. Production-код и схема базы не изменялись. Также workflow DATA-001 должен быть вручную обновлён в `.github/workflows/ci.yml`; старый workflow заметен по отсутствию шагов Alembic/PostgreSQL и по пропуску `test_postgresql_integration.py`. Статус DATA-001 остаётся НУЖНА ПРОВЕРКА до повторного зелёного CI и production persistence-проверки.
 
+Следующий запуск не начался из-за ошибки синтаксической валидации workflow: контекст `${{ runner.temp }}` был указан в `jobs.tests.env`, где GitHub Actions его не разрешает. `DATA_DIR` заменён на абсолютный временный путь `/tmp/ai-career-agent-ci`, а перед checkout добавлен шаг создания каталога. Production-код и миграции не изменялись. Статус DATA-001 оставался НУЖНА ПРОВЕРКА до зелёного CI и production persistence-проверки.
+
+Финальный GitHub Actions успешно выполнил PostgreSQL 17 service, Alembic migration/check, PostgreSQL integration test и полный pytest. На Render создана PostgreSQL 17 в регионе Oregon, сайт подключён через Internal Database URL. `/health` подтвердил `backend=postgresql`, `configured=true`, `persistent=true`, `revision=20260804_0001`. После restart значения `cached_total=24`, `current_offset=100`, `last_saved=100`, `last_started` и `last_finished` сохранились; увеличение `cache_age_seconds` подтверждает продолжение работы с теми же данными. Timeout `opendata.trudvsem.ru` является внешней ошибкой источника и относится к SYNC-001/SEARCH-005, а не к миграции базы.
+
 ### 9.4 Production verification
 
-1. Создать PostgreSQL в том же регионе, что и web service.
-2. Добавить `DATABASE_URL` из Internal Database URL в Render Environment.
-3. Не менять `TOKEN_ENCRYPTION_KEY`.
-4. Deploy ветки после зелёного CI.
-5. В `/health` подтвердить `backend=postgresql`, `persistent=true`, `configured=true`, `revision=20260804_0001`.
-6. Проверить `/`, `/privacy`, `/ai-career`, `/resume-builder`, `/vacancies`, `/vacancies/internal`, `/dashboard`.
-7. Проверить поиск хотя бы одного source.
-8. Выполнить restart/redeploy и подтвердить, что данные остались.
-9. Проверить повторный deploy/migration.
+Проверка завершена 04 августа 2026:
+
+1. PostgreSQL 17 создан в регионе Oregon, совпадающем с web service.
+2. `DATABASE_URL` настроен через Internal Database URL.
+3. Start Command: `python scripts/manage_db.py upgrade && gunicorn app:app`.
+4. `/health`: `status=ok`, `backend=postgresql`, `configured=true`, `persistent=true`, `revision=20260804_0001`.
+5. GitHub Actions полностью зелёный, включая PostgreSQL migrations и integration test.
+6. После restart сохранились `cached_total=24`, `current_offset=100`, `last_saved=100` и временные отметки синхронизации.
+7. Повторный запуск Alembic не повредил схему.
+8. `/dashboard` существует в текущем коде по точному пути `/dashboard` и без OAuth должен перенаправлять на главную; полученный 404 требует отдельной проверки URL/слэша и не является критерием DATA-001.
+9. Ошибка `Read timed out` от Trudvsem не связана с PostgreSQL и будет обрабатываться в пакетах SYNC/SEARCH.
 
 ### 9.5 Rollback
 
@@ -939,7 +947,66 @@ pytest: 47 passed, 3 skipped
 - Для data rollback использовать verified backup/restore или новую DB и переключение DATABASE_URL.
 - Удаление DATABASE_URL возвращает SQLite fallback только для диагностики и не считается production solution.
 
-## 10. Стратегия домена и hosting
+## 10. DATA-002 - фактическая реализация 04 августа 2026
+
+### 10.1 Схема
+
+- `users` - first-party identity skeleton для AUTH-001;
+- `oauth_connections` - unified HH/SuperJob connections, `user_id` nullable до AUTH-002;
+- `vacancies` - canonical vacancy;
+- `vacancy_source_records` - source payload/URL/raw JSON;
+- `sync_runs` - persistent lifecycle provider sync;
+- legacy `accounts`/`hh_accounts` временно сохранены для rollback.
+
+### 10.2 Слои
+
+```text
+routes -> services -> repositories -> SQLAlchemy models
+```
+
+- app.py импортирует `StorageServices`, но не SQLAlchemy/ORM/concrete repositories;
+- repositories возвращают detached User/OAuth/Vacancy/Source/SyncRun records;
+- VacancyStore нормализует payload, VacancyRepository выполняет SQL;
+- OAuth routes читают unified connections; HH/SJ writes зеркалируются в legacy tables для rollback;
+- Trudvsem worker пишет start/finish через SyncRunRepository.
+
+### 10.3 Migration 20260804_0002
+
+- создаёт новые domain tables;
+- копирует encrypted legacy OAuth rows без изменения tokens;
+- преобразует старую `vacancies` в canonical/source model;
+- сохраняет source IDs, raw JSON, search fields и timestamps;
+- выравнивает PostgreSQL serial sequence после explicit ID backfill;
+- поддерживает SQLite/PostgreSQL и controlled downgrade.
+
+### 10.4 Локальные проверки
+
+```text
+compileall: успешно
+pytest: 55 passed, 4 skipped (Flask/Psycopg/PostgreSQL недоступны локально)
+SQLite upgrade: успешно
+SQLite downgrade/upgrade round-trip: успешно
+alembic check: No new upgrade operations detected
+repository hygiene: успешно
+```
+
+### 10.5 Требуемая verification
+
+1. GitHub Actions зелёный, включая seeded legacy PostgreSQL migration, sequence и integration test.
+2. Render deploy применяет revision `20260804_0002`.
+3. `/health` показывает postgresql/persistent/configured и revision 0002.
+4. OAuth/search/resume smoke без HTTP 500.
+5. Existing connections/cache остаются после migration/restart.
+6. `/trudvsem/status` после run содержит secret-free `persisted_run`.
+
+### 10.6 Ограничения
+
+- User account UI/passwords не входят в DATA-002.
+- Legacy account tables удаляются только отдельной cleanup migration после AUTH-002.
+- Canonical vacancy пока one-to-one с source record; actual cross-source merge относится к SEARCH-002.
+- Trudvsem thread остаётся в Gunicorn до SYNC-001.
+
+## 11. Стратегия домена и hosting
 
 - Собственный домен обязателен к коммерческой beta и может сначала указывать на Render.
 - Первая beta: paid Render + own domain + managed PostgreSQL - минимальный operational risk.
@@ -947,11 +1014,10 @@ pytest: 47 passed, 3 skipped
 - Архитектура строится portability-first: DATABASE_URL, stdout logs, separate worker commands, object storage, Docker/Compose later.
 - При миграции users продолжают видеть один домен; DNS переключается с Render на VPS после staging/data sync/rollback rehearsal.
 
-## 11. Ближайшая последовательность
+## 12. Ближайшая последовательность
 
 ```text
-DATA-001 verification
--> DATA-002
+DATA-002 verification
 -> SEC-001
 -> OPS-001
 -> DOMAIN-001
@@ -962,11 +1028,11 @@ DATA-001 verification
 -> commercial release gates
 ```
 
-## 12. Следующий пакет после DATA-001
+## 13. Следующий пакет
 
-`DATA-002 - Базовая доменная модель и слой доступа к данным` начнётся только после подтверждения production PostgreSQL. Подготовка включает inventory всех текущих table accesses, проектирование User/OAuthConnection/Vacancy/SyncRun и migration strategy без одновременной реализации account UI.
+DATA-002 имеет статус **НУЖНА ПРОВЕРКА**. После зелёного CI, Render revision `20260804_0002` и smoke/persistence-проверки он перейдёт в ВЫПОЛНЕНО, а `SEC-001 - Базовое усиление безопасности` станет ГОТОВО К СТАРТУ. DOMAIN-001 остаётся следующим инфраструктурным пакетом после SEC-001 и OPS-001.
 
-## 13. Обязательный отчёт после каждого пакета
+## 14. Обязательный отчёт после каждого пакета
 
 ```text
 Пункт: <ID и название>
@@ -982,7 +1048,7 @@ GitHub/production/API: <подтверждено или требуется>
 Приложения: ZIP, PLAN_CURRENT DOCX/PDF/MD, паспорт при необходимости
 ```
 
-## 14. Журнал версий
+## 15. Журнал версий
 
 | Версия | Дата | Пункт | Изменение |
 |---|---|---|---|
@@ -994,3 +1060,6 @@ GitHub/production/API: <подтверждено или требуется>
 | 1.2.1 | 04.08.2026 | DOC-SYNC | Исправлена рассинхронизация экспортированных DOCX/PDF: FND-001 и FND-002 отмечены ВЫПОЛНЕНО; DATA-001 остаётся НУЖНА ПРОВЕРКА. |
 | 1.2.2 | 04.08.2026 | DOC-CACHE-FIX | Перевыпущены документы с уникальными versioned filenames; FND-001/FND-002 подтверждены как ВЫПОЛНЕНО, DATA-001 остаётся НУЖНА ПРОВЕРКА. |
 | 1.2.3 | 04.08.2026 | DATA-001-CI-FIX | Исправлен request-context тест OAuth-хранилища; усилен workflow отдельным PostgreSQL integration step. DATA-001 остаётся НУЖНА ПРОВЕРКА. |
+| 1.2.4 | 04.08.2026 | DATA-001-WORKFLOW-FIX | Исправлен недопустимый `${{ runner.temp }}` в job-level env; тестовый DATA_DIR перенесён в `/tmp`. Статус DATA-001 не изменён. |
+| 1.2.5 | 04.08.2026 | DATA-001-COMPLETE | Подтверждены зелёный PostgreSQL CI, Render PostgreSQL 17, Alembic revision и сохранность данных после restart; DATA-002 готов к старту. |
+| 1.2.6 | 04.08.2026 | DATA-002 | Добавлены domain/repository layers и migration 20260804_0002; DOMAIN-001 подтверждён в этапе 6. DATA-002 ожидает GitHub/Render verification. |

@@ -10,7 +10,8 @@ from pathlib import Path
 from sqlalchemy import select
 
 from database import create_database
-from models import HeadHunterAccount, SuperJobAccount, Vacancy
+from models import VacancySourceRecord
+from repositories import OAuthConnectionRepository
 
 
 def _create_legacy_database(path: Path) -> None:
@@ -133,11 +134,14 @@ def test_legacy_import_script_copies_current_tables(tmp_path):
 
     runtime = create_database(f"sqlite:///{target.resolve().as_posix()}")
     try:
+        oauth = OAuthConnectionRepository(runtime)
+        assert oauth.get("superjob", "1") is not None
+        assert oauth.get("headhunter", "hh-1") is not None
         with runtime.session() as session:
-            assert session.get(SuperJobAccount, 1) is not None
-            assert session.get(HeadHunterAccount, "hh-1") is not None
             imported = session.scalar(
-                select(Vacancy).where(Vacancy.external_id == "vacancy-1")
+                select(VacancySourceRecord).where(
+                    VacancySourceRecord.external_id == "vacancy-1"
+                )
             )
             assert imported is not None
             assert imported.title == "Imported vacancy"

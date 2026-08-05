@@ -1,153 +1,155 @@
-# AI Career Agent - Паспорт проекта
+# AI Career Agent — паспорт проекта
 
-**Версия паспорта:** 2.2  
+**Версия паспорта:** 2.4  
 **Дата:** 04 августа 2026  
 **Статус:** ДЕЙСТВУЮЩИЙ  
-**Связанный план:** `AI_Career_Agent_PLAN_CURRENT` v1.2.2  
-**Актуальный рабочий пакет:** `DATA-001` - НУЖНА ПРОВЕРКА
+**Связанный план:** `AI_Career_Agent_PLAN_CURRENT v1.2.6`  
+**Актуальный рабочий пакет:** `DATA-002 — НУЖНА ПРОВЕРКА`
 
-> КОНТРОЛЬНЫЕ СТАТУСЫ: `FND-001 — ВЫПОЛНЕНО`; `FND-002 — ВЫПОЛНЕНО`; `DATA-001 — НУЖНА ПРОВЕРКА`. Документы версии плана `1.0.1` устарели.
+> Контрольные статусы: FND-001 — ВЫПОЛНЕНО; FND-002 — ВЫПОЛНЕНО; DATA-001 — ВЫПОЛНЕНО; DATA-002 — НУЖНА ПРОВЕРКА; DOMAIN-001 — ЗАПЛАНИРОВАНО, ЭТАП 6, ОБЯЗАТЕЛЕН ДО BETA. Следующий пакет после подтверждения — SEC-001.
 
 ## 1. Назначение
 
-AI Career Agent - коммерческий веб-сервис карьерного сопровождения. Целевой пользовательский путь:
+AI Career Agent — коммерческий веб-сервис карьерного сопровождения:
 
 ```text
-аккаунт -> резюме -> подтверждённый карьерный профиль -> AI-анализ
--> поиск реальных вакансий -> объяснимый match -> письмо -> трекер откликов
+аккаунт -> резюме -> подтверждённый профиль -> AI-анализ
+-> реальные вакансии -> объяснимый match -> письмо -> tracker
 ```
 
-Пользователь принимает окончательные решения самостоятельно. Автоматическая отправка откликов без явного подтверждения не является целевой функцией.
+Пользователь принимает окончательные решения самостоятельно.
 
 ## 2. Источник истины
 
-1. GitHub - главный источник актуального кода.
-2. Более новый ZIP, загруженный в текущий чат, является рабочей основой задачи.
-3. Канонический план - `AI_Career_Agent_PLAN_CURRENT` с наибольшей версией и датой.
-4. После каждого пакета старые план и паспорт заменяются новыми; параллельные устаревшие версии удаляются из источников.
-5. Главный файл - `app.py`; WSGI entrypoint - `app:app`; `app_fixed.py` не используется.
+1. GitHub — главный источник кода.
+2. Более новый ZIP в текущем чате — рабочая основа задачи.
+3. Канонический PLAN_CURRENT определяется версией/датой.
+4. Старые план/паспорт удаляются после замены.
+5. Главный файл `app.py`; WSGI `app:app`; `app_fixed.py` не используется.
 
 ## 3. Технологии
 
-- Python 3.11;
-- Flask 3.1.3;
-- Gunicorn;
-- SQLAlchemy 2;
-- Alembic;
-- PostgreSQL через Psycopg 3;
-- SQLite как local/test fallback;
+- Python 3.11, Flask 3.1.3, Gunicorn;
+- SQLAlchemy 2, Alembic;
+- PostgreSQL 17/Psycopg 3;
+- SQLite local/test fallback;
 - GitHub Actions;
-- Render на текущем этапе;
-- будущий собственный домен;
-- возможный VPS после отдельного решения;
-- OAuth HeadHunter и SuperJob;
-- HeadHunter, Reed и Trudvsem API;
+- Render сейчас;
+- собственный домен в `DOMAIN-001`;
+- optional VPS после `HOST-001`;
+- OAuth HH/SuperJob;
+- HH, Reed, Trudvsem APIs;
 - pypdf, Cryptography/Fernet;
 - HTML/CSS/JavaScript.
 
 ## 4. Структура
 
 ```text
-app.py                         Flask routes и app:app
-config.py                      конфигурация production/development/test
-database.py                    SQLAlchemy runtime и health
-models/                        текущие persistence models
-migrations/                    Alembic revisions
-services/                      providers, filters, parser, vacancy store
-scripts/manage_db.py           migration/readiness commands
-scripts/import_legacy_sqlite.py optional legacy import
-tests/                         unit/provider/route/database tests
-templates/                     HTML
-static/                        CSS/JS/images
-render.yaml                    текущий Render deploy
-.github/workflows/ci.yml       CI
+app.py                     Flask routes, app:app
+config.py                  production/development/test
+database.py                SQLAlchemy runtime/health
+domain/                    detached records
+models/                    ORM domain schema
+repositories/              persistence queries
+migrations/                Alembic 0001 + 0002
+services/storage.py         app persistence boundary
+services/                  providers/application services
+scripts/manage_db.py       migrations/readiness
+scripts/import_legacy_sqlite.py
+tests/
+templates/
+static/
+render.yaml
+.github/workflows/ci.yml
 ```
 
 ## 5. Подтверждённые пакеты
 
-### FND-001 - ВЫПОЛНЕНО
+### FND-001 — ВЫПОЛНЕНО
 
-- добавлены базовые tests и GitHub Actions;
-- подтверждены зелёный CI, намеренно красный CI и повторный зелёный CI;
-- подтверждена Render smoke-проверка.
+Tests/CI и Render smoke подтверждены.
 
-### FND-002 - ВЫПОЛНЕНО
+### FND-002 — ВЫПОЛНЕНО
 
-- добавлен `config.py` и `AppSettings`;
-- разделены `production/development/test`;
-- ранняя валидация окружения;
-- `HH_CURRENCY_SCAN_PAGES` на Render исправлен на `20`;
-- GitHub Actions и Render deploy подтверждены.
+Central config/APP_ENV, CI и Render подтверждены; `HH_CURRENCY_SCAN_PAGES=20`.
 
+### DATA-001 — ВЫПОЛНЕНО
 
-## 5.1 Синхронизация статусов 04 августа 2026
+- PostgreSQL 17 в Oregon;
+- `DATABASE_URL` Internal URL;
+- Alembic `20260804_0001`;
+- `/health` persistent=true;
+- cache/state пережили restart.
 
-- `FND-001` подтверждён и имеет статус **ВЫПОЛНЕНО**.
-- `FND-002` подтверждён и имеет статус **ВЫПОЛНЕНО**.
-- `DATA-001` реализован в коде, но остаётся **НУЖНА ПРОВЕРКА** до PostgreSQL/Render persistence-проверки.
-- Предыдущие экспортированные DOCX/PDF с устаревшими статусами не являются каноническими и должны быть заменены.
+## 6. DATA-002 — реализован, нужна проверка
 
-## 6. Текущий пакет DATA-001
+### Добавлено
 
-### Реализовано в коде
+- `User`;
+- unified `OAuthConnection`;
+- canonical `Vacancy`;
+- `VacancySourceRecord`;
+- `SyncRun`;
+- domain records;
+- repositories и `StorageServices`;
+- migration `20260804_0002`;
+- legacy OAuth/vacancy backfill;
+- persisted Trudvsem run lifecycle;
+- architecture-boundary tests.
 
-- `DATABASE_URL`;
-- SQLAlchemy engine/sessions;
-- PostgreSQL/Psycopg 3;
-- Alembic и migration `20260804_0001`;
-- модели `accounts`, `hh_accounts`, `vacancies`;
-- SQLAlchemy persistence в `app.py` и `VacancyStore`;
-- `/health` с backend/persistence/revision без credentials;
-- `manage_db.py` и legacy SQLite importer;
-- CI migration checks, PostgreSQL 17 service container и реальный persistence round-trip.
+### Совместимость
 
-### Статус
+- Existing OAuth templates/session IDs сохраняются.
+- Legacy account tables пока остаются и получают mirrored HH/SJ writes для rollback.
+- Search/UI payload не меняется.
+- Canonical/source vacancy model готовит SEARCH-002.
+- app.py больше не знает SQLAlchemy, ORM или concrete repositories.
 
-`НУЖНА ПРОВЕРКА` до выполнения всех пунктов:
+### До статуса «ВЫПОЛНЕНО»
 
 - зелёный GitHub Actions;
-- создан production PostgreSQL;
-- `DATABASE_URL` использует internal URL;
-- `/health` показывает `postgresql`, `persistent=true`, `revision=20260804_0001`;
-- данные переживают restart/redeploy;
-- основные маршруты и поиск работают.
+- PostgreSQL integration test не skipped;
+- Render `/health` revision `20260804_0002`;
+- OAuth/search smoke;
+- restart persistence.
 
 ## 7. Текущее функциональное состояние
 
-- Публичная главная и AI Career pages - работают.
-- Единый поиск - Trudvsem, HeadHunter, Reed, SuperJob после подключения.
-- OAuth HH/SJ - реализован в текущем pre-MVP, токены шифруются.
-- Trudvsem - локальный cache и background thread внутри web process.
-- PDF resume parse - эвристический, не LLM.
-- Resume builder - live preview, PDF export, mobile/tablet fixes.
-- Saved jobs - localStorage only.
-- Собственный User, server profile, real AI, match, letters и tracker - ещё не реализованы.
+- Главная/AI Career/resume builder — работают.
+- Search — Trudvsem, HH, Reed, conditional SuperJob.
+- OAuth HH/SJ — текущий pre-MVP, tokens encrypted.
+- Trudvsem — cache + daemon внутри web process.
+- PDF parser — эвристический, не LLM.
+- Saved jobs — localStorage.
+- Own account/profile/real AI/match/letters/tracker — впереди.
 
-## 8. Критические риски и очередность
+## 8. Критические риски и очередь
 
-1. Завершить DATA-001 и исключить ephemeral SQLite production.
-2. DATA-002 - доменные модели и repository layer.
-3. SEC-001 - sessions/forms/endpoints/security headers/rate limits.
-4. OPS-001 - monitoring/logging/backup restore.
-5. DOMAIN-001 - собственный домен до коммерческой beta.
-6. SYNC/SEARCH - worker, normalization, dedup, stable pagination.
-7. AUTH/PROFILE.
-8. AI/JOB/LEGAL/REL.
+1. DATA-002 verification.
+2. SEC-001 — forms/sessions/endpoints/security headers/rate limits.
+3. OPS-001 — logs/monitoring/backup restore.
+4. DOMAIN-001 — собственный домен до beta.
+5. SYNC/SEARCH core.
+6. AUTH/PROFILE.
+7. AI/JOB/LEGAL/REL.
 
-## 9. Домен и hosting
+## 9. DOMAIN-001 — трассировка
 
-- Собственный домен обязателен к коммерческому запуску.
-- Первая коммерческая beta рекомендуется на платном Render с собственным доменом и managed PostgreSQL.
-- VPS не обязателен заранее. Решение принимается по реальным расходам, нагрузке, региону данных и операционной готовности.
-- Код должен быть переносимым: `DATABASE_URL`, stdout logs, separate jobs, object storage, Docker/Compose на INFRA-001.
-- При миграции домен остаётся прежним, меняется только DNS target.
+Пакет не потерян и не интегрирован в DATA-002. Он существует отдельно в этапе 6 и выполняется после `SEC-001`/`OPS-001`:
+
+```text
+регистрация домена -> DNS -> TLS -> PUBLIC_BASE_URL
+-> HH/SJ callbacks -> trusted hosts/cookie/CSRF origins
+```
+
+Сначала домен может указывать на Render; при переходе на VPS меняется DNS target.
 
 ## 10. Правила рабочего чата
 
-- Перед изменениями изучить паспорт, PLAN_CURRENT и актуальный ZIP.
-- Выбрать один пакет по ID.
-- Не менять unrelated design/business logic.
-- После работы перечислить файлы, изменения, tests, GitHub/production steps и limitations.
-- Не ставить `ВЫПОЛНЕНО` без подтверждения критериев.
-- Вернуть новый ZIP и обновлённые PLAN_CURRENT DOCX/PDF/MD.
-- Не помещать secrets, `.env`, databases, backups, virtualenv и caches в архив.
+- Читать паспорт, PLAN_CURRENT и актуальный ZIP.
+- Один пакет по ID.
+- Не смешивать unrelated design/business changes.
+- Возвращать files/change list/tests/GitHub/production steps/limitations.
+- Не ставить ВЫПОЛНЕНО без criteria.
+- Возвращать ZIP + PLAN_CURRENT DOCX/PDF/MD.
+- Не включать secrets/runtime artifacts.

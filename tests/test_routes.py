@@ -160,11 +160,36 @@ def test_sqlalchemy_account_storage_round_trip(app_module):
 
 
 def test_health_reports_migrated_database_without_connection_url(client):
+    from database import CURRENT_REVISION
+
     response = client.get("/health")
     payload = response.get_json()
 
     assert response.status_code == 200
     assert payload["database"]["ok"] is True
     assert payload["database"]["backend"] == "sqlite"
-    assert payload["database"]["revision"] == "20260804_0001"
+    assert payload["database"]["revision"] == CURRENT_REVISION
     assert "sqlite:///" not in response.get_data(as_text=True)
+
+
+def test_trudvsem_status_includes_latest_persisted_sync_run(app_module, client):
+    run = app_module.SYNC_RUNS.start(
+        source="trudvsem",
+        trigger="route-test",
+        target=10,
+    )
+    app_module.SYNC_RUNS.finish(
+        run.id,
+        status="succeeded",
+        processed=10,
+        saved=8,
+        cursor="10",
+    )
+
+    response = client.get("/trudvsem/status")
+    payload = response.get_json()
+
+    assert response.status_code == 200
+    assert payload["persisted_run"]["id"] == run.id
+    assert payload["persisted_run"]["status"] == "succeeded"
+    assert payload["persisted_run"]["saved"] == 8
