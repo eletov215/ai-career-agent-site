@@ -7,8 +7,8 @@
 - [x] `FND-001` — базовые тесты и CI.
 - [x] `FND-002` — конфигурация development/test/production.
 - [x] `DATA-001` — PostgreSQL и Alembic; production persistence подтверждена.
-- [ ] `DATA-002` — доменные модели и repository layer. **Код/migration 0002 готовы; нужен зелёный CI и Render verification.**
-- [ ] `SEC-001` — CSRF, secure cookies, rate limiting, security headers, закрытие technical endpoints.
+- [x] `DATA-002` — доменные модели и repository layer; migration 0002, CI, Render и restart persistence подтверждены.
+- [ ] `SEC-001` — **НУЖНА ПРОВЕРКА**: код CSRF/cookies/rate limits/headers/request limits/technical endpoints подготовлен; требуются GitHub Actions и Render smoke.
 - [ ] `OPS-001` — structured logs, error monitoring, backup/restore.
 - [ ] `DOC-001` — периодическая сверка документов и фактического кода.
 
@@ -68,8 +68,7 @@
 ## Ближайшая последовательность
 
 ```text
-DATA-002 verification
--> SEC-001
+SEC-001 verification
 -> OPS-001
 -> DOMAIN-001
 -> SYNC-001 / SEARCH core

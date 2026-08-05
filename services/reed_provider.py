@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
@@ -7,6 +8,8 @@ import requests
 
 from .base_provider import SearchResult, VacancyProvider
 from .search_filters import VacancySearchFilters, canonical_currency
+
+logger = logging.getLogger(__name__)
 
 
 class ReedProvider(VacancyProvider):
@@ -128,7 +131,21 @@ class ReedProvider(VacancyProvider):
                 has_next=(page + 1) * self.per_page < total,
             )
         except requests.HTTPError as exc:
-            status = exc.response.status_code if exc.response is not None else "HTTP"
-            return SearchResult(page=page, error=f"Reed.co.uk: ошибка API {status}")
-        except (requests.RequestException, ValueError) as exc:
-            return SearchResult(page=page, error=f"Reed.co.uk: {exc}")
+            status = exc.response.status_code if exc.response is not None else None
+            logger.exception("Reed vacancy search failed status=%s", status)
+            message = "Reed.co.uk временно не смог выполнить поиск."
+            if status in {401, 403, 429}:
+                message += f" Доступ источника отклонён (HTTP {status})."
+            return SearchResult(page=page, error=message)
+        except requests.RequestException:
+            logger.exception("Reed vacancy search failed")
+            return SearchResult(
+                page=page,
+                error="Reed.co.uk временно не смог выполнить поиск.",
+            )
+        except (ValueError, TypeError, KeyError):
+            logger.exception("Reed returned invalid vacancy payload")
+            return SearchResult(
+                page=page,
+                error="Reed.co.uk вернул некорректный ответ.",
+            )

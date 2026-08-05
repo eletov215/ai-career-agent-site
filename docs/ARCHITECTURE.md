@@ -1,7 +1,7 @@
 # AI Career Agent — архитектура проекта
 
-> Последнее обновление: 04 августа 2026 года  
-> Текущий пакет: `DATA-002` — доменная модель и repository layer  
+> Последнее обновление: 05 августа 2026 года  
+> Текущий пакет: `SEC-001` — базовое усиление безопасности  
 > Статус пакета: **НУЖНА ПРОВЕРКА**
 
 ## 1. Цель архитектуры
@@ -19,6 +19,7 @@
 - SQLAlchemy 2, Alembic, PostgreSQL/Psycopg 3;
 - SQLite как local/test fallback;
 - Requests, Cryptography/Fernet, pypdf;
+- Flask-WTF 1.3 и Flask-Limiter 4.1;
 - HTML/CSS/JavaScript;
 - GitHub Actions;
 - Render сейчас, собственный домен до beta, optional VPS позже.
@@ -30,6 +31,7 @@ project/
 ├── app.py                         # Flask routes и WSGI app:app
 ├── config.py                      # environment/settings
 ├── database.py                    # engine, sessions, health, Alembic helpers
+├── security.py                    # CSRF, rate limits, headers, request limits
 ├── domain/
 │   └── entities.py                # immutable detached records
 ├── models/
@@ -125,7 +127,51 @@ Legacy tables `accounts` и `hh_accounts` сохраняются временн�
 
 Persistent lifecycle provider sync. Trudvsem сохраняет start/finish, processed/saved/cursor/error. Scheduler/thread architecture остаётся до `SYNC-001`.
 
-## 6. Миграции
+## 6. Security boundary SEC-001
+
+```text
+request
+  -> ProxyFix (one trusted platform proxy)
+  -> trusted host validation
+  -> per-request size/form limits
+  -> CSRFProtect / route-specific exemptions
+  -> Flask-Limiter
+  -> route/service/repository
+  -> neutral error mapping
+  -> security response headers + CSP nonce
+```
+
+`security.py` не содержит business logic и может повторно использоваться будущими blueprints. `config.py` является единственным источником policy values. Production принудительно требует secure cookie, CSRF, rate limiting и security headers.
+
+### Browser session
+
+- host-only `aca_session`;
+- `Secure`, `HttpOnly`, production-enforced `SameSite=Lax`;
+- 12-hour permanent lifetime по умолчанию;
+- session очищается после успешного OAuth, provider identities сохраняются;
+- OAuth state одноразовый, имеет TTL 10 минут и проверяется до обработки success/error/cancel callback; production OAuth redirect URI обязаны использовать HTTPS.
+
+### Public и diagnostic surfaces
+
+- public UI получает только `/api/sources/trudvsem/status`;
+- `/debug/*` и detailed `/trudvsem/status` требуют explicit diagnostics mode + header secret;
+- `/sync/trudvsem` использует `X-Sync-Secret` и CSRF exemption только как machine endpoint;
+- `/trudvsem/refresh` недоступен в production;
+- logout — POST + CSRF.
+
+### Headers и front-end contract
+
+CSP использует request nonce, запрещает inline event handlers и не разрешает произвольные внешние images. Все `<script>` templates обязаны иметь `nonce="{{ csp_nonce }}"`; inline event handlers запрещены и контролируются static tests. Existing inline styles временно разрешены до PERF/A11Y cleanup.
+
+### Resource and outbound controls
+
+Upload/body/form/PDF limits применяются до дорогостоящей обработки. University-logo resolver валидирует DNS/IP, каждый redirect, MIME/signature и response size, что формирует SSRF baseline.
+
+### Ограничение масштабирования
+
+`RATELIMIT_STORAGE_URI=memory://` подходит текущему одному worker. При масштабировании storage должен стать общим, например Redis-compatible; это operational dependency OPS/INFRA.
+
+## 7. Миграции
 
 ### 20260804_0001
 
@@ -142,7 +188,7 @@ Persistent lifecycle provider sync. Trudvsem сохраняет start/finish, pr
 
 Alembic — единственный production schema mechanism. `Base.metadata.create_all()` разрешён только в изолированных tests.
 
-## 7. Runtime database
+## 8. Runtime database
 
 `DatabaseRuntime` предоставляет Engine/sessionmaker и secret-free health. Production подтверждён на PostgreSQL 17.
 
@@ -155,11 +201,11 @@ configured=true
 revision=20260804_0002
 ```
 
-## 8. OAuth compatibility
+## 9. OAuth compatibility
 
 Current browser session по-прежнему хранит внешний provider user ID. StorageServices передаёт запрос repository, unified connection преобразуется в прежний mapping для existing routes/templates. Token encryption/refresh behavior не меняются; обновления временно dual-write в legacy tables.
 
-## 9. Vacancy compatibility
+## 10. Vacancy compatibility
 
 Provider ingestion и template payload не меняются. `VacancyStore`:
 
@@ -168,11 +214,11 @@ Provider ingestion и template payload не меняются. `VacancyStore`:
 3. создаёт/обновляет canonical + source record;
 4. возвращает прежний raw JSON format для search UI.
 
-## 10. Sync state
+## 11. Sync state
 
 In-memory state пока остаётся для текущего UI/worker. Дополнительно каждый run сохраняется в `sync_runs`, а `/trudvsem/status` может показать `persisted_run`. Полный вынос worker из Gunicorn выполняется в `SYNC-001`.
 
-## 11. Собственный домен
+## 12. Собственный домен
 
 `DOMAIN-001` не потерян и не интегрирован в DATA-002. Он находится в этапе 6 и в ближайшей последовательности после `SEC-001` и `OPS-001`.
 
@@ -182,7 +228,7 @@ In-memory state пока остаётся для текущего UI/worker. Д�
 - monitoring/rollback (`OPS-001`);
 - `PUBLIC_BASE_URL`, OAuth callback changes, DNS/TLS (`DOMAIN-001`).
 
-## 12. Deploy и rollback
+## 13. Deploy и rollback
 
 Текущий Render start command:
 
@@ -197,7 +243,7 @@ Rollback DATA-002:
 - предпочтительно восстановить backup/clone и переключить `DATABASE_URL`;
 - rollback application на schema 0001 допустим только после controlled data rollback.
 
-## 13. Следующие границы
+## 14. Следующие границы
 
 - `SEC-001`: security middleware/forms/session flags;
 - `OPS-001`: structured logs, backup restore, alerts;

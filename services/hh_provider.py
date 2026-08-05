@@ -103,13 +103,12 @@ class HeadHunterProvider(VacancyProvider):
 
         if self.debug:
             logger.info(
-                "HH RESPONSE attempt=%s status=%s url=%s request_headers=%s response_headers=%s body=%s",
+                "HH RESPONSE attempt=%s status=%s request_id=%s content_type=%s",
                 attempt,
                 response.status_code,
-                response.url,
-                _safe_headers(response.request.headers),
-                dict(response.headers),
-                response.text[:2000],
+                response.headers.get("X-Request-Id")
+                or response.headers.get("x-request-id"),
+                response.headers.get("Content-Type"),
             )
         return response
 
@@ -184,17 +183,17 @@ class HeadHunterProvider(VacancyProvider):
         if self.token_factory is not None:
             try:
                 token = (self.token_factory() or "").strip()
-            except Exception as exc:
+            except Exception:
                 logger.exception("HH application token unavailable")
                 return SearchResult(
                     page=page,
-                    error=f"HeadHunter: не удалось получить токен приложения: {exc}",
+                    error="HeadHunter временно недоступен.",
                 )
 
         if not token:
             return SearchResult(
                 page=page,
-                error="HeadHunter: токен приложения HH_APP_TOKEN не настроен.",
+                error="HeadHunter временно недоступен.",
             )
 
         try:
@@ -262,28 +261,22 @@ class HeadHunterProvider(VacancyProvider):
             )
         except requests.RequestException as exc:
             status = exc.response.status_code if exc.response is not None else None
-            body = exc.response.text[:2000] if exc.response is not None else ""
-            response_headers = dict(exc.response.headers) if exc.response is not None else {}
-            logger.exception(
-                "HH vacancy search failed status=%s response_headers=%s body=%s",
-                status,
-                response_headers,
-                body,
+            response_headers = exc.response.headers if exc.response is not None else {}
+            request_id = (
+                response_headers.get("X-Request-Id")
+                or response_headers.get("x-request-id")
             )
-            message = f"HeadHunter: {exc}"
+            logger.exception(
+                "HH vacancy search failed status=%s request_id=%s",
+                status,
+                request_id,
+            )
+            message = "HeadHunter временно не смог выполнить поиск."
             if status in {401, 403}:
-                message += " Токен приложения HH отклонён. Проверьте HH_APP_TOKEN в Render."
-            if status == 403:
-                request_id = response_headers.get("X-Request-Id") or response_headers.get("x-request-id")
-                server = response_headers.get("Server") or response_headers.get("server")
-                message += " Доступ отклонён на стороне HH или защитного шлюза."
-                if server:
-                    message += f" Server: {server}."
-                if request_id:
-                    message += f" Request ID: {request_id}."
-            elif body:
-                message += f" Ответ HH: {body}"
+                message += f" Доступ источника отклонён (HTTP {status})."
+            if request_id:
+                message += f" Request ID: {request_id}."
             return SearchResult(page=page, error=message)
         except (ValueError, TypeError, KeyError) as exc:
             logger.exception("HH returned invalid vacancy payload")
-            return SearchResult(page=page, error=f"HeadHunter: некорректный ответ API: {exc}")
+            return SearchResult(page=page, error="HeadHunter вернул некорректный ответ.")

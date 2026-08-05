@@ -1,11 +1,14 @@
 from __future__ import annotations
 
+import logging
 from typing import Callable
 
 import requests
 
 from .base_provider import SearchResult, VacancyProvider
 from .search_filters import VacancySearchFilters, canonical_currency
+
+logger = logging.getLogger(__name__)
 
 
 class SuperJobProvider(VacancyProvider):
@@ -105,5 +108,18 @@ class SuperJobProvider(VacancyProvider):
                 pages=(total + self.per_page - 1) // self.per_page if total else 0,
                 has_next=bool(payload.get("more", False)),
             )
-        except Exception as exc:
-            return SearchResult(page=page, error=f"SuperJob: {exc}")
+        except requests.RequestException:
+            logger.exception("SuperJob vacancy search failed")
+            return SearchResult(
+                page=page,
+                error="SuperJob временно не смог выполнить поиск.",
+            )
+        except (ValueError, TypeError, KeyError):
+            logger.exception("SuperJob returned invalid vacancy payload")
+            return SearchResult(
+                page=page,
+                error="SuperJob вернул некорректный ответ.",
+            )
+        except RuntimeError:
+            logger.exception("SuperJob token preparation failed")
+            return SearchResult(page=page, error="SuperJob временно недоступен.")
