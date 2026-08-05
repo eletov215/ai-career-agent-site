@@ -59,7 +59,7 @@ jobs:
 
       - name: Verify production imports
         run: |
-          python -c "import flask, requests, cryptography, pypdf, sqlalchemy, alembic, psycopg"
+          python -c "import flask, flask_wtf, flask_limiter, requests, cryptography, pypdf, sqlalchemy, alembic, psycopg"
 
       - name: Check repository hygiene
         run: python scripts/check_repository_hygiene.py
@@ -67,13 +67,21 @@ jobs:
       - name: Compile Python files
         run: >-
           python -m compileall -q
-          app.py config.py database.py models migrations services tests scripts
+          app.py config.py database.py domain models repositories migrations services tests scripts
 
       - name: Apply test database migrations
         run: python scripts/manage_db.py upgrade
 
       - name: Verify migration metadata
         run: python -m alembic check
+
+      - name: Verify domain and repository boundaries
+        run: >-
+          python -m pytest -q
+          tests/test_architecture_boundaries.py
+          tests/test_database.py
+          tests/test_repositories.py
+          tests/test_legacy_import.py
 
       - name: Verify PostgreSQL migrations
         env:
@@ -87,6 +95,15 @@ jobs:
         run: |
           python -c "import os; assert os.environ.get('POSTGRES_TEST_URL'), 'POSTGRES_TEST_URL is required'"
           python -m pytest tests/test_postgresql_integration.py -q
+
+      - name: Verify SEC-001 security controls
+        run: >-
+          python -m pytest -q
+          tests/test_config.py
+          tests/test_template_security.py
+          tests/test_university_logo_security.py
+          tests/test_routes.py
+          tests/test_app_startup_modes.py
 
       - name: Run tests
         run: python -m pytest -ra
