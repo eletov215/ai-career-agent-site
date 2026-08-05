@@ -1,5 +1,41 @@
 # Changelog
 
+## Unreleased — DATA-002 (04 августа 2026)
+
+### Added
+
+- Immutable domain records `UserRecord`, `OAuthConnectionRecord`, `VacancyRecord`, `SourceRecord` и `SyncRunRecord` в `domain/`.
+- Models `User`, `OAuthConnection`, canonical `Vacancy`, `VacancySourceRecord`, and `SyncRun`.
+- Repository layer for users, OAuth connections, canonical/source vacancies and sync runs.
+- `services/storage.py` as the single persistence entry point used by `app.py`.
+- Alembic revision `20260804_0002` with legacy OAuth copy and vacancy canonical/source migration.
+- Persistent Trudvsem sync lifecycle records.
+- Repository, relationship, architecture-boundary, legacy-adoption, and PostgreSQL integration tests.
+- `docs/DOMAIN_MODEL.md`.
+
+### Changed
+
+- `app.py` no longer imports SQLAlchemy, ORM models or concrete repositories; it receives repositories through `StorageServices`.
+- Current HH/SuperJob routes read unified `oauth_connections`; writes are transactionally mirrored to legacy provider tables during verification for rollback safety.
+- `VacancyStore` delegates SQL queries to `VacancyRepository`.
+- `/trudvsem/status` exposes the latest secret-free `persisted_run` when available.
+- Legacy importer writes to the unified schema.
+- CI compiles/tests `domain/`, `repositories/` and storage boundaries; PostgreSQL integration migrates seeded revision `0001` rows and validates source-record sequence continuity.
+
+### Compatibility
+
+- Legacy `accounts` and `hh_accounts` remain temporarily and receive mirrored HH/SuperJob writes for controlled application rollback.
+- Existing source vacancy rows are copied without losing IDs/raw JSON/search fields.
+- Current UI, routes, OAuth callbacks, search payloads, and `app:app` remain unchanged.
+
+### Status
+
+- `FND-001` — ВЫПОЛНЕНО.
+- `FND-002` — ВЫПОЛНЕНО.
+- `DATA-001` — ВЫПОЛНЕНО.
+- `DATA-002` — НУЖНА ПРОВЕРКА: требуется зелёный GitHub Actions и Render revision `20260804_0002`.
+- `DOMAIN-001` подтверждён как отдельный будущий пакет после `SEC-001`/`OPS-001`; он не был потерян и не объединён с DATA-002.
+
 Все значимые изменения проекта фиксируются в этом файле.
 
 ## 04 августа 2026 — DATA-001 CI fix 1.2.3

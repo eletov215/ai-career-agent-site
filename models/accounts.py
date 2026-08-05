@@ -1,4 +1,10 @@
-"""Persistence models for external OAuth accounts."""
+"""Legacy provider-specific OAuth tables retained for migration rollback.
+
+DATA-002 copies these rows into ``oauth_connections``.  During the migration
+verification window, OAuth repository writes are mirrored here as a controlled
+rollback aid.  AUTH-002 can remove these tables after every connection belongs
+to a first-party user and a verified backup/restore path exists.
+"""
 
 from __future__ import annotations
 
@@ -9,8 +15,6 @@ from .base import Base
 
 
 class SuperJobAccount(Base):
-    """Encrypted SuperJob OAuth connection stored for the current prototype."""
-
     __tablename__ = "accounts"
 
     user_id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=False)
@@ -24,8 +28,6 @@ class SuperJobAccount(Base):
 
 
 class HeadHunterAccount(Base):
-    """Encrypted HeadHunter OAuth connection stored for the current prototype."""
-
     __tablename__ = "hh_accounts"
 
     user_id: Mapped[str] = mapped_column(Text, primary_key=True)

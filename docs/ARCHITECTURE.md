@@ -1,58 +1,57 @@
 # AI Career Agent — архитектура проекта
 
 > Последнее обновление: 04 августа 2026 года  
-> Текущий пакет: `DATA-001` — PostgreSQL и миграции  
+> Текущий пакет: `DATA-002` — доменная модель и repository layer  
 > Статус пакета: **НУЖНА ПРОВЕРКА**
 
 ## 1. Цель архитектуры
-
-Приложение должно поддерживать полный путь:
 
 ```text
 аккаунт -> карьерный профиль -> анализ резюме -> поиск вакансий
 -> объяснимое совпадение -> письмо -> трекер откликов
 ```
 
-Инфраструктура не должна быть жёстко привязана к Render. До первой коммерческой beta рекомендуемая production-схема — платный Render + собственный домен + PostgreSQL. В дальнейшем тот же код должен переноситься на VPS без изменения бизнес-логики.
+Инфраструктура не должна быть жёстко привязана к Render. До первой commercial beta рекомендуемая production-схема — платный Render + собственный домен + managed PostgreSQL. Тот же application code должен переноситься на VPS без изменения бизнес-логики.
 
 ## 2. Технологический стек
 
-- Python 3.11;
-- Flask 3.1.3;
-- Gunicorn;
-- SQLAlchemy 2;
-- Alembic;
-- PostgreSQL через Psycopg 3;
-- SQLite как локальный/test fallback;
+- Python 3.11, Flask 3.1.3, Gunicorn;
+- SQLAlchemy 2, Alembic, PostgreSQL/Psycopg 3;
+- SQLite как local/test fallback;
 - Requests, Cryptography/Fernet, pypdf;
-- HTML, CSS, JavaScript;
+- HTML/CSS/JavaScript;
 - GitHub Actions;
-- Render на текущем этапе;
-- OAuth HeadHunter и SuperJob;
-- API HeadHunter, Reed и Trudvsem.
+- Render сейчас, собственный домен до beta, optional VPS позже.
 
 ## 3. Структура
 
 ```text
 project/
-├── app.py                       # Flask routes и WSGI app:app
-├── config.py                    # единое чтение/валидация окружения
-├── database.py                  # engine, sessions, health, Alembic helpers
+├── app.py                         # Flask routes и WSGI app:app
+├── config.py                      # environment/settings
+├── database.py                    # engine, sessions, health, Alembic helpers
+├── domain/
+│   └── entities.py                # immutable detached records
 ├── models/
 │   ├── base.py
-│   ├── accounts.py
-│   └── vacancy.py
-├── migrations/
-│   ├── env.py
-│   └── versions/20260804_0001_initial_schema.py
-├── alembic.ini
+│   ├── user.py
+│   ├── oauth_connection.py
+│   ├── vacancy.py                 # Vacancy + VacancySourceRecord
+│   ├── sync_run.py
+│   └── accounts.py                # temporary legacy tables
+├── repositories/
+│   ├── users.py
+│   ├── oauth_connections.py
+│   ├── vacancies.py
+│   └── sync_runs.py
+├── migrations/versions/
+│   ├── 20260804_0001_initial_schema.py
+│   └── 20260804_0002_domain_model.py
 ├── services/
-│   ├── vacancy_store.py         # SQLAlchemy cache API
+│   ├── storage.py                 # StorageServices bundle for app.py
+│   ├── vacancy_store.py           # payload normalization/service API
 │   └── *_provider.py
 ├── scripts/
-│   ├── manage_db.py
-│   ├── import_legacy_sqlite.py
-│   └── check_repository_hygiene.py
 ├── tests/
 ├── templates/
 ├── static/
@@ -60,139 +59,148 @@ project/
 └── .github/workflows/ci.yml
 ```
 
-Главный рабочий файл — `app.py`. Файл `app_fixed.py` не создаётся.
+Главный файл — `app.py`; `app_fixed.py` не создаётся.
 
-## 4. Конфигурационный слой
-
-`config.py` является единственным местом прямого чтения переменных окружения. `AppSettings` содержит:
-
-- режим `production/development/test`;
-- OAuth и encryption-настройки;
-- параметры провайдеров и синхронизации;
-- `DATA_DIR`;
-- нормализованный `DATABASE_URL`;
-- флаг, был ли `DATABASE_URL` задан явно.
-
-Секретные значения не выводятся в ошибки, health endpoint или миграционные команды.
-
-## 5. Слой базы данных
-
-### 5.1 `database.py`
-
-Создаёт единый `DatabaseRuntime`:
+## 4. Границы слоёв
 
 ```text
-SQLAlchemy Engine
-+ sessionmaker
-+ backend metadata
-+ secret-free health
+Flask route
+    -> application/service
+        -> repository
+            -> SQLAlchemy model/session
 ```
 
-Для PostgreSQL включены `pool_pre_ping`, ограниченный pool и таймаут подключения. Для SQLite включены foreign keys, busy timeout и WAL; соединения не удерживаются пулом.
+### app.py
 
-### 5.2 Выбор backend
+- не импортирует SQLAlchemy, ORM models или concrete repositories;
+- получает `StorageServices` как единую persistence boundary;
+- использует совместимые aliases для OAuth, vacancy cache и SyncRun без SQL в routes.
+
+### services
+
+Нормализуют provider payload и реализуют application behavior. `VacancyStore` больше не содержит SQL statements.
+
+### repositories
+
+Единственное место application SQL queries. Возвращают immutable domain records либо JSON payload, а не session-bound ORM objects.
+
+### models
+
+Отражают persistence schema и relationships. Не содержат Flask/request logic.
+
+## 5. Доменная схема DATA-002
 
 ```text
-DATABASE_URL задан и указывает PostgreSQL
-    -> production PostgreSQL
+users
+  id PK
+  normalized_email UNIQUE nullable
 
-DATABASE_URL не задан
-    -> SQLite <DATA_DIR>/app.db (совместимость/local/test)
+users 1 ---- * oauth_connections
+oauth_connections UNIQUE(provider, external_user_id)
+
+vacancies 1 ---- * vacancy_source_records
+vacancy_source_records UNIQUE(source, external_id)
+
+sync_runs
 ```
 
-Production считается переведённым на постоянную базу только тогда, когда `/health` возвращает:
+### User
+
+Identity skeleton для `AUTH-001`. Password/reset/verification entities не добавляются преждевременно.
+
+### OAuthConnection
+
+Unified provider connection. `user_id` nullable для compatibility с текущими session-based HH/SJ connections. `AUTH-002` привяжет rows к first-party user.
+
+Legacy tables `accounts` и `hh_accounts` сохраняются временно как rollback mirror. Routes их не читают; `OAuthConnectionRepository` транзакционно зеркалирует известные HH/SuperJob writes до AUTH-002 cleanup.
+
+### Vacancy и VacancySourceRecord
+
+- `Vacancy` — canonical record;
+- `VacancySourceRecord` — payload конкретного source.
+
+На DATA-002 связь один-к-одному по фактическим данным. `SEARCH-002` сможет связать несколько source records с одной canonical vacancy, не меняя provider ingestion.
+
+### SyncRun
+
+Persistent lifecycle provider sync. Trudvsem сохраняет start/finish, processed/saved/cursor/error. Scheduler/thread architecture остаётся до `SYNC-001`.
+
+## 6. Миграции
+
+### 20260804_0001
+
+Создаёт legacy pre-MVP schema и принимает старый SQLite.
+
+### 20260804_0002
+
+- создаёт `users`, `oauth_connections`, `sync_runs`;
+- копирует legacy HH/SJ rows без изменения encrypted tokens;
+- преобразует старую source-only `vacancies` в canonical/source model;
+- сохраняет source IDs, raw JSON, search fields и timestamps;
+- поддерживает SQLite/PostgreSQL;
+- имеет downgrade для staging/backup rehearsal и выравнивает PostgreSQL serial sequences после копирования explicit IDs.
+
+Alembic — единственный production schema mechanism. `Base.metadata.create_all()` разрешён только в изолированных tests.
+
+## 7. Runtime database
+
+`DatabaseRuntime` предоставляет Engine/sessionmaker и secret-free health. Production подтверждён на PostgreSQL 17.
+
+После DATA-002 deploy ожидается:
 
 ```text
 backend=postgresql
 persistent=true
 configured=true
-revision=20260804_0001
+revision=20260804_0002
 ```
 
-### 5.3 Модели текущего pre-MVP
+## 8. OAuth compatibility
 
-- `SuperJobAccount` -> таблица `accounts`;
-- `HeadHunterAccount` -> таблица `hh_accounts`;
-- `Vacancy` -> таблица `vacancies`.
+Current browser session по-прежнему хранит внешний provider user ID. StorageServices передаёт запрос repository, unified connection преобразуется в прежний mapping для existing routes/templates. Token encryption/refresh behavior не меняются; обновления временно dual-write в legacy tables.
 
-Эти модели отражают уже существующие таблицы и не являются окончательной доменной моделью. Пакет `DATA-002` добавит `User`, `OAuthConnection`, `SyncRun` и репозитории.
+## 9. Vacancy compatibility
 
-## 6. Миграции
+Provider ingestion и template payload не меняются. `VacancyStore`:
 
-Alembic является единственным production-механизмом изменения схемы.
+1. нормализует provider dict;
+2. передаёт source payload repository;
+3. создаёт/обновляет canonical + source record;
+4. возвращает прежний raw JSON format для search UI.
 
-Первая миграция `20260804_0001`:
+## 10. Sync state
 
-- создаёт текущие три таблицы в чистой базе;
-- создаёт индексы вакансий;
-- может принять существующую SQLite-схему без удаления строк;
-- добавляет отсутствующее поле `experience`;
-- нормализует `search_text`, `experience` и `published_at` старых вакансий;
-- записывает Alembic revision.
+In-memory state пока остаётся для текущего UI/worker. Дополнительно каждый run сохраняется в `sync_runs`, а `/trudvsem/status` может показать `persisted_run`. Полный вынос worker из Gunicorn выполняется в `SYNC-001`.
 
-`Base.metadata.create_all()` разрешён только в изолированных unit-тестах, но не заменяет Alembic в production.
+## 11. Собственный домен
 
-## 7. Работа приложения с данными
+`DOMAIN-001` не потерян и не интегрирован в DATA-002. Он находится в этапе 6 и в ближайшей последовательности после `SEC-001` и `OPS-001`.
 
-### 7.1 OAuth
+Зависимости домена:
 
-`app.py` использует SQLAlchemy Session для сохранения HeadHunter и SuperJob account rows. Токены остаются зашифрованы Fernet. Для чтения используется SQLAlchemy mapping, чтобы сохранить совместимость с текущими функциями `row["field"]`.
+- secure cookies/CSRF/trusted hosts (`SEC-001`);
+- monitoring/rollback (`OPS-001`);
+- `PUBLIC_BASE_URL`, OAuth callback changes, DNS/TLS (`DOMAIN-001`).
 
-### 7.2 Вакансии
+## 12. Deploy и rollback
 
-`VacancyStore` сохраняет прежний публичный API, но выполняет операции через SQLAlchemy. Он поддерживает SQLite и PostgreSQL и не читает окружение самостоятельно.
-
-Нормализация, межисточниковая дедупликация и общая пагинация остаются отдельными пакетами `SEARCH-001..003`.
-
-## 8. Health endpoint
-
-`GET /health` проверяет реальное соединение и Alembic revision. Ответ не содержит host, username, password или полный URL.
-
-HTTP-коды:
-
-- `200` — база отвечает;
-- `503` — база недоступна.
-
-## 9. Deploy
-
-Текущий бесплатный Render запускает:
+Текущий Render start command:
 
 ```bash
 python scripts/manage_db.py upgrade && gunicorn app:app
 ```
 
-Это обеспечивает миграцию перед запуском worker. После перехода на платный Render или VPS миграции должны выполняться отдельной одноразовой pre-deploy/entrypoint-командой, а web-процесс — только `gunicorn app:app`.
+Rollback DATA-002:
 
-## 10. Миграция данных
+- не удалять PostgreSQL;
+- не делать downgrade единственной production DB без backup;
+- предпочтительно восстановить backup/clone и переключить `DATABASE_URL`;
+- rollback application на schema 0001 допустим только после controlled data rollback.
 
-Существующая база Render могла находиться во временной файловой системе. Поэтому возможны два сценария:
+## 13. Следующие границы
 
-1. **Новый PostgreSQL без переноса** — вакансии заново синхронизируются; HH/SuperJob подключаются заново.
-2. **Импорт сохранённого `app.db`** — `scripts/import_legacy_sqlite.py`; нужен тот же `TOKEN_ENCRYPTION_KEY`.
-
-Импорт не выполняется автоматически: источник должен быть явно указан, а перед production-операцией требуется backup и test run.
-
-## 11. Тестирование
-
-CI проверяет:
-
-- импорт production-зависимостей;
-- чистоту репозитория;
-- Python compilation;
-- повторяемую Alembic migration;
-- отсутствие незаписанных schema changes (`alembic check`);
-- SQLite compatibility;
-- принятие legacy schema;
-- legacy importer;
-- Flask routes, конфигурацию, провайдеры, фильтры и парсер.
-
-Неподменённые внешние HTTP-запросы в тестах запрещены.
-
-## 12. Следующая архитектурная точка
-
-После подтверждения `DATA-001` выполняется `DATA-002`:
-
-- доменные модели `User`, `OAuthConnection`, `Vacancy`, `SyncRun`;
-- repository/service layer;
-- удаление raw SQL/SQLAlchemy details из routes;
-- подготовка аккаунта, профиля и worker-процессов.
+- `SEC-001`: security middleware/forms/session flags;
+- `OPS-001`: structured logs, backup restore, alerts;
+- `DOMAIN-001`: domain/DNS/TLS/public URLs;
+- `SYNC-001`: отдельный worker command;
+- `AUTH-001/002`: first-party user и binding OAuth connections.

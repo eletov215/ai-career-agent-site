@@ -1,61 +1,64 @@
-# DATA-001 — инструкция перехода на PostgreSQL
+# PostgreSQL и Alembic — production runbook
 
-## 1. Цель
+## 1. Текущее состояние
 
-Перевести production с временного SQLite-файла на постоянный PostgreSQL, сохранив локальный/test SQLite и возможность отката приложения.
+- `DATA-001` подтверждён: production PostgreSQL 17, revision `20260804_0001`, persistence после restart.
+- `DATA-002` добавляет revision `20260804_0002` и ожидает GitHub/Render verification.
+- `DATABASE_URL` хранится только в окружении.
+- `TOKEN_ENCRYPTION_KEY` нельзя менять при наличии OAuth connections.
 
-## 2. До начала
+## 2. Revision history
 
-Подтвердить:
+### 20260804_0001
 
-- GitHub Actions зелёный;
-- текущий commit находится в отдельной ветке;
-- `TOKEN_ENCRYPTION_KEY` сохранён;
-- значение `HH_CURRENCY_SCAN_PAGES` равно `1..20`;
-- известен статус текущих HH/SuperJob подключений;
-- при необходимости старый `app.db` сохранён локально.
+- legacy tables `accounts`, `hh_accounts`, source-only `vacancies`;
+- indexes/search backfill;
+- adoption старого SQLite.
 
-## 2.1 Что проверяет CI
+### 20260804_0002
 
-GitHub Actions поднимает одноразовый PostgreSQL 17 service container и проверяет:
+- `users`;
+- unified `oauth_connections`;
+- canonical `vacancies`;
+- provider `vacancy_source_records`;
+- `sync_runs`;
+- copy legacy OAuth rows без расшифровки tokens;
+- conversion source-only vacancy rows в canonical/source relationship.
 
-- применение Alembic migration к реальному PostgreSQL через Psycopg 3;
-- повторяемость migration и `alembic check`;
-- сохранение OAuth account rows и vacancy row после закрытия и повторного создания SQLAlchemy engine;
-- отсутствие реальных внешних API-вызовов.
+Legacy `accounts`/`hh_accounts` пока сохраняются для controlled rollback; HH/SuperJob writes временно зеркалируются туда repository-транзакцией.
 
-Эта проверка снижает риск несовместимости SQLite/PostgreSQL, но не заменяет production persistence test на Render.
+## 3. CI
 
-## 3. Создание PostgreSQL на Render
+GitHub Actions поднимает PostgreSQL 17 и проверяет:
 
-1. Создать PostgreSQL в том же регионе, что и web service.
-2. Не публиковать credentials в GitHub, issue, screenshot или чат.
-3. Скопировать **Internal Database URL**.
-4. В web service открыть `Environment`.
-5. Добавить/заменить `DATABASE_URL`.
-6. Не менять `TOKEN_ENCRYPTION_KEY`.
+- upgrade всех revisions;
+- migration seeded legacy PostgreSQL `0001 -> 0002`;
+- `alembic check` на SQLite/PostgreSQL;
+- User/OAuth/SyncRun repositories и storage boundaries;
+- canonical/source vacancy round-trip и serial sequence continuity;
+- OAuth copy + temporary legacy dual-write;
+- persistence после Engine recreation;
+- отсутствие реальных external API calls.
 
-## 4. Deploy
+## 4. Deploy DATA-002
 
-Start command текущего пакета:
+Start command:
 
 ```bash
 python scripts/manage_db.py upgrade && gunicorn app:app
 ```
 
-В логах должна появиться строка без credentials:
+Ожидаемая строка:
 
 ```text
-Database ready: backend=postgresql, persistent=True, configured=True, revision=20260804_0001
+Database ready: backend=postgresql, persistent=True, configured=True, revision=20260804_0002
 ```
 
-Ошибки соединения, миграции или конфигурации должны прервать deploy до запуска нового web worker.
+Migration error должен остановить deploy до Gunicorn.
 
 ## 5. Проверка
 
-### 5.1 Health
-
-Открыть `/health` и подтвердить:
+### Health
 
 ```text
 status = ok
@@ -63,12 +66,10 @@ database.ok = true
 database.backend = postgresql
 database.persistent = true
 database.configured = true
-database.revision = 20260804_0001
+database.revision = 20260804_0002
 ```
 
-### 5.2 Smoke
-
-Проверить:
+### Smoke
 
 ```text
 /
@@ -78,60 +79,65 @@ database.revision = 20260804_0001
 /vacancies
 /vacancies/internal
 /dashboard
+/trudvsem/status
 ```
 
-Проверить поиск минимум через один доступный источник и отсутствие HTTP 500.
+### Compatibility
 
-### 5.3 Персистентность
+- OAuth HH/SJ connection остаётся доступным после migration.
+- Поиск показывает прежние vacancy payloads.
+- `cached_total` не сбрасывается.
+- После нового Trudvsem run `/trudvsem/status` содержит `persisted_run`.
 
-1. Сохранить тестовую запись штатной функцией приложения либо дождаться синхронизации вакансий.
-2. Выполнить manual redeploy/restart.
-3. Убедиться, что запись осталась.
-4. Проверить повторный запуск миграции — он должен быть безопасным.
+### Persistence
 
-## 6. Старые данные
+1. Запомнить `cached_total` и existing connection state.
+2. Restart/redeploy.
+3. Проверить revision 0002 и сохранность значений.
+4. Повторный deploy не должен повторно копировать/дублировать rows.
 
-### Вариант A — начать с чистой базы
-
-- вакансии будут восстановлены синхронизацией;
-- пользователи заново подключат HeadHunter/SuperJob;
-- это безопасный вариант, если достоверного снимка SQLite нет.
-
-### Вариант B — импортировать снимок
+## 6. Legacy SQLite import
 
 ```bash
 DATABASE_URL='postgresql+psycopg://...' \
 python scripts/import_legacy_sqlite.py --source /secure/path/app.db
 ```
 
-Требования:
+DATA-002 importer:
 
-- source file не хранится в репозитории;
-- `TOKEN_ENCRYPTION_KEY` совпадает со старым;
-- сначала выполнить импорт в тестовый PostgreSQL;
-- после импорта проверить количество account/vacancy rows;
-- удалить временную копию из небезопасных мест.
+- пишет SuperJob/HH rows в `oauth_connections`;
+- сохраняет encrypted tokens;
+- пишет vacancies через canonical/source repository;
+- не хранит source file в GitHub.
 
-## 7. Откат
+## 7. Rollback
 
-### Откат кода
+### Application rollback
 
-Вернуть предыдущий стабильный commit и выполнить deploy. PostgreSQL не удалять — он остаётся источником данных для повторной попытки.
+Не удалять PostgreSQL. Старый application commit ожидает schema 0001 и не должен запускаться поверх 0002 без controlled rollback.
 
-### Откат данных
+### Data rollback
 
-Не запускать Alembic downgrade без backup. Для критического сбоя восстановить PostgreSQL из проверенной резервной копии или создать новую базу и переключить `DATABASE_URL`.
+Предпочтительно:
 
-### Временный fallback
+1. backup/clone database;
+2. выполнить downgrade/restore на clone;
+3. проверить приложение;
+4. переключить `DATABASE_URL`.
 
-Удаление `DATABASE_URL` вернёт приложение к SQLite fallback. Это допустимо только для диагностики, но не считается production-решением и может привести к потере новых данных при следующем redeploy.
+Не выполнять `alembic downgrade 20260804_0001` на единственной production database без backup.
 
-## 8. Критерии «ВЫПОЛНЕНО»
+### Diagnostic fallback
+
+Удаление `DATABASE_URL` включает SQLite, но это не production solution.
+
+## 8. Критерии DATA-002 «ВЫПОЛНЕНО»
 
 - GitHub Actions зелёный;
-- production `/health` сообщает PostgreSQL и revision `20260804_0001`;
-- основные маршруты работают;
-- миграция повторяется без ошибки;
-- данные переживают restart/redeploy;
-- rollback описан и понятен;
-- план и CHANGELOG обновлены.
+- PostgreSQL integration test не skipped;
+- `/health` revision `20260804_0002`;
+- OAuth/search smoke без 500;
+- existing rows сохранены;
+- restart persistence подтверждён;
+- `alembic check` чистый;
+- docs/plan обновлены.
