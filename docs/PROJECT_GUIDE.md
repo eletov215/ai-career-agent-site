@@ -26,48 +26,85 @@
 - Главный файл — `app.py`; WSGI — `app:app`.
 - `app_fixed.py` не создаётся.
 - `.env`, credentials, databases, backups, virtualenv, caches и bytecode не попадают в ZIP/GitHub.
-- OAuth `state` не отключается.
-- Credentials не выводятся в logs/health.
+- OAuth `state` не отключается, проверяется до success/error callback и не отражается в URL/logs после callback.
+- Credentials, tokens и arbitrary provider response bodies не выводятся в logs/health/public endpoints.
 - Реальные API не вызываются из CI.
 - Production schema меняет только Alembic.
+- State-changing browser routes используют CSRF; machine endpoints требуют отдельный secret.
 - Статус `ВЫПОЛНЕНО` ставится только после всех критериев пакета.
 
-## 4. Ветки
+## 4. Текущая ветка
 
-Для DATA-002:
+Для SEC-001:
 
 ```text
-data-002-domain-repositories
+sec-001-security-baseline
 ```
 
 Commit:
 
 ```text
-refactor: add domain model and repository layer
+security: add baseline request and session protections
 ```
 
-Не очищать ветку. Сохранять `.github`, `.gitignore` и migrations.
+Не очищать ветку. Сохранять `.github`, `.gitignore`, migrations и существующие docs.
 
 ## 5. Проверки перед push
 
 ```bash
 python scripts/check_repository_hygiene.py
-python -m compileall -q app.py config.py database.py domain models repositories migrations services tests scripts
+python -m compileall -q app.py config.py database.py security.py domain models repositories migrations services tests scripts
 python scripts/manage_db.py upgrade
 python -m alembic check
 python -m pytest -ra
 ```
 
-DATA-002 дополнительно проверяет:
+SEC-001 дополнительно проверяет:
 
-- migration `20260804_0002`;
-- legacy OAuth copy;
-- canonical/source vacancy backfill;
-- repository relationships/constraints;
-- отсутствие SQLAlchemy/ORM/concrete repository imports в `app.py`;
-- seeded legacy PostgreSQL migration, sequence continuity и reconnect persistence в GitHub Actions.
+- production не позволяет отключить secure cookie, CSRF, rate limits и security headers, требует `SameSite=Lax` и HTTPS OAuth callbacks;
+- все template scripts используют CSP nonce;
+- POST forms имеют CSRF token;
+- inline event handlers отсутствуют;
+- API/form POST без CSRF отклоняется, с token доходит до route validation;
+- logout — POST only;
+- diagnostics скрыты без header secret;
+- public Trudvsem status не содержит raw error/internal run;
+- rate limit выдаёт controlled 429;
+- PDF page/text/body limits;
+- university-logo resolver не следует на private redirect и проверяет image signature;
+- startup modes и PostgreSQL integration остаются зелёными.
 
-## 6. Слои данных
+## 6. Security surfaces
+
+### Browser
+
+```text
+aca_session
+Secure + HttpOnly + SameSite=Lax
+CSRF token
+CSP nonce
+route-specific rate limit
+```
+
+### Machine sync
+
+```text
+POST /sync/trudvsem
+X-Sync-Secret
+CSRF exempt only because it is not a browser form
+```
+
+### Diagnostics
+
+```text
+DEBUG_DIAGNOSTICS=1
+DIAGNOSTICS_SECRET=<secret>
+X-Diagnostics-Secret: <secret>
+```
+
+Без всех трёх условий `/debug/*` и `/trudvsem/status` возвращают 404. Public UI использует `/api/sources/trudvsem/status`.
+
+## 7. Слои данных
 
 ```text
 routes -> StorageServices/application services -> repositories -> models/database
@@ -76,9 +113,9 @@ routes -> StorageServices/application services -> repositories -> models/databas
 - Routes получают persistence через `StorageServices` и не выполняют SQL.
 - Repositories возвращают detached User/OAuth/Vacancy/Source/SyncRun records.
 - `VacancyStore` нормализует payload, `VacancyRepository` выполняет query.
-- Legacy `accounts`/`hh_accounts` не удаляются до отдельной cleanup migration; HH/SJ writes временно зеркалируются для rollback.
+- Legacy `accounts`/`hh_accounts` не удаляются до отдельной cleanup migration.
 
-## 7. Миграции и rollback
+## 8. Миграции и rollback
 
 Команды:
 
@@ -88,27 +125,27 @@ python scripts/manage_db.py current
 python scripts/manage_db.py check
 ```
 
-После DATA-002 deploy `/health` должен показать:
+SEC-001 не добавляет migration; `/health` должен остаться на:
 
 ```text
 revision=20260804_0002
 ```
 
-Downgrade production без backup запрещён. Для rollback предпочтительны clone/restore PostgreSQL и переключение `DATABASE_URL`.
+Rollback SEC-001 выполняется application commit/redeploy без изменения PostgreSQL. Downgrade production schema без backup запрещён.
 
-## 8. Render, домен и VPS
+## 9. Render, домен и VPS
 
-Сейчас deploy — Render. `DOMAIN-001` не потерян: это отдельный пакет этапа 6 после `SEC-001` и `OPS-001`.
+Сейчас deploy — Render. `DOMAIN-001` остаётся отдельным пакетом этапа 6 после `SEC-001` и `OPS-001`.
 
 Порядок:
 
 ```text
-DATA-002 -> SEC-001 -> OPS-001 -> DOMAIN-001
+SEC-001 verification -> OPS-001 -> DOMAIN-001
 ```
 
-Домен сначала может указывать на Render. VPS выполняется позже через `INFRA-001`, `HOST-001`, `OPS-002`.
+При DOMAIN-001 нужно добавить коммерческий hostname в `TRUSTED_HOSTS`, обновить OAuth redirect URI и проверить secure cookie/CSRF/HSTS на новом HTTPS-домене.
 
-## 9. После каждого пакета вернуть
+## 10. После каждого пакета вернуть
 
 - новый ZIP;
 - список файлов/изменений;

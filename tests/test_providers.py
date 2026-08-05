@@ -60,14 +60,15 @@ def test_hh_missing_token_returns_controlled_error():
     provider = HeadHunterProvider("https://hh.test", lambda token: {}, None)
     result = provider.search(filters=VacancySearchFilters(), page=0)
     assert result.items == []
-    assert "HH_APP_TOKEN" in result.error
+    assert result.error == "HeadHunter временно недоступен."
+    assert "HH_APP_TOKEN" not in result.error
 
 
 @pytest.mark.parametrize(
     ("failure", "expected"),
     [
-        (requests.Timeout("timeout"), "timeout"),
-        (ValueError("broken json"), "некорректный ответ API"),
+        (requests.Timeout("secret-timeout-detail"), "временно не смог выполнить поиск"),
+        (ValueError("secret-broken-json"), "некорректный ответ"),
     ],
 )
 def test_hh_transport_and_payload_errors_are_controlled(monkeypatch, failure, expected):
@@ -80,7 +81,9 @@ def test_hh_transport_and_payload_errors_are_controlled(monkeypatch, failure, ex
         )
     provider = HeadHunterProvider("https://hh.test", lambda token: {}, lambda: "token")
     result = provider.search(filters=VacancySearchFilters(keyword="python"), page=0)
-    assert expected.casefold() in (result.error or "").casefold()
+    error = result.error or ""
+    assert expected.casefold() in error.casefold()
+    assert "secret-" not in error
 
 
 def test_hh_403_includes_safe_diagnostic_context(monkeypatch):
@@ -96,7 +99,7 @@ def test_hh_403_includes_safe_diagnostic_context(monkeypatch):
     provider = HeadHunterProvider("https://hh.test", lambda token: {}, lambda: "sensitive-value-123")
     result = provider.search(filters=VacancySearchFilters(keyword="python"), page=0)
     assert "403" in result.error
-    assert "ddos-guard" in result.error
+    assert "ddos-guard" not in result.error
     assert "request-123" in result.error
     assert "sensitive-value-123" not in result.error
 
@@ -140,8 +143,10 @@ def test_reed_success_empty_and_error_paths(monkeypatch):
 
     assert success.items[0]["source"] == "reed"
     assert empty.items == [] and empty.error is None
-    assert "500" in server_error.error
-    assert "bad json" in malformed.error
+    assert "временно не смог выполнить поиск" in server_error.error
+    assert "500" not in server_error.error
+    assert "некорректный ответ" in malformed.error
+    assert "bad json" not in malformed.error
 
 
 def test_reed_timeout_is_returned_as_source_error(monkeypatch):
@@ -153,7 +158,8 @@ def test_reed_timeout_is_returned_as_source_error(monkeypatch):
         filters=VacancySearchFilters(),
         page=0,
     )
-    assert "slow" in result.error
+    assert result.error == "Reed.co.uk временно не смог выполнить поиск."
+    assert "slow" not in result.error
 
 
 def test_superjob_success_and_failure(monkeypatch):
@@ -188,7 +194,8 @@ def test_superjob_success_and_failure(monkeypatch):
         lambda *args, **kwargs: (_ for _ in ()).throw(requests.Timeout("timeout")),
     )
     failed = provider.search(filters=VacancySearchFilters(), page=0)
-    assert "timeout" in failed.error
+    assert failed.error == "SuperJob временно не смог выполнить поиск."
+    assert "timeout" not in failed.error
 
 
 def test_trudvsem_fetch_batch_normalizes_valid_and_empty_payloads(monkeypatch):

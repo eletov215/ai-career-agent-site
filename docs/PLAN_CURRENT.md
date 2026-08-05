@@ -1,13 +1,13 @@
 # AI Career Agent - Единый план реализации и ведения разработки
 
-**Версия:** 1.2.6  
-**Дата:** 04 августа 2026  
+**Версия:** 1.2.8  
+**Дата:** 05 августа 2026  
 **Статус:** ДЕЙСТВУЮЩИЙ  
-**Основа:** `ai-career-agent-site-main-14-data-002-domain-repositories-v1.2.6.zip`
+**Основа:** `ai-career-agent-site-main-15-sec-001-security-v1.2.8.zip`
 
 > ОБЯЗАТЕЛЬНО ДЛЯ КАЖДОГО НОВОГО ЧАТА: прочитать этот план, новый паспорт и актуальный архив. После завершения любого пункта вернуть обновлённые DOCX/PDF/Markdown, новый ZIP, доказательства проверки и запись в журнале версий.
 
-> КОНТРОЛЬНЫЕ СТАТУСЫ ЭТОЙ ВЕРСИИ: `FND-001 — ВЫПОЛНЕНО`; `FND-002 — ВЫПОЛНЕНО`; `DATA-001 — ВЫПОЛНЕНО`; `DATA-002 — НУЖНА ПРОВЕРКА`; `DOMAIN-001 — ЗАПЛАНИРОВАНО, ЭТАП 6, ОБЯЗАТЕЛЕН ДО BETA`. PDF с версией `1.0.1` или иными статусами является устаревшей копией.
+> КОНТРОЛЬНЫЕ СТАТУСЫ ЭТОЙ ВЕРСИИ: `FND-001 — ВЫПОЛНЕНО`; `FND-002 — ВЫПОЛНЕНО`; `DATA-001 — ВЫПОЛНЕНО`; `DATA-002 — ВЫПОЛНЕНО`; `SEC-001 — НУЖНА ПРОВЕРКА`; `OPS-001 — ЗАПЛАНИРОВАНО`; `DOMAIN-001 — ЗАПЛАНИРОВАНО, ЭТАП 6, ОБЯЗАТЕЛЕН ДО BETA`. PDF с версией `1.0.1` или иными статусами является устаревшей копией.
 
 ## 1. Источник истины и аудит источников
 
@@ -16,7 +16,7 @@
 - Канонический план определяется наибольшей версией и датой; старые дубликаты не должны оставаться действующими.
 - Перед DATA-002 проверено, что актуальный код находится в `ai-career-agent-site-main (1).zip` и соответствует завершённому DATA-001.
 - Загруженные планы/паспорт были устаревшими: они содержали версии 1.0.0/1.0.1 и раннее состояние HH 403, не отражали подтверждение FND-001/FND-002 и согласованную стратегию собственного домена/VPS.
-- Версия 1.2.6 является канонической candidate-версией: FND-001, FND-002 и DATA-001 подтверждены как ВЫПОЛНЕНО; DATA-002 реализован и имеет статус НУЖНА ПРОВЕРКА до GitHub/Render подтверждения. DOMAIN-001 подтверждён как отдельный пакет этапа 6.
+- Версия 1.2.8 является канонической candidate-версией: FND-001, FND-002, DATA-001 и DATA-002 имеют статус ВЫПОЛНЕНО; SEC-001 реализован и имеет статус НУЖНА ПРОВЕРКА. DOMAIN-001 остаётся отдельным обязательным пакетом этапа 6 после SEC-001/OPS-001.
 
 ## 2. Обязательный протокол работы
 
@@ -84,7 +84,7 @@
 |---|---|---|
 | R-01 | Закрыт 04.08.2026 | Production переведён на PostgreSQL; restart подтвердил сохранность кэша и служебного состояния. |
 | R-02 | Высокий | Trudvsem daemon thread зависит от Gunicorn. |
-| R-03 | Высокий | Публичные technical endpoints/forms/sessions требуют SEC-001. |
+| R-03 | Снижен, нужна проверка | SEC-001 добавил CSRF, secure sessions, rate limits, headers, request/PDF limits и закрыл diagnostics; требуется GitHub/Render подтверждение. |
 | R-04 | Высокий | Межисточниковые дубли и нестабильный total/pagination. |
 | R-05 | Высокий | Маркетинговые AI promises опережают real implementation. |
 | R-06 | Средний | Большие assets и inline JS усложняют performance/support. |
@@ -109,8 +109,8 @@ MVP не готов, если работает только отдельная �
 | FND-001 | P0 | ВЫПОЛНЕНО | Базовые тесты и CI перед архитектурными изменениями |
 | FND-002 | P0 | ВЫПОЛНЕНО | Конфигурация приложения и разделение development/test/production |
 | DATA-001 | P0 | ВЫПОЛНЕНО | Переход с временной SQLite на PostgreSQL и миграции |
-| DATA-002 | P0 | НУЖНА ПРОВЕРКА | Базовая доменная модель и слой доступа к данным |
-| SEC-001 | P0 | ЗАПЛАНИРОВАНО | Базовое усиление безопасности |
+| DATA-002 | P0 | ВЫПОЛНЕНО | Базовая доменная модель и слой доступа к данным |
+| SEC-001 | P0 | НУЖНА ПРОВЕРКА | Базовое усиление безопасности |
 | OPS-001 | P0 | ЗАПЛАНИРОВАНО | Наблюдаемость, безопасные логи и резервное восстановление |
 | DOC-001 | P0 | ЗАПЛАНИРОВАНО | Синхронизация README, ROADMAP, CHANGELOG и фактического кода |
 
@@ -231,7 +231,7 @@ MVP не готов, если работает только отдельная �
 #### DATA-002 - Базовая доменная модель и слой доступа к данным
 
 **Приоритет:** P0  
-**Статус:** НУЖНА ПРОВЕРКА
+**Статус:** ВЫПОЛНЕНО
 
 **Цель:** Отделить persistence от Flask routes и подготовить данные для аккаунта, профиля, вакансий и синхронизаций.
 
@@ -248,19 +248,21 @@ MVP не готов, если работает только отдельная �
 #### SEC-001 - Базовое усиление безопасности
 
 **Приоритет:** P0  
-**Статус:** ЗАПЛАНИРОВАНО
+**Статус:** НУЖНА ПРОВЕРКА
 
-**Цель:** Защитить формы, сессии, загрузки и технические endpoints до появления реальных аккаунтов.
+**Цель:** Защитить state-changing формы/API, browser sessions, загрузки, внешние URL и технические endpoints до появления first-party аккаунтов.
 
-**Реализация:** Secure/HttpOnly/SameSite cookies, CSRF, rate limiting, security headers, нейтральные ошибки, ограничения PDF, закрытие debug/refresh.
+**Реализация:** Добавлен `security.py` с Flask-WTF CSRF, Flask-Limiter, ProxyFix, trusted hosts, request/body/form limits, CSP nonce, HSTS и набором browser headers. Production получает host-only `aca_session` с `Secure`, `HttpOnly`, `SameSite=Lax`, 12-часовой lifetime и принудительный запрет запуска с отключёнными CSRF/rate limits/headers. Logout переведён на POST; OAuth state одноразовый и ограничен 10 минутами. Debug/status endpoints скрыты за `DEBUG_DIAGNOSTICS` + `DIAGNOSTICS_SECRET` + `X-Diagnostics-Secret`; public UI использует sanitised `/api/sources/trudvsem/status`; `/sync/trudvsem` остаётся machine endpoint за `X-Sync-Secret`. Добавлены PDF page/text limits, safe filename, bounded request sizes и SSRF/redirect/MIME/signature protection university-logo resolver. Provider errors стали нейтральными, а HH logs не содержат response bodies/tokens.
 
-**Влияние на код:** config.py, app.py, security middleware, templates/forms, requirements, tests.
+**Влияние на код:** `security.py`, `config.py`, `app.py`, `requirements.txt`, `.github/workflows/ci.yml`, `.gitignore`, `services/hh_provider.py`, `services/resume_parser.py`, `services/university_logo.py`, `templates/base.html`, `templates/ai_career.html`, `templates/resume_builder.html`, `templates/vacancies_unified.html`, `static/styles.css`, security/config/route/template/SSRF tests и `docs/SECURITY.md`.
 
-**Влияние на сайт:** Технические URL закрываются; пользователь видит аккуратные ошибки без внутренних деталей.
+**Влияние на сайт:** Дизайн и основной пользовательский путь сохраняются. Сессии получают новое cookie name и существующие browser sessions будут разлогинены один раз после deploy. POST без CSRF получает нейтральный 400; частые дорогие запросы — 429; logout работает только через кнопку POST. Public `/trudvsem/status` и `/debug/*` становятся 404, но интерфейс продолжает получать безопасный status через `/api/sources/trudvsem/status`. Ошибки provider/API больше не показывают технические детали.
 
-**Критерии готовности:** CSRF и rate limits работают; cookie flags подтверждены; секреты не попадают в ответы/логи.
+**Критерии готовности:** Локально compileall, config/template/SSRF tests и полный доступный pytest должны пройти; GitHub Actions обязан выполнить отдельный `Verify SEC-001 security controls` без skip route/startup tests; Render должен стартовать без новых обязательных variables, `/health` сохранить revision `20260804_0002`, страницы/OAuth/search/PDF работать, headers/cookie/CSRF/rate limit подтвердиться, diagnostics быть закрыты, а logs не содержать tokens/body. До этого статус остаётся НУЖНА ПРОВЕРКА.
 
-**Зависимости:** FND-002; желательно DATA-001.
+**Совместимость и rollback:** Database migration отсутствует. Rollback — application commit/redeploy; PostgreSQL остаётся на `20260804_0002`. `RATELIMIT_STORAGE_URI=memory://` рассчитан на текущий один worker; перед несколькими workers/instances нужен общий Redis-compatible backend. CSP пока допускает inline styles; PDF остаётся внутри web process до будущего queue/sandbox.
+
+**Зависимости:** FND-002, DATA-001; DATA-002 подтверждён. После выполнения — OPS-001.
 
 #### OPS-001 - Наблюдаемость, безопасные логи и резервное восстановление
 
@@ -990,14 +992,14 @@ alembic check: No new upgrade operations detected
 repository hygiene: успешно
 ```
 
-### 10.5 Требуемая verification
+### 10.5 Production verification
 
-1. GitHub Actions зелёный, включая seeded legacy PostgreSQL migration, sequence и integration test.
-2. Render deploy применяет revision `20260804_0002`.
-3. `/health` показывает postgresql/persistent/configured и revision 0002.
-4. OAuth/search/resume smoke без HTTP 500.
-5. Existing connections/cache остаются после migration/restart.
-6. `/trudvsem/status` после run содержит secret-free `persisted_run`.
+1. GitHub Actions полностью зелёный, включая PostgreSQL 17, migration metadata, migration `20260804_0002`, integration test и полный pytest.
+2. Render deploy применил revision `20260804_0002`; `/health` показывает `backend=postgresql`, `configured=true`, `ok=true`, `persistent=true`.
+3. Поиск вакансий запускается без HTTP 500; после запуска `/trudvsem/status` показывает `cached_total=23`, `current_offset=30`, `last_processed=30`, `last_saved=30`.
+4. `/trudvsem/status` содержит secret-free `persisted_run` с UUID, source `trudvsem`, trigger `background`, target `300` и status `running`.
+5. После restart сохранились `cached_total=23`, `current_offset=30`, `last_processed=30`, `last_saved=30`, `last_started` и тот же persisted run; увеличился только `cache_age_seconds`, что подтверждает продолжение работы с постоянными данными.
+6. Пользователь подтвердил, что после перезагрузки сайт и поиск функционируют в штатном режиме.
 
 ### 10.6 Ограничения
 
@@ -1006,7 +1008,69 @@ repository hygiene: успешно
 - Canonical vacancy пока one-to-one с source record; actual cross-source merge относится к SEARCH-002.
 - Trudvsem thread остаётся в Gunicorn до SYNC-001.
 
-## 11. Стратегия домена и hosting
+## 11. SEC-001 - фактическая реализация 05 августа 2026
+
+### 11.1 Сессии и OAuth
+
+- cookie `aca_session`: Secure/HttpOnly/SameSite=Lax, host-only, lifetime 12 часов; production запрещает `Strict`, потому что он ломает возврат из внешнего OAuth;
+- production не запускается при явном отключении secure cookie, CSRF, rate limiting или security headers, а OAuth callback URL обязаны быть HTTPS без credentials/fragment;
+- OAuth state хранит issued_at, действует 10 минут и consume-ится один раз до обработки success/error/cancel callback;
+- после успешного OAuth transient session очищается, provider identities сохраняются;
+- `/logout` изменён с GET на POST + CSRF.
+
+### 11.2 CSRF и rate limiting
+
+- global Flask-WTF CSRF для POST/PUT/PATCH/DELETE;
+- hidden token во всех POST forms, `X-CSRF-Token` в JavaScript API;
+- CSRF exemption только для secret-authenticated machine sync и non-production refresh;
+- route limits для OAuth, resume/PDF, university logo, vacancy search, dashboard, status, diagnostics, sync и health;
+- controlled 429 с `Retry-After`/rate-limit headers;
+- process-local `memory://` storage до OPS/INFRA масштабирования.
+
+### 11.3 Browser headers и errors
+
+- CSP nonce на всех script tags; inline event handlers запрещены tests;
+- HSTS на production HTTPS, nosniff, frame deny, referrer/permissions/cross-origin policies;
+- non-static responses `Cache-Control: no-store`;
+- neutral 400/404/405/413/429/500 pages/JSON;
+- upstream OAuth/provider details и response bodies не отражаются пользователю.
+
+### 11.4 Request, PDF и outbound limits
+
+- file upload, multipart field/part, JSON and generic unsafe request limits;
+- PDF file size, page count и extracted-text limits;
+- filename normalization через `secure_filename`;
+- university-logo URLs запрещают credentials/private IP/nonstandard port; redirects проверяются вручную; HTML/image body bounded; SVG запрещён; image signature должна совпадать с MIME.
+
+### 11.5 Technical endpoints
+
+- `/debug/hh`, `/debug/trudvsem`, `/trudvsem/status` требуют diagnostics mode + header secret, иначе 404;
+- production `/trudvsem/refresh` возвращает 404;
+- `/sync/trudvsem` доступен только с `X-Sync-Secret`;
+- public UI status — `/api/sources/trudvsem/status`, без raw error/persisted internal state.
+
+### 11.6 Локальные доказательства
+
+```text
+compileall: успешно
+pytest: 77 passed, 4 skipped
+repository hygiene: будет выполнен на чистом финальном ZIP
+workflow YAML parse: успешно
+```
+
+Локальные skips относятся к Flask/Psycopg/PostgreSQL, отсутствующим в sandbox. GitHub Actions устанавливает production dependencies и запускает PostgreSQL 17, поэтому route/startup/integration tests не должны быть пропущены.
+
+### 11.7 Production verification, которое ещё требуется
+
+1. Зелёный GitHub Actions, включая `Verify SEC-001 security controls`.
+2. Render deploy без ImportError/startup loop.
+3. `/health`: PostgreSQL ok и revision `20260804_0002`.
+4. Main/AI Career/resume builder/vacancies/search/OAuth smoke.
+5. CSP/HSTS/cookie flags, CSRF positive/negative и controlled 429.
+6. `/debug/*`, detailed status и refresh закрыты; public status работает.
+7. Logs не содержат token, provider body или credentials.
+
+## 12. Стратегия домена и hosting
 
 - Собственный домен обязателен к коммерческой beta и может сначала указывать на Render.
 - Первая beta: paid Render + own domain + managed PostgreSQL - минимальный operational risk.
@@ -1014,11 +1078,10 @@ repository hygiene: успешно
 - Архитектура строится portability-first: DATABASE_URL, stdout logs, separate worker commands, object storage, Docker/Compose later.
 - При миграции users продолжают видеть один домен; DNS переключается с Render на VPS после staging/data sync/rollback rehearsal.
 
-## 12. Ближайшая последовательность
+## 13. Ближайшая последовательность
 
 ```text
-DATA-002 verification
--> SEC-001
+SEC-001 verification
 -> OPS-001
 -> DOMAIN-001
 -> SYNC-001/SEARCH core
@@ -1028,11 +1091,11 @@ DATA-002 verification
 -> commercial release gates
 ```
 
-## 13. Следующий пакет
+## 14. Следующий пакет
 
-DATA-002 имеет статус **НУЖНА ПРОВЕРКА**. После зелёного CI, Render revision `20260804_0002` и smoke/persistence-проверки он перейдёт в ВЫПОЛНЕНО, а `SEC-001 - Базовое усиление безопасности` станет ГОТОВО К СТАРТУ. DOMAIN-001 остаётся следующим инфраструктурным пакетом после SEC-001 и OPS-001.
+SEC-001 реализован и имеет статус **НУЖНА ПРОВЕРКА**. Локально подтверждены compileall и 77 доступных tests; полный Flask/PostgreSQL security contract должен пройти GitHub Actions и Render smoke. После подтверждения SEC-001 переводится в ВЫПОЛНЕНО, а `OPS-001 - Наблюдаемость, безопасные логи и резервное восстановление` становится следующим пакетом. DOMAIN-001 остаётся после OPS-001.
 
-## 14. Обязательный отчёт после каждого пакета
+## 15. Обязательный отчёт после каждого пакета
 
 ```text
 Пункт: <ID и название>
@@ -1048,7 +1111,7 @@ GitHub/production/API: <подтверждено или требуется>
 Приложения: ZIP, PLAN_CURRENT DOCX/PDF/MD, паспорт при необходимости
 ```
 
-## 15. Журнал версий
+## 16. Журнал версий
 
 | Версия | Дата | Пункт | Изменение |
 |---|---|---|---|
@@ -1063,3 +1126,5 @@ GitHub/production/API: <подтверждено или требуется>
 | 1.2.4 | 04.08.2026 | DATA-001-WORKFLOW-FIX | Исправлен недопустимый `${{ runner.temp }}` в job-level env; тестовый DATA_DIR перенесён в `/tmp`. Статус DATA-001 не изменён. |
 | 1.2.5 | 04.08.2026 | DATA-001-COMPLETE | Подтверждены зелёный PostgreSQL CI, Render PostgreSQL 17, Alembic revision и сохранность данных после restart; DATA-002 готов к старту. |
 | 1.2.6 | 04.08.2026 | DATA-002 | Добавлены domain/repository layers и migration 20260804_0002; DOMAIN-001 подтверждён в этапе 6. DATA-002 ожидает GitHub/Render verification. |
+| 1.2.7 | 05.08.2026 | DATA-002-COMPLETE | Подтверждены зелёный CI, Render revision 20260804_0002, штатный поиск и сохранность persisted sync/cache state после restart; SEC-001 готов к старту. |
+| 1.2.8 | 05.08.2026 | SEC-001 | Реализованы secure session, CSRF, rate limiting, CSP/headers, request/PDF limits, diagnostics gate, neutral errors и SSRF baseline; пакет ожидает GitHub/Render verification. |

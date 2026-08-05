@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import io
+import re
 
 import pytest
 
@@ -32,17 +33,20 @@ def test_vacancies_redirect_keeps_current_behavior(client):
     assert response.headers["Location"].endswith("/ai-career")
 
 
-def test_resume_preview_validation_does_not_require_network(client):
-    missing = client.post("/api/resume/preview")
+def test_resume_preview_validation_does_not_require_network(client, csrf_token):
+    headers = {"X-CSRF-Token": csrf_token}
+    missing = client.post("/api/resume/preview", headers=headers)
     wrong_extension = client.post(
         "/api/resume/preview",
         data={"resume": (io.BytesIO(b"text"), "resume.txt")},
         content_type="multipart/form-data",
+        headers=headers,
     )
     invalid_pdf = client.post(
         "/api/resume/preview",
         data={"resume": (io.BytesIO(b"not-pdf"), "resume.pdf")},
         content_type="multipart/form-data",
+        headers=headers,
     )
 
     assert missing.status_code == 400
@@ -50,13 +54,23 @@ def test_resume_preview_validation_does_not_require_network(client):
     assert invalid_pdf.status_code == 400
 
 
-def test_university_logo_rejects_short_name_before_http(client):
-    response = client.post("/api/university/logo", json={"name": "A"})
+def test_university_logo_rejects_short_name_before_http(client, csrf_token):
+    response = client.post(
+        "/api/university/logo",
+        json={"name": "A"},
+        headers={"X-CSRF-Token": csrf_token},
+    )
     assert response.status_code == 400
 
 
-def test_debug_and_sync_endpoints_have_baseline_access_controls(client):
+def test_debug_and_sync_endpoints_have_baseline_access_controls(
+    client,
+    diagnostics_headers,
+):
     assert client.get("/debug/hh").status_code == 404
+    assert client.get("/debug/trudvsem").status_code == 404
+    assert client.get("/trudvsem/status").status_code == 404
+    assert client.get("/trudvsem/status", headers=diagnostics_headers).status_code == 200
     assert client.post("/sync/trudvsem").status_code == 401
 
 
@@ -66,6 +80,8 @@ def test_application_uses_explicit_test_configuration(app_module):
     assert app_module.app.config["TESTING"] is True
     assert app_module.SETTINGS.hh_app_token is None
     assert app_module.SETTINGS.reed_api_key is None
+    assert app_module.SETTINGS.csrf_enabled is True
+    assert app_module.SETTINGS.rate_limit_enabled is True
 
 
 def test_background_worker_is_disabled_in_test_environment(app_module, client):
@@ -172,7 +188,11 @@ def test_health_reports_migrated_database_without_connection_url(client):
     assert "sqlite:///" not in response.get_data(as_text=True)
 
 
-def test_trudvsem_status_includes_latest_persisted_sync_run(app_module, client):
+def test_trudvsem_status_includes_latest_persisted_sync_run(
+    app_module,
+    client,
+    diagnostics_headers,
+):
     run = app_module.SYNC_RUNS.start(
         source="trudvsem",
         trigger="route-test",
@@ -186,10 +206,258 @@ def test_trudvsem_status_includes_latest_persisted_sync_run(app_module, client):
         cursor="10",
     )
 
-    response = client.get("/trudvsem/status")
+    response = client.get("/trudvsem/status", headers=diagnostics_headers)
     payload = response.get_json()
 
     assert response.status_code == 200
     assert payload["persisted_run"]["id"] == run.id
     assert payload["persisted_run"]["status"] == "succeeded"
     assert payload["persisted_run"]["saved"] == 8
+
+
+def test_public_trudvsem_status_is_sanitized(app_module, client):
+    with app_module.TRUDVSEM_SYNC_LOCK:
+        previous_error = app_module.TRUDVSEM_SYNC_STATE.get("last_error")
+        app_module.TRUDVSEM_SYNC_STATE["last_error"] = "private provider exception"
+
+    try:
+        response = client.get("/api/sources/trudvsem/status")
+        payload = response.get_json()
+
+        assert response.status_code == 200
+        assert set(payload) == {
+            "available",
+            "cache_age_seconds",
+            "cached_total",
+            "progress_percent",
+            "queued",
+            "running",
+            "source",
+        }
+        assert "private provider exception" not in response.get_data(as_text=True)
+        assert "persisted_run" not in payload
+    finally:
+        with app_module.TRUDVSEM_SYNC_LOCK:
+            app_module.TRUDVSEM_SYNC_STATE["last_error"] = previous_error
+
+
+def test_csrf_protects_form_and_json_posts(client, csrf_token):
+    missing = client.post("/api/resume/preview")
+    accepted = client.post(
+        "/api/resume/preview",
+        headers={"X-CSRF-Token": csrf_token},
+    )
+
+    assert missing.status_code == 400
+    assert missing.get_json()["error"] == "Обновите страницу и повторите действие."
+    assert accepted.status_code == 400
+    assert accepted.get_json()["error"] == "Выберите PDF-файл с резюме."
+
+
+def test_security_headers_and_csrf_nonce_are_present(client):
+    response = client.get("/")
+    body = response.get_data(as_text=True)
+    csp = response.headers["Content-Security-Policy"]
+
+    assert response.headers["X-Content-Type-Options"] == "nosniff"
+    assert response.headers["X-Frame-Options"] == "DENY"
+    assert response.headers["Referrer-Policy"] == "strict-origin-when-cross-origin"
+    assert response.headers["Cross-Origin-Opener-Policy"] == "same-origin"
+    assert response.headers["Cache-Control"] == "no-store, max-age=0"
+    assert "frame-ancestors 'none'" in csp
+    assert "script-src-attr 'none'" in csp
+    assert "'unsafe-inline'" not in csp.split("style-src", 1)[0]
+    assert 'meta name="csrf-token"' in body
+
+    nonce_match = re.search(r'<script nonce="([^"]+)"', body)
+    assert nonce_match, "Rendered page did not include a CSP nonce"
+    assert f"'nonce-{nonce_match.group(1)}'" in csp
+
+
+def test_session_cookie_is_http_only_and_same_site(client):
+    response = client.get("/")
+    cookie = response.headers.get("Set-Cookie", "")
+
+    assert cookie.startswith("aca_session=")
+    assert "HttpOnly" in cookie
+    assert "SameSite=Lax" in cookie
+    assert "Path=/" in cookie
+    assert "Secure" not in cookie  # test mode intentionally uses HTTP
+
+
+def test_logout_requires_post_and_csrf(client, csrf_token):
+    with client.session_transaction() as browser_session:
+        browser_session["hh_user_id"] = "hh-test"
+
+    assert client.get("/logout").status_code == 405
+    assert client.post("/logout").status_code == 400
+
+    response = client.post(
+        "/logout",
+        data={"csrf_token": csrf_token},
+    )
+    assert response.status_code == 302
+    with client.session_transaction() as browser_session:
+        assert "hh_user_id" not in browser_session
+
+
+def test_rate_limit_blocks_repeated_resume_preview_requests(client, csrf_token):
+    headers = {"X-CSRF-Token": csrf_token}
+    statuses = [
+        client.post("/api/resume/preview", headers=headers).status_code
+        for _ in range(11)
+    ]
+
+    assert statuses[:10] == [400] * 10
+    assert statuses[10] == 429
+
+
+def test_oauth_provider_error_requires_valid_state_and_is_not_reflected(client):
+    start = client.get("/oauth/hh/login")
+    assert start.status_code == 302
+    with client.session_transaction() as browser_session:
+        state = browser_session["hh_oauth_state"]
+
+    response = client.get(
+        f"/oauth/hh/callback?error=secret-provider-detail&state={state}"
+    )
+    body = response.get_data(as_text=True)
+
+    assert response.status_code == 400
+    assert "secret-provider-detail" not in body
+    assert "Подключение HeadHunter было отменено" in body
+    with client.session_transaction() as browser_session:
+        assert "hh_oauth_state" not in browser_session
+
+
+def test_superjob_provider_error_requires_valid_state_and_is_not_reflected(client):
+    start = client.get("/oauth/superjob/login")
+    assert start.status_code == 302
+    with client.session_transaction() as browser_session:
+        state = browser_session["superjob_oauth_state"]
+
+    response = client.get(
+        f"/oauth/superjob/callback?error=secret-provider-detail&state={state}"
+    )
+    body = response.get_data(as_text=True)
+
+    assert response.status_code == 400
+    assert "secret-provider-detail" not in body
+    assert "Подключение SuperJob было отменено" in body
+    with client.session_transaction() as browser_session:
+        assert "superjob_oauth_state" not in browser_session
+
+
+def test_oauth_provider_error_with_invalid_state_is_rejected(client):
+    response = client.get(
+        "/oauth/hh/callback?error=provider-cancelled&state=invalid"
+    )
+    body = response.get_data(as_text=True)
+
+    assert response.status_code == 400
+    assert "Ошибка безопасности" in body
+    assert "Подключение HeadHunter было отменено" not in body
+
+
+def test_token_refresh_network_errors_do_not_expose_sensitive_values(
+    app_module,
+    monkeypatch,
+):
+    def fail_request(*_args, **_kwargs):
+        raise app_module.requests.Timeout(
+            "request failed for refresh-token-secret and client-secret"
+        )
+
+    monkeypatch.setattr(app_module.requests, "get", fail_request)
+    superjob_row = {
+        "expires_at": 1,
+        "refresh_token": app_module.enc("refresh-token-secret"),
+        "profile_json": '{"id": 101}',
+        "access_token": app_module.enc("access-token-secret"),
+    }
+    with pytest.raises(RuntimeError) as superjob_error:
+        app_module.valid_token(superjob_row)
+
+    monkeypatch.setattr(app_module.requests, "post", fail_request)
+    hh_row = {
+        "expires_at": 1,
+        "refresh_token": app_module.enc("hh-refresh-token-secret"),
+        "profile_json": '{"id": "hh-101"}',
+        "access_token": app_module.enc("hh-access-token-secret"),
+    }
+    with pytest.raises(RuntimeError) as hh_error:
+        app_module.valid_hh_token(hh_row)
+
+    combined = f"{superjob_error.value} {hh_error.value}"
+    assert "refresh-token-secret" not in combined
+    assert "client-secret" not in combined
+    assert "Подключите" in combined
+
+
+def test_unknown_route_uses_neutral_error_page(client):
+    response = client.get("/missing-page")
+    body = response.get_data(as_text=True)
+
+    assert response.status_code == 404
+    assert "Страница не найдена" in body
+    assert "The requested URL was not found" not in body
+
+
+def test_untrusted_host_is_rejected_without_reflection(client):
+    response = client.get("/", headers={"Host": "evil.example"})
+    body = response.get_data(as_text=True)
+
+    assert response.status_code == 400
+    assert "evil.example" not in body
+    assert "Адрес запроса не разрешён" in body
+
+
+def test_manual_refresh_requires_csrf_outside_production(
+    app_module,
+    client,
+    csrf_token,
+    monkeypatch,
+):
+    monkeypatch.setattr(app_module, "request_trudvsem_sync", lambda: None)
+
+    assert client.post("/trudvsem/refresh").status_code == 400
+    accepted = client.post(
+        "/trudvsem/refresh",
+        data={"csrf_token": csrf_token, "source": "trudvsem"},
+    )
+    assert accepted.status_code == 302
+
+
+def test_oauth_state_is_single_use_and_expires(app_module, monkeypatch):
+    from flask import session
+
+    monkeypatch.setattr(app_module.time, "time", lambda: 1_000)
+    with app_module.app.test_request_context("/"):
+        state = app_module._remember_oauth_state("hh")
+        assert session["hh_oauth_state"] == state
+        assert app_module._consume_oauth_state("hh", state) is True
+        assert app_module._consume_oauth_state("hh", state) is False
+
+    monkeypatch.setattr(app_module.time, "time", lambda: 2_000)
+    with app_module.app.test_request_context("/"):
+        expired_state = app_module._remember_oauth_state("superjob")
+        session["superjob_oauth_state_issued_at"] = 1_000
+        assert app_module._consume_oauth_state("superjob", expired_state) is False
+
+
+def test_uploaded_filename_is_sanitized(app_module):
+    assert app_module._safe_upload_filename("../../My Resume.pdf") == "My_Resume.pdf"
+    assert app_module._safe_upload_filename("../..") == "resume.pdf"
+
+
+def test_oversized_resume_is_rejected_before_pdf_parsing(client, csrf_token):
+    oversized = b"%PDF" + (b"x" * (8 * 1024 * 1024 + 1))
+    response = client.post(
+        "/api/resume/preview",
+        data={"resume": (io.BytesIO(oversized), "resume.pdf")},
+        content_type="multipart/form-data",
+        headers={"X-CSRF-Token": csrf_token},
+    )
+
+    assert response.status_code == 413
+    assert "8 МБ" in response.get_json()["error"]

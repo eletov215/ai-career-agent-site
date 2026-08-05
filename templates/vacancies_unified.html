@@ -380,7 +380,9 @@
 
     {% if 'trudvsem' in selected_sources %}
       <div id="trudvsem-sync-status" class="card spaced" hidden></div>
+      {% if show_manual_refresh %}
       <form method="post" action="{{ url_for('refresh_trudvsem_cache') }}" class="cache-refresh-form" id="trudvsem-refresh-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <input type="hidden" name="keyword" value="{{ keyword }}">
         {% for source in selected_sources %}<input type="hidden" name="source" value="{{ source }}">{% endfor %}
         {% if remote_only %}<input type="hidden" name="remote" value="1">{% endif %}
@@ -395,6 +397,7 @@
         <input type="hidden" name="sort" value="{{ filters.sort }}">
         <button class="link-button" type="submit">Обновить данные «Работы России» сейчас</button>
       </form>
+      {% endif %}
     {% endif %}
 
     {% if not vacancies and not errors %}
@@ -525,7 +528,7 @@
     {% if 'reed' in selected_sources %}<p class="api-credit">Вакансии Великобритании получены через официальный Reed.co.uk Jobseeker API.</p>{% endif %}
   </div>
 </main>
-<script>
+<script nonce="{{ csp_nonce }}">
 (() => {
   const keywordInput = document.getElementById('vacancy-keyword');
   if (!keywordInput) return;
@@ -700,7 +703,7 @@
 })();
 </script>
 {% if 'trudvsem' in selected_sources %}
-<script>
+<script nonce="{{ csp_nonce }}">
 (() => {
   const statusBox = document.getElementById('trudvsem-sync-status');
   const form = document.getElementById('trudvsem-refresh-form');
@@ -708,25 +711,21 @@
 
   async function pollStatus() {
     try {
-      const response = await fetch('{{ url_for("trudvsem_status") }}', {cache: 'no-store'});
+      const response = await fetch('{{ url_for("trudvsem_public_status") }}', {cache: 'no-store'});
       if (!response.ok) return;
       const state = await response.json();
       const active = Boolean(state.running || state.queued);
 
-      if (active || state.last_error) {
+      if (active) {
         statusBox.hidden = false;
       }
 
       if (active) {
         observedRunning = true;
-        const processed = Number(state.last_processed || 0);
-        const target = Number(state.target || 0);
         const percent = Number(state.progress_percent || 0);
-        statusBox.textContent = `Обновление: ${processed} из ${target} (${percent}%)`;
-      } else if (state.last_error) {
-        statusBox.textContent = `Ошибка обновления: ${state.last_error}`;
+        statusBox.textContent = `Обновление данных «Работы России»: ${percent}%`;
       } else if (observedRunning) {
-        statusBox.textContent = `Обновление завершено. Загружено: ${state.last_saved || 0}`;
+        statusBox.textContent = `Обновление завершено. Доступно вакансий: ${state.cached_total || 0}`;
         window.setTimeout(() => window.location.reload(), 800);
         return;
       }

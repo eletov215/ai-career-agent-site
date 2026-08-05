@@ -13,6 +13,8 @@ COMMONS_FILE = "https://commons.wikimedia.org/wiki/Special:Redirect/file/{filena
 USER_AGENT = "AI-Career-Agent/1.0 (university logo resolver)"
 TIMEOUT = (4, 8)
 MAX_IMAGE_BYTES = 2 * 1024 * 1024
+MAX_HTML_BYTES = 1_500_000
+MAX_REDIRECTS = 5
 
 _IMAGE_META_RE = re.compile(
     r'<meta[^>]+(?:property|name)=["\'](?:og:image|twitter:image)["\'][^>]+content=["\']([^"\']+)',
@@ -57,13 +59,21 @@ def _is_public_host(hostname: str) -> bool:
 def _safe_http_url(value: str) -> str | None:
     try:
         parsed = urlparse(value)
+        port = parsed.port
     except ValueError:
         return None
     if parsed.scheme not in {"http", "https"} or not parsed.hostname:
         return None
+    if parsed.username or parsed.password:
+        return None
+    expected_port = 443 if parsed.scheme == "https" else 80
+    if port is not None and port != expected_port:
+        return None
+    if any(ord(character) < 32 for character in value):
+        return None
     if not _is_public_host(parsed.hostname):
         return None
-    return value
+    return parsed.geturl()
 
 
 def _same_site(candidate: str, official_url: str) -> bool:
@@ -73,22 +83,66 @@ def _same_site(candidate: str, official_url: str) -> bool:
 
 
 def _request(url: str, *, stream: bool = False) -> requests.Response:
-    safe_url = _safe_http_url(url)
-    if not safe_url:
+    current_url = _safe_http_url(url)
+    if not current_url:
         raise ValueError("Недопустимый адрес")
-    response = requests.get(
-        safe_url,
-        headers={"User-Agent": USER_AGENT, "Accept-Language": "ru,en;q=0.8"},
-        timeout=TIMEOUT,
-        allow_redirects=True,
-        stream=stream,
-    )
-    response.raise_for_status()
-    final_url = _safe_http_url(response.url)
-    if not final_url:
+
+    redirect_statuses = {301, 302, 303, 307, 308}
+    for _redirect_number in range(MAX_REDIRECTS + 1):
+        response = requests.get(
+            current_url,
+            headers={"User-Agent": USER_AGENT, "Accept-Language": "ru,en;q=0.8"},
+            timeout=TIMEOUT,
+            allow_redirects=False,
+            stream=stream,
+        )
+        if response.status_code in redirect_statuses:
+            location = response.headers.get("Location", "").strip()
+            response.close()
+            redirected_url = _safe_http_url(urljoin(current_url, location))
+            if not location or not redirected_url:
+                raise ValueError("Недопустимое перенаправление")
+            current_url = redirected_url
+            continue
+
+        response.raise_for_status()
+        final_url = _safe_http_url(response.url or current_url)
+        if not final_url:
+            response.close()
+            raise ValueError("Недопустимое перенаправление")
+        return response
+
+    raise ValueError("Слишком много перенаправлений")
+
+
+def _read_limited_body(response: requests.Response, maximum_bytes: int) -> bytes:
+    chunks: list[bytes] = []
+    total = 0
+    try:
+        for chunk in response.iter_content(64 * 1024):
+            if not chunk:
+                continue
+            total += len(chunk)
+            if total > maximum_bytes:
+                raise ValueError("Ответ внешнего сервиса слишком большой")
+            chunks.append(chunk)
+    finally:
         response.close()
-        raise ValueError("Недопустимое перенаправление")
-    return response
+    return b"".join(chunks)
+
+
+def _detected_image_type(data: bytes) -> str | None:
+    if data.startswith(b"\x89PNG\r\n\x1a\n"):
+        return "image/png"
+    if data.startswith(b"\xff\xd8\xff"):
+        return "image/jpeg"
+    if data.startswith((b"GIF87a", b"GIF89a")):
+        return "image/gif"
+    if len(data) >= 12 and data[:4] == b"RIFF" and data[8:12] == b"WEBP":
+        return "image/webp"
+    if data.startswith(b"\x00\x00\x01\x00"):
+        return "image/x-icon"
+    return None
 
 
 def _claim_value(entity: dict, property_id: str):
@@ -142,43 +196,55 @@ def _search_entity(name: str) -> tuple[dict, str] | tuple[None, None]:
 
 
 def _extract_site_image(official_url: str) -> str | None:
-    response = _request(official_url)
+    response = _request(official_url, stream=True)
     content_type = (response.headers.get("Content-Type") or "").lower()
+    final_url = response.url
     if "html" not in content_type:
+        response.close()
         return None
-    html = response.text[:1_500_000]
+    body = _read_limited_body(response, MAX_HTML_BYTES)
+    encoding = response.encoding or "utf-8"
+    html = body.decode(encoding, errors="replace")
     for pattern in (_LOGO_IMG_RE, _LOGO_IMG_RE_REVERSED, _IMAGE_META_RE, _IMAGE_META_RE_REVERSED, _ICON_RE):
         match = pattern.search(html)
         if not match:
             continue
-        candidate = urljoin(response.url, unescape(match.group(1).strip()))
-        if _safe_http_url(candidate) and _same_site(candidate, response.url):
+        candidate = urljoin(final_url, unescape(match.group(1).strip()))
+        if _safe_http_url(candidate) and _same_site(candidate, final_url):
             return candidate
     return None
 
 
 def _image_to_data_url(image_url: str) -> tuple[str, str]:
     response = _request(image_url, stream=True)
-    content_type = (response.headers.get("Content-Type") or "").split(";", 1)[0].strip().lower()
-    allowed = {"image/png", "image/jpeg", "image/webp", "image/gif", "image/svg+xml", "image/x-icon", "image/vnd.microsoft.icon"}
-    if content_type not in allowed:
-        response.close()
-        raise ValueError("Найденный файл не является изображением")
-    chunks = []
-    total = 0
-    for chunk in response.iter_content(64 * 1024):
-        if not chunk:
-            continue
-        total += len(chunk)
-        if total > MAX_IMAGE_BYTES:
-            response.close()
-            raise ValueError("Эмблема слишком большого размера")
-        chunks.append(chunk)
-    response.close()
-    if not chunks:
+    declared_type = (response.headers.get("Content-Type") or "").split(";", 1)[0].strip().lower()
+    final_url = response.url
+    image_bytes = _read_limited_body(response, MAX_IMAGE_BYTES)
+    if not image_bytes:
         raise ValueError("Пустое изображение")
-    encoded = base64.b64encode(b"".join(chunks)).decode("ascii")
-    return f"data:{content_type};base64,{encoded}", response.url
+
+    detected_type = _detected_image_type(image_bytes)
+    allowed_declared = {
+        "image/png",
+        "image/jpeg",
+        "image/webp",
+        "image/gif",
+        "image/x-icon",
+        "image/vnd.microsoft.icon",
+    }
+    declared_matches = (
+        declared_type in allowed_declared
+        and (
+            declared_type == detected_type
+            or {declared_type, detected_type}
+            <= {"image/x-icon", "image/vnd.microsoft.icon"}
+        )
+    )
+    if detected_type is None or not declared_matches:
+        raise ValueError("Найденный файл не является безопасным изображением")
+
+    encoded = base64.b64encode(image_bytes).decode("ascii")
+    return f"data:{detected_type};base64,{encoded}", final_url
 
 
 def find_university_logo(name: str) -> dict:
@@ -199,7 +265,8 @@ def find_university_logo(name: str) -> dict:
     if not entity:
         return {"found": False, "university_name": first_part or clean_name}
 
-    official_url = _claim_value(entity, "P856")
+    official_url_claim = _claim_value(entity, "P856")
+    official_url = _safe_http_url(str(official_url_claim)) if official_url_claim else None
     logo_filename = _claim_value(entity, "P154")
     candidates = []
     if logo_filename:

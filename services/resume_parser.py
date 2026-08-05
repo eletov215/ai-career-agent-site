@@ -27,7 +27,13 @@ class ParsedResume:
         return self.text[:12000]
 
 
-def parse_resume_pdf(file_bytes: bytes, filename: str) -> ParsedResume:
+def parse_resume_pdf(
+    file_bytes: bytes,
+    filename: str,
+    *,
+    max_pages: int = 20,
+    max_text_characters: int = 200_000,
+) -> ParsedResume:
     if not file_bytes:
         raise ResumeParseError("Файл пустой. Выберите PDF-резюме и повторите загрузку.")
 
@@ -47,12 +53,25 @@ def parse_resume_pdf(file_bytes: bytes, filename: str) -> ParsedResume:
         if not unlocked:
             raise ResumeParseError("Защищённые паролем PDF пока не поддерживаются.")
 
+    page_count = len(reader.pages)
+    if page_count > max(1, int(max_pages)):
+        raise ResumeParseError(
+            f"PDF содержит слишком много страниц. Максимум: {max_pages}."
+        )
+
     page_texts: list[str] = []
+    extracted_characters = 0
     for page in reader.pages:
         try:
-            page_texts.append((page.extract_text() or "").strip())
+            page_text = (page.extract_text() or "").strip()
         except Exception:
-            page_texts.append("")
+            page_text = ""
+        extracted_characters += len(page_text)
+        if extracted_characters > max(1, int(max_text_characters)):
+            raise ResumeParseError(
+                "В PDF слишком много текста для безопасной обработки. Сократите документ."
+            )
+        page_texts.append(page_text)
 
     text = "\n\n".join(part for part in page_texts if part).strip()
     if not text:
@@ -62,7 +81,7 @@ def parse_resume_pdf(file_bytes: bytes, filename: str) -> ParsedResume:
 
     return ParsedResume(
         filename=filename,
-        page_count=len(reader.pages),
+        page_count=page_count,
         text=text,
     )
 

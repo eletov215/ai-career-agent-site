@@ -666,7 +666,7 @@
 {% endblock %}
 
 {% block scripts %}
-<script>
+<script nonce="{{ csp_nonce }}">
 (() => {
   const items = document.querySelectorAll('.scroll-reveal');
   if (!items.length) return;

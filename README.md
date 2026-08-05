@@ -7,7 +7,8 @@ Flask-приложение с OAuth-интеграциями HeadHunter и Super
 - `FND-001` — **ВЫПОЛНЕНО**: базовые тесты и GitHub Actions подтверждены.
 - `FND-002` — **ВЫПОЛНЕНО**: конфигурация `development/test/production` подтверждена CI и Render; `HH_CURRENCY_SCAN_PAGES=20`.
 - `DATA-001` — **ВЫПОЛНЕНО**: production PostgreSQL 17, Alembic revision `20260804_0001` и сохранность после restart подтверждены.
-- `DATA-002` — **НУЖНА ПРОВЕРКА**: доменная schema/repositories и migration `20260804_0002` подготовлены; нужен зелёный CI и Render verification.
+- `DATA-002` — **ВЫПОЛНЕНО**: domain/repository layers и migration `20260804_0002` подтверждены зелёным CI, Render и restart persistence.
+- `SEC-001` — **НУЖНА ПРОВЕРКА**: защитный слой реализован; требуются зелёный GitHub Actions и production smoke на Render.
 
 Главный рабочий файл остаётся `app.py`. WSGI-приложение — `app:app`; `app_fixed.py` не используется.
 
@@ -69,11 +70,51 @@ TRUDVSEM_RETRY_BACKOFF
 HH_CURRENCY_SCAN_PAGES
 DEBUG_HH
 MAX_RESUME_UPLOAD_MB
+MAX_RESUME_PAGES
+MAX_RESUME_TEXT_CHARACTERS
+SESSION_COOKIE_SECURE
+SESSION_COOKIE_SAMESITE
+SESSION_LIFETIME_SECONDS
+CSRF_ENABLED
+CSRF_TIME_LIMIT_SECONDS
+RATE_LIMIT_ENABLED
+RATELIMIT_STORAGE_URI
+TRUSTED_HOSTS
+TRUST_PROXY_HEADERS
+SECURITY_HEADERS_ENABLED
+HSTS_SECONDS
+MAX_FORM_MEMORY_SIZE
+MAX_FORM_PARTS
+DEBUG_DIAGNOSTICS
+DIAGNOSTICS_SECRET
 FLASK_DEBUG
 PORT
 ```
 
 `HH_CURRENCY_SCAN_PAGES` допускает `1..20`; Render использует `20`.
+
+## Базовый защитный слой SEC-001
+
+Добавлены Flask-WTF и Flask-Limiter, а политика собрана в `security.py`. Production по умолчанию использует:
+
+- host-only cookie `aca_session` с `Secure`, `HttpOnly`, обязательным production `SameSite=Lax` и ограниченным сроком жизни;
+- глобальную CSRF-проверку для POST/PUT/PATCH/DELETE;
+- route-specific rate limits для OAuth, загрузок, поиска, diagnostics и sync;
+- CSP с nonce для скриптов, HSTS, clickjacking/MIME/referrer/permissions/cross-origin headers;
+- лимиты размера запроса, числа multipart-полей, страниц PDF и извлечённого текста;
+- нейтральные 400/404/405/413/429/500 ответы без отражения provider details; OAuth state проверяется также при cancel/error callback;
+- закрытые `/debug/*` и `/trudvsem/status`; production refresh endpoint возвращает 404; `/sync/trudvsem` остаётся доступен только по `X-Sync-Secret`;
+- public status для интерфейса: `/api/sources/trudvsem/status`, без ошибок и внутренних полей;
+- проверку внешних URL/redirects/изображений в university-logo resolver для снижения SSRF и oversized-response рисков.
+
+Новых обязательных переменных для обычного production deploy нет. Production OAuth callback URL должны использовать HTTPS; credentials и URL fragments запрещены. Детальная диагностика выключена по умолчанию. Для временного включения нужны одновременно:
+
+```text
+DEBUG_DIAGNOSTICS=1
+DIAGNOSTICS_SECRET=<случайное длинное значение>
+```
+
+и заголовок `X-Diagnostics-Secret`. Не передавайте секрет в URL. `RATELIMIT_STORAGE_URI=memory://` подходит текущему одному Gunicorn worker; при горизонтальном масштабировании потребуется общее Redis-compatible storage. Подробности: [`docs/SECURITY.md`](docs/SECURITY.md).
 
 ## Данные и доменная модель
 
@@ -163,13 +204,13 @@ Importer пишет provider identities в `oauth_connections` и ваканси
 
 ```bash
 python scripts/check_repository_hygiene.py
-python -m compileall -q app.py config.py database.py domain models repositories migrations services tests scripts
+python -m compileall -q app.py config.py database.py security.py domain models repositories migrations services tests scripts
 python scripts/manage_db.py upgrade
 python -m alembic check
 python -m pytest -ra
 ```
 
-GitHub Actions поднимает PostgreSQL 17, проверяет migration из legacy revision `0001` в `0002`, serial sequence после backfill, `alembic check`, repository/domain boundaries и persistence после пересоздания Engine.
+GitHub Actions поднимает PostgreSQL 17, проверяет migration из legacy revision `0001` в `0002`, serial sequence после backfill, `alembic check`, repository/domain boundaries, persistence после пересоздания Engine и отдельный контракт SEC-001 для config/templates/routes/SSRF controls.
 
 ## Собственный домен
 
@@ -183,6 +224,8 @@ DOMAIN-001 — собственный домен, DNS, TLS и публичные
 
 ## Текущие ограничения
 
+- SEC-001 ожидает подтверждения GitHub/Render; до этого пакет нельзя считать выполненным.
+- Rate limiting пока использует process-local memory storage; для нескольких workers/instances нужен общий backend.
 - Trudvsem worker пока работает внутри web-процесса (`SYNC-001`).
 - Собственный пользователь и account UI ещё не реализованы (`AUTH-001`).
 - `user_id` в `oauth_connections` пока nullable и будет заполняться в `AUTH-002`.

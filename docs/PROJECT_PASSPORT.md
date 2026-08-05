@@ -1,12 +1,12 @@
 # AI Career Agent — паспорт проекта
 
-**Версия паспорта:** 2.4  
-**Дата:** 04 августа 2026  
+**Версия паспорта:** 2.6  
+**Дата:** 05 августа 2026  
 **Статус:** ДЕЙСТВУЮЩИЙ  
-**Связанный план:** `AI_Career_Agent_PLAN_CURRENT v1.2.6`  
-**Актуальный рабочий пакет:** `DATA-002 — НУЖНА ПРОВЕРКА`
+**Связанный план:** `AI_Career_Agent_PLAN_CURRENT v1.2.8`  
+**Актуальный рабочий пакет:** `SEC-001 — НУЖНА ПРОВЕРКА`
 
-> Контрольные статусы: FND-001 — ВЫПОЛНЕНО; FND-002 — ВЫПОЛНЕНО; DATA-001 — ВЫПОЛНЕНО; DATA-002 — НУЖНА ПРОВЕРКА; DOMAIN-001 — ЗАПЛАНИРОВАНО, ЭТАП 6, ОБЯЗАТЕЛЕН ДО BETA. Следующий пакет после подтверждения — SEC-001.
+> Контрольные статусы: FND-001 — ВЫПОЛНЕНО; FND-002 — ВЫПОЛНЕНО; DATA-001 — ВЫПОЛНЕНО; DATA-002 — ВЫПОЛНЕНО; SEC-001 — НУЖНА ПРОВЕРКА; OPS-001 — ЗАПЛАНИРОВАНО; DOMAIN-001 — ЗАПЛАНИРОВАНО, ЭТАП 6, ОБЯЗАТЕЛЕН ДО BETA.
 
 ## 1. Назначение
 
@@ -34,6 +34,7 @@ AI Career Agent — коммерческий веб-сервис карьерн�
 - PostgreSQL 17/Psycopg 3;
 - SQLite local/test fallback;
 - GitHub Actions;
+- Flask-WTF 1.3 и Flask-Limiter 4.1;
 - Render сейчас;
 - собственный домен в `DOMAIN-001`;
 - optional VPS после `HOST-001`;
@@ -48,6 +49,7 @@ AI Career Agent — коммерческий веб-сервис карьерн�
 app.py                     Flask routes, app:app
 config.py                  production/development/test
 database.py                SQLAlchemy runtime/health
+security.py                CSRF/rate limits/headers/request limits
 domain/                    detached records
 models/                    ORM domain schema
 repositories/              persistence queries
@@ -81,7 +83,7 @@ Central config/APP_ENV, CI и Render подтверждены; `HH_CURRENCY_SCAN
 - `/health` persistent=true;
 - cache/state пережили restart.
 
-## 6. DATA-002 — реализован, нужна проверка
+## 6. DATA-002 — ВЫПОЛНЕНО
 
 ### Добавлено
 
@@ -105,15 +107,50 @@ Central config/APP_ENV, CI и Render подтверждены; `HH_CURRENCY_SCAN
 - Canonical/source vacancy model готовит SEARCH-002.
 - app.py больше не знает SQLAlchemy, ORM или concrete repositories.
 
-### До статуса «ВЫПОЛНЕНО»
+### Подтверждение выполнения
 
-- зелёный GitHub Actions;
-- PostgreSQL integration test не skipped;
-- Render `/health` revision `20260804_0002`;
-- OAuth/search smoke;
-- restart persistence.
+- GitHub Actions полностью зелёный, включая PostgreSQL migration/integration test и полный pytest;
+- Render `/health` показывает PostgreSQL и revision `20260804_0002`;
+- поиск вакансий работает без HTTP 500;
+- `/trudvsem/status` содержит secret-free `persisted_run`;
+- после restart сохранились `cached_total=23`, `current_offset=30`, `last_processed=30`, `last_saved=30`, `last_started` и persisted run;
+- пользователь подтвердил штатную работу сайта после перезагрузки.
 
-## 7. Текущее функциональное состояние
+## 7. SEC-001 — НУЖНА ПРОВЕРКА
+
+### Реализовано
+
+- host-only `aca_session` с production Secure/HttpOnly/SameSite=Lax и ограниченным lifetime; Strict отклоняется из-за OAuth compatibility;
+- one-time OAuth state с TTL 10 минут для success/error callbacks, HTTPS-only production redirect URI и session cleanup после успешного callback;
+- global Flask-WTF CSRF, token в POST forms и JavaScript header;
+- Flask-Limiter route limits и controlled 429;
+- trusted hosts, one-proxy scheme/client handling, CSP nonce, HSTS и browser security headers;
+- request/form/file/PDF page/text limits;
+- POST-only logout;
+- neutral 400/404/405/413/429/500 и sanitized OAuth/provider errors;
+- diagnostics gate: `DEBUG_DIAGNOSTICS` + `DIAGNOSTICS_SECRET` + header;
+- public secret-free `/api/sources/trudvsem/status`;
+- production refresh hidden, sync protected by `X-Sync-Secret`;
+- university-logo SSRF/redirect/response-size/MIME-signature baseline;
+- security config/route/template/SSRF tests и отдельный CI step.
+
+### Совместимость
+
+- database migration отсутствует, ожидаемая revision остаётся `20260804_0002`;
+- UI/design/search payload не меняются;
+- существующие browser sessions один раз сбросятся из-за нового cookie name;
+- diagnostics URLs, ранее открывавшиеся напрямую, теперь намеренно возвращают 404; public UI использует sanitised API;
+- current rate-limit storage process-local и рассчитан на один worker.
+
+### Для завершения требуется
+
+- зелёный GitHub Actions без skip Flask route/startup tests;
+- Render deploy и `/health` revision `20260804_0002`;
+- smoke main/search/resume/OAuth;
+- подтверждение cookie/CSRF/rate limit/CSP/HSTS;
+- закрытые diagnostics и чистые logs.
+
+## 8. Текущее функциональное состояние
 
 - Главная/AI Career/resume builder — работают.
 - Search — Trudvsem, HH, Reed, conditional SuperJob.
@@ -123,17 +160,16 @@ Central config/APP_ENV, CI и Render подтверждены; `HH_CURRENCY_SCAN
 - Saved jobs — localStorage.
 - Own account/profile/real AI/match/letters/tracker — впереди.
 
-## 8. Критические риски и очередь
+## 9. Критические риски и очередь
 
-1. DATA-002 verification.
-2. SEC-001 — forms/sessions/endpoints/security headers/rate limits.
-3. OPS-001 — logs/monitoring/backup restore.
-4. DOMAIN-001 — собственный домен до beta.
-5. SYNC/SEARCH core.
-6. AUTH/PROFILE.
-7. AI/JOB/LEGAL/REL.
+1. SEC-001 verification — GitHub/Render/security smoke.
+2. OPS-001 — logs/monitoring/backup restore.
+3. DOMAIN-001 — собственный домен до beta.
+4. SYNC/SEARCH core.
+5. AUTH/PROFILE.
+6. AI/JOB/LEGAL/REL.
 
-## 9. DOMAIN-001 — трассировка
+## 10. DOMAIN-001 — трассировка
 
 Пакет не потерян и не интегрирован в DATA-002. Он существует отдельно в этапе 6 и выполняется после `SEC-001`/`OPS-001`:
 
@@ -144,7 +180,7 @@ Central config/APP_ENV, CI и Render подтверждены; `HH_CURRENCY_SCAN
 
 Сначала домен может указывать на Render; при переходе на VPS меняется DNS target.
 
-## 10. Правила рабочего чата
+## 11. Правила рабочего чата
 
 - Читать паспорт, PLAN_CURRENT и актуальный ZIP.
 - Один пакет по ID.

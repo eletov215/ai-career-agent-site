@@ -27,7 +27,14 @@ REQUIRED_NAMES = (
 
 def _base_environment(tmp_path: Path, app_env: str) -> dict[str, str]:
     environment = dict(os.environ)
-    for name in REQUIRED_NAMES:
+    for name in (
+        *REQUIRED_NAMES,
+        "DEBUG_DIAGNOSTICS",
+        "DIAGNOSTICS_SECRET",
+        "TRUSTED_HOSTS",
+        "RENDER_EXTERNAL_HOSTNAME",
+        "DATABASE_URL",
+    ):
         environment.pop(name, None)
 
     environment.update(
@@ -38,6 +45,7 @@ def _base_environment(tmp_path: Path, app_env: str) -> dict[str, str]:
             "TRUDVSEM_REQUEST_ATTEMPTS": "1",
             "TRUDVSEM_RETRY_BACKOFF": "0.1",
             "DEBUG_HH": "0",
+            "DEBUG_DIAGNOSTICS": "0",
         }
     )
 
@@ -123,3 +131,43 @@ def test_production_import_fails_early_with_clear_missing_variable_names(tmp_pat
     assert "FLASK_SECRET_KEY" in result.stderr
     assert "TOKEN_ENCRYPTION_KEY" in result.stderr
     assert "HH_USER_AGENT" in result.stderr
+
+
+def test_production_security_headers_cookie_and_host_validation(tmp_path):
+    environment = _base_environment(tmp_path, "production")
+    script = """
+import json
+import app
+with app.app.test_client() as client:
+    response = client.get("/", base_url="https://example.test")
+    rejected = client.get("/", base_url="https://evil.example")
+    print(json.dumps({
+        "status": response.status_code,
+        "cookie": response.headers.get("Set-Cookie", ""),
+        "hsts": response.headers.get("Strict-Transport-Security", ""),
+        "csp": response.headers.get("Content-Security-Policy", ""),
+        "bad_host_status": rejected.status_code,
+        "bad_host_body": rejected.get_data(as_text=True),
+    }))
+"""
+    result = subprocess.run(
+        [sys.executable, "-c", script],
+        cwd=Path(__file__).resolve().parents[1],
+        env=environment,
+        capture_output=True,
+        text=True,
+        timeout=20,
+        check=False,
+    )
+
+    assert result.returncode == 0, result.stderr
+    payload = json.loads(result.stdout.strip().splitlines()[-1])
+    assert payload["status"] == 200
+    assert "Secure" in payload["cookie"]
+    assert "HttpOnly" in payload["cookie"]
+    assert "SameSite=Lax" in payload["cookie"]
+    assert payload["hsts"].startswith("max-age=31536000")
+    assert "frame-ancestors 'none'" in payload["csp"]
+    assert "script-src-attr 'none'" in payload["csp"]
+    assert payload["bad_host_status"] == 400
+    assert "evil.example" not in payload["bad_host_body"]

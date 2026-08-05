@@ -1,5 +1,45 @@
 # Changelog
 
+## Unreleased — SEC-001 (05 августа 2026)
+
+### Added
+
+- `security.py` with Flask-WTF CSRF, Flask-Limiter, ProxyFix, request resource limits, neutral errors and browser security headers.
+- CSP nonce contract for every script tag and static tests that forbid unprotected scripts/POST forms/inline event handlers.
+- Secure session policy, production `SameSite=Lax`, OAuth state TTL/one-time consumption for success and error callbacks, and POST-only logout.
+- Public sanitized Trudvsem status endpoint and header-secret diagnostics gate.
+- PDF page/text limits and safe upload filename normalization.
+- University-logo SSRF hardening: private-host/credentials/port rejection, validated redirects, bounded bodies and image signature checks.
+- `docs/SECURITY.md`, security route/config/template/SSRF tests and an explicit CI step `Verify SEC-001 security controls`.
+- Root `.gitignore` for secrets, databases, dumps, caches and virtual environments.
+
+### Changed
+
+- Technical `/debug/*` and detailed `/trudvsem/status` now return 404 unless diagnostics are explicitly enabled and authenticated by `X-Diagnostics-Secret`.
+- Production `/trudvsem/refresh` is hidden; machine sync remains CSRF-exempt only behind `X-Sync-Secret`.
+- Vacancy UI polls `/api/sources/trudvsem/status`, which excludes raw errors and persisted internal state.
+- OAuth/provider error details are no longer reflected to users; callback state is validated before provider-controlled error fields; token-refresh network errors are converted to neutral messages; HH logs no longer include response bodies or complete response headers.
+- Existing POST forms and JavaScript API calls now carry CSRF tokens; logout changed from GET to POST.
+- Production configuration rejects insecure OAuth redirect URIs, `SameSite=Strict` (incompatible with external OAuth return), and disabled baseline controls.
+- `requirements.txt` adds `Flask-WTF==1.3.0` and `Flask-Limiter==4.1.1`.
+
+### Compatibility and status
+
+- No database migration; Alembic revision remains `20260804_0002`.
+- Existing templates/design and business flows are preserved, but all existing browser sessions are intentionally replaced by the new `aca_session` cookie.
+- `SEC-001` is **НУЖНА ПРОВЕРКА** until GitHub Actions and Render smoke/security headers/CSRF/rate-limit/OAuth checks are confirmed.
+- After confirmation, the next package is `OPS-001`; `DOMAIN-001` remains after OPS-001.
+
+## 05 августа 2026 — DATA-002 COMPLETE 1.2.7
+
+- GitHub Actions полностью зелёный, включая PostgreSQL migrations, integration test и полный pytest.
+- Render `/health` подтвердил PostgreSQL и Alembic revision `20260804_0002`.
+- Поиск вакансий работает в production без HTTP 500.
+- `/trudvsem/status` возвращает secret-free `persisted_run`.
+- После restart сохранились `cached_total=23`, `current_offset=30`, `last_processed=30`, `last_saved=30`, `last_started` и persisted run.
+- `DATA-002` переведён в **ВЫПОЛНЕНО**; `SEC-001` переведён в **ГОТОВО К СТАРТУ**.
+- Production-код в этом документальном обновлении не менялся.
+
 ## Unreleased — DATA-002 (04 августа 2026)
 
 ### Added
@@ -33,7 +73,7 @@
 - `FND-001` — ВЫПОЛНЕНО.
 - `FND-002` — ВЫПОЛНЕНО.
 - `DATA-001` — ВЫПОЛНЕНО.
-- `DATA-002` — НУЖНА ПРОВЕРКА: требуется зелёный GitHub Actions и Render revision `20260804_0002`.
+- `DATA-002` — ВЫПОЛНЕНО: CI, Render revision `20260804_0002`, production search и restart persistence подтверждены.
 - `DOMAIN-001` подтверждён как отдельный будущий пакет после `SEC-001`/`OPS-001`; он не был потерян и не объединён с DATA-002.
 
 Все значимые изменения проекта фиксируются в этом файле.
