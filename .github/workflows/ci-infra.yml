@@ -1,0 +1,208 @@
+name: CI INFRA-001
+
+run-name: "CI INFRA-001 | ${{ github.event_name }} | ${{ github.ref_name }} | ${{ github.sha }}"
+
+"on":
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  trigger_check:
+    name: Workflow trigger check
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Confirm workflow trigger
+        run: |
+          echo "event=${{ github.event_name }}"
+          echo "ref=${{ github.ref }}"
+          echo "sha=${{ github.sha }}"
+
+  tests:
+    needs: trigger_check
+    name: Python tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: ai_career_agent_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d ai_career_agent_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      APP_ENV: test
+      DATA_DIR: /tmp/ai-career-agent-ci
+      POSTGRES_TEST_URL: postgresql+psycopg://postgres:postgres@127.0.0.1:5432/ai_career_agent_test
+      TRUDVSEM_SYNC_ENABLED: "0"
+      TRUDVSEM_REQUEST_ATTEMPTS: "1"
+      TRUDVSEM_RETRY_BACKOFF: "0.1"
+      DEBUG_HH: "0"
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Prepare test directories
+        run: mkdir -p "$DATA_DIR"
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: |
+            requirements.txt
+            requirements-dev.txt
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+          python -m pip install -r requirements-dev.txt
+
+      - name: Verify production imports
+        run: |
+          python -c "import flask, flask_wtf, flask_limiter, requests, cryptography, pypdf, sqlalchemy, alembic, psycopg"
+
+      - name: Check repository hygiene
+        run: python scripts/check_repository_hygiene.py
+
+      - name: Compile Python files
+        run: >-
+          python -m compileall -q
+          app.py config.py database.py observability.py security.py domain models repositories operations migrations services tests scripts infra
+
+      - name: Apply test database migrations
+        run: python scripts/manage_db.py upgrade
+
+      - name: Verify migration metadata
+        run: python -m alembic check
+
+      - name: Verify domain and repository boundaries
+        run: >-
+          python -m pytest -q
+          tests/test_architecture_boundaries.py
+          tests/test_database.py
+          tests/test_repositories.py
+          tests/test_legacy_import.py
+
+      - name: Verify PostgreSQL migrations
+        env:
+          DATABASE_URL: ${{ env.POSTGRES_TEST_URL }}
+        run: |
+          python scripts/manage_db.py upgrade
+          python scripts/manage_db.py check
+          python -m alembic check
+
+      - name: Run PostgreSQL integration test
+        run: |
+          python -c "import os; assert os.environ.get('POSTGRES_TEST_URL'), 'POSTGRES_TEST_URL is required'"
+          python -m pytest tests/test_postgresql_integration.py -q
+
+      - name: Verify SEC-001 security controls
+        run: >-
+          python -m pytest -q
+          tests/test_config.py
+          tests/test_template_security.py
+          tests/test_university_logo_security.py
+          tests/test_rate_limit_proxy.py
+          tests/test_routes.py
+          tests/test_app_startup_modes.py
+
+      - name: Verify OPS-001 observability controls
+        run: >-
+          python -m pytest -q
+          tests/test_observability.py
+          tests/test_backup_restore.py
+
+      - name: Verify PostgreSQL encrypted backup and restore
+        env:
+          DATABASE_URL: ${{ env.POSTGRES_TEST_URL }}
+          RESTORE_DATABASE_URL: postgresql+psycopg://postgres:postgres@127.0.0.1:5432/ai_career_agent_restore
+          BACKUP_ENCRYPTION_KEY: yPWPkxw3j4ZWDVBQ-i3kryGBFjd-5Bjg2tDjCNUMciw=
+          BACKUP_DIR: /tmp/ai-career-agent-backups
+        run: |
+          set -euo pipefail
+          postgres_container=$(docker ps --format '{{.ID}} {{.Image}}' | awk '$2 ~ /^postgres:17-alpine/ {print $1; exit}')
+          test -n "$postgres_container"
+          printf '%s' "$postgres_container" > /tmp/aca-postgres-container-id
+
+          cat > /tmp/aca-pg-dump <<'SH'
+          #!/usr/bin/env bash
+          set -euo pipefail
+          container=$(cat /tmp/aca-postgres-container-id)
+          exec docker exec -i \
+            -e PGHOST="${PGHOST:-127.0.0.1}" \
+            -e PGPORT="${PGPORT:-5432}" \
+            -e PGUSER="${PGUSER:-postgres}" \
+            -e PGPASSWORD="${PGPASSWORD:-}" \
+            -e PGDATABASE="${PGDATABASE:-}" \
+            "$container" pg_dump "$@"
+          SH
+
+          cat > /tmp/aca-pg-restore <<'SH'
+          #!/usr/bin/env bash
+          set -euo pipefail
+          container=$(cat /tmp/aca-postgres-container-id)
+          exec docker exec -i \
+            -e PGHOST="${PGHOST:-127.0.0.1}" \
+            -e PGPORT="${PGPORT:-5432}" \
+            -e PGUSER="${PGUSER:-postgres}" \
+            -e PGPASSWORD="${PGPASSWORD:-}" \
+            -e PGDATABASE="${PGDATABASE:-}" \
+            "$container" pg_restore "$@"
+          SH
+
+          chmod +x /tmp/aca-pg-dump /tmp/aca-pg-restore
+          export PG_DUMP_BIN=/tmp/aca-pg-dump
+          export PG_RESTORE_BIN=/tmp/aca-pg-restore
+
+          docker exec -e PGPASSWORD=postgres "$postgres_container" \
+            createdb -U postgres ai_career_agent_restore
+
+          python scripts/backup_database.py \
+            --output-dir "$BACKUP_DIR" \
+            --name ops-ci.dump
+          python scripts/verify_backup.py \
+            --backup "$BACKUP_DIR/ops-ci.dump.enc"
+          python scripts/restore_database.py \
+            --backup "$BACKUP_DIR/ops-ci.dump.enc"
+
+      - name: Verify INFRA-001 manifests, probe and document structure
+        run: >-
+          python -m pytest -q
+          tests/test_infra_probe.py
+          tests/test_infra_manifests.py
+          tests/test_document_structure.py
+          && python scripts/infra_manifest_check.py
+          && python scripts/check_document_structure.py
+
+      - name: Validate INFRA-001 Docker Compose configuration
+        run: docker compose --env-file infra/vps/compose.test.env config --quiet
+
+      - name: Build INFRA-001 container targets
+        run: |
+          docker build --target runtime --tag ai-career-agent:infra-ci .
+          docker build --target ops --tag ai-career-agent-ops:infra-ci .
+
+      - name: Smoke-test INFRA-001 runtime image
+        env:
+          ENV_FILE: infra/vps/compose.test.env
+          BASE_URL: http://127.0.0.1:18000
+          REPORT_DIR: /tmp/ai-career-agent-infra-reports
+        run: bash scripts/infra_container_smoke.sh
+
+      - name: Run tests
+        run: python -m pytest -ra
