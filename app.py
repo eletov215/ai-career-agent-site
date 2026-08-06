@@ -25,14 +25,27 @@ from services.vacancy_presenter import present_vacancy
 from services.resume_parser import ResumeParseError, build_resume_preview, parse_resume_pdf
 from services.university_logo import find_university_logo
 from config import AppSettings, load_settings
-from database import create_database, database_health
+from database import CURRENT_REVISION, create_database, database_health
 from services.storage import StorageServices
 from security import csrf, diagnostics_access_allowed, init_security, limiter
+from observability import (
+    ALERT_DISPATCHER,
+    OPS_STATE,
+    build_test_alert_payload,
+    configure_logging,
+    current_request_id,
+    init_observability,
+    provider_operation,
+)
 
 SETTINGS: AppSettings = load_settings()
+configure_logging(SETTINGS)
 
 app = Flask(__name__)
 app.config.from_mapping(SETTINGS.flask_mapping())
+# Register request correlation before security handlers so CSRF/host/error logs
+# receive the same request ID as the final HTTP access record.
+init_observability(app, SETTINGS)
 init_security(app, SETTINGS)
 
 CLIENT_ID = SETTINGS.superjob_client_id
@@ -70,7 +83,6 @@ TRUDVSEM_REQUEST_ATTEMPTS = SETTINGS.trudvsem_request_attempts
 TRUDVSEM_RETRY_BACKOFF = SETTINGS.trudvsem_retry_backoff
 TRUDVSEM_SYNC_ENABLED = SETTINGS.trudvsem_sync_enabled
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
 DEBUG_HH = SETTINGS.debug_hh
 HH_CURRENCY_SCAN_PAGES = SETTINGS.hh_currency_scan_pages
 MAX_RESUME_UPLOAD_MB = SETTINGS.max_resume_upload_mb
@@ -86,6 +98,14 @@ OAUTH_CONNECTIONS = STORAGE.oauth_connections
 SYNC_RUNS = STORAGE.sync_runs
 USERS = STORAGE.users
 VACANCY_STORE = STORAGE.vacancies
+
+logger.info(
+    "Application runtime initialized",
+    extra={
+        "event": "application_runtime_initialized",
+        "database_revision": CURRENT_REVISION,
+    },
+)
 
 
 TRUDVSEM_SYNC_EVENT = threading.Event()
@@ -201,11 +221,13 @@ def _run_trudvsem_sync():
         for page_number in range(1, total_pages + 1):
             remaining = target - processed
             requested = min(batch_size, remaining)
-            items = provider.fetch_batch(
-                offset=page_number,
-                limit=requested,
-                modified_from=modified_from,
-            )
+            with provider_operation("trudvsem", "sync_fetch_batch") as observation:
+                items = provider.fetch_batch(
+                    offset=page_number,
+                    limit=requested,
+                    modified_from=modified_from,
+                )
+                observation.result_count = len(items)
 
             logger.info(
                 "Trudvsem batch fetched offset=%s requested=%s received=%s first=%s",
@@ -269,8 +291,13 @@ def _run_trudvsem_sync():
     except Exception as exc:
         error = f"{type(exc).__name__}: {exc}"
         logger.warning(
-            "Trudvsem background sync failed error=%s",
-            error,
+            "Trudvsem background sync failed",
+            extra={
+                "event": "trudvsem_sync_failed",
+                "provider": "trudvsem",
+                "operation": "background_sync",
+                "error_type": type(exc).__name__,
+            },
         )
 
     finally:
@@ -418,6 +445,17 @@ def _safe_upload_filename(filename: str) -> str:
 
     candidate = secure_filename(Path(filename or "").name)
     return candidate or "resume.pdf"
+
+
+def _search_provider_with_metrics(source_key, provider, *, filters, page):
+    """Run one direct provider search and record only bounded metadata."""
+
+    with provider_operation(source_key, "vacancy_search") as observation:
+        result = provider.search(filters=filters, page=page)
+        observation.result_count = len(result.items)
+        if result.error:
+            observation.fail("ProviderSearchError")
+        return result
 
 
 def enc(value):
@@ -966,7 +1004,9 @@ def university_logo_api():
     if len(university_name) < 3:
         return jsonify({"ok": False, "error": "Укажите название учебного заведения."}), 400
     try:
-        result = find_university_logo(university_name)
+        with provider_operation("university_logo", "lookup") as observation:
+            result = find_university_logo(university_name)
+            observation.result_count = 1 if result else 0
     except requests.RequestException:
         logger.exception("University logo lookup request failed")
         return jsonify({"ok": False, "error": "Сервис поиска эмблемы временно недоступен."}), 502
@@ -1106,7 +1146,9 @@ def vacancies():
                             errors.append("Reed.co.uk не подключён. Добавьте REED_API_KEY в Render.")
                         continue
                     future = executor.submit(
-                        provider.search,
+                        _search_provider_with_metrics,
+                        source_key,
+                        provider,
                         filters=filters,
                         page=page,
                     )
@@ -1454,19 +1496,114 @@ def debug_hh():
     return report, 200
 
 
-@app.get("/health")
-@limiter.limit("300 per minute")
-def health():
+def _readiness_response():
+    started = time.monotonic()
     database_status = database_health(DATABASE)
-    status_code = 200 if database_status["ok"] else 503
+    database_status["latency_ms"] = round(
+        max(0.0, (time.monotonic() - started) * 1000.0),
+        3,
+    )
+    migration_ok = database_status.get("revision") == CURRENT_REVISION
+    ready = bool(database_status.get("ok") and migration_ok)
+    status_code = 200 if ready else 503
     return {
-        "status": "ok" if database_status["ok"] else "degraded",
+        "status": "ok" if ready else "degraded",
+        "service": SETTINGS.service_name,
+        "version": SETTINGS.app_version,
+        "request_id": current_request_id(),
+        "uptime_seconds": OPS_STATE.uptime_seconds,
         "oauth_configured": True,
         "database": {
             **database_status,
             "configured": SETTINGS.database_url_explicit,
         },
+        "migrations": {
+            "ok": migration_ok,
+            "expected_revision": CURRENT_REVISION,
+            "current_revision": database_status.get("revision"),
+        },
     }, status_code
+
+
+@app.get("/health/live")
+@limiter.limit("300 per minute")
+def health_live():
+    return {
+        "status": "ok",
+        "service": SETTINGS.service_name,
+        "version": SETTINGS.app_version,
+        "request_id": current_request_id(),
+        "uptime_seconds": OPS_STATE.uptime_seconds,
+    }, 200
+
+
+@app.get("/health/ready")
+@limiter.limit("300 per minute")
+def health_ready():
+    return _readiness_response()
+
+
+@app.get("/health")
+@limiter.limit("300 per minute")
+def health():
+    # Backwards-compatible readiness alias used by existing monitoring.
+    return _readiness_response()
+
+
+@app.get("/api/security/rate-limit-probe")
+@limiter.limit("5 per minute")
+def security_rate_limit_probe():
+    """Secret-free production probe used to verify a controlled HTTP 429."""
+
+    return {
+        "ok": True,
+        "status": "ok",
+        "request_id": current_request_id(),
+    }, 200
+
+
+@app.get("/ops/status")
+@limiter.limit("30 per 5 minutes")
+def ops_status():
+    if not diagnostics_access_allowed(SETTINGS):
+        return {"ok": False, "error": "not found"}, 404
+    database_status = database_health(DATABASE)
+    return {
+        "ok": bool(database_status.get("ok")),
+        "service": SETTINGS.service_name,
+        "version": SETTINGS.app_version,
+        "request_id": current_request_id(),
+        "database": {
+            **database_status,
+            "configured": SETTINGS.database_url_explicit,
+        },
+        "background": {
+            "trudvsem_sync_enabled": TRUDVSEM_SYNC_ENABLED,
+            "trudvsem_worker_alive": bool(
+                TRUDVSEM_SYNC_THREAD and TRUDVSEM_SYNC_THREAD.is_alive()
+            ),
+        },
+        "telemetry": OPS_STATE.snapshot(include_recent_errors=True),
+    }, 200
+
+
+@app.post("/ops/alerts/test")
+@csrf.exempt
+@limiter.limit("3 per hour")
+def ops_alert_test():
+    if not diagnostics_access_allowed(SETTINGS):
+        return {"ok": False, "error": "not found"}, 404
+    if not ALERT_DISPATCHER.configured:
+        return {
+            "ok": False,
+            "error": "alert webhook is not configured",
+        }, 503
+    accepted = ALERT_DISPATCHER.enqueue(build_test_alert_payload())
+    return {
+        "ok": accepted,
+        "status": "queued" if accepted else "queue_full",
+        "request_id": current_request_id(),
+    }, 202 if accepted else 503
 
 
 def _generic_error_response(status_code: int, title: str, message: str):

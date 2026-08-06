@@ -34,6 +34,14 @@ def _base_environment(tmp_path: Path, app_env: str) -> dict[str, str]:
         "TRUSTED_HOSTS",
         "RENDER_EXTERNAL_HOSTNAME",
         "DATABASE_URL",
+        "SERVICE_NAME",
+        "APP_VERSION",
+        "LOG_LEVEL",
+        "LOG_FORMAT",
+        "OPS_ALERT_WEBHOOK_URL",
+        "OPS_ALERT_WEBHOOK_TOKEN",
+        "OPS_ALERT_TIMEOUT_SECONDS",
+        "OPS_ALERT_MIN_LEVEL",
     ):
         environment.pop(name, None)
 

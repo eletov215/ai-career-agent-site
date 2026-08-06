@@ -96,6 +96,13 @@ def test_production_defaults_preserve_current_runtime_behavior():
     assert settings.rate_limit_enabled is True
     assert settings.security_headers_enabled is True
     assert settings.rate_limit_storage_uri == "memory://"
+    assert settings.service_name == "ai-career-agent"
+    assert settings.app_version == "development"
+    assert settings.log_level == "INFO"
+    assert settings.log_format == "json"
+    assert settings.ops_alert_webhook_url is None
+    assert settings.ops_alert_min_level == "ERROR"
+    assert settings.ops_alert_timeout_seconds == 3.0
     assert "example.test" in settings.trusted_hosts
     mapping = settings.flask_mapping()
     assert mapping["SESSION_COOKIE_HTTPONLY"] is True
@@ -104,6 +111,7 @@ def test_production_defaults_preserve_current_runtime_behavior():
     assert mapping["PERMANENT_SESSION_LIFETIME"] == timedelta(hours=12)
     assert mapping["WTF_CSRF_TIME_LIMIT"] == 7200
     assert isinstance(mapping["WTF_CSRF_TIME_LIMIT"], int)
+    assert mapping["TRUST_PROXY_HEADERS"] is True
     assert mapping["MAX_CONTENT_LENGTH"] == 9 * 1024 * 1024
     assert settings.port == 10000
     assert settings.flask_debug is False
@@ -124,6 +132,13 @@ def test_numeric_and_boolean_values_are_validated_centrally(tmp_path):
             CSRF_TIME_LIMIT_SECONDS="1800",
             MAX_FORM_MEMORY_SIZE="131072",
             MAX_FORM_PARTS="20",
+            SERVICE_NAME="career-service",
+            APP_VERSION="test-version",
+            LOG_LEVEL="warning",
+            LOG_FORMAT="text",
+            OPS_ALERT_WEBHOOK_URL="https://alerts.example.test/hooks/ops",
+            OPS_ALERT_TIMEOUT_SECONDS="4.5",
+            OPS_ALERT_MIN_LEVEL="critical",
             PORT="11000",
         )
     )
@@ -140,6 +155,13 @@ def test_numeric_and_boolean_values_are_validated_centrally(tmp_path):
     assert settings.csrf_time_limit_seconds == 1800
     assert settings.max_form_memory_size == 131_072
     assert settings.max_form_parts == 20
+    assert settings.service_name == "career-service"
+    assert settings.app_version == "test-version"
+    assert settings.log_level == "WARNING"
+    assert settings.log_format == "text"
+    assert settings.ops_alert_webhook_url == "https://alerts.example.test/hooks/ops"
+    assert settings.ops_alert_timeout_seconds == 4.5
+    assert settings.ops_alert_min_level == "CRITICAL"
     assert settings.port == 11000
 
 
@@ -152,6 +174,10 @@ def test_numeric_and_boolean_values_are_validated_centrally(tmp_path):
         ("MAX_RESUME_PAGES", "101", "не может быть больше 100"),
         ("SESSION_COOKIE_SAMESITE", "None", "Разрешены"),
         ("SESSION_LIFETIME_SECONDS", "60", "не может быть меньше 900"),
+        ("LOG_LEVEL", "verbose", "Разрешены"),
+        ("LOG_FORMAT", "xml", "Разрешены"),
+        ("SERVICE_NAME", "bad service", "SERVICE_NAME"),
+        ("OPS_ALERT_TIMEOUT_SECONDS", "0.1", "не может быть меньше 0.5"),
         ("PORT", "0", "не может быть меньше 1"),
     ],
 )
@@ -274,3 +300,21 @@ def test_explicit_trusted_hosts_are_combined_with_oauth_hosts():
         "app.ai-career.example",
         "example.test",
     )
+
+
+def test_production_alert_webhook_requires_https():
+    with pytest.raises(ConfigurationError, match="OPS_ALERT_WEBHOOK_URL.*HTTPS"):
+        load_settings(
+            production_environment(
+                OPS_ALERT_WEBHOOK_URL="http://alerts.example.test/hook",
+            )
+        )
+
+
+def test_alert_webhook_rejects_embedded_credentials():
+    with pytest.raises(ConfigurationError, match="credentials"):
+        load_settings(
+            production_environment(
+                OPS_ALERT_WEBHOOK_URL="https://user:secret@alerts.example.test/hook",
+            )
+        )

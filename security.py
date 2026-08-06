@@ -8,12 +8,22 @@ covered by route tests.
 
 from __future__ import annotations
 
+import hashlib
+import hmac
+import ipaddress
 import logging
 import secrets
 
-from flask import Flask, g, jsonify, make_response, render_template, request
+from flask import (
+    Flask,
+    current_app,
+    g,
+    jsonify,
+    make_response,
+    render_template,
+    request,
+)
 from flask_limiter import Limiter
-from flask_limiter.util import get_remote_address
 from flask_wtf.csrf import CSRFError, CSRFProtect
 from werkzeug.exceptions import RequestEntityTooLarge, SecurityError
 from werkzeug.middleware.proxy_fix import ProxyFix
@@ -23,7 +33,82 @@ from config import AppSettings
 logger = logging.getLogger(__name__)
 
 csrf = CSRFProtect()
-limiter = Limiter(key_func=get_remote_address, default_limits=[])
+
+
+def _normalise_ip_address(value: str | None) -> str | None:
+    """Return a canonical IP address or ``None`` for an invalid header value."""
+
+    candidate = (value or "").strip().strip('"')
+    if not candidate:
+        return None
+
+    # X-Forwarded-For normally contains bare addresses, but tolerate the
+    # common ``IPv4:port`` and ``[IPv6]:port`` forms without accepting
+    # arbitrary host names.
+    if candidate.startswith("["):
+        closing = candidate.find("]")
+        if closing > 0:
+            candidate = candidate[1:closing]
+    elif candidate.count(":") == 1 and "." in candidate:
+        host, port = candidate.rsplit(":", 1)
+        if port.isdigit():
+            candidate = host
+
+    try:
+        parsed = ipaddress.ip_address(candidate)
+    except ValueError:
+        return None
+
+    if isinstance(parsed, ipaddress.IPv6Address) and parsed.ipv4_mapped:
+        parsed = parsed.ipv4_mapped
+    return parsed.compressed
+
+
+def rate_limit_client_address() -> str:
+    """Resolve a stable client address without trusting arbitrary headers.
+
+    Render terminates HTTPS behind Cloudflare and its load balancer.  The
+    immediate peer address can therefore rotate between requests, which makes
+    ``request.remote_addr`` unsuitable as the production rate-limit key.
+    Forwarded headers are consulted only when the deployment explicitly opts
+    in with ``TRUST_PROXY_HEADERS``.  Otherwise they are ignored so a direct
+    client cannot spoof a new bucket.
+    """
+
+    if current_app.config.get("TRUST_PROXY_HEADERS", False):
+        # Cloudflare overwrites CF-Connecting-IP before forwarding to Render.
+        candidate = _normalise_ip_address(
+            request.headers.get("CF-Connecting-IP")
+        )
+        if candidate:
+            return candidate
+
+        # Render places the real client address first in X-Forwarded-For.
+        forwarded_for = request.headers.get("X-Forwarded-For", "")
+        if forwarded_for:
+            candidate = _normalise_ip_address(forwarded_for.split(",", 1)[0])
+            if candidate:
+                return candidate
+
+    return _normalise_ip_address(request.remote_addr) or "unknown"
+
+
+def rate_limit_key() -> str:
+    """Return a privacy-preserving, stable limiter bucket for this client."""
+
+    address = rate_limit_client_address()
+    secret = str(current_app.config.get("SECRET_KEY") or "rate-limit").encode(
+        "utf-8"
+    )
+    digest = hmac.new(
+        secret,
+        address.encode("utf-8"),
+        hashlib.sha256,
+    ).hexdigest()
+    return f"client:{digest}"
+
+
+limiter = Limiter(key_func=rate_limit_key, default_limits=[])
 
 _UNSAFE_METHODS = {"POST", "PUT", "PATCH", "DELETE"}
 _UPLOAD_ENDPOINTS = {"resume_preview_api", "ai_career"}
@@ -105,9 +190,11 @@ def init_security(app: Flask, settings: AppSettings) -> None:
     """Attach the SEC-001 controls to a configured Flask application."""
 
     if settings.trust_proxy_headers:
-        # Render terminates TLS and forwards the original client/protocol.
-        # Trust exactly one platform proxy and do not trust forwarded host.
-        app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1)
+        # Trust the platform only for the original HTTPS scheme.  Client IP is
+        # resolved separately by ``rate_limit_client_address`` because the
+        # Cloudflare -> Render proxy chain can contain rotating intermediary
+        # addresses.  Forwarded host is intentionally never trusted.
+        app.wsgi_app = ProxyFix(app.wsgi_app, x_for=0, x_proto=1)
 
     @app.before_request
     def apply_request_resource_limits():
@@ -225,6 +312,10 @@ def init_security(app: Flask, settings: AppSettings) -> None:
         logger.error(
             "Unhandled application error",
             exc_info=(type(original), original, original.__traceback__),
+            extra={
+                "event": "unhandled_application_error",
+                "error_type": type(original).__name__,
+            },
         )
         return _error_response(
             title="Временная ошибка сервиса",
