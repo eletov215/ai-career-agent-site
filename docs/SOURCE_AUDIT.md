@@ -1,57 +1,34 @@
 # AI Career Agent — аудит источников
 
-**Дата:** 05 августа 2026  
-**Рабочая основа:** `ai-career-agent-site-main-14-data-002-completed-v1.2.7.zip`  
-**Кандидат:** `ai-career-agent-site-main-15-sec-001-security-v1.2.8.zip`  
-**Пакет:** SEC-001 — НУЖНА ПРОВЕРКА
+**Версия аудита:** 1.3.2  
+**Дата:** 06 августа 2026  
+**Пакет:** SEC-001 rate-limit fix поверх OPS-001
 
-## Подтверждённая база
+## Результат
 
-- FND-001/FND-002 выполнены.
-- DATA-001 выполнен: PostgreSQL 17, migration `20260804_0001`, restart persistence.
-- DATA-002 выполнен: migration `20260804_0002`, domain/repository layers, persisted sync state и production restart.
-- Актуальная database revision до и после SEC-001 должна оставаться `20260804_0002`.
+### Актуальный код
 
-## Реализовано в кандидате SEC-001
+Рабочей основой признан архив `ai-career-agent-site-main-16-ops-001-observability-backup-v1.3.1.zip`, потому что именно он содержит уже реализованный OPS-001 (`observability.py`, `operations/backup.py`, operational tests и runbooks). Исправление SEC-001 внесено непосредственно поверх этой версии без отката observability, backup/restore или документации OPS-001.
 
-- `security.py`: secure cookies, CSRF, rate limiting, request limits, CSP/security headers, neutral errors, diagnostics gate.
-- Flask-WTF 1.3.0 и Flask-Limiter 4.1.1.
-- POST-only logout, bounded state checked for success/error callbacks, HTTPS-only production OAuth redirect URI, sanitized provider/refresh errors.
-- Public `/api/sources/trudvsem/status`; detailed technical endpoints hidden by default.
-- PDF page/text/request limits and safe filename handling.
-- University-logo SSRF/redirect/body/MIME/signature protection.
-- Security config/route/template/SSRF tests and explicit GitHub Actions step.
-- `.gitignore` preventing accidental secret/database/cache commits.
+### Актуальные документы до исправления
 
-## Текущие статусы
+- `AI_Career_Agent_PLAN_CURRENT_v1.3.1_2026-08-05` — план OPS-001 candidate;
+- `AI_Career_Agent_Паспорт_проекта_v2.9_2026-08-05` — связанный паспорт;
+- они фиксируют SEC-001 и OPS-001 как ожидающие проверки и сохраняют последовательность VPS/Alice AI/Reed/domain/migration.
 
-- FND-001 — ВЫПОЛНЕНО.
-- FND-002 — ВЫПОЛНЕНО.
-- DATA-001 — ВЫПОЛНЕНО.
-- DATA-002 — ВЫПОЛНЕНО.
-- SEC-001 — НУЖНА ПРОВЕРКА.
-- OPS-001 — ЗАПЛАНИРОВАНО; следующий после подтверждения SEC-001.
-- DOMAIN-001 — ЗАПЛАНИРОВАНО, этап 6, после SEC-001/OPS-001 и до коммерческой beta.
+### Проверка состава ZIP
 
-## Что ещё требуется для SEC-001
+Архив содержит SEC-001, OPS-001, PostgreSQL/Alembic revision `20260804_0002`, актуальный CI, root `.gitignore`, operational runbooks и не содержит временного `README_FIRST.txt`. В исправлении изменены только security/rate-limit wiring, regression tests, CI security step и связанная документация.
 
-1. GitHub Actions полностью зелёный, включая `Verify SEC-001 security controls`.
-2. Render deploy без startup/import errors.
-3. `/health` остаётся на revision `20260804_0002`.
-4. Основные страницы, vacancy search, PDF upload и OAuth smoke работают.
-5. Public technical URLs закрыты; sanitized source status доступен.
-6. CSP/HSTS/cookie/CSRF/rate-limit behavior подтверждены.
-7. Render logs не содержат token/provider response body.
+## Новые канонические источники
 
-## DOMAIN-001
+- PLAN_CURRENT `1.3.2`;
+- паспорт `2.10`;
+- проектный ZIP `ai-career-agent-site-main-17-sec-001-rate-limit-fix-ops-001-v1.3.2.zip`.
 
-Пакет собственного домена не потерян и не интегрирован в SEC-001. SEC-001 заранее добавляет `TRUSTED_HOSTS`, secure cookie, CSRF и HSTS foundation. Сам `DOMAIN-001` остаётся отдельным инфраструктурным пакетом: регистрация домена, DNS, TLS, `PUBLIC_BASE_URL`, OAuth callbacks и trusted origins.
+Старые документы ниже PLAN_CURRENT 1.3.2 и паспорта 2.10 после загрузки новых источников не должны считаться действующими.
 
-## Канонические источники после подтверждения загрузки
 
-1. `ai-career-agent-site-main-15-sec-001-security-v1.2.8.zip`.
-2. `AI_Career_Agent_PLAN_CURRENT v1.2.8`.
-3. Паспорт проекта v2.6.
-4. Этот аудит.
+## Проверка 06 августа 2026
 
-Старые candidate-документы 1.2.7/2.5 следует удалить только после загрузки и проверки новых файлов.
+Production smoke подтвердил CSP/HSTS, secure cookie, CSRF 400, PostgreSQL revision, страницы, поиск, PDF, закрытые diagnostics и безопасные application logs. Единственное расхождение: 25 последовательных обращений к декорированному лимитом маршруту не дали `429`, потому что `get_remote_address` видел меняющиеся Render proxy addresses. Исправление внесено в актуальный OPS-001 ZIP без удаления observability/backup кода.

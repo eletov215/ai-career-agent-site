@@ -8,8 +8,8 @@
 - [x] `FND-002` — конфигурация development/test/production.
 - [x] `DATA-001` — PostgreSQL и Alembic; production persistence подтверждена.
 - [x] `DATA-002` — доменные модели и repository layer; migration 0002, CI, Render и restart persistence подтверждены.
-- [ ] `SEC-001` — **НУЖНА ПРОВЕРКА**: код CSRF/cookies/rate limits/headers/request limits/technical endpoints подготовлен; требуются GitHub Actions и Render smoke.
-- [ ] `OPS-001` — structured logs, error monitoring, backup/restore.
+- [ ] `SEC-001` — **НУЖНА ПОВТОРНАЯ ПРОВЕРКА НА RENDER**: основная production-проверка прошла; rate-limit key исправлен для Cloudflare/Render, нужен зелёный CI и контролируемый `429` на probe endpoint.
+- [ ] `OPS-001` — **НУЖНА ПРОВЕРКА**: structured logs, request IDs, metrics, alerts, live/readiness и encrypted backup/restore реализованы; нужен CI/production verification.
 - [ ] `DOC-001` — периодическая сверка документов и фактического кода.
 
 ## Этап 2. Качественный поиск
@@ -33,6 +33,8 @@
 
 ## Этап 4. Реальный AI-контур
 
+- [ ] `AI-BENCH-001` — benchmark Yandex AI Studio/Alice AI.
+- [ ] `AI-PROVIDER-001` — provider/geography/privacy/cost/fallback decision.
 - [ ] `AI-001` — независимый AI provider layer.
 - [ ] `AI-002` — анализ резюме.
 - [ ] `AI-003` — адаптивное интервью.
@@ -47,12 +49,14 @@
 - [ ] `JOB-003` — добровольные уведомления.
 - [ ] `JOB-004` — личная аналитика.
 
-## Этап 6. Коммерческий запуск, домен и hosting
+## Этап 6. Коммерческий запуск, VPS, домен и миграция
 
+- [ ] `INFRA-001` — выбор и технический тест российского VPS из РФ/РБ.
+- [ ] `REED-COMPAT-001` — API smoke и договорная проверка Reed с точного VPS.
+- [ ] `HOST-001` — production VPS, Docker/Compose, proxy, PostgreSQL, TLS, deploy.
 - [ ] `DOMAIN-001` — собственный домен, DNS, TLS, `PUBLIC_BASE_URL`, OAuth callbacks.
-- [ ] `INFRA-001` — Docker/Compose и portability.
-- [ ] `HOST-001` — решение paid Render/VPS по метрикам.
-- [ ] `OPS-002` — эксплуатация VPS, только если выбран VPS.
+- [ ] `MIG-001` — перенос PostgreSQL/production с Render с rollback.
+- [ ] `OPS-002` — эксплуатация VPS.
 - [ ] `PERF-001` — frontend/assets.
 - [ ] `A11Y-001` — доступность.
 - [ ] `LEGAL-001` — legal/consent до публичного AI.
@@ -63,15 +67,18 @@
 
 ## Трассировка DOMAIN-001
 
-`DOMAIN-001` не был потерян и не интегрирован в DATA-002. Он появился в стратегии `1.1.0`, находится в этапе 6 и намеренно выполняется после security/operations foundation.
+`DOMAIN-001` не потерян. В стратегии 1.3.x он выполняется после `HOST-001` и до `MIG-001`, поэтому пользовательский адрес не зависит от конкретного VPS.
 
 ## Ближайшая последовательность
 
 ```text
-SEC-001 verification
--> OPS-001
+SEC-001 rate-limit recheck
+-> OPS-001 verification
+-> INFRA-001
+-> AI-BENCH-001
+-> REED-COMPAT-001
+-> AI-PROVIDER-001
+-> HOST-001
 -> DOMAIN-001
--> SYNC-001 / SEARCH core
--> AUTH / PROFILE
--> AI
+-> MIG-001
 ```

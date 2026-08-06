@@ -1,13 +1,13 @@
 # AI Career Agent - Единый план реализации и ведения разработки
 
-**Версия:** 1.2.8  
-**Дата:** 05 августа 2026  
+**Версия:** 1.3.2  
+**Дата:** 06 августа 2026  
 **Статус:** ДЕЙСТВУЮЩИЙ  
-**Основа:** `ai-career-agent-site-main-15-sec-001-security-v1.2.8.zip`
+**Основа кода:** `ai-career-agent-site-main-17-sec-001-rate-limit-fix-ops-001-v1.3.2.zip`
 
 > ОБЯЗАТЕЛЬНО ДЛЯ КАЖДОГО НОВОГО ЧАТА: прочитать этот план, новый паспорт и актуальный архив. После завершения любого пункта вернуть обновлённые DOCX/PDF/Markdown, новый ZIP, доказательства проверки и запись в журнале версий.
 
-> КОНТРОЛЬНЫЕ СТАТУСЫ ЭТОЙ ВЕРСИИ: `FND-001 — ВЫПОЛНЕНО`; `FND-002 — ВЫПОЛНЕНО`; `DATA-001 — ВЫПОЛНЕНО`; `DATA-002 — ВЫПОЛНЕНО`; `SEC-001 — НУЖНА ПРОВЕРКА`; `OPS-001 — ЗАПЛАНИРОВАНО`; `DOMAIN-001 — ЗАПЛАНИРОВАНО, ЭТАП 6, ОБЯЗАТЕЛЕН ДО BETA`. PDF с версией `1.0.1` или иными статусами является устаревшей копией.
+> КОНТРОЛЬНЫЕ СТАТУСЫ ЭТОЙ ВЕРСИИ: `FND-001 — ВЫПОЛНЕНО`; `FND-002 — ВЫПОЛНЕНО`; `DATA-001 — ВЫПОЛНЕНО`; `DATA-002 — ВЫПОЛНЕНО`; `SEC-001 — НУЖНА ПОВТОРНАЯ ПРОВЕРКА НА RENDER`; `OPS-001 — НУЖНА ПРОВЕРКА`; `INFRA-001`, `AI-BENCH-001`, `REED-COMPAT-001`, `AI-PROVIDER-001`, `HOST-001`, `DOMAIN-001`, `MIG-001` — ЗАПЛАНИРОВАНО. PDF/документы с версией ниже `1.3.2` являются устаревшими.
 
 ## 1. Источник истины и аудит источников
 
@@ -16,7 +16,7 @@
 - Канонический план определяется наибольшей версией и датой; старые дубликаты не должны оставаться действующими.
 - Перед DATA-002 проверено, что актуальный код находится в `ai-career-agent-site-main (1).zip` и соответствует завершённому DATA-001.
 - Загруженные планы/паспорт были устаревшими: они содержали версии 1.0.0/1.0.1 и раннее состояние HH 403, не отражали подтверждение FND-001/FND-002 и согласованную стратегию собственного домена/VPS.
-- Версия 1.2.8 является канонической candidate-версией: FND-001, FND-002, DATA-001 и DATA-002 имеют статус ВЫПОЛНЕНО; SEC-001 реализован и имеет статус НУЖНА ПРОВЕРКА. DOMAIN-001 остаётся отдельным обязательным пакетом этапа 6 после SEC-001/OPS-001.
+- Версия 1.3.2 является канонической: FND-001, FND-002, DATA-001 и DATA-002 имеют статус ВЫПОЛНЕНО; SEC-001 прошёл основную production-проверку, получил исправление proxy-aware rate-limit key и ожидает повторный CI/429 smoke; OPS-001 реализован в актуальном ZIP и ожидает GitHub/backup/alert/production verification. После выявленной недоступности Render из части сетей РФ сохраняется обязательная последовательность operational readiness -> тест российского VPS -> benchmark Yandex AI Studio/Alice AI -> проверка Reed -> production VPS -> домен -> миграция.
 
 ## 2. Обязательный протокол работы
 
@@ -63,8 +63,8 @@
 | OAuth | HeadHunter и SuperJob, Fernet encryption, пока не привязаны к собственному User. |
 | Вакансии | Trudvsem cache, HH, Reed, conditional SuperJob; остаются dedup/pagination задачи. |
 | Резюме | PDF extraction на pypdf и browser resume builder; LLM пока нет. |
-| Тесты | GitHub Actions, unit/provider/route/config/database/migration tests. |
-| Hosting | Render сейчас; собственный домен обязателен до beta; VPS - решение после metrics/readiness. |
+| Тесты | GitHub Actions, unit/provider/route/config/database/migration/security/observability/backup tests. |
+| Hosting | Render временно используется как staging/резервная площадка. Для production требуется проверенный VPS с доступностью из РФ/РБ, собственный домен и план миграции. |
 
 ### 5.1 Выполнено/частично
 
@@ -84,11 +84,13 @@
 |---|---|---|
 | R-01 | Закрыт 04.08.2026 | Production переведён на PostgreSQL; restart подтвердил сохранность кэша и служебного состояния. |
 | R-02 | Высокий | Trudvsem daemon thread зависит от Gunicorn. |
-| R-03 | Снижен, нужна проверка | SEC-001 добавил CSRF, secure sessions, rate limits, headers, request/PDF limits и закрыл diagnostics; требуется GitHub/Render подтверждение. |
+| R-03 | Снижен, нужна проверка | SEC-001 прошёл отдельный GitHub security step; остаётся Render production smoke и проверка headers/cookies/CSRF. |
 | R-04 | Высокий | Межисточниковые дубли и нестабильный total/pagination. |
 | R-05 | Высокий | Маркетинговые AI promises опережают real implementation. |
 | R-06 | Средний | Большие assets и inline JS усложняют performance/support. |
-| R-07 | Средний | VPS без operational readiness создаёт single point of failure и security burden. |
+| R-07 | Высокий | VPS без operational readiness создаёт single point of failure и security burden. |
+| R-08 | Критический | Render/Cloudflare недоступен из части сетей РФ: DNS работает, но TCP 443 до edge IP не устанавливается, запросы не доходят до Render Logs. |
+| R-09 | Высокий | OpenAI API не является базовым провайдером для пользователей РФ/РБ; Yandex AI Studio/Alice AI требует benchmark, а Reed — проверку с точного VPS и договорное подтверждение. |
 
 ## 6. Целевой пользовательский путь MVP 1.0
 
@@ -110,8 +112,8 @@ MVP не готов, если работает только отдельная �
 | FND-002 | P0 | ВЫПОЛНЕНО | Конфигурация приложения и разделение development/test/production |
 | DATA-001 | P0 | ВЫПОЛНЕНО | Переход с временной SQLite на PostgreSQL и миграции |
 | DATA-002 | P0 | ВЫПОЛНЕНО | Базовая доменная модель и слой доступа к данным |
-| SEC-001 | P0 | НУЖНА ПРОВЕРКА | Базовое усиление безопасности |
-| OPS-001 | P0 | ЗАПЛАНИРОВАНО | Наблюдаемость, безопасные логи и резервное восстановление |
+| SEC-001 | P0 | НУЖНА ПОВТОРНАЯ ПРОВЕРКА | Proxy-aware rate-limit fix реализован поверх подтверждённой security-базы; нужны CI и production 429 |
+| OPS-001 | P0 | НУЖНА ПРОВЕРКА | Наблюдаемость, безопасные логи и резервное восстановление |
 | DOC-001 | P0 | ЗАПЛАНИРОВАНО | Синхронизация README, ROADMAP, CHANGELOG и фактического кода |
 
 ### Этап 2. Надёжный поиск и обновление вакансий
@@ -141,6 +143,8 @@ MVP не готов, если работает только отдельная �
 
 | ID | Приоритет | Статус | Пункт |
 |---|---|---|---|
+| AI-BENCH-001 | P0 | ЗАПЛАНИРОВАНО | Сравнительное тестирование Yandex AI Studio/Alice AI на функциях проекта |
+| AI-PROVIDER-001 | P0 | ЗАПЛАНИРОВАНО | Стратегия AI-провайдеров, география, стоимость, fallback и privacy |
 | AI-001 | P1 | ЗАПЛАНИРОВАНО | Независимый слой AI-провайдера и контроль стоимости |
 | AI-002 | P1 | ЗАПЛАНИРОВАНО | Настоящий анализ резюме |
 | AI-003 | P1 | ЗАПЛАНИРОВАНО | Адаптивное AI-интервью в конструкторе |
@@ -157,13 +161,15 @@ MVP не готов, если работает только отдельная �
 | JOB-003 | P2 | ЗАПЛАНИРОВАНО | Добровольные напоминания и уведомления |
 | JOB-004 | P2 | ЗАПЛАНИРОВАНО | Личная аналитика поиска работы |
 
-### Этап 6. Коммерческий запуск, домен и hosting
+### Этап 6. Коммерческий запуск, VPS, домен и миграция
 
 | ID | Приоритет | Статус | Пункт |
 |---|---|---|---|
+| INFRA-001 | P0 | ЗАПЛАНИРОВАНО | Выбор и технический тест российского VPS для пользователей РФ/РБ |
+| REED-COMPAT-001 | P0 | ЗАПЛАНИРОВАНО | Техническая и договорная проверка Reed API с выбранного VPS |
+| HOST-001 | P0 | ЗАПЛАНИРОВАНО | Подготовка production VPS: контейнеры, reverse proxy, PostgreSQL, TLS, deploy |
 | DOMAIN-001 | P0 до beta | ЗАПЛАНИРОВАНО | Собственный домен, DNS, TLS и публичные URL |
-| INFRA-001 | P1 | ЗАПЛАНИРОВАНО | Платформонезависимая упаковка и контейнеризация |
-| HOST-001 | P1 перед коммерческим запуском | ЗАПЛАНИРОВАНО | Выбор production-площадки и миграция с Render |
+| MIG-001 | P0 | ЗАПЛАНИРОВАНО | Перенос PostgreSQL и production с Render на VPS с rollback |
 | OPS-002 | P0 при выборе VPS | ЗАПЛАНИРОВАНО | Эксплуатация собственного VPS |
 | PERF-001 | P2 | ЗАПЛАНИРОВАНО | Оптимизация frontend и статических ресурсов |
 | A11Y-001 | P2 | ЗАПЛАНИРОВАНО | Доступность интерфейса |
@@ -248,7 +254,7 @@ MVP не готов, если работает только отдельная �
 #### SEC-001 - Базовое усиление безопасности
 
 **Приоритет:** P0  
-**Статус:** НУЖНА ПРОВЕРКА
+**Статус:** НУЖНА ПРОВЕРКА НА RENDER
 
 **Цель:** Защитить state-changing формы/API, browser sessions, загрузки, внешние URL и технические endpoints до появления first-party аккаунтов.
 
@@ -267,19 +273,21 @@ MVP не готов, если работает только отдельная �
 #### OPS-001 - Наблюдаемость, безопасные логи и резервное восстановление
 
 **Приоритет:** P0  
-**Статус:** ЗАПЛАНИРОВАНО
+**Статус:** НУЖНА ПРОВЕРКА
 
-**Цель:** Быстро обнаруживать сбои и иметь проверяемую процедуру восстановления.
+**Цель:** Быстро обнаруживать сбои, связывать события одного запроса и иметь проверяемую процедуру резервного копирования и восстановления до выбора VPS.
 
-**Реализация:** Структурированные логи, correlation ID, error monitoring, provider metrics, health/readiness, backup/restore runbook.
+**Реализация:** Добавлен vendor-neutral `observability.py`: JSON stdout logs в production, `X-Request-ID`, bounded HTTP/provider metrics, sanitised recent errors и необязательный HTTPS alert webhook. Добавлены `/health/live`, `/health/ready`, diagnostics-only `/ops/status` и `POST /ops/alerts/test`. Добавлен `operations/backup.py` и CLI для PostgreSQL custom-format `pg_dump`/`pg_restore`, SQLite online backup, независимого AES-256-GCM шифрования, secret-free manifest, SHA-256, revision/table-count verification, retention и production restore guard. CI выполняет отдельные OPS tests и реальный encrypted PostgreSQL backup/restore drill.
 
-**Влияние на код:** logging config, app.py, providers, DB scripts, docs, hosting settings.
+**Влияние на код:** `observability.py`, `operations/backup.py`, `scripts/backup_database.py`, `scripts/verify_backup.py`, `scripts/restore_database.py`, `scripts/send_test_alert.py`, `app.py`, `config.py`, `security.py`, `render.yaml`, CI, tests и operational runbooks.
 
-**Влияние на сайт:** Меньше необъяснимых ошибок; администратор видит источник сбоя без персональных данных.
+**Влияние на сайт:** Основной интерфейс не меняется. Каждый HTTP-ответ получает `X-Request-ID`; `/health/live` отделяет жизнь процесса от `/health/ready`, который проверяет PostgreSQL и Alembic revision. Ошибки диагностируются без записи query/body/cookies/tokens/resume text. При недоступности alert webhook приложение продолжает работать.
 
-**Критерии готовности:** Health не раскрывает секреты; backup восстановлен на тестовой базе; alert доставлен.
+**Критерии готовности:** GitHub Actions зелёный, включая OPS control tests и encrypted PostgreSQL backup/restore; `/health/live` и `/health/ready` подтверждены на Render; structured logs содержат request ID и не содержат секреты; test alert доставлен на выбранный webhook; encrypted backup создан вне web filesystem, проверен и восстановлен в отдельную test database с совпадением revision и контрольных counts.
 
-**Зависимости:** DATA-001.
+**Совместимость и rollback:** Database migration отсутствует; revision остаётся `20260804_0002`. In-process metrics сбрасываются при restart и не заменяют внешнюю monitoring platform. Alert webhook опционален. Production backup требует отдельный `BACKUP_ENCRYPTION_KEY`; restore в production заблокирован без явного `--allow-production`. Rollback выполняется откатом application commit, backups не удаляются.
+
+**Зависимости:** DATA-001, DATA-002, SEC-001. После подтверждения — INFRA-001.
 
 #### DOC-001 - Синхронизация README, ROADMAP, CHANGELOG и фактического кода
 
@@ -525,6 +533,36 @@ MVP не готов, если работает только отдельная �
 
 ### Этап 4. Реальный AI-контур
 
+#### AI-BENCH-001 - Сравнительное тестирование Yandex AI Studio/Alice AI
+
+**Приоритет:** P0  
+**Статус:** ЗАПЛАНИРОВАНО
+
+**Цель:** Проверить качество, скорость и стоимость выбранных моделей на реальных функциях AI Career Agent до интеграции.
+
+**Реализация:** Golden dataset русских и английских резюме/вакансий; тест JSON-schema, анализа резюме, match explanations, писем и интервью; p50/p95 latency, cost и hallucination rate.
+
+**Влияние на код:** `evals/`, fixtures, benchmark runner, отчёт моделей; production routes не меняются.
+
+**Критерии готовности:** Утверждены пороги качества; выбран набор моделей по задачам; не допускаются придуманные места работы и достижения.
+
+**Зависимости:** OPS-001; тестовый доступ к Yandex AI Studio.
+
+#### AI-PROVIDER-001 - Стратегия AI-провайдеров
+
+**Приоритет:** P0  
+**Статус:** ЗАПЛАНИРОВАНО
+
+**Цель:** Зафиксировать основной и резервный AI-контур с учётом РФ/РБ, privacy, стоимости и отказоустойчивости.
+
+**Реализация:** Основной кандидат — Yandex AI Studio/Alice AI; OpenAI не используется как обязательный baseline для пользователей РФ/РБ; определяется fallback/local model, data policy, quotas, provider kill switch и routing by task/market.
+
+**Влияние на код:** Архитектурное решение для `AIProvider`, config/secrets, usage accounting и fallback policy.
+
+**Критерии готовности:** Decision record утверждён; география и условия провайдеров проверены; стоимость рассчитана; privacy/retention описаны.
+
+**Зависимости:** AI-BENCH-001.
+
 #### AI-001 - Независимый слой AI-провайдера и контроль стоимости
 
 **Приоритет:** P1  
@@ -704,53 +742,78 @@ MVP не готов, если работает только отдельная �
 **Приоритет:** P0 до beta  
 **Статус:** ЗАПЛАНИРОВАНО
 
-**Цель:** Дать продукту постоянный адрес, независимый от Render/VPS.
+**Цель:** Дать продукту постоянный адрес, независимый от Render и конкретного VPS.
 
-**Трассировка:** Пакет не потерян и не интегрирован в DATA-002. Он добавлен в версии 1.1.0, остаётся отдельным пунктом этапа 6 и выполняется после SEC-001/OPS-001 до публичной beta.
+**Реализация:** Регистрация домена, DNS, TLS, `PUBLIC_BASE_URL`, `TRUSTED_HOSTS`, CSRF trusted origins, cookie policy, `www` policy и новые HH/SuperJob callback URL.
 
-**Реализация:** Register domain, DNS, TLS, PUBLIC_BASE_URL, OAuth callbacks, cookie/CSRF trusted origins, email DNS.
+**Влияние на код:** config, absolute URLs, OAuth provider settings, reverse proxy и deployment documentation.
 
-**Влияние на код:** config, routes generating absolute URLs, hosting/DNS docs, OAuth provider settings.
+**Влияние на сайт:** Пользователь всегда видит один коммерческий домен; последующие изменения сервера выполняются через DNS.
 
-**Влияние на сайт:** Пользователи видят коммерческий домен; переход между хостингами не меняет адрес.
+**Критерии готовности:** HTTPS и redirects работают; домен доступен из контрольных сетей РФ и РБ; HH/SJ callbacks проходят; старый Render URL не используется как основной.
 
-**Критерии готовности:** HTTPS works; www/app policy fixed; HH/SJ callbacks pass; old URL redirects intentionally.
+**Зависимости:** HOST-001, SEC-001, OPS-001; до публичной beta.
+#### INFRA-001 - Выбор и тест российского VPS
 
-**Зависимости:** SEC-001; до публичных accounts/OAuth beta.
-
-#### INFRA-001 - Платформонезависимая упаковка и контейнеризация
-
-**Приоритет:** P1  
+**Приоритет:** P0  
 **Статус:** ЗАПЛАНИРОВАНО
 
-**Цель:** Подготовить одинаковый запуск на Render, VPS и CI.
+**Цель:** Найти площадку, стабильно доступную пользователям РФ и РБ и пригодную для Flask, PostgreSQL, workers и AI API.
 
-**Реализация:** Dockerfile, .dockerignore, Compose web/db/worker/migrations, non-root, healthcheck.
+**Реализация:** Сравнить кандидатов, развернуть тестовую копию, проверить IPv4/TLS/маршруты из нескольких сетей РФ и РБ, исходящий HTTPS к Yandex AI Studio и Reed, backup options, SLA, стоимость и масштабирование.
 
-**Влияние на код:** Docker/Compose, deploy/render, deploy/vps, CI image build.
+**Влияние на код:** Минимальное; добавляются deployment probes, Docker/Compose baseline и инфраструктурный decision record.
 
-**Влияние на сайт:** Пользователь не замечает; команда получает воспроизводимый deploy.
+**Влияние на сайт:** Появляется проверенная production-площадка без выявленного ограничения Render/Cloudflare.
 
-**Критерии готовности:** Image builds; migrations one-shot; secrets not baked; same tests pass.
+**Критерии готовности:** Тестовый URL доступен из контрольной матрицы сетей; health/search/resume работают; Yandex AI Studio доступен; Reed test зафиксирован; выбранный тариф документирован.
 
-**Зависимости:** DATA-001, SYNC-001 желательно.
+**Зависимости:** OPS-001.
+#### HOST-001 - Подготовка production VPS
 
-#### HOST-001 - Выбор production-площадки и миграция с Render
-
-**Приоритет:** P1 перед коммерческим запуском  
+**Приоритет:** P0 перед коммерческим запуском  
 **Статус:** ЗАПЛАНИРОВАНО
 
-**Цель:** Выбрать paid Render или VPS на основании метрик, а не предположений.
+**Цель:** Подготовить воспроизводимый и безопасный production-сервер до переключения домена.
 
-**Реализация:** Сравнить cost, CPU/RAM, DB/worker/backup, data region, ops readiness; perform staging migration and rollback drill.
+**Реализация:** Ubuntu LTS, Docker/Compose, non-root containers, Nginx/Caddy, PostgreSQL, migrations, workers, firewall, secrets, healthchecks, staging deploy и rollback rehearsal.
 
-**Влияние на код:** Hosting docs/config, deployment scripts, DNS switch plan.
+**Влияние на код:** Dockerfile, compose, deploy/vps scripts, environment templates без секретов, runbooks.
 
-**Влияние на сайт:** При сохранении собственного домена смена площадки прозрачна.
+**Влияние на сайт:** До DNS switch внешний адрес не меняется; после проверки сервер готов принять production-трафик.
 
-**Критерии готовности:** Decision record approved; load test; backup restore; rollback; no unplanned downtime.
+**Критерии готовности:** Image builds; migrations one-shot; health/readiness зелёные; backup restore и rollback подтверждены; секреты не встроены в image.
 
-**Зависимости:** DOMAIN-001, INFRA-001, OPS-001.
+**Зависимости:** INFRA-001, OPS-001, SEC-001.
+#### REED-COMPAT-001 - Проверка Reed API с выбранного VPS
+
+**Приоритет:** P0  
+**Статус:** ЗАПЛАНИРОВАНО
+
+**Цель:** Не переносить production на сервер, с которого Reed технически или договорно недоступен.
+
+**Реализация:** Connectivity/API smoke с точного source IP, проверка rate limits и display/redirect rules, обращение в Reed за письменным подтверждением географических и коммерческих условий.
+
+**Влияние на код:** Provider health probe, feature flag и graceful degradation Reed.
+
+**Критерии готовности:** API search/details проходят или Reed отключается без влияния на другие источники; условия использования зафиксированы.
+
+**Зависимости:** INFRA-001.
+
+#### MIG-001 - Перенос production с Render на VPS
+
+**Приоритет:** P0  
+**Статус:** ЗАПЛАНИРОВАНО
+
+**Цель:** Перенести приложение и PostgreSQL без потери данных и с контролируемым rollback.
+
+**Реализация:** Backup Render PostgreSQL, restore на VPS, staging verification, freeze/sync window, DNS switch, post-migration smoke, наблюдение и rollback plan.
+
+**Влияние на код:** Migration scripts, deployment checklist, DNS runbook; бизнес-логика не должна зависеть от хостинга.
+
+**Критерии готовности:** Data counts/checksums совпадают; OAuth/search/resume работают; downtime в пределах окна; rollback протестирован.
+
+**Зависимости:** HOST-001, DOMAIN-001, OPS-002, REED-COMPAT-001.
 
 #### OPS-002 - Эксплуатация собственного VPS
 
@@ -1060,42 +1123,155 @@ workflow YAML parse: успешно
 
 Локальные skips относятся к Flask/Psycopg/PostgreSQL, отсутствующим в sandbox. GitHub Actions устанавливает production dependencies и запускает PostgreSQL 17, поэтому route/startup/integration tests не должны быть пропущены.
 
-### 11.7 Production verification, которое ещё требуется
+### 11.7 Исправление первого CI-запуска
 
-1. Зелёный GitHub Actions, включая `Verify SEC-001 security controls`.
-2. Render deploy без ImportError/startup loop.
-3. `/health`: PostgreSQL ok и revision `20260804_0002`.
-4. Main/AI Career/resume builder/vacancies/search/OAuth smoke.
-5. CSP/HSTS/cookie flags, CSRF positive/negative и controlled 429.
-6. `/debug/*`, detailed status и refresh закрыты; public status работает.
-7. Logs не содержат token, provider body или credentials.
+Первый полный SEC-001 workflow корректно дошёл до отдельного шага безопасности и выявил две несовместимости:
 
-## 12. Стратегия домена и hosting
+- `WTF_CSRF_TIME_LIMIT` был передан как `datetime.timedelta`, хотя Flask-WTF 1.3 ожидает целое число секунд; это вызывало `TypeError` при проверке CSRF во всех POST-тестах. Значение исправлено на integer seconds и закреплено config-тестом.
+- обработчик недоверенного Host пытался отрисовать общий шаблон до создания Flask URL adapter; вызов `url_for()` из `base.html` завершался `AttributeError: NoneType has no attribute build`. Для `SecurityError` добавлен минимальный нейтральный text response без отражения Host.
 
-- Собственный домен обязателен к коммерческой beta и может сначала указывать на Render.
-- Первая beta: paid Render + own domain + managed PostgreSQL - минимальный operational risk.
-- VPS не является обязательным заранее. Решение принимается после реальных 30-дневных metrics, load test, backup restore и operational readiness.
-- Архитектура строится portability-first: DATABASE_URL, stdout logs, separate worker commands, object storage, Docker/Compose later.
-- При миграции users продолжают видеть один домен; DNS переключается с Render на VPS после staging/data sync/rollback rehearsal.
+Database schema, OAuth data, UI и revision `20260804_0002` не изменяются. SEC-001 остаётся в статусе НУЖНА ПРОВЕРКА до повторного зелёного CI и Render smoke.
 
-## 13. Ближайшая последовательность
+### 11.8 Production verification status
+
+Подтверждены Render deploy, `/health` с PostgreSQL revision `20260804_0002`, основные страницы, поиск, PDF positive/negative, CSP/HSTS, secure cookie flags, отрицательный CSRF (`400`), закрытые diagnostics, public Trudvsem status и application logs без secrets. Положительный logout/OAuth неприменим до пользовательского аккаунта.
+
+Остаются только:
+
+1. зелёный GitHub Actions после proxy-aware rate-limit fix;
+2. controlled `429` и `Retry-After` на `/api/security/rate-limit-probe`;
+3. при доступной рабочей OAuth-конфигурации — отдельный provider callback/logout smoke.
+
+### 11.9 SEC-001 rate-limit fix — фактическая реализация 06 августа 2026
+
+Production smoke подтвердил CSP/HSTS, secure cookie, PostgreSQL health/revision, основные страницы, поиск, PDF, закрытые diagnostics, безопасный Trudvsem status, application logs и отрицательный CSRF (`400`). Проверка rate limiting выявила расхождение: декорированный `20 per 5 minutes` маршрут продолжал отвечать `404` после 25 запросов.
+
+Причина: Flask-Limiter использовал `request.remote_addr`, который после `ProxyFix(x_for=1)` представлял меняющийся адрес промежуточного Render proxy. В исправлении:
+
+- real client выбирается из валидного `CF-Connecting-IP`, затем первого IP `X-Forwarded-For`, только при `TRUST_PROXY_HEADERS`;
+- без доверенного proxy forwarded headers игнорируются;
+- bucket key хранится как HMAC-SHA256 fingerprint;
+- `ProxyFix` доверяет только forwarded protocol, но не переписывает client address;
+- добавлен secret-free `/api/security/rate-limit-probe` с лимитом `5 per minute`;
+- CI получает отдельные regression tests с rotating proxy hops и обязательным `429`/`Retry-After`.
+
+OPS-001 код сохранён. Миграций нет, revision остаётся `20260804_0002`. Статус SEC-001 — НУЖНА ПОВТОРНАЯ ПРОВЕРКА до зелёного GitHub Actions и production probe.
+
+## 12. OPS-001 - фактическая реализация 05 августа 2026
+
+### 12.1 Структурированные безопасные логи
+
+- Production logging переведён на bounded JSON lines в stdout; local/test сохраняют читаемый text format.
+- Каждый запрос получает или принимает валидный `X-Request-ID`, который возвращается клиенту и добавляется в logs/alerts.
+- `LogSanitizer` удаляет configured secrets, Authorization/Cookie, OAuth tokens, API keys, passwords, URL credentials и query strings.
+- Request bodies, cookies, содержимое резюме и raw provider responses не записываются.
+- Ошибки `500` и provider failures создают sanitised operational events; внешний webhook не может остановить web process.
+
+### 12.2 Health, readiness и bounded metrics
+
+- `/health/live` подтверждает работу процесса без обращения к внешним сервисам.
+- `/health/ready` и совместимый `/health` проверяют PostgreSQL и expected Alembic revision `20260804_0002`; mismatch возвращает HTTP 503.
+- `provider_operation()` измеряет HH, SuperJob, Reed, Trudvsem и university-logo calls: calls/success/failure/timeout, status и p50/p95 latency.
+- Diagnostics-only `/ops/status` показывает bounded telemetry без query/body/credentials.
+- Diagnostics-only `POST /ops/alerts/test` позволяет подтвердить канал уведомлений.
+
+### 12.3 Backup и restore
+
+- PostgreSQL backup использует standard custom format `pg_dump`; restore — `pg_restore` с `--exit-on-error`, без owner/privileges.
+- Local/test SQLite использует online backup API.
+- Backup может шифроваться отдельным 32-byte URL-safe base64 `BACKUP_ENCRYPTION_KEY` через AES-256-GCM; production без encryption запрещён по умолчанию.
+- Manifest не содержит username/password/URL: только backend, host, port, database, revision, table counts, size, SHA-256 и cipher.
+- Restore проверяет checksum, decryptability, backend, revision и контрольные counts; production restore требует явного `--allow-production`.
+- Добавлены CLI `backup_database.py`, `verify_backup.py`, `restore_database.py`, retention cleanup и runbooks.
+
+### 12.4 CI и локальные доказательства
 
 ```text
-SEC-001 verification
+compileall: успешно
+pytest: 90 passed, 5 skipped локально
+SQLite encrypted backup/verify/restore: успешно
+Alembic revision после restore: 20260804_0002
+workflow YAML parse: успешно
+backup shell block bash -n: успешно
+repository hygiene: успешно на clean candidate ZIP
+```
+
+Локальные skips относятся к Flask/Flask-WTF/Flask-Limiter, Psycopg и PostgreSQL service, отсутствующим в sandbox. GitHub Actions устанавливает production dependencies, запускает PostgreSQL 17 и обязан выполнить реальный encrypted backup/restore в отдельную базу.
+
+### 12.5 Проверка, которая ещё требуется
+
+1. Зелёный GitHub Actions, включая `Verify OPS-001 observability controls` и `Verify PostgreSQL encrypted backup and restore`.
+2. Render `/health/live` = 200 и `/health/ready` = 200 с revision `20260804_0002`.
+3. В Render logs один запрос виден как JSON с тем же `X-Request-ID`; query/token/body отсутствуют.
+4. Настроенный test alert доставлен и не содержит secret/token/DB URL.
+5. Encrypted production backup сохранён во внешнем защищённом хранилище, manifest verified.
+6. Restore выполнен в отдельную test database; revision и table counts совпадают; production DB не затронута.
+
+## 13. Зафиксированная стратегия hosting, AI и Reed
+
+### 13.1 Причина изменения плана
+
+05 августа 2026 подтверждён инфраструктурный риск Render: из части сетей РФ DNS корректно разрешает `ai-career-agent-site.onrender.com` в `216.24.57.7/216.24.57.15`, но TCP 443 не устанавливается и запросы не появляются в Render Logs. Одновременно сайт работает из Республики Беларусь и с мобильных сетей. Это не ошибка Flask/SEC-001; Render остаётся staging/резервной площадкой, но не принимается как гарантированный production для РФ/РБ.
+
+### 13.2 AI-провайдер
+
+- Основной кандидат для MVP: **Yandex AI Studio / модели Alice AI**.
+- Решение не принимается по маркетинговым benchmark: обязателен `AI-BENCH-001` на наших русских и английских сценариях.
+- Бизнес-логика строится через независимый `AIProvider`; одна модель не используется для всех задач.
+- OpenAI может оставаться дополнительным адаптером только для поддерживаемых рынков и не является обязательной зависимостью продукта для РФ/РБ.
+- API key хранится только на сервере; браузер не вызывает AI API напрямую.
+
+### 13.3 Reed
+
+- Документация Reed описывает API key/Basic Auth и endpoints, но не даёт гарантии работы с российского source IP.
+- До выбора production VPS требуется `REED-COMPAT-001`: реальный API smoke с точного IP и письменное подтверждение допустимости коммерческого использования.
+- Недоступность Reed не должна ломать HH, SuperJob, Trudvsem и внутренний поиск; provider обязан иметь feature flag и graceful degradation.
+
+### 13.4 Требования к VPS
+
+- доступность из контрольных сетей РФ и РБ;
+- постоянный публичный IPv4 и корректный TLS без обязательного Cloudflare на входе;
+- исходящий HTTPS к Yandex AI Studio и Reed;
+- Docker/Compose, PostgreSQL, отдельный worker, firewall и non-root deployment;
+- offsite backup, restore drill, monitoring и rollback;
+- возможность масштабирования CPU/RAM и последующего подключения GPU/local model при необходимости.
+
+### 13.5 Проверенные внешние предпосылки
+
+- Render документирует использование Cloudflare для DDoS-защиты всех web-сервисов.
+- OpenAI официально предупреждает, что API поддерживается только в перечисленных странах; РФ и РБ не используются как целевой baseline проекта.
+- Yandex AI Studio предоставляет text generation и embeddings API; конкретные модели и качество утверждаются только после benchmark.
+- Reed Jobseeker API использует API key в Basic Auth; географическая пригодность проверяется отдельно.
+
+
+
+## 14. Обязательная ближайшая последовательность
+
+```text
+SEC-001 rate-limit recheck
 -> OPS-001
+-> INFRA-001
+-> AI-BENCH-001
+-> REED-COMPAT-001
+-> AI-PROVIDER-001
+-> HOST-001
 -> DOMAIN-001
--> SYNC-001/SEARCH core
+-> MIG-001
+-> AI-001
+-> SYNC/SEARCH core
 -> AUTH/PROFILE
--> AI
+-> AI functions
 -> JOB tracker
 -> commercial release gates
 ```
 
-## 14. Следующий пакет
+Порядок может меняться только новой MINOR-версией PLAN_CURRENT с объяснением причин и зависимостей.
 
-SEC-001 реализован и имеет статус **НУЖНА ПРОВЕРКА**. Локально подтверждены compileall и 77 доступных tests; полный Flask/PostgreSQL security contract должен пройти GitHub Actions и Render smoke. После подтверждения SEC-001 переводится в ВЫПОЛНЕНО, а `OPS-001 - Наблюдаемость, безопасные логи и резервное восстановление` становится следующим пакетом. DOMAIN-001 остаётся после OPS-001.
+## 15. Следующий пакет
 
-## 15. Обязательный отчёт после каждого пакета
+`SEC-001` имеет статус **НУЖНА ПОВТОРНАЯ ПРОВЕРКА НА RENDER** после исправления limiter key за Cloudflare/Render. `OPS-001` реализован и имеет статус **НУЖНА ПРОВЕРКА** до зелёного CI, проверки live/readiness, доставки test alert и encrypted backup/restore drill. После подтверждения OPS следующим пакетом становится `INFRA-001 - Выбор и технический тест российского VPS`; затем без пропусков выполняется последовательность раздела 14.
+
+## 16. Обязательный отчёт после каждого пакета
 
 ```text
 Пункт: <ID и название>
@@ -1111,7 +1287,7 @@ GitHub/production/API: <подтверждено или требуется>
 Приложения: ZIP, PLAN_CURRENT DOCX/PDF/MD, паспорт при необходимости
 ```
 
-## 16. Журнал версий
+## 17. Журнал версий
 
 | Версия | Дата | Пункт | Изменение |
 |---|---|---|---|
@@ -1128,3 +1304,7 @@ GitHub/production/API: <подтверждено или требуется>
 | 1.2.6 | 04.08.2026 | DATA-002 | Добавлены domain/repository layers и migration 20260804_0002; DOMAIN-001 подтверждён в этапе 6. DATA-002 ожидает GitHub/Render verification. |
 | 1.2.7 | 05.08.2026 | DATA-002-COMPLETE | Подтверждены зелёный CI, Render revision 20260804_0002, штатный поиск и сохранность persisted sync/cache state после restart; SEC-001 готов к старту. |
 | 1.2.8 | 05.08.2026 | SEC-001 | Реализованы secure session, CSRF, rate limiting, CSP/headers, request/PDF limits, diagnostics gate, neutral errors и SSRF baseline; пакет ожидает GitHub/Render verification. |
+| 1.2.9 | 05.08.2026 | SEC-001-CI-FIX | Исправлены тип `WTF_CSRF_TIME_LIMIT` для Flask-WTF 1.3 и безопасный ответ при недоверенном Host; workflow содержит отдельную SEC-001 проверку, пакет ожидает повторный CI/Render smoke. |
+| 1.3.0 | 05.08.2026 | INFRA/AI/REED STRATEGY | После подтверждённой недоступности Render из части сетей РФ перестроена очередь: OPS -> VPS test -> Alice AI benchmark -> Reed compatibility -> provider strategy -> production VPS -> domain -> migration -> AI layer. |
+| 1.3.1 | 05.08.2026 | OPS-001 | Добавлены structured JSON logs, correlation ID, provider/HTTP metrics, live/readiness, optional alert webhook и encrypted PostgreSQL/SQLite backup-restore с secret-free manifest; пакет ожидает GitHub/Render/alert/restore verification. |
+| 1.3.2 | 06.08.2026 | SEC-001-RATE-LIMIT-FIX | Исправлен нестабильный client key за Cloudflare/Render, добавлен HMAC bucket и безопасный 5/minute production probe; OPS-001 сохранён. |

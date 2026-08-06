@@ -35,16 +35,16 @@
 
 ## 4. Текущая ветка
 
-Для SEC-001:
+Для OPS-001:
 
 ```text
-sec-001-security-baseline
+ops-001-observability-backup
 ```
 
 Commit:
 
 ```text
-security: add baseline request and session protections
+ops: add observability and verified backup restore
 ```
 
 Не очищать ветку. Сохранять `.github`, `.gitignore`, migrations и существующие docs.
@@ -53,7 +53,7 @@ security: add baseline request and session protections
 
 ```bash
 python scripts/check_repository_hygiene.py
-python -m compileall -q app.py config.py database.py security.py domain models repositories migrations services tests scripts
+python -m compileall -q app.py config.py database.py observability.py security.py domain models repositories operations migrations services tests scripts
 python scripts/manage_db.py upgrade
 python -m alembic check
 python -m pytest -ra
@@ -69,12 +69,36 @@ SEC-001 дополнительно проверяет:
 - logout — POST only;
 - diagnostics скрыты без header secret;
 - public Trudvsem status не содержит raw error/internal run;
-- rate limit выдаёт controlled 429;
+- rate limit использует стабильный HMAC bucket за Cloudflare/Render и выдаёт controlled 429;
 - PDF page/text/body limits;
 - university-logo resolver не следует на private redirect и проверяет image signature;
 - startup modes и PostgreSQL integration остаются зелёными.
 
-## 6. Security surfaces
+
+### Production rate-limit probe
+
+```text
+GET /api/security/rate-limit-probe
+1-5 запросы: 200
+6-й запрос в течение минуты: 429 + Retry-After
+```
+
+Probe не использует базу или внешние API и предназначен только для проверки limiter wiring.
+
+## 6. OPS-001 проверки
+
+- `/health/live` отвечает без DB dependency;
+- `/health/ready` проверяет DB и revision `20260804_0002`;
+- `X-Request-ID` генерируется/сохраняется;
+- access/provider logs не содержат query/body/token/resume text;
+- `/ops/status` и `/ops/alerts/test` закрыты diagnostics secret;
+- optional webhook получает sanitised test alert;
+- production backup требует `BACKUP_ENCRYPTION_KEY`;
+- manifest/size/SHA-256 проверяются;
+- restore в отдельную DB подтверждает revision и row counts;
+- CI выполняет реальный PostgreSQL encrypted backup/restore.
+
+## 7. Security surfaces
 
 ### Browser
 
@@ -84,6 +108,7 @@ Secure + HttpOnly + SameSite=Lax
 CSRF token
 CSP nonce
 route-specific rate limit
+proxy-aware client fingerprint
 ```
 
 ### Machine sync
@@ -104,7 +129,7 @@ X-Diagnostics-Secret: <secret>
 
 Без всех трёх условий `/debug/*` и `/trudvsem/status` возвращают 404. Public UI использует `/api/sources/trudvsem/status`.
 
-## 7. Слои данных
+## 8. Слои данных
 
 ```text
 routes -> StorageServices/application services -> repositories -> models/database
@@ -115,7 +140,7 @@ routes -> StorageServices/application services -> repositories -> models/databas
 - `VacancyStore` нормализует payload, `VacancyRepository` выполняет query.
 - Legacy `accounts`/`hh_accounts` не удаляются до отдельной cleanup migration.
 
-## 8. Миграции и rollback
+## 9. Миграции и rollback
 
 Команды:
 
@@ -125,27 +150,33 @@ python scripts/manage_db.py current
 python scripts/manage_db.py check
 ```
 
-SEC-001 не добавляет migration; `/health` должен остаться на:
+SEC-001 и OPS-001 не добавляют migration; `/health/ready` должен остаться на:
 
 ```text
 revision=20260804_0002
 ```
 
-Rollback SEC-001 выполняется application commit/redeploy без изменения PostgreSQL. Downgrade production schema без backup запрещён.
+Rollback SEC/OPS выполняется application commit/redeploy без изменения PostgreSQL. Backup/restore scripts остаются отдельно; downgrade production schema без verified backup запрещён.
 
-## 9. Render, домен и VPS
+## 10. Hosting, домен и VPS
 
-Сейчас deploy — Render. `DOMAIN-001` остаётся отдельным пакетом этапа 6 после `SEC-001` и `OPS-001`.
-
-Порядок:
+Render остаётся staging/резервной площадкой. Обязательная очередь PLAN_CURRENT 1.3.x:
 
 ```text
-SEC-001 verification -> OPS-001 -> DOMAIN-001
+SEC-001 rate-limit recheck
+-> OPS-001 verification
+-> INFRA-001
+-> AI-BENCH-001
+-> REED-COMPAT-001
+-> AI-PROVIDER-001
+-> HOST-001
+-> DOMAIN-001
+-> MIG-001
 ```
 
 При DOMAIN-001 нужно добавить коммерческий hostname в `TRUSTED_HOSTS`, обновить OAuth redirect URI и проверить secure cookie/CSRF/HSTS на новом HTTPS-домене.
 
-## 10. После каждого пакета вернуть
+## 11. После каждого пакета вернуть
 
 - новый ZIP;
 - список файлов/изменений;
