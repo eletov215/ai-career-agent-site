@@ -206,3 +206,7 @@ Metrics не содержат keywords, filters или provider payload. Оши�
 - Offsite backup schedule не настроен до выбора production VPS.
 - Trudvsem thread остаётся внутри Gunicorn до `SYNC-001`.
 - SEC-001 production smoke остаётся отдельной незавершённой проверкой.
+
+## 12. Завершение OPS-001 на тестовом VPS
+
+INFRA-001 предоставляет `ops` image с PostgreSQL 17 tools, persistent backup volume и isolated `restore-db`. Production URL Render передаётся только временной переменной shell. Полная команда и критерии проверки находятся в `docs/INFRA001_VPS_TEST.md`. Production database никогда не используется как restore target.

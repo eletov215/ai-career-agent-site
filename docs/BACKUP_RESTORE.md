@@ -154,3 +154,25 @@ OPS-001 предоставляет инструменты и CI restore proof. �
 - публиковать backup key;
 - считать cloud provider snapshot единственной копией;
 - выполнять downgrade/restore единственной production DB без backup и rollback.
+
+## 10. Compose restore drill INFRA-001
+
+```bash
+docker compose --env-file .env --profile restore-test up -d restore-db
+docker compose --env-file .env --profile ops run --rm --no-deps \
+  -e APP_ENV=production \
+  -e DATABASE_URL="$RENDER_DATABASE_URL" \
+  ops python scripts/backup_database.py \
+  --output-dir /var/backups/ai-career-agent \
+  --name render-production.dump
+
+docker compose --env-file .env --profile ops run --rm --no-deps \
+  ops python scripts/verify_backup.py \
+  --backup /var/backups/ai-career-agent/render-production.dump.enc
+
+docker compose --env-file .env --profile ops --profile restore-test run --rm \
+  ops python scripts/restore_database.py \
+  --backup /var/backups/ai-career-agent/render-production.dump.enc
+```
+
+Перед выполнением сверить `RESTORE_DATABASE_URL`, manifest, SHA-256 и целевую revision `20260804_0002`.

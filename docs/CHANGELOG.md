@@ -1,4 +1,25 @@
-# Changelog
+# AI Career Agent — журнал изменений
+
+## 1.3.5 — 2026-08-06 — INFRA-001
+
+### Добавлено
+
+- multi-target `Dockerfile`: non-root `runtime` и отдельный `ops` target с PostgreSQL 17 client tools;
+- `compose.yaml`: private PostgreSQL, one-shot migrations, web, optional Caddy TLS, OPS и isolated restore-test profiles;
+- единая Gunicorn policy в `infra/gunicorn.conf.py`;
+- secret-free VPS templates в `infra/vps/`;
+- `infra_probe.py` с JSON/Markdown report, DNS/TCP/TLS/HTTP checks и strict mode;
+- manifest/document validators и container smoke script;
+- INFRA unit/manifest/document tests и GitHub Actions build/smoke;
+- DOC-STD-001 и единый формат PLAN_CURRENT, паспорта, runbooks и отчётов.
+
+### Статусы
+
+- `SEC-001 — ВЫПОЛНЕНО`;
+- `OPS-001 — НУЖНА ФИНАЛЬНАЯ ПРОВЕРКА`;
+- `INFRA-001 — НУЖНА ПРОВЕРКА НА VPS`.
+
+---
 
 ## Unreleased — SEC-001 rate-limit fix 1.3.2 (06 августа 2026)
 

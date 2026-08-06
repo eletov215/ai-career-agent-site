@@ -1,13 +1,17 @@
 # AI Career Agent - Единый план реализации и ведения разработки
 
-**Версия:** 1.3.2  
-**Дата:** 06 августа 2026  
-**Статус:** ДЕЙСТВУЮЩИЙ  
-**Основа кода:** `ai-career-agent-site-main-17-sec-001-rate-limit-fix-ops-001-v1.3.2.zip`
+| Поле | Значение |
+|---|---|
+| Документ | PLAN_CURRENT |
+| Версия | 1.3.5 |
+| Дата | 06 августа 2026 |
+| Статус | ДЕЙСТВУЮЩИЙ |
+| Основа кода | `ai-career-agent-site-main (3).zip` -> INFRA-001 candidate build v1.3.5 |
+| Следующий gate | Реальный VPS test и production restore drill |
 
 > ОБЯЗАТЕЛЬНО ДЛЯ КАЖДОГО НОВОГО ЧАТА: прочитать этот план, новый паспорт и актуальный архив. После завершения любого пункта вернуть обновлённые DOCX/PDF/Markdown, новый ZIP, доказательства проверки и запись в журнале версий.
 
-> КОНТРОЛЬНЫЕ СТАТУСЫ ЭТОЙ ВЕРСИИ: `FND-001 — ВЫПОЛНЕНО`; `FND-002 — ВЫПОЛНЕНО`; `DATA-001 — ВЫПОЛНЕНО`; `DATA-002 — ВЫПОЛНЕНО`; `SEC-001 — НУЖНА ПОВТОРНАЯ ПРОВЕРКА НА RENDER`; `OPS-001 — НУЖНА ПРОВЕРКА`; `INFRA-001`, `AI-BENCH-001`, `REED-COMPAT-001`, `AI-PROVIDER-001`, `HOST-001`, `DOMAIN-001`, `MIG-001` — ЗАПЛАНИРОВАНО. PDF/документы с версией ниже `1.3.2` являются устаревшими.
+> КОНТРОЛЬНЫЕ СТАТУСЫ ЭТОЙ ВЕРСИИ: `FND-001 — ВЫПОЛНЕНО`; `FND-002 — ВЫПОЛНЕНО`; `DATA-001 — ВЫПОЛНЕНО`; `DATA-002 — ВЫПОЛНЕНО`; `SEC-001 — ВЫПОЛНЕНО`; `OPS-001 — НУЖНА ПРОВЕРКА` (остался только production backup/restore drill); `INFRA-001 — НУЖНА ПРОВЕРКА НА VPS`; `AI-BENCH-001`, `REED-COMPAT-001`, `AI-PROVIDER-001`, `HOST-001`, `DOMAIN-001`, `MIG-001` — ЗАПЛАНИРОВАНО. Документы с версией ниже `1.3.5` являются устаревшими.
 
 ## 1. Источник истины и аудит источников
 
@@ -16,7 +20,7 @@
 - Канонический план определяется наибольшей версией и датой; старые дубликаты не должны оставаться действующими.
 - Перед DATA-002 проверено, что актуальный код находится в `ai-career-agent-site-main (1).zip` и соответствует завершённому DATA-001.
 - Загруженные планы/паспорт были устаревшими: они содержали версии 1.0.0/1.0.1 и раннее состояние HH 403, не отражали подтверждение FND-001/FND-002 и согласованную стратегию собственного домена/VPS.
-- Версия 1.3.2 является канонической: FND-001, FND-002, DATA-001 и DATA-002 имеют статус ВЫПОЛНЕНО; SEC-001 прошёл основную production-проверку, получил исправление proxy-aware rate-limit key и ожидает повторный CI/429 smoke; OPS-001 реализован в актуальном ZIP и ожидает GitHub/backup/alert/production verification. После выявленной недоступности Render из части сетей РФ сохраняется обязательная последовательность operational readiness -> тест российского VPS -> benchmark Yandex AI Studio/Alice AI -> проверка Reed -> production VPS -> домен -> миграция.
+- Версия 1.3.5 является канонической: FND-001, FND-002, DATA-001, DATA-002 и SEC-001 имеют статус ВЫПОЛНЕНО. Для OPS-001 подтверждены зелёные GitHub Actions, включая observability и encrypted PostgreSQL backup/restore drill в CI; live/readiness и revision `20260804_0002`; совпадение `X-Request-ID` в ответе и структурированном application JSON log; защищённый `/ops/status`; provider metrics; фактическая POST-доставка sanitised webhook alert; сохранность данных после redeploy. Единственный незакрытый критерий OPS-001 - encrypted backup реальной production PostgreSQL и restore в отдельную test database. Кодовая часть INFRA-001 реализована: добавлены non-root Docker images, Docker Compose stack, one-shot migrations, isolated restore database, Caddy TLS profile, VPS probe, provider decision record и container CI smoke. Production backup/restore OPS-001 будет завершён на тестовом VPS. После подтверждения INFRA-001 сохраняется последовательность: benchmark Yandex AI Studio/Alice AI -> проверка Reed -> production VPS -> домен -> миграция.
 
 ## 2. Обязательный протокол работы
 
@@ -84,7 +88,7 @@
 |---|---|---|
 | R-01 | Закрыт 04.08.2026 | Production переведён на PostgreSQL; restart подтвердил сохранность кэша и служебного состояния. |
 | R-02 | Высокий | Trudvsem daemon thread зависит от Gunicorn. |
-| R-03 | Снижен, нужна проверка | SEC-001 прошёл отдельный GitHub security step; остаётся Render production smoke и проверка headers/cookies/CSRF. |
+| R-03 | Закрыт 06.08.2026 | SEC-001 подтверждён в production: headers/cookies/CSRF, diagnostics, безопасные ответы и `429` с `Retry-After`. |
 | R-04 | Высокий | Межисточниковые дубли и нестабильный total/pagination. |
 | R-05 | Высокий | Маркетинговые AI promises опережают real implementation. |
 | R-06 | Средний | Большие assets и inline JS усложняют performance/support. |
@@ -112,8 +116,8 @@ MVP не готов, если работает только отдельная �
 | FND-002 | P0 | ВЫПОЛНЕНО | Конфигурация приложения и разделение development/test/production |
 | DATA-001 | P0 | ВЫПОЛНЕНО | Переход с временной SQLite на PostgreSQL и миграции |
 | DATA-002 | P0 | ВЫПОЛНЕНО | Базовая доменная модель и слой доступа к данным |
-| SEC-001 | P0 | НУЖНА ПОВТОРНАЯ ПРОВЕРКА | Proxy-aware rate-limit fix реализован поверх подтверждённой security-базы; нужны CI и production 429 |
-| OPS-001 | P0 | НУЖНА ПРОВЕРКА | Наблюдаемость, безопасные логи и резервное восстановление |
+| SEC-001 | P0 | ВЫПОЛНЕНО | Базовое усиление безопасности и proxy-aware rate limiting подтверждены на Render |
+| OPS-001 | P0 | НУЖНА ПРОВЕРКА | Наблюдаемость подтверждена; остался production backup/restore drill |
 | DOC-001 | P0 | ЗАПЛАНИРОВАНО | Синхронизация README, ROADMAP, CHANGELOG и фактического кода |
 
 ### Этап 2. Надёжный поиск и обновление вакансий
@@ -165,7 +169,7 @@ MVP не готов, если работает только отдельная �
 
 | ID | Приоритет | Статус | Пункт |
 |---|---|---|---|
-| INFRA-001 | P0 | ЗАПЛАНИРОВАНО | Выбор и технический тест российского VPS для пользователей РФ/РБ |
+| INFRA-001 | P0 | НУЖНА ПРОВЕРКА | Container/VPS toolkit реализован; требуется реальный VPS и матрица доступности РФ/РБ |
 | REED-COMPAT-001 | P0 | ЗАПЛАНИРОВАНО | Техническая и договорная проверка Reed API с выбранного VPS |
 | HOST-001 | P0 | ЗАПЛАНИРОВАНО | Подготовка production VPS: контейнеры, reverse proxy, PostgreSQL, TLS, deploy |
 | DOMAIN-001 | P0 до beta | ЗАПЛАНИРОВАНО | Собственный домен, DNS, TLS и публичные URL |
@@ -254,7 +258,7 @@ MVP не готов, если работает только отдельная �
 #### SEC-001 - Базовое усиление безопасности
 
 **Приоритет:** P0  
-**Статус:** НУЖНА ПРОВЕРКА НА RENDER
+**Статус:** ВЫПОЛНЕНО
 
 **Цель:** Защитить state-changing формы/API, browser sessions, загрузки, внешние URL и технические endpoints до появления first-party аккаунтов.
 
@@ -264,7 +268,7 @@ MVP не готов, если работает только отдельная �
 
 **Влияние на сайт:** Дизайн и основной пользовательский путь сохраняются. Сессии получают новое cookie name и существующие browser sessions будут разлогинены один раз после deploy. POST без CSRF получает нейтральный 400; частые дорогие запросы — 429; logout работает только через кнопку POST. Public `/trudvsem/status` и `/debug/*` становятся 404, но интерфейс продолжает получать безопасный status через `/api/sources/trudvsem/status`. Ошибки provider/API больше не показывают технические детали.
 
-**Критерии готовности:** Локально compileall, config/template/SSRF tests и полный доступный pytest должны пройти; GitHub Actions обязан выполнить отдельный `Verify SEC-001 security controls` без skip route/startup tests; Render должен стартовать без новых обязательных variables, `/health` сохранить revision `20260804_0002`, страницы/OAuth/search/PDF работать, headers/cookie/CSRF/rate limit подтвердиться, diagnostics быть закрыты, а logs не содержать tokens/body. До этого статус остаётся НУЖНА ПРОВЕРКА.
+**Критерии готовности:** ВЫПОЛНЕНО. Подтверждены production health/revision `20260804_0002`, основные страницы, поиск и PDF, CSP/HSTS/browser headers, secure `aca_session`, CSRF без токена `400`, закрытые diagnostics, безопасный публичный Trudvsem status, отсутствие секретов в application logs и контролируемый `429` с `Retry-After` после 20 запросов к защищённому diagnostic route.
 
 **Совместимость и rollback:** Database migration отсутствует. Rollback — application commit/redeploy; PostgreSQL остаётся на `20260804_0002`. `RATELIMIT_STORAGE_URI=memory://` рассчитан на текущий один worker; перед несколькими workers/instances нужен общий Redis-compatible backend. CSP пока допускает inline styles; PDF остаётся внутри web process до будущего queue/sandbox.
 
@@ -273,11 +277,22 @@ MVP не готов, если работает только отдельная �
 #### OPS-001 - Наблюдаемость, безопасные логи и резервное восстановление
 
 **Приоритет:** P0  
-**Статус:** НУЖНА ПРОВЕРКА
+**Статус:** НУЖНА ПРОВЕРКА - остался production backup/restore drill
 
 **Цель:** Быстро обнаруживать сбои, связывать события одного запроса и иметь проверяемую процедуру резервного копирования и восстановления до выбора VPS.
 
 **Реализация:** Добавлен vendor-neutral `observability.py`: JSON stdout logs в production, `X-Request-ID`, bounded HTTP/provider metrics, sanitised recent errors и необязательный HTTPS alert webhook. Добавлены `/health/live`, `/health/ready`, diagnostics-only `/ops/status` и `POST /ops/alerts/test`. Добавлен `operations/backup.py` и CLI для PostgreSQL custom-format `pg_dump`/`pg_restore`, SQLite online backup, независимого AES-256-GCM шифрования, secret-free manifest, SHA-256, revision/table-count verification, retention и production restore guard. CI выполняет отдельные OPS tests и реальный encrypted PostgreSQL backup/restore drill.
+
+**Подтверждено 06.08.2026:**
+
+- GitHub Actions полностью зелёный, включая `Verify OPS-001 observability controls`, `Verify PostgreSQL encrypted backup and restore` и общий `Run tests`.
+- `/health/live`, `/health/ready` и `/health` возвращают HTTP 200; PostgreSQL `ok=true`; current/expected revision = `20260804_0002`.
+- Пользовательский `X-Request-ID` совпал в request, response header и JSON, затем найден в production application JSON log с `route=/api/sources/trudvsem/status`, `method=GET`, `status_code=200` и `duration_ms`.
+- `/ops/status` без diagnostics secret возвращает безопасный 404; с временным secret - HTTP 200, DB ok, HTTP metrics, provider `trudvsem`, recent errors 0.
+- `POST /ops/alerts/test` вернул 202 `queued`; Webhook.site получил реальный `POST application/json` от `AI-Career-Agent-Ops/1.0` с sanitised event `ops_test_alert` и без секретов.
+- После redeploy uptime сбросился, health/readiness остались зелёными, а `cached_total=77` сохранился.
+
+**Осталось для статуса ВЫПОЛНЕНО:** создать encrypted backup реальной production PostgreSQL вне web filesystem, проверить manifest/SHA-256 и восстановить копию в отдельную test database с совпадающими revision и контрольными table counts. Production database нельзя использовать как цель тестового restore.
 
 **Влияние на код:** `observability.py`, `operations/backup.py`, `scripts/backup_database.py`, `scripts/verify_backup.py`, `scripts/restore_database.py`, `scripts/send_test_alert.py`, `app.py`, `config.py`, `security.py`, `render.yaml`, CI, tests и operational runbooks.
 
@@ -287,7 +302,7 @@ MVP не готов, если работает только отдельная �
 
 **Совместимость и rollback:** Database migration отсутствует; revision остаётся `20260804_0002`. In-process metrics сбрасываются при restart и не заменяют внешнюю monitoring platform. Alert webhook опционален. Production backup требует отдельный `BACKUP_ENCRYPTION_KEY`; restore в production заблокирован без явного `--allow-production`. Rollback выполняется откатом application commit, backups не удаляются.
 
-**Зависимости:** DATA-001, DATA-002, SEC-001. После подтверждения — INFRA-001.
+**Зависимости:** DATA-001, DATA-002, SEC-001. После подтверждения production backup/restore - INFRA-001.
 
 #### DOC-001 - Синхронизация README, ROADMAP, CHANGELOG и фактического кода
 
@@ -756,19 +771,21 @@ MVP не готов, если работает только отдельная �
 #### INFRA-001 - Выбор и тест российского VPS
 
 **Приоритет:** P0  
-**Статус:** ЗАПЛАНИРОВАНО
+**Статус:** НУЖНА ПРОВЕРКА НА РЕАЛЬНОМ VPS
 
-**Цель:** Найти площадку, стабильно доступную пользователям РФ и РБ и пригодную для Flask, PostgreSQL, workers и AI API.
+**Цель:** Найти площадку, стабильно доступную пользователям РФ и РБ, и подготовить воспроизводимый запуск Flask/PostgreSQL/OPS-инструментов без зависимости от Render.
 
-**Реализация:** Сравнить кандидатов, развернуть тестовую копию, проверить IPv4/TLS/маршруты из нескольких сетей РФ и РБ, исходящий HTTPS к Yandex AI Studio и Reed, backup options, SLA, стоимость и масштабирование.
+**Реализация:** Добавлены multi-target `Dockerfile` (`runtime` и PostgreSQL 17 `ops`), `.dockerignore`, `compose.yaml` с private PostgreSQL, one-shot migrations, non-root web, optional Caddy TLS, isolated restore-test database и backup volume. Добавлены `infra/gunicorn.conf.py`, secret-free VPS environment template, DNS/TCP/TLS/HTTP probe для приложения, Yandex AI и Reed, manifest validator, container smoke script, INFRA tests, CI image build/smoke, provider shortlist и пошаговый VPS runbook.
 
-**Влияние на код:** Минимальное; добавляются deployment probes, Docker/Compose baseline и инфраструктурный decision record.
+**Влияние на код:** Docker/Compose baseline, `infra/`, probe/manifest scripts, INFRA unit tests, CI container build/smoke и структурированная инфраструктурная документация. Business routes, database schema и UI не изменены.
 
-**Влияние на сайт:** Появляется проверенная production-площадка без выявленного ограничения Render/Cloudflare.
+**Влияние на сайт:** На Render внешний вид не меняется. После VPS test появляется альтернативный test URL с тем же health/search/resume поведением. Production DNS пока не переключается.
 
-**Критерии готовности:** Тестовый URL доступен из контрольной матрицы сетей; health/search/resume работают; Yandex AI Studio доступен; Reed test зафиксирован; выбранный тариф документирован.
+**Критерии готовности:** Runtime и ops images собираются; container работает non-root; one-shot migration и `/health/ready` проходят; тестовый TLS URL доступен без VPN из контрольных сетей РФ/РБ; `infra_probe.py --strict` не имеет required failures; Yandex AI и Reed transport доступны; основные страницы/search/PDF проходят; encrypted production backup восстановлен в isolated restore database; выбранный тариф и фактическая матрица документированы.
 
-**Зависимости:** OPS-001.
+**Ограничения:** Один Gunicorn worker и `TRUDVSEM_SYNC_ENABLED=0` сохраняются до Redis/SYNC-001. HOST-001, domain switch и production migration не входят в пакет.
+
+**Зависимости:** OPS-001 реализован; его production backup/restore drill выполняется внутри теста INFRA-001.
 #### HOST-001 - Подготовка production VPS
 
 **Приоритет:** P0 перед коммерческим запуском  
@@ -1130,17 +1147,13 @@ workflow YAML parse: успешно
 - `WTF_CSRF_TIME_LIMIT` был передан как `datetime.timedelta`, хотя Flask-WTF 1.3 ожидает целое число секунд; это вызывало `TypeError` при проверке CSRF во всех POST-тестах. Значение исправлено на integer seconds и закреплено config-тестом.
 - обработчик недоверенного Host пытался отрисовать общий шаблон до создания Flask URL adapter; вызов `url_for()` из `base.html` завершался `AttributeError: NoneType has no attribute build`. Для `SecurityError` добавлен минимальный нейтральный text response без отражения Host.
 
-Database schema, OAuth data, UI и revision `20260804_0002` не изменяются. SEC-001 остаётся в статусе НУЖНА ПРОВЕРКА до повторного зелёного CI и Render smoke.
+Database schema, OAuth data, UI и revision `20260804_0002` не изменялись. После последующего CI и Render smoke пакет был дополнительно исправлен и полностью подтверждён 06 августа 2026.
 
 ### 11.8 Production verification status
 
-Подтверждены Render deploy, `/health` с PostgreSQL revision `20260804_0002`, основные страницы, поиск, PDF positive/negative, CSP/HSTS, secure cookie flags, отрицательный CSRF (`400`), закрытые diagnostics, public Trudvsem status и application logs без secrets. Положительный logout/OAuth неприменим до пользовательского аккаунта.
+Подтверждены Render deploy, `/health` с PostgreSQL revision `20260804_0002`, основные страницы, поиск, PDF positive/negative, CSP/HSTS, secure cookie flags, отрицательный CSRF (`400`), закрытые diagnostics, public Trudvsem status и application logs без secrets. Положительный logout/OAuth неприменим до пользовательского аккаунта и не блокирует SEC-001.
 
-Остаются только:
-
-1. зелёный GitHub Actions после proxy-aware rate-limit fix;
-2. controlled `429` и `Retry-After` на `/api/security/rate-limit-probe`;
-3. при доступной рабочей OAuth-конфигурации — отдельный provider callback/logout smoke.
+После proxy-aware исправления повторный production-тест подтвердил controlled `429` и `Retry-After`; пакет SEC-001 закрыт как ВЫПОЛНЕНО.
 
 ### 11.9 SEC-001 rate-limit fix — фактическая реализация 06 августа 2026
 
@@ -1155,7 +1168,18 @@ Production smoke подтвердил CSP/HSTS, secure cookie, PostgreSQL health
 - добавлен secret-free `/api/security/rate-limit-probe` с лимитом `5 per minute`;
 - CI получает отдельные regression tests с rotating proxy hops и обязательным `429`/`Retry-After`.
 
-OPS-001 код сохранён. Миграций нет, revision остаётся `20260804_0002`. Статус SEC-001 — НУЖНА ПОВТОРНАЯ ПРОВЕРКА до зелёного GitHub Actions и production probe.
+OPS-001 код сохранён. Миграций нет, revision остаётся `20260804_0002`. Повторный production-тест подтвердил `429` и `Retry-After`; SEC-001 переведён в статус ВЫПОЛНЕНО.
+
+### 11.10 Production-доказательства SEC-001 — 06 августа 2026
+
+- CSP, HSTS, frame deny, nosniff, referrer/permissions/cross-origin policies и no-store подтверждены в Response Headers.
+- `aca_session` подтверждена как host-only, `HttpOnly`, `Secure`, `SameSite=Lax`; анонимная сессия отображается как session cookie до OAuth.
+- `/health` подтвердил PostgreSQL и revision `20260804_0002`.
+- Основные страницы, поиск вакансий, положительная и отрицательная PDF-проверка, закрытые technical routes и безопасный Trudvsem status прошли.
+- `POST /logout` без CSRF token вернул `400` без traceback.
+- Rate-limit тест вернул двадцать ответов `404`, затем `21: 429` с `Retry-After=295`; это подтверждает стабильный bucket за Cloudflare/Render.
+- Application logs не показали tokens, cookies, DB URL, PDF content или provider bodies.
+
 
 ## 12. OPS-001 - фактическая реализация 05 августа 2026
 
@@ -1198,22 +1222,69 @@ repository hygiene: успешно на clean candidate ZIP
 
 Локальные skips относятся к Flask/Flask-WTF/Flask-Limiter, Psycopg и PostgreSQL service, отсутствующим в sandbox. GitHub Actions устанавливает production dependencies, запускает PostgreSQL 17 и обязан выполнить реальный encrypted backup/restore в отдельную базу.
 
-### 12.5 Проверка, которая ещё требуется
+### 12.5 Production-проверка 06 августа 2026
 
-1. Зелёный GitHub Actions, включая `Verify OPS-001 observability controls` и `Verify PostgreSQL encrypted backup and restore`.
-2. Render `/health/live` = 200 и `/health/ready` = 200 с revision `20260804_0002`.
-3. В Render logs один запрос виден как JSON с тем же `X-Request-ID`; query/token/body отсутствуют.
-4. Настроенный test alert доставлен и не содержит secret/token/DB URL.
-5. Encrypted production backup сохранён во внешнем защищённом хранилище, manifest verified.
-6. Restore выполнен в отдельную test database; revision и table counts совпадают; production DB не затронута.
+Подтверждено по скриншотам пользователя:
 
-## 13. Зафиксированная стратегия hosting, AI и Reed
+1. `/health/live` возвращает `200`, `status=ok`, `uptime_seconds` и `request_id`.
+2. `/health/ready` и `/health` возвращают `200`; PostgreSQL `ok=true`, current/expected revision равны `20260804_0002`.
+3. Переданный `X-Request-ID` совпадает в заголовке ответа и JSON (`Совпадают: true`).
+4. `/ops/status` без diagnostics secret возвращает безопасный `404`; с корректным secret возвращает `200`.
+5. В telemetry появились HTTP endpoints и provider `trudvsem`; recent errors = 0.
+6. После redeploy uptime сбросился, health восстановился, `cached_total=77` сохранился — данные PostgreSQL не обнулились.
+7. Alert webhook временно определялся как configured и `POST /ops/alerts/test` вернул `202 queued`; фактический POST на Webhook.site не подтверждён. Последующая проверка показала `Configured: false`, поэтому переменную окружения и доставку нужно повторно подтвердить без restart между отправкой и чтением counters.
 
-### 13.1 Причина изменения плана
+До завершения OPS-001 остаётся:
+
+- приложить зелёный GitHub Actions со steps `Verify OPS-001 observability controls` и `Verify PostgreSQL encrypted backup and restore`;
+- получить application JSON log с тем же `X-Request-ID` и подтвердить отсутствие query/token/body;
+- получить реальный sanitised `POST` на webhook и counters `Configured: true`, `Sent >= 1`, `Failed = 0`;
+- создать encrypted backup production PostgreSQL вне web filesystem, проверить manifest/SHA-256 и восстановить в отдельную test database с совпадающими revision/table counts.
+
+Пока эти пункты не выполнены, статус OPS-001 остаётся НУЖНА ПРОВЕРКА.
+
+## 13. INFRA-001 - фактическая реализация 06 августа 2026
+
+### 13.1 Container baseline
+
+- `Dockerfile` target `runtime`: Python 3.11, non-root UID/GID 10001, `/health/live` healthcheck.
+- `Dockerfile` target `ops`: PostgreSQL 17 client tools, Python runtime и non-root backup/restore commands.
+- `compose.yaml`: private PostgreSQL 17, one-shot migrate, web, optional Caddy TLS, isolated `restore-db` и OPS profile.
+- Database host ports не публикуются; backend Docker network имеет `internal: true`.
+
+### 13.2 VPS probe и отчётность
+
+- `scripts/infra_probe.py` проверяет DNS, TCP, TLS, certificate lifetime и HTTP latency.
+- Required targets: app live/ready/home, Yandex API catalogue, Yandex AI edge, Reed transport.
+- Optional observations: HH, Trudvsem и SuperJob.
+- Probe reports удаляют query string, URL credentials и не записывают API keys.
+
+### 13.3 CI и security gates
+
+- Manifest regression tests проверяют non-root image, private database, one-shot migrations, OPS/restore profiles и secret-free `.env.example`.
+- GitHub Actions валидирует Compose, собирает runtime/ops targets и запускает container health smoke.
+- Один Gunicorn worker зафиксирован до shared rate-limit storage и отдельного Trudvsem worker.
+
+### 13.4 Provider shortlist
+
+Первый кандидат для реального теста - Timeweb Cloud. Резервные кандидаты: Yandex Cloud, Beget Cloud и Selectel. Это предварительный порядок; окончательное решение принимается только после матрицы доступности, probe reports, стоимости и restore drill.
+
+### 13.5 Что ещё требуется
+
+1. Создать VPS 2 vCPU / 4 GB RAM / 40 GB NVMe с public IPv4.
+2. Развернуть test stack и TLS hostname.
+3. Проверить минимум две сети РФ и одну сеть РБ без VPN.
+4. Выполнить Yandex AI/Reed transport probes.
+5. Провести production backup/restore OPS-001 в isolated `restore-db`.
+6. Зафиксировать решение по провайдеру.
+
+## 14. Зафиксированная стратегия hosting, AI и Reed
+
+### 14.1 Причина изменения плана
 
 05 августа 2026 подтверждён инфраструктурный риск Render: из части сетей РФ DNS корректно разрешает `ai-career-agent-site.onrender.com` в `216.24.57.7/216.24.57.15`, но TCP 443 не устанавливается и запросы не появляются в Render Logs. Одновременно сайт работает из Республики Беларусь и с мобильных сетей. Это не ошибка Flask/SEC-001; Render остаётся staging/резервной площадкой, но не принимается как гарантированный production для РФ/РБ.
 
-### 13.2 AI-провайдер
+### 14.2 AI-провайдер
 
 - Основной кандидат для MVP: **Yandex AI Studio / модели Alice AI**.
 - Решение не принимается по маркетинговым benchmark: обязателен `AI-BENCH-001` на наших русских и английских сценариях.
@@ -1221,13 +1292,13 @@ repository hygiene: успешно на clean candidate ZIP
 - OpenAI может оставаться дополнительным адаптером только для поддерживаемых рынков и не является обязательной зависимостью продукта для РФ/РБ.
 - API key хранится только на сервере; браузер не вызывает AI API напрямую.
 
-### 13.3 Reed
+### 14.3 Reed
 
 - Документация Reed описывает API key/Basic Auth и endpoints, но не даёт гарантии работы с российского source IP.
 - До выбора production VPS требуется `REED-COMPAT-001`: реальный API smoke с точного IP и письменное подтверждение допустимости коммерческого использования.
 - Недоступность Reed не должна ломать HH, SuperJob, Trudvsem и внутренний поиск; provider обязан иметь feature flag и graceful degradation.
 
-### 13.4 Требования к VPS
+### 14.4 Требования к VPS
 
 - доступность из контрольных сетей РФ и РБ;
 - постоянный публичный IPv4 и корректный TLS без обязательного Cloudflare на входе;
@@ -1236,7 +1307,7 @@ repository hygiene: успешно на clean candidate ZIP
 - offsite backup, restore drill, monitoring и rollback;
 - возможность масштабирования CPU/RAM и последующего подключения GPU/local model при необходимости.
 
-### 13.5 Проверенные внешние предпосылки
+### 14.5 Проверенные внешние предпосылки
 
 - Render документирует использование Cloudflare для DDoS-защиты всех web-сервисов.
 - OpenAI официально предупреждает, что API поддерживается только в перечисленных странах; РФ и РБ не используются как целевой baseline проекта.
@@ -1245,12 +1316,10 @@ repository hygiene: успешно на clean candidate ZIP
 
 
 
-## 14. Обязательная ближайшая последовательность
+## 15. Обязательная ближайшая последовательность
 
 ```text
-SEC-001 rate-limit recheck
--> OPS-001
--> INFRA-001
+OPS-001 production restore + INFRA-001 real VPS verification
 -> AI-BENCH-001
 -> REED-COMPAT-001
 -> AI-PROVIDER-001
@@ -1267,11 +1336,11 @@ SEC-001 rate-limit recheck
 
 Порядок может меняться только новой MINOR-версией PLAN_CURRENT с объяснением причин и зависимостей.
 
-## 15. Следующий пакет
+## 16. Следующий пакет
 
-`SEC-001` имеет статус **НУЖНА ПОВТОРНАЯ ПРОВЕРКА НА RENDER** после исправления limiter key за Cloudflare/Render. `OPS-001` реализован и имеет статус **НУЖНА ПРОВЕРКА** до зелёного CI, проверки live/readiness, доставки test alert и encrypted backup/restore drill. После подтверждения OPS следующим пакетом становится `INFRA-001 - Выбор и технический тест российского VPS`; затем без пропусков выполняется последовательность раздела 14.
+`SEC-001` имеет статус **ВЫПОЛНЕНО**. `OPS-001` остаётся **НУЖНА ПРОВЕРКА** только до production backup/restore drill. Кодовая часть `INFRA-001` реализована и имеет статус **НУЖНА ПРОВЕРКА НА VPS**. Следующее практическое действие - создать тестовый VPS, одновременно завершить OPS restore drill и подтвердить INFRA matrix. После успешного теста следующим кодовым пакетом становится `AI-BENCH-001`; затем выполняется последовательность раздела 15.
 
-## 16. Обязательный отчёт после каждого пакета
+## 17. Обязательный отчёт после каждого пакета
 
 ```text
 Пункт: <ID и название>
@@ -1287,7 +1356,7 @@ GitHub/production/API: <подтверждено или требуется>
 Приложения: ZIP, PLAN_CURRENT DOCX/PDF/MD, паспорт при необходимости
 ```
 
-## 17. Журнал версий
+## 18. Журнал версий
 
 | Версия | Дата | Пункт | Изменение |
 |---|---|---|---|
@@ -1307,4 +1376,8 @@ GitHub/production/API: <подтверждено или требуется>
 | 1.2.9 | 05.08.2026 | SEC-001-CI-FIX | Исправлены тип `WTF_CSRF_TIME_LIMIT` для Flask-WTF 1.3 и безопасный ответ при недоверенном Host; workflow содержит отдельную SEC-001 проверку, пакет ожидает повторный CI/Render smoke. |
 | 1.3.0 | 05.08.2026 | INFRA/AI/REED STRATEGY | После подтверждённой недоступности Render из части сетей РФ перестроена очередь: OPS -> VPS test -> Alice AI benchmark -> Reed compatibility -> provider strategy -> production VPS -> domain -> migration -> AI layer. |
 | 1.3.1 | 05.08.2026 | OPS-001 | Добавлены structured JSON logs, correlation ID, provider/HTTP metrics, live/readiness, optional alert webhook и encrypted PostgreSQL/SQLite backup-restore с secret-free manifest; пакет ожидает GitHub/Render/alert/restore verification. |
-| 1.3.2 | 06.08.2026 | SEC-001-RATE-LIMIT-FIX | Исправлен нестабильный client key за Cloudflare/Render, добавлен HMAC bucket и безопасный 5/minute production probe; OPS-001 сохранён. |
+| 1.3.2 | 06.08.2026 | SEC-001-RATE-LIMIT-FIX | Исправлен нестабильный client key за Cloudflare/Render, добавлен HMAC bucket и безопасный production probe; OPS-001 сохранён. |
+| 1.3.3 | 06.08.2026 | SEC-001-COMPLETE / OPS-001-VERIFY | SEC-001 закрыт после production `429` + `Retry-After`. Зафиксированы успешные live/readiness, revision, request ID response, protected ops status, Trudvsem metrics и redeploy persistence; OPS-001 остаётся на проверке до logs correlation, POST alert и production backup/restore. |
+| 1.3.4 | 06.08.2026 | OPS-001-VERIFICATION-UPDATE | Подтверждены зелёные OPS/backup GitHub steps, correlation `X-Request-ID` в application JSON log и реальная sanitised POST-доставка alert webhook. OPS-001 остаётся на финальной проверке только до production backup/restore drill. |
+| 1.3.5 | 06.08.2026 | INFRA-001 | Добавлены non-root Docker runtime/ops images, Compose stack, Caddy TLS profile, VPS probes, isolated restore database, CI container build/smoke, provider decision record и единый стандарт документов; требуется real VPS verification. |
+

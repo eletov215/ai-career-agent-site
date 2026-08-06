@@ -1,34 +1,86 @@
-# AI Career Agent — аудит источников
+# AI Career Agent - аудит источников
 
-**Версия аудита:** 1.3.2  
-**Дата:** 06 августа 2026  
-**Пакет:** SEC-001 rate-limit fix поверх OPS-001
+| Поле | Значение |
+|---|---|
+| Версия | 1.3.5 |
+| Дата | 06 августа 2026 |
+| Статус | ДЕЙСТВУЮЩИЙ |
+| Актуальный код | `ai-career-agent-site-main (3).zip` + INFRA-001 changes |
+| Канонический план | PLAN_CURRENT 1.3.5 |
+| Канонический паспорт | Project Passport 2.13 |
 
-## Результат
+## 1. Результат проверки входного ZIP
 
-### Актуальный код
+| Область | Состояние до изменений | Решение |
+|---|---|---|
+| Production code | SEC-001 fix и OPS-001 присутствуют | Использован без отката |
+| Database | Alembic 0001/0002, PostgreSQL 17 | Схема не изменялась |
+| CI | SEC/OPS/backup steps присутствуют | Расширен INFRA build/smoke |
+| `docs/PLAN_CURRENT.md` | Версия 1.3.2 | Синхронизирован до 1.3.5 |
+| `docs/PROJECT_PASSPORT.md` | Версия 2.10 | Синхронизирован до 2.13 |
+| `README_FIRST.txt` | Устаревшая инструкция SEC CI fix | Удалён |
+| `.gitignore` | Отсутствовал | Восстановлен и расширен |
+| Docker/VPS manifests | Отсутствовали | Добавлены в INFRA-001 |
 
-Рабочей основой признан архив `ai-career-agent-site-main-16-ops-001-observability-backup-v1.3.1.zip`, потому что именно он содержит уже реализованный OPS-001 (`observability.py`, `operations/backup.py`, operational tests и runbooks). Исправление SEC-001 внесено непосредственно поверх этой версии без отката observability, backup/restore или документации OPS-001.
+## 2. Канонические статусы
 
-### Актуальные документы до исправления
+| Пакет | Статус |
+|---|---|
+| FND-001 | ВЫПОЛНЕНО |
+| FND-002 | ВЫПОЛНЕНО |
+| DATA-001 | ВЫПОЛНЕНО |
+| DATA-002 | ВЫПОЛНЕНО |
+| SEC-001 | ВЫПОЛНЕНО |
+| OPS-001 | НУЖНА ПРОВЕРКА: production backup/restore |
+| INFRA-001 | НУЖНА ПРОВЕРКА НА VPS |
+| AI-BENCH-001 | ЗАПЛАНИРОВАНО |
 
-- `AI_Career_Agent_PLAN_CURRENT_v1.3.1_2026-08-05` — план OPS-001 candidate;
-- `AI_Career_Agent_Паспорт_проекта_v2.9_2026-08-05` — связанный паспорт;
-- они фиксируют SEC-001 и OPS-001 как ожидающие проверки и сохраняют последовательность VPS/Alice AI/Reed/domain/migration.
+## 3. Новые канонические документы
 
-### Проверка состава ZIP
+- `docs/DOCUMENT_STANDARD.md`
+- `docs/INFRA001_IMPLEMENTATION.md`
+- `docs/INFRA001_VPS_TEST.md`
+- `docs/INFRA001_PROVIDER_DECISION.md`
+- `docs/OPS001_VERIFICATION_STATUS.md`
+- `docs/PLAN_CURRENT.md`
+- `docs/PROJECT_PASSPORT.md`
 
-Архив содержит SEC-001, OPS-001, PostgreSQL/Alembic revision `20260804_0002`, актуальный CI, root `.gitignore`, operational runbooks и не содержит временного `README_FIRST.txt`. В исправлении изменены только security/rate-limit wiring, regression tests, CI security step и связанная документация.
+## 4. Внешние источники INFRA-001
 
-## Новые канонические источники
+Проверены только официальные материалы провайдеров и API:
 
-- PLAN_CURRENT `1.3.2`;
-- паспорт `2.10`;
-- проектный ZIP `ai-career-agent-site-main-17-sec-001-rate-limit-fix-ops-001-v1.3.2.zip`.
+- Timeweb Cloud: cloud servers, public IP, firewall, backup, API/IaC.
+- Yandex Cloud: Compute, VPC pricing, snapshots и AI API endpoints.
+- Beget Cloud: VPS geography, public IPv4, backups и monitoring.
+- Selectel: cloud servers, snapshots и backup methods.
+- Reed Jobseeker API: endpoint и Basic Auth.
+- HeadHunter OpenAPI: base URL и User-Agent requirement.
 
-Старые документы ниже PLAN_CURRENT 1.3.2 и паспорта 2.10 после загрузки новых источников не должны считаться действующими.
+Полный список ссылок находится в `docs/INFRA001_PROVIDER_DECISION.md`.
 
+## 5. Секреты и runtime artifacts
 
-## Проверка 06 августа 2026
+Проверяется отсутствие:
 
-Production smoke подтвердил CSP/HSTS, secure cookie, CSRF 400, PostgreSQL revision, страницы, поиск, PDF, закрытые diagnostics и безопасные application logs. Единственное расхождение: 25 последовательных обращений к декорированному лимитом маршруту не дали `429`, потому что `get_remote_address` видел меняющиеся Render proxy addresses. Исправление внесено в актуальный OPS-001 ZIP без удаления observability/backup кода.
+```text
+.env
+OAuth/API tokens
+DATABASE_URL
+production backups
+database files
+virtualenv
+cache/bytecode
+infra/reports
+```
+
+`infra/vps/.env.example` содержит только `CHANGE_ME` и test-only placeholders.
+
+## 6. Следующее действие
+
+Загрузить полный ZIP INFRA-001 в новую ветку, дождаться зелёного CI, затем создать тестовый VPS и выполнить `docs/INFRA001_VPS_TEST.md`.
+
+## 7. Журнал версий
+
+| Версия | Дата | Изменение |
+|---|---|---|
+| 1.3.5 | 06.08.2026 | Синхронизированы code/docs sources и добавлен INFRA-001 toolkit |
