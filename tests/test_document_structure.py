@@ -1,0 +1,26 @@
+from __future__ import annotations
+
+from pathlib import Path
+
+from scripts import check_document_structure
+
+ROOT = Path(__file__).resolve().parents[1]
+
+
+def test_project_documents_follow_doc_std_001():
+    assert check_document_structure.validate(ROOT) == []
+
+
+def test_canonical_documents_have_metadata_tables():
+    for relative in [
+        "docs/PLAN_CURRENT.md",
+        "docs/PROJECT_PASSPORT.md",
+        "docs/INFRA001_IMPLEMENTATION.md",
+        "docs/INFRA001_VPS_TEST.md",
+        "docs/INFRA001_PROVIDER_DECISION.md",
+        "docs/INFRA001_VERIFICATION_STATUS.md",
+        "docs/OPS001_VERIFICATION_STATUS.md",
+        "docs/SOURCE_AUDIT.md",
+    ]:
+        text = (ROOT / relative).read_text(encoding="utf-8")
+        assert "| Поле | Значение |" in text
