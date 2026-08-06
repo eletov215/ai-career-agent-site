@@ -9,6 +9,7 @@ that the test suite can import the Flask application without real API keys.
 from __future__ import annotations
 
 import os
+import re
 from dataclasses import dataclass
 from datetime import timedelta
 from pathlib import Path
@@ -126,6 +127,53 @@ def _validated_redirect_uri(
         raise ConfigurationError(f"{name} содержит недопустимый port.")
     return value
 
+
+
+def _validated_optional_url(
+    source: Mapping[str, str],
+    name: str,
+    *,
+    environment: str,
+) -> str | None:
+    value = _optional(source, name)
+    if not value:
+        return None
+    try:
+        parsed = urlparse(value)
+        port = parsed.port
+    except ValueError as exc:
+        raise ConfigurationError(f"{name} имеет некорректный URL.") from exc
+    if (
+        parsed.scheme not in {"http", "https"}
+        or not parsed.hostname
+        or parsed.username
+        or parsed.password
+        or parsed.fragment
+    ):
+        raise ConfigurationError(
+            f"{name} должен быть абсолютным HTTP(S) URL без credentials и fragment."
+        )
+    if environment == "production" and parsed.scheme != "https":
+        raise ConfigurationError(f"{name} в production должен использовать HTTPS.")
+    if port is not None and not (1 <= port <= 65535):
+        raise ConfigurationError(f"{name} содержит недопустимый port.")
+    return value
+
+
+def _service_name(source: Mapping[str, str]) -> str:
+    value = _clean(source.get("SERVICE_NAME", "ai-career-agent")) or "ai-career-agent"
+    if not re.fullmatch(r"[A-Za-z0-9._-]{3,80}", value):
+        raise ConfigurationError(
+            "SERVICE_NAME должен содержать только буквы, цифры, точку, подчёркивание и дефис."
+        )
+    return value
+
+
+def _app_version(source: Mapping[str, str]) -> str:
+    value = _clean(source.get("APP_VERSION")) or _clean(source.get("RENDER_GIT_COMMIT")) or "development"
+    if len(value) > 80:
+        value = value[:80]
+    return value
 
 def _hostname_from_url(value: str) -> str | None:
     try:
@@ -350,6 +398,14 @@ class AppSettings:
     max_form_parts: int
     debug_diagnostics: bool
     diagnostics_secret: str | None
+    service_name: str
+    app_version: str
+    log_level: str
+    log_format: str
+    ops_alert_webhook_url: str | None
+    ops_alert_webhook_token: str | None
+    ops_alert_timeout_seconds: float
+    ops_alert_min_level: str
     render_region: str
     port: int
     flask_debug: bool
@@ -397,6 +453,7 @@ class AppSettings:
             "RATELIMIT_STORAGE_URI": self.rate_limit_storage_uri,
             "RATELIMIT_HEADERS_ENABLED": True,
             "RATELIMIT_KEY_PREFIX": "ai-career-agent",
+            "TRUST_PROXY_HEADERS": self.trust_proxy_headers,
             "MAX_CONTENT_LENGTH": (
                 self.max_resume_upload_mb * 1024 * 1024 + 1024 * 1024
             ),
@@ -506,6 +563,11 @@ def load_settings(environ: Mapping[str, str] | None = None) -> AppSettings:
         source,
         environment=environment,
         redirect_uris=(superjob_redirect_uri, hh_redirect_uri),
+    )
+    ops_alert_webhook_url = _validated_optional_url(
+        source,
+        "OPS_ALERT_WEBHOOK_URL",
+        environment=environment,
     )
 
     return AppSettings(
@@ -630,6 +692,35 @@ def load_settings(environ: Mapping[str, str] | None = None) -> AppSettings:
         ),
         debug_diagnostics=debug_diagnostics,
         diagnostics_secret=diagnostics_secret,
+        service_name=_service_name(source),
+        app_version=_app_version(source),
+        log_level=_choice(
+            {**source, "LOG_LEVEL": _clean(source.get("LOG_LEVEL", "INFO")).upper()},
+            "LOG_LEVEL",
+            "INFO",
+            choices={"DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"},
+        ),
+        log_format=_choice(
+            {**source, "LOG_FORMAT": _clean(source.get("LOG_FORMAT", "json" if environment == "production" else "text")).lower()},
+            "LOG_FORMAT",
+            "json" if environment == "production" else "text",
+            choices={"json", "text"},
+        ),
+        ops_alert_webhook_url=ops_alert_webhook_url,
+        ops_alert_webhook_token=_optional(source, "OPS_ALERT_WEBHOOK_TOKEN"),
+        ops_alert_timeout_seconds=_float(
+            source,
+            "OPS_ALERT_TIMEOUT_SECONDS",
+            3.0,
+            minimum=0.5,
+            maximum=15.0,
+        ),
+        ops_alert_min_level=_choice(
+            {**source, "OPS_ALERT_MIN_LEVEL": _clean(source.get("OPS_ALERT_MIN_LEVEL", "ERROR")).upper()},
+            "OPS_ALERT_MIN_LEVEL",
+            "ERROR",
+            choices={"WARNING", "ERROR", "CRITICAL"},
+        ),
         render_region=_clean(source.get("RENDER_REGION", "unknown")) or "unknown",
         port=_int(source, "PORT", 10000, minimum=1, maximum=65535),
         flask_debug=_bool(source, "FLASK_DEBUG", flask_debug_default),

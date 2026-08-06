@@ -235,3 +235,23 @@ SEC-001 не добавляет database migration. Для отката дост
 - diagnostics используют shared secret, а role-based admin появится после AUTH-001;
 - Trudvsem worker остаётся внутри Gunicorn до SYNC-001;
 - WAF, centralized error monitoring, backup alerts и incident runbook относятся к OPS-001.
+
+
+## 8. Rate limiting за Cloudflare и Render
+
+Production limiter не использует непосредственный `REMOTE_ADDR`, потому что адрес промежуточного Render proxy может меняться между запросами. При `TRUST_PROXY_HEADERS=1` клиент определяется в таком порядке:
+
+1. валидный `CF-Connecting-IP`;
+2. первый валидный IP из `X-Forwarded-For`;
+3. прямой peer address как fallback.
+
+Если доверие к proxy выключено, forwarded headers полностью игнорируются. В limiter storage записывается HMAC fingerprint, а не исходный IP. `ProxyFix` доверяет только `X-Forwarded-Proto` для корректного HTTPS/HSTS.
+
+Для безопасной ручной проверки используется:
+
+```text
+GET /api/security/rate-limit-probe
+limit: 5 per minute
+```
+
+Первые пять запросов одного клиента должны вернуть `200`, следующий — `429` с `Retry-After`. Endpoint не обращается к базе или внешним API и не раскрывает диагностику.

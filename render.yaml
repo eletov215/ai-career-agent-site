@@ -10,9 +10,15 @@ services:
     # to a paid plan or VPS, move this command into the dedicated pre-deploy
     # phase/entrypoint.
     startCommand: python scripts/manage_db.py upgrade && gunicorn app:app
-    healthCheckPath: /health
+    healthCheckPath: /health/ready
     envVars:
       - key: APP_ENV
         value: production
       - key: DATABASE_URL
         sync: false
+      - key: SERVICE_NAME
+        value: ai-career-agent
+      - key: LOG_FORMAT
+        value: json
+      - key: LOG_LEVEL
+        value: INFO

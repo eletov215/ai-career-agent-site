@@ -32,6 +32,10 @@ FORBIDDEN_SUFFIXES = {
     ".p12",
     ".sqlite",
     ".sqlite3",
+    ".dump",
+    ".backup",
+    ".sql",
+    ".enc",
 }
 
 

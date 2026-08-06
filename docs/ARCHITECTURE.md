@@ -1,8 +1,8 @@
 # AI Career Agent — архитектура проекта
 
 > Последнее обновление: 05 августа 2026 года  
-> Текущий пакет: `SEC-001` — базовое усиление безопасности  
-> Статус пакета: **НУЖНА ПРОВЕРКА**
+> Текущий пакет: `OPS-001` — наблюдаемость и восстановление  
+> Статус пакета: **НУЖНА ПРОВЕРКА**; `SEC-001` параллельно ожидает повторный CI/429 smoke после proxy-aware rate-limit fix
 
 ## 1. Цель архитектуры
 
@@ -11,7 +11,7 @@
 -> объяснимое совпадение -> письмо -> трекер откликов
 ```
 
-Инфраструктура не должна быть жёстко привязана к Render. До первой commercial beta рекомендуемая production-схема — платный Render + собственный домен + managed PostgreSQL. Тот же application code должен переноситься на VPS без изменения бизнес-логики.
+Инфраструктура не должна быть жёстко привязана к Render. После выявленной недоступности Render из части сетей РФ Render остаётся staging/резервной площадкой. Production-кандидат выбирается в `INFRA-001`, затем подготавливается в `HOST-001`; собственный домен подключается до `MIG-001`. Тот же application code должен переноситься без изменения бизнес-логики.
 
 ## 2. Технологический стек
 
@@ -22,7 +22,9 @@
 - Flask-WTF 1.3 и Flask-Limiter 4.1;
 - HTML/CSS/JavaScript;
 - GitHub Actions;
-- Render сейчас, собственный домен до beta, optional VPS позже.
+- vendor-neutral JSON logs, request IDs, health/readiness, optional alert webhook;
+- encrypted PostgreSQL backup/restore;
+- Render временно как staging/резерв, production VPS после INFRA/HOST.
 
 ## 3. Структура
 
@@ -32,6 +34,9 @@ project/
 ├── config.py                      # environment/settings
 ├── database.py                    # engine, sessions, health, Alembic helpers
 ├── security.py                    # CSRF, rate limits, headers, request limits
+├── observability.py               # logs, request IDs, metrics, alerts
+├── operations/
+│   └── backup.py                  # encrypted backup/verified restore
 ├── domain/
 │   └── entities.py                # immutable detached records
 ├── models/
@@ -54,6 +59,10 @@ project/
 │   ├── vacancy_store.py           # payload normalization/service API
 │   └── *_provider.py
 ├── scripts/
+│   ├── backup_database.py
+│   ├── verify_backup.py
+│   ├── restore_database.py
+│   └── send_test_alert.py
 ├── tests/
 ├── templates/
 ├── static/
@@ -131,7 +140,8 @@ Persistent lifecycle provider sync. Trudvsem сохраняет start/finish, pr
 
 ```text
 request
-  -> ProxyFix (one trusted platform proxy)
+  -> ProxyFix (trusted protocol only; client address is not rewritten)
+  -> validated Cloudflare/Render client fingerprint for rate limits
   -> trusted host validation
   -> per-request size/form limits
   -> CSRFProtect / route-specific exemptions
@@ -141,7 +151,7 @@ request
   -> security response headers + CSP nonce
 ```
 
-`security.py` не содержит business logic и может повторно использоваться будущими blueprints. `config.py` является единственным источником policy values. Production принудительно требует secure cookie, CSRF, rate limiting и security headers.
+`security.py` не содержит business logic и может повторно использоваться будущими blueprints. `config.py` является единственным источником policy values. Production принудительно требует secure cookie, CSRF, rate limiting и security headers. При `TRUST_PROXY_HEADERS=1` limiter использует валидный `CF-Connecting-IP` или первый IP `X-Forwarded-For`, сохраняет только HMAC fingerprint и игнорирует forwarded headers в остальных режимах.
 
 ### Browser session
 
@@ -171,7 +181,44 @@ Upload/body/form/PDF limits применяются до дорогостояще
 
 `RATELIMIT_STORAGE_URI=memory://` подходит текущему одному worker. При масштабировании storage должен стать общим, например Redis-compatible; это operational dependency OPS/INFRA.
 
-## 7. Миграции
+## 7. Operational boundary OPS-001
+
+```text
+HTTP request
+  -> request ID + timer
+  -> SEC-001 controls
+  -> route/service/repository
+  -> X-Request-ID + bounded access metric/log
+
+provider call
+  -> provider_operation(name, operation)
+  -> success/failure/timeout/latency metric
+
+ERROR log
+  -> sanitizer
+  -> bounded recent-errors registry
+  -> optional HTTPS alert queue
+```
+
+`observability.py` запрещает запись request body, query string, cookies, OAuth tokens, database credentials и resume text. Production writes one JSON object per stdout line. Metrics/recent errors process-local и доступны только через diagnostics-authenticated `/ops/status`.
+
+Health contract:
+
+- `/health/live` - process liveness, без базы;
+- `/health/ready` - DB connectivity + expected Alembic revision;
+- `/health` - compatibility alias readiness.
+
+Backup contract:
+
+- PostgreSQL: `pg_dump` custom format + `pg_restore --list`;
+- optional mandatory production AES-256-GCM encryption;
+- manifest + SHA-256 + revision + controlled row counts;
+- restore в отдельную DB и post-restore inventory verification;
+- production restore требует explicit override.
+
+Schema не меняется; revision остаётся `20260804_0002`. Offsite schedule, alert destination и production restore drill ещё являются verification criteria.
+
+## 8. Миграции
 
 ### 20260804_0001
 
@@ -188,7 +235,7 @@ Upload/body/form/PDF limits применяются до дорогостояще
 
 Alembic — единственный production schema mechanism. `Base.metadata.create_all()` разрешён только в изолированных tests.
 
-## 8. Runtime database
+## 9. Runtime database
 
 `DatabaseRuntime` предоставляет Engine/sessionmaker и secret-free health. Production подтверждён на PostgreSQL 17.
 
@@ -201,11 +248,11 @@ configured=true
 revision=20260804_0002
 ```
 
-## 9. OAuth compatibility
+## 10. OAuth compatibility
 
 Current browser session по-прежнему хранит внешний provider user ID. StorageServices передаёт запрос repository, unified connection преобразуется в прежний mapping для existing routes/templates. Token encryption/refresh behavior не меняются; обновления временно dual-write в legacy tables.
 
-## 10. Vacancy compatibility
+## 11. Vacancy compatibility
 
 Provider ingestion и template payload не меняются. `VacancyStore`:
 
@@ -214,21 +261,23 @@ Provider ingestion и template payload не меняются. `VacancyStore`:
 3. создаёт/обновляет canonical + source record;
 4. возвращает прежний raw JSON format для search UI.
 
-## 11. Sync state
+## 12. Sync state
 
 In-memory state пока остаётся для текущего UI/worker. Дополнительно каждый run сохраняется в `sync_runs`, а `/trudvsem/status` может показать `persisted_run`. Полный вынос worker из Gunicorn выполняется в `SYNC-001`.
 
-## 12. Собственный домен
+## 13. Собственный домен
 
-`DOMAIN-001` не потерян и не интегрирован в DATA-002. Он находится в этапе 6 и в ближайшей последовательности после `SEC-001` и `OPS-001`.
+`DOMAIN-001` не потерян. В плане 1.3.x он выполняется после `HOST-001` и до `MIG-001`, чтобы постоянный URL не зависел от конкретного VPS.
 
 Зависимости домена:
 
 - secure cookies/CSRF/trusted hosts (`SEC-001`);
-- monitoring/rollback (`OPS-001`);
-- `PUBLIC_BASE_URL`, OAuth callback changes, DNS/TLS (`DOMAIN-001`).
+- monitoring/backup/rollback (`OPS-001`);
+- проверенный VPS (`INFRA-001`, `HOST-001`);
+- `PUBLIC_BASE_URL`, OAuth callback changes, DNS/TLS (`DOMAIN-001`);
+- data/DNS switch (`MIG-001`).
 
-## 13. Deploy и rollback
+## 14. Deploy и rollback
 
 Текущий Render start command:
 
@@ -243,10 +292,11 @@ Rollback DATA-002:
 - предпочтительно восстановить backup/clone и переключить `DATABASE_URL`;
 - rollback application на schema 0001 допустим только после controlled data rollback.
 
-## 14. Следующие границы
+## 15. Следующие границы
 
-- `SEC-001`: security middleware/forms/session flags;
-- `OPS-001`: structured logs, backup restore, alerts;
-- `DOMAIN-001`: domain/DNS/TLS/public URLs;
-- `SYNC-001`: отдельный worker command;
-- `AUTH-001/002`: first-party user и binding OAuth connections.
+- `SEC-001`: подтвердить proxy-aware limiter в CI и production probe;
+- `OPS-001`: подтвердить CI, alert delivery и restore drill;
+- `INFRA-001`: выбрать и протестировать VPS из РФ/РБ;
+- `AI-BENCH-001` / `REED-COMPAT-001`: проверить AI и Reed;
+- `HOST-001` -> `DOMAIN-001` -> `MIG-001`: подготовить и переключить production;
+- затем `SYNC/SEARCH`, `AUTH/PROFILE`, AI functions.

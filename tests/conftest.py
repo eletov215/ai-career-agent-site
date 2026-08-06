@@ -45,7 +45,18 @@ for variable in (
     "DIAGNOSTICS_SECRET",
     "DATABASE_URL",
     "TRUSTED_HOSTS",
+    "TRUST_PROXY_HEADERS",
     "RATELIMIT_STORAGE_URI",
+    "SERVICE_NAME",
+    "APP_VERSION",
+    "LOG_LEVEL",
+    "LOG_FORMAT",
+    "OPS_ALERT_WEBHOOK_URL",
+    "OPS_ALERT_WEBHOOK_TOKEN",
+    "OPS_ALERT_TIMEOUT_SECONDS",
+    "OPS_ALERT_MIN_LEVEL",
+    "BACKUP_ENCRYPTION_KEY",
+    "RESTORE_DATABASE_URL",
 ):
     os.environ.pop(variable, None)
 
@@ -81,12 +92,15 @@ def app_module():
 
 @pytest.fixture()
 def client(app_module):
+    from observability import OPS_STATE
     from security import limiter
 
     limiter.reset()
+    OPS_STATE.reset_for_tests()
     test_client = app_module.app.test_client()
     yield test_client
     limiter.reset()
+    OPS_STATE.reset_for_tests()
 
 
 @pytest.fixture()

@@ -8,7 +8,8 @@ Flask-приложение с OAuth-интеграциями HeadHunter и Super
 - `FND-002` — **ВЫПОЛНЕНО**: конфигурация `development/test/production` подтверждена CI и Render; `HH_CURRENCY_SCAN_PAGES=20`.
 - `DATA-001` — **ВЫПОЛНЕНО**: production PostgreSQL 17, Alembic revision `20260804_0001` и сохранность после restart подтверждены.
 - `DATA-002` — **ВЫПОЛНЕНО**: domain/repository layers и migration `20260804_0002` подтверждены зелёным CI, Render и restart persistence.
-- `SEC-001` — **НУЖНА ПРОВЕРКА**: защитный слой реализован; требуются зелёный GitHub Actions и production smoke на Render.
+- `SEC-001` — **НУЖНА ПОВТОРНАЯ ПРОВЕРКА НА RENDER**: CSRF/headers/cookie/PDF/search/log smoke подтверждены; исправлен нестабильный rate-limit key за Cloudflare/Render, требуется повторный CI и production `429` probe.
+- `OPS-001` — **НУЖНА ПРОВЕРКА**: observability, live/readiness, alerts и encrypted backup/restore реализованы; требуются зелёный CI, тест доставки alert и production restore drill.
 
 Главный рабочий файл остаётся `app.py`. WSGI-приложение — `app:app`; `app_fixed.py` не используется.
 
@@ -87,6 +88,17 @@ MAX_FORM_MEMORY_SIZE
 MAX_FORM_PARTS
 DEBUG_DIAGNOSTICS
 DIAGNOSTICS_SECRET
+SERVICE_NAME
+APP_VERSION
+LOG_LEVEL
+LOG_FORMAT
+OPS_ALERT_WEBHOOK_URL
+OPS_ALERT_WEBHOOK_TOKEN
+OPS_ALERT_TIMEOUT_SECONDS
+OPS_ALERT_MIN_LEVEL
+BACKUP_DIR
+BACKUP_RETENTION_DAYS
+BACKUP_ENCRYPTION_KEY
 FLASK_DEBUG
 PORT
 ```
@@ -114,7 +126,48 @@ DEBUG_DIAGNOSTICS=1
 DIAGNOSTICS_SECRET=<случайное длинное значение>
 ```
 
-и заголовок `X-Diagnostics-Secret`. Не передавайте секрет в URL. `RATELIMIT_STORAGE_URI=memory://` подходит текущему одному Gunicorn worker; при горизонтальном масштабировании потребуется общее Redis-compatible storage. Подробности: [`docs/SECURITY.md`](docs/SECURITY.md).
+и заголовок `X-Diagnostics-Secret`. Не передавайте секрет в URL. Rate-limit client key за Render/Cloudflare строится из валидированного forwarded client IP и сохраняется как HMAC fingerprint. Для production smoke существует безопасный `GET /api/security/rate-limit-probe`: первые 5 запросов в минуту возвращают 200, следующий должен вернуть 429 и `Retry-After`. `RATELIMIT_STORAGE_URI=memory://` подходит текущему одному Gunicorn worker; при горизонтальном масштабировании потребуется общее Redis-compatible storage. Подробности: [`docs/SECURITY.md`](docs/SECURITY.md).
+
+## Наблюдаемость и восстановление OPS-001
+
+OPS-001 добавляет vendor-neutral operational foundation:
+
+- JSON-логи в stdout в production и читаемый text-формат локально;
+- `X-Request-ID` для корреляции HTTP-запросов;
+- bounded HTTP/provider metrics и последние sanitised ошибки;
+- optional HTTPS alert webhook без request body, query string, cookies, токенов и текста резюме;
+- отдельные endpoints `/health/live` и `/health/ready`; `/health` остаётся совместимым alias readiness;
+- encrypted PostgreSQL/SQLite backups с manifest, SHA-256 и проверяемым restore;
+- diagnostics-only `/ops/status` и `/ops/alerts/test`.
+
+Обычный deploy не требует новых обязательных переменных. Для alert webhook используются:
+
+```text
+OPS_ALERT_WEBHOOK_URL=https://...
+OPS_ALERT_WEBHOOK_TOKEN=<optional bearer token>
+OPS_ALERT_TIMEOUT_SECONDS=3
+OPS_ALERT_MIN_LEVEL=ERROR
+```
+
+Для production backup обязателен отдельный ключ:
+
+```bash
+python - <<'PY'
+import base64, os
+print(base64.urlsafe_b64encode(os.urandom(32)).decode())
+PY
+```
+
+Полученное значение хранится как `BACKUP_ENCRYPTION_KEY`, отдельно от `TOKEN_ENCRYPTION_KEY`. Основные команды:
+
+```bash
+python scripts/backup_database.py --output-dir backups
+python scripts/verify_backup.py --backup backups/<file>.enc
+RESTORE_DATABASE_URL='postgresql+psycopg://...' \
+  python scripts/restore_database.py --backup backups/<file>.enc
+```
+
+Не храните backups и manifests в Git. Подробности: [`docs/OPERATIONS.md`](docs/OPERATIONS.md), [`docs/BACKUP_RESTORE.md`](docs/BACKUP_RESTORE.md), [`docs/INCIDENT_RESPONSE.md`](docs/INCIDENT_RESPONSE.md).
 
 ## Данные и доменная модель
 
@@ -204,31 +257,42 @@ Importer пишет provider identities в `oauth_connections` и ваканси
 
 ```bash
 python scripts/check_repository_hygiene.py
-python -m compileall -q app.py config.py database.py security.py domain models repositories migrations services tests scripts
+python -m compileall -q app.py config.py database.py observability.py security.py domain models repositories operations migrations services tests scripts
 python scripts/manage_db.py upgrade
 python -m alembic check
 python -m pytest -ra
 ```
 
-GitHub Actions поднимает PostgreSQL 17, проверяет migration из legacy revision `0001` в `0002`, serial sequence после backfill, `alembic check`, repository/domain boundaries, persistence после пересоздания Engine и отдельный контракт SEC-001 для config/templates/routes/SSRF controls.
+GitHub Actions поднимает PostgreSQL 17, проверяет migration из legacy revision `0001` в `0002`, serial sequence после backfill, `alembic check`, repository/domain boundaries, SEC-001 controls, OPS-001 observability tests и реальный encrypted PostgreSQL backup/restore в отдельную тестовую базу.
 
-## Собственный домен
+## Зафиксированная инфраструктурная очередь
 
-Пакет не потерян и не объединён с DATA-002:
+Render временно остаётся staging/резервной площадкой. Production-путь согласно PLAN_CURRENT 1.3.x:
 
 ```text
-DOMAIN-001 — собственный домен, DNS, TLS и публичные URL
+SEC-001 rate-limit recheck
+-> OPS-001 verification
+-> INFRA-001 test VPS
+-> AI-BENCH-001
+-> REED-COMPAT-001
+-> AI-PROVIDER-001
+-> HOST-001
+-> DOMAIN-001
+-> MIG-001
 ```
 
-Он находится в этапе 6 и выполняется после `SEC-001` и `OPS-001`, до публичной beta. Домен сначала может указывать на Render; последующий переход на VPS меняет DNS target, но не пользовательский адрес.
+`DOMAIN-001` не потерян: он выполняется после подготовки VPS и до миграции production, чтобы пользовательский адрес не зависел от конкретного сервера.
 
 ## Текущие ограничения
 
-- SEC-001 ожидает подтверждения GitHub/Render; до этого пакет нельзя считать выполненным.
+- SEC-001 прошёл CI, но ожидает production security smoke на Render из доступной сети.
+- OPS-001 ожидает GitHub/production verification, реальную доставку alert и restore drill; до этого пакет нельзя считать выполненным.
 - Rate limiting пока использует process-local memory storage; для нескольких workers/instances нужен общий backend.
 - Trudvsem worker пока работает внутри web-процесса (`SYNC-001`).
 - Собственный пользователь и account UI ещё не реализованы (`AUTH-001`).
 - `user_id` в `oauth_connections` пока nullable и будет заполняться в `AUTH-002`.
 - Canonical vacancy пока создаётся один-к-одному с source record; cross-source merge появится в `SEARCH-002`.
-- Реального LLM-провайдера пока нет.
+- Реального LLM-провайдера пока нет; Yandex AI Studio/Alice AI будет оцениваться в AI-BENCH-001.
+- Operational metrics и alert queue пока process-local; перед несколькими workers/instances потребуется shared backend/exporter.
+- Offsite backup storage и расписание backup ещё должны быть настроены на выбранной production-площадке.
 - Общая дедупликация и стабильная единая пагинация остаются будущими пакетами.

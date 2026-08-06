@@ -1,6 +1,58 @@
 # Changelog
 
+## Unreleased — SEC-001 rate-limit fix 1.3.2 (06 августа 2026)
+
+### Fixed
+
+- Flask-Limiter больше не использует меняющийся адрес промежуточного Render proxy как bucket key.
+- Добавлено валидируемое определение реального клиента: `CF-Connecting-IP`, затем первый адрес `X-Forwarded-For`, и только при явном `TRUST_PROXY_HEADERS=1`; без доверенного proxy заголовки игнорируются.
+- Limiter storage key теперь содержит HMAC-SHA256 fingerprint адреса, а не исходный IP.
+- `ProxyFix` доверяет только forwarded protocol (`x_proto=1`) и не переписывает `REMOTE_ADDR` по неоднозначной proxy-цепочке.
+- Добавлен secret-free `GET /api/security/rate-limit-probe` с лимитом `5 per minute` для однозначной production-проверки HTTP 429.
+- Добавлены regression tests для rotating proxy hops, CF/XFF fallback, spoof protection и `Retry-After`; SEC-001 CI step расширен новым тестовым модулем.
+
+### Compatibility and status
+
+- OPS-001 observability/backup code сохранён без отката.
+- Database migration отсутствует; revision остаётся `20260804_0002`.
+- `SEC-001` имеет статус **НУЖНА ПОВТОРНАЯ ПРОВЕРКА НА RENDER** до зелёного CI и получения `429` на probe endpoint.
+- `OPS-001` остаётся **НУЖНА ПРОВЕРКА**.
+
+## Unreleased - OPS-001 (05 августа 2026)
+
+### Added
+
+- `observability.py`: JSON/text stdout logging, secret/query/body redaction, `X-Request-ID`, bounded HTTP/provider metrics, recent sanitised errors and optional HTTPS alert queue.
+- `/health/live` and `/health/ready`; `/health` remains a readiness alias.
+- Diagnostics-only `/ops/status` and `/ops/alerts/test`.
+- `operations/backup.py` with PostgreSQL custom-format backup, AES-256-GCM encryption, manifest/SHA-256 verification, controlled restore and row-count/revision validation.
+- CLI scripts `backup_database.py`, `verify_backup.py`, `restore_database.py`, `send_test_alert.py`.
+- `docs/OPERATIONS.md`, `docs/BACKUP_RESTORE.md`, `docs/INCIDENT_RESPONSE.md`.
+- Tests for logging redaction, correlation IDs, readiness, metrics, alerts, encrypted backup/restore, tamper detection and production guards.
+- GitHub Actions steps for OPS controls and real encrypted PostgreSQL backup/restore into a separate database.
+
+### Changed
+
+- `render.yaml` health path is `/health/ready`; non-secret log defaults are configured.
+- Vacancy-provider searches, Trudvsem batches and university-logo lookup emit bounded provider metrics without user query/payload.
+- Generic 500 handling emits a structured error event while keeping the response neutral.
+- Repository hygiene rejects dump/backup/SQL/encrypted backup artifacts; missing root `.gitignore` restored.
+- Embedded plan/passport/source-audit documents synchronised with canonical 1.3.x strategy.
+
+### Compatibility and status
+
+- No database migration; revision remains `20260804_0002`.
+- No new mandatory variables for normal web startup. Alert webhook and backup encryption key are opt-in operational secrets.
+- Local available tests pass; full Flask/PostgreSQL/backup verification is delegated to GitHub Actions.
+- `OPS-001` is **НУЖНА ПРОВЕРКА** until CI, production health/log smoke, alert delivery and a real restore drill are confirmed.
+- `SEC-001` remains **НУЖНА ПРОВЕРКА НА RENDER**; its GitHub security step is already green.
+
 ## Unreleased — SEC-001 (05 августа 2026)
+
+### CI verification
+
+- The repeated GitHub Actions run is fully green; `Verify SEC-001 security controls` passed 74 tests.
+- SEC-001 still requires production smoke on Render from an accessible network.
 
 ### Added
 
@@ -27,7 +79,7 @@
 
 - No database migration; Alembic revision remains `20260804_0002`.
 - Existing templates/design and business flows are preserved, but all existing browser sessions are intentionally replaced by the new `aca_session` cookie.
-- `SEC-001` is **НУЖНА ПРОВЕРКА** until GitHub Actions and Render smoke/security headers/CSRF/rate-limit/OAuth checks are confirmed.
+- `SEC-001` is **НУЖНА ПРОВЕРКА НА RENDER**: GitHub Actions is confirmed; Render smoke/security headers/CSRF/rate-limit/OAuth checks remain.
 - After confirmation, the next package is `OPS-001`; `DOMAIN-001` remains after OPS-001.
 
 ## 05 августа 2026 — DATA-002 COMPLETE 1.2.7
