@@ -11,6 +11,11 @@ import socket
 import sys
 import time
 import uuid
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 
 from config import load_settings
 from database import create_database
@@ -67,9 +72,7 @@ def main() -> int:
         sync_runs=storage.sync_runs,
         provider_operation_factory=provider_operation,
     )
-    worker_id = (
-        f"{socket.gethostname()}:{os.getpid()}:{uuid.uuid4().hex[:8]}"
-    )
+    worker_id = f"{socket.gethostname()}:{os.getpid()}:{uuid.uuid4().hex[:8]}"
     heartbeat_interval = settings.trudvsem_worker_heartbeat_seconds
     poll_interval = settings.trudvsem_sync_poll_seconds
     next_heartbeat = 0.0
@@ -113,7 +116,9 @@ def main() -> int:
                 heartbeat(active.id if active else None, status="running")
                 result = service.run_once(
                     trigger="scheduled-worker",
-                    queued_run_id=(active.id if active and active.status == "queued" else None),
+                    queued_run_id=(
+                        active.id if active and active.status == "queued" else None
+                    ),
                     heartbeat=lambda run_id: heartbeat(
                         run_id,
                         status="running" if run_id else "idle",
