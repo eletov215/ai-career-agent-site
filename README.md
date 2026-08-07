@@ -2,26 +2,26 @@
 
 | Поле | Значение |
 |---|---|
-| Канонический план | `docs/PLAN_CURRENT.md` — 1.3.5 |
-| Паспорт | `docs/PROJECT_PASSPORT.md` — 2.13 |
-| Текущий пакет | `INFRA-001 — НУЖНА ПРОВЕРКА НА VPS` |
-| OPS-001 | Нужен production backup/restore drill |
-| Database revision | `20260804_0002` |
-| Production | Render остаётся staging/rollback |
+| Канонический план | `docs/PLAN_CURRENT.md` — 1.4.1 |
+| Паспорт | `docs/PROJECT_PASSPORT.md` — 2.15 |
+| Текущий пакет | `SYNC-001 — НУЖНА ПРОВЕРКА НА GITHUB/RENDER` |
+| Следующий пакет | `SYNC-002` после подтверждения SYNC-001 |
+| Database revision | `20260807_0003` |
+| Production | Render остаётся staging/rollback; real VPS отложен до предрелизного INFRA-001 |
 
-> GitHub является главным источником кода. Более новый ZIP текущего чата становится рабочей основой. Секреты, `.env`, базы, backups, virtualenv, caches и bytecode не входят в репозиторий.
+> GitHub является главным источником кода. Более новый ZIP текущего чата становится рабочей основой. Секреты, `.env`, базы, dumps, backups, virtualenv, caches и bytecode не входят в репозиторий.
 
 ## 1. Назначение проекта
 
-AI Career Agent — Flask-сервис карьерного сопровождения: резюме, карьерный профиль, поиск вакансий, OAuth HeadHunter/SuperJob, кэш Trudvsem и будущий AI-контур.
+AI Career Agent — Flask-сервис карьерного сопровождения: резюме, карьерный профиль, поиск вакансий, OAuth HeadHunter/SuperJob, PostgreSQL cache Trudvsem и будущий AI-контур.
 
-Текущий WSGI entrypoint:
+WSGI entrypoint:
 
 ```text
 app:app
 ```
 
-## 2. Подтверждённые пакеты
+## 2. Статусы пакетов
 
 | Пакет | Статус |
 |---|---|
@@ -30,21 +30,44 @@ app:app
 | DATA-001 | ВЫПОЛНЕНО |
 | DATA-002 | ВЫПОЛНЕНО |
 | SEC-001 | ВЫПОЛНЕНО |
-| OPS-001 | НУЖНА ФИНАЛЬНАЯ ПРОВЕРКА |
-| INFRA-001 | НУЖНА ПРОВЕРКА НА VPS |
+| OPS-001 | ВЫПОЛНЕНО; production restore drill перенесён в OPS-002/REL-001 |
+| INFRA-PREP-001 | ВЫПОЛНЕНО |
+| DOC-001 | В РАБОТЕ как постоянный процесс |
+| SYNC-001 | НУЖНА ПРОВЕРКА НА GITHUB/RENDER |
+| INFRA-001 | ОТЛОЖЕНО ДО ПРЕДРЕЛИЗНОГО ЭТАПА |
 
-Подробные доказательства: `docs/OPS001_VERIFICATION_STATUS.md` и `docs/INFRA001_VERIFICATION_STATUS.md`.
+## 3. SYNC-001
 
-## 3. Основной стек
+Trudvsem provider I/O больше не принадлежит Gunicorn/Flask lifecycle.
+
+```text
+web request -> PostgreSQL cache -> durable enqueue
+external worker -> claim -> provider API -> upsert -> persisted result
+```
+
+Компоненты:
+
+- `services/trudvsem_sync.py` — application service;
+- `repositories/sync_runs.py` — durable queue/run lifecycle;
+- `repositories/sync_workers.py` — heartbeat/liveness;
+- `services/sync_lock.py` — PostgreSQL advisory lock / SQLite lockfile;
+- `scripts/trudvsem_sync_worker.py` — long-running worker;
+- `scripts/sync_trudvsem.py` — one-shot/queue CLI;
+- `scripts/start_runtime.py` — Render staging supervisor;
+- migration `20260807_0003`.
+
+Архитектурный отчёт: `docs/SYNC001_IMPLEMENTATION.md`. Полный runbook: `docs/SYNC001_RUNBOOK.md`.
+
+## 4. Основной стек
 
 - Python 3.11, Flask, Gunicorn;
 - SQLAlchemy 2, Alembic, PostgreSQL 17/Psycopg 3;
 - Flask-WTF, Flask-Limiter, Cryptography;
 - GitHub Actions;
-- Docker multi-target images, Docker Compose и Caddy для тестового VPS;
+- Docker multi-target images, Docker Compose и Caddy test TLS;
 - HTML, CSS и JavaScript без отдельного frontend build.
 
-## 4. Локальный запуск без контейнеров
+## 5. Локальный запуск без контейнеров
 
 ```bash
 python -m venv .venv
@@ -53,62 +76,54 @@ python -m pip install -r requirements.txt
 python -m pip install -r requirements-dev.txt
 export APP_ENV=development
 python scripts/manage_db.py upgrade
-gunicorn app:app
+python scripts/start_runtime.py
 ```
 
-Production/development требуют реальные секреты из `config.py`. Не помещайте их в команды, screenshots или GitHub.
-
-## 5. INFRA-001: тестовый VPS
-
-### 5.1 Подготовка environment
+Для запуска только web без worker:
 
 ```bash
-cp infra/vps/.env.example .env
-chmod 600 .env
+TRUDVSEM_SYNC_ENABLED=0 gunicorn app:app
 ```
 
-Заполните `CHANGE_ME` только на сервере.
+Production/development требуют реальные secrets из `config.py`. Не помещайте их в команды, screenshots или GitHub.
 
-### 5.2 Direct IPv4 smoke
+## 6. SYNC-001 команды
+
+### 6.1 Enqueue only
 
 ```bash
-python3 scripts/infra_manifest_check.py
-docker compose --env-file .env build web ops
-docker compose --env-file .env up -d db
-docker compose --env-file .env run --rm migrate
-docker compose --env-file .env up -d web
-curl -fsS http://127.0.0.1:8000/health/ready
+python scripts/sync_trudvsem.py --enqueue-only --trigger manual-cli
 ```
 
-### 5.3 TLS profile
-
-После создания временной DNS A-записи:
+### 6.2 One-shot execution
 
 ```bash
-docker compose --env-file .env --profile tls up -d gateway
+python scripts/sync_trudvsem.py --trigger manual-cli
 ```
 
-Полный runbook: `docs/INFRA001_VPS_TEST.md`.
-
-## 6. Автоматический VPS probe
+### 6.3 Long-running worker
 
 ```bash
-python scripts/infra_probe.py \
-  --base-url https://infra-test.example.com \
-  --candidate-id provider-region-plan \
-  --country RU \
-  --city Moscow \
-  --network mobile \
-  --device iphone \
-  --optional-providers \
-  --strict \
-  --json-output infra/reports/vps-probe.json \
-  --markdown-output infra/reports/vps-probe.md
+python scripts/trudvsem_sync_worker.py
 ```
 
-Отчёт очищает credentials, query strings и response bodies. Reed transport reachability не заменяет пакет `REED-COMPAT-001`.
+### 6.4 Docker Compose worker
 
-## 7. Проверки качества
+```bash
+docker compose --env-file .env --profile sync up -d sync-worker
+```
+
+## 7. Render staging
+
+Для существующего вручную созданного web service Start Command должен быть:
+
+```text
+python scripts/manage_db.py upgrade && python scripts/start_runtime.py
+```
+
+`render.yaml` содержит это значение. На free staging Gunicorn и worker запускаются как sibling OS processes в одном service container. На будущем VPS worker станет отдельным Compose service без изменения business logic.
+
+## 8. Проверки качества
 
 ```bash
 python scripts/check_repository_hygiene.py
@@ -121,39 +136,34 @@ python -m pytest -q
 GitHub Actions дополнительно:
 
 - поднимает PostgreSQL 17;
-- проверяет миграции и integration tests;
-- проверяет SEC-001 и OPS-001;
-- создаёт/восстанавливает encrypted backup в отдельную test database;
+- применяет migration `20260807_0003` и выполняет integration tests;
+- проверяет SEC-001, OPS-001 и SYNC-001;
+- создаёт/восстанавливает encrypted backup;
 - валидирует Compose;
 - собирает targets `runtime` и `ops`;
-- выполняет non-root container health smoke.
+- выполняет runtime image smoke.
 
-## 8. Структура репозитория
+## 9. Структура репозитория
 
 ```text
-app.py                       Flask routes, app:app
-config.py                    development/test/production settings
-database.py                  SQLAlchemy runtime and health
-security.py                  CSRF, rate limits, headers, request limits
-observability.py             JSON logs, request ID, metrics, alerts
-domain/                      detached domain records
-models/                      ORM schema
-repositories/                persistence layer
-operations/backup.py         encrypted backup/restore
-migrations/                  Alembic 0001/0002
-infra/gunicorn.conf.py       container/VPS Gunicorn policy
-infra/vps/                   env template, Caddy, CI env
-scripts/infra_probe.py       VPS/network probe
-scripts/infra_manifest_check.py manifest invariants
-scripts/infra_container_smoke.sh Docker smoke
-docs/                        canonical structured documents
+app.py                         Flask routes, cache reads, durable enqueue
+database.py                    SQLAlchemy runtime, revision 20260807_0003
+services/trudvsem_sync.py      external sync application service
+services/sync_lock.py          cross-process execution lock
+repositories/sync_runs.py      durable queue/run lifecycle
+repositories/sync_workers.py   external worker heartbeat
+scripts/start_runtime.py       Render staging supervisor
+scripts/trudvsem_sync_worker.py long-running worker
+scripts/sync_trudvsem.py       one-shot/queue CLI
+migrations/                    Alembic 0001/0002/0003
+Dockerfile / compose.yaml      portable runtime and separate sync profile
+docs/                          canonical documents and runbooks
 ```
 
-## 9. Следующие действия
+## 10. Ближайшие действия
 
-1. Загрузить пакет в отдельную GitHub-ветку и получить зелёный CI.
-2. Создать тестовый VPS-кандидат.
-3. Выполнить `docs/INFRA001_VPS_TEST.md` из сетей РФ и РБ.
-4. На том же VPS завершить production backup/restore drill OPS-001.
-5. Зафиксировать решение в `docs/INFRA001_PROVIDER_DECISION.md`.
-6. После подтверждения перейти к `AI-BENCH-001`.
+1. Загрузить SYNC-001 в отдельную GitHub-ветку.
+2. Получить полностью зелёный CI.
+3. На Render изменить Start Command на `scripts/start_runtime.py` и дождаться deploy.
+4. Подтвердить revision `20260807_0003`, worker heartbeat и queue-to-terminal smoke.
+5. После подтверждения перевести SYNC-001 в ВЫПОЛНЕНО и начать SYNC-002.

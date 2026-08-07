@@ -378,6 +378,9 @@ class AppSettings:
     trudvsem_request_attempts: int
     trudvsem_retry_backoff: float
     trudvsem_sync_enabled: bool
+    trudvsem_sync_poll_seconds: int
+    trudvsem_sync_stale_seconds: int
+    trudvsem_worker_heartbeat_seconds: int
     debug_hh: bool
     hh_currency_scan_pages: int
     max_resume_upload_mb: int
@@ -610,6 +613,27 @@ def load_settings(environ: Mapping[str, str] | None = None) -> AppSettings:
             source,
             "TRUDVSEM_SYNC_ENABLED",
             sync_enabled_default,
+        ),
+        trudvsem_sync_poll_seconds=_int(
+            source,
+            "TRUDVSEM_SYNC_POLL_SECONDS",
+            15,
+            minimum=2,
+            maximum=300,
+        ),
+        trudvsem_sync_stale_seconds=_int(
+            source,
+            "TRUDVSEM_SYNC_STALE_SECONDS",
+            900,
+            minimum=120,
+            maximum=86400,
+        ),
+        trudvsem_worker_heartbeat_seconds=_int(
+            source,
+            "TRUDVSEM_WORKER_HEARTBEAT_SECONDS",
+            15,
+            minimum=2,
+            maximum=300,
         ),
         debug_hh=_bool(source, "DEBUG_HH", False),
         hh_currency_scan_pages=_int(

@@ -3,7 +3,6 @@ import secrets
 import socket
 import platform
 import time
-import threading
 import logging
 from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -13,13 +12,11 @@ import requests
 from cryptography.fernet import Fernet, InvalidToken
 from flask import Flask, jsonify, redirect, render_template, request, session, url_for
 from werkzeug.utils import secure_filename
-from datetime import datetime, timezone
 
 
 from services.hh_provider import HeadHunterProvider
 from services.superjob_provider import SuperJobProvider
 from services.reed_provider import ReedProvider
-from services.trudvsem_provider import TrudvsemProvider
 from services.search_filters import VacancySearchFilters, canonical_currency
 from services.vacancy_presenter import present_vacancy
 from services.resume_parser import ResumeParseError, build_resume_preview, parse_resume_pdf
@@ -27,6 +24,7 @@ from services.university_logo import find_university_logo
 from config import AppSettings, load_settings
 from database import CURRENT_REVISION, create_database, database_health
 from services.storage import StorageServices
+from services.trudvsem_sync import TrudvsemSyncService
 from security import csrf, diagnostics_access_allowed, init_security, limiter
 from observability import (
     ALERT_DISPATCHER,
@@ -76,11 +74,6 @@ DATA_DIR.mkdir(parents=True, exist_ok=True)
 DATABASE = create_database(SETTINGS.database_url)
 VACANCY_CACHE_TTL = SETTINGS.vacancy_cache_ttl
 VACANCY_PAGE_SIZE = SETTINGS.vacancy_page_size
-TRUDVSEM_SYNC_INTERVAL = SETTINGS.trudvsem_sync_interval
-TRUDVSEM_SYNC_ITEMS = SETTINGS.trudvsem_sync_items
-TRUDVSEM_SYNC_BATCH = SETTINGS.trudvsem_sync_batch
-TRUDVSEM_REQUEST_ATTEMPTS = SETTINGS.trudvsem_request_attempts
-TRUDVSEM_RETRY_BACKOFF = SETTINGS.trudvsem_retry_backoff
 TRUDVSEM_SYNC_ENABLED = SETTINGS.trudvsem_sync_enabled
 logger = logging.getLogger(__name__)
 DEBUG_HH = SETTINGS.debug_hh
@@ -108,288 +101,39 @@ logger.info(
 )
 
 
-TRUDVSEM_SYNC_EVENT = threading.Event()
-TRUDVSEM_SYNC_LOCK = threading.Lock()
-TRUDVSEM_SYNC_THREAD = None
-TRUDVSEM_SYNC_STATE = {
-    "running": False,
-    "queued": False,
-    "last_started": None,
-    "last_finished": None,
-    "last_success": None,
-    "last_saved": 0,
-    "last_processed": 0,
-    "current_offset": 0,
-    "target": max(1, min(TRUDVSEM_SYNC_ITEMS, 500)),
-    "progress_percent": 0,
-    "last_error": None,
-}
+TRUDVSEM_SYNC = TrudvsemSyncService(
+    settings=SETTINGS,
+    database=DATABASE,
+    vacancy_store=VACANCY_STORE,
+    sync_runs=SYNC_RUNS,
+    provider_operation_factory=provider_operation,
+)
 
 
 def trudvsem_sync_status():
-    with TRUDVSEM_SYNC_LOCK:
-        return dict(TRUDVSEM_SYNC_STATE)
+    """Return durable queue state written by the external worker."""
+
+    return TRUDVSEM_SYNC.status()
 
 
-def request_trudvsem_sync():
-    already_queued = TRUDVSEM_SYNC_EVENT.is_set()
-    TRUDVSEM_SYNC_EVENT.set()
-    with TRUDVSEM_SYNC_LOCK:
-        TRUDVSEM_SYNC_STATE["queued"] = True
-    logger.info(
-        "Trudvsem event set",
-    )
-    logger.info(
-        "Trudvsem sync requested already_queued=%s running=%s",
-        already_queued,
-        trudvsem_sync_status().get("running"),
-    )
-
-
-def _run_trudvsem_sync():
-    with TRUDVSEM_SYNC_LOCK:
-        if TRUDVSEM_SYNC_STATE["running"]:
-            return
-
-        previous_success = TRUDVSEM_SYNC_STATE.get("last_success")
-
-        target = max(1, min(TRUDVSEM_SYNC_ITEMS, 500))
-        TRUDVSEM_SYNC_STATE.update(
-            running=True,
-            queued=False,
-            last_started=int(time.time()),
-            last_finished=None,
-            last_error=None,
-            last_saved=0,
-            last_processed=0,
-            current_offset=0,
-            target=target,
-            progress_percent=0,
-        )
-
-    saved = 0
-    processed = 0
-    error = None
-    sync_run_id = None
-
-    try:
-        try:
-            persisted_run = SYNC_RUNS.start(
-                source="trudvsem",
-                trigger="background",
-                target=target,
-                details={"previous_success": previous_success},
-            )
-            sync_run_id = persisted_run.id
-        except Exception:
-            logger.exception("Could not persist Trudvsem sync start")
-
-        logger.info(
-            "Trudvsem provider init previous_success=%s",
-            previous_success,
-        )
-
-        provider = TrudvsemProvider(
-            HH_USER_AGENT,
-            per_page=10,
-            timeout=(5, 45),
-            scan_pages=5,
-            request_attempts=TRUDVSEM_REQUEST_ATTEMPTS,
-            retry_backoff=TRUDVSEM_RETRY_BACKOFF,
-        )
-
-        batch_size = max(1, min(TRUDVSEM_SYNC_BATCH, 10))
-        target = max(batch_size, min(TRUDVSEM_SYNC_ITEMS, 500))
-
-        # После первой синхронизации запрашиваем только изменённые вакансии.
-        modified_from = None
-
-        if previous_success:
-            modified_from = datetime.fromtimestamp(
-                previous_success,
-                tz=timezone.utc,
-            ).strftime("%Y-%m-%dT%H:%M:%SZ")
-
-        logger.info(
-            "Trudvsem background sync started target=%s batch_size=%s modified_from=%s",
-            target,
-            batch_size,
-            modified_from,
-        )
-
-        total_pages = (target + batch_size - 1) // batch_size
-        for page_number in range(1, total_pages + 1):
-            remaining = target - processed
-            requested = min(batch_size, remaining)
-            with provider_operation("trudvsem", "sync_fetch_batch") as observation:
-                items = provider.fetch_batch(
-                    offset=page_number,
-                    limit=requested,
-                    modified_from=modified_from,
-                )
-                observation.result_count = len(items)
-
-            logger.info(
-                "Trudvsem batch fetched offset=%s requested=%s received=%s first=%s",
-                page_number,
-                requested,
-                len(items),
-                items[0].get("external_id") if items else None,
-            )
-
-            if not items:
-                # Пустая первая страница является нормальным ответом при
-                # инкрементальной синхронизации: после previous_success новых
-                # или изменённых вакансий могло не появиться. Считаем это
-                # ошибкой только при самой первой полной загрузке пустого кэша.
-                cached_before_sync = VACANCY_STORE.count(
-                    keyword="",
-                    sources=["trudvsem"],
-                    period_days=3650,
-                )
-                if (
-                    page_number == 1
-                    and processed == 0
-                    and modified_from is None
-                    and cached_before_sync == 0
-                ):
-                    raise RuntimeError("API 'Работы России' вернул пустую первую страницу")
-
-                logger.info(
-                    "Trudvsem sync has no new items page=%s modified_from=%s cached=%s",
-                    page_number,
-                    modified_from,
-                    cached_before_sync,
-                )
-                break
-
-            processed += len(items)
-            saved += VACANCY_STORE.upsert_many(items)
-            progress = min(100, int(processed * 100 / target))
-            with TRUDVSEM_SYNC_LOCK:
-                TRUDVSEM_SYNC_STATE.update(
-                    last_processed=processed,
-                    last_saved=saved,
-                    current_offset=processed,
-                    progress_percent=progress,
-                )
-            logger.info(
-                "Trudvsem batch saved page=%s processed=%s saved=%s",
-                page_number,
-                processed,
-                saved,
-            )
-            time.sleep(0.15)
-
-        logger.info(
-            "Trudvsem background sync completed processed=%s saved=%s modified_from=%s",
-            processed,
-            saved,
-            modified_from,
-        )
-
-    except Exception as exc:
-        error = f"{type(exc).__name__}: {exc}"
-        logger.warning(
-            "Trudvsem background sync failed",
-            extra={
-                "event": "trudvsem_sync_failed",
-                "provider": "trudvsem",
-                "operation": "background_sync",
-                "error_type": type(exc).__name__,
-            },
-        )
-
-    finally:
-        with TRUDVSEM_SYNC_LOCK:
-            finished_at = int(time.time())
-            TRUDVSEM_SYNC_STATE.update(
-                running=False,
-                last_finished=finished_at,
-                last_saved=saved,
-                last_processed=processed,
-                current_offset=processed,
-                progress_percent=min(100, int(processed * 100 / max(1, target))),
-                last_error=error,
-            )
-            if error is None:
-                TRUDVSEM_SYNC_STATE["last_success"] = finished_at
-
-        if sync_run_id:
-            try:
-                error_type = None
-                error_message = None
-                if error:
-                    error_type, separator, error_message = error.partition(": ")
-                    if not separator:
-                        error_message = error
-                SYNC_RUNS.finish(
-                    sync_run_id,
-                    status="failed" if error else "succeeded",
-                    processed=processed,
-                    saved=saved,
-                    cursor=str(processed),
-                    error_type=error_type,
-                    error_message=error_message,
-                )
-            except Exception:
-                logger.exception("Could not persist Trudvsem sync completion")
-
-def _trudvsem_sync_worker():
-    logger.info("Trudvsem sync worker started")
-    time.sleep(2)
-
-    while True:
-        age = VACANCY_STORE.source_age_seconds("trudvsem")
-
-        if (
-            age is None
-            or age >= TRUDVSEM_SYNC_INTERVAL
-            or TRUDVSEM_SYNC_EVENT.is_set()
-        ):
-            TRUDVSEM_SYNC_EVENT.clear()
-            _run_trudvsem_sync()
-
-        TRUDVSEM_SYNC_EVENT.wait(timeout=30)
-
-
-def start_trudvsem_sync_worker():
-    global TRUDVSEM_SYNC_THREAD
-    
-    logger.info("ENTER start_trudvsem_sync_worker")
+def request_trudvsem_sync(*, trigger: str = "web"):
+    """Queue an idempotent job without running provider I/O in Gunicorn."""
 
     if not TRUDVSEM_SYNC_ENABLED:
-        logger.info("Trudvsem sync worker disabled")
-        return
-
-    if (
-        TRUDVSEM_SYNC_THREAD is not None
-        and TRUDVSEM_SYNC_THREAD.is_alive()
-    ):
-        logger.info("Trudvsem sync worker already running")
-        return
-
-    TRUDVSEM_SYNC_THREAD = threading.Thread(
-        target=_trudvsem_sync_worker,
-        name="trudvsem-sync-worker",
-        daemon=True,
-    )
-
-    TRUDVSEM_SYNC_THREAD.start()
-
+        return None
+    run = TRUDVSEM_SYNC.enqueue(trigger=trigger)
     logger.info(
-        "Trudvsem sync thread launched alive=%s",
-        TRUDVSEM_SYNC_THREAD.is_alive(),
+        "Trudvsem sync queued",
+        extra={
+            "event": "trudvsem_sync_queued",
+            "provider": "trudvsem",
+            "operation": "enqueue",
+            "sync_run_id": run.id,
+            "sync_status": run.status,
+            "trigger": trigger,
+        },
     )
-
-
-@app.before_request
-def start_background_workers():
-    global TRUDVSEM_SYNC_THREAD
-
-    if TRUDVSEM_SYNC_ENABLED and TRUDVSEM_SYNC_THREAD is None:
-        logger.info("Starting background worker from request")
-        start_trudvsem_sync_worker()
+    return run
 
 
 def _remember_oauth_state(prefix: str) -> str:
@@ -434,7 +178,7 @@ def _public_trudvsem_status_payload() -> dict:
         "source": "trudvsem",
         "available": True,
         "running": bool(state.get("running")),
-        "queued": bool(state.get("queued") or TRUDVSEM_SYNC_EVENT.is_set()),
+        "queued": bool(state.get("queued")),
         "progress_percent": max(0, min(int(state.get("progress_percent") or 0), 100)),
         "cached_total": VACANCY_STORE.count(keyword="", sources=["trudvsem"]),
         "cache_age_seconds": VACANCY_STORE.source_age_seconds("trudvsem"),
@@ -1074,7 +818,7 @@ def vacancies():
 
     if search_requested:
         # Работа России is always searched locally. Network synchronization
-        # runs in a daemon thread and never blocks page navigation.
+        # is performed only by the external SYNC-001 worker process.
         if "trudvsem" in selected_sources:
             offset = page * VACANCY_PAGE_SIZE
             cached_items = VACANCY_STORE.search(
@@ -1110,16 +854,20 @@ def vacancies():
             sync_state = trudvsem_sync_status()
 
             if sync_state["running"]:
-                cache_note = "Данные «Работы России» обновляются в фоне. Сайт продолжает работать без ожидания API."
-            elif sync_queued:
-                cache_note = "Фоновое обновление «Работы России» запущено. Новые вакансии появятся после обновления страницы."
+                cache_note = "Данные «Работы России» обновляются в фоне. Сайт продолжает работать из кэша."
+            elif sync_state["queued"] or sync_queued:
+                cache_note = "Фоновое обновление «Работы России» поставлено в очередь."
             elif cache_age is None:
-                request_trudvsem_sync()
-                cache_note = "Кэш пока пуст. Фоновая загрузка вакансий запущена; обнови страницу через минуту."
+                queued_run = request_trudvsem_sync(trigger="cache-miss")
+                if queued_run is not None:
+                    cache_note = "Кэш пока пуст. Загрузка поставлена в очередь; обнови страницу немного позже."
+                else:
+                    cache_note = "Кэш пока пуст, а внешняя синхронизация сейчас отключена."
             else:
                 cache_note = f"Работа России загружена из локального кэша ({cache_age // 60} мин. назад)."
-                if sync_state.get("last_error"):
-                    cache_note += " Последнее фоновое обновление завершилось ошибкой, сохранённые вакансии доступны."
+                latest_run = sync_state.get("latest_run")
+                if latest_run and latest_run.status == "failed":
+                    cache_note += " Последнее обновление завершилось ошибкой, сохранённые вакансии доступны."
 
             source_results["trudvsem"] = type("CachedResult", (), {
                 "total": cached_total,
@@ -1347,7 +1095,7 @@ def refresh_trudvsem_cache():
     # The route is globally exempt so production can return a neutral 404
     # before CSRF validation. Development/test still require a valid token.
     csrf.protect()
-    request_trudvsem_sync()
+    request_trudvsem_sync(trigger="development-refresh")
     filters = VacancySearchFilters.from_query(request.form)
     sources = request.form.getlist("source") or ["trudvsem"]
     params = filters.query_pairs()
@@ -1373,11 +1121,23 @@ def trudvsem_status():
     state["cache_age_seconds"] = VACANCY_STORE.source_age_seconds("trudvsem")
     state["cached_total"] = VACANCY_STORE.count(keyword="", sources=["trudvsem"])
     state["sync_enabled"] = TRUDVSEM_SYNC_ENABLED
-    state["worker_alive"] = bool(TRUDVSEM_SYNC_THREAD and TRUDVSEM_SYNC_THREAD.is_alive())
-    state["queued"] = bool(state.get("queued") or TRUDVSEM_SYNC_EVENT.is_set())
-    latest_run = SYNC_RUNS.latest("trudvsem")
+    state["worker_mode"] = "external_process"
+    stale_after = int(time.time()) - max(
+        SETTINGS.trudvsem_worker_heartbeat_seconds * 3,
+        300,
+    )
+    active_workers = STORAGE.sync_workers.active(
+        "trudvsem",
+        stale_after=stale_after,
+    )
+    state["worker_alive"] = bool(active_workers)
+    state["workers"] = [worker.public_summary() for worker in active_workers]
+    latest_run = state.pop("latest_run", None)
+    active_run = state.pop("active_run", None)
     if latest_run:
         state["persisted_run"] = latest_run.public_summary()
+    if active_run:
+        state["active_run"] = active_run.public_summary()
     return state, 200
 
 
@@ -1390,15 +1150,19 @@ def sync_trudvsem():
     if not configured_secret or not secrets.compare_digest(configured_secret, supplied_secret):
         return {"ok": False, "error": "unauthorized"}, 401
 
-    request_trudvsem_sync()
+    run = request_trudvsem_sync(trigger="api")
+    if run is None:
+        return {
+            "ok": False,
+            "source": "trudvsem",
+            "error": "sync disabled",
+        }, 503
     return {
         "ok": True,
         "source": "trudvsem",
-        "message": "background sync scheduled",
-        "status": {
-            "running": bool(trudvsem_sync_status().get("running")),
-            "queued": True,
-        },
+        "message": "sync job queued for external worker",
+        "run_id": run.id,
+        "status": run.status,
     }, 202
 
 
@@ -1579,9 +1343,9 @@ def ops_status():
         },
         "background": {
             "trudvsem_sync_enabled": TRUDVSEM_SYNC_ENABLED,
-            "trudvsem_worker_alive": bool(
-                TRUDVSEM_SYNC_THREAD and TRUDVSEM_SYNC_THREAD.is_alive()
-            ),
+            "trudvsem_worker_mode": "external_process",
+            "trudvsem_running": bool(trudvsem_sync_status().get("running")),
+            "trudvsem_queued": bool(trudvsem_sync_status().get("queued")),
         },
         "telemetry": OPS_STATE.snapshot(include_recent_errors=True),
     }, 200
