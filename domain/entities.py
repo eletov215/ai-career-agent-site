@@ -140,6 +140,31 @@ class SourceRecord:
 
 
 @dataclass(frozen=True, slots=True)
+class SyncWorkerRecord:
+    """Heartbeat of a synchronization worker process."""
+
+    id: str
+    source: str
+    status: str
+    current_run_id: str | None
+    started_at: int
+    heartbeat_at: int
+    details_json: str | None
+    created_at: int
+    updated_at: int
+
+    def public_summary(self) -> dict[str, Any]:
+        return {
+            "id": self.id,
+            "source": self.source,
+            "status": self.status,
+            "current_run_id": self.current_run_id,
+            "started_at": self.started_at,
+            "heartbeat_at": self.heartbeat_at,
+        }
+
+
+@dataclass(frozen=True, slots=True)
 class SyncRunRecord:
     """Persisted status of one provider synchronization attempt."""
 

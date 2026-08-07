@@ -19,6 +19,13 @@ DOCUMENTS = {
     "docs/INFRA001_PROVIDER_DECISION.md": ["| Поле | Значение |", "## 1."],
     "docs/INFRA001_VERIFICATION_STATUS.md": ["| Поле | Значение |", "## 1."],
     "docs/OPS001_VERIFICATION_STATUS.md": ["| Поле | Значение |", "## 1."],
+    "docs/SYNC001_IMPLEMENTATION.md": ["| Поле | Значение |", "## 1.", "## 2."],
+    "docs/SYNC001_RUNBOOK.md": ["| Поле | Значение |", "## 1.", "## 2."],
+    "docs/SYNC001_VERIFICATION_STATUS.md": [
+        "| Поле | Значение |",
+        "## 1.",
+        "## 2.",
+    ],
     "docs/SOURCE_AUDIT.md": ["| Поле | Значение |", "## 1."],
 }
 

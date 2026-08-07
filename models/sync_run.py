@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from sqlalchemy import BigInteger, Index, Integer, String, Text
+from sqlalchemy import BigInteger, Index, Integer, String, Text, text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from .base import Base
@@ -15,6 +15,13 @@ class SyncRun(Base):
     __table_args__ = (
         Index("idx_sync_runs_source_started", "source", "started_at"),
         Index("idx_sync_runs_status", "status"),
+        Index(
+            "uq_sync_runs_active_source",
+            "source",
+            unique=True,
+            postgresql_where=text("status IN ('queued', 'running')"),
+            sqlite_where=text("status IN ('queued', 'running')"),
+        ),
     )
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True)

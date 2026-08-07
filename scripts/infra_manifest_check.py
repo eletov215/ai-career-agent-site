@@ -41,6 +41,9 @@ def validate(root: Path = ROOT) -> list[str]:
             "infra/vps/Caddyfile",
             "scripts/infra_probe.py",
             "scripts/infra_container_smoke.sh",
+            "scripts/start_runtime.py",
+            "scripts/sync_trudvsem.py",
+            "scripts/trudvsem_sync_worker.py",
         ]
         for relative in required_files:
             if not (ROOT / relative).is_file():
@@ -61,7 +64,15 @@ def validate(root: Path = ROOT) -> list[str]:
         if not isinstance(services, dict):
             errors.append("compose.yaml services mapping is missing")
             return errors
-        required_services = {"db", "restore-db", "migrate", "web", "gateway", "ops"}
+        required_services = {
+            "db",
+            "restore-db",
+            "migrate",
+            "web",
+            "sync-worker",
+            "gateway",
+            "ops",
+        }
         missing_services = sorted(required_services - set(services))
         if missing_services:
             errors.append(f"compose.yaml missing services: {', '.join(missing_services)}")
@@ -100,6 +111,20 @@ def validate(root: Path = ROOT) -> list[str]:
         if isinstance(web_env, dict) and str(web_env.get("TRUDVSEM_SYNC_ENABLED", "0")) not in {"0", "${TRUDVSEM_SYNC_ENABLED:-0}"}:
             errors.append("test VPS must not enable embedded Trudvsem sync by default")
 
+        sync_worker = services.get("sync-worker", {})
+        if "sync" not in (sync_worker.get("profiles") or []):
+            errors.append("sync-worker must be behind the sync profile")
+        worker_command = " ".join(map(str, sync_worker.get("command") or []))
+        if "scripts/trudvsem_sync_worker.py" not in worker_command:
+            errors.append("sync-worker must run scripts/trudvsem_sync_worker.py")
+        worker_env = sync_worker.get("environment") or {}
+        if not isinstance(worker_env, dict) or str(
+            worker_env.get("TRUDVSEM_SYNC_ENABLED", "")
+        ) != "1":
+            errors.append("sync-worker must explicitly enable Trudvsem sync")
+        if sync_worker.get("ports"):
+            errors.append("sync-worker must not publish a host port")
+
         gateway = services.get("gateway", {})
         if "tls" not in (gateway.get("profiles") or []):
             errors.append("gateway must be behind the tls profile")
@@ -119,7 +144,15 @@ def validate(root: Path = ROOT) -> list[str]:
                 errors.append(f".dockerignore missing: {marker}")
 
         env_example = _read("infra/vps/.env.example")
-        for marker in ["CHANGE_ME", "TRUDVSEM_SYNC_ENABLED=0", "GUNICORN_WORKERS=1", "BACKUP_ENCRYPTION_KEY"]:
+        for marker in [
+            "CHANGE_ME",
+            "TRUDVSEM_SYNC_ENABLED=0",
+            "TRUDVSEM_SYNC_POLL_SECONDS=15",
+            "TRUDVSEM_SYNC_STALE_SECONDS=900",
+            "TRUDVSEM_WORKER_HEARTBEAT_SECONDS=15",
+            "GUNICORN_WORKERS=1",
+            "BACKUP_ENCRYPTION_KEY",
+        ]:
             if marker not in env_example:
                 errors.append(f"VPS env template missing: {marker}")
         if re.search(r"(?i)(password|secret|token|key)=((?!CHANGE_ME)[^\s#]+)", env_example):
@@ -140,6 +173,24 @@ def validate(root: Path = ROOT) -> list[str]:
         caddyfile = _read("infra/vps/Caddyfile")
         if "reverse_proxy web:8000" not in caddyfile or "admin off" not in caddyfile:
             errors.append("Caddyfile must disable admin API and proxy only to web:8000")
+
+        render = _load_yaml("render.yaml")
+        render_services = render.get("services") or []
+        render_start = ""
+        if render_services and isinstance(render_services[0], dict):
+            render_start = str(render_services[0].get("startCommand") or "")
+        if "scripts/start_runtime.py" not in render_start:
+            errors.append("Render web service must start the SYNC-001 runtime supervisor")
+
+        app_text = _read("app.py")
+        forbidden_web_worker_markers = (
+            "TRUDVSEM_SYNC_THREAD",
+            "TRUDVSEM_SYNC_EVENT",
+            "threading.Thread(",
+        )
+        for marker in forbidden_web_worker_markers:
+            if marker in app_text:
+                errors.append(f"app.py must not own Trudvsem worker lifecycle: {marker}")
 
         return errors
     finally:

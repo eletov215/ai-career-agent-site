@@ -13,6 +13,7 @@ from database import DatabaseRuntime
 from repositories import (
     OAuthConnectionRepository,
     SyncRunRepository,
+    SyncWorkerRepository,
     UserRepository,
 )
 from services.vacancy_store import VacancyStore
@@ -25,6 +26,7 @@ class StorageServices:
     users: UserRepository
     oauth_connections: OAuthConnectionRepository
     sync_runs: SyncRunRepository
+    sync_workers: SyncWorkerRepository
     vacancies: VacancyStore
 
     @classmethod
@@ -33,5 +35,6 @@ class StorageServices:
             users=UserRepository(database),
             oauth_connections=OAuthConnectionRepository(database),
             sync_runs=SyncRunRepository(database),
+            sync_workers=SyncWorkerRepository(database),
             vacancies=VacancyStore(database),
         )

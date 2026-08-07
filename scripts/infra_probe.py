@@ -17,9 +17,11 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable
 
+from database import CURRENT_REVISION
+
 SCHEMA_VERSION = 1
 PACKAGE = "INFRA-001"
-EXPECTED_REVISION = "20260804_0002"
+EXPECTED_REVISION = CURRENT_REVISION
 USER_AGENT = "AI-Career-Agent-INFRA001-Probe/1.0"
 MAX_BODY_BYTES = 512 * 1024
 
