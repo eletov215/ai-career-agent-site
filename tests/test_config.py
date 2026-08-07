@@ -86,6 +86,9 @@ def test_production_defaults_preserve_current_runtime_behavior():
     assert settings.vacancy_page_size == 60
     assert settings.trudvsem_sync_items == 300
     assert settings.trudvsem_sync_batch == 10
+    assert settings.trudvsem_sync_poll_seconds == 15
+    assert settings.trudvsem_sync_stale_seconds == 900
+    assert settings.trudvsem_worker_heartbeat_seconds == 15
     assert settings.max_resume_upload_mb == 8
     assert settings.max_resume_pages == 30
     assert settings.max_resume_text_characters == 200_000
@@ -123,6 +126,9 @@ def test_numeric_and_boolean_values_are_validated_centrally(tmp_path):
             DATA_DIR=str(tmp_path),
             VACANCY_PAGE_SIZE="40",
             TRUDVSEM_SYNC_ENABLED="no",
+            TRUDVSEM_SYNC_POLL_SECONDS="20",
+            TRUDVSEM_SYNC_STALE_SECONDS="900",
+            TRUDVSEM_WORKER_HEARTBEAT_SECONDS="12",
             TRUDVSEM_RETRY_BACKOFF="0.25",
             HH_CURRENCY_SCAN_PAGES="7",
             MAX_RESUME_UPLOAD_MB="12",
@@ -146,6 +152,9 @@ def test_numeric_and_boolean_values_are_validated_centrally(tmp_path):
     assert settings.data_dir == tmp_path
     assert settings.vacancy_page_size == 40
     assert settings.trudvsem_sync_enabled is False
+    assert settings.trudvsem_sync_poll_seconds == 20
+    assert settings.trudvsem_sync_stale_seconds == 900
+    assert settings.trudvsem_worker_heartbeat_seconds == 12
     assert settings.trudvsem_retry_backoff == 0.25
     assert settings.hh_currency_scan_pages == 7
     assert settings.max_resume_upload_mb == 12
@@ -169,6 +178,9 @@ def test_numeric_and_boolean_values_are_validated_centrally(tmp_path):
     ("name", "value", "expected"),
     [
         ("TRUDVSEM_SYNC_ENABLED", "sometimes", "true/false"),
+        ("TRUDVSEM_SYNC_POLL_SECONDS", "1", "не может быть меньше 2"),
+        ("TRUDVSEM_SYNC_STALE_SECONDS", "60", "не может быть меньше 120"),
+        ("TRUDVSEM_WORKER_HEARTBEAT_SECONDS", "301", "не может быть больше 300"),
         ("VACANCY_PAGE_SIZE", "many", "целое число"),
         ("MAX_RESUME_UPLOAD_MB", "26", "не может быть больше 25"),
         ("MAX_RESUME_PAGES", "101", "не может быть больше 100"),

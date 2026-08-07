@@ -2,37 +2,47 @@
 
 | Поле | Значение |
 |---|---|
-| Версия | 1.3.5 |
-| Дата | 2026-08-06 |
-| Источник | docs/PLAN_CURRENT.md |
+| Версия | 1.4.1 |
+| Дата | 2026-08-07 |
+| Источник | `docs/PLAN_CURRENT.md` |
+| Текущий gate | SYNC-001 GitHub/Render verification |
 
-## Ближайшая последовательность
+## 1. Функциональная очередь без аренды VPS
 
 ```text
-OPS-001 production backup/restore
-→ INFRA-001 real VPS matrix
-→ AI-BENCH-001
-→ REED-COMPAT-001
-→ AI-PROVIDER-001
-→ HOST-001
-→ DOMAIN-001
-→ MIG-001
+SYNC-001 verification
+→ SYNC-002
+→ SEARCH-001 → SEARCH-002 → SEARCH-003 → SEARCH-004
+→ AUTH-001 → AUTH-002
+→ PROF-001 → PROF-002 → PROF-003 → PRIV-001
+→ SEARCH-005
+→ AI-BENCH-001 → AI-PROVIDER-001 → LEGAL-001
+→ AI-001 → AI-002 → AI-003 → AI-004 → AI-005 → AI-006
+→ JOB-001 → JOB-002 → JOB-003/JOB-004
 ```
 
-## Пакеты
+## 2. Предрелизный инфраструктурный блок
+
+```text
+INFRA-001
+→ REED-COMPAT-001
+→ HOST-001
+→ OPS-002 + production backup/restore
+→ DOMAIN-001
+→ MIG-001
+→ REL-001
+```
+
+## 3. Пакеты
 
 | ID | Статус | Следующее действие |
 |---|---|---|
-| FND-001 | ВЫПОЛНЕНО | Базовые тесты и CI |
-| FND-002 | ВЫПОЛНЕНО | Централизованная конфигурация |
-| DATA-001 | ВЫПОЛНЕНО | PostgreSQL и Alembic |
-| DATA-002 | ВЫПОЛНЕНО | Доменная модель и repositories |
-| SEC-001 | ВЫПОЛНЕНО | Базовое усиление безопасности |
-| OPS-001 | НУЖНА ФИНАЛЬНАЯ ПРОВЕРКА | Production backup/restore реальной БД |
-| INFRA-001 | НУЖНА ПРОВЕРКА | Выбор и технический тест VPS для РФ/РБ |
-| AI-BENCH-001 | ЗАПЛАНИРОВАНО | Benchmark Yandex AI Studio/Alice AI |
-| REED-COMPAT-001 | ЗАПЛАНИРОВАНО | Проверка Reed с выбранного VPS |
-| AI-PROVIDER-001 | ЗАПЛАНИРОВАНО | Стратегия AI-провайдеров |
-| HOST-001 | ЗАПЛАНИРОВАНО | Подготовка production VPS |
-| DOMAIN-001 | ЗАПЛАНИРОВАНО | Домен, DNS и TLS |
-| MIG-001 | ЗАПЛАНИРОВАНО | Миграция production с Render |
+| FND-001/FND-002 | ВЫПОЛНЕНО | Базовая платформа |
+| DATA-001/DATA-002 | ВЫПОЛНЕНО | PostgreSQL и domain/repository layer |
+| SEC-001 | ВЫПОЛНЕНО | Production security baseline |
+| OPS-001 | ВЫПОЛНЕНО | Observability и backup tooling |
+| INFRA-PREP-001 | ВЫПОЛНЕНО | Container portability |
+| DOC-001 | В РАБОТЕ | Синхронизация с каждым package |
+| SYNC-001 | НУЖНА ПРОВЕРКА | CI, migration 0003, Render worker heartbeat |
+| SYNC-002 | ЗАПЛАНИРОВАНО | Incremental freshness и cleanup |
+| INFRA-001 | ОТЛОЖЕНО | Реальный VPS перед beta |

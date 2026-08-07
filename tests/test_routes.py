@@ -87,7 +87,10 @@ def test_application_uses_explicit_test_configuration(app_module):
 def test_background_worker_is_disabled_in_test_environment(app_module, client):
     assert app_module.TRUDVSEM_SYNC_ENABLED is False
     client.get("/")
-    assert app_module.TRUDVSEM_SYNC_THREAD is None
+    assert not hasattr(app_module, "TRUDVSEM_SYNC_THREAD")
+    assert not hasattr(app_module, "TRUDVSEM_SYNC_EVENT")
+    assert not hasattr(app_module, "TRUDVSEM_SYNC_STATE")
+    assert app_module.STORAGE.sync_workers.latest("trudvsem") is None
 
 
 def test_one_provider_failure_does_not_hide_another_provider_result(
@@ -216,29 +219,35 @@ def test_trudvsem_status_includes_latest_persisted_sync_run(
 
 
 def test_public_trudvsem_status_is_sanitized(app_module, client):
-    with app_module.TRUDVSEM_SYNC_LOCK:
-        previous_error = app_module.TRUDVSEM_SYNC_STATE.get("last_error")
-        app_module.TRUDVSEM_SYNC_STATE["last_error"] = "private provider exception"
+    run = app_module.SYNC_RUNS.start(
+        source="trudvsem",
+        trigger="sanitization-test",
+        target=1,
+    )
+    app_module.SYNC_RUNS.finish(
+        run.id,
+        status="failed",
+        processed=0,
+        saved=0,
+        error_type="ProviderPrivateError",
+        error_message="private provider exception",
+    )
 
-    try:
-        response = client.get("/api/sources/trudvsem/status")
-        payload = response.get_json()
+    response = client.get("/api/sources/trudvsem/status")
+    payload = response.get_json()
 
-        assert response.status_code == 200
-        assert set(payload) == {
-            "available",
-            "cache_age_seconds",
-            "cached_total",
-            "progress_percent",
-            "queued",
-            "running",
-            "source",
-        }
-        assert "private provider exception" not in response.get_data(as_text=True)
-        assert "persisted_run" not in payload
-    finally:
-        with app_module.TRUDVSEM_SYNC_LOCK:
-            app_module.TRUDVSEM_SYNC_STATE["last_error"] = previous_error
+    assert response.status_code == 200
+    assert set(payload) == {
+        "available",
+        "cache_age_seconds",
+        "cached_total",
+        "progress_percent",
+        "queued",
+        "running",
+        "source",
+    }
+    assert "private provider exception" not in response.get_data(as_text=True)
+    assert "persisted_run" not in payload
 
 
 def test_csrf_protects_form_and_json_posts(client, csrf_token):
@@ -418,7 +427,11 @@ def test_manual_refresh_requires_csrf_outside_production(
     csrf_token,
     monkeypatch,
 ):
-    monkeypatch.setattr(app_module, "request_trudvsem_sync", lambda: None)
+    monkeypatch.setattr(
+        app_module,
+        "request_trudvsem_sync",
+        lambda **_kwargs: None,
+    )
 
     assert client.post("/trudvsem/refresh").status_code == 400
     accepted = client.post(
@@ -426,6 +439,35 @@ def test_manual_refresh_requires_csrf_outside_production(
         data={"csrf_token": csrf_token, "source": "trudvsem"},
     )
     assert accepted.status_code == 302
+
+
+def test_machine_sync_endpoint_only_queues_external_job(
+    app_module,
+    client,
+    monkeypatch,
+):
+    queued = app_module.SYNC_RUNS.enqueue(
+        source="trudvsem",
+        trigger="route-fixture",
+        target=3,
+    )
+    monkeypatch.setattr(app_module, "SYNC_SECRET", "test-sync-secret")
+    monkeypatch.setattr(
+        app_module,
+        "request_trudvsem_sync",
+        lambda **_kwargs: queued,
+    )
+
+    response = client.post(
+        "/sync/trudvsem",
+        headers={"X-Sync-Secret": "test-sync-secret"},
+    )
+    payload = response.get_json()
+
+    assert response.status_code == 202
+    assert payload["run_id"] == queued.id
+    assert payload["status"] == "queued"
+    assert payload["message"] == "sync job queued for external worker"
 
 
 def test_oauth_state_is_single_use_and_expires(app_module, monkeypatch):

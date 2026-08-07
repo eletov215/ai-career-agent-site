@@ -35,19 +35,19 @@
 
 ## 4. Текущая ветка
 
-Для OPS-001:
+Для SYNC-001 рекомендуется отдельная ветка:
 
 ```text
-ops-001-observability-backup
+sync-001-external-worker
 ```
 
 Commit:
 
 ```text
-ops: add observability and verified backup restore
+sync: move Trudvsem updates out of Gunicorn
 ```
 
-Не очищать ветку. Сохранять `.github`, `.gitignore`, migrations и существующие docs.
+Не очищать ветку. Сохранять `.github`, `.gitignore`, migrations, INFRA-PREP и существующие docs.
 
 ## 5. Проверки перед push
 
@@ -88,7 +88,7 @@ Probe не использует базу или внешние API и предн
 ## 6. OPS-001 проверки
 
 - `/health/live` отвечает без DB dependency;
-- `/health/ready` проверяет DB и revision `20260804_0002`;
+- `/health/ready` проверяет DB и revision `20260807_0003`;
 - `X-Request-ID` генерируется/сохраняется;
 - access/provider logs не содержат query/body/token/resume text;
 - `/ops/status` и `/ops/alerts/test` закрыты diagnostics secret;
@@ -150,28 +150,26 @@ python scripts/manage_db.py current
 python scripts/manage_db.py check
 ```
 
-SEC-001 и OPS-001 не добавляют migration; `/health/ready` должен остаться на:
+SYNC-001 добавляет migration `20260807_0003`; `/health/ready` должен показать:
 
 ```text
-revision=20260804_0002
+revision=20260807_0003
 ```
 
-Rollback SEC/OPS выполняется application commit/redeploy без изменения PostgreSQL. Backup/restore scripts остаются отдельно; downgrade production schema без verified backup запрещён.
+Rollback SYNC-001 предпочтительно выполняется application commit/redeploy с сохранением schema `20260807_0003`; downgrade migration допустим только на backup/staging. Backup/restore scripts остаются отдельно; downgrade production schema без verified backup запрещён.
 
 ## 10. Hosting, домен и VPS
 
-Render остаётся staging/резервной площадкой. Обязательная очередь PLAN_CURRENT 1.3.x:
+Render остаётся staging/резервной площадкой. Действует hosting-independent очередь PLAN_CURRENT 1.4.x:
 
 ```text
-SEC-001 completed
--> OPS-001 production restore drill
--> INFRA-001 real VPS verification
--> AI-BENCH-001
--> REED-COMPAT-001
--> AI-PROVIDER-001
--> HOST-001
--> DOMAIN-001
--> MIG-001
+SYNC-001 verification
+-> SYNC-002
+-> SEARCH core
+-> AUTH/PROFILE
+-> AI/JOB functional MVP
+-> INFRA-001 real VPS verification before beta
+-> REED-COMPAT-001 -> HOST-001 -> OPS-002 -> DOMAIN-001 -> MIG-001 -> REL-001
 ```
 
 При DOMAIN-001 нужно добавить коммерческий hostname в `TRUSTED_HOSTS`, обновить OAuth redirect URI и проверить secure cookie/CSRF/HSTS на новом HTTPS-домене.

@@ -1,8 +1,8 @@
 # AI Career Agent - эксплуатация и наблюдаемость OPS-001
 
 **Пакет:** `OPS-001`  
-**Статус:** НУЖНА ПРОВЕРКА  
-**Дата реализации:** 05 августа 2026
+**Статус:** OPS-001 ВЫПОЛНЕНО; SYNC-001 НУЖНА ПРОВЕРКА  
+**Последнее обновление:** 07 августа 2026
 
 ## 1. Цель
 
@@ -16,7 +16,7 @@ OPS-001 создаёт минимальный vendor-neutral operational layer �
 - encrypted backup, manifest, integrity verification и restore drill;
 - runbook для диагностики, аварий и rollback.
 
-Пакет не меняет Alembic schema. Ожидаемая revision остаётся `20260804_0002`.
+OPS-001 не менял schema. SYNC-001 добавляет migration `20260807_0003`; health/readiness должны показывать эту revision после deploy.
 
 ## 2. Логи
 
@@ -189,7 +189,7 @@ Metrics не содержат keywords, filters или provider payload. Оши�
 ## 8. Operational checklist после deploy
 
 1. `/health/live` -> `200`.
-2. `/health/ready` -> `200`, revision `20260804_0002`.
+2. `/health/ready` -> `200`, revision `20260807_0003`.
 3. `/health` -> тот же readiness result.
 4. Ответы имеют `X-Request-ID`.
 5. Render logs содержат JSON и не содержат token/query/body.
@@ -204,9 +204,48 @@ Metrics не содержат keywords, filters или provider payload. Оши�
 - Alert webhook не настроен по умолчанию.
 - Metrics и alert queue process-local.
 - Offsite backup schedule не настроен до выбора production VPS.
-- Trudvsem thread остаётся внутри Gunicorn до `SYNC-001`.
-- SEC-001 production smoke остаётся отдельной незавершённой проверкой.
+- Trudvsem daemon thread удалён. External worker heartbeat и queue-to-terminal smoke должны быть подтверждены на Render.
+- SEC-001 production smoke завершён; повторяется как regression gate в CI.
 
-## 12. Завершение OPS-001 на тестовом VPS
+## 10. Production restore drill OPS-002/REL-001
 
-INFRA-001 предоставляет `ops` image с PostgreSQL 17 tools, persistent backup volume и isolated `restore-db`. Production URL Render передаётся только временной переменной shell. Полная команда и критерии проверки находятся в `docs/INFRA001_VPS_TEST.md`. Production database никогда не используется как restore target.
+Production restore drill перенесён из закрытого базового OPS-001 в обязательный предрелизный `OPS-002/REL-001`. INFRA-PREP уже предоставляет `ops` image с PostgreSQL 17 tools, persistent backup volume и isolated `restore-db`. Production database никогда не используется как restore target.
+
+## 11. SYNC-001 external worker operations
+
+### 11.1 Render staging
+
+Start Command:
+
+```text
+python scripts/manage_db.py upgrade && python scripts/start_runtime.py
+```
+
+`runtime_supervisor` запускает Gunicorn и `trudvsem_sync_worker.py` как sibling OS processes. Worker failure не завершает Gunicorn: supervisor перезапускает worker с задержкой.
+
+### 11.2 VPS/Compose
+
+```bash
+docker compose --env-file .env --profile sync up -d sync-worker
+```
+
+Web service не должен включать provider I/O. `sync-worker` не публикует порт и использует private backend network.
+
+### 11.3 Operational signals
+
+- `sync_workers.heartbeat_at` — liveness process;
+- `sync_runs.status` — queued/running/terminal state;
+- `processed/saved/cursor` — progress;
+- `error_type` — bounded failure classification;
+- public status не содержит error details;
+- diagnostic status доступен только с diagnostics secret.
+
+### 11.4 Recovery
+
+- stale running run закрывается после `TRUDVSEM_SYNC_STALE_SECONDS` (default 900);
+- PostgreSQL advisory lock исключает параллельный provider run;
+- существующий cache не удаляется при failure;
+- после redeploy новый worker продолжает durable queue.
+
+Подробности: `docs/SYNC001_RUNBOOK.md`.
+

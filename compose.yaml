@@ -27,6 +27,9 @@ x-app-environment: &app-environment
   TRUST_PROXY_HEADERS: ${TRUST_PROXY_HEADERS:-1}
   RATELIMIT_STORAGE_URI: ${RATELIMIT_STORAGE_URI:-memory://}
   TRUDVSEM_SYNC_ENABLED: ${TRUDVSEM_SYNC_ENABLED:-0}
+  TRUDVSEM_SYNC_POLL_SECONDS: ${TRUDVSEM_SYNC_POLL_SECONDS:-15}
+  TRUDVSEM_SYNC_STALE_SECONDS: ${TRUDVSEM_SYNC_STALE_SECONDS:-900}
+  TRUDVSEM_WORKER_HEARTBEAT_SECONDS: ${TRUDVSEM_WORKER_HEARTBEAT_SECONDS:-15}
   LOG_FORMAT: ${LOG_FORMAT:-json}
   LOG_LEVEL: ${LOG_LEVEL:-INFO}
   GUNICORN_WORKERS: ${GUNICORN_WORKERS:-1}
@@ -113,6 +116,26 @@ services:
       start_period: 30s
     networks:
       - frontend
+      - backend
+
+  sync-worker:
+    build: *app-build
+    image: ai-career-agent:${APP_IMAGE_TAG:-infra-test}
+    profiles: ["sync"]
+    restart: unless-stopped
+    command: ["python", "scripts/trudvsem_sync_worker.py"]
+    environment:
+      <<: *app-environment
+      TRUDVSEM_SYNC_ENABLED: "1"
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    volumes:
+      - app-data:/var/lib/ai-career-agent
+    stop_grace_period: 30s
+    networks:
       - backend
 
   gateway:

@@ -6,6 +6,7 @@ from pathlib import Path
 
 import pytest
 
+from database import CURRENT_REVISION
 from scripts import infra_probe
 
 
@@ -17,7 +18,7 @@ def _args(tmp_path: Path, **overrides):
         "city": "Moscow",
         "network": "mobile",
         "device": "iphone",
-        "expected_revision": "20260804_0002",
+        "expected_revision": CURRENT_REVISION,
         "timeout": 1.0,
         "skip_outbound": False,
         "optional_providers": True,
@@ -43,23 +44,23 @@ def test_safe_url_removes_sensitive_parts():
 def test_evaluate_ready_accepts_expected_revision():
     payload = {
         "status": "ok",
-        "database": {"ok": True, "revision": "20260804_0002"},
-        "migrations": {"current_revision": "20260804_0002"},
+        "database": {"ok": True, "revision": CURRENT_REVISION},
+        "migrations": {"current_revision": CURRENT_REVISION},
     }
-    result = infra_probe.evaluate_ready(payload, "20260804_0002")
+    result = infra_probe.evaluate_ready(payload, CURRENT_REVISION)
     assert result == {
         "ok": True,
         "status_ok": True,
         "database_ok": True,
         "revision_ok": True,
-        "current_revision": "20260804_0002",
-        "expected_revision": "20260804_0002",
+        "current_revision": CURRENT_REVISION,
+        "expected_revision": CURRENT_REVISION,
     }
 
 
 def test_evaluate_ready_rejects_revision_mismatch():
     payload = {"status": "ok", "database": {"ok": True, "revision": "old"}}
-    assert infra_probe.evaluate_ready(payload, "20260804_0002")["ok"] is False
+    assert infra_probe.evaluate_ready(payload, CURRENT_REVISION)["ok"] is False
 
 
 def test_build_report_is_secret_free_and_passes(tmp_path):
@@ -81,8 +82,8 @@ def test_build_report_is_secret_free_and_passes(tmp_path):
         elif url.endswith("/health/ready"):
             payload = {
                 "status": "ok",
-                "database": {"ok": True, "revision": "20260804_0002"},
-                "migrations": {"current_revision": "20260804_0002"},
+                "database": {"ok": True, "revision": CURRENT_REVISION},
+                "migrations": {"current_revision": CURRENT_REVISION},
             }
         return {
             "url": infra_probe.safe_url(url),
@@ -110,7 +111,7 @@ def test_markdown_contains_readable_status(tmp_path):
     def fake_http(url, timeout, *, expect_json=False):
         payload = None
         if url.endswith("/health/ready"):
-            payload = {"status": "ok", "database": {"ok": True, "revision": "20260804_0002"}}
+            payload = {"status": "ok", "database": {"ok": True, "revision": CURRENT_REVISION}}
         elif url.endswith("/health/live"):
             payload = {"status": "ok"}
         return {"url": infra_probe.safe_url(url), "reachable": True, "status": 200, "latency_ms": 1.0, "content_type": "application/json", "json": payload, "error": None}
@@ -134,7 +135,7 @@ def test_main_writes_json_and_markdown(monkeypatch, tmp_path, capsys):
         "observer": {"country": "RU", "city": "Moscow", "network": "mobile", "device": "iphone"},
         "target": {"base_url": "https://candidate.example"},
         "candidate_id": "candidate",
-        "expected_revision": "20260804_0002",
+        "expected_revision": CURRENT_REVISION,
         "checks": {},
     }
     monkeypatch.setattr(infra_probe, "build_report", lambda args: report)

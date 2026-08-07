@@ -1,12 +1,12 @@
-# OPS-001 - статус проверки
+# OPS-001 — статус проверки
 
 | Поле | Значение |
 |---|---|
-| Версия отчёта | 1.2 |
-| Дата | 06 августа 2026 |
-| Статус пакета | НУЖНА ФИНАЛЬНАЯ ПРОВЕРКА |
-| Незакрытый критерий | Production backup/restore drill |
-| План завершения | Выполнить на тестовом VPS INFRA-001 |
+| Версия отчёта | 1.3 |
+| Дата | 07 августа 2026 |
+| Статус пакета | ВЫПОЛНЕНО |
+| Перенесённый release gate | Production backup/restore drill → OPS-002/REL-001 |
+| Текущая schema после SYNC-001 | `20260807_0003` |
 
 ## 1. Подтверждённые проверки
 
@@ -16,47 +16,57 @@
 | CI encrypted PostgreSQL backup/restore | ПРОЙДЕНО | Separate restore database |
 | `/health/live` | ПРОЙДЕНО | HTTP 200 |
 | `/health/ready` | ПРОЙДЕНО | DB and migrations ok |
-| Revision | ПРОЙДЕНО | `20260804_0002` |
-| `X-Request-ID` response | ПРОЙДЕНО | Header and JSON match |
-| `X-Request-ID` application log | ПРОЙДЕНО | Structured JSON log found |
+| OPS-001 revision на момент проверки | ПРОЙДЕНО | `20260804_0002` |
+| `X-Request-ID` response/log | ПРОЙДЕНО | Header, JSON и structured log match |
 | Secret-free logs | ПРОЙДЕНО | No token/cookie/DB URL/resume body |
 | Protected `/ops/status` | ПРОЙДЕНО | 404 without secret, 200 with secret |
 | Provider telemetry | ПРОЙДЕНО | Trudvsem metrics present |
-| Webhook alert | ПРОЙДЕНО | Real POST JSON delivered |
-| Redeploy persistence | ПРОЙДЕНО | `cached_total=77` preserved |
+| Webhook alert | ПРОЙДЕНО | Real sanitised POST JSON delivered |
+| Redeploy persistence | ПРОЙДЕНО | Cached state preserved |
 
-## 2. Незакрытая проверка
+## 2. Решение PLAN_CURRENT 1.4.0
 
-Нужно создать encrypted backup реальной Render PostgreSQL, проверить manifest/SHA-256 и восстановить копию в отдельную test database. Production database не должна быть restore target.
+Базовый OPS-001 закрыт как выполненный: код, CI, Render observability и alerting подтверждены; vendor-neutral backup/restore tooling проверен на PostgreSQL в CI.
 
-## 3. Реализация в INFRA-001
+Encrypted backup **реальной** production PostgreSQL и restore в отдельную test database не отменены и не объявлены выполненными. Они перенесены в обязательный `OPS-002` и повторно проверяются в `REL-001`, когда будет выбран production VPS и isolated restore database.
 
-Для завершения добавлены:
+## 3. Текущий regression gate
 
-- Docker target `ops` с PostgreSQL 17 client tools;
-- persistent backup volume;
-- profile `restore-test` с isolated PostgreSQL 17;
-- команды backup, verify и restore в `docs/INFRA001_VPS_TEST.md`.
+Каждый merge продолжает выполнять:
 
-## 4. Критерий закрытия
+```text
+Verify OPS-001 observability controls
+Verify PostgreSQL encrypted backup and restore
+```
+
+SYNC-001 добавляет migration `20260807_0003`; OPS tooling должно продолжать backup/restore этой новой revision без изменения формата безопасности.
+
+## 4. Предрелизный production drill
+
+В OPS-002 выполнить:
 
 ```text
 production encrypted backup created
 manifest and SHA-256 verified
-restore database revision = 20260804_0002
+restore database revision = current production revision
 table counts match
 production database untouched
+rollback rehearsal passed
 ```
 
-После этого OPS-001 переводится в `ВЫПОЛНЕНО`.
+## 5. Временные diagnostics
 
-## 5. Временные настройки
+После тестов webhook/ops status:
 
-После тестов удалить Webhook.site URL, установить `DEBUG_DIAGNOSTICS=0`, удалить temporary diagnostics secret и подтвердить `/ops/status -> 404`.
+- удалить temporary Webhook.site URL;
+- установить `DEBUG_DIAGNOSTICS=0`;
+- удалить temporary diagnostics secret;
+- подтвердить `/ops/status -> 404`.
 
 ## 6. Журнал версий
 
 | Версия | Дата | Изменение |
 |---|---|---|
 | 1.1 | 06.08.2026 | Подтверждены logs correlation, webhook и CI restore |
-| 1.2 | 06.08.2026 | Production restore drill интегрирован в INFRA-001 VPS toolkit |
+| 1.2 | 06.08.2026 | Production restore drill интегрирован в INFRA toolkit |
+| 1.3 | 07.08.2026 | OPS-001 закрыт как базовый пакет; real production drill перенесён в OPS-002/REL-001 без отмены |

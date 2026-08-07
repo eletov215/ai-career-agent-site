@@ -1,5 +1,46 @@
 # AI Career Agent — журнал изменений
 
+## 1.4.1 — 2026-08-07 — SYNC-001 candidate
+
+### Добавлено
+
+- external `TrudvsemSyncService`, long-running worker и one-shot/queue CLI;
+- durable idempotent queue на `sync_runs`;
+- `sync_workers` heartbeat model/repository;
+- PostgreSQL advisory lock и SQLite lockfile;
+- migration `20260807_0003` с one-active-run partial unique index;
+- Render staging supervisor `scripts/start_runtime.py`;
+- Docker Compose `sync-worker` profile;
+- SYNC-001 unit/migration/config/manifest/route tests и отдельный CI step;
+- `SYNC001_RUNBOOK.md` и `SYNC001_VERIFICATION_STATUS.md`.
+
+### Изменено
+
+- `app.py` больше не создаёт daemon thread и не выполняет Trudvsem provider HTTP;
+- search/cache-miss/refresh/machine endpoint только создают persisted queued run;
+- expected Alembic revision обновлена до `20260807_0003`;
+- Render Start Command использует runtime supervisor;
+- repository docs синхронизированы с PLAN_CURRENT 1.4.1 и passport 2.15.
+
+### Совместимость и статус
+
+- UI, search payload, OAuth и vacancy schema совместимы;
+- существующий cache сохраняется при upstream failure;
+- `SYNC-001 — НУЖНА ПРОВЕРКА НА GITHUB/RENDER`;
+- после подтверждения следующий пакет — `SYNC-002`;
+- real VPS по-прежнему отложен до предрелизного `INFRA-001`.
+
+---
+
+## 1.4.0 — 2026-08-07 — hosting-independent sequence
+
+- кодовая инфраструктурная подготовка классифицирована как выполненный `INFRA-PREP-001`;
+- real VPS test перенесён в pre-release window;
+- OPS-001 закрыт как базовый пакет, production restore drill перенесён в OPS-002/REL-001;
+- SYNC-001 выбран следующим кодовым пакетом.
+
+---
+
 ## 1.3.5 — 2026-08-06 — INFRA-001
 
 ### Добавлено

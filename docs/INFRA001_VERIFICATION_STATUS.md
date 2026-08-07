@@ -1,87 +1,63 @@
-# INFRA-001 - статус реализации и проверки
+# INFRA-PREP-001 / INFRA-001 — статус
 
 | Поле | Значение |
 |---|---|
-| Версия отчёта | 1.0 |
-| Дата | 06 августа 2026 |
-| Статус | НУЖНА ПРОВЕРКА НА VPS |
-| Кодовая основа | `ai-career-agent-site-main (3).zip` |
+| Версия отчёта | 1.1 |
+| Дата | 07 августа 2026 |
+| INFRA-PREP-001 | ВЫПОЛНЕНО |
+| INFRA-001 real VPS | ОТЛОЖЕНО ДО ПРЕДРЕЛИЗНОГО ЭТАПА |
+| Канонический план | PLAN_CURRENT 1.4.1 |
 
-## 1. Реализовано
+## 1. INFRA-PREP-001 — выполнено
 
 | Область | Статус |
 |---|:---:|
-| Runtime Docker image | ГОТОВО |
-| OPS PostgreSQL 17 image | ГОТОВО |
-| Docker Compose stack | ГОТОВО |
-| One-shot migrations | ГОТОВО |
-| Private DB network | ГОТОВО |
-| Caddy TLS profile | ГОТОВО |
-| VPS environment template | ГОТОВО |
-| Infrastructure probe | ГОТОВО |
-| Provider decision record | ГОТОВО |
-| Unit/manifest tests | ГОТОВО |
-| CI container build/smoke | ТРЕБУЕТ GITHUB ACTIONS |
-| Real VPS deploy | НЕ ВЫПОЛНЕНО |
-| РФ/РБ network matrix | НЕ ВЫПОЛНЕНО |
-| Production backup/restore | НЕ ВЫПОЛНЕНО |
+| Runtime Docker image | ПРОЙДЕНО CI |
+| OPS PostgreSQL 17 image | ПРОЙДЕНО CI |
+| Docker Compose stack | ПРОЙДЕНО CI |
+| One-shot migrations | ПРОЙДЕНО CI |
+| Private DB network | ПРОЙДЕНО |
+| Caddy TLS profile | ПРОЙДЕНО manifest tests |
+| VPS environment template | ПРОЙДЕНО |
+| Infrastructure probe | ПРОЙДЕНО |
+| Provider decision template | ГОТОВО |
+| Container build/runtime smoke | ПРОЙДЕНО GitHub Actions |
+| External sync-worker profile | ДОБАВЛЕНО SYNC-001, ожидает regression CI |
 
-## 2. Изменённые файлы
+## 2. Классификация PLAN_CURRENT 1.4.0+
 
-```text
-Dockerfile
-.dockerignore
-.gitignore
-compose.yaml
-infra/gunicorn.conf.py
-infra/vps/Caddyfile
-infra/vps/.env.example
-infra/vps/compose.test.env
-scripts/infra_probe.py
-scripts/infra_manifest_check.py
-scripts/infra_container_smoke.sh
-tests/test_infra_probe.py
-tests/test_infra_manifests.py
-.github/workflows/ci.yml
-requirements-dev.txt
-docs/* INFRA and canonical sources
-```
+Кодовая container/probe часть прежнего INFRA-001 выделена в завершённый `INFRA-PREP-001`. Это позволяет продолжать hosting-independent functional development без аренды простаивающего VPS.
 
-## 3. Локальные доказательства
+`INFRA-001` теперь означает только реальную аренду и полевой тест VPS перед beta/production.
 
-| Проверка | Результат |
-|---|---|
-| Repository hygiene | ПРОЙДЕНО |
-| Compileall | ПРОЙДЕНО |
-| Full pytest | `103 passed, 6 skipped` |
-| INFRA tests | `12 passed` |
-| SQLite migrations | `20260804_0002` |
-| Alembic check | ПРОЙДЕНО |
-| Manifest validator | `ok: true` |
-| CI YAML parsing | 20 steps, корректно |
-| Shell syntax | ПРОЙДЕНО |
-| Docker build/smoke | Не запускался локально: Docker CLI отсутствует; выполняется в GitHub Actions |
+## 3. Real INFRA-001 — отложено
 
-## 4. GitHub критерии
+Будущие критерии:
+
+- public IPv4 и временный TLS hostname;
+- доступность из минимум двух сетей РФ и одной сети РБ;
+- live/ready/home/search/PDF/security smoke;
+- Yandex AI и Reed transport с exact source IP;
+- latency/cost/SLA/backup assessment;
+- provider decision record.
+
+## 4. SYNC-001 изменение container baseline
+
+Compose получил отдельный service:
 
 ```text
-Verify INFRA-001 manifests and probe tooling
-Validate INFRA-001 Docker Compose configuration
-Build INFRA-001 container targets
-Smoke-test INFRA-001 runtime image
-Run tests
+sync-worker (profile: sync)
 ```
 
-## 5. VPS критерии
+Он не публикует ports, работает в private backend network и запускает `scripts/trudvsem_sync_worker.py`. Web service остаётся Gunicorn-only. Render free staging использует sibling-process supervisor.
 
-- test URL без VPN доступен из РФ/РБ;
-- TLS валиден;
-- app live/ready/home - 200;
-- Yandex AI edge и Reed transport доступны;
-- search/PDF/security smoke проходят;
-- production backup restored in isolated DB;
-- provider choice documented.
+## 5. Следующее действие
 
-## 6. Следующее действие
+Не создавать VPS сейчас. Сначала завершить SYNC-001 verification и функциональные MVP packages. Real INFRA-001 выполняется в отдельном предрелизном окне до beta, а не в день запуска.
 
-После зелёного CI создать тестовый VPS у Timeweb Cloud как первого кандидата.
+## 6. Журнал
+
+| Версия | Дата | Изменение |
+|---|---|---|
+| 1.0 | 06.08.2026 | INFRA toolkit ожидал real VPS verification |
+| 1.1 | 07.08.2026 | Toolkit классифицирован как completed INFRA-PREP; real VPS test отложен; добавлен SYNC worker profile |

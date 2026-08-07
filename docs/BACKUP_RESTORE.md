@@ -1,7 +1,7 @@
 # AI Career Agent - backup и восстановление PostgreSQL
 
 **Пакет:** `OPS-001`  
-**Схема:** Alembic `20260804_0002`  
+**Схема:** Alembic `20260807_0003`  
 **Правило:** backup не считается рабочим, пока restore не проверен на отдельной базе.
 
 ## 1. Формат
@@ -175,4 +175,4 @@ docker compose --env-file .env --profile ops --profile restore-test run --rm \
   --backup /var/backups/ai-career-agent/render-production.dump.enc
 ```
 
-Перед выполнением сверить `RESTORE_DATABASE_URL`, manifest, SHA-256 и целевую revision `20260804_0002`.
+Перед выполнением сверить `RESTORE_DATABASE_URL`, manifest, SHA-256 и целевую revision `20260807_0003`.

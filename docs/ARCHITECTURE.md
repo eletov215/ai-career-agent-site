@@ -1,8 +1,8 @@
 # AI Career Agent — архитектура проекта
 
-> Последнее обновление: 05 августа 2026 года  
-> Текущий пакет: `OPS-001` — наблюдаемость и восстановление  
-> Статус пакета: **НУЖНА ПРОВЕРКА**; `SEC-001` параллельно ожидает повторный CI/429 smoke после proxy-aware rate-limit fix
+> Последнее обновление: 07 августа 2026 года  
+> Текущий пакет: `SYNC-001` — external Trudvsem worker  
+> Статус пакета: **НУЖНА ПРОВЕРКА НА GITHUB/RENDER**; expected revision `20260807_0003`
 
 ## 1. Цель архитектуры
 
@@ -45,24 +45,32 @@ project/
 │   ├── oauth_connection.py
 │   ├── vacancy.py                 # Vacancy + VacancySourceRecord
 │   ├── sync_run.py
+│   ├── sync_worker.py
 │   └── accounts.py                # temporary legacy tables
 ├── repositories/
 │   ├── users.py
 │   ├── oauth_connections.py
 │   ├── vacancies.py
-│   └── sync_runs.py
+│   ├── sync_runs.py
+│   └── sync_workers.py
 ├── migrations/versions/
 │   ├── 20260804_0001_initial_schema.py
-│   └── 20260804_0002_domain_model.py
+│   ├── 20260804_0002_domain_model.py
+│   └── 20260807_0003_external_sync_worker.py
 ├── services/
 │   ├── storage.py                 # StorageServices bundle for app.py
-│   ├── vacancy_store.py           # payload normalization/service API
+│   ├── vacancy_store.py           # cache/query service API
+│   ├── trudvsem_sync.py           # external sync orchestration
+│   ├── sync_lock.py               # PostgreSQL/SQLite process lock
 │   └── *_provider.py
 ├── scripts/
 │   ├── backup_database.py
 │   ├── verify_backup.py
 │   ├── restore_database.py
-│   └── send_test_alert.py
+│   ├── send_test_alert.py
+│   ├── sync_trudvsem.py
+│   ├── trudvsem_sync_worker.py
+│   └── start_runtime.py
 ├── tests/
 ├── templates/
 ├── static/
@@ -134,7 +142,7 @@ Legacy tables `accounts` и `hh_accounts` сохраняются временн�
 
 ### SyncRun
 
-Persistent lifecycle provider sync. Trudvsem сохраняет start/finish, processed/saved/cursor/error. Scheduler/thread architecture остаётся до `SYNC-001`.
+Persistent lifecycle provider sync. После SYNC-001 status `queued` является durable job, а `running/succeeded/failed` отражают external worker execution. Partial unique index допускает только один active run на source.
 
 ## 6. Security boundary SEC-001
 
@@ -216,7 +224,7 @@ Backup contract:
 - restore в отдельную DB и post-restore inventory verification;
 - production restore требует explicit override.
 
-Schema не меняется; revision остаётся `20260804_0002`. Offsite schedule, alert destination и production restore drill ещё являются verification criteria.
+OPS-001 сам schema не менял. SYNC-001 добавляет revision `20260807_0003`; production restore drill остаётся release gate OPS-002/REL-001.
 
 ## 8. Миграции
 
@@ -233,6 +241,14 @@ Schema не меняется; revision остаётся `20260804_0002`. Offsite
 - поддерживает SQLite/PostgreSQL;
 - имеет downgrade для staging/backup rehearsal и выравнивает PostgreSQL serial sequences после копирования explicit IDs.
 
+### 20260807_0003
+
+- закрывает legacy abandoned `running` sync rows как failed;
+- добавляет partial unique index `uq_sync_runs_active_source`;
+- создаёт `sync_workers` для external process heartbeat;
+- не меняет vacancy/OAuth/user payload;
+- поддерживает SQLite/PostgreSQL и controlled downgrade.
+
 Alembic — единственный production schema mechanism. `Base.metadata.create_all()` разрешён только в изолированных tests.
 
 ## 9. Runtime database
@@ -245,7 +261,7 @@ Alembic — единственный production schema mechanism. `Base.metadata
 backend=postgresql
 persistent=true
 configured=true
-revision=20260804_0002
+revision=20260807_0003
 ```
 
 ## 10. OAuth compatibility
@@ -263,7 +279,14 @@ Provider ingestion и template payload не меняются. `VacancyStore`:
 
 ## 12. Sync state
 
-In-memory state пока остаётся для текущего UI/worker. Дополнительно каждый run сохраняется в `sync_runs`, а `/trudvsem/status` может показать `persisted_run`. Полный вынос worker из Gunicorn выполняется в `SYNC-001`.
+SYNC-001 удаляет process-local queue/event/thread из Flask. Координация хранится в PostgreSQL:
+
+```text
+sync_runs      durable queue and execution lifecycle
+sync_workers   process heartbeat/liveness
+```
+
+Web routes создают idempotent `queued` run. External worker выполняет provider HTTP под PostgreSQL advisory lock (SQLite fallback — stale-aware lockfile), обновляет progress и переводит run в terminal state. Public status sanitised; diagnostic status может показать persisted run и worker heartbeat.
 
 ## 13. Собственный домен
 
@@ -279,11 +302,13 @@ In-memory state пока остаётся для текущего UI/worker. Д�
 
 ## 14. Deploy и rollback
 
-Текущий Render start command:
+Текущий Render start command для SYNC-001 candidate:
 
 ```bash
-python scripts/manage_db.py upgrade && gunicorn app:app
+python scripts/manage_db.py upgrade && python scripts/start_runtime.py
 ```
+
+Supervisor запускает Gunicorn и Trudvsem worker как sibling OS processes. На VPS Compose web остаётся отдельным от `sync-worker`.
 
 Rollback DATA-002:
 
@@ -294,12 +319,11 @@ Rollback DATA-002:
 
 ## 15. Следующие границы
 
-- `SEC-001`: подтвердить proxy-aware limiter в CI и production probe;
-- `OPS-001`: подтвердить CI, alert delivery и restore drill;
-- `INFRA-001`: выбрать и протестировать VPS из РФ/РБ;
-- `AI-BENCH-001` / `REED-COMPAT-001`: проверить AI и Reed;
-- `HOST-001` -> `DOMAIN-001` -> `MIG-001`: подготовить и переключить production;
-- затем `SYNC/SEARCH`, `AUTH/PROFILE`, AI functions.
+- завершить GitHub/Render verification `SYNC-001`;
+- `SYNC-002`: freshness watermark, retries и cleanup policy;
+- `SEARCH-001/002/003/004`: normalization, dedup и stable pagination;
+- `AUTH/PROFILE`, AI functions и JOB tracker;
+- перед beta: `INFRA-001` -> `REED-COMPAT-001` -> `HOST-001` -> `OPS-002` -> `DOMAIN-001` -> `MIG-001`.
 ## 16. INFRA-001 container boundary
 
 ```text
@@ -315,7 +339,23 @@ isolated restore-test PostgreSQL profile
 - Production Render не изменяется этим пакетом.
 - PostgreSQL services не публикуют host ports.
 - Web публикуется напрямую только во время controlled IPv4 test; с Caddy он привязан к localhost.
-- Один Gunicorn worker сохраняется до shared limiter storage и SYNC-001.
+- Один Gunicorn worker сохраняется до shared limiter storage; Trudvsem provider I/O уже вынесен в external worker.
 - OPS target используется для encrypted backup/restore, а не для web traffic.
 - Реальная доступность из РФ/РБ фиксируется `scripts/infra_probe.py` и матрицей `docs/INFRA001_VPS_TEST.md`.
+
+## 17. SYNC-001 process boundary
+
+```text
+Render staging container
+  scripts/start_runtime.py
+    ├── Gunicorn -> Flask routes -> PostgreSQL cache / durable enqueue
+    └── sync worker -> advisory lock -> Trudvsem API -> PostgreSQL upsert
+
+VPS / Docker Compose
+  web service         (Gunicorn only)
+  sync-worker service (provider I/O only)
+  db service          (private network)
+```
+
+Ключевая гарантия: web request не запускает network sync и не ждёт provider API. Failure external worker не удаляет cache и не останавливает web.
 

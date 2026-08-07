@@ -3,13 +3,13 @@
 | Поле | Значение |
 |---|---|
 | Документ | PROJECT_PASSPORT |
-| Версия паспорта | 2.13 |
-| Дата | 06 августа 2026 |
+| Версия паспорта | 2.15 |
+| Дата | 07 августа 2026 |
 | Статус | ДЕЙСТВУЮЩИЙ |
-| Связанный план | `AI_Career_Agent_PLAN_CURRENT v1.3.5` |
-| Основа кода | `ai-career-agent-site-main (3).zip` -> INFRA-001 candidate build v1.3.5 |
+| Связанный план | `AI_Career_Agent_PLAN_CURRENT v1.4.1` |
+| Основа кода | `ai-career-agent-site-main (4).zip` + SYNC-001 candidate; GitHub main после INFRA-PREP-001 merge |
 
-> Контрольные статусы: FND-001/FND-002/DATA-001/DATA-002/SEC-001 — ВЫПОЛНЕНО; OPS-001 — НУЖНА ПРОВЕРКА, остался только production backup/restore drill; INFRA-001 — НУЖНА ПРОВЕРКА НА VPS; AI-BENCH-001, REED-COMPAT-001, AI-PROVIDER-001, HOST-001, DOMAIN-001 и MIG-001 — ЗАПЛАНИРОВАНО.
+> Контрольные статусы: FND-001/FND-002/DATA-001/DATA-002/SEC-001/OPS-001/INFRA-PREP-001 — **ВЫПОЛНЕНО**; DOC-001 — **В РАБОТЕ как постоянный процесс**; SYNC-001 — **НУЖНА ПРОВЕРКА НА GITHUB/RENDER**; SYNC-002 — следующий пакет после подтверждения; INFRA-001 — **ОТЛОЖЕНО ДО ПРЕДРЕЛИЗНОГО ЭТАПА**.
 
 ## 1. Назначение
 
@@ -39,7 +39,7 @@ AI Career Agent — коммерческий веб-сервис карьерн�
 - GitHub Actions;
 - Docker multi-target images, Docker Compose, Caddy test TLS и VPS probe tooling;
 - Render временно как staging/резервная площадка;
-- production VPS выбирается в `INFRA-001`;
+- production VPS арендуется и тестируется только в предрелизном `INFRA-001`;
 - основной AI-кандидат — Yandex AI Studio/Alice AI после `AI-BENCH-001`.
 
 ```text
@@ -50,17 +50,17 @@ security.py                CSRF/rate limits/headers/request limits
 observability.py           structured logs/request IDs/metrics/alerts
 operations/backup.py       encrypted backup/verified restore
 Dockerfile / compose.yaml  runtime, ops, DB, migrations, restore-test
-infra/                     Gunicorn, Caddy, VPS environment and runbooks
-scripts/                    migrations, backup, restore, alert test
+infra/                     Gunicorn, Caddy, VPS environment and probes
+scripts/                   migrations, backup, restore, alert, infra probes, sync CLI/worker/supervisor
 domain/ models/ repositories/ services/
-migrations/                Alembic 0001 + 0002
-tests/                     unit/integration/security/ops tests
+migrations/                Alembic 0001 + 0002 + 0003 (external sync worker)
+tests/                     unit/integration/security/ops/infra/sync tests
 docs/                      architecture, security and runbooks
 render.yaml
 .github/workflows/ci.yml
 ```
 
-## 4. Подтверждённые пакеты
+## 4. Подтверждённые базовые пакеты
 
 ### FND-001 — ВЫПОЛНЕНО
 
@@ -78,131 +78,128 @@ PostgreSQL 17, `DATABASE_URL`, Alembic `20260804_0001`, restart persistence по
 
 User/OAuthConnection/canonical Vacancy/VacancySourceRecord/SyncRun, repositories, StorageServices и migration `20260804_0002` подтверждены в CI и Render; cache/persisted run пережили restart.
 
-## 5. SEC-001 — ВЫПОЛНЕНО
+### SEC-001 — ВЫПОЛНЕНО
 
-Реализованы secure `aca_session`, one-time OAuth state, global CSRF, route limits, trusted hosts, CSP/HSTS/browser headers, bounded uploads/PDF, POST-only logout, diagnostics gate, neutral errors и university-logo SSRF baseline. Production уже подтвердил headers, cookie, CSRF 400, health/revision, страницы, поиск, PDF, закрытые diagnostics и secret-free logs.
+Production подтвердил secure `aca_session`, CSRF `400`, CSP/HSTS/browser headers, закрытые diagnostics, безопасный Trudvsem status, secret-free logs и стабильный rate-limit bucket: первые 20 запросов к diagnostic route дали `404`, 21-й — `429` с `Retry-After`.
 
-Обнаруженная нестабильность limiter buckets за Cloudflare/Render исправлена валидируемым client address и HMAC bucket key. Production-тест подтвердил ожидаемое поведение: первые 20 запросов к закрытому diagnostic route вернули `404`, двадцать первый — `429` с `Retry-After=295`. Также подтверждены headers, secure cookie, CSRF `400`, health/revision, страницы, поиск, PDF, закрытые diagnostics, безопасный Trudvsem status и secret-free application logs. Database revision не менялась: `20260804_0002`.
+## 5. OPS-001 — ВЫПОЛНЕНО
 
-## 6. OPS-001 — НУЖНА ПРОВЕРКА
+Подтверждены production JSON logs, `X-Request-ID` correlation, health/live/readiness, protected `/ops/status`, provider metrics, sanitised alert webhook, encrypted PostgreSQL backup/restore toolchain и отдельные GitHub OPS/backup steps.
 
-### Реализовано
+**Важно:** ранее незакрытый encrypted backup реальной production PostgreSQL + restore в отдельную test database не объявлен пройденным. В PLAN_CURRENT 1.4.0 он перенесён целиком в `OPS-002` и повторно проверяется в `REL-001`. Это release gate, а не текущий blocker функциональной разработки.
 
-- production JSON logs в stdout и text logs локально;
-- `X-Request-ID` на каждом запросе и в logs/alerts;
-- redaction configured secrets, Authorization/Cookie, tokens, passwords, URL credentials и query strings;
-- bounded HTTP/provider metrics с p50/p95;
-- `/health/live`, `/health/ready` и совместимый `/health`;
-- diagnostics-only `/ops/status` и `POST /ops/alerts/test`;
-- optional HTTPS alert webhook, не блокирующий приложение;
-- PostgreSQL custom-format `pg_dump`/`pg_restore`;
-- SQLite online backup для local/test;
-- AES-256-GCM backup encryption независимым `BACKUP_ENCRYPTION_KEY`;
-- secret-free manifest с revision, table counts, size и SHA-256;
-- checksum/decrypt/revision/count verification и production restore guard;
-- runbooks `OPERATIONS`, `BACKUP_RESTORE`, `INCIDENT_RESPONSE`;
-- отдельные CI steps для observability и реального encrypted PostgreSQL backup/restore.
+OPS-001 database migration отсутствовала. После SYNC-001 ожидаемая revision проекта — `20260807_0003`.
 
-### Влияние
+## 6. INFRA-PREP-001 — ВЫПОЛНЕНО
 
-Интерфейс не меняется. Ответы получают `X-Request-ID`; liveness отделён от readiness. Логи не должны содержать query/body/cookies/tokens/resume text. Backup хранится вне web filesystem. Database migration отсутствует; revision остаётся `20260804_0002`.
+Кодовая часть прежнего INFRA-001 выделена в самостоятельный подготовительный пакет без изменения кода:
 
-### Подтверждено 06 августа 2026
+- non-root runtime/ops Docker images;
+- Compose stack с private PostgreSQL, one-shot migrations, web, optional Caddy TLS и isolated restore DB;
+- secret-free environment template;
+- DNS/TCP/TLS/HTTP probes для app/Yandex AI/Reed и optional providers;
+- manifest validation, Docker build и runtime smoke в GitHub Actions;
+- VPS runbook и provider shortlist.
 
-- `/health/live`, `/health/ready` и `/health` возвращают `200`; PostgreSQL `ok=true`, current/expected revision `20260804_0002`.
-- Переданный `X-Request-ID` совпадает в заголовке ответа и JSON.
-- Тот же `X-Request-ID` найден в structured application JSON log: `route=/api/sources/trudvsem/status`, `method=GET`, `status_code=200`, присутствует `duration_ms`; query/body/cookies/tokens в записи отсутствуют.
-- `/ops/status` без секрета возвращает `404`, с diagnostics secret — `200`.
-- Telemetry показывает HTTP endpoints, provider `trudvsem`, recent errors `0`.
-- Webhook alert подтверждён end-to-end: endpoint вернул `202 queued`, Webhook.site получил `POST application/json` от `AI-Career-Agent-Ops/1.0` с sanitised event `ops_test_alert`, `service`, `environment`, `version`, `level`, `message` и `request_id`; секреты отсутствуют.
-- GitHub Actions после merge полностью зелёный, включая `Verify OPS-001 observability controls`, `Verify PostgreSQL encrypted backup and restore` и `Run tests`.
-- После redeploy uptime сбросился, а `cached_total=77` сохранился; health/readiness остались зелёными.
+Это делает приложение переносимым на VPS без необходимости оплачивать ВМ во время разработки.
 
-### Для завершения требуется
+## 7. SYNC-001 — НУЖНА ПРОВЕРКА НА GITHUB/RENDER
 
-1. Создать encrypted backup реальной production PostgreSQL вне web filesystem и проверить manifest/SHA-256.
-2. Restore выполнить в отдельную test database с совпадающими revision/table counts.
-3. После проверки удалить временный Webhook.site URL, отключить `DEBUG_DIAGNOSTICS` и удалить временный diagnostics secret; `/ops/status` снова должен возвращать `404`.
+Реализован hosting-independent внешний контур Trudvsem sync:
 
-## 7. INFRA-001 — НУЖНА ПРОВЕРКА НА VPS
+- Gunicorn/Flask больше не создаёт daemon thread и не выполняет provider HTTP;
+- web routes только читают PostgreSQL cache и идемпотентно ставят durable job в `sync_runs`;
+- `scripts/trudvsem_sync_worker.py` выполняет queue jobs отдельным OS process;
+- `scripts/sync_trudvsem.py` поддерживает one-shot/queue CLI;
+- PostgreSQL advisory lock и SQLite lockfile блокируют параллельный sync;
+- `sync_workers` хранит heartbeat/liveness;
+- migration `20260807_0003` закрывает legacy abandoned runs и добавляет one-active-run constraint;
+- Render free staging использует `scripts/start_runtime.py`, а Docker Compose — отдельный `sync-worker` profile;
+- provider timeout сохраняет старый cache и записывает контролируемый failed `SyncRun`.
 
-### Реализовано
+До статуса ВЫПОЛНЕНО нужны зелёный GitHub CI и Render smoke: revision `20260807_0003`, worker heartbeat, queue `202` и переход persisted run до terminal status.
 
-- non-root Docker runtime image с healthcheck;
-- отдельный OPS image с PostgreSQL 17 `pg_dump`/`pg_restore`;
-- Compose stack: private PostgreSQL, one-shot migrations, web, optional Caddy TLS, isolated restore-test database;
-- единый Gunicorn config с одним worker до Redis/SYNC-001;
-- secret-free `.env.example` и private backend network;
-- DNS/TCP/TLS/HTTP probe приложения, Yandex AI, Reed, HH, Trudvsem и SuperJob;
-- JSON/Markdown probe reports без query strings и credentials;
-- manifest validator, unit tests, Docker build и runtime smoke в CI;
-- provider shortlist: Timeweb Cloud first test, Yandex Cloud/Beget/Selectel alternatives;
-- VPS runbook, который одновременно завершает production backup/restore OPS-001.
+## 8. INFRA-001 — ОТЛОЖЕНО ДО ПРЕДРЕЛИЗНОГО ЭТАПА
 
-### Не меняется
+`INFRA-001` теперь означает только реальную аренду и полевой тест VPS:
 
-- UI и business routes;
-- PostgreSQL schema и Alembic revision `20260804_0002`;
-- Render остаётся production/staging до MIG-001;
-- DNS и OAuth callback URL не переключаются.
+1. public IPv4 и временный TLS hostname;
+2. доступность минимум из двух сетей РФ и одной сети РБ без VPN;
+3. health/search/resume/security smoke;
+4. outbound transport к Yandex AI и Reed;
+5. latency/cost/SLA/backup assessment;
+6. provider decision record.
 
-### Для завершения требуется
+До начала этого пакета Render остаётся staging/резервной площадкой, DNS/OAuth callback URL не переключаются.
 
-1. Реальный VPS 2 vCPU / 4 GB / 40 GB с public IPv4.
-2. Test deploy и TLS hostname.
-3. Доступность без VPN из контрольных сетей РФ/РБ.
-4. Yandex AI и Reed transport probes.
-5. Search/PDF/security smoke.
-6. Encrypted Render production backup и restore в isolated database.
-7. Фактический provider decision record.
-
-## 8. Текущее функциональное состояние
+## 9. Текущее функциональное состояние
 
 - Главная/AI Career/resume builder работают.
 - Search: Trudvsem, HH, Reed, conditional SuperJob.
 - OAuth HH/SJ: текущий pre-MVP, tokens encrypted.
-- Trudvsem cache и daemon пока внутри web process.
+- Trudvsem cache остаётся PostgreSQL-backed; daemon thread удалён, external worker candidate ожидает GitHub/Render verification.
 - PDF parser эвристический, не LLM.
 - Saved jobs пока localStorage.
 - Own account/profile/real AI/match/letters/tracker впереди.
 
-## 9. Критические риски и обязательная очередь
+## 10. Новая обязательная очередь разработки
 
-1. Создать реальный VPS и подтвердить INFRA-001 из сетей РФ/РБ.
-2. На этом VPS завершить OPS-001: encrypted backup реальной Render PostgreSQL и restore drill в isolated test database.
-3. `AI-BENCH-001` — проверить Yandex AI Studio/Alice AI.
-4. `REED-COMPAT-001` — проверить Reed с точного source IP и условия использования.
-5. `AI-PROVIDER-001` — зафиксировать AI-контур, privacy, стоимость и fallback.
-6. `HOST-001` — подготовить production VPS.
-7. `DOMAIN-001` — домен, TLS, PUBLIC_BASE_URL и OAuth callback URL.
-8. `MIG-001` — перенос PostgreSQL/production с rollback.
-
-## 10. Зафиксированная инфраструктурная стратегия
-
-Render остаётся staging/резервной площадкой: из части сетей РФ DNS работает, но TCP 443 до edge IP не устанавливается и запросы не доходят до Render Logs; сайт доступен из Республики Беларусь и мобильных сетей.
+### Сейчас — функциональный MVP без аренды VPS
 
 ```text
-OPS-001 production restore + INFRA-001 real VPS verification
--> AI-BENCH-001
--> REED-COMPAT-001
--> AI-PROVIDER-001
--> HOST-001
--> DOMAIN-001
--> MIG-001
+SYNC-001 verification -> SYNC-002
+-> SEARCH-001 -> SEARCH-002 -> SEARCH-003 -> SEARCH-004
+-> AUTH-001 -> AUTH-002
+-> PROF-001 -> PROF-002 -> PROF-003 -> PRIV-001
+-> SEARCH-005
+-> AI-BENCH-001 -> AI-PROVIDER-001 -> LEGAL-001
+-> AI-001 -> AI-002 -> AI-003 -> AI-004 -> AI-005 -> AI-006
+-> JOB-001 -> JOB-002 -> JOB-003/JOB-004
+-> PERF/A11Y/ANL по готовности
 ```
 
-Production-кандидат должен иметь постоянный IPv4, доступность из РФ/РБ, исходящий HTTPS к Yandex AI Studio и Reed, Docker/Compose, PostgreSQL, worker, firewall, offsite backup, monitoring и rollback.
+`DOC-001` выполняется постоянно вместе с каждым package и не является отдельным blocker.
 
-## 11. AI и Reed
+### Перед beta / production — инфраструктурный блок
 
-- Основной AI-кандидат: Yandex AI Studio/Alice AI после benchmark на нашем golden dataset.
+```text
+INFRA-001 -> REED-COMPAT-001 -> HOST-001
+-> OPS-002 + production backup/restore drill
+-> DOMAIN-001 -> MIG-001
+-> final SEC/OPS smoke -> REL-001 -> commercial release
+```
+
+## 11. Зафиксированная hosting-independent стратегия
+
+До предрелизного окна новый код не должен зависеть от конкретного hosting provider:
+
+- configuration через `config.py` и environment variables;
+- PostgreSQL через `DATABASE_URL`, schema только Alembic;
+- WSGI `app:app`;
+- публичные абсолютные URL через будущий `PUBLIC_BASE_URL`;
+- provider/AI integrations через service/adapters и feature flags;
+- worker/scheduler отделяется от web process в `SYNC-001`;
+- health/readiness, Docker/Compose и probes остаются в CI.
+
+Render не считается гарантированным production для РФ/РБ из-за подтверждённой сетевой недоступности из части сетей РФ, но остаётся пригодным staging/резервным контуром до `MIG-001`.
+
+## 12. AI и Reed
+
+- `AI-BENCH-001` можно выполнять без реального VPS: качество Yandex AI Studio/Alice AI проверяется на golden dataset, а transport с будущего source IP повторяется в `INFRA-001`.
 - Бизнес-логика должна использовать независимый `AIProvider`; OpenAI не является обязательным baseline для РФ/РБ.
 - API keys хранятся только на сервере.
-- Reed требует real API smoke с выбранного VPS и письменного подтверждения условий.
-- Reed обязан иметь feature flag и graceful degradation.
+- `REED-COMPAT-001` требует точного IP выбранного VPS и выполняется сразу после `INFRA-001`.
+- Reed должен иметь feature flag и graceful degradation.
 
-## 12. Правила рабочего чата
+## 13. Следующий пакет
 
-- Перед изменениями читать паспорт, PLAN_CURRENT и актуальный ZIP; работать по одному package ID и не смешивать unrelated design/business changes.
-- Не ставить ВЫПОЛНЕНО без критериев; после пакета возвращать ZIP, PLAN_CURRENT DOCX/PDF/MD, паспорт и source audit без `.env`, secrets, databases, dumps, backups, virtualenv, caches и bytecode.
-- Для OPS-001 считать подтверждёнными GitHub OPS/backup steps, request ID correlation, webhook delivery и redeploy persistence; production backup/restore выполняется внутри INFRA-001 VPS test. Для новых документов применять `docs/DOCUMENT_STANDARD.md`.
+Сначала завершается verification `SYNC-001`: GitHub Actions, Render migration `20260807_0003`, external worker heartbeat и queue-to-terminal-run smoke. После подтверждения следующий кодовый пакет — `SYNC-002`, который добавит полную incremental freshness/cleanup policy поверх созданного worker contract.
+
+## 14. Правила рабочего чата
+
+- Перед изменениями читать паспорт, PLAN_CURRENT и актуальный ZIP; работать по одному package ID.
+- Не смешивать unrelated design/business changes.
+- Не ставить ВЫПОЛНЕНО без критериев и доказательств.
+- После пакета возвращать ZIP, PLAN_CURRENT DOCX/PDF/MD, паспорт и source audit без `.env`, secrets, databases, dumps, backups, virtualenv, caches и bytecode.
+- Канонические и repository docs синхронизируются вместе с каждым code package.
+- Для новых документов применять единый документный стандарт проекта.

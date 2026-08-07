@@ -1,15 +1,15 @@
-# INFRA-001 - контейнерная упаковка и комплект тестирования VPS
+# INFRA-PREP-001 — контейнерная упаковка и комплект будущего VPS-теста
 
 | Поле | Значение |
 |---|---|
-| Пакет | INFRA-001 |
-| Версия реализации | 1.0 |
-| Дата | 06 августа 2026 |
-| Статус | НУЖНА ПРОВЕРКА НА РЕАЛЬНОМ VPS |
-| Основа кода | `ai-career-agent-site-main (3).zip` |
-| Связанный план | PLAN_CURRENT 1.3.5 |
+| Пакет | INFRA-PREP-001 |
+| Версия реализации | 1.1 |
+| Дата | 07 августа 2026 |
+| Статус | ВЫПОЛНЕНО; real INFRA-001 отложен |
+| Основа кода | GitHub main после INFRA-PREP merge + SYNC-001 candidate |
+| Связанный план | PLAN_CURRENT 1.4.1 |
 
-> Кодовая часть INFRA-001 завершена. Пакет нельзя перевести в `ВЫПОЛНЕНО`, пока тестовая копия не развёрнута у выбранного российского провайдера и не подтверждена из контрольных сетей РФ и РБ.
+> Кодовая часть классифицирована как выполненный `INFRA-PREP-001`. Реальная аренда и полевая проверка VPS остаются отдельным отложенным `INFRA-001` перед beta.
 
 ## 1. Цель
 
@@ -27,6 +27,8 @@ Caddy (optional TLS profile)
 Gunicorn / Flask web container
    |
    +---- internal Docker network ---- PostgreSQL 17
+   |
+External sync-worker service (profile: sync)
    |
    +---- external HTTPS ------------ Yandex AI Studio / Reed / HH / Trudvsem
 
@@ -88,7 +90,7 @@ Isolated restore-test PostgreSQL container
 | Python compileall | ПРОЙДЕНО | Локально |
 | Full pytest | `103 passed, 6 skipped` | Локально; skips только Flask/Psycopg/PostgreSQL environment |
 | INFRA unit/manifest tests | `12 passed` | Локально |
-| SQLite migrations | Revision `20260804_0002` | Локально |
+| SQLite migrations | Revision `20260807_0003` | Локально |
 | Alembic check | No new upgrade operations | Локально |
 | `infra_manifest_check.py` | `ok: true` | Локально |
 | CI YAML / shell syntax | ПРОЙДЕНО | Локально |

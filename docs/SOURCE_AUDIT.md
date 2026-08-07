@@ -1,86 +1,96 @@
-# AI Career Agent - аудит источников
+# AI Career Agent — аудит источников
 
 | Поле | Значение |
 |---|---|
-| Версия | 1.3.5 |
-| Дата | 06 августа 2026 |
+| Версия | 1.4.1 |
+| Дата | 07 августа 2026 |
 | Статус | ДЕЙСТВУЮЩИЙ |
-| Актуальный код | `ai-career-agent-site-main (3).zip` + INFRA-001 changes |
-| Канонический план | PLAN_CURRENT 1.3.5 |
-| Канонический паспорт | Project Passport 2.13 |
+| Входной код | `ai-career-agent-site-main (4).zip` |
+| SHA-256 входного ZIP | `2d3c4cc36121ae70a0deec98f64abf29efb4562f6501dce062186ed781e62419` |
+| GitHub snapshot | Пользователь подтвердил, что ZIP выгружен из актуального `main`; commit metadata в ZIP отсутствует |
+| Канонический план до пакета | PLAN_CURRENT 1.4.0 |
+| Канонический паспорт до пакета | PROJECT_PASSPORT 2.14 |
+| Результат | SYNC-001 candidate + PLAN_CURRENT 1.4.1 + паспорт 2.15 |
 
-## 1. Результат проверки входного ZIP
+## 1. Проверка входного ZIP
 
-| Область | Состояние до изменений | Решение |
+| Область | Найдено | Решение |
 |---|---|---|
-| Production code | SEC-001 fix и OPS-001 присутствуют | Использован без отката |
-| Database | Alembic 0001/0002, PostgreSQL 17 | Схема не изменялась |
-| CI | SEC/OPS/backup steps присутствуют | Расширен INFRA build/smoke |
-| `docs/PLAN_CURRENT.md` | Версия 1.3.2 | Синхронизирован до 1.3.5 |
-| `docs/PROJECT_PASSPORT.md` | Версия 2.10 | Синхронизирован до 2.13 |
-| `README_FIRST.txt` | Устаревшая инструкция SEC CI fix | Удалён |
-| `.gitignore` | Отсутствовал | Восстановлен и расширен |
-| Docker/VPS manifests | Отсутствовали | Добавлены в INFRA-001 |
+| Production code | INFRA-PREP-001, SEC-001, OPS-001 присутствуют | Использован как рабочая основа без отката |
+| GitHub workflow | `.github/workflows/ci.yml` присутствует | Расширен отдельным SYNC-001 step |
+| Dotfiles | `.gitignore`, `.dockerignore`, `.env.example` присутствуют | Сохранены |
+| Database | Alembic 0001/0002 | Добавлена migration 0003 |
+| Repository plan | 1.3.5 | Устарел относительно загруженного PLAN 1.4.0; заменён и обновлён до 1.4.1 |
+| Repository passport | 2.13 | Устарел относительно загруженного паспорта 2.14; заменён и обновлён до 2.15 |
+| README/ROADMAP | INFRA-001 как ближайший пакет | Синхронизированы с новой hosting-independent очередью |
+| Trudvsem lifecycle | daemon thread внутри Gunicorn | Заменён external worker/durable queue |
 
-## 2. Канонические статусы
+## 2. Актуальные источники после пакета
+
+1. GitHub `main` после последнего подтверждённого merge остаётся главным источником кода.
+2. До merge SYNC-001 рабочей основой является полный ZIP этого package.
+3. Канонический план: PLAN_CURRENT 1.4.1.
+4. Канонический паспорт: PROJECT_PASSPORT 2.15.
+5. Implementation: `docs/SYNC001_IMPLEMENTATION.md`.
+6. Verification: `docs/SYNC001_VERIFICATION_STATUS.md`.
+7. Operations: `docs/SYNC001_RUNBOOK.md`.
+
+## 3. Статусы
 
 | Пакет | Статус |
 |---|---|
-| FND-001 | ВЫПОЛНЕНО |
-| FND-002 | ВЫПОЛНЕНО |
-| DATA-001 | ВЫПОЛНЕНО |
-| DATA-002 | ВЫПОЛНЕНО |
+| FND-001/FND-002 | ВЫПОЛНЕНО |
+| DATA-001/DATA-002 | ВЫПОЛНЕНО |
 | SEC-001 | ВЫПОЛНЕНО |
-| OPS-001 | НУЖНА ПРОВЕРКА: production backup/restore |
-| INFRA-001 | НУЖНА ПРОВЕРКА НА VPS |
-| AI-BENCH-001 | ЗАПЛАНИРОВАНО |
+| OPS-001 | ВЫПОЛНЕНО |
+| INFRA-PREP-001 | ВЫПОЛНЕНО |
+| DOC-001 | В РАБОТЕ как постоянный процесс |
+| SYNC-001 | НУЖНА ПРОВЕРКА НА GITHUB/RENDER |
+| SYNC-002 | ЗАПЛАНИРОВАНО |
+| INFRA-001 | ОТЛОЖЕНО ДО ПРЕДРЕЛИЗНОГО ЭТАПА |
 
-## 3. Новые канонические документы
+## 4. Изменённые категории файлов
 
-- `docs/DOCUMENT_STANDARD.md`
-- `docs/INFRA001_IMPLEMENTATION.md`
-- `docs/INFRA001_VPS_TEST.md`
-- `docs/INFRA001_PROVIDER_DECISION.md`
-- `docs/OPS001_VERIFICATION_STATUS.md`
-- `docs/PLAN_CURRENT.md`
-- `docs/PROJECT_PASSPORT.md`
-
-## 4. Внешние источники INFRA-001
-
-Проверены только официальные материалы провайдеров и API:
-
-- Timeweb Cloud: cloud servers, public IP, firewall, backup, API/IaC.
-- Yandex Cloud: Compute, VPC pricing, snapshots и AI API endpoints.
-- Beget Cloud: VPS geography, public IPv4, backups и monitoring.
-- Selectel: cloud servers, snapshots и backup methods.
-- Reed Jobseeker API: endpoint и Basic Auth.
-- HeadHunter OpenAPI: base URL и User-Agent requirement.
-
-Полный список ссылок находится в `docs/INFRA001_PROVIDER_DECISION.md`.
+- Flask queue/status integration;
+- external sync service, lock и worker scripts;
+- domain/models/repositories/storage;
+- Alembic migration и expected revision;
+- Render/Docker/Compose runtime;
+- config/CI/tests;
+- README, ROADMAP, CHANGELOG, architecture, operations, migration docs;
+- canonical plan/passport and package runbooks.
 
 ## 5. Секреты и runtime artifacts
 
-Проверяется отсутствие:
+Финальный пакет не должен содержать:
 
 ```text
 .env
 OAuth/API tokens
-DATABASE_URL
-production backups
-database files
+DATABASE_URL credentials
+production backups/dumps
+*.db
 virtualenv
-cache/bytecode
+.pytest_cache
+__pycache__
+*.pyc
 infra/reports
 ```
 
-`infra/vps/.env.example` содержит только `CHANGE_ME` и test-only placeholders.
+`infra/vps/.env.example` содержит только placeholders.
 
-## 6. Следующее действие
+## 6. Внешние источники
 
-Загрузить полный ZIP INFRA-001 в новую ветку, дождаться зелёного CI, затем создать тестовый VPS и выполнить `docs/INFRA001_VPS_TEST.md`.
+SYNC-001 не требует новых внешних данных или платных API. Provider HTTP в tests mocked. Инфраструктурная стратегия по VPS/Yandex AI/Reed остаётся без изменений относительно PLAN_CURRENT 1.4.0.
 
-## 7. Журнал версий
+## 7. Следующее действие
+
+Загрузить полный SYNC-001 ZIP в отдельную ветку, дождаться зелёного CI, затем выполнить Render checklist. Старые PLAN_CURRENT ниже 1.4.1 и паспорт ниже 2.15 считать устаревшими для текущего статуса.
+
+## 8. Журнал
 
 | Версия | Дата | Изменение |
 |---|---|---|
-| 1.3.5 | 06.08.2026 | Синхронизированы code/docs sources и добавлен INFRA-001 toolkit |
+| 1.3.5 | 06.08.2026 | INFRA-PREP toolkit и source sync |
+| 1.4.0 | 07.08.2026 | Hosting strategy: real VPS перенесён в pre-release |
+| 1.4.1 | 07.08.2026 | Проверен актуальный GitHub ZIP; repository docs синхронизированы; реализован SYNC-001 candidate |

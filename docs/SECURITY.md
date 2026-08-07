@@ -1,8 +1,8 @@
 # SEC-001 — базовый защитный слой
 
-> Версия кандидата: 05 августа 2026 года  
-> Статус: **НУЖНА ПРОВЕРКА**  
-> Production entrypoint остаётся `gunicorn app:app`.
+> Базовый пакет SEC-001 подтверждён в production 06 августа 2026 года.  
+> Текущая schema после SYNC-001 candidate: `20260807_0003`.  
+> Render entrypoint для staging после SYNC-001: `python scripts/manage_db.py upgrade && python scripts/start_runtime.py`.
 
 ## 1. Назначение
 
@@ -16,7 +16,7 @@ SEC-001 закрывает базовые риски до появления с�
 - базовая браузерная политика через security headers;
 - дополнительные ограничения PDF и внешнего поиска эмблем.
 
-Пакет не реализует first-party регистрацию, роли администратора, Redis, WAF, antivirus sandbox или отдельный background worker. Эти задачи остаются в AUTH/OPS/SYNC.
+Пакет не реализует first-party регистрацию, роли администратора, Redis, WAF или antivirus sandbox. Отдельный Trudvsem background worker реализуется пакетом SYNC-001 и не ослабляет ограничения SEC-001.
 
 ## 2. Реализация
 
@@ -210,7 +210,7 @@ Verify SEC-001 security controls
 
 ## 5. Production smoke после merge
 
-1. `/health` — HTTP 200, revision остаётся `20260804_0002`.
+1. `/health` — HTTP 200, revision после SYNC-001 должна быть `20260807_0003`.
 2. Главная, AI Career, resume builder и vacancies открываются.
 3. PDF upload с корректным token проходит; запрос без token получает neutral 400.
 4. Одиннадцатый быстрый preview request получает 429 в контролируемом тесте, обычное использование не блокируется.
@@ -223,7 +223,7 @@ Verify SEC-001 security controls
 
 ## 6. Rollback
 
-SEC-001 не добавляет database migration. Для отката достаточно вернуть application commit и redeploy. PostgreSQL schema revision остаётся `20260804_0002`.
+SEC-001 не добавляет database migration. Для отката достаточно вернуть application commit и redeploy. PostgreSQL schema revision после SYNC-001 должна быть `20260807_0003`.
 
 При rollback старый GET `/logout` и публичные technical endpoints вернут прежнее поведение, поэтому откат следует использовать только для аварийного восстановления и затем исправить первопричину.
 

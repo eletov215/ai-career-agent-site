@@ -3,9 +3,9 @@
 | Поле | Значение |
 |---|---|
 | Документ | INFRA001-VPS-TEST |
-| Версия | 1.0 |
-| Дата | 06 августа 2026 |
-| Статус | ГОТОВО К ИСПОЛЬЗОВАНИЮ |
+| Версия | 1.1 |
+| Дата | 07 августа 2026 |
+| Статус | ОТЛОЖЕНО ДО ПРЕДРЕЛИЗНОГО INFRA-001 |
 | Результат | Заполняется после создания VPS |
 
 ## 1. Рекомендуемая тестовая конфигурация
@@ -61,6 +61,7 @@ docker compose --env-file .env build web ops
 docker compose --env-file .env up -d db
 docker compose --env-file .env run --rm migrate
 docker compose --env-file .env up -d web
+docker compose --env-file .env --profile sync up -d sync-worker
 ```
 
 Проверка на VPS:
@@ -205,7 +206,7 @@ docker compose --env-file .env --profile ops --profile restore-test run --rm --n
 
 Подтвердить:
 
-- `database_revision=20260804_0002`;
+- `database_revision=20260807_0003`;
 - table counts совпадают с manifest;
 - production database не была целью restore.
 

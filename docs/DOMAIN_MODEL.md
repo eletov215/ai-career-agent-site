@@ -34,7 +34,7 @@ Legacy-таблицы `accounts` и `hh_accounts` пока не удаляютс
 
 ### SyncRun
 
-Постоянная запись запуска синхронизации: источник, trigger, status, processed/saved, cursor и нейтральная ошибка. Текущий Trudvsem worker сохраняет start/finish в эту таблицу, но сам daemon thread остаётся внутри web process до `SYNC-001`.
+Постоянная запись запуска синхронизации: источник, trigger, status, processed/saved, cursor и нейтральная ошибка. С SYNC-001 Trudvsem lifecycle хранится в этой таблице как durable queue: web-процесс только создаёт `queued` run, а отдельный worker переводит его в `running` и terminal status. Частичный unique index допускает не более одного активного run для источника.
 
 ## Repository layer
 
@@ -43,19 +43,20 @@ repositories/
 ├── users.py
 ├── oauth_connections.py
 ├── vacancies.py
-└── sync_runs.py
+├── sync_runs.py
+└── sync_workers.py
 ```
 
 - `app.py` импортирует только `StorageServices`, а не SQLAlchemy/ORM/concrete repositories.
 - `StorageServices` собирает User/OAuth/SyncRun repositories и VacancyStore.
 - OAuth helpers работают через unified repository с временным legacy dual-write.
 - `VacancyStore` нормализует provider payload, но SQL-запросы выполняет `VacancyRepository`.
-- Sync worker пишет lifecycle через `SyncRunRepository`.
+- External sync worker пишет lifecycle через `SyncRunRepository`, а heartbeat — через `SyncWorkerRepository`.
 - Repositories возвращают immutable User/OAuth/Vacancy/Source/SyncRun records, а не session-bound ORM objects.
 
-## Migration 20260804_0002
+## Migrations 20260804_0002 и 20260807_0003
 
-Migration выполняет:
+Migration `20260804_0002` выполняет:
 
 1. создание `users`, `oauth_connections`, `sync_runs`;
 2. копирование legacy OAuth rows без расшифровки/изменения tokens;
@@ -68,13 +69,22 @@ Migration выполняет:
 
 Migration поддерживает SQLite и PostgreSQL. Downgrade восстанавливает прежнюю таблицу `vacancies`, но в production downgrade без backup запрещён.
 
+### Migration 20260807_0003
+
+1. создаёт таблицу `sync_workers` для heartbeat внешних worker-процессов;
+2. завершает legacy `running` runs нейтральной ошибкой `WorkerRestarted`;
+3. добавляет partial unique index, запрещающий более одного `queued/running` run на source;
+4. оставляет cached vacancies без изменений;
+5. поддерживает SQLite и PostgreSQL, а downgrade удаляет только worker heartbeat/index.
+
+
 ## Совместимость
 
 - Текущие OAuth sessions продолжают использовать provider external ID.
 - Текущие templates получают прежние dict keys (`name`, `first_name`, `access_token` и т. д.).
 - Публичный API `VacancyStore` не меняется.
 - UI, маршруты поиска и формат карточек не меняются.
-- Existing PostgreSQL rows переходят на revision `20260804_0002` при deploy.
+- Existing PostgreSQL rows переходят на revision `20260807_0003` при deploy; business vacancy/OAuth data не переписываются migration 0003.
 
 ## Проверки
 
@@ -92,12 +102,13 @@ Migration поддерживает SQLite и PostgreSQL. Downgrade восста�
 
 После merge/deploy:
 
-1. `python scripts/manage_db.py upgrade` должен применить `20260804_0002`;
-2. `/health` должен показать `revision=20260804_0002`;
+1. `python scripts/manage_db.py upgrade` должен применить `20260807_0003`;
+2. `/health` должен показать `revision=20260807_0003`;
 3. `/`, `/vacancies/internal`, OAuth dashboard и `/trudvsem/status` должны работать;
 4. legacy OAuth connection, если он существует, должен остаться доступным;
 5. `cached_total` до и после restart должен сохраниться;
-6. `/trudvsem/status` после нового sync должен содержать `persisted_run`.
+6. `/trudvsem/status` в diagnostics mode должен показать external worker heartbeat и persisted run; public status остаётся sanitised.
+7. web process не должен создавать Trudvsem daemon thread.
 
 ## Rollback
 

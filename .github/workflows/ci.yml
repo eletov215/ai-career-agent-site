@@ -113,6 +113,14 @@ jobs:
           tests/test_observability.py
           tests/test_backup_restore.py
 
+      - name: Verify SYNC-001 external worker controls
+        run: >-
+          python -m pytest -q
+          tests/test_sync_worker.py
+          tests/test_routes.py
+          tests/test_config.py
+          tests/test_infra_manifests.py
+
       - name: Verify PostgreSQL encrypted backup and restore
         env:
           DATABASE_URL: ${{ env.POSTGRES_TEST_URL }}

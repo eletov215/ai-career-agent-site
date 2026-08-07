@@ -22,6 +22,12 @@ def test_compose_has_isolated_postgresql_and_profiles():
     assert services["restore-db"]["profiles"] == ["restore-test"]
     assert services["ops"]["profiles"] == ["ops"]
     assert services["gateway"]["profiles"] == ["tls"]
+    assert services["sync-worker"]["profiles"] == ["sync"]
+    assert services["sync-worker"]["command"] == [
+        "python",
+        "scripts/trudvsem_sync_worker.py",
+    ]
+    assert "ports" not in services["sync-worker"]
 
 
 def test_dockerfile_has_non_root_runtime_and_ops_targets():
@@ -37,5 +43,18 @@ def test_env_template_contains_placeholders_not_real_secrets():
     text = (ROOT / "infra/vps/.env.example").read_text(encoding="utf-8")
     assert "CHANGE_ME_STRONG_DATABASE_PASSWORD" in text
     assert "TRUDVSEM_SYNC_ENABLED=0" in text
+    assert "TRUDVSEM_SYNC_POLL_SECONDS=15" in text
+    assert "TRUDVSEM_SYNC_STALE_SECONDS=900" in text
+    assert "TRUDVSEM_WORKER_HEARTBEAT_SECONDS=15" in text
     assert "GUNICORN_WORKERS=1" in text
     assert "postgresql+psycopg://restore_user:CHANGE_ME" in text
+
+
+def test_render_uses_external_worker_runtime_supervisor():
+    render = yaml.safe_load((ROOT / "render.yaml").read_text(encoding="utf-8"))
+    service = render["services"][0]
+    assert "scripts/start_runtime.py" in service["startCommand"]
+
+    app_text = (ROOT / "app.py").read_text(encoding="utf-8")
+    assert "TRUDVSEM_SYNC_THREAD" not in app_text
+    assert "TRUDVSEM_SYNC_EVENT" not in app_text

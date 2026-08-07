@@ -9,7 +9,7 @@ services:
     # migration therefore runs before Gunicorn starts. When the service moves
     # to a paid plan or VPS, move this command into the dedicated pre-deploy
     # phase/entrypoint.
-    startCommand: python scripts/manage_db.py upgrade && gunicorn app:app
+    startCommand: python scripts/manage_db.py upgrade && python scripts/start_runtime.py
     healthCheckPath: /health/ready
     envVars:
       - key: APP_ENV
@@ -22,3 +22,15 @@ services:
         value: json
       - key: LOG_LEVEL
         value: INFO
+      - key: TRUDVSEM_SYNC_ENABLED
+        value: "1"
+      - key: TRUDVSEM_SYNC_POLL_SECONDS
+        value: "15"
+      - key: TRUDVSEM_SYNC_STALE_SECONDS
+        value: "900"
+      - key: TRUDVSEM_WORKER_HEARTBEAT_SECONDS
+        value: "15"
+
+# SYNC-001 runs the worker as a sibling OS process on the current free web
+# service. On a paid Render plan or VPS, deploy scripts/trudvsem_sync_worker.py
+# as an independent background worker/Compose service instead.
