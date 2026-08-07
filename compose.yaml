@@ -1,0 +1,170 @@
+name: ai-career-agent
+
+x-app-build: &app-build
+  context: .
+  target: runtime
+
+x-app-environment: &app-environment
+  APP_ENV: ${APP_ENV:?Set APP_ENV in .env}
+  APP_VERSION: ${APP_VERSION:-infra-test}
+  SERVICE_NAME: ${SERVICE_NAME:-ai-career-agent}
+  PORT: "8000"
+  DATA_DIR: /var/lib/ai-career-agent
+  BACKUP_DIR: /var/backups/ai-career-agent
+  DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:?Set POSTGRES_USER}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:?Set POSTGRES_DB}
+  FLASK_SECRET_KEY: ${FLASK_SECRET_KEY:?Set FLASK_SECRET_KEY}
+  TOKEN_ENCRYPTION_KEY: ${TOKEN_ENCRYPTION_KEY:?Set TOKEN_ENCRYPTION_KEY}
+  SUPERJOB_CLIENT_ID: ${SUPERJOB_CLIENT_ID:?Set SUPERJOB_CLIENT_ID}
+  SUPERJOB_CLIENT_SECRET: ${SUPERJOB_CLIENT_SECRET:?Set SUPERJOB_CLIENT_SECRET}
+  SUPERJOB_REDIRECT_URI: ${SUPERJOB_REDIRECT_URI:?Set SUPERJOB_REDIRECT_URI}
+  HH_CLIENT_ID: ${HH_CLIENT_ID:?Set HH_CLIENT_ID}
+  HH_CLIENT_SECRET: ${HH_CLIENT_SECRET:?Set HH_CLIENT_SECRET}
+  HH_REDIRECT_URI: ${HH_REDIRECT_URI:?Set HH_REDIRECT_URI}
+  HH_USER_AGENT: ${HH_USER_AGENT:?Set HH_USER_AGENT}
+  REED_API_KEY: ${REED_API_KEY:-}
+  SYNC_SECRET: ${SYNC_SECRET:-}
+  TRUSTED_HOSTS: ${TRUSTED_HOSTS:?Set TRUSTED_HOSTS}
+  TRUST_PROXY_HEADERS: ${TRUST_PROXY_HEADERS:-1}
+  RATELIMIT_STORAGE_URI: ${RATELIMIT_STORAGE_URI:-memory://}
+  TRUDVSEM_SYNC_ENABLED: ${TRUDVSEM_SYNC_ENABLED:-0}
+  LOG_FORMAT: ${LOG_FORMAT:-json}
+  LOG_LEVEL: ${LOG_LEVEL:-INFO}
+  GUNICORN_WORKERS: ${GUNICORN_WORKERS:-1}
+  GUNICORN_THREADS: ${GUNICORN_THREADS:-4}
+  GUNICORN_TIMEOUT: ${GUNICORN_TIMEOUT:-90}
+  FORWARDED_ALLOW_IPS: ${FORWARDED_ALLOW_IPS:-*}
+
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:?Set POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:?Set POSTGRES_DB}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    networks:
+      - backend
+
+  restore-db:
+    image: postgres:17-alpine
+    profiles: ["restore-test"]
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${RESTORE_POSTGRES_USER:-restore_user}
+      POSTGRES_PASSWORD: ${RESTORE_POSTGRES_PASSWORD:?Set RESTORE_POSTGRES_PASSWORD for restore-test profile}
+      POSTGRES_DB: ${RESTORE_POSTGRES_DB:-ai_career_agent_restore}
+    volumes:
+      - restore-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    networks:
+      - backend
+
+  migrate:
+    build: *app-build
+    image: ai-career-agent:${APP_IMAGE_TAG:-infra-test}
+    restart: "no"
+    command: ["python", "scripts/manage_db.py", "upgrade"]
+    environment: *app-environment
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - app-data:/var/lib/ai-career-agent
+    networks:
+      - backend
+
+  web:
+    build: *app-build
+    image: ai-career-agent:${APP_IMAGE_TAG:-infra-test}
+    restart: unless-stopped
+    command: ["gunicorn", "--config", "infra/gunicorn.conf.py", "app:app"]
+    environment: *app-environment
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    ports:
+      - "${WEB_BIND_ADDRESS:-127.0.0.1}:${WEB_PUBLISH_PORT:-8000}:8000"
+    volumes:
+      - app-data:/var/lib/ai-career-agent
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health/ready', timeout=4).read()"
+      interval: 20s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - frontend
+      - backend
+
+  gateway:
+    image: caddy:2-alpine
+    profiles: ["tls"]
+    restart: unless-stopped
+    environment:
+      VPS_TEST_HOST: ${VPS_TEST_HOST:?Set VPS_TEST_HOST for the tls profile}
+      ACME_EMAIL: ${ACME_EMAIL:?Set ACME_EMAIL for the tls profile}
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./infra/vps/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      web:
+        condition: service_healthy
+    networks:
+      - frontend
+
+  ops:
+    build:
+      context: .
+      target: ops
+    image: ai-career-agent-ops:${APP_IMAGE_TAG:-infra-test}
+    profiles: ["ops"]
+    environment:
+      APP_ENV: ${APP_ENV:?Set APP_ENV in .env}
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:?Set POSTGRES_USER}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:?Set POSTGRES_DB}
+      RESTORE_DATABASE_URL: ${RESTORE_DATABASE_URL:-}
+      BACKUP_ENCRYPTION_KEY: ${BACKUP_ENCRYPTION_KEY:?Set BACKUP_ENCRYPTION_KEY for ops profile}
+      BACKUP_DIR: /var/backups/ai-career-agent
+    volumes:
+      - backup-data:/var/backups/ai-career-agent
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - backend
+
+volumes:
+  postgres-data:
+  restore-postgres-data:
+  app-data:
+  backup-data:
+  caddy-data:
+  caddy-config:
+
+networks:
+  frontend:
+  backend:
+    internal: true

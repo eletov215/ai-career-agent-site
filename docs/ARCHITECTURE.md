@@ -300,3 +300,22 @@ Rollback DATA-002:
 - `AI-BENCH-001` / `REED-COMPAT-001`: проверить AI и Reed;
 - `HOST-001` -> `DOMAIN-001` -> `MIG-001`: подготовить и переключить production;
 - затем `SYNC/SEARCH`, `AUTH/PROFILE`, AI functions.
+## 16. INFRA-001 container boundary
+
+```text
+Caddy (optional TLS profile)
+    -> non-root Gunicorn/Flask runtime
+        -> internal PostgreSQL 17 network
+
+one-shot migrate service
+OPS image with PostgreSQL 17 tools
+isolated restore-test PostgreSQL profile
+```
+
+- Production Render не изменяется этим пакетом.
+- PostgreSQL services не публикуют host ports.
+- Web публикуется напрямую только во время controlled IPv4 test; с Caddy он привязан к localhost.
+- Один Gunicorn worker сохраняется до shared limiter storage и SYNC-001.
+- OPS target используется для encrypted backup/restore, а не для web traffic.
+- Реальная доступность из РФ/РБ фиксируется `scripts/infra_probe.py` и матрицей `docs/INFRA001_VPS_TEST.md`.
+

@@ -163,9 +163,9 @@ Rollback SEC/OPS выполняется application commit/redeploy без из�
 Render остаётся staging/резервной площадкой. Обязательная очередь PLAN_CURRENT 1.3.x:
 
 ```text
-SEC-001 rate-limit recheck
--> OPS-001 verification
--> INFRA-001
+SEC-001 completed
+-> OPS-001 production restore drill
+-> INFRA-001 real VPS verification
 -> AI-BENCH-001
 -> REED-COMPAT-001
 -> AI-PROVIDER-001
@@ -185,3 +185,16 @@ SEC-001 rate-limit recheck
 - limitations/rollback;
 - PLAN_CURRENT DOCX/PDF/MD;
 - паспорт при изменении архитектуры/статуса.
+
+## 12. INFRA-001 commands
+
+```bash
+cp infra/vps/.env.example .env
+python3 scripts/infra_manifest_check.py
+docker compose --env-file .env build web ops
+docker compose --env-file .env up -d db
+docker compose --env-file .env run --rm migrate
+docker compose --env-file .env up -d web
+```
+
+Полная последовательность, TLS, probe и production restore drill описаны в `docs/INFRA001_VPS_TEST.md`.
