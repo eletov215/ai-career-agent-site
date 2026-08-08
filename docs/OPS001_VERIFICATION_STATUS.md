@@ -6,7 +6,7 @@
 | Дата | 07 августа 2026 |
 | Статус пакета | ВЫПОЛНЕНО |
 | Перенесённый release gate | Production backup/restore drill → OPS-002/REL-001 |
-| Текущая schema после SYNC-001 | `20260807_0003` |
+| Текущая candidate schema после SYNC-002 | `20260807_0004` |
 
 ## 1. Подтверждённые проверки
 
@@ -39,7 +39,7 @@ Verify OPS-001 observability controls
 Verify PostgreSQL encrypted backup and restore
 ```
 
-SYNC-001 добавляет migration `20260807_0003`; OPS tooling должно продолжать backup/restore этой новой revision без изменения формата безопасности.
+SYNC-001 добавил migration `20260807_0003`; candidate SYNC-002 добавляет `20260807_0004`. OPS tooling должно backup/restore checkpoint и lifecycle metadata без изменения формата безопасности.
 
 ## 4. Предрелизный production drill
 

@@ -3,13 +3,13 @@
 | Поле | Значение |
 |---|---|
 | Документ | PROJECT_PASSPORT |
-| Версия паспорта | 2.15 |
+| Версия паспорта | 2.17 |
 | Дата | 07 августа 2026 |
 | Статус | ДЕЙСТВУЮЩИЙ |
-| Связанный план | `AI_Career_Agent_PLAN_CURRENT v1.4.1` |
-| Основа кода | `ai-career-agent-site-main (4).zip` + SYNC-001 candidate; GitHub main после INFRA-PREP-001 merge |
+| Связанный план | `AI_Career_Agent_PLAN_CURRENT v1.4.3` |
+| Основа кода | `ai-career-agent-site-main (5).zip` — актуальный GitHub `main` после SYNC-001; поверх него реализован candidate SYNC-002 |
 
-> Контрольные статусы: FND-001/FND-002/DATA-001/DATA-002/SEC-001/OPS-001/INFRA-PREP-001 — **ВЫПОЛНЕНО**; DOC-001 — **В РАБОТЕ как постоянный процесс**; SYNC-001 — **НУЖНА ПРОВЕРКА НА GITHUB/RENDER**; SYNC-002 — следующий пакет после подтверждения; INFRA-001 — **ОТЛОЖЕНО ДО ПРЕДРЕЛИЗНОГО ЭТАПА**.
+> Контрольные статусы: FND-001/FND-002/DATA-001/DATA-002/SEC-001/OPS-001/INFRA-PREP-001 — **ВЫПОЛНЕНО**; DOC-001 — **В РАБОТЕ как постоянный процесс**; SYNC-001 — **ВЫПОЛНЕНО**; SYNC-002 — **НУЖНА ПРОВЕРКА**; INFRA-001 — **ОТЛОЖЕНО ДО ПРЕДРЕЛИЗНОГО ЭТАПА**.
 
 ## 1. Назначение
 
@@ -53,7 +53,7 @@ Dockerfile / compose.yaml  runtime, ops, DB, migrations, restore-test
 infra/                     Gunicorn, Caddy, VPS environment and probes
 scripts/                   migrations, backup, restore, alert, infra probes, sync CLI/worker/supervisor
 domain/ models/ repositories/ services/
-migrations/                Alembic 0001 + 0002 + 0003 (external sync worker)
+migrations/                Alembic 0001 + 0002 + 0003 + 0004 (incremental checkpoints/cleanup)
 tests/                     unit/integration/security/ops/infra/sync tests
 docs/                      architecture, security and runbooks
 render.yaml
@@ -86,9 +86,9 @@ Production подтвердил secure `aca_session`, CSRF `400`, CSP/HSTS/brows
 
 Подтверждены production JSON logs, `X-Request-ID` correlation, health/live/readiness, protected `/ops/status`, provider metrics, sanitised alert webhook, encrypted PostgreSQL backup/restore toolchain и отдельные GitHub OPS/backup steps.
 
-**Важно:** ранее незакрытый encrypted backup реальной production PostgreSQL + restore в отдельную test database не объявлен пройденным. В PLAN_CURRENT 1.4.0 он перенесён целиком в `OPS-002` и повторно проверяется в `REL-001`. Это release gate, а не текущий blocker функциональной разработки.
+**Важно:** ранее незакрытый encrypted backup реальной production PostgreSQL + restore в отдельную test database не объявлен пройденным. В PLAN_CURRENT 1.4.3 он перенесён целиком в `OPS-002` и повторно проверяется в `REL-001`. Это release gate, а не текущий blocker функциональной разработки.
 
-OPS-001 database migration отсутствовала. После SYNC-001 ожидаемая revision проекта — `20260807_0003`.
+OPS-001 database migration отсутствовала. Текущая candidate revision SYNC-002 — `20260807_0004`; production остаётся на `20260807_0003` до merge/deploy.
 
 ## 6. INFRA-PREP-001 — ВЫПОЛНЕНО
 
@@ -103,23 +103,40 @@ OPS-001 database migration отсутствовала. После SYNC-001 ож�
 
 Это делает приложение переносимым на VPS без необходимости оплачивать ВМ во время разработки.
 
-## 7. SYNC-001 — НУЖНА ПРОВЕРКА НА GITHUB/RENDER
+## 7. SYNC-001 — ВЫПОЛНЕНО
 
-Реализован hosting-independent внешний контур Trudvsem sync:
+Внешний контур Trudvsem sync реализован и подтверждён в production:
 
-- Gunicorn/Flask больше не создаёт daemon thread и не выполняет provider HTTP;
-- web routes только читают PostgreSQL cache и идемпотентно ставят durable job в `sync_runs`;
-- `scripts/trudvsem_sync_worker.py` выполняет queue jobs отдельным OS process;
+- Gunicorn/Flask не создаёт daemon thread и не выполняет provider HTTP;
+- web routes читают PostgreSQL cache и идемпотентно ставят durable job в `sync_runs`;
+- `scripts/trudvsem_sync_worker.py` выполняет jobs отдельным OS process;
 - `scripts/sync_trudvsem.py` поддерживает one-shot/queue CLI;
 - PostgreSQL advisory lock и SQLite lockfile блокируют параллельный sync;
 - `sync_workers` хранит heartbeat/liveness;
-- migration `20260807_0003` закрывает legacy abandoned runs и добавляет one-active-run constraint;
-- Render free staging использует `scripts/start_runtime.py`, а Docker Compose — отдельный `sync-worker` profile;
-- provider timeout сохраняет старый cache и записывает контролируемый failed `SyncRun`.
+- migration `20260807_0003` добавляет one-active-run constraint и закрывает legacy abandoned runs;
+- Render использует `scripts/start_runtime.py`, Docker Compose - отдельный `sync-worker` profile;
+- provider timeout сохраняет старый cache и переводит run в контролируемое terminal state.
 
-До статуса ВЫПОЛНЕНО нужны зелёный GitHub CI и Render smoke: revision `20260807_0003`, worker heartbeat, queue `202` и переход persisted run до terminal status.
+**Production verification 07.08.2026:** GitHub Actions полностью зелёный; `/health/ready` подтвердил PostgreSQL, `persistent=true`, current/expected revision `20260807_0003`; Render supervisor запустил внешний worker; после исправления import path worker выполняет реальные batches (`normalized items=10`, `result_count=10`). Public Trudvsem status показал активный run (`running=true`, progress 43%, `cached_total=102`) и корректное завершение (`running=false`, `queued=false`, `cached_total=102`). После реального restart `uptime_seconds` сбросился до 89 и затем вырос до 112, а cache остался `102`.
 
-## 8. INFRA-001 — ОТЛОЖЕНО ДО ПРЕДРЕЛИЗНОГО ЭТАПА
+Отдельно зафиксировано: `cache_age_seconds` после restart не сбрасывается, потому что отражает возраст сохранённого PostgreSQL cache, а не uptime web-процесса.
+
+## 8. SYNC-002 — НУЖНА ПРОВЕРКА
+
+Поверх подтверждённого external worker реализована incremental freshness/cleanup policy:
+
+- migration `20260807_0004` создаёт `sync_checkpoints` и добавляет lifecycle-поля source records;
+- committed watermark и bounded pending window хранятся отдельно от process memory;
+- API Trudvsem вызывается с фиксированными `modifiedFrom`/`modifiedTo`; cursor/offset/total сохраняются после каждой страницы;
+- bootstrap последних 45 дней и большие incremental change-sets продолжаются через несколько runs и reconnect БД;
+- overlap 300 секунд защищает границу watermark, а upsert по `(source, external_id)` остаётся идемпотентным;
+- explicit closed/deleted/expired записи скрываются, старые публикации закрываются по TTL, закрытые source rows удаляются после retention;
+- при upstream failure watermark и cleanup не продвигаются, checkpoint хранит bounded exponential retry, прежний cache остаётся доступным;
+- backup inventory учитывает `sync_checkpoints`; diagnostics показывают checkpoint и active/closed totals без raw upstream body.
+
+**Локальная проверка:** 130 passed, 6 skipped; migration 0004 upgrade/downgrade/upgrade и Alembic check пройдены. Пакет не считается выполненным до зелёного GitHub Actions и Render smoke с revision `20260807_0004`, continuation cursor, retry preservation и cleanup evidence.
+
+## 9. INFRA-001 — ОТЛОЖЕНО ДО ПРЕДРЕЛИЗНОГО ЭТАПА
 
 `INFRA-001` теперь означает только реальную аренду и полевой тест VPS:
 
@@ -132,22 +149,22 @@ OPS-001 database migration отсутствовала. После SYNC-001 ож�
 
 До начала этого пакета Render остаётся staging/резервной площадкой, DNS/OAuth callback URL не переключаются.
 
-## 9. Текущее функциональное состояние
+## 10. Текущее функциональное состояние
 
 - Главная/AI Career/resume builder работают.
 - Search: Trudvsem, HH, Reed, conditional SuperJob.
 - OAuth HH/SJ: текущий pre-MVP, tokens encrypted.
-- Trudvsem cache остаётся PostgreSQL-backed; daemon thread удалён, external worker candidate ожидает GitHub/Render verification.
+- Trudvsem cache остаётся PostgreSQL-backed; внешний worker подтверждён; candidate SYNC-002 добавляет persistent watermark/cursor, retry state и lifecycle cleanup.
 - PDF parser эвристический, не LLM.
 - Saved jobs пока localStorage.
 - Own account/profile/real AI/match/letters/tracker впереди.
 
-## 10. Новая обязательная очередь разработки
+## 11. Новая обязательная очередь разработки
 
 ### Сейчас — функциональный MVP без аренды VPS
 
 ```text
-SYNC-001 verification -> SYNC-002
+SYNC-002 verification
 -> SEARCH-001 -> SEARCH-002 -> SEARCH-003 -> SEARCH-004
 -> AUTH-001 -> AUTH-002
 -> PROF-001 -> PROF-002 -> PROF-003 -> PRIV-001
@@ -169,7 +186,7 @@ INFRA-001 -> REED-COMPAT-001 -> HOST-001
 -> final SEC/OPS smoke -> REL-001 -> commercial release
 ```
 
-## 11. Зафиксированная hosting-independent стратегия
+## 12. Зафиксированная hosting-independent стратегия
 
 До предрелизного окна новый код не должен зависеть от конкретного hosting provider:
 
@@ -183,7 +200,7 @@ INFRA-001 -> REED-COMPAT-001 -> HOST-001
 
 Render не считается гарантированным production для РФ/РБ из-за подтверждённой сетевой недоступности из части сетей РФ, но остаётся пригодным staging/резервным контуром до `MIG-001`.
 
-## 12. AI и Reed
+## 13. AI и Reed
 
 - `AI-BENCH-001` можно выполнять без реального VPS: качество Yandex AI Studio/Alice AI проверяется на golden dataset, а transport с будущего source IP повторяется в `INFRA-001`.
 - Бизнес-логика должна использовать независимый `AIProvider`; OpenAI не является обязательным baseline для РФ/РБ.
@@ -191,11 +208,11 @@ Render не считается гарантированным production для 
 - `REED-COMPAT-001` требует точного IP выбранного VPS и выполняется сразу после `INFRA-001`.
 - Reed должен иметь feature flag и graceful degradation.
 
-## 13. Следующий пакет
+## 14. Следующий пакет
 
-Сначала завершается verification `SYNC-001`: GitHub Actions, Render migration `20260807_0003`, external worker heartbeat и queue-to-terminal-run smoke. После подтверждения следующий кодовый пакет — `SYNC-002`, который добавит полную incremental freshness/cleanup policy поверх созданного worker contract.
+Текущий candidate — `SYNC-002`. Сначала требуется GitHub/Render verification migration `20260807_0004`, persistent checkpoint/cursor, retry preservation и cleanup. После подтверждения следующий кодовый пакет — `SEARCH-001`: единая схема вакансии и нормализация данных.
 
-## 14. Правила рабочего чата
+## 15. Правила рабочего чата
 
 - Перед изменениями читать паспорт, PLAN_CURRENT и актуальный ZIP; работать по одному package ID.
 - Не смешивать unrelated design/business changes.

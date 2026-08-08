@@ -45,6 +45,7 @@ def main() -> int:
         database=database,
         vacancy_store=storage.vacancies,
         sync_runs=storage.sync_runs,
+        sync_checkpoints=storage.sync_checkpoints,
         provider_operation_factory=provider_operation,
     )
     try:

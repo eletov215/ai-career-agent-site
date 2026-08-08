@@ -26,6 +26,13 @@ DOCUMENTS = {
         "## 1.",
         "## 2.",
     ],
+    "docs/SYNC002_IMPLEMENTATION.md": ["| Поле | Значение |", "## 1.", "## 2."],
+    "docs/SYNC002_RUNBOOK.md": ["| Поле | Значение |", "## 1.", "## 2."],
+    "docs/SYNC002_VERIFICATION_STATUS.md": [
+        "| Поле | Значение |",
+        "## 1.",
+        "## 2.",
+    ],
     "docs/SOURCE_AUDIT.md": ["| Поле | Значение |", "## 1."],
 }
 

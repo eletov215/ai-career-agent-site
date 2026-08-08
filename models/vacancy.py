@@ -59,6 +59,13 @@ class VacancySourceRecord(Base):
         Index("idx_vacancy_source_records_source_fetched", "source", "fetched_at"),
         Index("idx_vacancy_source_records_remote", "remote"),
         Index("idx_vacancy_source_records_location", "location"),
+        Index(
+            "idx_vacancy_source_records_source_status_published",
+            "source",
+            "source_status",
+            "published_at",
+        ),
+        Index("idx_vacancy_source_records_closed_at", "closed_at"),
     )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
@@ -86,6 +93,10 @@ class VacancySourceRecord(Base):
     search_text: Mapped[str | None] = mapped_column(Text)
     raw_json: Mapped[str | None] = mapped_column(Text)
     source_status: Mapped[str] = mapped_column(String(32), nullable=False, default="active")
+    source_modified_at: Mapped[str | None] = mapped_column(Text)
+    closed_at: Mapped[int | None] = mapped_column(BigInteger)
+    closed_reason: Mapped[str | None] = mapped_column(String(64))
+    last_seen_run_id: Mapped[str | None] = mapped_column(String(36))
     first_seen_at: Mapped[int] = mapped_column(BigInteger, nullable=False)
     last_seen_at: Mapped[int] = mapped_column(BigInteger, nullable=False)
     fetched_at: Mapped[int] = mapped_column(BigInteger, nullable=False)

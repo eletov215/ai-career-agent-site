@@ -35,16 +35,16 @@
 
 ## 4. Текущая ветка
 
-Для SYNC-001 рекомендуется отдельная ветка:
+Для SYNC-002 рекомендуется отдельная ветка:
 
 ```text
-sync-001-external-worker
+sync-002-incremental-cleanup
 ```
 
 Commit:
 
 ```text
-sync: move Trudvsem updates out of Gunicorn
+sync: add incremental Trudvsem freshness and cleanup
 ```
 
 Не очищать ветку. Сохранять `.github`, `.gitignore`, migrations, INFRA-PREP и существующие docs.
@@ -88,7 +88,7 @@ Probe не использует базу или внешние API и предн
 ## 6. OPS-001 проверки
 
 - `/health/live` отвечает без DB dependency;
-- `/health/ready` проверяет DB и revision `20260807_0003`;
+- `/health/ready` проверяет DB и candidate revision `20260807_0004`;
 - `X-Request-ID` генерируется/сохраняется;
 - access/provider logs не содержат query/body/token/resume text;
 - `/ops/status` и `/ops/alerts/test` закрыты diagnostics secret;
@@ -150,13 +150,13 @@ python scripts/manage_db.py current
 python scripts/manage_db.py check
 ```
 
-SYNC-001 добавляет migration `20260807_0003`; `/health/ready` должен показать:
+SYNC-002 candidate добавляет migration `20260807_0004`; `/health/ready` после deploy должен показать:
 
 ```text
-revision=20260807_0003
+revision=20260807_0004
 ```
 
-Rollback SYNC-001 предпочтительно выполняется application commit/redeploy с сохранением schema `20260807_0003`; downgrade migration допустим только на backup/staging. Backup/restore scripts остаются отдельно; downgrade production schema без verified backup запрещён.
+Rollback SYNC-002 предпочтительно выполняется application commit/redeploy с сохранением schema `20260807_0004`; controlled downgrade до `20260807_0003` допустим только на backup/staging. Backup/restore scripts остаются отдельно; downgrade production schema без verified backup запрещён.
 
 ## 10. Hosting, домен и VPS
 
@@ -196,3 +196,24 @@ docker compose --env-file .env up -d web
 ```
 
 Полная последовательность, TLS, probe и production restore drill описаны в `docs/INFRA001_VPS_TEST.md`.
+
+
+## 12. SYNC-002 verification
+
+Перед merge:
+
+```bash
+python -m pytest -q tests/test_sync_incremental.py tests/test_sync_worker.py tests/test_config.py tests/test_infra_manifests.py
+python scripts/manage_db.py upgrade
+python -m alembic check
+python -m pytest -ra
+```
+
+После Render deploy:
+
+- `/health/ready` -> current/expected `20260807_0004`;
+- diagnostic checkpoint показывает committed watermark;
+- continuation offset переживает restart/redeploy;
+- повторный window не создаёт duplicate source records;
+- controlled failure сохраняет cache/watermark и выставляет retry;
+- TTL closure/purge/reactivation подтверждены на test data или diagnostics drill.

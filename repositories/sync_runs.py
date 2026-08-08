@@ -196,6 +196,19 @@ class SyncRunRepository(RepositoryBase):
             session.flush()
             return self._record(row)
 
+    def set_target(self, run_id: str, *, target: int) -> SyncRunRecord:
+        now = int(time.time())
+        with self.session() as session:
+            row = session.get(SyncRun, run_id)
+            if row is None:
+                raise LookupError("Sync run not found")
+            if row.status not in _ACTIVE_STATUSES:
+                raise RuntimeError("Only an active sync target can be updated")
+            row.target = max(0, int(target))
+            row.updated_at = now
+            session.commit()
+            return self._record(row)
+
     def heartbeat(
         self,
         run_id: str,

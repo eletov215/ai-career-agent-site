@@ -39,6 +39,7 @@ _INVENTORY_TABLES = (
     "vacancies",
     "vacancy_source_records",
     "sync_runs",
+    "sync_checkpoints",
     "accounts",
     "hh_accounts",
 )

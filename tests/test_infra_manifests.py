@@ -43,9 +43,17 @@ def test_env_template_contains_placeholders_not_real_secrets():
     text = (ROOT / "infra/vps/.env.example").read_text(encoding="utf-8")
     assert "CHANGE_ME_STRONG_DATABASE_PASSWORD" in text
     assert "TRUDVSEM_SYNC_ENABLED=0" in text
+    assert "TRUDVSEM_SYNC_INTERVAL=1800" in text
+    assert "TRUDVSEM_SYNC_ITEMS=300" in text
+    assert "TRUDVSEM_SYNC_BATCH=10" in text
     assert "TRUDVSEM_SYNC_POLL_SECONDS=15" in text
     assert "TRUDVSEM_SYNC_STALE_SECONDS=900" in text
     assert "TRUDVSEM_WORKER_HEARTBEAT_SECONDS=15" in text
+    assert "TRUDVSEM_SYNC_WATERMARK_OVERLAP_SECONDS=300" in text
+    assert "TRUDVSEM_VACANCY_TTL_DAYS=45" in text
+    assert "TRUDVSEM_CLOSED_RETENTION_DAYS=30" in text
+    assert "TRUDVSEM_RETRY_BASE_SECONDS=60" in text
+    assert "TRUDVSEM_RETRY_MAX_SECONDS=3600" in text
     assert "GUNICORN_WORKERS=1" in text
     assert "postgresql+psycopg://restore_user:CHANGE_ME" in text
 

@@ -206,7 +206,7 @@ docker compose --env-file .env --profile ops --profile restore-test run --rm --n
 
 Подтвердить:
 
-- `database_revision=20260807_0003`;
+- `database_revision=20260807_0004`;
 - table counts совпадают с manifest;
 - production database не была целью restore.
 

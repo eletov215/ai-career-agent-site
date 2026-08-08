@@ -147,9 +147,17 @@ def validate(root: Path = ROOT) -> list[str]:
         for marker in [
             "CHANGE_ME",
             "TRUDVSEM_SYNC_ENABLED=0",
+            "TRUDVSEM_SYNC_INTERVAL=1800",
+            "TRUDVSEM_SYNC_ITEMS=300",
+            "TRUDVSEM_SYNC_BATCH=10",
             "TRUDVSEM_SYNC_POLL_SECONDS=15",
             "TRUDVSEM_SYNC_STALE_SECONDS=900",
             "TRUDVSEM_WORKER_HEARTBEAT_SECONDS=15",
+            "TRUDVSEM_SYNC_WATERMARK_OVERLAP_SECONDS=300",
+            "TRUDVSEM_VACANCY_TTL_DAYS=45",
+            "TRUDVSEM_CLOSED_RETENTION_DAYS=30",
+            "TRUDVSEM_RETRY_BASE_SECONDS=60",
+            "TRUDVSEM_RETRY_MAX_SECONDS=3600",
             "GUNICORN_WORKERS=1",
             "BACKUP_ENCRYPTION_KEY",
         ]:

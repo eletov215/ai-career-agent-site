@@ -106,6 +106,7 @@ TRUDVSEM_SYNC = TrudvsemSyncService(
     database=DATABASE,
     vacancy_store=VACANCY_STORE,
     sync_runs=SYNC_RUNS,
+    sync_checkpoints=STORAGE.sync_checkpoints,
     provider_operation_factory=provider_operation,
 )
 
@@ -1134,10 +1135,13 @@ def trudvsem_status():
     state["workers"] = [worker.public_summary() for worker in active_workers]
     latest_run = state.pop("latest_run", None)
     active_run = state.pop("active_run", None)
+    checkpoint = state.pop("checkpoint", None)
     if latest_run:
         state["persisted_run"] = latest_run.public_summary()
     if active_run:
         state["active_run"] = active_run.public_summary()
+    if checkpoint:
+        state["checkpoint"] = checkpoint.public_summary()
     return state, 200
 
 

@@ -7,7 +7,7 @@
 | Дата | 07 августа 2026 |
 | Статус | ВЫПОЛНЕНО; real INFRA-001 отложен |
 | Основа кода | GitHub main после INFRA-PREP merge + SYNC-001 candidate |
-| Связанный план | PLAN_CURRENT 1.4.1 |
+| Связанный план | PLAN_CURRENT 1.4.3 |
 
 > Кодовая часть классифицирована как выполненный `INFRA-PREP-001`. Реальная аренда и полевая проверка VPS остаются отдельным отложенным `INFRA-001` перед beta.
 
@@ -90,7 +90,7 @@ Isolated restore-test PostgreSQL container
 | Python compileall | ПРОЙДЕНО | Локально |
 | Full pytest | `103 passed, 6 skipped` | Локально; skips только Flask/Psycopg/PostgreSQL environment |
 | INFRA unit/manifest tests | `12 passed` | Локально |
-| SQLite migrations | Revision `20260807_0003` | Локально |
+| SQLite migrations | Candidate revision `20260807_0004` | Локально |
 | Alembic check | No new upgrade operations | Локально |
 | `infra_manifest_check.py` | `ok: true` | Локально |
 | CI YAML / shell syntax | ПРОЙДЕНО | Локально |

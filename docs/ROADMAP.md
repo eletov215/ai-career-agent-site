@@ -2,16 +2,15 @@
 
 | Поле | Значение |
 |---|---|
-| Версия | 1.4.1 |
+| Версия | 1.4.3 |
 | Дата | 2026-08-07 |
 | Источник | `docs/PLAN_CURRENT.md` |
-| Текущий gate | SYNC-001 GitHub/Render verification |
+| Текущий gate | SYNC-002 GitHub/Render verification |
 
 ## 1. Функциональная очередь без аренды VPS
 
 ```text
-SYNC-001 verification
-→ SYNC-002
+SYNC-002 verification
 → SEARCH-001 → SEARCH-002 → SEARCH-003 → SEARCH-004
 → AUTH-001 → AUTH-002
 → PROF-001 → PROF-002 → PROF-003 → PRIV-001
@@ -43,6 +42,7 @@ INFRA-001
 | OPS-001 | ВЫПОЛНЕНО | Observability и backup tooling |
 | INFRA-PREP-001 | ВЫПОЛНЕНО | Container portability |
 | DOC-001 | В РАБОТЕ | Синхронизация с каждым package |
-| SYNC-001 | НУЖНА ПРОВЕРКА | CI, migration 0003, Render worker heartbeat |
-| SYNC-002 | ЗАПЛАНИРОВАНО | Incremental freshness и cleanup |
+| SYNC-001 | ВЫПОЛНЕНО | External worker production verified |
+| SYNC-002 | НУЖНА ПРОВЕРКА | CI, migration 0004, checkpoint/cleanup Render smoke |
+| SEARCH-001 | ЗАПЛАНИРОВАНО | Начать после подтверждения SYNC-002 |
 | INFRA-001 | ОТЛОЖЕНО | Реальный VPS перед beta |

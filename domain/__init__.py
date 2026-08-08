@@ -3,6 +3,7 @@
 from .entities import (
     OAuthConnectionRecord,
     SourceRecord,
+    SyncCheckpointRecord,
     SyncRunRecord,
     SyncWorkerRecord,
     UserRecord,
@@ -12,6 +13,7 @@ from .entities import (
 __all__ = [
     "OAuthConnectionRecord",
     "SourceRecord",
+    "SyncCheckpointRecord",
     "SyncRunRecord",
     "SyncWorkerRecord",
     "UserRecord",

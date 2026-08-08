@@ -1,8 +1,8 @@
 # AI Career Agent — архитектура проекта
 
 > Последнее обновление: 07 августа 2026 года  
-> Текущий пакет: `SYNC-001` — external Trudvsem worker  
-> Статус пакета: **НУЖНА ПРОВЕРКА НА GITHUB/RENDER**; expected revision `20260807_0003`
+> Текущий пакет: `SYNC-002` — incremental freshness и lifecycle cleanup  
+> Статус пакета: **НУЖНА ПРОВЕРКА В GITHUB ACTIONS И НА RENDER**; candidate revision `20260807_0004`, production baseline `20260807_0003`
 
 ## 1. Цель архитектуры
 
@@ -46,17 +46,20 @@ project/
 │   ├── vacancy.py                 # Vacancy + VacancySourceRecord
 │   ├── sync_run.py
 │   ├── sync_worker.py
+│   ├── sync_checkpoint.py        # watermark/cursor/retry state SYNC-002
 │   └── accounts.py                # temporary legacy tables
 ├── repositories/
 │   ├── users.py
 │   ├── oauth_connections.py
 │   ├── vacancies.py
 │   ├── sync_runs.py
-│   └── sync_workers.py
+│   ├── sync_workers.py
+│   └── sync_checkpoints.py       # durable incremental checkpoint
 ├── migrations/versions/
 │   ├── 20260804_0001_initial_schema.py
 │   ├── 20260804_0002_domain_model.py
-│   └── 20260807_0003_external_sync_worker.py
+│   ├── 20260807_0003_external_sync_worker.py
+│   └── 20260807_0004_incremental_sync_cleanup.py
 ├── services/
 │   ├── storage.py                 # StorageServices bundle for app.py
 │   ├── vacancy_store.py           # cache/query service API
@@ -140,9 +143,11 @@ Legacy tables `accounts` и `hh_accounts` сохраняются временн�
 
 На DATA-002 связь один-к-одному по фактическим данным. `SEARCH-002` сможет связать несколько source records с одной canonical vacancy, не меняя provider ingestion.
 
-### SyncRun
+### SyncRun и SyncCheckpoint
 
-Persistent lifecycle provider sync. После SYNC-001 status `queued` является durable job, а `running/succeeded/failed` отражают external worker execution. Partial unique index допускает только один active run на source.
+`SyncRun` хранит lifecycle отдельного запуска. После SYNC-001 status `queued` является durable job, а `running/succeeded/failed` отражают external worker execution. Partial unique index допускает только один active run на source.
+
+`SyncCheckpoint` (SYNC-002) хранит committed watermark, фиксированное окно `modifiedFrom/modifiedTo`, continuation offset/limit/total, последний успешный run, cleanup timestamp и persistent exponential retry. Watermark продвигается только после полного завершения окна; при partial success/failure cursor остаётся в PostgreSQL.
 
 ## 6. Security boundary SEC-001
 
@@ -224,7 +229,7 @@ Backup contract:
 - restore в отдельную DB и post-restore inventory verification;
 - production restore требует explicit override.
 
-OPS-001 сам schema не менял. SYNC-001 добавляет revision `20260807_0003`; production restore drill остаётся release gate OPS-002/REL-001.
+OPS-001 сам schema не менял. SYNC-001 добавил revision `20260807_0003`; candidate SYNC-002 добавляет `20260807_0004` с checkpoint и vacancy lifecycle metadata. Production restore drill остаётся release gate OPS-002/REL-001.
 
 ## 8. Миграции
 
@@ -249,19 +254,27 @@ OPS-001 сам schema не менял. SYNC-001 добавляет revision `202
 - не меняет vacancy/OAuth/user payload;
 - поддерживает SQLite/PostgreSQL и controlled downgrade.
 
+### 20260807_0004
+
+- создаёт `sync_checkpoints` для committed watermark, continuation cursor и retry/backoff;
+- добавляет lifecycle metadata в `vacancy_source_records`: `source_modified_at`, `closed_at`, `closed_reason`, `last_seen_run_id`;
+- добавляет индексы для active/closed поиска и retention cleanup;
+- seed-ит checkpoint из последнего successful `sync_runs` по каждому source;
+- не переписывает OAuth/user/canonical vacancy payload и поддерживает controlled downgrade до `20260807_0003`.
+
 Alembic — единственный production schema mechanism. `Base.metadata.create_all()` разрешён только в изолированных tests.
 
 ## 9. Runtime database
 
 `DatabaseRuntime` предоставляет Engine/sessionmaker и secret-free health. Production подтверждён на PostgreSQL 17.
 
-После DATA-002 deploy ожидается:
+После SYNC-002 candidate deploy ожидается:
 
 ```text
 backend=postgresql
 persistent=true
 configured=true
-revision=20260807_0003
+revision=20260807_0004
 ```
 
 ## 10. OAuth compatibility
@@ -320,7 +333,7 @@ Rollback DATA-002:
 ## 15. Следующие границы
 
 - завершить GitHub/Render verification `SYNC-001`;
-- `SYNC-002`: freshness watermark, retries и cleanup policy;
+- `SYNC-002`: candidate реализован — persistent watermark/cursor, fixed modified windows, retries, active/closed lifecycle и TTL/retention cleanup; требуется GitHub/Render verification;
 - `SEARCH-001/002/003/004`: normalization, dedup и stable pagination;
 - `AUTH/PROFILE`, AI functions и JOB tracker;
 - перед beta: `INFRA-001` -> `REED-COMPAT-001` -> `HOST-001` -> `OPS-002` -> `DOMAIN-001` -> `MIG-001`.

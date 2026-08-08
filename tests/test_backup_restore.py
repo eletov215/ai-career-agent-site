@@ -52,6 +52,12 @@ def _seed_database(database_url: str) -> None:
             saved=4,
             cursor="5",
         )
+        storage.sync_checkpoints.complete_success(
+            "trudvsem",
+            run_id=run.id,
+            watermark_at=1_785_853_489,
+            cleanup_at=1_785_853_490,
+        )
     finally:
         runtime.dispose()
 
@@ -95,6 +101,7 @@ def test_encrypted_sqlite_backup_restore_round_trip(tmp_path):
     assert result.manifest["database_revision"] == CURRENT_REVISION
     assert result.manifest["table_counts"]["users"] == 1
     assert result.manifest["table_counts"]["sync_runs"] == 1
+    assert result.manifest["table_counts"]["sync_checkpoints"] == 1
     assert validate_backup(result.backup_path) == result.manifest
 
     restored = restore_database(
@@ -108,12 +115,15 @@ def test_encrypted_sqlite_backup_restore_round_trip(tmp_path):
     assert restored.database_revision == CURRENT_REVISION
     assert restored.table_counts["users"] == 1
     assert restored.table_counts["sync_runs"] == 1
+    assert restored.table_counts["sync_checkpoints"] == 1
 
     runtime = create_database(target_url)
     try:
         storage = StorageServices.from_database(runtime)
         assert storage.users.get("backup-user").email == "backup@example.test"
         assert storage.sync_runs.latest("trudvsem").saved == 4
+        checkpoint = storage.sync_checkpoints.get("trudvsem")
+        assert checkpoint.watermark_at == 1_785_853_489
     finally:
         runtime.dispose()
 

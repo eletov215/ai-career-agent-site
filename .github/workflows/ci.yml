@@ -121,6 +121,14 @@ jobs:
           tests/test_config.py
           tests/test_infra_manifests.py
 
+      - name: Verify SYNC-002 incremental freshness and cleanup controls
+        run: >-
+          python -m pytest -q
+          tests/test_sync_incremental.py
+          tests/test_sync_worker.py
+          tests/test_config.py
+          tests/test_infra_manifests.py
+
       - name: Verify PostgreSQL encrypted backup and restore
         env:
           DATABASE_URL: ${{ env.POSTGRES_TEST_URL }}

@@ -2,7 +2,8 @@ from __future__ import annotations
 
 import json
 import time
-from datetime import datetime, timezone
+from dataclasses import dataclass
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Iterable
 
@@ -10,6 +11,17 @@ from sqlalchemy import Engine
 
 from database import DatabaseRuntime, create_database
 from repositories import VacancyRepository
+
+
+
+
+@dataclass(frozen=True, slots=True)
+class VacancyCleanupResult:
+    closed: int = 0
+    purged: int = 0
+
+    def as_dict(self) -> dict[str, int]:
+        return {"closed": self.closed, "purged": self.purged}
 
 
 class VacancyStore:
@@ -84,8 +96,14 @@ class VacancyStore:
                 parsed = parsed.astimezone(timezone.utc)
         return parsed.isoformat(timespec="seconds").replace("+00:00", "Z")
 
-    def upsert_many(self, items: Iterable[dict[str, Any]]) -> int:
-        now = int(time.time())
+    def upsert_many(
+        self,
+        items: Iterable[dict[str, Any]],
+        *,
+        run_id: str | None = None,
+        seen_at: int | None = None,
+    ) -> int:
+        now = int(time.time()) if seen_at is None else int(seen_at)
         payloads: list[dict[str, Any]] = []
         for item in items:
             external_id = str(item.get("external_id") or "").strip()
@@ -112,11 +130,52 @@ class VacancyStore:
                     "url": item.get("url"),
                     "search_text": self._search_blob(item),
                     "raw_json": json.dumps(item, ensure_ascii=False),
+                    "source_status": str(item.get("source_status") or "active"),
+                    "source_modified_at": self._normalize_published_at(
+                        item.get("source_modified_at")
+                    ),
+                    "closed_at": item.get("closed_at"),
+                    "closed_reason": item.get("closed_reason"),
+                    "last_seen_run_id": run_id,
+                    "last_seen_at": now,
                     "fetched_at": now,
                     "updated_at": now,
                 }
             )
         return self.repository.upsert_source_records(payloads)
+
+    def cleanup_source(
+        self,
+        *,
+        source: str,
+        vacancy_ttl_days: int,
+        closed_retention_days: int,
+        now: int | None = None,
+    ) -> VacancyCleanupResult:
+        """Close old postings and purge long-retained closed source rows."""
+
+        current = int(time.time()) if now is None else int(now)
+        published_cutoff = datetime.fromtimestamp(
+            current,
+            tz=timezone.utc,
+        ) - timedelta(days=max(1, int(vacancy_ttl_days)))
+        published_before = published_cutoff.isoformat(
+            timespec="seconds"
+        ).replace("+00:00", "Z")
+        closed = self.repository.mark_expired_active(
+            source=source,
+            published_before=published_before,
+            closed_at=current,
+        )
+        retention_seconds = max(1, int(closed_retention_days)) * 86_400
+        purged = self.repository.purge_closed(
+            source=source,
+            closed_before=current - retention_seconds,
+        )
+        return VacancyCleanupResult(closed=closed, purged=purged)
+
+    def source_status_counts(self, source: str) -> dict[str, int]:
+        return self.repository.source_status_counts(source)
 
     def search(
         self,

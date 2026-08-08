@@ -129,6 +129,11 @@ def test_numeric_and_boolean_values_are_validated_centrally(tmp_path):
             TRUDVSEM_SYNC_POLL_SECONDS="20",
             TRUDVSEM_SYNC_STALE_SECONDS="900",
             TRUDVSEM_WORKER_HEARTBEAT_SECONDS="12",
+            TRUDVSEM_SYNC_WATERMARK_OVERLAP_SECONDS="420",
+            TRUDVSEM_VACANCY_TTL_DAYS="60",
+            TRUDVSEM_CLOSED_RETENTION_DAYS="21",
+            TRUDVSEM_RETRY_BASE_SECONDS="30",
+            TRUDVSEM_RETRY_MAX_SECONDS="900",
             TRUDVSEM_RETRY_BACKOFF="0.25",
             HH_CURRENCY_SCAN_PAGES="7",
             MAX_RESUME_UPLOAD_MB="12",
@@ -155,6 +160,11 @@ def test_numeric_and_boolean_values_are_validated_centrally(tmp_path):
     assert settings.trudvsem_sync_poll_seconds == 20
     assert settings.trudvsem_sync_stale_seconds == 900
     assert settings.trudvsem_worker_heartbeat_seconds == 12
+    assert settings.trudvsem_sync_watermark_overlap_seconds == 420
+    assert settings.trudvsem_vacancy_ttl_days == 60
+    assert settings.trudvsem_closed_retention_days == 21
+    assert settings.trudvsem_retry_base_seconds == 30
+    assert settings.trudvsem_retry_max_seconds == 900
     assert settings.trudvsem_retry_backoff == 0.25
     assert settings.hh_currency_scan_pages == 7
     assert settings.max_resume_upload_mb == 12
@@ -181,6 +191,19 @@ def test_numeric_and_boolean_values_are_validated_centrally(tmp_path):
         ("TRUDVSEM_SYNC_POLL_SECONDS", "1", "не может быть меньше 2"),
         ("TRUDVSEM_SYNC_STALE_SECONDS", "60", "не может быть меньше 120"),
         ("TRUDVSEM_WORKER_HEARTBEAT_SECONDS", "301", "не может быть больше 300"),
+        (
+            "TRUDVSEM_SYNC_WATERMARK_OVERLAP_SECONDS",
+            "86401",
+            "не может быть больше 86400",
+        ),
+        ("TRUDVSEM_VACANCY_TTL_DAYS", "30", "не может быть меньше 31"),
+        (
+            "TRUDVSEM_CLOSED_RETENTION_DAYS",
+            "0",
+            "не может быть меньше 1",
+        ),
+        ("TRUDVSEM_RETRY_BASE_SECONDS", "4", "не может быть меньше 5"),
+        ("TRUDVSEM_RETRY_MAX_SECONDS", "29", "не может быть меньше 30"),
         ("VACANCY_PAGE_SIZE", "many", "целое число"),
         ("MAX_RESUME_UPLOAD_MB", "26", "не может быть больше 25"),
         ("MAX_RESUME_PAGES", "101", "не может быть больше 100"),
@@ -198,6 +221,16 @@ def test_invalid_runtime_values_have_clear_errors(name, value, expected):
 
     with pytest.raises(ConfigurationError, match=expected):
         load_settings(environment)
+
+
+def test_trudvsem_retry_ceiling_cannot_be_below_base():
+    with pytest.raises(ConfigurationError, match="RETRY_MAX_SECONDS"):
+        load_settings(
+            production_environment(
+                TRUDVSEM_RETRY_BASE_SECONDS="300",
+                TRUDVSEM_RETRY_MAX_SECONDS="120",
+            )
+        )
 
 
 def test_invalid_environment_name_is_rejected():
