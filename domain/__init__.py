@@ -1,5 +1,15 @@
 """Domain-facing records detached from SQLAlchemy sessions."""
 
+from .vacancy_contract import (
+    CONTRACT_VERSION,
+    EMPLOYMENT_VALUES,
+    EXPERIENCE_VALUES,
+    WORK_FORMAT_VALUES,
+    EmploymentCode,
+    ExperienceCode,
+    NormalizedVacancy,
+    WorkFormat,
+)
 from .entities import (
     OAuthConnectionRecord,
     SourceRecord,
@@ -11,6 +21,14 @@ from .entities import (
 )
 
 __all__ = [
+    "CONTRACT_VERSION",
+    "EMPLOYMENT_VALUES",
+    "EXPERIENCE_VALUES",
+    "WORK_FORMAT_VALUES",
+    "EmploymentCode",
+    "ExperienceCode",
+    "NormalizedVacancy",
+    "WorkFormat",
     "OAuthConnectionRecord",
     "SourceRecord",
     "SyncCheckpointRecord",

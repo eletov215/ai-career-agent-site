@@ -35,6 +35,9 @@ class VacancyRepository(RepositoryBase):
             currency=row.currency,
             location=row.location,
             remote=bool(row.remote),
+            work_format=row.work_format,
+            employment_code=row.employment_code,
+            experience_code=row.experience_code,
             schedule=row.schedule,
             employment=row.employment,
             experience=row.experience,
@@ -60,6 +63,9 @@ class VacancyRepository(RepositoryBase):
             currency=row.currency,
             location=row.location,
             remote=bool(row.remote),
+            work_format=row.work_format,
+            employment_code=row.employment_code,
+            experience_code=row.experience_code,
             schedule=row.schedule,
             employment=row.employment,
             experience=row.experience,
@@ -114,6 +120,9 @@ class VacancyRepository(RepositoryBase):
             "currency": values.get("currency"),
             "location": values.get("location"),
             "remote": bool(values.get("remote")),
+            "work_format": values.get("work_format"),
+            "employment_code": values.get("employment_code"),
+            "experience_code": values.get("experience_code"),
             "schedule": values.get("schedule"),
             "employment": values.get("employment"),
             "experience": values.get("experience"),
@@ -356,13 +365,27 @@ class VacancyRepository(RepositoryBase):
             conditions.append(search_text.like(f"%{term}%"))
         if region:
             conditions.append(search_text.like(f"%{region.casefold()}%"))
-        if remote_only or work_format == "remote":
-            conditions.append(record.remote.is_(True))
-        elif work_format == "onsite":
-            conditions.append(record.remote.is_(False))
-            conditions.append(~search_text.like("%гибк%"))
-        elif work_format == "hybrid":
-            conditions.append(search_text.like("%гибк%"))
+        selected_work_format = "remote" if remote_only else work_format
+        if selected_work_format:
+            legacy_work_format = {
+                "remote": record.remote.is_(True),
+                "onsite": and_(
+                    record.remote.is_(False),
+                    ~search_text.like("%гибк%"),
+                    ~search_text.like("%hybrid%"),
+                ),
+                "hybrid": or_(
+                    search_text.like("%гибк%"),
+                    search_text.like("%hybrid%"),
+                ),
+            }.get(selected_work_format)
+            if legacy_work_format is not None:
+                conditions.append(
+                    or_(
+                        record.work_format == selected_work_format,
+                        and_(record.work_format.is_(None), legacy_work_format),
+                    )
+                )
         if currency:
             currency_value = func.upper(func.coalesce(record.currency, ""))
             currency_code = currency.upper()
@@ -375,13 +398,19 @@ class VacancyRepository(RepositoryBase):
         employment_terms = {
             "full": ("полная", "полный"),
             "part": ("частичная", "неполный"),
-            "project": ("проект", "временная"),
+            "project": ("проект", "контракт", "временная"),
             "probation": ("стажиров",),
             "volunteer": ("волонт",),
         }.get(employment, ())
         if employment_terms:
+            legacy_employment = or_(
+                *(search_text.like(f"%{term}%") for term in employment_terms)
+            )
             conditions.append(
-                or_(*(search_text.like(f"%{term}%") for term in employment_terms))
+                or_(
+                    record.employment_code == employment,
+                    and_(record.employment_code.is_(None), legacy_employment),
+                )
             )
         experience_terms = {
             "no_experience": ("без опыта",),
@@ -390,8 +419,14 @@ class VacancyRepository(RepositoryBase):
             "more_than_6": ("6 лет", "более 6"),
         }.get(experience, ())
         if experience_terms:
+            legacy_experience = or_(
+                *(search_text.like(f"%{term}%") for term in experience_terms)
+            )
             conditions.append(
-                or_(*(search_text.like(f"%{term}%") for term in experience_terms))
+                or_(
+                    record.experience_code == experience,
+                    and_(record.experience_code.is_(None), legacy_experience),
+                )
             )
         if salary_only:
             conditions.append(

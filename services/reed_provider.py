@@ -1,13 +1,13 @@
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timedelta, timezone
 from typing import Any
 
 import requests
 
 from .base_provider import SearchResult, VacancyProvider
-from .search_filters import VacancySearchFilters, canonical_currency
+from .search_filters import VacancySearchFilters, filter_vacancies
+from .vacancy_normalizer import normalize_reed_vacancy
 
 logger = logging.getLogger(__name__)
 
@@ -30,44 +30,7 @@ class ReedProvider(VacancyProvider):
 
     @staticmethod
     def _normalize(raw: dict[str, Any]) -> dict[str, Any]:
-        description = raw.get("jobDescription") or raw.get("description") or ""
-        location = raw.get("locationName") or raw.get("location") or ""
-        title = raw.get("jobTitle") or raw.get("title") or "Без названия"
-        combined_text = f"{title} {description} {location}".casefold()
-        remote = any(term in combined_text for term in ("remote", "home based", "work from home"))
-
-        return {
-            "external_id": str(raw.get("jobId") or raw.get("id") or ""),
-            "source": "reed",
-            "source_title": "Reed.co.uk",
-            "title": title,
-            "company": raw.get("employerName") or "Компания не указана",
-            "salary_from": raw.get("minimumSalary"),
-            "salary_to": raw.get("maximumSalary"),
-            "currency": canonical_currency(raw.get("currency") or "GBP"),
-            "location": location,
-            "remote": remote,
-            "schedule": raw.get("jobType") or "",
-            "employment": raw.get("contractType") or raw.get("jobType") or "",
-            "experience": "",
-            "description": description,
-            "requirements": "",
-            "published_at": raw.get("date") or raw.get("datePosted") or "",
-            "url": raw.get("jobUrl") or raw.get("externalUrl") or "",
-        }
-
-    @staticmethod
-    def _parse_date(value: str | None) -> datetime | None:
-        text = str(value or "").strip()
-        if not text:
-            return None
-        try:
-            parsed = datetime.fromisoformat(text.replace("Z", "+00:00"))
-            if parsed.tzinfo is None:
-                parsed = parsed.replace(tzinfo=timezone.utc)
-            return parsed.astimezone(timezone.utc)
-        except ValueError:
-            return None
+        return normalize_reed_vacancy(raw).as_mapping()
 
     def search(self, *, filters: VacancySearchFilters, page: int = 0) -> SearchResult:
         params: dict[str, Any] = {
@@ -100,27 +63,7 @@ class ReedProvider(VacancyProvider):
             raw_items = payload.get("results", []) if isinstance(payload, dict) else []
             items = [self._normalize(item) for item in raw_items if isinstance(item, dict)]
 
-            cutoff = datetime.now(timezone.utc) - timedelta(days=filters.period_days)
-            dated_items = []
-            for item in items:
-                published = self._parse_date(item.get("published_at"))
-                if published is None or published >= cutoff:
-                    dated_items.append(item)
-            items = dated_items
-
-            if filters.work_format == "remote":
-                items = [item for item in items if item.get("remote")]
-            elif filters.work_format == "onsite":
-                items = [item for item in items if not item.get("remote")]
-            elif filters.work_format == "hybrid":
-                items = [
-                    item for item in items
-                    if "hybrid" in f"{item.get('title', '')} {item.get('description', '')}".casefold()
-                ]
-            if filters.salary_only:
-                items = [item for item in items if item.get("salary_from") is not None or item.get("salary_to") is not None]
-            if filters.currency:
-                items = [item for item in items if canonical_currency(item.get("currency")) == filters.currency]
+            items = filter_vacancies(items, filters)
 
             total = int(payload.get("totalResults", 0) or 0) if isinstance(payload, dict) else 0
             return SearchResult(

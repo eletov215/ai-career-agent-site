@@ -1,5 +1,35 @@
 # AI Career Agent — журнал изменений
 
+## Unreleased — SEARCH-001 (08 августа 2026)
+
+### Added
+
+- Typed `NormalizedVacancy` contract and canonical enums.
+- Central vacancy normalizer for text, currency, salary and UTC dates.
+- Provider adapters for HH, Reed, SuperJob and Trudvsem.
+- Additive Alembic revision `20260808_0005` with canonical code columns/indexes.
+- Exact common filters and legacy compatibility fallback.
+- SEARCH-001 contract/migration tests and dedicated GitHub Actions gate.
+- DOC-STD-001 v1.1 and uniform canonical document generator/template.
+
+### Changed
+
+- Store/repository/presenter use canonical fields rather than repeated provider-specific heuristics.
+- `app.py` applies common filter policy after provider aggregation.
+- README, ROADMAP, PLAN_CURRENT, passport and source audit synchronized to 1.4.5/2.19.
+
+### Verification status
+
+- Local focused tests: 29 passed.
+- Full available pytest: 139 passed, 6 skipped.
+- SQLite migration upgrade/check/downgrade/re-upgrade: passed.
+- GitHub PostgreSQL/CI and Render revision/search smoke: pending.
+
+### Scope exclusions
+
+- Cross-source dedup remains SEARCH-002.
+- Global pagination/total remains SEARCH-003.
+
 ## 1.4.3 — 2026-08-07 — SYNC-002 candidate
 
 ### Добавлено

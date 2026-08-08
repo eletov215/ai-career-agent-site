@@ -1,54 +1,57 @@
-M	.github/workflows/ci.yml
-M	README.md
-M	app.py
-M	compose.yaml
-M	config.py
-M	database.py
-M	docs/ARCHITECTURE.md
-M	docs/BACKUP_RESTORE.md
-M	docs/CHANGELOG.md
-M	docs/DATABASE_MIGRATION.md
-M	docs/DOMAIN_MODEL.md
-M	docs/INFRA001_IMPLEMENTATION.md
-M	docs/INFRA001_VPS_TEST.md
-M	docs/OPERATIONS.md
-M	docs/OPS001_VERIFICATION_STATUS.md
-M	docs/PLAN_CURRENT.md
-M	docs/PROJECT_GUIDE.md
-M	docs/PROJECT_PASSPORT.md
-M	docs/ROADMAP.md
-M	docs/SECURITY.md
-M	docs/SOURCE_AUDIT.md
-A	docs/SYNC002_IMPLEMENTATION.md
-A	docs/SYNC002_RUNBOOK.md
-A	docs/SYNC002_VERIFICATION_STATUS.md
-M	domain/__init__.py
-M	domain/entities.py
-M	infra/vps/.env.example
-M	infra/vps/compose.test.env
-A	migrations/versions/20260807_0004_incremental_sync_cleanup.py
-M	models/__init__.py
-A	models/sync_checkpoint.py
-M	models/vacancy.py
-M	operations/backup.py
-M	render.yaml
-M	repositories/__init__.py
-A	repositories/sync_checkpoints.py
-M	repositories/sync_runs.py
-M	repositories/vacancies.py
-M	scripts/check_document_structure.py
-M	scripts/infra_manifest_check.py
-M	scripts/sync_trudvsem.py
-M	scripts/trudvsem_sync_worker.py
-M	services/storage.py
-M	services/trudvsem_provider.py
-M	services/trudvsem_sync.py
-M	services/vacancy_store.py
-M	tests/test_backup_restore.py
-M	tests/test_config.py
-M	tests/test_document_structure.py
-M	tests/test_infra_manifests.py
-M	tests/test_postgresql_integration.py
-A	tests/test_sync_incremental.py
+AI Career Agent - SEARCH-001 changed files
+Working basis: ai-career-agent-site-main (11).zip
+Candidate version: PLAN_CURRENT 1.4.5 / PROJECT_PASSPORT 2.19
+Status: NEEDS VERIFICATION
 
-TOTAL	52
+Added (8):
+  + docs/SEARCH001_CONTRACT_REFERENCE.md
+  + docs/SEARCH001_IMPLEMENTATION.md
+  + docs/SEARCH001_RUNBOOK.md
+  + docs/SEARCH001_VERIFICATION_STATUS.md
+  + domain/vacancy_contract.py
+  + migrations/versions/20260808_0005_vacancy_normalization_contract.py
+  + services/vacancy_normalizer.py
+  + tests/test_search_normalization.py
+
+Modified (23):
+  * .github/workflows/ci.yml
+  * README.md
+  * app.py
+  * database.py
+  * docs/CHANGELOG.md
+  * docs/DOCUMENT_STANDARD.md
+  * docs/PLAN_CURRENT.md
+  * docs/PROJECT_PASSPORT.md
+  * docs/ROADMAP.md
+  * docs/SOURCE_AUDIT.md
+  * domain/__init__.py
+  * domain/entities.py
+  * models/vacancy.py
+  * repositories/vacancies.py
+  * scripts/check_document_structure.py
+  * services/hh_provider.py
+  * services/reed_provider.py
+  * services/search_filters.py
+  * services/superjob_provider.py
+  * services/trudvsem_provider.py
+  * services/vacancy_presenter.py
+  * services/vacancy_store.py
+  * tests/test_document_structure.py
+
+Removed (0):
+  (none)
+
+Package scope:
+  - typed NormalizedVacancy contract
+  - centralized provider normalization
+  - canonical work/employment/experience codes
+  - additive Alembic revision 20260808_0005
+  - canonical-code filters with legacy fallback
+  - SEARCH-001 contract tests and CI gate
+  - unified DOC-STD-001 v1.1 canonical document output
+
+Excluded by design:
+  - cross-source fuzzy deduplication (SEARCH-002)
+  - pagination/total redesign (SEARCH-003)
+  - visual redesign
+  - secrets, databases, dumps, backups, virtualenv, caches and bytecode

@@ -6,7 +6,8 @@ from typing import Callable
 import requests
 
 from .base_provider import SearchResult, VacancyProvider
-from .search_filters import VacancySearchFilters, canonical_currency
+from .search_filters import VacancySearchFilters, filter_vacancies
+from .vacancy_normalizer import normalize_superjob_vacancy
 
 logger = logging.getLogger(__name__)
 
@@ -23,26 +24,7 @@ class SuperJobProvider(VacancyProvider):
 
     @staticmethod
     def _normalize(raw: dict) -> dict:
-        town = raw.get("town") or {}
-        return {
-            "external_id": str(raw.get("id") or ""),
-            "source": "superjob",
-            "source_title": "SuperJob",
-            "title": raw.get("profession") or "Без названия",
-            "company": raw.get("firm_name") or "Компания не указана",
-            "salary_from": raw.get("payment_from"),
-            "salary_to": raw.get("payment_to"),
-            "currency": canonical_currency(raw.get("currency") or "RUB"),
-            "location": town.get("title", "") if isinstance(town, dict) else str(town),
-            "remote": bool(raw.get("is_remote_work")),
-            "schedule": (raw.get("type_of_work") or {}).get("title", "") if isinstance(raw.get("type_of_work"), dict) else "",
-            "employment": (raw.get("place_of_work") or {}).get("title", "") if isinstance(raw.get("place_of_work"), dict) else "",
-            "experience": raw.get("experience", {}).get("title", "") if isinstance(raw.get("experience"), dict) else "",
-            "description": raw.get("candidat") or raw.get("work") or "",
-            "requirements": raw.get("experience", {}).get("title", "") if isinstance(raw.get("experience"), dict) else "",
-            "published_at": raw.get("date_published") or "",
-            "url": raw.get("link") or "",
-        }
+        return normalize_superjob_vacancy(raw).as_mapping()
 
     def search(self, *, filters: VacancySearchFilters, page: int = 0) -> SearchResult:
         order_field = "payment" if filters.sort in {"salary_desc", "salary_asc"} else "date"
@@ -72,34 +54,7 @@ class SuperJobProvider(VacancyProvider):
             response.raise_for_status()
             payload = response.json()
             items = [self._normalize(item) for item in payload.get("objects", [])]
-            if filters.work_format == "remote":
-                items = [item for item in items if item.get("remote")]
-            elif filters.work_format == "onsite":
-                items = [item for item in items if not item.get("remote")]
-            if filters.region and not filters.region.isdigit():
-                region_query = filters.region.casefold()
-                items = [item for item in items if region_query in str(item.get("location") or "").casefold()]
-            if filters.currency:
-                items = [item for item in items if canonical_currency(item.get("currency")) == filters.currency]
-            if filters.employment:
-                employment_terms = {
-                    "full": ("полная", "полный"),
-                    "part": ("частичная", "неполный"),
-                    "project": ("проект", "временная"),
-                    "probation": ("стажиров",),
-                    "volunteer": ("волонт",),
-                }.get(filters.employment, ())
-                if employment_terms:
-                    items = [item for item in items if any(term in str(item.get("employment") or "").casefold() for term in employment_terms)]
-            if filters.experience:
-                experience_terms = {
-                    "no_experience": ("без опыта",),
-                    "between_1_and_3": ("1 год", "1-3", "от 1"),
-                    "between_3_and_6": ("3 года", "3-6", "от 3"),
-                    "more_than_6": ("6 лет", "более 6"),
-                }.get(filters.experience, ())
-                if experience_terms:
-                    items = [item for item in items if any(term in str(item.get("requirements") or "").casefold() for term in experience_terms)]
+            items = filter_vacancies(items, filters)
             total = int(payload.get("total", 0) or 0)
             return SearchResult(
                 items=items,
