@@ -3,7 +3,6 @@ from __future__ import annotations
 import logging
 import time
 from dataclasses import dataclass
-from datetime import datetime, timezone
 from typing import Any
 
 import requests
@@ -13,6 +12,7 @@ from urllib3.util.retry import Retry
 
 from .base_provider import SearchResult, VacancyProvider
 from .search_filters import VacancySearchFilters
+from .vacancy_normalizer import normalize_trudvsem_vacancy
 
 logger = logging.getLogger(__name__)
 
@@ -70,197 +70,9 @@ class TrudvsemProvider(VacancyProvider):
         self.session.mount("https://", HTTPAdapter(max_retries=retry))
 
     @staticmethod
-    def _text(value: Any) -> str:
-        if value is None:
-            return ""
-        if isinstance(value, str):
-            return value.strip()
-        return str(value).strip()
-
-    @staticmethod
-    def _iso_text(value: Any) -> str | None:
-        raw = TrudvsemProvider._text(value)
-        if not raw:
-            return None
-        try:
-            parsed = datetime.fromisoformat(raw.replace("Z", "+00:00"))
-        except ValueError:
-            return raw
-        if parsed.tzinfo is None:
-            parsed = parsed.replace(tzinfo=timezone.utc)
-        return parsed.astimezone(timezone.utc).isoformat(
-            timespec="seconds"
-        ).replace("+00:00", "Z")
-
-    @classmethod
-    def _lifecycle(cls, raw: dict[str, Any]) -> tuple[str, str | None, str | None]:
-        """Conservatively map explicit provider lifecycle fields."""
-
-        closed_tokens = {
-            "closed",
-            "archived",
-            "archive",
-            "inactive",
-            "deleted",
-            "invalid",
-            "removed",
-            "expired",
-            "закрыта",
-            "закрыто",
-            "архив",
-            "неактивна",
-            "удалена",
-        }
-        status_values = [
-            raw.get("status"),
-            raw.get("state"),
-            raw.get("vacancy-status"),
-            raw.get("status-name"),
-        ]
-        explicitly_closed = any(
-            cls._text(value).casefold() in closed_tokens
-            for value in status_values
-            if value not in (None, "")
-        )
-        boolean_closed = any(
-            raw.get(name) is True
-            or cls._text(raw.get(name)).casefold() in {"true", "1", "yes"}
-            for name in (
-                "is-invalid",
-                "deleted",
-                "archived",
-                "is-archived",
-                "is_closed",
-            )
-        )
-        explicitly_inactive = any(
-            raw.get(name) is False
-            or cls._text(raw.get(name)).casefold() in {"false", "0", "no"}
-            for name in ("active", "is-active", "is_active")
-            if name in raw
-        )
-
-        expires_at = None
-        for name in (
-            "expiration-date",
-            "date-expiration",
-            "expiration_date",
-            "valid-through",
-            "valid_through",
-        ):
-            expires_at = cls._iso_text(raw.get(name))
-            if expires_at:
-                break
-        expired = False
-        if expires_at:
-            try:
-                parsed_expiry = datetime.fromisoformat(
-                    expires_at.replace("Z", "+00:00")
-                )
-                expired = parsed_expiry <= datetime.now(timezone.utc)
-            except ValueError:
-                expired = False
-
-        modified_at = None
-        for name in (
-            "modified-date",
-            "date-modification",
-            "modification-date",
-            "last-modified",
-            "update-date",
-            "change-date",
-        ):
-            modified_at = cls._iso_text(raw.get(name))
-            if modified_at:
-                break
-
-        if explicitly_closed or boolean_closed or explicitly_inactive or expired:
-            reason = "provider_status"
-            if expired:
-                reason = "provider_expired"
-            return "closed", modified_at, reason
-        return "active", modified_at, None
-
-    def _normalize(self, item: Any) -> dict[str, Any] | None:
-        if not isinstance(item, dict):
-            return None
-        raw = item.get("vacancy") or item
-        if not isinstance(raw, dict):
-            return None
-
-        company = raw.get("company") or {}
-        region = raw.get("region") or {}
-        addresses = raw.get("addresses") or {}
-        address = addresses.get("address") if isinstance(addresses, dict) else None
-        if isinstance(address, list):
-            address = ", ".join(
-                self._text(x.get("location") if isinstance(x, dict) else x)
-                for x in address
-                if x
-            )
-        elif isinstance(address, dict):
-            address = address.get("location") or address.get("address")
-
-        schedule = self._text(raw.get("schedule"))
-        employment = self._text(raw.get("employment"))
-        remote_text = " ".join(
-            [schedule, employment, self._text(raw.get("work_places"))]
-        ).lower()
-        requirement = raw.get("requirement") or {}
-        requirements_value = raw.get("requirements") or ""
-        qualification = (
-            requirement.get("qualification", "")
-            if isinstance(requirement, dict)
-            else ""
-        )
-        education = (
-            requirement.get("education", "")
-            if isinstance(requirement, dict)
-            else ""
-        )
-        description = raw.get("duty") or raw.get("job-description") or qualification
-        requirements_text = " ".join(
-            part for part in (self._text(requirements_value), self._text(qualification), self._text(education)) if part
-        )
-        external_id = self._text(raw.get("id") or raw.get("vacancy-id"))
-        url = self._text(raw.get("vac_url") or raw.get("url"))
-        if not url and external_id:
-            url = f"https://trudvsem.ru/vacancy/card/{external_id}"
-
-        source_status, source_modified_at, closed_reason = self._lifecycle(raw)
-
-        return {
-            "external_id": external_id,
-            "source": self.key,
-            "source_title": self.title,
-            "title": self._text(raw.get("job-name") or raw.get("name")) or "Без названия",
-            "company": self._text(
-                company.get("name") if isinstance(company, dict) else company
-            )
-            or "Компания не указана",
-            "salary_from": raw.get("salary_min"),
-            "salary_to": raw.get("salary_max"),
-            "currency": self._text(raw.get("currency")) or "RUB",
-            "location": self._text(
-                region.get("name") if isinstance(region, dict) else region
-            )
-            or self._text(address),
-            "remote": (
-                "дистан" in remote_text
-                or "удален" in remote_text
-                or "remote" in remote_text
-            ),
-            "schedule": schedule,
-            "employment": employment,
-            "experience": self._text(raw.get("experience")) or self._text(raw.get("required_experience")),
-            "description": self._text(description),
-            "requirements": self._text(requirements_text),
-            "published_at": self._text(raw.get("creation-date") or raw.get("date")),
-            "source_modified_at": source_modified_at,
-            "source_status": source_status,
-            "closed_reason": closed_reason,
-            "url": url,
-        }
+    def _normalize(item: Any) -> dict[str, Any] | None:
+        normalized = normalize_trudvsem_vacancy(item) if isinstance(item, dict) else None
+        return normalized.as_mapping() if normalized is not None else None
 
     @staticmethod
     def _matches_keyword(item: dict[str, Any], keyword: str) -> bool:

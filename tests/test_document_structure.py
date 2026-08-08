@@ -26,6 +26,10 @@ def test_canonical_documents_have_metadata_tables():
         "docs/SYNC002_IMPLEMENTATION.md",
         "docs/SYNC002_RUNBOOK.md",
         "docs/SYNC002_VERIFICATION_STATUS.md",
+        "docs/SEARCH001_IMPLEMENTATION.md",
+        "docs/SEARCH001_VERIFICATION_STATUS.md",
+        "docs/SEARCH001_RUNBOOK.md",
+        "docs/SEARCH001_CONTRACT_REFERENCE.md",
         "docs/SOURCE_AUDIT.md",
     ]:
         text = (ROOT / relative).read_text(encoding="utf-8")

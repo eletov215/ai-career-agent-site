@@ -3,15 +3,15 @@
 | Поле | Значение |
 |---|---|
 | Документ | PLAN_CURRENT |
-| Версия | 1.4.3 |
-| Дата | 07 августа 2026 |
+| Версия | 1.4.5 |
+| Дата | 08 августа 2026 |
 | Статус | ДЕЙСТВУЮЩИЙ |
-| Основа кода | `ai-career-agent-site-main (5).zip` — актуальный GitHub `main` после закрытия SYNC-001; поверх него реализован кандидат SYNC-002 |
-| Следующий gate | Проверка `SYNC-002` в GitHub Actions и на Render; после подтверждения — `SEARCH-001` |
+| Основа кода | `ai-career-agent-site-main (11).zip` — актуальный GitHub `main` после закрытия SYNC-002; поверх него реализован кандидат SEARCH-001 |
+| Следующий gate | Проверка `SEARCH-001` в GitHub Actions и на Render; после подтверждения — `SEARCH-002` |
 
 > ОБЯЗАТЕЛЬНО ДЛЯ КАЖДОГО НОВОГО ЧАТА: прочитать этот план, новый паспорт и актуальный архив. После завершения любого пункта вернуть обновлённые DOCX/PDF/Markdown, новый ZIP, доказательства проверки и запись в журнале версий.
 
-> КОНТРОЛЬНЫЕ СТАТУСЫ ЭТОЙ ВЕРСИИ: `FND-001`, `FND-002`, `DATA-001`, `DATA-002`, `SEC-001`, `OPS-001` и `INFRA-PREP-001` — **ВЫПОЛНЕНО**; `DOC-001` — **В РАБОТЕ как постоянный процесс**; `SYNC-001` — **ВЫПОЛНЕНО**; `SYNC-002` — **НУЖНА ПРОВЕРКА**; `INFRA-001` — **ОТЛОЖЕНО ДО ПРЕДРЕЛИЗНОГО ЭТАПА**; `AI-BENCH-001`, `AI-PROVIDER-001`, `REED-COMPAT-001`, `HOST-001`, `OPS-002`, `DOMAIN-001`, `MIG-001` — по новой очереди раздела 15. Документы с версией ниже `1.4.3` считаются устаревшими для определения очереди разработки.
+> КОНТРОЛЬНЫЕ СТАТУСЫ ЭТОЙ ВЕРСИИ: `FND-001`, `FND-002`, `DATA-001`, `DATA-002`, `SEC-001`, `OPS-001`, `INFRA-PREP-001`, `SYNC-001` и `SYNC-002` — **ВЫПОЛНЕНО**; `SEARCH-001` — **НУЖНА ПРОВЕРКА**; `SEARCH-002` — **ЗАПЛАНИРОВАНО**; `DOC-001` — **В РАБОТЕ как постоянный процесс**; `INFRA-001` — **ОТЛОЖЕНО ДО ПРЕДРЕЛИЗНОГО ЭТАПА**. Документы с версией ниже `1.4.5` считаются устаревшими для определения очереди разработки.
 
 ## 1. Источник истины и аудит источников
 
@@ -20,7 +20,7 @@
 - Канонический план определяется наибольшей версией и датой; старые дубликаты не должны оставаться действующими.
 - Перед DATA-002 проверено, что актуальный код находится в `ai-career-agent-site-main (1).zip` и соответствует завершённому DATA-001.
 - Загруженные планы/паспорт были устаревшими: они содержали версии 1.0.0/1.0.1 и раннее состояние HH 403, не отражали подтверждение FND-001/FND-002 и согласованную стратегию собственного домена/VPS.
-- Версия 1.4.3 реализует кандидат SYNC-002 поверх подтверждённого внешнего worker SYNC-001. Добавлены persistent watermark и continuation cursor, bounded `modifiedFrom/modifiedTo` windows, идемпотентный upsert lifecycle, retry/backoff, TTL closure и retention cleanup. Пакет не объявляется выполненным до зелёного GitHub CI и production-проверки Render. Ранее подтверждённые SEC-001, OPS-001, INFRA-PREP-001 и SYNC-001 не отменяются. Production restore drill по-прежнему остаётся обязательным предрелизным `OPS-002/REL-001` gate, а реальный `INFRA-001` остаётся отложенным до предрелизного окна.
+- Версия 1.4.5 реализует кандидат SEARCH-001 поверх подтверждённой схемы `20260807_0004`. Добавлены typed `NormalizedVacancy`, централизованная нормализация зарплаты/валюты/дат/текста, canonical codes для формата работы, занятости и опыта, additive migration `20260808_0005`, provider adapters и единая post-aggregation filter policy. Пакет не объявляется выполненным до зелёного GitHub CI и Render smoke с revision `20260808_0005`. Cross-source dedup намеренно остаётся SEARCH-002; предыдущие пакеты и принятый Trudvsem provider-risk не пересматриваются.
 
 ## 2. Обязательный протокол работы
 
@@ -69,15 +69,15 @@
 | Резюме | PDF extraction на pypdf и browser resume builder; LLM пока нет. |
 | Тесты | GitHub Actions, unit/provider/route/config/database/migration/security/observability/backup tests. |
 | Hosting | Render временно используется как staging/резервная площадка. Для production требуется проверенный VPS с доступностью из РФ/РБ, собственный домен и план миграции. |
-| Текущая схема | Alembic `20260807_0004`: incremental checkpoints и vacancy lifecycle поверх external sync queue/worker. |
+| Текущая схема | Alembic candidate `20260808_0005`: canonical vacancy codes поверх incremental checkpoints/lifecycle `0004`. |
 
 ### 5.1 Выполнено/частично
 
 - BASE-001: Flask/Gunicorn/Render и публичные страницы - реализовано.
 - BASE-002: единый поиск по текущим providers - реализован в текущем объёме.
 - BASE-003: HH/SJ OAuth и encryption - частично, нужен User binding/E2E.
-- BASE-004: Trudvsem cache и внешний worker реализованы и подтверждены в production; SYNC-002 candidate добавляет durable watermark/cursor, retry и stale cleanup поверх PostgreSQL queue/state.
-- BASE-005: filters/sort/pagination - реализованы, но cross-source consistency требует SEARCH packages.
+- BASE-004: Trudvsem cache, внешний worker и SYNC-002 incremental checkpoint/retry/lifecycle policy реализованы и подтверждены; внешний success-smoke Trudvsem повторяется на российском VPS без блокировки текущей разработки.
+- BASE-005: SEARCH-001 candidate вводит единый typed provider contract и canonical filtering; cross-source dedup/pagination остаются SEARCH-002/003.
 - BASE-006: PDF parse - частично, это не AI.
 - BASE-007: resume builder/live preview/PDF/mobile - реализовано.
 - BASE-008: спокойные homepage transitions/reduced motion - реализовано.
@@ -128,8 +128,8 @@ MVP не готов, если работает только отдельная �
 | ID | Приоритет | Статус | Пункт |
 |---|---|---|---|
 | SYNC-001 | P0 | ВЫПОЛНЕНО | Durable queue и внешний worker подтверждены GitHub CI и production Render; cache переживает restart |
-| SYNC-002 | P1 | НУЖНА ПРОВЕРКА | Persistent watermark/cursor, retry/backoff и stale-vacancy cleanup реализованы; требуется GitHub/Render verification |
-| SEARCH-001 | P0 | ЗАПЛАНИРОВАНО | Единая схема вакансии и нормализация данных |
+| SYNC-002 | P1 | ВЫПОЛНЕНО | GitHub CI и Render revision 0004 подтверждены; checkpoint/retry/restart persistence проверены на реальных upstream timeouts; внешний success-smoke перенесён в INFRA-001/OPS-002 |
+| SEARCH-001 | P0 | НУЖНА ПРОВЕРКА | Typed `NormalizedVacancy`, central normalizer, canonical code columns `0005`, provider adapters и contract tests реализованы |
 | SEARCH-002 | P0 | ЗАПЛАНИРОВАНО | Дедупликация между источниками |
 | SEARCH-003 | P0 | ЗАПЛАНИРОВАНО | Стабильная пагинация, сортировка и итоговые счётчики |
 | SEARCH-004 | P1 | ЗАПЛАНИРОВАНО | Основной маршрут /vacancies и честные состояния источников |
@@ -324,13 +324,13 @@ MVP не готов, если работает только отдельная �
 
 **Реализация:** Канонические PLAN_CURRENT и паспорт обновляются после каждого архитектурного решения; README/ROADMAP/CHANGELOG и package-specific docs синхронизируются вместе с ближайшим кодовым пакетом, чтобы документация и код проходили один CI/merge cycle.
 
-**Текущее состояние:** PLAN_CURRENT 1.4.3 и паспорт 2.17 фиксируют кандидат SYNC-002 со статусом НУЖНА ПРОВЕРКА. Repository docs, README, ROADMAP и CHANGELOG включены в тот же candidate merge.
+**Текущее состояние:** PLAN_CURRENT 1.4.5 и паспорт 2.19 фиксируют SEARCH-001 как НУЖНА ПРОВЕРКА. Repository docs, contract reference, implementation report и verification runbook включены в один candidate merge.
 
 **Влияние на сайт:** Нет.
 
 **Критерии готовности:** Это постоянный процесс, а не блокирующий одноразовый gate. Для каждого package release source docs, канонические документы и changelog должны совпадать.
 
-**Зависимости:** Постоянный процесс; не блокирует `SYNC-002` и последующие пакеты.
+**Зависимости:** Постоянный процесс; не блокирует `SEARCH-001` и последующие пакеты.
 
 ### Этап 2. Надёжный поиск и обновление вакансий
 
@@ -376,7 +376,7 @@ MVP не готов, если работает только отдельная �
 #### SYNC-002 - Инкрементальная загрузка и очистка устаревших вакансий
 
 **Приоритет:** P1  
-**Статус:** НУЖНА ПРОВЕРКА
+**Статус:** ВЫПОЛНЕНО
 
 **Цель:** Загружать только изменения Trudvsem в ограниченных временных окнах, продолжать большой change-set с сохранённого cursor и контролируемо убирать устаревшие записи без потери последнего успешного кэша.
 
@@ -399,38 +399,59 @@ MVP не готов, если работает только отдельная �
 
 **Локальные доказательства:** полный доступный pytest — 130 passed, 6 skipped; отдельные SYNC-002 tests проверяют migration/downgrade, bounded provider window, bootstrap и incremental continuation, reconnect persistence, idempotent upsert, exponential retry, TTL cleanup, purge и reactivation. SQLite upgrade/check/downgrade/upgrade и Alembic check пройдены.
 
-**Критерии готовности:**
+**Финальные доказательства 08.08.2026:**
 
-1. GitHub Actions зелёный, включая отдельный `Verify SYNC-002 incremental freshness and cleanup controls`, PostgreSQL migration/integration, backup/restore и полный pytest.
-2. Render `/health/ready` показывает current/expected revision `20260807_0004`.
-3. Diagnostics checkpoint фиксирует bounded pending window и после завершения продвигает watermark к `pending_to_at`.
-4. Change-set больше одного run продолжает `pending_offset` после reconnect/redeploy без дублей.
-5. Повторяющиеся записи не увеличивают `(source, external_id)` count; explicit closed записи не возвращаются в public search, а active update реактивирует запись.
-6. После успешного полного окна TTL cleanup уменьшает active stale count; purge удаляет только закрытые записи старше retention.
-7. При управляемой upstream error watermark/cleanup не продвигаются, `next_retry_at` растёт по bounded exponential backoff, а ранее сохранённый cache остаётся доступным.
+1. GitHub Actions полностью зелёный, включая `Verify SYNC-002 incremental freshness and cleanup controls`, PostgreSQL migration/integration, encrypted backup/restore, container build/smoke и полный pytest.
+2. Render `/health/ready` и `/health` вернули `200`; PostgreSQL `persistent=true`; current/expected revision = `20260807_0004`.
+3. Diagnostics подтвердили persistent pending window: `pending=true`, `pending_offset=3`, `pending_total=92287`, `watermark_at=1785926683`, `pending_from_at=1785926383`, `pending_to_at=1786195111`; overlap между watermark и `pending_from_at` = 300 секунд.
+4. На реальных `opendata.trudvsem.ru: Read timed out` watermark/cursor/cache не изменялись; worker оставался жив и переходил `running -> failed -> idle`; `consecutive_failures` рос, scheduled retry стартовал после `next_retry_at`, backoff наблюдался 120 -> 240 -> 480 секунд и далее вплоть до 1920 секунд.
+5. После redeploy checkpoint, `pending_offset=3`, watermark, `cached_total=102` и `active_total=552` сохранились; worker поднялся новым process ID и продолжил retry state.
+6. Success-path continuation, lifecycle reactivation и cleanup полностью покрыты contract/unit/migration/CI tests. Реальный successful continuation/cleanup на Render не завершился только из-за длительной недоступности upstream; владелец принял остаточный риск и перенёс повторный provider-smoke в `INFRA-001/OPS-002`.
 
 **Ограничения:** Источник не гарантирует идеальное явное событие закрытия для каждой вакансии, поэтому применяется консервативная комбинация provider lifecycle + publication TTL. Cross-source dedup и единая vacancy contract относятся к SEARCH-001/002.
 
 **Rollback:** установить `TRUDVSEM_SYNC_ENABLED=0`, остановить worker, оставить revision `0004` как additive либо выполнить downgrade до `0003` только после verified backup. Application rollback не должен удалять существующий vacancy cache.
 
-**Зависимости:** SYNC-001 выполнен. После подтверждения SYNC-002 следующий пакет — SEARCH-001.
+**Зависимости:** SYNC-001 выполнен. SYNC-002 закрыт; следующий пакет — SEARCH-001.
 
 #### SEARCH-001 - Единая схема вакансии и нормализация данных
 
-**Приоритет:** P0
-**Статус:** ЗАПЛАНИРОВАНО
+**Приоритет:** P0  
+**Статус:** НУЖНА ПРОВЕРКА
 
-**Цель:** Одинаково трактовать валюту, регион, формат, опыт, занятость, даты и зарплату.
+**Цель:** Убрать provider-specific трактовку одинаковых полей и дать HH, SuperJob, Reed и Trudvsem единый typed contract для зарплаты, валюты, даты, формата работы, занятости, опыта и lifecycle.
 
-**Реализация:** Канонический contract/schema и явные adapters каждого источника.
+**Реализация:**
 
-**Влияние на код:** base_provider.py, provider files, schemas, filters, presenter, models/tests.
+- добавлен frozen typed contract `domain/vacancy_contract.py` с `NormalizedVacancy`, `WorkFormat`, `EmploymentCode`, `ExperienceCode` и `CONTRACT_VERSION=1`;
+- добавлен `services/vacancy_normalizer.py` как единственная граница очистки текста, валюты, salary range, UTC dates и provider mapping;
+- HH, Reed, SuperJob и Trudvsem adapters возвращают одинаковый contract mapping;
+- `services/search_filters.py` применяет единый exact-code filter после provider aggregation; неизвестные значения не угадываются;
+- migration `20260808_0005` добавляет nullable `work_format`, `employment_code`, `experience_code` в canonical/source vacancy tables и индексы;
+- `VacancyStore` и `VacancyRepository` сохраняют canonical codes, а legacy rows используют ограниченный backward-compatible fallback только при `NULL` canonical column;
+- presenter показывает понятные labels, сохраняя provider display text;
+- cross-source fuzzy dedup, stable global pagination и UI redesign не входят в пакет.
 
-**Влияние на сайт:** Фильтры и карточки становятся последовательными; неизвестные значения не маскируются.
+**Изменённые области:** `domain/`, `models/vacancy.py`, `repositories/vacancies.py`, provider adapters, `services/vacancy_normalizer.py`, `services/search_filters.py`, `services/vacancy_store.py`, `services/vacancy_presenter.py`, `app.py`, migration `0005`, CI, tests и docs.
 
-**Критерии готовности:** Все providers проходят contract tests; значения документированы.
+**Влияние на сайт:** URL и визуальный layout не меняются. Фильтры remote/hybrid/onsite, employment, experience, salary/currency и period получают одинаковую semantics у всех источников. Unknown остаётся unknown; existing cache не обнуляется.
 
-**Зависимости:** DATA-002 желательно.
+**Локальные доказательства:** полный доступный pytest — `139 passed, 6 skipped`; SEARCH-001 focused suite — `29 passed`; SQLite upgrade/check/downgrade/re-upgrade до `20260808_0005` пройдены; workflow YAML и compileall проходят. Локальные skips относятся к Flask/Psycopg/PostgreSQL scenarios, которые обязан выполнить GitHub Actions.
+
+**Критерии завершения:**
+
+1. GitHub Actions зелёный, включая `Verify SEARCH-001 vacancy contract and normalization controls`, PostgreSQL migration/integration, SEC/OPS/SYNC, backup/restore, container build/smoke и full pytest.
+2. Render `/health/ready` показывает `current_revision=expected_revision=20260808_0005`, PostgreSQL `persistent=true`.
+3. Multi-source search smoke сохраняет текущие URL/карточки и не вызывает HTTP 500.
+4. Contract tests подтверждают одинаковые keys/types и conservative unknown policy для четырёх providers.
+5. Exact canonical filters работают для новых rows; legacy cache остаётся доступным до refresh.
+6. Cross-source dedup отсутствует и остаётся SEARCH-002.
+
+**Ограничения:** provider totals остаются source-specific до SEARCH-003; raw labels могут отличаться по языку; legacy textual fallback временный; semantic merge между источниками не выполняется.
+
+**Rollback:** откатить application commit, сохранив additive `0005` columns. Schema downgrade до `0004` выполнять только после verified backup и только если старый код уже развернут; vacancy cache не очищать.
+
+**Зависимости:** DATA-002 и SYNC-002 выполнены. После подтверждения SEARCH-001 следующий пакет — SEARCH-002.
 
 #### SEARCH-002 - Дедупликация между источниками
 
@@ -1328,7 +1349,6 @@ Render остаётся staging/резервной площадкой на пе�
 
 ```text
 DOC-001 (постоянная синхронизация, не блокирует код)
--> SYNC-002 verification
 -> SEARCH-001
 -> SEARCH-002
 -> SEARCH-003
@@ -1373,15 +1393,17 @@ INFRA-001 real VPS test
 
 ## 16. Следующий пакет
 
-`SYNC-002` реализован как candidate и имеет статус **НУЖНА ПРОВЕРКА**. До merge обязательны зелёный GitHub Actions и production smoke на Render с revision `20260807_0004`, checkpoint/watermark, continuation cursor, retry preservation и cleanup evidence.
+`SYNC-002` остаётся **ВЫПОЛНЕНО** с принятым provider-smoke на будущем российском VPS.
 
-После подтверждения следующий кодовый пакет:
+Текущий candidate:
 
 ```text
 SEARCH-001 - Единая схема вакансии и нормализация данных
+Статус: НУЖНА ПРОВЕРКА
+Alembic candidate: 20260808_0005
 ```
 
-`DOC-001` остаётся постоянным процессом: repository docs, канонический план, паспорт и changelog должны обновляться в каждом следующем merge.
+Следующий gate: зелёный GitHub Actions, Render migration/health и multi-source search smoke. После подтверждения SEARCH-001 переводится в ВЫПОЛНЕНО, а `SEARCH-002` — в ГОТОВО К СТАРТУ. `DOC-001` остаётся постоянным процессом.
 
 ## 17. Обязательный отчёт после каждого пакета
 
@@ -1427,4 +1449,5 @@ GitHub/production/API: <подтверждено или требуется>
 | 1.4.1 | 07.08.2026 | SYNC-001 | Удалён daemon thread из Gunicorn; добавлены durable queue, external worker/CLI, cross-process locks, worker heartbeat, stale recovery, migration 20260807_0003, Render/Compose integration, tests и verification runbook. Статус - НУЖНА ПРОВЕРКА. |
 | 1.4.2 | 07.08.2026 | SYNC-001-COMPLETE | GitHub CI и Render production verification пройдены; исправлен script import-path, подтверждены внешний worker, provider batches, persisted run lifecycle, revision 20260807_0003 и cache persistence после реального restart. SYNC-002 готов к старту. |
 | 1.4.3 | 07.08.2026 | SYNC-002 | Добавлены migration 20260807_0004, persistent watermark/cursor, bounded modified windows, idempotent lifecycle upsert, retry/backoff, TTL closure и retention purge; пакет ожидает GitHub/Render verification. |
-
+| 1.4.4 | 08.08.2026 | SYNC-002-COMPLETE / SEARCH-001-PREP | GitHub CI и Render revision 0004 подтверждены; production доказал checkpoint/retry/backoff/cache/restart persistence на реальных Trudvsem timeouts. Остаточный successful provider-smoke принят и перенесён в INFRA-001/OPS-002; SEARCH-001 подготовлен и переведён в ГОТОВО К СТАРТУ. |
+| 1.4.5 | 08.08.2026 | SEARCH-001 | Добавлены typed `NormalizedVacancy`, central provider normalization, canonical vacancy codes и migration `20260808_0005`, exact-code filters, compatibility fallback, contract tests и единый документный шаблон v1.1. Статус — НУЖНА ПРОВЕРКА. |

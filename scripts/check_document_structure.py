@@ -33,6 +33,10 @@ DOCUMENTS = {
         "## 1.",
         "## 2.",
     ],
+    "docs/SEARCH001_IMPLEMENTATION.md": ["| Поле | Значение |", "## 1.", "## 2."],
+    "docs/SEARCH001_VERIFICATION_STATUS.md": ["| Поле | Значение |", "## 1.", "## 2."],
+    "docs/SEARCH001_RUNBOOK.md": ["| Поле | Значение |", "## 1.", "## 2."],
+    "docs/SEARCH001_CONTRACT_REFERENCE.md": ["| Поле | Значение |", "## 1.", "## 2."],
     "docs/SOURCE_AUDIT.md": ["| Поле | Значение |", "## 1."],
 }
 

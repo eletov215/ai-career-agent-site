@@ -16,6 +16,9 @@ class Vacancy(Base):
         UniqueConstraint("fingerprint", name="uq_vacancies_fingerprint"),
         Index("idx_vacancies_active_updated", "is_active", "updated_at"),
         Index("idx_vacancies_location", "location"),
+        Index("idx_vacancies_work_format", "work_format"),
+        Index("idx_vacancies_employment_code", "employment_code"),
+        Index("idx_vacancies_experience_code", "experience_code"),
     )
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True)
@@ -27,6 +30,9 @@ class Vacancy(Base):
     currency: Mapped[str | None] = mapped_column(Text)
     location: Mapped[str | None] = mapped_column(Text)
     remote: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    work_format: Mapped[str | None] = mapped_column(String(32))
+    employment_code: Mapped[str | None] = mapped_column(String(32))
+    experience_code: Mapped[str | None] = mapped_column(String(32))
     schedule: Mapped[str | None] = mapped_column(Text)
     employment: Mapped[str | None] = mapped_column(Text)
     experience: Mapped[str | None] = mapped_column(Text)
@@ -60,6 +66,21 @@ class VacancySourceRecord(Base):
         Index("idx_vacancy_source_records_remote", "remote"),
         Index("idx_vacancy_source_records_location", "location"),
         Index(
+            "idx_vacancy_source_records_source_work_format",
+            "source",
+            "work_format",
+        ),
+        Index(
+            "idx_vacancy_source_records_source_employment_code",
+            "source",
+            "employment_code",
+        ),
+        Index(
+            "idx_vacancy_source_records_source_experience_code",
+            "source",
+            "experience_code",
+        ),
+        Index(
             "idx_vacancy_source_records_source_status_published",
             "source",
             "source_status",
@@ -83,6 +104,9 @@ class VacancySourceRecord(Base):
     currency: Mapped[str | None] = mapped_column(Text)
     location: Mapped[str | None] = mapped_column(Text)
     remote: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    work_format: Mapped[str | None] = mapped_column(String(32))
+    employment_code: Mapped[str | None] = mapped_column(String(32))
+    experience_code: Mapped[str | None] = mapped_column(String(32))
     schedule: Mapped[str | None] = mapped_column(Text)
     employment: Mapped[str | None] = mapped_column(Text)
     experience: Mapped[str | None] = mapped_column(Text)

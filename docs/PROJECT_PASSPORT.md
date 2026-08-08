@@ -3,13 +3,13 @@
 | Поле | Значение |
 |---|---|
 | Документ | PROJECT_PASSPORT |
-| Версия паспорта | 2.17 |
-| Дата | 07 августа 2026 |
+| Версия паспорта | 2.19 |
+| Дата | 08 августа 2026 |
 | Статус | ДЕЙСТВУЮЩИЙ |
-| Связанный план | `AI_Career_Agent_PLAN_CURRENT v1.4.3` |
-| Основа кода | `ai-career-agent-site-main (5).zip` — актуальный GitHub `main` после SYNC-001; поверх него реализован candidate SYNC-002 |
+| Связанный план | `AI_Career_Agent_PLAN_CURRENT v1.4.5` |
+| Основа кода | `ai-career-agent-site-main (11).zip`; поверх актуального `main` реализован candidate SEARCH-001 с revision `20260808_0005` |
 
-> Контрольные статусы: FND-001/FND-002/DATA-001/DATA-002/SEC-001/OPS-001/INFRA-PREP-001 — **ВЫПОЛНЕНО**; DOC-001 — **В РАБОТЕ как постоянный процесс**; SYNC-001 — **ВЫПОЛНЕНО**; SYNC-002 — **НУЖНА ПРОВЕРКА**; INFRA-001 — **ОТЛОЖЕНО ДО ПРЕДРЕЛИЗНОГО ЭТАПА**.
+> Контрольные статусы: FND-001/FND-002/DATA-001/DATA-002/SEC-001/OPS-001/INFRA-PREP-001/SYNC-001/SYNC-002 — **ВЫПОЛНЕНО**; SEARCH-001 — **НУЖНА ПРОВЕРКА**; SEARCH-002 — **ЗАПЛАНИРОВАНО**; DOC-001 — **В РАБОТЕ**; INFRA-001 — **ОТЛОЖЕНО ДО ПРЕДРЕЛИЗНОГО ЭТАПА**.
 
 ## 1. Назначение
 
@@ -53,7 +53,7 @@ Dockerfile / compose.yaml  runtime, ops, DB, migrations, restore-test
 infra/                     Gunicorn, Caddy, VPS environment and probes
 scripts/                   migrations, backup, restore, alert, infra probes, sync CLI/worker/supervisor
 domain/ models/ repositories/ services/
-migrations/                Alembic 0001 + 0002 + 0003 + 0004 (incremental checkpoints/cleanup)
+migrations/                Alembic 0001 + 0002 + 0003 + 0004 + 0005 (vacancy normalization contract)
 tests/                     unit/integration/security/ops/infra/sync tests
 docs/                      architecture, security and runbooks
 render.yaml
@@ -86,9 +86,9 @@ Production подтвердил secure `aca_session`, CSRF `400`, CSP/HSTS/brows
 
 Подтверждены production JSON logs, `X-Request-ID` correlation, health/live/readiness, protected `/ops/status`, provider metrics, sanitised alert webhook, encrypted PostgreSQL backup/restore toolchain и отдельные GitHub OPS/backup steps.
 
-**Важно:** ранее незакрытый encrypted backup реальной production PostgreSQL + restore в отдельную test database не объявлен пройденным. В PLAN_CURRENT 1.4.3 он перенесён целиком в `OPS-002` и повторно проверяется в `REL-001`. Это release gate, а не текущий blocker функциональной разработки.
+**Важно:** ранее незакрытый encrypted backup реальной production PostgreSQL + restore в отдельную test database не объявлен пройденным. В PLAN_CURRENT 1.4.5 он перенесён целиком в `OPS-002` и повторно проверяется в `REL-001`. Это release gate, а не текущий blocker функциональной разработки.
 
-OPS-001 database migration отсутствовала. Текущая candidate revision SYNC-002 — `20260807_0004`; production остаётся на `20260807_0003` до merge/deploy.
+OPS-001 database migration отсутствовала. Production schema остаётся `20260807_0004`; SEARCH-001 candidate ожидает проверку additive revision `20260808_0005`.
 
 ## 6. INFRA-PREP-001 — ВЫПОЛНЕНО
 
@@ -121,22 +121,41 @@ OPS-001 database migration отсутствовала. Текущая candidate 
 
 Отдельно зафиксировано: `cache_age_seconds` после restart не сбрасывается, потому что отражает возраст сохранённого PostgreSQL cache, а не uptime web-процесса.
 
-## 8. SYNC-002 — НУЖНА ПРОВЕРКА
+## 8. SYNC-002 — ВЫПОЛНЕНО
 
-Поверх подтверждённого external worker реализована incremental freshness/cleanup policy:
+Поверх подтверждённого external worker внедрена и принята incremental freshness/cleanup policy:
 
-- migration `20260807_0004` создаёт `sync_checkpoints` и добавляет lifecycle-поля source records;
-- committed watermark и bounded pending window хранятся отдельно от process memory;
-- API Trudvsem вызывается с фиксированными `modifiedFrom`/`modifiedTo`; cursor/offset/total сохраняются после каждой страницы;
-- bootstrap последних 45 дней и большие incremental change-sets продолжаются через несколько runs и reconnect БД;
-- overlap 300 секунд защищает границу watermark, а upsert по `(source, external_id)` остаётся идемпотентным;
-- explicit closed/deleted/expired записи скрываются, старые публикации закрываются по TTL, закрытые source rows удаляются после retention;
-- при upstream failure watermark и cleanup не продвигаются, checkpoint хранит bounded exponential retry, прежний cache остаётся доступным;
-- backup inventory учитывает `sync_checkpoints`; diagnostics показывают checkpoint и active/closed totals без raw upstream body.
+- migration `20260807_0004` создаёт `sync_checkpoints` и lifecycle-поля source records;
+- committed watermark, bounded pending window, cursor/offset/total и retry state живут в PostgreSQL, а не в process memory;
+- overlap 300 секунд + idempotent upsert защищают границу окна;
+- explicit closed/expired lifecycle, TTL closure и retention purge реализованы и покрыты tests;
+- upstream failure не продвигает watermark/cleanup и не удаляет последний cache;
+- scheduled worker соблюдает persistent bounded exponential backoff.
 
-**Локальная проверка:** 130 passed, 6 skipped; migration 0004 upgrade/downgrade/upgrade и Alembic check пройдены. Пакет не считается выполненным до зелёного GitHub Actions и Render smoke с revision `20260807_0004`, continuation cursor, retry preservation и cleanup evidence.
+**GitHub verification 08.08.2026:** весь workflow зелёный, включая SYNC-001/SYNC-002 gates, PostgreSQL migrations/integration, encrypted backup/restore, Docker/Compose, runtime smoke и full tests.
 
-## 9. INFRA-001 — ОТЛОЖЕНО ДО ПРЕДРЕЛИЗНОГО ЭТАПА
+**Render verification 08.08.2026:** `/health/ready` и `/health` вернули `200`, `database.backend=postgresql`, `persistent=true`, current/expected revision `20260807_0004`. Diagnostics подтвердили window `pending=true`, `pending_offset=3`, `pending_total=92287`, watermark `1785926683`, from `1785926383`, to `1786195111` и 300-second overlap. На реальных `Read timed out` внешнего Trudvsem API cursor/watermark/cache сохранялись; worker оставался жив; backoff увеличивался; после redeploy checkpoint и `cached_total=102`/`active_total=552` сохранились.
+
+**Принятое ограничение:** из-за длительных timeout `opendata.trudvsem.ru` на Render не дождались успешного продвижения `pending_offset > 3` и production cleanup полного окна. Эти success-path сценарии покрыты automated tests/CI. По решению владельца они не блокируют SEARCH-001 и повторяются на реальном российском VPS в `INFRA-001/OPS-002`, где ожидается более стабильный маршрут к Trudvsem.
+
+После verification временные `DEBUG_DIAGNOSTICS`/`DIAGNOSTICS_SECRET` должны быть удалены из production Environment.
+
+## 9. SEARCH-001 — НУЖНА ПРОВЕРКА
+
+Реализован единый provider-to-application contract вакансии:
+
+- `NormalizedVacancy` и documented enums для формата работы, занятости и опыта;
+- central normalizer для текста, валюты, зарплаты и UTC timestamps;
+- adapters HH, Reed, SuperJob и Trudvsem возвращают одинаковые keys/types;
+- migration `20260808_0005` добавляет nullable canonical code columns и индексы;
+- store/repository сохраняют codes; legacy rows не блокируют выдачу благодаря fallback только при `NULL`;
+- exact canonical filters применяются после provider aggregation;
+- unknown provider values не маскируются ложным onsite/full/experience;
+- cross-source dedup не входит и остаётся SEARCH-002.
+
+Локально подтверждены `139 passed, 6 skipped`, migration upgrade/check/downgrade/re-upgrade и focused SEARCH-001 suite. Требуются GitHub PostgreSQL/CI и Render revision/search smoke, поэтому статус пока **НУЖНА ПРОВЕРКА**.
+
+## 10. INFRA-001 — ОТЛОЖЕНО ДО ПРЕДРЕЛИЗНОГО ЭТАПА
 
 `INFRA-001` теперь означает только реальную аренду и полевой тест VPS:
 
@@ -149,23 +168,22 @@ OPS-001 database migration отсутствовала. Текущая candidate 
 
 До начала этого пакета Render остаётся staging/резервной площадкой, DNS/OAuth callback URL не переключаются.
 
-## 10. Текущее функциональное состояние
+## 11. Текущее функциональное состояние
 
 - Главная/AI Career/resume builder работают.
 - Search: Trudvsem, HH, Reed, conditional SuperJob.
 - OAuth HH/SJ: текущий pre-MVP, tokens encrypted.
-- Trudvsem cache остаётся PostgreSQL-backed; внешний worker подтверждён; candidate SYNC-002 добавляет persistent watermark/cursor, retry state и lifecycle cleanup.
+- Trudvsem cache остаётся PostgreSQL-backed; внешний worker и SYNC-002 подтверждены. SEARCH-001 candidate добавляет единый typed contract/canonical fields для всех источников без изменения UI.
 - PDF parser эвристический, не LLM.
 - Saved jobs пока localStorage.
 - Own account/profile/real AI/match/letters/tracker впереди.
 
-## 11. Новая обязательная очередь разработки
+## 12. Новая обязательная очередь разработки
 
 ### Сейчас — функциональный MVP без аренды VPS
 
 ```text
-SYNC-002 verification
--> SEARCH-001 -> SEARCH-002 -> SEARCH-003 -> SEARCH-004
+SEARCH-001 verification -> SEARCH-002 -> SEARCH-003 -> SEARCH-004
 -> AUTH-001 -> AUTH-002
 -> PROF-001 -> PROF-002 -> PROF-003 -> PRIV-001
 -> SEARCH-005
@@ -186,7 +204,7 @@ INFRA-001 -> REED-COMPAT-001 -> HOST-001
 -> final SEC/OPS smoke -> REL-001 -> commercial release
 ```
 
-## 12. Зафиксированная hosting-independent стратегия
+## 13. Зафиксированная hosting-independent стратегия
 
 До предрелизного окна новый код не должен зависеть от конкретного hosting provider:
 
@@ -200,7 +218,7 @@ INFRA-001 -> REED-COMPAT-001 -> HOST-001
 
 Render не считается гарантированным production для РФ/РБ из-за подтверждённой сетевой недоступности из части сетей РФ, но остаётся пригодным staging/резервным контуром до `MIG-001`.
 
-## 13. AI и Reed
+## 14. AI и Reed
 
 - `AI-BENCH-001` можно выполнять без реального VPS: качество Yandex AI Studio/Alice AI проверяется на golden dataset, а transport с будущего source IP повторяется в `INFRA-001`.
 - Бизнес-логика должна использовать независимый `AIProvider`; OpenAI не является обязательным baseline для РФ/РБ.
@@ -208,11 +226,11 @@ Render не считается гарантированным production для 
 - `REED-COMPAT-001` требует точного IP выбранного VPS и выполняется сразу после `INFRA-001`.
 - Reed должен иметь feature flag и graceful degradation.
 
-## 14. Следующий пакет
+## 15. Следующий пакет
 
-Текущий candidate — `SYNC-002`. Сначала требуется GitHub/Render verification migration `20260807_0004`, persistent checkpoint/cursor, retry preservation и cleanup. После подтверждения следующий кодовый пакет — `SEARCH-001`: единая схема вакансии и нормализация данных.
+Текущий gate — SEARCH-001: GitHub Actions, PostgreSQL migration `20260808_0005`, Render `/health/ready` и multi-source search smoke. После подтверждения следующий кодовый пакет — SEARCH-002, cross-source deduplication поверх нового contract.
 
-## 15. Правила рабочего чата
+## 16. Правила рабочего чата
 
 - Перед изменениями читать паспорт, PLAN_CURRENT и актуальный ZIP; работать по одному package ID.
 - Не смешивать unrelated design/business changes.

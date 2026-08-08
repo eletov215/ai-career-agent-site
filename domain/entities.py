@@ -97,6 +97,9 @@ class VacancyRecord:
     currency: str | None
     location: str | None
     remote: bool
+    work_format: str | None
+    employment_code: str | None
+    experience_code: str | None
     schedule: str | None
     employment: str | None
     experience: str | None
@@ -123,6 +126,9 @@ class SourceRecord:
     currency: str | None
     location: str | None
     remote: bool
+    work_format: str | None
+    employment_code: str | None
+    experience_code: str | None
     schedule: str | None
     employment: str | None
     experience: str | None

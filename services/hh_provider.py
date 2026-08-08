@@ -6,7 +6,8 @@ from typing import Callable
 import requests
 
 from .base_provider import SearchResult, VacancyProvider
-from .search_filters import VacancySearchFilters, canonical_currency
+from .search_filters import VacancySearchFilters, filter_vacancies
+from .vacancy_normalizer import normalize_hh_vacancy
 
 logger = logging.getLogger(__name__)
 
@@ -46,42 +47,7 @@ class HeadHunterProvider(VacancyProvider):
 
     @staticmethod
     def _normalize(raw: dict) -> dict:
-        area = raw.get("area") or {}
-        employer = raw.get("employer") or {}
-        salary = raw.get("salary") or {}
-        schedule = raw.get("schedule") or {}
-        employment = raw.get("employment") or {}
-        experience = raw.get("experience") or {}
-        snippet = raw.get("snippet") or {}
-
-        description = " ".join(
-            part
-            for part in (
-                snippet.get("requirement") or "",
-                snippet.get("responsibility") or "",
-            )
-            if part
-        ).strip()
-
-        return {
-            "external_id": str(raw.get("id") or ""),
-            "source": "hh",
-            "source_title": "HeadHunter",
-            "title": raw.get("name") or "Без названия",
-            "company": employer.get("name") or "Компания не указана",
-            "salary_from": salary.get("from"),
-            "salary_to": salary.get("to"),
-            "currency": canonical_currency(salary.get("currency")),
-            "location": area.get("name") or "",
-            "remote": schedule.get("id") == "remote",
-            "schedule": schedule.get("name") or "",
-            "employment": employment.get("name") or "",
-            "experience": experience.get("name") or "",
-            "description": description,
-            "requirements": experience.get("name") or "",
-            "published_at": raw.get("published_at") or "",
-            "url": raw.get("alternate_url") or raw.get("apply_alternate_url") or "",
-        }
+        return normalize_hh_vacancy(raw).as_mapping()
 
     def _request(self, params: dict, token: str | None, attempt: str) -> requests.Response:
         headers = self.header_factory(token)
@@ -127,10 +93,13 @@ class HeadHunterProvider(VacancyProvider):
         }
         if filters.keyword:
             params["text"] = filters.keyword
-        if filters.work_format == "remote":
-            params["schedule"] = "remote"
-        elif filters.work_format == "hybrid":
-            params["schedule"] = "flexible"
+        hh_work_format = {
+            "remote": "REMOTE",
+            "hybrid": "HYBRID",
+            "onsite": "ON_SITE",
+        }.get(filters.work_format)
+        if hh_work_format:
+            params["work_format"] = hh_work_format
         hh_experience = {
             "no_experience": "noExperience",
             "between_1_and_3": "between1And3",
@@ -139,8 +108,13 @@ class HeadHunterProvider(VacancyProvider):
         }.get(filters.experience)
         if hh_experience:
             params["experience"] = hh_experience
-        if filters.employment:
-            params["employment"] = filters.employment
+        hh_employment = {
+            "full": "FULL",
+            "part": "PART",
+            "project": "PROJECT",
+        }.get(filters.employment)
+        if hh_employment:
+            params["employment_form"] = hh_employment
         # HH uses currency only together with the salary threshold and does not
         # guarantee that returned vacancies are denominated in that currency.
         # Exact currency matching is therefore performed on normalized results.
@@ -217,15 +191,7 @@ class HeadHunterProvider(VacancyProvider):
                     payload = response.json()
                     api_pages = int(payload.get("pages", 0) or 0)
                     batch = [self._normalize(item) for item in payload.get("items", [])]
-                    if filters.region and "area" not in params:
-                        region_query = filters.region.casefold()
-                        batch = [item for item in batch if region_query in str(item.get("location") or "").casefold()]
-                    if filters.work_format == "onsite":
-                        batch = [item for item in batch if not item.get("remote") and "гибк" not in str(item.get("schedule") or "").casefold()]
-                    batch = [
-                        item for item in batch
-                        if canonical_currency(item.get("currency")) == filters.currency
-                    ]
+                    batch = filter_vacancies(batch, filters)
                     matched_items.extend(batch)
                     api_page += 1
 
@@ -244,11 +210,7 @@ class HeadHunterProvider(VacancyProvider):
             response.raise_for_status()
             payload = response.json()
             items = [self._normalize(item) for item in payload.get("items", [])]
-            if filters.region and "area" not in params:
-                region_query = filters.region.casefold()
-                items = [item for item in items if region_query in str(item.get("location") or "").casefold()]
-            if filters.work_format == "onsite":
-                items = [item for item in items if not item.get("remote") and "гибк" not in str(item.get("schedule") or "").casefold()]
+            items = filter_vacancies(items, filters)
             current_page = int(payload.get("page", page) or page)
             pages = int(payload.get("pages", 0) or 0)
 

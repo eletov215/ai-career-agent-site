@@ -12,6 +12,8 @@ from sqlalchemy import Engine
 from database import DatabaseRuntime, create_database
 from repositories import VacancyRepository
 
+from .vacancy_normalizer import normalize_datetime, normalize_vacancy_mapping
+
 
 
 
@@ -70,31 +72,16 @@ class VacancyStore:
             item.get("schedule"),
             item.get("employment"),
             item.get("experience"),
+            item.get("work_format"),
+            item.get("employment_code"),
+            item.get("experience_code"),
             item.get("currency"),
         ]
         return " ".join(str(value or "") for value in values).lower()
 
     @staticmethod
     def _normalize_published_at(value: object | None) -> str | None:
-        if value in (None, ""):
-            return None
-        if isinstance(value, (int, float)):
-            parsed = datetime.fromtimestamp(float(value), tz=timezone.utc)
-        else:
-            raw = str(value).strip()
-            if not raw:
-                return None
-            if raw.isdigit():
-                parsed = datetime.fromtimestamp(float(raw), tz=timezone.utc)
-            else:
-                try:
-                    parsed = datetime.fromisoformat(raw.replace("Z", "+00:00"))
-                except ValueError:
-                    return raw
-                if parsed.tzinfo is None:
-                    parsed = parsed.replace(tzinfo=timezone.utc)
-                parsed = parsed.astimezone(timezone.utc)
-        return parsed.isoformat(timespec="seconds").replace("+00:00", "Z")
+        return normalize_datetime(value)
 
     def upsert_many(
         self,
@@ -106,36 +93,38 @@ class VacancyStore:
         now = int(time.time()) if seen_at is None else int(seen_at)
         payloads: list[dict[str, Any]] = []
         for item in items:
-            external_id = str(item.get("external_id") or "").strip()
-            source = str(item.get("source") or "").strip()
+            normalized = normalize_vacancy_mapping(item).as_mapping()
+            external_id = normalized["external_id"]
+            source = normalized["source"]
             if not source or not external_id:
                 continue
             payloads.append(
                 {
                     "source": source,
                     "external_id": external_id,
-                    "title": item.get("title") or "Без названия",
-                    "company": item.get("company"),
-                    "salary_from": item.get("salary_from"),
-                    "salary_to": item.get("salary_to"),
-                    "currency": item.get("currency"),
-                    "location": item.get("location"),
-                    "remote": bool(item.get("remote")),
-                    "schedule": item.get("schedule"),
-                    "employment": item.get("employment"),
-                    "experience": item.get("experience"),
-                    "description": item.get("description"),
-                    "requirements": item.get("requirements"),
-                    "published_at": self._normalize_published_at(item.get("published_at")),
-                    "url": item.get("url"),
-                    "search_text": self._search_blob(item),
-                    "raw_json": json.dumps(item, ensure_ascii=False),
-                    "source_status": str(item.get("source_status") or "active"),
-                    "source_modified_at": self._normalize_published_at(
-                        item.get("source_modified_at")
-                    ),
-                    "closed_at": item.get("closed_at"),
-                    "closed_reason": item.get("closed_reason"),
+                    "title": normalized["title"],
+                    "company": normalized["company"],
+                    "salary_from": normalized["salary_from"],
+                    "salary_to": normalized["salary_to"],
+                    "currency": normalized["currency"] or None,
+                    "location": normalized["location"],
+                    "remote": normalized["remote"],
+                    "work_format": normalized["work_format"],
+                    "employment_code": normalized["employment_code"],
+                    "experience_code": normalized["experience_code"],
+                    "schedule": normalized["schedule"],
+                    "employment": normalized["employment"],
+                    "experience": normalized["experience"],
+                    "description": normalized["description"],
+                    "requirements": normalized["requirements"],
+                    "published_at": normalized["published_at"],
+                    "url": normalized["url"],
+                    "search_text": self._search_blob(normalized),
+                    "raw_json": json.dumps(normalized, ensure_ascii=False),
+                    "source_status": normalized["source_status"],
+                    "source_modified_at": normalized["source_modified_at"],
+                    "closed_at": normalized["closed_at"],
+                    "closed_reason": normalized["closed_reason"],
                     "last_seen_run_id": run_id,
                     "last_seen_at": now,
                     "fetched_at": now,
@@ -218,7 +207,7 @@ class VacancyStore:
             except (TypeError, json.JSONDecodeError):
                 continue
             if isinstance(item, dict):
-                result.append(item)
+                result.append(normalize_vacancy_mapping(item).as_mapping())
         return result
 
     def count(self, **filters: Any) -> int:

@@ -17,7 +17,7 @@ from werkzeug.utils import secure_filename
 from services.hh_provider import HeadHunterProvider
 from services.superjob_provider import SuperJobProvider
 from services.reed_provider import ReedProvider
-from services.search_filters import VacancySearchFilters, canonical_currency
+from services.search_filters import VacancySearchFilters, filter_vacancies
 from services.vacancy_presenter import present_vacancy
 from services.resume_parser import ResumeParseError, build_resume_preview, parse_resume_pdf
 from services.university_logo import find_university_logo
@@ -918,13 +918,10 @@ def vacancies():
                     if result.error:
                         errors.append(result.error)
 
-        # Enforce currency consistently after all providers are combined.
-        # Some APIs treat currency as a salary-conversion hint rather than a strict filter.
-        if filters.currency:
-            all_items = [
-                item for item in all_items
-                if canonical_currency(item.get("currency")) == filters.currency
-            ]
+        # Apply the same canonical contract at the aggregation boundary.
+        # Provider-side filters are only an optimization; this final pass keeps
+        # HH, Reed, SuperJob and cached Trudvsem behavior consistent.
+        all_items = filter_vacancies(all_items, filters)
 
         # Remove duplicates across providers and sort newest first.
         unique_items = {}

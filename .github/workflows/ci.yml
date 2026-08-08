@@ -129,6 +129,16 @@ jobs:
           tests/test_config.py
           tests/test_infra_manifests.py
 
+      - name: Verify SEARCH-001 vacancy contract and normalization controls
+        run: >-
+          python -m pytest -q
+          tests/test_search_normalization.py
+          tests/test_providers.py
+          tests/test_vacancy_store.py
+          tests/test_search_filters.py
+          tests/test_vacancy_presenter.py
+          tests/test_repositories.py
+
       - name: Verify PostgreSQL encrypted backup and restore
         env:
           DATABASE_URL: ${{ env.POSTGRES_TEST_URL }}
