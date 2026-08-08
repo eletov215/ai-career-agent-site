@@ -106,7 +106,7 @@ def test_one_provider_failure_does_not_hide_another_provider_result(
                         "external_id": "reed-1",
                         "source": "reed",
                         "source_title": "Reed.co.uk",
-                        "title": "Visible test vacancy",
+                        "title": "Python Visible test vacancy",
                         "company": "Test Company",
                         "published_at": "2026-08-03T08:00:00Z",
                         "url": "https://example.test/vacancy",
