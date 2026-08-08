@@ -8,7 +8,7 @@ import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Any, Iterable
 
-from sqlalchemy import and_, case, func, or_, select, tuple_
+from sqlalchemy import and_, case, delete, exists, func, or_, select, tuple_, update
 
 from domain import SourceRecord, VacancyRecord
 from models import Vacancy, VacancySourceRecord
@@ -70,6 +70,10 @@ class VacancyRepository(RepositoryBase):
             search_text=row.search_text,
             raw_json=row.raw_json,
             source_status=row.source_status,
+            source_modified_at=row.source_modified_at,
+            closed_at=row.closed_at,
+            closed_reason=row.closed_reason,
+            last_seen_run_id=row.last_seen_run_id,
             first_seen_at=row.first_seen_at,
             last_seen_at=row.last_seen_at,
             fetched_at=row.fetched_at,
@@ -120,6 +124,20 @@ class VacancyRepository(RepositoryBase):
             "updated_at": now,
         }
 
+    @staticmethod
+    def _refresh_canonical_activity(session, vacancy_ids: set[str]) -> None:  # noqa: ANN001
+        for vacancy_id in vacancy_ids:
+            canonical = session.get(Vacancy, vacancy_id)
+            if canonical is None:
+                continue
+            active_count = session.scalar(
+                select(func.count(VacancySourceRecord.id)).where(
+                    VacancySourceRecord.vacancy_id == vacancy_id,
+                    VacancySourceRecord.source_status == "active",
+                )
+            )
+            canonical.is_active = bool(active_count)
+
     def upsert_source_records(self, payloads: Iterable[dict[str, Any]]) -> int:
         rows_by_key: dict[tuple[str, str], dict[str, Any]] = {}
         for values in payloads:
@@ -132,6 +150,7 @@ class VacancyRepository(RepositoryBase):
 
         keys = list(rows_by_key)
         now = int(time.time())
+        touched_vacancy_ids: set[str] = set()
         with self.session() as session:
             existing = session.scalars(
                 select(VacancySourceRecord).where(
@@ -144,6 +163,19 @@ class VacancyRepository(RepositoryBase):
             by_key = {(row.source, row.external_id): row for row in existing}
 
             for key, values in rows_by_key.items():
+                source_status = str(values.get("source_status") or "active").strip().lower()
+                if source_status not in {"active", "closed"}:
+                    source_status = "active"
+                values["source_status"] = source_status
+                if source_status == "active":
+                    values["closed_at"] = None
+                    values["closed_reason"] = None
+                else:
+                    values["closed_at"] = int(values.get("closed_at") or now)
+                    values["closed_reason"] = str(
+                        values.get("closed_reason") or "provider_status"
+                    )[:64]
+
                 source_record = by_key.get(key)
                 if source_record is None:
                     canonical_id = str(uuid.uuid4())
@@ -155,7 +187,7 @@ class VacancyRepository(RepositoryBase):
                     )
                     session.add(canonical)
                     record_values = dict(values)
-                    source_status = record_values.pop("source_status", "active")
+                    source_status_value = record_values.pop("source_status", "active")
                     first_seen_at = record_values.pop(
                         "first_seen_at",
                         record_values.get("fetched_at", now),
@@ -166,18 +198,23 @@ class VacancyRepository(RepositoryBase):
                     )
                     source_record = VacancySourceRecord(
                         vacancy_id=canonical_id,
-                        source_status=source_status,
+                        source_status=source_status_value,
                         first_seen_at=first_seen_at,
                         last_seen_at=last_seen_at,
                         **record_values,
                     )
                     session.add(source_record)
+                    touched_vacancy_ids.add(canonical_id)
                     continue
 
-                source_record.last_seen_at = values.get("updated_at", now)
-                source_record.source_status = values.get("source_status", "active")
+                source_record.last_seen_at = int(
+                    values.get("last_seen_at")
+                    or values.get("updated_at")
+                    or now
+                )
                 for name, value in values.items():
-                    setattr(source_record, name, value)
+                    if hasattr(source_record, name):
+                        setattr(source_record, name, value)
 
                 canonical = session.get(Vacancy, source_record.vacancy_id)
                 if canonical is None:
@@ -191,8 +228,111 @@ class VacancyRepository(RepositoryBase):
                 else:
                     for name, value in self._canonical_values(values, now=now).items():
                         setattr(canonical, name, value)
+                touched_vacancy_ids.add(source_record.vacancy_id)
+
+            session.flush()
+            self._refresh_canonical_activity(session, touched_vacancy_ids)
             session.commit()
         return len(rows_by_key)
+
+    def mark_expired_active(
+        self,
+        *,
+        source: str,
+        published_before: str,
+        closed_at: int,
+        reason: str = "published_ttl",
+    ) -> int:
+        """Hide active records older than the supported search window."""
+
+        with self.session() as session:
+            vacancy_ids = set(
+                session.scalars(
+                    select(VacancySourceRecord.vacancy_id).where(
+                        VacancySourceRecord.source == source,
+                        VacancySourceRecord.source_status == "active",
+                        VacancySourceRecord.published_at.is_not(None),
+                        VacancySourceRecord.published_at < published_before,
+                    )
+                ).all()
+            )
+            if not vacancy_ids:
+                return 0
+            result = session.execute(
+                update(VacancySourceRecord)
+                .where(
+                    VacancySourceRecord.source == source,
+                    VacancySourceRecord.source_status == "active",
+                    VacancySourceRecord.published_at.is_not(None),
+                    VacancySourceRecord.published_at < published_before,
+                )
+                .values(
+                    source_status="closed",
+                    closed_at=int(closed_at),
+                    closed_reason=str(reason)[:64],
+                    updated_at=int(closed_at),
+                )
+            )
+            session.flush()
+            self._refresh_canonical_activity(session, vacancy_ids)
+            session.commit()
+            return int(result.rowcount or 0)
+
+    def purge_closed(
+        self,
+        *,
+        source: str,
+        closed_before: int,
+    ) -> int:
+        """Delete long-retained closed source rows and orphan canonicals."""
+
+        with self.session() as session:
+            rows = session.execute(
+                select(
+                    VacancySourceRecord.id,
+                    VacancySourceRecord.vacancy_id,
+                ).where(
+                    VacancySourceRecord.source == source,
+                    VacancySourceRecord.source_status == "closed",
+                    VacancySourceRecord.closed_at.is_not(None),
+                    VacancySourceRecord.closed_at < int(closed_before),
+                )
+            ).all()
+            if not rows:
+                return 0
+            row_ids = [row.id for row in rows]
+            vacancy_ids = {row.vacancy_id for row in rows}
+            result = session.execute(
+                delete(VacancySourceRecord).where(
+                    VacancySourceRecord.id.in_(row_ids)
+                )
+            )
+            session.flush()
+            session.execute(
+                delete(Vacancy).where(
+                    Vacancy.id.in_(vacancy_ids),
+                    ~exists(
+                        select(VacancySourceRecord.id).where(
+                            VacancySourceRecord.vacancy_id == Vacancy.id
+                        )
+                    ),
+                )
+            )
+            self._refresh_canonical_activity(session, vacancy_ids)
+            session.commit()
+            return int(result.rowcount or 0)
+
+    def source_status_counts(self, source: str) -> dict[str, int]:
+        with self.session() as session:
+            rows = session.execute(
+                select(
+                    VacancySourceRecord.source_status,
+                    func.count(VacancySourceRecord.id),
+                )
+                .where(VacancySourceRecord.source == source)
+                .group_by(VacancySourceRecord.source_status)
+            ).all()
+        return {str(status): int(count) for status, count in rows}
 
     @staticmethod
     def _build_conditions(
@@ -372,7 +512,8 @@ class VacancyRepository(RepositoryBase):
         with self.session() as session:
             fetched_at = session.scalar(
                 select(func.max(VacancySourceRecord.fetched_at)).where(
-                    VacancySourceRecord.source == source
+                    VacancySourceRecord.source == source,
+                    VacancySourceRecord.source_status == "active",
                 )
             )
         if fetched_at is None:

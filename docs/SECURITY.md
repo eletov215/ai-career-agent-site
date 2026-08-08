@@ -1,7 +1,7 @@
 # SEC-001 — базовый защитный слой
 
 > Базовый пакет SEC-001 подтверждён в production 06 августа 2026 года.  
-> Текущая schema после SYNC-001 candidate: `20260807_0003`.  
+> Candidate schema после SYNC-002: `20260807_0004`; production baseline до deploy — `20260807_0003`.  
 > Render entrypoint для staging после SYNC-001: `python scripts/manage_db.py upgrade && python scripts/start_runtime.py`.
 
 ## 1. Назначение
@@ -210,7 +210,7 @@ Verify SEC-001 security controls
 
 ## 5. Production smoke после merge
 
-1. `/health` — HTTP 200, revision после SYNC-001 должна быть `20260807_0003`.
+1. `/health` — HTTP 200, revision после SYNC-002 deploy должна быть `20260807_0004`.
 2. Главная, AI Career, resume builder и vacancies открываются.
 3. PDF upload с корректным token проходит; запрос без token получает neutral 400.
 4. Одиннадцатый быстрый preview request получает 429 в контролируемом тесте, обычное использование не блокируется.
@@ -223,7 +223,7 @@ Verify SEC-001 security controls
 
 ## 6. Rollback
 
-SEC-001 не добавляет database migration. Для отката достаточно вернуть application commit и redeploy. PostgreSQL schema revision после SYNC-001 должна быть `20260807_0003`.
+SEC-001 не добавляет database migration. Для отката достаточно вернуть application commit и redeploy. Candidate schema после SYNC-002 — `20260807_0004`; controlled downgrade target для самого SYNC-002 — `20260807_0003`.
 
 При rollback старый GET `/logout` и публичные technical endpoints вернут прежнее поведение, поэтому откат следует использовать только для аварийного восстановления и затем исправить первопричину.
 

@@ -24,12 +24,28 @@ services:
         value: INFO
       - key: TRUDVSEM_SYNC_ENABLED
         value: "1"
+      - key: TRUDVSEM_SYNC_INTERVAL
+        value: "1800"
+      - key: TRUDVSEM_SYNC_ITEMS
+        value: "300"
+      - key: TRUDVSEM_SYNC_BATCH
+        value: "10"
       - key: TRUDVSEM_SYNC_POLL_SECONDS
         value: "15"
       - key: TRUDVSEM_SYNC_STALE_SECONDS
         value: "900"
       - key: TRUDVSEM_WORKER_HEARTBEAT_SECONDS
         value: "15"
+      - key: TRUDVSEM_SYNC_WATERMARK_OVERLAP_SECONDS
+        value: "300"
+      - key: TRUDVSEM_VACANCY_TTL_DAYS
+        value: "45"
+      - key: TRUDVSEM_CLOSED_RETENTION_DAYS
+        value: "30"
+      - key: TRUDVSEM_RETRY_BASE_SECONDS
+        value: "60"
+      - key: TRUDVSEM_RETRY_MAX_SECONDS
+        value: "3600"
 
 # SYNC-001 runs the worker as a sibling OS process on the current free web
 # service. On a paid Render plan or VPS, deploy scripts/trudvsem_sync_worker.py

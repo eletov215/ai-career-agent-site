@@ -133,10 +133,57 @@ class SourceRecord:
     search_text: str | None
     raw_json: str | None
     source_status: str
+    source_modified_at: str | None
+    closed_at: int | None
+    closed_reason: str | None
+    last_seen_run_id: str | None
     first_seen_at: int
     last_seen_at: int
     fetched_at: int
     updated_at: int
+
+
+@dataclass(frozen=True, slots=True)
+class SyncCheckpointRecord:
+    """Durable incremental watermark and retry state for one source."""
+
+    source: str
+    watermark_at: int | None
+    pending_from_at: int | None
+    pending_to_at: int | None
+    pending_offset: int | None
+    pending_limit: int | None
+    pending_total: int | None
+    last_success_run_id: str | None
+    last_success_at: int | None
+    last_cleanup_at: int | None
+    consecutive_failures: int
+    next_retry_at: int | None
+    created_at: int
+    updated_at: int
+
+    @property
+    def has_pending_window(self) -> bool:
+        return bool(
+            self.pending_to_at is not None
+            and self.pending_offset is not None
+            and self.pending_limit is not None
+        )
+
+    def public_summary(self) -> dict[str, Any]:
+        return {
+            "source": self.source,
+            "watermark_at": self.watermark_at,
+            "pending": self.has_pending_window,
+            "pending_from_at": self.pending_from_at,
+            "pending_to_at": self.pending_to_at,
+            "pending_offset": self.pending_offset,
+            "pending_total": self.pending_total,
+            "last_success_at": self.last_success_at,
+            "last_cleanup_at": self.last_cleanup_at,
+            "consecutive_failures": self.consecutive_failures,
+            "next_retry_at": self.next_retry_at,
+        }
 
 
 @dataclass(frozen=True, slots=True)

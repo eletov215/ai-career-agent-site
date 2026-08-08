@@ -2,16 +2,17 @@
 
 | Поле | Значение |
 |---|---|
-| Текущая revision | `20260807_0003` |
+| Candidate revision | `20260807_0004` |
 | PostgreSQL | 17 |
-| Последний пакет schema | SYNC-001 |
+| Последний пакет schema | SYNC-002 candidate |
 | Статус | НУЖНА ПРОВЕРКА НА GITHUB/RENDER |
 
 ## 1. Текущее состояние
 
 - DATA-001/002 подтверждены на production PostgreSQL.
 - DATA-002 schema revision: `20260804_0002`.
-- SYNC-001 candidate добавляет `20260807_0003`.
+- SYNC-001 добавил `20260807_0003`.
+- SYNC-002 candidate добавляет `20260807_0004`.
 - `DATABASE_URL` хранится только в environment.
 - `TOKEN_ENCRYPTION_KEY` нельзя менять при наличии OAuth connections.
 
@@ -40,20 +41,29 @@
 - не изменяет vacancy/user/OAuth rows;
 - поддерживает SQLite/PostgreSQL downgrade.
 
+### 20260807_0004
+
+- создаёт `sync_checkpoints` с committed watermark, fixed window continuation и persistent retry/backoff;
+- добавляет lifecycle metadata `source_modified_at`, `closed_at`, `closed_reason`, `last_seen_run_id`;
+- добавляет индексы active/closed lifecycle;
+- seed-ит checkpoint из последнего successful run по каждому source;
+- поддерживает SQLite/PostgreSQL и controlled downgrade до `20260807_0003`.
+
 ## 3. CI
 
 GitHub Actions поднимает PostgreSQL 17 и проверяет:
 
-- upgrade всех revisions до `20260807_0003`;
+- upgrade всех revisions до `20260807_0004`;
 - migration metadata и `alembic check`;
 - PostgreSQL integration;
 - legacy running-run cleanup;
 - active-run constraint;
-- queue/worker repositories;
+- queue/worker/checkpoint repositories;
+- lifecycle columns, incremental cursor and cleanup;
 - encrypted backup/restore в отдельную DB;
 - полный pytest без внешнего provider network.
 
-## 4. Deploy SYNC-001
+## 4. Deploy SYNC-002 candidate
 
 Для существующего Render service Start Command:
 
@@ -64,7 +74,7 @@ python scripts/manage_db.py upgrade && python scripts/start_runtime.py
 Ожидаемая строка/health:
 
 ```text
-Database ready: backend=postgresql, persistent=True, configured=True, revision=20260807_0003
+Database ready: backend=postgresql, persistent=True, configured=True, revision=20260807_0004
 ```
 
 Migration error должен остановить deploy до запуска supervisor/Gunicorn.
@@ -79,9 +89,9 @@ database.ok = true
 database.backend = postgresql
 database.persistent = true
 database.configured = true
-database.revision = 20260807_0003
-migrations.current_revision = 20260807_0003
-migrations.expected_revision = 20260807_0003
+database.revision = 20260807_0004
+migrations.current_revision = 20260807_0004
+migrations.expected_revision = 20260807_0004
 ```
 
 ### Sync schema
@@ -137,7 +147,7 @@ Downgrade удаляет `sync_workers` и active-run index. Production database
 ## 8. Критерии SYNC-001 schema verification
 
 - GitHub PostgreSQL migration/integration зелёные;
-- Render `/health/ready` revision `20260807_0003`;
+- Render `/health/ready` revision `20260807_0004`;
 - worker heartbeat записывается;
 - queue survives process boundary;
 - one-active-run constraint работает;

@@ -12,6 +12,7 @@ from dataclasses import dataclass
 from database import DatabaseRuntime
 from repositories import (
     OAuthConnectionRepository,
+    SyncCheckpointRepository,
     SyncRunRepository,
     SyncWorkerRepository,
     UserRepository,
@@ -25,6 +26,7 @@ class StorageServices:
 
     users: UserRepository
     oauth_connections: OAuthConnectionRepository
+    sync_checkpoints: SyncCheckpointRepository
     sync_runs: SyncRunRepository
     sync_workers: SyncWorkerRepository
     vacancies: VacancyStore
@@ -34,6 +36,7 @@ class StorageServices:
         return cls(
             users=UserRepository(database),
             oauth_connections=OAuthConnectionRepository(database),
+            sync_checkpoints=SyncCheckpointRepository(database),
             sync_runs=SyncRunRepository(database),
             sync_workers=SyncWorkerRepository(database),
             vacancies=VacancyStore(database),

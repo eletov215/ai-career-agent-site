@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import logging
 import time
+from dataclasses import dataclass
+from datetime import datetime, timezone
 from typing import Any
 
 import requests
@@ -13,6 +15,27 @@ from .base_provider import SearchResult, VacancyProvider
 from .search_filters import VacancySearchFilters
 
 logger = logging.getLogger(__name__)
+
+
+@dataclass(frozen=True, slots=True)
+class TrudvsemBatch:
+    """One deterministic page of the Trudvsem change feed."""
+
+    items: list[dict[str, Any]]
+    offset: int
+    limit: int
+    total: int | None
+
+    @property
+    def returned(self) -> int:
+        return len(self.items)
+
+    @property
+    def exhausted(self) -> bool:
+        if self.total is not None:
+            return self.offset * self.limit >= self.total
+        return self.returned < self.limit
+
 
 class TrudvsemProvider(VacancyProvider):
     key = "trudvsem"
@@ -53,6 +76,110 @@ class TrudvsemProvider(VacancyProvider):
         if isinstance(value, str):
             return value.strip()
         return str(value).strip()
+
+    @staticmethod
+    def _iso_text(value: Any) -> str | None:
+        raw = TrudvsemProvider._text(value)
+        if not raw:
+            return None
+        try:
+            parsed = datetime.fromisoformat(raw.replace("Z", "+00:00"))
+        except ValueError:
+            return raw
+        if parsed.tzinfo is None:
+            parsed = parsed.replace(tzinfo=timezone.utc)
+        return parsed.astimezone(timezone.utc).isoformat(
+            timespec="seconds"
+        ).replace("+00:00", "Z")
+
+    @classmethod
+    def _lifecycle(cls, raw: dict[str, Any]) -> tuple[str, str | None, str | None]:
+        """Conservatively map explicit provider lifecycle fields."""
+
+        closed_tokens = {
+            "closed",
+            "archived",
+            "archive",
+            "inactive",
+            "deleted",
+            "invalid",
+            "removed",
+            "expired",
+            "закрыта",
+            "закрыто",
+            "архив",
+            "неактивна",
+            "удалена",
+        }
+        status_values = [
+            raw.get("status"),
+            raw.get("state"),
+            raw.get("vacancy-status"),
+            raw.get("status-name"),
+        ]
+        explicitly_closed = any(
+            cls._text(value).casefold() in closed_tokens
+            for value in status_values
+            if value not in (None, "")
+        )
+        boolean_closed = any(
+            raw.get(name) is True
+            or cls._text(raw.get(name)).casefold() in {"true", "1", "yes"}
+            for name in (
+                "is-invalid",
+                "deleted",
+                "archived",
+                "is-archived",
+                "is_closed",
+            )
+        )
+        explicitly_inactive = any(
+            raw.get(name) is False
+            or cls._text(raw.get(name)).casefold() in {"false", "0", "no"}
+            for name in ("active", "is-active", "is_active")
+            if name in raw
+        )
+
+        expires_at = None
+        for name in (
+            "expiration-date",
+            "date-expiration",
+            "expiration_date",
+            "valid-through",
+            "valid_through",
+        ):
+            expires_at = cls._iso_text(raw.get(name))
+            if expires_at:
+                break
+        expired = False
+        if expires_at:
+            try:
+                parsed_expiry = datetime.fromisoformat(
+                    expires_at.replace("Z", "+00:00")
+                )
+                expired = parsed_expiry <= datetime.now(timezone.utc)
+            except ValueError:
+                expired = False
+
+        modified_at = None
+        for name in (
+            "modified-date",
+            "date-modification",
+            "modification-date",
+            "last-modified",
+            "update-date",
+            "change-date",
+        ):
+            modified_at = cls._iso_text(raw.get(name))
+            if modified_at:
+                break
+
+        if explicitly_closed or boolean_closed or explicitly_inactive or expired:
+            reason = "provider_status"
+            if expired:
+                reason = "provider_expired"
+            return "closed", modified_at, reason
+        return "active", modified_at, None
 
     def _normalize(self, item: Any) -> dict[str, Any] | None:
         if not isinstance(item, dict):
@@ -100,6 +227,8 @@ class TrudvsemProvider(VacancyProvider):
         if not url and external_id:
             url = f"https://trudvsem.ru/vacancy/card/{external_id}"
 
+        source_status, source_modified_at, closed_reason = self._lifecycle(raw)
+
         return {
             "external_id": external_id,
             "source": self.key,
@@ -127,6 +256,9 @@ class TrudvsemProvider(VacancyProvider):
             "description": self._text(description),
             "requirements": self._text(requirements_text),
             "published_at": self._text(raw.get("creation-date") or raw.get("date")),
+            "source_modified_at": source_modified_at,
+            "source_status": source_status,
+            "closed_reason": closed_reason,
             "url": url,
         }
 
@@ -214,68 +346,90 @@ class TrudvsemProvider(VacancyProvider):
 
 
 
-    def fetch_batch(
+    @staticmethod
+    def _meta_total(payload: dict[str, Any]) -> int | None:
+        meta = payload.get("meta") or {}
+        if not isinstance(meta, dict):
+            return None
+        try:
+            return max(0, int(meta.get("total")))
+        except (TypeError, ValueError):
+            return None
+
+    def fetch_page(
         self,
         *,
-        offset: int = 0,
-        limit: int = 1,
+        offset: int = 1,
+        limit: int = 10,
         modified_from: str | None = None,
-    ) -> list[dict[str, Any]]:
-        """Load a small API batch for the background cache worker."""
-        safe_limit = max(1, min(int(limit), 10))
-        safe_offset = max(1, int(offset))
+        modified_to: str | None = None,
+    ) -> TrudvsemBatch:
+        """Load one API page with stable incremental-window metadata."""
 
+        safe_limit = max(1, min(int(limit), 100))
+        safe_offset = max(1, int(offset))
         params: dict[str, Any] = {
             "limit": safe_limit,
             "offset": safe_offset,
         }
         if modified_from:
             params["modifiedFrom"] = modified_from
+        if modified_to:
+            params["modifiedTo"] = modified_to
 
         payload = self._request(params)
-
-        logger.info(
-            "TRUDVSEM RAW RESPONSE keys=%s",
-            list(payload.keys()) if isinstance(payload, dict) else type(payload),
-        )
-
         results = payload.get("results") or {}
-
-        logger.info(
-            "TRUDVSEM RESULTS TYPE=%s keys=%s",
-            type(results).__name__,
-            list(results.keys()) if isinstance(results, dict) else None,
-        )
-
-        raw_items = []
-
+        raw_items: list[Any] = []
         if isinstance(results, dict):
             raw_items = results.get("vacancies") or []
-
-            # Некоторые ответы API могут возвращать вакансии внутри вложенного объекта.
             if not raw_items and isinstance(results.get("vacancy"), list):
                 raw_items = results.get("vacancy")
-
         if not isinstance(raw_items, list):
             logger.warning(
                 "TRUDVSEM unexpected vacancies format type=%s",
                 type(raw_items).__name__,
             )
-            return []
+            raw_items = []
 
         normalized = [
             item
             for raw in raw_items
             if (item := self._normalize(raw))
         ]
-
+        total = self._meta_total(payload)
         logger.info(
-            "TRUDVSEM normalized items=%s raw_items=%s",
+            "TRUDVSEM page normalized offset=%s limit=%s items=%s raw_items=%s total=%s incremental=%s",
+            safe_offset,
+            safe_limit,
             len(normalized),
             len(raw_items),
+            total,
+            bool(modified_from or modified_to),
+        )
+        return TrudvsemBatch(
+            items=normalized,
+            offset=safe_offset,
+            limit=safe_limit,
+            total=total,
         )
 
-        return normalized
+    def fetch_batch(
+        self,
+        *,
+        offset: int = 1,
+        limit: int = 10,
+        modified_from: str | None = None,
+        modified_to: str | None = None,
+    ) -> list[dict[str, Any]]:
+        """Compatibility wrapper returning only normalized vacancy items."""
+
+        return self.fetch_page(
+            offset=offset,
+            limit=limit,
+            modified_from=modified_from,
+            modified_to=modified_to,
+        ).items
+
 
     def search(
         self,
@@ -284,6 +438,7 @@ class TrudvsemProvider(VacancyProvider):
         page: int = 0,
     ) -> SearchResult:
         """Prevent user-facing requests from calling the external API directly."""
+        del filters
         logger.error("Direct TrudvsemProvider.search() call blocked; use VacancyStore")
         return SearchResult(
             page=max(page, 0),

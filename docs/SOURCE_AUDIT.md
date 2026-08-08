@@ -1,96 +1,119 @@
-# AI Career Agent — аудит источников
+# AI Career Agent — аудит источников v1.4.3
 
 | Поле | Значение |
 |---|---|
-| Версия | 1.4.1 |
+| Документ | SOURCE_AUDIT |
+| Версия | 1.4.3 |
 | Дата | 07 августа 2026 |
-| Статус | ДЕЙСТВУЮЩИЙ |
-| Входной код | `ai-career-agent-site-main (4).zip` |
-| SHA-256 входного ZIP | `2d3c4cc36121ae70a0deec98f64abf29efb4562f6501dce062186ed781e62419` |
-| GitHub snapshot | Пользователь подтвердил, что ZIP выгружен из актуального `main`; commit metadata в ZIP отсутствует |
-| Канонический план до пакета | PLAN_CURRENT 1.4.0 |
-| Канонический паспорт до пакета | PROJECT_PASSPORT 2.14 |
-| Результат | SYNC-001 candidate + PLAN_CURRENT 1.4.1 + паспорт 2.15 |
+| Проверяемый пакет | SYNC-002 candidate |
+| Текущий источник кода | `ai-career-agent-site-main (5).zip` — актуальный GitHub `main` после SYNC-001 |
+| Канонический план до обновления | PLAN_CURRENT 1.4.2 |
+| Канонический паспорт до обновления | PROJECT_PASSPORT 2.16 |
+| Результат | SYNC-002 реализован локально; статус НУЖНА ПРОВЕРКА; docs синхронизированы до 1.4.3/2.17 |
 
-## 1. Проверка входного ZIP
+## 1. Приоритет источников
 
-| Область | Найдено | Решение |
-|---|---|---|
-| Production code | INFRA-PREP-001, SEC-001, OPS-001 присутствуют | Использован как рабочая основа без отката |
-| GitHub workflow | `.github/workflows/ci.yml` присутствует | Расширен отдельным SYNC-001 step |
-| Dotfiles | `.gitignore`, `.dockerignore`, `.env.example` присутствуют | Сохранены |
-| Database | Alembic 0001/0002 | Добавлена migration 0003 |
-| Repository plan | 1.3.5 | Устарел относительно загруженного PLAN 1.4.0; заменён и обновлён до 1.4.1 |
-| Repository passport | 2.13 | Устарел относительно загруженного паспорта 2.14; заменён и обновлён до 2.15 |
-| README/ROADMAP | INFRA-001 как ближайший пакет | Синхронизированы с новой hosting-independent очередью |
-| Trudvsem lifecycle | daemon thread внутри Gunicorn | Заменён external worker/durable queue |
+1. ZIP `ai-career-agent-site-main (5).zip`, присланный как актуальный GitHub main, является рабочей основой кода этой задачи.
+2. Внешние PLAN_CURRENT 1.4.2 и PROJECT_PASSPORT 2.16 определяют очередь и критерии SYNC-002.
+3. Repository docs из ZIP имели более старые версии PLAN 1.4.1/passport 2.15 и не переопределяли внешние канонические источники.
+4. После candidate merge главным источником кода снова станет GitHub main; внешние docs этой поставки определяют статус до следующего обновления.
 
-## 2. Актуальные источники после пакета
+## 2. Найденные источники
 
-1. GitHub `main` после последнего подтверждённого merge остаётся главным источником кода.
-2. До merge SYNC-001 рабочей основой является полный ZIP этого package.
-3. Канонический план: PLAN_CURRENT 1.4.1.
-4. Канонический паспорт: PROJECT_PASSPORT 2.15.
-5. Implementation: `docs/SYNC001_IMPLEMENTATION.md`.
-6. Verification: `docs/SYNC001_VERIFICATION_STATUS.md`.
-7. Operations: `docs/SYNC001_RUNBOOK.md`.
+| Источник | Найден | Состояние до пакета | Действие |
+|---|---|---|---|
+| GitHub ZIP `(5)` | Да | Актуальный код после SYNC-001 | Принят как baseline |
+| PLAN_CURRENT 1.4.2 MD/DOCX/PDF | Да | Действующий | Обновлён до 1.4.3 |
+| PROJECT_PASSPORT 2.16 | Да | Действующий | Обновлён до 2.17 |
+| SYNC001 implementation 1.1 | Да | Исторический завершённый package | Сохранён |
+| SOURCE_AUDIT 1.4.2 | Да | Действующий до начала | Обновлён до 1.4.3 |
+| Repository `docs/PLAN_CURRENT.md` | Да | Устарел: 1.4.1 | Заменяется 1.4.3 |
+| Repository `docs/PROJECT_PASSPORT.md` | Да | Устарел: 2.15 | Заменяется 2.17 |
+| README/ROADMAP/CHANGELOG | Да | SYNC-001 candidate/verification | Синхронизируются с SYNC-002 candidate |
 
-## 3. Статусы
+## 3. Подтверждённая baseline
 
-| Пакет | Статус |
-|---|---|
-| FND-001/FND-002 | ВЫПОЛНЕНО |
-| DATA-001/DATA-002 | ВЫПОЛНЕНО |
-| SEC-001 | ВЫПОЛНЕНО |
-| OPS-001 | ВЫПОЛНЕНО |
-| INFRA-PREP-001 | ВЫПОЛНЕНО |
-| DOC-001 | В РАБОТЕ как постоянный процесс |
-| SYNC-001 | НУЖНА ПРОВЕРКА НА GITHUB/RENDER |
-| SYNC-002 | ЗАПЛАНИРОВАНО |
-| INFRA-001 | ОТЛОЖЕНО ДО ПРЕДРЕЛИЗНОГО ЭТАПА |
+До SYNC-002 подтверждены:
 
-## 4. Изменённые категории файлов
+```text
+FND-001
+FND-002
+DATA-001
+DATA-002
+SEC-001
+OPS-001
+INFRA-PREP-001
+SYNC-001
+```
 
-- Flask queue/status integration;
-- external sync service, lock и worker scripts;
-- domain/models/repositories/storage;
-- Alembic migration и expected revision;
-- Render/Docker/Compose runtime;
-- config/CI/tests;
-- README, ROADMAP, CHANGELOG, architecture, operations, migration docs;
-- canonical plan/passport and package runbooks.
+Production schema baseline — `20260807_0003`. Внешний Trudvsem worker, durable queue и cache persistence после restart подтверждены.
 
-## 5. Секреты и runtime artifacts
+## 4. Реализованный candidate SYNC-002
 
-Финальный пакет не должен содержать:
+В актуальном baseline добавлены:
+
+- migration `20260807_0004`;
+- `sync_checkpoints` с watermark/cursor/retry;
+- lifecycle-поля vacancy source records;
+- bounded bootstrap/incremental windows;
+- API `modifiedFrom`/`modifiedTo` + page total;
+- continuation после reconnect;
+- idempotent upsert/closed reactivation;
+- TTL closure и retention purge;
+- persistent exponential retry;
+- checkpoint backup inventory;
+- отдельный CI gate и tests.
+
+## 5. Локальная проверка
+
+```text
+full pytest: 130 passed, 6 skipped
+SYNC-002 tests: 8 passed
+migration upgrade/downgrade/upgrade: passed
+Alembic check: passed
+repository hygiene: passed
+manifest/document checks: passed
+```
+
+Docker/PostgreSQL production paths должны быть подтверждены GitHub Actions. Render должен подтвердить revision 0004 и runtime behavior.
+
+## 6. Новые канонические версии
+
+```text
+PLAN_CURRENT 1.4.3
+PROJECT_PASSPORT 2.17
+SOURCE_AUDIT 1.4.3
+SYNC002_IMPLEMENTATION 1.0
+SYNC002_VERIFICATION_STATUS 1.0
+SYNC002_RUNBOOK 1.0
+```
+
+SYNC-002 остаётся **НУЖНА ПРОВЕРКА**. После подтверждения следующий package — SEARCH-001.
+
+## 7. Исключённые артефакты
+
+В поставку и GitHub не входят:
 
 ```text
 .env
-OAuth/API tokens
-DATABASE_URL credentials
-production backups/dumps
-*.db
+реальные secrets/tokens/passwords
+*.db / *.sqlite / *.dump / *.enc
+backups/
 virtualenv
 .pytest_cache
 __pycache__
 *.pyc
-infra/reports
+.git
+private URLs/reports
 ```
 
-`infra/vps/.env.example` содержит только placeholders.
+## 8. Правило следующего чата
 
-## 6. Внешние источники
+Следующий чат обязан:
 
-SYNC-001 не требует новых внешних данных или платных API. Provider HTTP в tests mocked. Инфраструктурная стратегия по VPS/Yandex AI/Reed остаётся без изменений относительно PLAN_CURRENT 1.4.0.
-
-## 7. Следующее действие
-
-Загрузить полный SYNC-001 ZIP в отдельную ветку, дождаться зелёного CI, затем выполнить Render checklist. Старые PLAN_CURRENT ниже 1.4.1 и паспорт ниже 2.15 считать устаревшими для текущего статуса.
-
-## 8. Журнал
-
-| Версия | Дата | Изменение |
-|---|---|---|
-| 1.3.5 | 06.08.2026 | INFRA-PREP toolkit и source sync |
-| 1.4.0 | 07.08.2026 | Hosting strategy: real VPS перенесён в pre-release |
-| 1.4.1 | 07.08.2026 | Проверен актуальный GitHub ZIP; repository docs синхронизированы; реализован SYNC-001 candidate |
+1. прочитать PLAN_CURRENT 1.4.3 и PROJECT_PASSPORT 2.17;
+2. использовать новый GitHub main либо более новый ZIP;
+3. не повторять SYNC-001;
+4. сначала завершить verification SYNC-002;
+5. после выполнения начать SEARCH-001;
+6. оставить real INFRA-001 отложенным до предрелизного окна.

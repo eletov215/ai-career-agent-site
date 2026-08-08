@@ -16,7 +16,7 @@ OPS-001 создаёт минимальный vendor-neutral operational layer �
 - encrypted backup, manifest, integrity verification и restore drill;
 - runbook для диагностики, аварий и rollback.
 
-OPS-001 не менял schema. SYNC-001 добавляет migration `20260807_0003`; health/readiness должны показывать эту revision после deploy.
+OPS-001 не менял schema. SYNC-001 добавил migration `20260807_0003`; candidate SYNC-002 добавляет `20260807_0004`. После его deploy health/readiness должны показывать revision `20260807_0004`.
 
 ## 2. Логи
 
@@ -189,7 +189,7 @@ Metrics не содержат keywords, filters или provider payload. Оши�
 ## 8. Operational checklist после deploy
 
 1. `/health/live` -> `200`.
-2. `/health/ready` -> `200`, revision `20260807_0003`.
+2. `/health/ready` -> `200`, revision `20260807_0004`.
 3. `/health` -> тот же readiness result.
 4. Ответы имеют `X-Request-ID`.
 5. Render logs содержат JSON и не содержат token/query/body.
@@ -249,3 +249,27 @@ Web service не должен включать provider I/O. `sync-worker` не 
 
 Подробности: `docs/SYNC001_RUNBOOK.md`.
 
+
+
+## 12. SYNC-002 incremental operations
+
+После candidate deploy revision должна быть `20260807_0004`.
+
+Operational state хранится в `sync_checkpoints`:
+
+- `watermark_at` — committed last complete window;
+- `pending_from_at/pending_to_at/pending_offset` — durable continuation;
+- `consecutive_failures/next_retry_at` — persistent exponential backoff;
+- `last_cleanup_at` — последняя successful TTL/retention cleanup.
+
+Критические проверки:
+
+1. partial run сохраняет `pending_offset`, а следующий run продолжает то же fixed window;
+2. failure не меняет committed watermark и не удаляет cache;
+3. повторный upsert не создаёт duplicate `(source, external_id)`;
+4. explicit provider closed event скрывает vacancy из search;
+5. TTL closure выполняется только после полного успешного окна;
+6. long-retained closed row purged по retention policy;
+7. reactivated source row снова становится active.
+
+Подробности: `docs/SYNC002_RUNBOOK.md`.

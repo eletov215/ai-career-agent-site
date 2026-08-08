@@ -3,15 +3,15 @@
 | Поле | Значение |
 |---|---|
 | Документ | PLAN_CURRENT |
-| Версия | 1.4.1 |
+| Версия | 1.4.3 |
 | Дата | 07 августа 2026 |
 | Статус | ДЕЙСТВУЮЩИЙ |
-| Основа кода | `ai-career-agent-site-main (4).zip` — актуальный GitHub snapshot после merge INFRA-PREP-001; поверх него реализован SYNC-001 candidate |
-| Следующий gate | GitHub Actions + Render verification `SYNC-001`; после подтверждения — `SYNC-002` |
+| Основа кода | `ai-career-agent-site-main (5).zip` — актуальный GitHub `main` после закрытия SYNC-001; поверх него реализован кандидат SYNC-002 |
+| Следующий gate | Проверка `SYNC-002` в GitHub Actions и на Render; после подтверждения — `SEARCH-001` |
 
 > ОБЯЗАТЕЛЬНО ДЛЯ КАЖДОГО НОВОГО ЧАТА: прочитать этот план, новый паспорт и актуальный архив. После завершения любого пункта вернуть обновлённые DOCX/PDF/Markdown, новый ZIP, доказательства проверки и запись в журнале версий.
 
-> КОНТРОЛЬНЫЕ СТАТУСЫ ЭТОЙ ВЕРСИИ: `FND-001`, `FND-002`, `DATA-001`, `DATA-002`, `SEC-001`, `OPS-001` и `INFRA-PREP-001` — **ВЫПОЛНЕНО**; `DOC-001` — **В РАБОТЕ как постоянный процесс**; `SYNC-001` — **НУЖНА ПРОВЕРКА НА GITHUB/RENDER**; `SYNC-002` — **СЛЕДУЮЩИЙ КОДОВЫЙ ПАКЕТ ПОСЛЕ ПОДТВЕРЖДЕНИЯ SYNC-001**; `INFRA-001` — **ОТЛОЖЕНО ДО ПРЕДРЕЛИЗНОГО ЭТАПА**. Документы с версией ниже `1.4.1` считаются устаревшими для текущего статуса и очереди разработки.
+> КОНТРОЛЬНЫЕ СТАТУСЫ ЭТОЙ ВЕРСИИ: `FND-001`, `FND-002`, `DATA-001`, `DATA-002`, `SEC-001`, `OPS-001` и `INFRA-PREP-001` — **ВЫПОЛНЕНО**; `DOC-001` — **В РАБОТЕ как постоянный процесс**; `SYNC-001` — **ВЫПОЛНЕНО**; `SYNC-002` — **НУЖНА ПРОВЕРКА**; `INFRA-001` — **ОТЛОЖЕНО ДО ПРЕДРЕЛИЗНОГО ЭТАПА**; `AI-BENCH-001`, `AI-PROVIDER-001`, `REED-COMPAT-001`, `HOST-001`, `OPS-002`, `DOMAIN-001`, `MIG-001` — по новой очереди раздела 15. Документы с версией ниже `1.4.3` считаются устаревшими для определения очереди разработки.
 
 ## 1. Источник истины и аудит источников
 
@@ -20,8 +20,7 @@
 - Канонический план определяется наибольшей версией и датой; старые дубликаты не должны оставаться действующими.
 - Перед DATA-002 проверено, что актуальный код находится в `ai-career-agent-site-main (1).zip` и соответствует завершённому DATA-001.
 - Загруженные планы/паспорт были устаревшими: они содержали версии 1.0.0/1.0.1 и раннее состояние HH 403, не отражали подтверждение FND-001/FND-002 и согласованную стратегию собственного домена/VPS.
-- Версия 1.4.1 продолжает стратегию 1.4.0 и фиксирует реализацию `SYNC-001` поверх актуального GitHub snapshot. Repository docs версии 1.3.5/2.13 во входном ZIP были устаревшими относительно загруженных канонических PLAN_CURRENT 1.4.0 и паспорта 2.14; в этом package они синхронизированы.
-- Версия 1.4.0 является канонической стратегической редакцией. Она не отменяет ни одной ранее выполненной проверки: SEC-001 подтверждён в production, а OPS-001 имеет подтверждённые health/readiness, correlation ID, structured logs, provider metrics, sanitised alert webhook и encrypted PostgreSQL backup/restore в CI. Незакрытый ранее production restore drill **не удалён**, а перенесён в обязательный предрелизный `OPS-002/REL-001` gate, когда будет существовать выбранный VPS и отдельная restore database. Кодовая часть прежнего INFRA-001 (Docker/Compose, non-root runtime, migrations, Caddy test TLS, probes, isolated restore DB и CI container smoke) выделена в завершённый `INFRA-PREP-001`. Реальный `INFRA-001` теперь означает только аренду и полевую проверку VPS и выполняется после функционального MVP, но до публичной beta/production migration. Это позволяет не оплачивать простаивающую ВМ во время разработки, сохраняя требование hosting-independent architecture.
+- Версия 1.4.3 реализует кандидат SYNC-002 поверх подтверждённого внешнего worker SYNC-001. Добавлены persistent watermark и continuation cursor, bounded `modifiedFrom/modifiedTo` windows, идемпотентный upsert lifecycle, retry/backoff, TTL closure и retention cleanup. Пакет не объявляется выполненным до зелёного GitHub CI и production-проверки Render. Ранее подтверждённые SEC-001, OPS-001, INFRA-PREP-001 и SYNC-001 не отменяются. Production restore drill по-прежнему остаётся обязательным предрелизным `OPS-002/REL-001` gate, а реальный `INFRA-001` остаётся отложенным до предрелизного окна.
 
 ## 2. Обязательный протокол работы
 
@@ -70,13 +69,14 @@
 | Резюме | PDF extraction на pypdf и browser resume builder; LLM пока нет. |
 | Тесты | GitHub Actions, unit/provider/route/config/database/migration/security/observability/backup tests. |
 | Hosting | Render временно используется как staging/резервная площадка. Для production требуется проверенный VPS с доступностью из РФ/РБ, собственный домен и план миграции. |
+| Текущая схема | Alembic `20260807_0004`: incremental checkpoints и vacancy lifecycle поверх external sync queue/worker. |
 
 ### 5.1 Выполнено/частично
 
 - BASE-001: Flask/Gunicorn/Render и публичные страницы - реализовано.
 - BASE-002: единый поиск по текущим providers - реализован в текущем объёме.
 - BASE-003: HH/SJ OAuth и encryption - частично, нужен User binding/E2E.
-- BASE-004: Trudvsem cache - код `SYNC-001` вынес provider I/O из Gunicorn в durable external worker; требуется GitHub/Render verification.
+- BASE-004: Trudvsem cache и внешний worker реализованы и подтверждены в production; SYNC-002 candidate добавляет durable watermark/cursor, retry и stale cleanup поверх PostgreSQL queue/state.
 - BASE-005: filters/sort/pagination - реализованы, но cross-source consistency требует SEARCH packages.
 - BASE-006: PDF parse - частично, это не AI.
 - BASE-007: resume builder/live preview/PDF/mobile - реализовано.
@@ -88,7 +88,7 @@
 | ID | Уровень | Риск |
 |---|---|---|
 | R-01 | Закрыт 04.08.2026 | Production переведён на PostgreSQL; restart подтвердил сохранность кэша и служебного состояния. |
-| R-02 | Снижен, нужна проверка | In-process daemon удалён; durable queue/external worker реализованы, требуется подтверждение migration `20260807_0003` и worker heartbeat на Render. |
+| R-02 | Закрыт 07.08.2026 | Daemon thread удалён; durable queue/external worker подтверждены GitHub CI и production Render, включая restart persistence. |
 | R-03 | Закрыт 06.08.2026 | SEC-001 подтверждён в production: headers/cookies/CSRF, diagnostics, безопасные ответы и `429` с `Retry-After`. |
 | R-04 | Высокий | Межисточниковые дубли и нестабильный total/pagination. |
 | R-05 | Высокий | Маркетинговые AI promises опережают real implementation. |
@@ -127,8 +127,8 @@ MVP не готов, если работает только отдельная �
 
 | ID | Приоритет | Статус | Пункт |
 |---|---|---|---|
-| SYNC-001 | P0 | НУЖНА ПРОВЕРКА | Durable queue, external worker/CLI, process lock и migration `20260807_0003` реализованы; требуется GitHub/Render verification |
-| SYNC-002 | P1 | ЗАПЛАНИРОВАНО | Следующий пакет после подтверждения SYNC-001: расширенная incremental policy и очистка устаревших вакансий |
+| SYNC-001 | P0 | ВЫПОЛНЕНО | Durable queue и внешний worker подтверждены GitHub CI и production Render; cache переживает restart |
+| SYNC-002 | P1 | НУЖНА ПРОВЕРКА | Persistent watermark/cursor, retry/backoff и stale-vacancy cleanup реализованы; требуется GitHub/Render verification |
 | SEARCH-001 | P0 | ЗАПЛАНИРОВАНО | Единая схема вакансии и нормализация данных |
 | SEARCH-002 | P0 | ЗАПЛАНИРОВАНО | Дедупликация между источниками |
 | SEARCH-003 | P0 | ЗАПЛАНИРОВАНО | Стабильная пагинация, сортировка и итоговые счётчики |
@@ -192,7 +192,7 @@ MVP не готов, если работает только отдельная �
 
 #### FND-001 - Базовые тесты и CI перед архитектурными изменениями
 
-**Приоритет:** P0  
+**Приоритет:** P0
 **Статус:** ВЫПОЛНЕНО
 
 **Цель:** Зафиксировать текущее поведение проекта и не допускать незамеченных регрессий.
@@ -209,7 +209,7 @@ MVP не готов, если работает только отдельная �
 
 #### FND-002 - Конфигурация приложения и разделение development/test/production
 
-**Приоритет:** P0  
+**Приоритет:** P0
 **Статус:** ВЫПОЛНЕНО
 
 **Цель:** Сделать запуск предсказуемым и централизовать окружение.
@@ -226,7 +226,7 @@ MVP не готов, если работает только отдельная �
 
 #### DATA-001 - Переход с временной SQLite на PostgreSQL и миграции
 
-**Приоритет:** P0  
+**Приоритет:** P0
 **Статус:** ВЫПОЛНЕНО
 
 **Цель:** Исключить потерю OAuth-подключений, кэша и будущих пользовательских данных после restart/redeploy.
@@ -243,7 +243,7 @@ MVP не готов, если работает только отдельная �
 
 #### DATA-002 - Базовая доменная модель и слой доступа к данным
 
-**Приоритет:** P0  
+**Приоритет:** P0
 **Статус:** ВЫПОЛНЕНО
 
 **Цель:** Отделить persistence от Flask routes и подготовить данные для аккаунта, профиля, вакансий и синхронизаций.
@@ -260,7 +260,7 @@ MVP не готов, если работает только отдельная �
 
 #### SEC-001 - Базовое усиление безопасности
 
-**Приоритет:** P0  
+**Приоритет:** P0
 **Статус:** ВЫПОЛНЕНО
 
 **Цель:** Защитить state-changing формы/API, browser sessions, загрузки, внешние URL и технические endpoints до появления first-party аккаунтов.
@@ -279,7 +279,7 @@ MVP не готов, если работает только отдельная �
 
 #### OPS-001 - Наблюдаемость, безопасные логи и резервное восстановление
 
-**Приоритет:** P0  
+**Приоритет:** P0
 **Статус:** ВЫПОЛНЕНО
 
 **Цель:** Дать приложению vendor-neutral наблюдаемость, безопасную диагностику и проверяемый backup/restore toolchain до продолжения функциональной разработки.
@@ -300,7 +300,7 @@ MVP не готов, если работает только отдельная �
 
 #### INFRA-PREP-001 - Hosting-independent подготовка приложения к VPS
 
-**Приоритет:** P0  
+**Приоритет:** P0
 **Статус:** ВЫПОЛНЕНО
 
 **Цель:** Подготовить приложение к будущему VPS без аренды сервера и без привязки бизнес-логики к Render/Yandex Cloud/другому хостингу.
@@ -317,84 +317,107 @@ MVP не готов, если работает только отдельная �
 
 #### DOC-001 - Синхронизация README, ROADMAP, CHANGELOG и фактического кода
 
-**Приоритет:** P0  
+**Приоритет:** P0
 **Статус:** В РАБОТЕ - ПОСТОЯННЫЙ ПРОЦЕСС
 
 **Цель:** Исключить противоречивые источники и повторение уже выполненных задач.
 
 **Реализация:** Канонические PLAN_CURRENT и паспорт обновляются после каждого архитектурного решения; README/ROADMAP/CHANGELOG и package-specific docs синхронизируются вместе с ближайшим кодовым пакетом, чтобы документация и код проходили один CI/merge cycle.
 
-**Текущее состояние:** PLAN_CURRENT 1.4.0 и паспорт 2.14 фиксируют новую стратегию без аренды VPS до предрелизного окна. Repository docs должны быть приведены к этой версии при реализации следующего code package.
+**Текущее состояние:** PLAN_CURRENT 1.4.3 и паспорт 2.17 фиксируют кандидат SYNC-002 со статусом НУЖНА ПРОВЕРКА. Repository docs, README, ROADMAP и CHANGELOG включены в тот же candidate merge.
 
 **Влияние на сайт:** Нет.
 
 **Критерии готовности:** Это постоянный процесс, а не блокирующий одноразовый gate. Для каждого package release source docs, канонические документы и changelog должны совпадать.
 
-**Зависимости:** Постоянный процесс; не блокирует `SYNC-001`.
+**Зависимости:** Постоянный процесс; не блокирует `SYNC-002` и последующие пакеты.
 
 ### Этап 2. Надёжный поиск и обновление вакансий
 
 #### SYNC-001 - Вынести синхронизацию Trudvsem из web-процесса
 
-**Приоритет:** P0  
-**Статус:** НУЖНА ПРОВЕРКА НА GITHUB/RENDER
+**Приоритет:** P0
+**Статус:** ВЫПОЛНЕНО
 
-**Цель:** Не связывать актуальность кэша с жизненным циклом Gunicorn и исключить provider I/O из web-request/web-worker lifecycle.
+**Цель:** Не связывать актуальность кэша с жизненным циклом Gunicorn и исключить дублирующие синхронизации при нескольких web/worker-процессах.
 
-**Реализация:**
+**Реализация:** Удалены `threading.Event`, `threading.Thread`, `before_request`-запуск и process-local sync state из `app.py`. Web теперь только создаёт idempotent durable job в `sync_runs`. Добавлены `TrudvsemSyncService`, CLI `scripts/sync_trudvsem.py`, long-running worker `scripts/trudvsem_sync_worker.py`, Render supervisor `scripts/start_runtime.py`, отдельный Compose `sync-worker`, cross-process lock (PostgreSQL advisory lock / SQLite lock file), heartbeat-таблица `sync_workers`, stale-run recovery и Alembic revision `20260807_0003`.
 
-- удалены `threading.Thread`, process-local event/state и `before_request` worker startup из `app.py`;
-- создан hosting-independent `TrudvsemSyncService`;
-- создана durable idempotent queue на `sync_runs` со статусами `queued/running/succeeded/failed`;
-- partial unique index гарантирует не более одного активного run на source;
-- PostgreSQL advisory lock и SQLite lockfile блокируют параллельное выполнение;
-- создана external worker command `scripts/trudvsem_sync_worker.py` и one-shot CLI `scripts/sync_trudvsem.py`;
-- создана таблица `sync_workers` для heartbeat/liveness;
-- Render free staging использует supervisor `scripts/start_runtime.py`: Gunicorn и worker являются соседними OS processes, а не thread внутри Flask;
-- Docker Compose запускает worker отдельным service в profile `sync`;
-- cache-miss, refresh и machine endpoint только ставят durable job в очередь;
-- ошибки worker фиксируются в `SyncRun`, но существующий cache не удаляется;
-- migration `20260807_0003` закрывает legacy abandoned `running` rows, создаёт active-run constraint и `sync_workers`;
-- добавлены unit/migration/config/manifest/route tests и отдельный CI step `Verify SYNC-001 external worker controls`.
+**Контроль параллелизма:** Partial unique index `uq_sync_runs_active_source` разрешает только один `queued` или `running` run на источник. PostgreSQL advisory lock и SQLite lock file являются вторым уровнем защиты. Для SQLite проверяется PID владельца: живой процесс не теряет lock из-за возраста файла, а stale lock удаляется только после исчезновения владельца и превышения порога.
 
-**Влияние на код:** `app.py`, `config.py`, `database.py`, `domain/`, `models/`, `repositories/`, `services/trudvsem_sync.py`, `services/sync_lock.py`, `scripts/sync_trudvsem.py`, `scripts/trudvsem_sync_worker.py`, `scripts/start_runtime.py`, migration `20260807_0003`, `render.yaml`, `Dockerfile`, `compose.yaml`, CI, tests и docs.
+**Поведение web:** Search и manual/machine routes не выполняют provider I/O. При пустом/просроченном кэше web создаёт одну durable queue row и продолжает обслуживать запрос из существующего кэша. Public status остаётся sanitised; diagnostics показывают active/latest run и heartbeat внешнего worker.
 
-**Влияние на сайт:** Дизайн и search payload не меняются. Trudvsem по-прежнему читается из PostgreSQL cache; если cache пуст или устарел, web быстро ставит job в очередь и не ждёт внешний API. Пользователь получает нейтральное сообщение о фоновом обновлении.
+**Поведение worker:** Worker polls durable queue, автоматически создаёт scheduled run при истечении cache interval, пишет heartbeat, обновляет progress, завершает run как `succeeded`/`failed` и сохраняет прежний кэш при upstream error. Для Render free worker запускается отдельным sibling OS process через supervisor; на Docker/VPS он запускается самостоятельным Compose service profile `sync`.
 
-**Критерии готовности:**
+**Изменённые области:** `app.py`, `config.py`, `database.py`, `domain/`, `models/`, `repositories/`, `services/`, `scripts/`, `compose.yaml`, `render.yaml`, `infra/vps/`, migration `20260807_0003`, CI, tests и документация.
 
-1. GitHub Actions полностью зелёный, включая PostgreSQL migration/integration, `Verify SYNC-001 external worker controls`, Docker build и runtime smoke.
-2. Render применил revision `20260807_0003`; `/health/ready` возвращает `200`.
-3. Start Command использует `python scripts/start_runtime.py`; application logs показывают отдельные `runtime_supervisor`, Gunicorn и `trudvsem_sync_worker` процессы.
-4. Diagnostics status показывает `worker_mode=external_process`, `worker_alive=true` и heartbeat.
-5. `/sync/trudvsem` с secret возвращает `202`, `run_id`, status `queued`; persisted run переходит в `running`, затем `succeeded` или контролируемый `failed`.
-6. Поиск и public Trudvsem status работают без HTTP 500; provider timeout не удаляет старый cache.
-7. После redeploy stale/abandoned run закрывается и новый worker продолжает работу без параллельного запуска.
+**Влияние на сайт:** Визуальных изменений нет. Поиск больше не запускает daemon thread и не ждёт внешнюю API-синхронизацию. Статус `queued/running/progress` берётся из PostgreSQL и переживает restart web-процесса. При ошибке Trudvsem пользователю остаётся доступен последний успешный кэш.
 
-**Совместимость и rollback:** Search/UI/OAuth payload совместимы. Rollback приложения возможен без downgrade, но queued rows перед возвратом старого кода следует закрыть; schema downgrade допускается только после backup. PostgreSQL revision после deploy — `20260807_0003`.
+**Доказательства:** локальные compile/migration/repository checks пройдены; GitHub Actions полностью зелёный, включая `Verify SYNC-001 external worker controls`, PostgreSQL integration, container build/runtime smoke и полный pytest. На Render применена revision `20260807_0003`; supervisor запускает Gunicorn и Trudvsem worker как sibling OS processes. После import-path hotfix worker выполняет реальные provider batches: в логах подтверждены `TRUDVSEM normalized items=10 raw_items=10` и `sync_fetch_batch result_count=10`. Public status показал `running=true`, `progress_percent=43`, `cached_total=102`, затем terminal idle `running=false`, `queued=false`, `cached_total=102`. После реального restart `uptime_seconds` сбросился до 89 и затем вырос до 112, при этом `cached_total=102` сохранился.
 
-**Зависимости:** DATA-001, DATA-002, OPS-001, INFRA-PREP-001. После production verification разрешён `SYNC-002`.
+**Критерии завершения:**
+
+1. GitHub Actions зелёный, включая `Verify SYNC-001 external worker controls`, PostgreSQL migration/integration и полный pytest.
+2. Render применяет revision `20260807_0003`; `/health/ready` и `/health` возвращают `200`.
+3. После deploy diagnostics показывают `worker_mode=external_process` и свежий `worker_alive=true`.
+4. Machine/manual trigger создаёт `queued` run; worker переводит его в `running`, затем `succeeded` или контролируемый `failed`.
+5. Повторные trigger-запросы не создают более одного active run.
+6. Restart web/worker не обнуляет кэш и не оставляет вечный `running` run; stale run закрывается.
+7. Ошибка upstream не удаляет ранее сохранённые вакансии и не раскрывает body/token/credentials в public response/logs.
+
+**Исправление production startup:** первый Render smoke выявил `ModuleNotFoundError: No module named 'config'` при прямом запуске `scripts/trudvsem_sync_worker.py`. В `trudvsem_sync_worker.py` и `sync_trudvsem.py` добавлен bootstrap корня проекта в `sys.path` до импортов project modules. Повторный CI и production deploy прошли успешно; restart loop исчез.
+
+**Ограничения:** Render free не предоставляет отдельный бесплатный background service, поэтому временно используется supervisor с двумя sibling processes в одном контейнере. Это уже исключает worker из Gunicorn, но общий container restart остаётся до будущего `HOST-001`. Очистка устаревших вакансий и полноценный cursor/watermark относятся к `SYNC-002`.
+
+**Rollback:** Остановить worker, выставить `TRUDVSEM_SYNC_ENABLED=0`, закрыть active jobs как failed, вернуть прежний start command и application commit. Revision `0003` additive и может оставаться; controlled downgrade переводит `queued/running` в `failed`, затем удаляет `sync_workers` и active-run index. Production downgrade выполняется только после backup.
+
+**Зависимости:** DATA-001, DATA-002, OPS-001. Все критерии SYNC-001 подтверждены; `SYNC-002` разрешён к старту.
 
 #### SYNC-002 - Инкрементальная загрузка и очистка устаревших вакансий
 
 **Приоритет:** P1  
-**Статус:** ЗАПЛАНИРОВАНО
+**Статус:** НУЖНА ПРОВЕРКА
 
-**Цель:** Увеличить полноту каталога и убирать закрытые записи.
+**Цель:** Загружать только изменения Trudvsem в ограниченных временных окнах, продолжать большой change-set с сохранённого cursor и контролируемо убирать устаревшие записи без потери последнего успешного кэша.
 
-**Реализация:** Cursor/offset, upsert, active/closed, last-success watermark, retries, TTL cleanup.
+**Реализация:**
 
-**Влияние на код:** sync command, repositories, models, fixtures/tests.
+- migration `20260807_0004` добавляет таблицу `sync_checkpoints` и lifecycle-поля `source_modified_at`, `closed_at`, `closed_reason`, `last_seen_run_id`;
+- `SyncCheckpointRepository` хранит committed watermark, bounded pending window, next offset/limit/total, last success/cleanup и retry state;
+- worker использует API-параметры `modifiedFrom` и `modifiedTo`, фиксируя верхнюю границу окна до первого запроса;
+- offset/total сохраняются после каждой страницы, поэтому continuation переживает новый run и reconnect БД;
+- overlapping watermark (`TRUDVSEM_SYNC_WATERMARK_OVERLAP_SECONDS`) предотвращает пропуски на границе времени, а upsert по `(source, external_id)` не создаёт дублей;
+- provider lifecycle переводит явно закрытые/удалённые/expired записи в `closed`; повторное появление активирует запись обратно;
+- после полного успешного окна выполняются TTL closure старых публикаций и purge закрытых source rows после retention-периода;
+- cleanup и watermark advance не выполняются при upstream failure; checkpoint сохраняет pending cursor, exponential retry/backoff и старый кэш;
+- initial bootstrap также является bounded/resumable window последних `TRUDVSEM_VACANCY_TTL_DAYS` дней;
+- backup inventory расширен таблицей `sync_checkpoints`.
 
-**Влияние на сайт:** Больше актуальных вакансий, меньше закрытых карточек.
+**Влияние на код:** `config.py`, `database.py`, `domain/`, `models/`, `repositories/`, `services/trudvsem_provider.py`, `services/trudvsem_sync.py`, `services/vacancy_store.py`, worker/CLI, migration `20260807_0004`, Compose/Render env, CI, tests и docs.
 
-**Критерии готовности:** Повторный sync не создаёт дублей; закрытые скрываются; прогресс измерим.
+**Влияние на сайт:** Визуальных изменений нет. Search продолжает читать только active PostgreSQL cache. Во время incremental run доступен предыдущий кэш; закрытые/TTL-expired source rows перестают попадать в выдачу. Diagnostics показывают checkpoint, active/closed totals и retry state без raw provider body или credentials.
 
-**Зависимости:** SYNC-001.
+**Локальные доказательства:** полный доступный pytest — 130 passed, 6 skipped; отдельные SYNC-002 tests проверяют migration/downgrade, bounded provider window, bootstrap и incremental continuation, reconnect persistence, idempotent upsert, exponential retry, TTL cleanup, purge и reactivation. SQLite upgrade/check/downgrade/upgrade и Alembic check пройдены.
+
+**Критерии готовности:**
+
+1. GitHub Actions зелёный, включая отдельный `Verify SYNC-002 incremental freshness and cleanup controls`, PostgreSQL migration/integration, backup/restore и полный pytest.
+2. Render `/health/ready` показывает current/expected revision `20260807_0004`.
+3. Diagnostics checkpoint фиксирует bounded pending window и после завершения продвигает watermark к `pending_to_at`.
+4. Change-set больше одного run продолжает `pending_offset` после reconnect/redeploy без дублей.
+5. Повторяющиеся записи не увеличивают `(source, external_id)` count; explicit closed записи не возвращаются в public search, а active update реактивирует запись.
+6. После успешного полного окна TTL cleanup уменьшает active stale count; purge удаляет только закрытые записи старше retention.
+7. При управляемой upstream error watermark/cleanup не продвигаются, `next_retry_at` растёт по bounded exponential backoff, а ранее сохранённый cache остаётся доступным.
+
+**Ограничения:** Источник не гарантирует идеальное явное событие закрытия для каждой вакансии, поэтому применяется консервативная комбинация provider lifecycle + publication TTL. Cross-source dedup и единая vacancy contract относятся к SEARCH-001/002.
+
+**Rollback:** установить `TRUDVSEM_SYNC_ENABLED=0`, остановить worker, оставить revision `0004` как additive либо выполнить downgrade до `0003` только после verified backup. Application rollback не должен удалять существующий vacancy cache.
+
+**Зависимости:** SYNC-001 выполнен. После подтверждения SYNC-002 следующий пакет — SEARCH-001.
 
 #### SEARCH-001 - Единая схема вакансии и нормализация данных
 
-**Приоритет:** P0  
+**Приоритет:** P0
 **Статус:** ЗАПЛАНИРОВАНО
 
 **Цель:** Одинаково трактовать валюту, регион, формат, опыт, занятость, даты и зарплату.
@@ -411,7 +434,7 @@ MVP не готов, если работает только отдельная �
 
 #### SEARCH-002 - Дедупликация между источниками
 
-**Приоритет:** P0  
+**Приоритет:** P0
 **Статус:** ЗАПЛАНИРОВАНО
 
 **Цель:** Не показывать одну вакансию несколько раз из разных площадок.
@@ -428,7 +451,7 @@ MVP не готов, если работает только отдельная �
 
 #### SEARCH-003 - Стабильная пагинация, сортировка и итоговые счётчики
 
-**Приоритет:** P0  
+**Приоритет:** P0
 **Статус:** ЗАПЛАНИРОВАНО
 
 **Цель:** Убрать пропуски/повторы между страницами и неверный total.
@@ -445,7 +468,7 @@ MVP не готов, если работает только отдельная �
 
 #### SEARCH-004 - Основной маршрут /vacancies и честные состояния источников
 
-**Приоритет:** P1  
+**Приоритет:** P1
 **Статус:** ЗАПЛАНИРОВАНО
 
 **Цель:** Убрать технический /vacancies/internal и отделить AI Career от реальной выдачи.
@@ -462,7 +485,7 @@ MVP не готов, если работает только отдельная �
 
 #### SEARCH-005 - Центр состояния источников для администратора
 
-**Приоритет:** P1  
+**Приоритет:** P1
 **Статус:** ЗАПЛАНИРОВАНО
 
 **Цель:** Показывать доступность API, latency, импорт и срок интеграций.
@@ -481,7 +504,7 @@ MVP не готов, если работает только отдельная �
 
 #### AUTH-001 - Аккаунт AI Career Agent
 
-**Приоритет:** P0  
+**Приоритет:** P0
 **Статус:** ЗАПЛАНИРОВАНО
 
 **Цель:** Создать собственную identity; HH/SuperJob становятся дополнительными подключениями.
@@ -498,7 +521,7 @@ MVP не готов, если работает только отдельная �
 
 #### AUTH-002 - Привязка OAuth HeadHunter и SuperJob к пользователю сервиса
 
-**Приоритет:** P0  
+**Приоритет:** P0
 **Статус:** ЗАПЛАНИРОВАНО
 
 **Цель:** Хранить внешние подключения как сущности конкретного пользователя.
@@ -515,7 +538,7 @@ MVP не готов, если работает только отдельная �
 
 #### PROF-001 - Структурированный карьерный профиль
 
-**Приоритет:** P1  
+**Приоритет:** P1
 **Статус:** ЗАПЛАНИРОВАНО
 
 **Цель:** Создать подтверждённый набор фактов для search, AI и документов.
@@ -532,7 +555,7 @@ MVP не готов, если работает только отдельная �
 
 #### PROF-002 - Импорт резюме в профиль с проверкой пользователем
 
-**Приоритет:** P1  
+**Приоритет:** P1
 **Статус:** ЗАПЛАНИРОВАНО
 
 **Цель:** Заменить тупиковый PDF result на извлечение, review и подтверждение.
@@ -549,7 +572,7 @@ MVP не готов, если работает только отдельная �
 
 #### PROF-003 - Серверные черновики и версии резюме
 
-**Приоритет:** P1  
+**Приоритет:** P1
 **Статус:** ЗАПЛАНИРОВАНО
 
 **Цель:** Убрать зависимость конструктора от localStorage.
@@ -566,7 +589,7 @@ MVP не готов, если работает только отдельная �
 
 #### PRIV-001 - Экспорт, удаление и сроки хранения персональных данных
 
-**Приоритет:** P1  
+**Приоритет:** P1
 **Статус:** ЗАПЛАНИРОВАНО
 
 **Цель:** Дать пользователю фактический контроль над данными.
@@ -585,7 +608,7 @@ MVP не готов, если работает только отдельная �
 
 #### AI-BENCH-001 - Сравнительное тестирование Yandex AI Studio/Alice AI
 
-**Приоритет:** P0  
+**Приоритет:** P0
 **Статус:** ЗАПЛАНИРОВАНО
 
 **Цель:** Проверить качество, скорость и стоимость выбранных моделей на реальных функциях AI Career Agent до интеграции.
@@ -600,7 +623,7 @@ MVP не готов, если работает только отдельная �
 
 #### AI-PROVIDER-001 - Стратегия AI-провайдеров
 
-**Приоритет:** P0  
+**Приоритет:** P0
 **Статус:** ЗАПЛАНИРОВАНО
 
 **Цель:** Зафиксировать основной и резервный AI-контур с учётом РФ/РБ, privacy, стоимости и отказоустойчивости.
@@ -615,7 +638,7 @@ MVP не готов, если работает только отдельная �
 
 #### AI-001 - Независимый слой AI-провайдера и контроль стоимости
 
-**Приоритет:** P1  
+**Приоритет:** P1
 **Статус:** ЗАПЛАНИРОВАНО
 
 **Цель:** Не привязывать бизнес-логику к одной модели.
@@ -632,7 +655,7 @@ MVP не готов, если работает только отдельная �
 
 #### AI-002 - Настоящий анализ резюме
 
-**Приоритет:** P1  
+**Приоритет:** P1
 **Статус:** ЗАПЛАНИРОВАНО
 
 **Цель:** Дать полезный анализ вместо keyword heuristics.
@@ -649,7 +672,7 @@ MVP не готов, если работает только отдельная �
 
 #### AI-003 - Адаптивное AI-интервью в конструкторе
 
-**Приоритет:** P1  
+**Приоритет:** P1
 **Статус:** ЗАПЛАНИРОВАНО
 
 **Цель:** Задавать уточняющие вопросы и превращать обязанности в подтверждённые достижения.
@@ -666,7 +689,7 @@ MVP не готов, если работает только отдельная �
 
 #### AI-004 - Объяснимая оценка соответствия вакансии
 
-**Приоритет:** P1  
+**Приоритет:** P1
 **Статус:** ЗАПЛАНИРОВАНО
 
 **Цель:** Рассчитывать реальный match вместо демонстрационного процента.
@@ -683,7 +706,7 @@ MVP не готов, если работает только отдельная �
 
 #### AI-005 - Генерация и версии сопроводительного письма
 
-**Приоритет:** P1  
+**Приоритет:** P1
 **Статус:** ЗАПЛАНИРОВАНО
 
 **Цель:** Готовить персонализированный редактируемый черновик.
@@ -700,7 +723,7 @@ MVP не готов, если работает только отдельная �
 
 #### AI-006 - Оценка качества AI и защита от галлюцинаций
 
-**Приоритет:** P1  
+**Приоритет:** P1
 **Статус:** ЗАПЛАНИРОВАНО
 
 **Цель:** Не считать AI готовым только по факту ответа модели.
@@ -719,7 +742,7 @@ MVP не готов, если работает только отдельная �
 
 #### JOB-001 - Серверные сохранённые вакансии
 
-**Приоритет:** P1  
+**Приоритет:** P1
 **Статус:** ЗАПЛАНИРОВАНО
 
 **Цель:** Заменить localStorage серверной snapshot-карточкой.
@@ -736,7 +759,7 @@ MVP не готов, если работает только отдельная �
 
 #### JOB-002 - Трекер откликов и история действий
 
-**Приоритет:** P1  
+**Приоритет:** P1
 **Статус:** ЗАПЛАНИРОВАНО
 
 **Цель:** Фиксировать этапы поиска, документы, заметки и следующий шаг.
@@ -753,7 +776,7 @@ MVP не готов, если работает только отдельная �
 
 #### JOB-003 - Добровольные напоминания и уведомления
 
-**Приоритет:** P2  
+**Приоритет:** P2
 **Статус:** ЗАПЛАНИРОВАНО
 
 **Цель:** Возвращать к следующему действию без спама.
@@ -770,7 +793,7 @@ MVP не готов, если работает только отдельная �
 
 #### JOB-004 - Личная аналитика поиска работы
 
-**Приоритет:** P2  
+**Приоритет:** P2
 **Статус:** ЗАПЛАНИРОВАНО
 
 **Цель:** Показывать conversion и узкие места без ложных выводов.
@@ -789,7 +812,7 @@ MVP не готов, если работает только отдельная �
 
 #### DOMAIN-001 - Собственный домен, DNS, TLS и публичные URL
 
-**Приоритет:** P0 до beta  
+**Приоритет:** P0 до beta
 **Статус:** ЗАПЛАНИРОВАНО
 
 **Цель:** Дать продукту постоянный адрес, независимый от Render и конкретного VPS.
@@ -806,7 +829,7 @@ MVP не готов, если работает только отдельная �
 
 #### INFRA-001 - Реальный выбор и полевой тест российского VPS
 
-**Приоритет:** P0 перед beta / production  
+**Приоритет:** P0 перед beta / production
 **Статус:** ОТЛОЖЕНО ДО ПРЕДРЕЛИЗНОГО ЭТАПА
 
 **Цель:** После завершения функционального MVP арендовать кандидата на production VPS и проверить его в реальной сетевой среде РФ/РБ, не оплачивая простаивающую инфраструктуру во время продуктовой разработки.
@@ -825,7 +848,7 @@ MVP не готов, если работает только отдельная �
 
 #### REED-COMPAT-001 - Проверка Reed API с выбранного VPS
 
-**Приоритет:** P0  
+**Приоритет:** P0
 **Статус:** ЗАПЛАНИРОВАНО
 
 **Цель:** Не переносить production на сервер, с которого Reed технически или договорно недоступен.
@@ -840,7 +863,7 @@ MVP не готов, если работает только отдельная �
 
 #### MIG-001 - Перенос production с Render на VPS
 
-**Приоритет:** P0  
+**Приоритет:** P0
 **Статус:** ЗАПЛАНИРОВАНО
 
 **Цель:** Перенести приложение и PostgreSQL без потери данных и с контролируемым rollback.
@@ -855,7 +878,7 @@ MVP не готов, если работает только отдельная �
 
 #### OPS-002 - Эксплуатация собственного VPS
 
-**Приоритет:** P0 при выборе VPS  
+**Приоритет:** P0 при выборе VPS
 **Статус:** ЗАПЛАНИРОВАНО
 
 **Цель:** Безопасно обслуживать выбранный VPS и выполнить обязательный production backup/restore drill, перенесённый из OPS-001 без ослабления release gate.
@@ -872,7 +895,7 @@ MVP не готов, если работает только отдельная �
 
 #### PERF-001 - Оптимизация frontend и статических ресурсов
 
-**Приоритет:** P2  
+**Приоритет:** P2
 **Статус:** ЗАПЛАНИРОВАНО
 
 **Цель:** Снизить вес и сложность без новой полной переработки дизайна.
@@ -889,7 +912,7 @@ MVP не готов, если работает только отдельная �
 
 #### A11Y-001 - Доступность интерфейса
 
-**Приоритет:** P2  
+**Приоритет:** P2
 **Статус:** ЗАПЛАНИРОВАНО
 
 **Цель:** Клавиатура, screen reader, zoom и reduced motion.
@@ -906,7 +929,7 @@ MVP не готов, если работает только отдельная �
 
 #### LEGAL-001 - Юридические документы и согласия
 
-**Приоритет:** P0 до публичного AI  
+**Приоритет:** P0 до публичного AI
 **Статус:** ЗАПЛАНИРОВАНО
 
 **Цель:** Честно описать резюме, OAuth tokens, AI providers, retention и права.
@@ -923,7 +946,7 @@ MVP не готов, если работает только отдельная �
 
 #### ANL-001 - Продуктовая аналитика без содержимого резюме
 
-**Приоритет:** P2  
+**Приоритет:** P2
 **Статус:** ЗАПЛАНИРОВАНО
 
 **Цель:** Понимать drop-off и ценность функций без утечки пользовательского текста.
@@ -940,7 +963,7 @@ MVP не готов, если работает только отдельная �
 
 #### BILL-001 - Тарифы, платежи и лимиты использования
 
-**Приоритет:** P3  
+**Приоритет:** P3
 **Статус:** ОТЛОЖЕНО
 
 **Цель:** Монетизировать только после доказуемо полезного полного пути.
@@ -957,7 +980,7 @@ MVP не готов, если работает только отдельная �
 
 #### SRC-001 - Подключение новых источников вакансий
 
-**Приоритет:** P3  
+**Приоритет:** P3
 **Статус:** ОТЛОЖЕНО
 
 **Цель:** Расширять охват только после качества core search.
@@ -974,7 +997,7 @@ MVP не готов, если работает только отдельная �
 
 #### REL-001 - Предрелизная проверка MVP 1.0
 
-**Приоритет:** P0 для релиза  
+**Приоритет:** P0 для релиза
 **Статус:** ЗАПЛАНИРОВАНО
 
 **Цель:** Подтвердить полный путь и эксплуатационную готовность.
@@ -1107,7 +1130,7 @@ repository hygiene: успешно
 - User account UI/passwords не входят в DATA-002.
 - Legacy account tables удаляются только отдельной cleanup migration после AUTH-002.
 - Canonical vacancy пока one-to-one с source record; actual cross-source merge относится к SEARCH-002.
-- Trudvsem thread оставался в Gunicorn до SYNC-001; в candidate 1.4.1 он удалён и заменён external worker process.
+- Историческое состояние DATA-002: Trudvsem thread оставался в Gunicorn до SYNC-001. В текущей архитектуре thread удалён и заменён внешним worker-процессом.
 
 ## 11. SEC-001 - фактическая реализация 05 августа 2026
 
@@ -1250,7 +1273,7 @@ Alembic revision = 20260804_0002
 
 - Manifest regression tests проверяют non-root image, private database, one-shot migrations, OPS/restore profiles и secret-free environment template.
 - GitHub Actions валидирует Compose, собирает runtime/ops targets и запускает container health smoke.
-- Один Gunicorn worker остаётся до shared rate-limit storage и отдельного Trudvsem worker.
+- Один Gunicorn worker остаётся из-за process-local rate-limit storage; Trudvsem worker уже вынесен из Gunicorn в SYNC-001.
 
 ### 13.4 Итог
 
@@ -1262,60 +1285,9 @@ INFRA-001 = ОТЛОЖЕНО ДО ПРЕДРЕЛИЗНОГО ОКНА
 
 Provider shortlist и VPS runbook сохраняются как входные данные будущего `INFRA-001`; окончательный выбор провайдера не зафиксирован до полевого теста.
 
-## 14. SYNC-001 - фактическая реализация 07 августа 2026
+## 14. Зафиксированная стратегия hosting, AI и Reed
 
-### 14.1 Изменение lifecycle
-
-До пакета Flask/Gunicorn создавал daemon thread из `before_request`, а progress/queue state частично находились в памяти процесса. После пакета web process только читает cache и создаёт durable queued run. Provider HTTP выполняет external worker process.
-
-```text
-Browser/search request
-        -> PostgreSQL vacancy cache
-        -> enqueue sync_runs(status=queued), если cache пуст/устарел
-
-External worker process
-        -> claim queued run
-        -> PostgreSQL advisory lock / SQLite lockfile
-        -> Trudvsem API batches
-        -> vacancy upsert
-        -> SyncRun heartbeat/result
-```
-
-### 14.2 Persisted coordination
-
-- migration `20260807_0003`;
-- `sync_workers` heartbeat table;
-- unique partial index `uq_sync_runs_active_source`;
-- abandoned legacy `running` rows закрываются migration как `failed/WorkerRestarted`;
-- runtime stale recovery по `TRUDVSEM_SYNC_STALE_SECONDS`;
-- queue enqueue идемпотентен и безопасен при нескольких web requests/instances.
-
-### 14.3 Staging и будущий VPS
-
-Текущий Render free web service не требует отдельной платной worker service: `scripts/start_runtime.py` запускает Gunicorn и worker как sibling OS processes. Это временная staging-компоновка. На VPS/Compose worker запускается отдельным service через profile `sync`; бизнес-логика при этом не меняется.
-
-### 14.4 Локальные доказательства
-
-```text
-pytest: 115 passed, 6 skipped до финальной документации
-SYNC-001 tests: durable queue, active-run constraint, migration cleanup,
-external execution, incremental cursor, failure cache preservation,
-process lock, stale recovery и worker heartbeat — пройдены
-SQLite upgrade 0001 -> 0002 -> 0003 — пройден
-Alembic check — No new upgrade operations detected
-SQLite downgrade/upgrade 0003 round-trip — пройден
-infra manifest validator — пройден
-```
-
-Локальные skips относятся к Flask/Psycopg/PostgreSQL service, отсутствующим в изолированном окружении. Они обязательны и не должны быть skipped в GitHub Actions.
-
-### 14.5 Production verification, которое ещё требуется
-
-Полная последовательность приведена в `docs/SYNC001_VERIFICATION_STATUS.md`. До зелёного GitHub Actions и Render worker heartbeat пакет остаётся **НУЖНА ПРОВЕРКА**.
-
-## 15. Зафиксированная стратегия hosting, AI и Reed
-
-### 15.1 Новый принцип 1.4.0: сначала функциональный MVP, затем оплачиваемая инфраструктура
+### 14.1 Новый принцип 1.4.0: сначала функциональный MVP, затем оплачиваемая инфраструктура
 
 Render остаётся staging/резервной площадкой на период разработки. Из части сетей РФ существует подтверждённый риск недоступности Render/Cloudflare, поэтому Render не принимается как окончательный production, но это не требует немедленно арендовать VPS.
 
@@ -1327,18 +1299,18 @@ Render остаётся staging/резервной площадкой на пе�
 - никаких обязательных `onrender.com` URL в business logic;
 - абсолютные публичные URL идут через `PUBLIC_BASE_URL` после DOMAIN-001;
 - provider/AI integrations идут через service/adapters и feature flags;
-- background sync вынесен из Gunicorn в `SYNC-001` и ожидает production verification;
+- background sync вынесен из Gunicorn в `SYNC-001`;
 - health/readiness и container baseline сохраняются в CI.
 
-### 15.2 AI benchmark не блокируется VPS
+### 14.2 AI benchmark не блокируется VPS
 
 `AI-BENCH-001` выполняется на тестовом доступе к Yandex AI Studio/Alice AI и оценивает качество, latency, JSON/schema compliance, cost и hallucination rate на golden dataset. Реальный VPS для этого не нужен. После выбора production VPS `INFRA-001` повторно проверит только transport/access с его source IP.
 
-### 15.3 Reed остаётся привязан к реальному VPS
+### 14.3 Reed остаётся привязан к реальному VPS
 
 `REED-COMPAT-001` нельзя честно закрыть без точного source IP будущего VPS. Поэтому real Reed smoke и письменное подтверждение условий выполняются сразу после `INFRA-001`. До этого Reed остаётся feature-flagged и не должен ломать HH/SuperJob/Trudvsem при недоступности.
 
-### 15.4 Что переносится в предрелизный инфраструктурный блок
+### 14.4 Что переносится в предрелизный инфраструктурный блок
 
 - аренда и полевой тест VPS (`INFRA-001`);
 - real Reed compatibility (`REED-COMPAT-001`);
@@ -1350,14 +1322,13 @@ Render остаётся staging/резервной площадкой на пе�
 
 Эти задачи выполняются **до beta/production**, но не в день публичного запуска: должен оставаться отдельный rollback/observation window.
 
-## 16. Обязательная ближайшая последовательность
+## 15. Обязательная ближайшая последовательность
 
-### 16.1 Функциональная разработка без аренды VPS
+### 15.1 Функциональная разработка без аренды VPS
 
 ```text
 DOC-001 (постоянная синхронизация, не блокирует код)
--> SYNC-001 GitHub/Render verification
--> SYNC-002
+-> SYNC-002 verification
 -> SEARCH-001
 -> SEARCH-002
 -> SEARCH-003
@@ -1384,7 +1355,7 @@ DOC-001 (постоянная синхронизация, не блокируе�
 -> PERF-001 / A11Y-001 / ANL-001 по готовности
 ```
 
-### 16.2 Предрелизный инфраструктурный блок
+### 15.2 Предрелизный инфраструктурный блок
 
 ```text
 INFRA-001 real VPS test
@@ -1400,15 +1371,19 @@ INFRA-001 real VPS test
 
 `AI-BENCH-001` не зависит от VPS. Финальная доступность Yandex AI с production source IP повторно подтверждается в `INFRA-001`. Порядок снова меняется только новой MINOR-версией PLAN_CURRENT с объяснением зависимостей.
 
-## 17. Следующий пакет
+## 16. Следующий пакет
 
-Текущий package `SYNC-001` имеет статус **НУЖНА ПРОВЕРКА НА GITHUB/RENDER**. Сначала должны пройти migration `20260807_0003`, новый CI step, Render deploy, external worker heartbeat и queue-to-completion smoke.
+`SYNC-002` реализован как candidate и имеет статус **НУЖНА ПРОВЕРКА**. До merge обязательны зелёный GitHub Actions и production smoke на Render с revision `20260807_0004`, checkpoint/watermark, continuation cursor, retry preservation и cleanup evidence.
 
-После подтверждения следующим кодовым пакетом становится `SYNC-002 — Инкрементальная загрузка и очистка устаревших вакансий`. Он расширит уже созданный worker contract: watermark/cursor policy, закрытие устаревших вакансий, retry/backoff policy и измеримые freshness criteria.
+После подтверждения следующий кодовый пакет:
 
-`DOC-001` остаётся постоянным процессом и синхронизируется вместе с каждым code package.
+```text
+SEARCH-001 - Единая схема вакансии и нормализация данных
+```
 
-## 18. Обязательный отчёт после каждого пакета
+`DOC-001` остаётся постоянным процессом: repository docs, канонический план, паспорт и changelog должны обновляться в каждом следующем merge.
+
+## 17. Обязательный отчёт после каждого пакета
 
 ```text
 Пункт: <ID и название>
@@ -1424,7 +1399,7 @@ GitHub/production/API: <подтверждено или требуется>
 Приложения: ZIP, PLAN_CURRENT DOCX/PDF/MD, паспорт при необходимости
 ```
 
-## 19. Журнал версий
+## 18. Журнал версий
 
 | Версия | Дата | Пункт | Изменение |
 |---|---|---|---|
@@ -1449,5 +1424,7 @@ GitHub/production/API: <подтверждено или требуется>
 | 1.3.4 | 06.08.2026 | OPS-001-VERIFICATION-UPDATE | Подтверждены зелёные OPS/backup GitHub steps, correlation `X-Request-ID` в application JSON log и реальная sanitised POST-доставка alert webhook. OPS-001 остаётся на финальной проверке только до production backup/restore drill. |
 | 1.3.5 | 06.08.2026 | INFRA-001 | Добавлены non-root Docker runtime/ops images, Compose stack, Caddy TLS profile, VPS probes, isolated restore database, CI container build/smoke, provider decision record и единый стандарт документов; требуется real VPS verification. |
 | 1.4.0 | 07.08.2026 | DEVELOPMENT-SEQUENCE / INFRA-DEFER | Реальный VPS перенесён в предрелизное окно; кодовая container/probe часть выделена в выполненный INFRA-PREP-001; OPS-001 закрыт как базовый пакет с переносом production restore drill в OPS-002/REL-001; следующий кодовый пакет — SYNC-001. |
-| 1.4.1 | 07.08.2026 | SYNC-001 | Удалён daemon thread из Gunicorn; добавлены durable queue, external worker/CLI, cross-process lock, worker heartbeat, migration `20260807_0003`, Render supervisor, Compose worker service, tests и structured verification runbook. Пакет ожидает GitHub/Render verification. |
+| 1.4.1 | 07.08.2026 | SYNC-001 | Удалён daemon thread из Gunicorn; добавлены durable queue, external worker/CLI, cross-process locks, worker heartbeat, stale recovery, migration 20260807_0003, Render/Compose integration, tests и verification runbook. Статус - НУЖНА ПРОВЕРКА. |
+| 1.4.2 | 07.08.2026 | SYNC-001-COMPLETE | GitHub CI и Render production verification пройдены; исправлен script import-path, подтверждены внешний worker, provider batches, persisted run lifecycle, revision 20260807_0003 и cache persistence после реального restart. SYNC-002 готов к старту. |
+| 1.4.3 | 07.08.2026 | SYNC-002 | Добавлены migration 20260807_0004, persistent watermark/cursor, bounded modified windows, idempotent lifecycle upsert, retry/backoff, TTL closure и retention purge; пакет ожидает GitHub/Render verification. |
 

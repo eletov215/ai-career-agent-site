@@ -1,5 +1,35 @@
 # AI Career Agent — журнал изменений
 
+## 1.4.3 — 2026-08-07 — SYNC-002 candidate
+
+### Добавлено
+
+- migration `20260807_0004` с `sync_checkpoints` и lifecycle fields source records;
+- persistent committed watermark, bounded pending window и continuation offset/total;
+- Trudvsem `modifiedFrom`/`modifiedTo` page adapter и provider lifecycle mapping;
+- resumable bootstrap последних TTL-дней и incremental change-set across runs/reconnect;
+- idempotent active/closed upsert, TTL closure, retention purge и reactivation;
+- persistent bounded exponential retry/backoff без потери cache;
+- checkpoint table в encrypted backup inventory;
+- отдельный CI step и SYNC-002 implementation/verification/runbook docs.
+
+### Изменено
+
+- expected Alembic revision candidate — `20260807_0004`;
+- diagnostics включают checkpoint, active/closed totals и retry state;
+- worker не возвращает failure exit code при transient upstream error в long-running mode;
+- VPS/Compose/Render templates содержат явные incremental/cleanup defaults;
+- repository docs синхронизированы с PLAN_CURRENT 1.4.3 и passport 2.17.
+
+### Проверки и статус
+
+- локально: `130 passed, 6 skipped`; SYNC-002 tests — 8 passed;
+- migration upgrade/downgrade/upgrade и Alembic check пройдены;
+- `SYNC-002 — НУЖНА ПРОВЕРКА` до GitHub Actions и Render revision/checkpoint/cleanup smoke;
+- после подтверждения следующий пакет — `SEARCH-001`.
+
+---
+
 ## 1.4.1 — 2026-08-07 — SYNC-001 candidate
 
 ### Добавлено

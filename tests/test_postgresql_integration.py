@@ -18,12 +18,18 @@ from models import (
     HeadHunterAccount,
     OAuthConnection,
     SuperJobAccount,
+    SyncCheckpoint,
     SyncRun,
     User,
     Vacancy,
     VacancySourceRecord,
 )
-from repositories import OAuthConnectionRepository, SyncRunRepository, UserRepository
+from repositories import (
+    OAuthConnectionRepository,
+    SyncCheckpointRepository,
+    SyncRunRepository,
+    UserRepository,
+)
 from services.vacancy_store import VacancyStore
 
 
@@ -178,6 +184,7 @@ def test_postgresql_migration_and_persistence_round_trip():
 
         users = UserRepository(runtime)
         sync_runs = SyncRunRepository(runtime)
+        sync_checkpoints = SyncCheckpointRepository(runtime)
         user_email = f"ci-{suffix}@example.test"
         user = users.create(email=user_email, display_name="CI User", status="active")
 
@@ -207,6 +214,13 @@ def test_postgresql_migration_and_persistence_round_trip():
             saved=1,
             cursor="1",
         )
+        checkpoint = sync_checkpoints.complete_success(
+            "ci-postgresql",
+            run_id=sync_run.id,
+            watermark_at=1_785_853_489,
+            cleanup_at=1_785_853_490,
+        )
+        assert checkpoint.watermark_at == 1_785_853_489
 
         external_id = f"vacancy-{suffix}"
         store = VacancyStore(runtime)
@@ -219,14 +233,21 @@ def test_postgresql_migration_and_persistence_round_trip():
                     "company": "AI Career Agent CI",
                     "currency": "RUB",
                     "published_at": "2026-08-04T07:00:00Z",
+                    "source_modified_at": "2026-08-07T12:00:00Z",
+                    "source_status": "active",
                     "url": "https://example.test/postgresql-ci",
                 }
-            ]
+            ],
+            run_id=sync_run.id,
+            seen_at=1_785_853_500,
         ) == 1
 
         inserted_source = store.repository.get_source("ci-postgresql", external_id)
         assert inserted_source is not None
         assert inserted_source.id > max_source_id
+        assert inserted_source.source_modified_at == "2026-08-07T12:00:00Z"
+        assert inserted_source.last_seen_run_id == sync_run.id
+        assert inserted_source.source_status == "active"
         inserted_canonical = store.repository.get_canonical(inserted_source.vacancy_id)
         assert inserted_canonical is not None
         assert inserted_canonical.title == "PostgreSQL integration vacancy"
@@ -250,6 +271,10 @@ def test_postgresql_migration_and_persistence_round_trip():
         latest_run = SyncRunRepository(runtime).latest("ci-postgresql")
         assert latest_run is not None
         assert latest_run.status == "succeeded"
+        persisted_checkpoint = SyncCheckpointRepository(runtime).get("ci-postgresql")
+        assert persisted_checkpoint is not None
+        assert persisted_checkpoint.watermark_at == 1_785_853_489
+        assert persisted_checkpoint.last_cleanup_at == 1_785_853_490
         persisted_source = VacancyStore(runtime).repository.get_source(
             "ci-postgresql", external_id
         )
@@ -264,6 +289,7 @@ def test_postgresql_migration_and_persistence_round_trip():
             ) is not None
             assert session.get(User, user.id) is not None
             assert session.get(SyncRun, sync_run.id) is not None
+            assert session.get(SyncCheckpoint, "ci-postgresql") is not None
             assert session.get(HeadHunterAccount, legacy_hh_id) is not None
     finally:
         runtime.dispose()

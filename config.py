@@ -381,6 +381,11 @@ class AppSettings:
     trudvsem_sync_poll_seconds: int
     trudvsem_sync_stale_seconds: int
     trudvsem_worker_heartbeat_seconds: int
+    trudvsem_sync_watermark_overlap_seconds: int
+    trudvsem_vacancy_ttl_days: int
+    trudvsem_closed_retention_days: int
+    trudvsem_retry_base_seconds: int
+    trudvsem_retry_max_seconds: int
     debug_hh: bool
     hh_currency_scan_pages: int
     max_resume_upload_mb: int
@@ -572,6 +577,25 @@ def load_settings(environ: Mapping[str, str] | None = None) -> AppSettings:
         "OPS_ALERT_WEBHOOK_URL",
         environment=environment,
     )
+    trudvsem_retry_base_seconds = _int(
+        source,
+        "TRUDVSEM_RETRY_BASE_SECONDS",
+        60,
+        minimum=5,
+        maximum=3600,
+    )
+    trudvsem_retry_max_seconds = _int(
+        source,
+        "TRUDVSEM_RETRY_MAX_SECONDS",
+        3600,
+        minimum=30,
+        maximum=86_400,
+    )
+    if trudvsem_retry_max_seconds < trudvsem_retry_base_seconds:
+        raise ConfigurationError(
+            "TRUDVSEM_RETRY_MAX_SECONDS не может быть меньше "
+            "TRUDVSEM_RETRY_BASE_SECONDS."
+        )
 
     return AppSettings(
         environment=environment,
@@ -635,6 +659,29 @@ def load_settings(environ: Mapping[str, str] | None = None) -> AppSettings:
             minimum=2,
             maximum=300,
         ),
+        trudvsem_sync_watermark_overlap_seconds=_int(
+            source,
+            "TRUDVSEM_SYNC_WATERMARK_OVERLAP_SECONDS",
+            300,
+            minimum=0,
+            maximum=86_400,
+        ),
+        trudvsem_vacancy_ttl_days=_int(
+            source,
+            "TRUDVSEM_VACANCY_TTL_DAYS",
+            45,
+            minimum=31,
+            maximum=365,
+        ),
+        trudvsem_closed_retention_days=_int(
+            source,
+            "TRUDVSEM_CLOSED_RETENTION_DAYS",
+            30,
+            minimum=1,
+            maximum=365,
+        ),
+        trudvsem_retry_base_seconds=trudvsem_retry_base_seconds,
+        trudvsem_retry_max_seconds=trudvsem_retry_max_seconds,
         debug_hh=_bool(source, "DEBUG_HH", False),
         hh_currency_scan_pages=_int(
             source,

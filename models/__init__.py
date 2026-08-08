@@ -3,6 +3,7 @@
 from .accounts import HeadHunterAccount, SuperJobAccount
 from .base import Base
 from .oauth_connection import OAuthConnection
+from .sync_checkpoint import SyncCheckpoint
 from .sync_run import SyncRun
 from .sync_worker import SyncWorker
 from .user import User
@@ -13,6 +14,7 @@ __all__ = [
     "HeadHunterAccount",
     "OAuthConnection",
     "SuperJobAccount",
+    "SyncCheckpoint",
     "SyncRun",
     "SyncWorker",
     "User",

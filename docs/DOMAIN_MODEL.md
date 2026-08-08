@@ -54,7 +54,7 @@ repositories/
 - External sync worker пишет lifecycle через `SyncRunRepository`, а heartbeat — через `SyncWorkerRepository`.
 - Repositories возвращают immutable User/OAuth/Vacancy/Source/SyncRun records, а не session-bound ORM objects.
 
-## Migrations 20260804_0002 и 20260807_0003
+## Migrations 20260804_0002, 20260807_0003 и 20260807_0004
 
 Migration `20260804_0002` выполняет:
 
@@ -84,7 +84,7 @@ Migration поддерживает SQLite и PostgreSQL. Downgrade восста�
 - Текущие templates получают прежние dict keys (`name`, `first_name`, `access_token` и т. д.).
 - Публичный API `VacancyStore` не меняется.
 - UI, маршруты поиска и формат карточек не меняются.
-- Existing PostgreSQL rows переходят на revision `20260807_0003` при deploy; business vacancy/OAuth data не переписываются migration 0003.
+- Existing PostgreSQL rows переходят на candidate revision `20260807_0004` при deploy; business vacancy/OAuth data не переписываются migration 0003.
 
 ## Проверки
 
@@ -102,8 +102,8 @@ Migration поддерживает SQLite и PostgreSQL. Downgrade восста�
 
 После merge/deploy:
 
-1. `python scripts/manage_db.py upgrade` должен применить `20260807_0003`;
-2. `/health` должен показать `revision=20260807_0003`;
+1. `python scripts/manage_db.py upgrade` должен применить `20260807_0004`;
+2. `/health` должен показать `revision=20260807_0004`;
 3. `/`, `/vacancies/internal`, OAuth dashboard и `/trudvsem/status` должны работать;
 4. legacy OAuth connection, если он существует, должен остаться доступным;
 5. `cached_total` до и после restart должен сохраниться;

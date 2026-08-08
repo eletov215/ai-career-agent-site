@@ -70,6 +70,7 @@ def main() -> int:
         database=database,
         vacancy_store=storage.vacancies,
         sync_runs=storage.sync_runs,
+        sync_checkpoints=storage.sync_checkpoints,
         provider_operation_factory=provider_operation,
     )
     worker_id = f"{socket.gethostname()}:{os.getpid()}:{uuid.uuid4().hex[:8]}"
@@ -111,7 +112,7 @@ def main() -> int:
         while not _STOP_REQUESTED:
             heartbeat(None, status="idle")
             active = service.active_run()
-            should_run = bool(active and active.status == "queued") or service.is_due()
+            should_run = service.should_run(active)
             if should_run:
                 heartbeat(active.id if active else None, status="running")
                 result = service.run_once(
@@ -124,7 +125,7 @@ def main() -> int:
                         status="running" if run_id else "idle",
                     ),
                 )
-                if result.status == "failed":
+                if args.once and result.status == "failed":
                     exit_code = 1
                 heartbeat(None, status="idle")
 
