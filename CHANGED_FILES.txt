@@ -1,11 +1,60 @@
-SEARCH-002 dedup verification endpoint hotfix
+SEARCH-003 — persistent stable pagination, deterministic sorting and honest totals
 
-Modified:
-app.py
-observability.py
-tests/test_observability.py
-tests/test_routes.py
-docs/CHANGELOG.md
-docs/SEARCH002_VERIFICATION_STATUS.md
-README_UPLOAD.txt
-CHANGED_FILES.txt
+Added (9):
+- docs/SEARCH003_IMPLEMENTATION.md
+- docs/SEARCH003_PAGINATION_REFERENCE.md
+- docs/SEARCH003_RUNBOOK.md
+- docs/SEARCH003_VERIFICATION_STATUS.md
+- migrations/versions/20260809_0007_stable_search_snapshots.py
+- models/search_snapshot.py
+- repositories/search_snapshots.py
+- services/search_aggregation.py
+- tests/test_search_pagination.py
+
+Modified (40):
+- .github/workflows/ci.yml
+- CHANGED_FILES.txt
+- README.md
+- README_FIRST.txt
+- README_UPLOAD.txt
+- app.py
+- compose.yaml
+- config.py
+- database.py
+- docs/ARCHITECTURE.md
+- docs/CHANGELOG.md
+- docs/DATABASE_MIGRATION.md
+- docs/DOMAIN_MODEL.md
+- docs/PLAN_CURRENT.md
+- docs/PROJECT_GUIDE.md
+- docs/PROJECT_PASSPORT.md
+- docs/ROADMAP.md
+- docs/SOURCE_AUDIT.md
+- domain/__init__.py
+- domain/entities.py
+- infra/vps/.env.example
+- models/__init__.py
+- observability.py
+- operations/backup.py
+- render.yaml
+- repositories/__init__.py
+- scripts/check_document_structure.py
+- scripts/infra_manifest_check.py
+- services/storage.py
+- services/vacancy_deduplication.py
+- static/styles.css
+- templates/vacancies_unified.html
+- tests/test_config.py
+- tests/test_database.py
+- tests/test_document_structure.py
+- tests/test_infra_manifests.py
+- tests/test_observability.py
+- tests/test_postgresql_integration.py
+- tests/test_routes.py
+- tests/test_search_deduplication.py
+
+Removed (0):
+- none
+
+Expected Alembic revision after deploy: 20260809_0007.
+Package status: SEARCH-003 — НУЖНА ПРОВЕРКА.

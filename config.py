@@ -372,6 +372,12 @@ class AppSettings:
     database_url_explicit: bool
     vacancy_cache_ttl: int
     vacancy_page_size: int
+    search_snapshot_ttl_seconds: int
+    search_snapshot_max_candidates: int
+    search_snapshot_max_pages_per_source: int
+    search_snapshot_max_rounds_per_request: int
+    search_snapshot_buffer_items: int
+    search_snapshot_extension_lease_seconds: int
     trudvsem_sync_interval: int
     trudvsem_sync_items: int
     trudvsem_sync_batch: int
@@ -616,6 +622,48 @@ def load_settings(environ: Mapping[str, str] | None = None) -> AppSettings:
         database_url_explicit=database_url_explicit,
         vacancy_cache_ttl=_int(source, "VACANCY_CACHE_TTL", 1800, minimum=1),
         vacancy_page_size=_int(source, "VACANCY_PAGE_SIZE", 60, minimum=1, maximum=100),
+        search_snapshot_ttl_seconds=_int(
+            source,
+            "SEARCH_SNAPSHOT_TTL_SECONDS",
+            1800,
+            minimum=300,
+            maximum=86_400,
+        ),
+        search_snapshot_max_candidates=_int(
+            source,
+            "SEARCH_SNAPSHOT_MAX_CANDIDATES",
+            1200,
+            minimum=60,
+            maximum=10_000,
+        ),
+        search_snapshot_max_pages_per_source=_int(
+            source,
+            "SEARCH_SNAPSHOT_MAX_PAGES_PER_SOURCE",
+            8,
+            minimum=1,
+            maximum=100,
+        ),
+        search_snapshot_max_rounds_per_request=_int(
+            source,
+            "SEARCH_SNAPSHOT_MAX_ROUNDS_PER_REQUEST",
+            3,
+            minimum=1,
+            maximum=20,
+        ),
+        search_snapshot_buffer_items=_int(
+            source,
+            "SEARCH_SNAPSHOT_BUFFER_ITEMS",
+            1,
+            minimum=1,
+            maximum=100,
+        ),
+        search_snapshot_extension_lease_seconds=_int(
+            source,
+            "SEARCH_SNAPSHOT_EXTENSION_LEASE_SECONDS",
+            90,
+            minimum=15,
+            maximum=600,
+        ),
         trudvsem_sync_interval=_int(source, "TRUDVSEM_SYNC_INTERVAL", 1800, minimum=1),
         trudvsem_sync_items=_int(source, "TRUDVSEM_SYNC_ITEMS", 300, minimum=1, maximum=500),
         trudvsem_sync_batch=_int(source, "TRUDVSEM_SYNC_BATCH", 10, minimum=1, maximum=10),

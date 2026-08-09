@@ -84,6 +84,12 @@ def test_production_defaults_preserve_current_runtime_behavior():
     assert settings.database_url_explicit is False
     assert settings.vacancy_cache_ttl == 1800
     assert settings.vacancy_page_size == 60
+    assert settings.search_snapshot_ttl_seconds == 1800
+    assert settings.search_snapshot_max_candidates == 1200
+    assert settings.search_snapshot_max_pages_per_source == 8
+    assert settings.search_snapshot_max_rounds_per_request == 3
+    assert settings.search_snapshot_buffer_items == 1
+    assert settings.search_snapshot_extension_lease_seconds == 90
     assert settings.trudvsem_sync_items == 300
     assert settings.trudvsem_sync_batch == 10
     assert settings.trudvsem_sync_poll_seconds == 15
@@ -125,6 +131,12 @@ def test_numeric_and_boolean_values_are_validated_centrally(tmp_path):
         production_environment(
             DATA_DIR=str(tmp_path),
             VACANCY_PAGE_SIZE="40",
+            SEARCH_SNAPSHOT_TTL_SECONDS="2400",
+            SEARCH_SNAPSHOT_MAX_CANDIDATES="1600",
+            SEARCH_SNAPSHOT_MAX_PAGES_PER_SOURCE="12",
+            SEARCH_SNAPSHOT_MAX_ROUNDS_PER_REQUEST="4",
+            SEARCH_SNAPSHOT_BUFFER_ITEMS="6",
+            SEARCH_SNAPSHOT_EXTENSION_LEASE_SECONDS="120",
             TRUDVSEM_SYNC_ENABLED="no",
             TRUDVSEM_SYNC_POLL_SECONDS="20",
             TRUDVSEM_SYNC_STALE_SECONDS="900",
@@ -156,6 +168,12 @@ def test_numeric_and_boolean_values_are_validated_centrally(tmp_path):
 
     assert settings.data_dir == tmp_path
     assert settings.vacancy_page_size == 40
+    assert settings.search_snapshot_ttl_seconds == 2400
+    assert settings.search_snapshot_max_candidates == 1600
+    assert settings.search_snapshot_max_pages_per_source == 12
+    assert settings.search_snapshot_max_rounds_per_request == 4
+    assert settings.search_snapshot_buffer_items == 6
+    assert settings.search_snapshot_extension_lease_seconds == 120
     assert settings.trudvsem_sync_enabled is False
     assert settings.trudvsem_sync_poll_seconds == 20
     assert settings.trudvsem_sync_stale_seconds == 900
@@ -205,6 +223,12 @@ def test_numeric_and_boolean_values_are_validated_centrally(tmp_path):
         ("TRUDVSEM_RETRY_BASE_SECONDS", "4", "не может быть меньше 5"),
         ("TRUDVSEM_RETRY_MAX_SECONDS", "29", "не может быть меньше 30"),
         ("VACANCY_PAGE_SIZE", "many", "целое число"),
+        ("SEARCH_SNAPSHOT_TTL_SECONDS", "299", "не может быть меньше 300"),
+        ("SEARCH_SNAPSHOT_MAX_CANDIDATES", "59", "не может быть меньше 60"),
+        ("SEARCH_SNAPSHOT_MAX_PAGES_PER_SOURCE", "101", "не может быть больше 100"),
+        ("SEARCH_SNAPSHOT_MAX_ROUNDS_PER_REQUEST", "21", "не может быть больше 20"),
+        ("SEARCH_SNAPSHOT_BUFFER_ITEMS", "0", "не может быть меньше 1"),
+        ("SEARCH_SNAPSHOT_EXTENSION_LEASE_SECONDS", "14", "не может быть меньше 15"),
         ("MAX_RESUME_UPLOAD_MB", "26", "не может быть больше 25"),
         ("MAX_RESUME_PAGES", "101", "не может быть больше 100"),
         ("SESSION_COOKIE_SAMESITE", "None", "Разрешены"),

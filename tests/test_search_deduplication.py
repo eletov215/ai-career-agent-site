@@ -366,3 +366,17 @@ def test_migration_0006_is_additive_and_does_not_guess_historical_matches(tmp_pa
         }
     finally:
         runtime.dispose()
+
+
+def test_anonymous_same_provider_rows_keep_distinct_group_ids():
+    first = _vacancy(source="hh", external_id="anonymous-1")
+    second = _vacancy(source="hh", external_id="anonymous-2")
+    for item in (first, second):
+        item.pop("external_id", None)
+        item.pop("url", None)
+
+    result = deduplicate_vacancies([first, second])
+
+    assert len(result.items) == 2
+    assert len({item["dedup_group_id"] for item in result.items}) == 2
+    assert all("_dedup_anonymous_key" not in item for item in result.items)

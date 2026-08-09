@@ -258,3 +258,93 @@ class SyncRunRecord:
             "error_type": self.error_type,
             "error_message": self.error_message,
         }
+
+
+@dataclass(frozen=True, slots=True)
+class SearchSnapshotRecord:
+    """Secret-free state of one bounded SEARCH-003 snapshot."""
+
+    id: str
+    query_fingerprint: str
+    selected_sources_json: str
+    sort_code: str
+    page_size: int
+    status: str
+    provider_reported_total: int
+    known_unique_total: int
+    committed_count: int
+    late_arrival_count: int
+    candidate_count: int
+    duplicate_count: int
+    cross_source_duplicate_count: int
+    cross_source_groups: int
+    total_is_exact: bool
+    bounded: bool
+    extension_lease_until: int | None
+    created_at: int
+    updated_at: int
+    expires_at: int
+
+    def public_summary(self) -> dict[str, Any]:
+        return {
+            "id": self.id,
+            "status": self.status,
+            "sort": self.sort_code,
+            "page_size": self.page_size,
+            "provider_reported_total": self.provider_reported_total,
+            "known_unique_total": self.known_unique_total,
+            "committed_count": self.committed_count,
+            "late_arrival_count": self.late_arrival_count,
+            "candidate_count": self.candidate_count,
+            "duplicate_count": self.duplicate_count,
+            "cross_source_duplicate_count": self.cross_source_duplicate_count,
+            "cross_source_groups": self.cross_source_groups,
+            "total_is_exact": self.total_is_exact,
+            "bounded": self.bounded,
+            "created_at": self.created_at,
+            "updated_at": self.updated_at,
+            "expires_at": self.expires_at,
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class SearchSnapshotSourceRecord:
+    """Per-provider cursor state detached from SQLAlchemy."""
+
+    source: str
+    next_page: int
+    fetched_pages: int
+    fetched_items: int
+    reported_total: int
+    exhausted: bool
+    bounded: bool
+    error_count: int
+    last_error_type: str | None
+    last_fetched_at: int | None
+    updated_at: int
+
+
+@dataclass(frozen=True, slots=True)
+class SearchSnapshotCandidateRecord:
+    """One normalized provider publication stored inside a snapshot."""
+
+    id: int
+    source: str
+    identity_key: str
+    provider_page: int
+    payload_json: str
+    created_at: int
+    updated_at: int
+
+
+@dataclass(frozen=True, slots=True)
+class SearchSnapshotItemRecord:
+    """Materialized stable ordinal stored for one snapshot."""
+
+    id: int
+    ordinal: int
+    stable_key: str
+    source_keys_json: str
+    payload_json: str
+    created_at: int
+    updated_at: int

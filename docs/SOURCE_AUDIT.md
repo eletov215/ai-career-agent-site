@@ -1,124 +1,143 @@
-# AI Career Agent — аудит источников v1.4.7
+# AI Career Agent — аудит источников v1.4.9
 
 | Поле | Значение |
 |---|---|
 | Документ | SOURCE_AUDIT |
-| Версия | 1.4.7 |
+| Версия | 1.4.9 |
 | Дата | 09 августа 2026 |
-| Проверяемый пакет | SEARCH-002 candidate |
-| Рабочий источник кода | `ai-career-agent-site-main (12).zip` |
-| Канонический план до обновления | PLAN_CURRENT 1.4.6 |
-| Канонический паспорт до обновления | PROJECT_PASSPORT 2.20 |
-| Результат | Актуальный GitHub ZIP подтверждён; SEARCH-002 реализован с additive migration `20260809_0006` и ожидает GitHub/Render verification |
+| Проверяемый пакет | SEARCH-003 candidate |
+| Рабочий источник кода | `ai-career-agent-site-main (13).zip` из GitHub `main` |
+| Канонический план до обновления | PLAN_CURRENT 1.4.8 |
+| Канонический паспорт до обновления | PROJECT_PASSPORT 2.22 |
+| Результат | SEARCH-003 реализован с additive migration `20260809_0007`; требуется GitHub/Render verification |
 
 ## 1. Контрольный статус
 
-ZIP `(12)` принят как источник действующего кода. PLAN_CURRENT 1.4.6 и PROJECT_PASSPORT 2.20 подтверждают SEARCH-001 как ВЫПОЛНЕНО и SEARCH-002 как следующий gate. DOC-STD-001 v1.1 обязателен для активного canonical set.
+Актуальный ZIP `(13)` принят как источник действующего кода. Канонические PLAN_CURRENT 1.4.8 и PROJECT_PASSPORT 2.22 фиксируют SEARCH-001/002 как ВЫПОЛНЕНО и SEARCH-003 как следующий gate. DOC-STD-001 v1.1 остаётся обязательным.
 
 ## 2. Проверка источников
 
-| Источник | Найден | Результат |
-|---|---|---|
-| GitHub ZIP `(12)` | Да | Актуальный main после SEARCH-001, production revision `20260808_0005` |
-| PLAN_CURRENT 1.4.6 | Да | SEARCH-002 = ГОТОВО К СТАРТУ |
-| PROJECT_PASSPORT 2.20 | Да | SEARCH-001 production verification подтверждена |
-| DOC-STD-001 v1.1 | Да | Единый generator/style/visual QA обязателен |
-| SOURCE_AUDIT 1.4.6 | Да | SEARCH-001 final state и artifact policy подтверждены |
+| Источник | Результат |
+|---|---|
+| GitHub ZIP `(13)` | `app.py`, WSGI `app:app`, migration `0006`, public SuperJob и SEARCH-002 hotfixes присутствуют |
+| PLAN_CURRENT 1.4.8 | SEARCH-003 = ГОТОВО К СТАРТУ |
+| PROJECT_PASSPORT 2.22 | Production revision `20260809_0006`, SEARCH-002 complete |
+| SEARCH003_PREPARATION 1.0 | Persistent bounded snapshot architecture и honest total semantics определены |
+| DOC-STD-001 1.1 | Единый generator/style/render-and-inspect обязателен |
 
 ## 3. Проверка ZIP до изменений
 
 | Область | Результат |
 |---|---|
-| WSGI | `app.py`, `app:app` сохранены |
-| Database | PostgreSQL/Alembic production revision `20260808_0005` |
-| Search contract | SEARCH-001 canonical fields/normalizer/providers найдены |
-| Data model | `Vacancy 1 — * VacancySourceRecord` поддерживает multi-source relation |
-| Existing dedup | Только same-source identity; cross-source semantic merge отсутствовал |
+| Database | PostgreSQL/Alembic `20260809_0006` |
+| Search normalization | SEARCH-001 contract/filter layer присутствует |
+| Dedup | SEARCH-002 service/persistence/UI/health telemetry присутствуют |
+| Current route | Независимый provider `page`, provider totals до final filter/dedup |
+| Partial skeleton | Snapshot ORM classes найдены, но отсутствовали migration/repository/service/route/tests integration |
 | Dotfiles | `.github`, `.gitignore`, `.dockerignore` присутствуют |
-| Prohibited artifacts | Реальные secrets, databases, backups, virtualenv, cache и bytecode в исходном ZIP не обнаружены |
+| Prohibited artifacts | `.env`, secrets, DB/dump/backup/venv не обнаружены |
 
-## 4. Scope SEARCH-002
+## 4. Реализованный SEARCH-003 scope
 
-Канонические источники требуют:
+Добавлены/интегрированы:
 
-- fingerprint по нормализованным полям;
-- осторожную similarity;
-- несколько source records на одной canonical vacancy;
-- explainable positive/negative decisions;
-- отсутствие cross-source overmerge;
-- сохранение всех provider links;
-- отсутствие global pagination/total redesign.
+```text
+SearchAggregationService
+SearchSnapshotRepository
+SearchSnapshot / Source / Candidate / Item models
+migration 20260809_0007
+per-provider cursor state
+per-provider coverage/global-boundary invariant
+canonical filter + dedup before ordinal
+deterministic sort and committed prefix
+late-arrival tracking
+honest total semantics
+TTL cleanup isolation
+/health/search-pagination
+SEARCH-003 CI gate/tests/docs
+```
 
-Реализация соответствует этой границе. Для versioned metadata и candidate lookup добавлена additive migration `20260809_0006`; исторический backfill не выполняется.
+SEARCH-002 thresholds, OAuth policy, `/vacancies` redesign и AI matching не изменялись.
 
-## 5. Реализованный результат
+## 5. Изменённые области
 
-- `services/vacancy_deduplication.py` с version 1, hard gates и complete-link grouping;
-- collapse одинаковой provider identity до cross-source pass;
-- deterministic primary card и bounded explanation;
-- multi-source provider links с HTTP/HTTPS validation;
-- route integration после canonical filters;
-- nullable dedup metadata в canonical/source tables и non-unique indexes;
-- exact persistence grouping с несколькими source rows;
-- reversible split при изменении source role/constraints;
-- stacked provider logos и `<details>` со всеми площадками;
-- positive/negative/persistence/migration/security tests;
-- отдельный GitHub Actions gate;
-- repository/canonical docs обновлены до PLAN 1.4.7 / passport 2.21.
+```text
+app.py
+config.py
+database.py
+domain/
+models/search_snapshot.py
+repositories/search_snapshots.py
+services/search_aggregation.py
+services/storage.py
+operations/backup.py
+migrations/versions/20260809_0007_stable_search_snapshots.py
+templates/vacancies_unified.html
+static/styles.css
+compose.yaml
+render.yaml
+infra/vps/.env.example
+scripts/infra_manifest_check.py
+tests/
+.github/workflows/ci.yml
+docs/
+```
 
 ## 6. Проверки
 
 ```text
-SEARCH-002 dedup/migration suite: 15 passed
-presenter suite: 5 passed
-provider/search normalization/filter suites: passed
-repository/store/sync migration regressions: passed
-Python compile: passed
-SQLite migration round-trip and Alembic check: passed
-Jinja template parse: passed
+compileall: passed
+full available pytest: 182 passed, 6 skipped
+SEARCH-003 focused tests: 18 passed
+related SEARCH-002/003 tests: 34 passed
+migration 0006 -> 0007 -> 0006 -> 0007: passed
+alembic check: passed
+repository hygiene: passed
+INFRA manifest: passed
+document structure: passed
 ```
 
-GitHub PostgreSQL/Flask/Docker и Render production smoke ещё требуются.
+Локальные skips: Flask, Psycopg/real PostgreSQL service и Docker-dependent route/runtime gates. Они остаются обязательными в GitHub Actions.
 
-## 7. Исключённые артефакты
+## 7. Риски и ограничения
+
+- Exact global post-dedup total нельзя получать synchronous scan десятков тысяч provider rows.
+- Snapshot bounded limits могут оставить `total_is_exact=false`.
+- Provider datasets меняются во времени; committed prefix защищает уже показанные pages, late arrivals добавляются после него.
+- Snapshot tables содержат public vacancy payload, но metadata не хранит raw user query.
+- Cleanup ephemeral snapshot state не должен затрагивать canonical vacancy cache.
+
+## 8. Rollback
+
+Application revert без очистки vacancy/source cache. Additive `0007` может остаться. Downgrade до `0006` только после verified backup и deploy совместимого кода; удаляются только snapshot tables.
+
+## 9. Следующее действие
 
 ```text
-.env
-real secrets/tokens/passwords
-*.db / *.sqlite / *.dump / *.enc
-backups/
-virtualenv
-.pytest_cache
-__pycache__
-*.pyc
-.git
+SEARCH-003 candidate
+-> GitHub Actions
+-> Render revision 0007
+-> page 0/page 1/page 0 smoke
+-> SEARCH-003 complete
+-> SEARCH-004
 ```
 
-## 8. Ограничения и риски
-
-- False negative предпочтительнее false positive.
-- Embeddings и semantic AI merge не используются.
-- Similarity работает внутри текущего агрегированного набора.
-- Global total/pagination после dedup остаётся SEARCH-003.
-- Real provider data может не содержать удобную duplicate pair в момент production smoke; positive semantics тогда подтверждаются CI fixtures.
-
-## 9. Rollback
-
-Application revert без удаления vacancy/source cache. Additive columns `0006` могут оставаться. Controlled downgrade до `0005` — только после verified backup и после развертывания совместимого старого кода.
-
-## 10. Следующее действие
+## 10. Новые канонические версии
 
 ```text
-SEARCH-002 candidate
--> green GitHub CI
--> Render revision 0006 + multi-source smoke
--> SEARCH-002 complete
--> SEARCH-003 start
+PLAN_CURRENT 1.4.9
+PROJECT_PASSPORT 2.23
+SOURCE_AUDIT 1.4.9
+SEARCH003_IMPLEMENTATION 1.0
+SEARCH003_VERIFICATION_STATUS 1.0
+SEARCH003_RUNBOOK 1.0
+SEARCH003_PAGINATION_REFERENCE 1.0
+DOCUMENT_STANDARD 1.1 (без изменений)
 ```
 
 ## 11. Журнал версий
 
 | Версия | Дата | Изменение |
 |---|---|---|
-| 1.4.6 | 08.08.2026 | SEARCH-001 final verification. |
-| 1.4.7 | 09.08.2026 | SEARCH-002 source/code audit, migration `0006` и candidate implementation. |
+| 1.4.8 | 09.08.2026 | SEARCH-002 final verification и SEARCH-003 preparation. |
+| 1.4.9 | 09.08.2026 | SEARCH-003 candidate source audit: persistent snapshot/ordinal/totals implementation, migration `0007`, tests/CI/docs. |

@@ -23,7 +23,7 @@ from collections import defaultdict, deque
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-from typing import Any, Iterable
+from typing import Any, Iterable, Mapping
 
 import requests
 from flask import Flask, g, request
@@ -270,6 +270,25 @@ class OperationsState:
             "candidate_counts_by_source": {},
             "stats": {},
         }
+        self._search_pagination_state: dict[str, Any] = {
+            "available": False,
+            "recorded_at": None,
+            "recorded_monotonic": None,
+            "snapshot_prefix": None,
+            "page": None,
+            "page_size": None,
+            "provider_fetch_pages": {},
+            "providers_exhausted": 0,
+            "providers_bounded": 0,
+            "known_unique_total": 0,
+            "provider_reported_total": 0,
+            "total_is_exact": False,
+            "bounded": False,
+            "has_next": False,
+            "committed_count": 0,
+            "late_arrival_count": 0,
+            "snapshot_age_seconds": 0,
+        }
         self.service_name = "ai-career-agent"
         self.environment = "unknown"
         self.app_version = "unknown"
@@ -435,6 +454,76 @@ class OperationsState:
             )
         return state
 
+    def record_search_pagination(
+        self,
+        *,
+        snapshot_id: str,
+        page: int,
+        page_size: int,
+        source_results: Mapping[str, Any],
+        known_unique_total: int,
+        provider_reported_total: int,
+        total_is_exact: bool,
+        bounded: bool,
+        has_next: bool,
+        committed_count: int,
+        late_arrival_count: int,
+        snapshot_age_seconds: int,
+    ) -> None:
+        """Store privacy-safe SEARCH-003 metrics for protected diagnostics.
+
+        Only an opaque UUID prefix and aggregate counters are kept. Query text,
+        region, salary filters and provider payloads are deliberately excluded.
+        """
+
+        safe_pages: dict[str, int] = {}
+        exhausted = 0
+        bounded_sources = 0
+        for source, result in sorted(source_results.items()):
+            source_name = str(source).strip()[:64]
+            if not source_name:
+                continue
+            safe_pages[source_name] = max(0, int(getattr(result, "fetched_pages", 0) or 0))
+            exhausted += int(bool(getattr(result, "exhausted", False)))
+            bounded_sources += int(bool(getattr(result, "bounded", False)))
+
+        with self._lock:
+            self._search_pagination_state = {
+                "available": True,
+                "recorded_at": _utc_timestamp(),
+                "recorded_monotonic": time.monotonic(),
+                "snapshot_prefix": str(snapshot_id or "")[:12] or None,
+                "page": max(0, int(page)),
+                "page_size": max(1, int(page_size)),
+                "provider_fetch_pages": safe_pages,
+                "providers_exhausted": exhausted,
+                "providers_bounded": bounded_sources,
+                "known_unique_total": max(0, int(known_unique_total)),
+                "provider_reported_total": max(0, int(provider_reported_total)),
+                "total_is_exact": bool(total_is_exact),
+                "bounded": bool(bounded),
+                "has_next": bool(has_next),
+                "committed_count": max(0, int(committed_count)),
+                "late_arrival_count": max(0, int(late_arrival_count)),
+                "snapshot_age_seconds": max(0, int(snapshot_age_seconds)),
+            }
+
+    def search_pagination_snapshot(self) -> dict[str, Any]:
+        """Return a copy of the latest privacy-safe SEARCH-003 metrics."""
+
+        with self._lock:
+            state = dict(self._search_pagination_state)
+            state["provider_fetch_pages"] = dict(
+                self._search_pagination_state.get("provider_fetch_pages", {})
+            )
+        recorded_monotonic = state.pop("recorded_monotonic", None)
+        state["age_seconds"] = (
+            None
+            if recorded_monotonic is None
+            else max(0, int(time.monotonic() - float(recorded_monotonic)))
+        )
+        return state
+
     def snapshot(self, *, include_recent_errors: bool = True) -> dict[str, Any]:
         with self._lock:
             payload = {
@@ -455,6 +544,7 @@ class OperationsState:
                     for provider, operations in sorted(self._providers.items())
                 },
                 "alerts": dict(self._alert_state),
+                "search_pagination": self.search_pagination_snapshot(),
             }
             if include_recent_errors:
                 payload["recent_errors"] = list(self._recent_errors)
@@ -473,6 +563,25 @@ class OperationsState:
                 "selected_sources": [],
                 "candidate_counts_by_source": {},
                 "stats": {},
+            }
+            self._search_pagination_state = {
+                "available": False,
+                "recorded_at": None,
+                "recorded_monotonic": None,
+                "snapshot_prefix": None,
+                "page": None,
+                "page_size": None,
+                "provider_fetch_pages": {},
+                "providers_exhausted": 0,
+                "providers_bounded": 0,
+                "known_unique_total": 0,
+                "provider_reported_total": 0,
+                "total_is_exact": False,
+                "bounded": False,
+                "has_next": False,
+                "committed_count": 0,
+                "late_arrival_count": 0,
+                "snapshot_age_seconds": 0,
             }
             configured = self._alert_state["configured"]
             self._alert_state = {

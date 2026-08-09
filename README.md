@@ -2,11 +2,11 @@
 
 | Поле | Значение |
 |---|---|
-| Канонический план | `docs/PLAN_CURRENT.md` — 1.4.7 |
-| Паспорт | `docs/PROJECT_PASSPORT.md` — 2.21 |
-| Текущий пакет | `SEARCH-002 — НУЖНА ПРОВЕРКА` |
-| Следующий пакет | `SEARCH-003` после подтверждения SEARCH-002 |
-| Database revision candidate | `20260809_0006` — dedup metadata и reversible grouping |
+| Канонический план | `docs/PLAN_CURRENT.md` — 1.4.9 |
+| Паспорт | `docs/PROJECT_PASSPORT.md` — 2.23 |
+| Текущий пакет | `SEARCH-003 — НУЖНА ПРОВЕРКА` |
+| Следующий пакет | `SEARCH-004` после подтверждения SEARCH-003 |
+| Database revision candidate | `20260809_0007` — bounded persistent search snapshots |
 | Production | Render остаётся staging/rollback; real VPS отложен до предрелизного INFRA-001 |
 
 > GitHub является главным источником кода. Более новый ZIP текущего чата становится рабочей основой. Секреты, `.env`, базы, dumps, backups, virtualenv, caches и bytecode не входят в репозиторий.
@@ -24,32 +24,32 @@ AI Career Agent — Flask-сервис карьерного сопровожде
 | SEC-001 / OPS-001 / INFRA-PREP-001 | ВЫПОЛНЕНО |
 | DOC-001 | В РАБОТЕ как постоянный процесс |
 | SYNC-001 / SYNC-002 | ВЫПОЛНЕНО |
-| SEARCH-001 | ВЫПОЛНЕНО |
-| SEARCH-002 | НУЖНА ПРОВЕРКА |
-| SEARCH-003 | ГОТОВО К СТАРТУ ПОСЛЕ SEARCH-002 |
+| SEARCH-001 / SEARCH-002 | ВЫПОЛНЕНО |
+| SEARCH-003 | НУЖНА ПРОВЕРКА |
+| SEARCH-004 | ЗАПЛАНИРОВАНО |
 | INFRA-001 | ОТЛОЖЕНО ДО ПРЕДРЕЛИЗНОГО ЭТАПА |
 
-## 3. SEARCH-002 candidate
+## 3. SEARCH-003 candidate
 
 ```text
-canonical provider results
-→ exact canonical filters
-→ conservative cross-source dedup
-→ stable sort
-→ presenter
-→ one card + all provider links
+provider pages
+→ canonical filter
+→ SEARCH-002 dedup
+→ deterministic global sort
+→ persistent stable ordinal
+→ page slice + honest totals
 ```
 
 Ключевые компоненты:
 
-- `services/vacancy_deduplication.py` — versioned fingerprint, hard gates, complete-link grouping и explainability;
-- `services/vacancy_store.py` / `repositories/vacancies.py` — exact grouping, сохранение нескольких source rows и reversible split;
-- `services/vacancy_presenter.py` — multi-source card contract;
-- `templates/vacancies_unified.html` — stacked logos и список площадок;
-- `tests/test_search_deduplication.py` — positive/negative/persistence/security cases;
-- отдельный CI gate `Verify SEARCH-002 cross-source deduplication controls`.
+- `services/search_aggregation.py` — bounded persistent aggregation и per-provider coverage invariant;
+- `repositories/search_snapshots.py` — snapshot/source/candidate/item persistence;
+- `models/search_snapshot.py` — isolated TTL schema;
+- migration `20260809_0007`;
+- `/health/search-pagination?snapshot=<uuid>` — secret-free verification;
+- `tests/test_search_pagination.py` и отдельный CI gate.
 
-SEARCH-002 добавляет только nullable dedup metadata revision `20260809_0006`, не меняет `/vacancies/internal` и не решает stable total/pagination — это SEARCH-003.
+SEARCH-003 не меняет dedup thresholds, OAuth strategy или canonical `/vacancies` route. Provider-reported totals больше не называются точным post-filter/dedup total.
 
 ## 4. Основной стек
 
@@ -79,6 +79,7 @@ python scripts/check_document_structure.py
 python scripts/infra_manifest_check.py
 python -m compileall -q app.py config.py database.py observability.py security.py domain models repositories services operations scripts tests infra
 python -m pytest -q
+python -m alembic check
 ```
 
 GitHub Actions дополнительно запускает PostgreSQL 17, migration/integration, SEC/OPS/SYNC/SEARCH gates, encrypted backup/restore, Docker build и runtime smoke.
@@ -91,12 +92,13 @@ Start Command:
 python scripts/manage_db.py upgrade && python scripts/start_runtime.py
 ```
 
-После merge SEARCH-002 ожидается revision `20260809_0006`.
+После merge SEARCH-003 ожидается revision `20260809_0007`.
 
 ## 8. Ближайшие действия
 
-1. Загрузить SEARCH-002 candidate в отдельную branch.
+1. Загрузить SEARCH-003 candidate в отдельную branch.
 2. Получить полностью зелёный GitHub Actions.
 3. Merge в `main`.
-4. Проверить Render readiness и multi-source positive/negative smoke.
-5. Закрыть SEARCH-002 и начать SEARCH-003.
+4. Проверить Render readiness revision `0007`.
+5. Проверить page 0/page 1/page 0 с одним snapshot ID и `/health/search-pagination`.
+6. Закрыть SEARCH-003 и начать SEARCH-004.

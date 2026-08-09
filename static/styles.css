@@ -6650,3 +6650,28 @@ body.resume-reader-open{overflow:hidden}
     padding:0;
   }
 }
+
+/* SEARCH-003: stable snapshot pagination and honest total semantics. */
+.vacancy-snapshot-note {
+  margin-top: 8px;
+  padding: 8px 10px;
+  border: 1px solid #dbe4ff;
+  border-radius: 10px;
+  background: #f5f7ff;
+  color: #4b5b87;
+  font-size: 13px;
+  line-height: 1.45;
+}
+.pagination {
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.pagination__status {
+  min-width: 110px;
+  padding: 10px 14px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 700;
+}

@@ -284,3 +284,57 @@ def test_alert_dispatcher_uses_https_webhook_without_exposing_token(monkeypatch)
     assert calls[0][1] == {"event": "test", "message": "safe"}
     assert calls[0][2]["Authorization"] == "Bearer private-alert-token"
     assert calls[0][3] == 2.5
+
+
+def test_search_pagination_telemetry_is_bounded_and_query_free():
+    from services.search_aggregation import SearchSourceSummary
+
+    OPS_STATE.reset_for_tests()
+    OPS_STATE.record_search_pagination(
+        snapshot_id="12345678-1234-1234-1234-123456789abc",
+        page=2,
+        page_size=60,
+        source_results={
+            "hh": SearchSourceSummary(
+                source="hh",
+                total=100,
+                loaded=40,
+                fetched_pages=2,
+                exhausted=False,
+                bounded=False,
+                has_next=True,
+            ),
+            "superjob": SearchSourceSummary(
+                source="superjob",
+                total=20,
+                loaded=20,
+                fetched_pages=1,
+                exhausted=True,
+                bounded=False,
+                has_next=False,
+            ),
+        },
+        known_unique_total=55,
+        provider_reported_total=120,
+        total_is_exact=False,
+        bounded=False,
+        has_next=True,
+        committed_count=55,
+        late_arrival_count=1,
+        snapshot_age_seconds=12,
+    )
+
+    snapshot = OPS_STATE.search_pagination_snapshot()
+    encoded = __import__("json").dumps(snapshot, ensure_ascii=False)
+
+    assert snapshot["available"] is True
+    assert snapshot["snapshot_prefix"] == "12345678-123"
+    assert snapshot["provider_fetch_pages"] == {"hh": 2, "superjob": 1}
+    assert snapshot["providers_exhausted"] == 1
+    assert snapshot["known_unique_total"] == 55
+    assert snapshot["total_is_exact"] is False
+    assert snapshot["late_arrival_count"] == 1
+    assert "keyword" not in encoded
+    assert "region" not in encoded
+    assert "salary" not in encoded
+    assert "123456789abc" not in encoded

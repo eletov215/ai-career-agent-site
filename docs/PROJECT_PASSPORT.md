@@ -3,13 +3,13 @@
 | Поле | Значение |
 |---|---|
 | Документ        | PROJECT_PASSPORT                                                                              |
-| Версия паспорта | 2.21                                                                                          |
+| Версия паспорта | 2.23 |
 | Дата            | 09 августа 2026                                                                               |
 | Статус          | ДЕЙСТВУЮЩИЙ                                                                                   |
-| Связанный план  | `AI_Career_Agent_PLAN_CURRENT v1.4.7`                                                         |
-| Основа кода | `ai-career-agent-site-main (12).zip`; поверх подтверждённого SEARCH-001 реализован candidate SEARCH-002 с Alembic revision `20260809_0006` |
+| Связанный план | `AI_Career_Agent_PLAN_CURRENT v1.4.9` |
+| Основа кода | `ai-career-agent-site-main (13).zip`; SEARCH-003 candidate реализован поверх production revision `20260809_0006`, ожидаемая revision `20260809_0007` |
 
-> Контрольные статусы: FND-001/FND-002/DATA-001/DATA-002/SEC-001/OPS-001/INFRA-PREP-001/SYNC-001/SYNC-002/SEARCH-001 — ВЫПОЛНЕНО; SEARCH-002 — НУЖНА ПРОВЕРКА; SEARCH-003 — ГОТОВО К СТАРТУ ПОСЛЕ ПОДТВЕРЖДЕНИЯ SEARCH-002; DOC-001 — В РАБОТЕ как постоянный процесс; INFRA-001 — ОТЛОЖЕНО ДО ПРЕДРЕЛИЗНОГО ЭТАПА.
+> Контрольные статусы: FND-001/FND-002/DATA-001/DATA-002/SEC-001/OPS-001/INFRA-PREP-001/SYNC-001/SYNC-002/SEARCH-001/SEARCH-002 — ВЫПОЛНЕНО; SEARCH-003 — НУЖНА ПРОВЕРКА; DOC-001 — В РАБОТЕ как постоянный процесс; INFRA-001 — ОТЛОЖЕНО ДО ПРЕДРЕЛИЗНОГО ЭТАПА.
 
 ## 1. Назначение
 
@@ -53,7 +53,7 @@ AI Career Agent — коммерческий веб-сервис карьерн�
 >     infra/                     Gunicorn, Caddy, VPS environment and probes
 >     scripts/                   migrations, backup, restore, alert, infra probes, sync CLI/worker/supervisor
 >     domain/ models/ repositories/ services/
->     migrations/                Alembic 0001 + 0002 + 0003 + 0004 + 0005 + 0006 (dedup metadata candidate)
+>     migrations/                Alembic 0001 + 0002 + 0003 + 0004 + 0005 + 0006 production
 >     tests/                     unit/integration/security/ops/infra/sync tests
 >     docs/                      architecture, security and runbooks
 >     render.yaml
@@ -237,28 +237,46 @@ smoke подтвердил штатную выдачу и canonical filters remo
 
 Cross-source fuzzy dedup не входит в SEARCH-001 и остаётся SEARCH-002.
 
-## 10. SEARCH-002 — НУЖНА ПРОВЕРКА
+## 10. SEARCH-002 — ВЫПОЛНЕНО
 
-Реализована консервативная и обратимая cross-source deduplication поверх canonical contract SEARCH-001:
+Консервативная cross-source deduplication подтверждена в production:
 
-- versioned candidate key и explainable hard gates по employer/title/seniority/location/canonical codes/date/salary;
-- complete-link grouping, которое не допускает transitive overmerge;
-- same-provider identity duplicate схлопывается только по одинаковому source ID; разные external IDs остаются разными вакансиями;
-- deterministic primary card по completeness, recency и фиксированному source priority;
-- каждая объединённая карточка сохраняет все provider IDs/URLs, `source_records`, `dedup_group_id` и bounded explanation;
-- provider URLs допускают только HTTP/HTTPS без embedded credentials;
-- route выполняет dedup после canonical filters и до общей сортировки;
-- migration `20260809_0006` добавляет nullable `dedup_key`/`dedup_version` и non-unique indexes в canonical/source tables без historical backfill;
-- доказанные duplicates разных providers могут храниться как одна canonical `Vacancy` и несколько `VacancySourceRecord`;
-- persisted grouping обратим: изменившийся source отделяется в отдельную canonical vacancy, а прежняя canonical перестраивается из оставшихся rows;
-- UI показывает stacked logos, число площадок и раскрываемый список исходных публикаций;
-- отдельный GitHub gate проверяет positive/negative, migration, source preservation и reversible split.
+- fingerprint/similarity service с hard gates и complete-link grouping;
+- сохранение всех source IDs/URLs и несколько `VacancySourceRecord` под одной canonical vacancy только для доказанного merge;
+- deterministic primary card и bounded explainability metadata;
+- reversible persisted grouping при изменении source publication;
+- migration `20260809_0006` с nullable dedup metadata без historical backfill;
+- multi-source UI со stacked logos и `Все площадки`;
+- SuperJob vacancy search доступен по app-level credential без обязательного user OAuth; OAuth сохранён для персональных операций;
+- aggregate verification endpoint `/health/search-dedup` не инициирует provider I/O и не хранит keyword/region/salary/credentials.
 
-Локальные candidate-доказательства: dedup/migration suite — `15 passed`, presenter suite — `5 passed`; provider/search/store/repository/sync regressions, compile, Jinja parse, SQLite migration round-trip и Alembic check пройдены. Flask/Psycopg/PostgreSQL/Docker scenarios и Render smoke ещё требуются, поэтому статус остаётся НУЖНА ПРОВЕРКА.
+GitHub Actions полностью зелёный, включая отдельный SEARCH-002 gate, PostgreSQL migration/integration, SEC/OPS/SYNC/SEARCH-001 regressions, backup/restore и container smoke. Render `/health/ready` подтвердил `current_revision=expected_revision=20260809_0006`, `persistent=true`, `status=ok`.
 
-Ограничения: embeddings/AI merge и широкие fuzzy company aliases не используются; global total/pagination после dedup остаётся SEARCH-003; historical rows не объединяются массовым backfill.
+Production negative-smoke: контрольный multi-source поиск обработал 164 candidate records (`hh=20`, `reed=60`, `superjob=24`, `trudvsem=60`) и вернул `input_count=output_count=164`, `cross_source_duplicate_count=0`, `cross_source_groups=0`. Дополнительные поиски также не выявили безопасной real duplicate-pair; ложных merge не обнаружено. Positive merge и multi-source persistence подтверждены CI fixtures. Такое отсутствие реального duplicate в ограниченном fetched window не считается blocker.
 
-## 11. INFRA-001 — ОТЛОЖЕНО ДО ПРЕДРЕЛИЗНОГО ЭТАПА
+Ограничение после закрытия SEARCH-002: dedup выполняется внутри фактически загруженного candidate set. Stable cross-page pagination/global sort/честная total semantics — SEARCH-003.
+
+## 11. SEARCH-003 — НУЖНА ПРОВЕРКА
+
+Реализован bounded persistent pagination candidate:
+
+- `SearchAggregationService` оркестрирует providers вне Flask route;
+- SHA-256 query fingerprint не хранит raw keyword/region/salary в snapshot metadata;
+- migration `20260809_0007` добавляет четыре ephemeral TTL tables для snapshot/source cursor/candidate/item state;
+- SEARCH-001 canonical filters и SEARCH-002 dedup выполняются до stable ordinal;
+- deterministic sort имеет явные tie-breakers и не зависит от порядка provider futures;
+- уже показанные pages фиксируются committed prefix; late arrivals не переставляют page 0;
+- per-provider cursor/error/exhausted state и snapshot items переживают restart;
+- per-provider coverage invariant не фиксирует global page boundary, пока каждый non-terminal source не покрывает required depth accepted identities либо не становится exhausted/bounded;
+- provider-reported/known unique/exact totals разделены;
+- `/health/search-pagination?snapshot=<uuid>` отдаёт только secret-free aggregate state;
+- TTL cleanup изолирован от canonical vacancy cache.
+
+Локально пройдены full available pytest `182 passed, 6 skipped`, focused SEARCH-003 `18 passed`, related SEARCH-002/003 `34 passed`, compile, migration round-trip `0006 -> 0007 -> 0006 -> 0007`, Alembic check и repository/INFRA/document validators. Flask/Psycopg/PostgreSQL/Docker gates ожидаются в GitHub Actions.
+
+После GitHub/Render verification требуется production smoke page 0 → page 1 → page 0 с одним snapshot ID и отсутствие cross-page overlap. До этого SEARCH-003 не переводится в ВЫПОЛНЕНО.
+
+## 12. INFRA-001 — ОТЛОЖЕНО ДО ПРЕДРЕЛИЗНОГО ЭТАПА
 
 `INFRA-001` теперь означает только реальную аренду и полевой тест VPS:
 
@@ -272,22 +290,22 @@ Cross-source fuzzy dedup не входит в SEARCH-001 и остаётся SEA
 До начала этого пакета Render остаётся staging/резервной площадкой,
 DNS/OAuth callback URL не переключаются.
 
-## 12. Текущее функциональное состояние
+## 13. Текущее функциональное состояние
 
 - Главная/AI Career/resume builder работают.
-- Search: Trudvsem, HH, Reed, conditional SuperJob.
+- Search: Trudvsem, HH, Reed и public SuperJob; SEARCH-001/002 подтверждены, SEARCH-003 stable snapshot pagination реализована candidate.
 - OAuth HH/SJ: текущий pre-MVP, tokens encrypted.
 - Trudvsem cache остаётся PostgreSQL-backed; внешний worker и SYNC-002 checkpoint/retry/lifecycle подтверждены.
-- SEARCH-001 canonical contract подтверждён; SEARCH-002 candidate объединяет только объяснимые cross-source duplicates и сохраняет все исходные публикации.
+- SEARCH-001 canonical contract и SEARCH-002 conservative dedup подтверждены; multi-source grouping сохраняет все исходные публикации.
 - PDF parser эвристический, не LLM.
 - Saved jobs пока localStorage.
 - Own account/profile/real AI/match/letters/tracker впереди.
 
-## 13. Новая обязательная очередь разработки
+## 14. Новая обязательная очередь разработки
 
 ### Сейчас — функциональный MVP без аренды VPS
 
->     SEARCH-002 verification -> SEARCH-003 -> SEARCH-004
+>     SEARCH-003 verification -> SEARCH-004
 >     -> AUTH-001 -> AUTH-002
 >     -> PROF-001 -> PROF-002 -> PROF-003 -> PRIV-001
 >     -> SEARCH-005
@@ -306,7 +324,7 @@ DNS/OAuth callback URL не переключаются.
 >     -> DOMAIN-001 -> MIG-001
 >     -> final SEC/OPS smoke -> REL-001 -> commercial release
 
-## 14. Зафиксированная hosting-independent стратегия
+## 15. Зафиксированная hosting-independent стратегия
 
 До предрелизного окна новый код не должен зависеть от конкретного
 hosting provider:
@@ -323,7 +341,7 @@ Render не считается гарантированным production для 
 подтверждённой сетевой недоступности из части сетей РФ, но остаётся
 пригодным staging/резервным контуром до `MIG-001`.
 
-## 15. AI и Reed
+## 16. AI и Reed
 
 - `AI-BENCH-001` можно выполнять без реального VPS: качество Yandex AI
   Studio/Alice AI проверяется на golden dataset, а transport с будущего
@@ -335,11 +353,22 @@ Render не считается гарантированным production для 
   сразу после `INFRA-001`.
 - Reed должен иметь feature flag и graceful degradation.
 
-## 16. Следующий пакет
+## 17. Следующий пакет
 
-SEARCH-001 — ВЫПОЛНЕНО. Текущий code candidate — SEARCH-002: conservative cross-source deduplication. Пакет требует зелёного GitHub Actions, Render migration `20260809_0006` и search smoke. После подтверждения следующий пакет — SEARCH-003.
+SEARCH-003 — НУЖНА ПРОВЕРКА. Candidate включает migration `20260809_0007`, persistent bounded snapshots, per-provider cursors, deterministic order, committed page prefix, honest totals и `/health/search-pagination`.
 
-## 17. Правила рабочего чата
+Следующий gate:
+
+```text
+GitHub Actions green
+-> Render revision 20260809_0007
+-> page 0/page 1/page 0 stable snapshot smoke
+-> SEARCH-003 complete
+```
+
+После подтверждения следующий кодовый пакет — SEARCH-004: canonical `/vacancies` route и честные source states.
+
+## 18. Правила рабочего чата
 
 - Перед изменениями читать паспорт, PLAN_CURRENT и актуальный ZIP;
   работать по одному package ID.
@@ -352,9 +381,11 @@ SEARCH-001 — ВЫПОЛНЕНО. Текущий code candidate — SEARCH-002:
   package.
 - Для новых документов применять единый документный стандарт проекта.
 
-## 18. Журнал версий
+## 19. Журнал версий
 
 | Версия | Дата | Изменение |
 |---|---|---|
 | 2.20 | 08.08.2026 | SEARCH-001 закрыт после CI, Render revision `0005` и production filter smoke. |
 | 2.21 | 09.08.2026 | SEARCH-002 реализован как conservative reversible cross-source dedup candidate с additive migration `20260809_0006`; требуется GitHub/Render verification. |
+| 2.22 | 09.08.2026 | SEARCH-002 complete; SEARCH-003 ready. |
+| 2.23 | 09.08.2026 | SEARCH-003 persistent stable pagination/honest totals candidate с migration `20260809_0007`; требуется GitHub/Render verification. |

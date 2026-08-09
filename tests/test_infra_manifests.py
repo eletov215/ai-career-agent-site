@@ -42,6 +42,12 @@ def test_dockerfile_has_non_root_runtime_and_ops_targets():
 def test_env_template_contains_placeholders_not_real_secrets():
     text = (ROOT / "infra/vps/.env.example").read_text(encoding="utf-8")
     assert "CHANGE_ME_STRONG_DATABASE_PASSWORD" in text
+    assert "SEARCH_SNAPSHOT_TTL_SECONDS=1800" in text
+    assert "SEARCH_SNAPSHOT_MAX_CANDIDATES=1200" in text
+    assert "SEARCH_SNAPSHOT_MAX_PAGES_PER_SOURCE=8" in text
+    assert "SEARCH_SNAPSHOT_MAX_ROUNDS_PER_REQUEST=3" in text
+    assert "SEARCH_SNAPSHOT_BUFFER_ITEMS=1" in text
+    assert "SEARCH_SNAPSHOT_EXTENSION_LEASE_SECONDS=90" in text
     assert "TRUDVSEM_SYNC_ENABLED=0" in text
     assert "TRUDVSEM_SYNC_INTERVAL=1800" in text
     assert "TRUDVSEM_SYNC_ITEMS=300" in text
