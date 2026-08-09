@@ -141,3 +141,8 @@ DOCUMENT_STANDARD 1.1 (без изменений)
 |---|---|---|
 | 1.4.8 | 09.08.2026 | SEARCH-002 final verification и SEARCH-003 preparation. |
 | 1.4.9 | 09.08.2026 | SEARCH-003 candidate source audit: persistent snapshot/ordinal/totals implementation, migration `0007`, tests/CI/docs. |
+
+
+## SEARCH-003 latency regression — production evidence
+
+После зелёного GitHub CI и Render revision `20260809_0007` первый реальный поиск зависал на длительной загрузке. Аудит candidate показал две причины: default `SEARCH_SNAPSHOT_MAX_ROUNDS_PER_REQUEST=3` заставлял один HTTP request синхронно расширять несколько provider pages, а `SearchSnapshotRepository.upsert_candidates` выполнял SELECT на каждую вакансию и повторно переписывал materialized items при commit boundary. Hotfix вводит `SEARCH_PAGE_SIZE=20`, rounds default `1`, batch persistence и metadata-only boundary commit. Schema остаётся `0007`; требуется повторный Render smoke.

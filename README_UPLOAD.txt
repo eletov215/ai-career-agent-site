@@ -1,31 +1,28 @@
-SEARCH-003 candidate: persistent bounded search snapshots, deterministic global sorting and honest total semantics.
+SEARCH-003 latency hotfix 1 on top of candidate revision 20260809_0007.
+
+Problem found on Render:
+The first vacancy search could appear to load indefinitely because SEARCH-003 used the provider/cache page size (60) as the logical UI page size, could synchronously run up to three provider rounds, and persisted snapshot candidates/items with too many row-by-row database operations.
+
+Fix:
+- SEARCH_PAGE_SIZE=20 separates the UI page from provider/cache page size.
+- SEARCH_SNAPSHOT_MAX_ROUNDS_PER_REQUEST default is 1.
+- candidate persistence uses one existing-identity lookup plus bulk insert per provider page.
+- materialized items use bulk insert.
+- committing a served page updates only snapshot metadata instead of rewriting the same item rows again.
+- migration does not change; expected Render revision remains 20260809_0007.
 
 Recommended branch:
 search-003-stable-pagination
 
 Recommended commit:
-search: add persistent stable pagination and honest totals
-
-Important files:
-- services/search_aggregation.py
-- repositories/search_snapshots.py
-- models/search_snapshot.py
-- migrations/versions/20260809_0007_stable_search_snapshots.py
-- tests/test_search_pagination.py
-- .github/workflows/ci.yml
+fix: bound SEARCH-003 request latency
 
 Expected GitHub Actions step:
 Verify SEARCH-003 stable pagination and totals controls
 
-Expected Render revision after merge:
-20260809_0007
-
-Production verification:
-1. Open /vacancies/internal and run a broad multi-source search.
-2. Open page 2 with the generated snapshot parameter.
-3. Return to page 1 using the same snapshot; the cards and order must be unchanged.
-4. Adjacent pages must not contain the same vacancy identity.
-5. Open /health/search-pagination?snapshot=<snapshot-id>.
-6. Confirm known_unique_total/provider_reported_total/total_is_exact/bounded, per-provider cursor state and candidate_counts_by_source coverage.
-
-The snapshot stores only a SHA-256 query fingerprint and bounded provider/result data. The public verification endpoint does not expose keyword, region, salary, credentials or provider payloads.
+Production verification after deploy:
+1. /health/ready remains current_revision=expected_revision=20260809_0007.
+2. Run a broad vacancy search; page 0 should return instead of remaining in an endless browser load.
+3. URL must include snapshot=<uuid>.
+4. Open page 2 and return to page 1; snapshot stays the same and cards do not overlap.
+5. Open /health/search-pagination?snapshot=<uuid>.

@@ -1001,3 +1001,96 @@ def test_identical_anonymous_rows_keep_distinct_snapshot_stable_keys(tmp_path):
         assert first.items[0]["published_at"] != second.items[0]["published_at"]
     finally:
         runtime.dispose()
+
+
+def test_default_extension_round_is_single_provider_page_per_request(tmp_path):
+    """Regression: page 0 must not synchronously prefetch three provider rounds."""
+
+    _url, runtime = _runtime(tmp_path)
+    try:
+        service = SearchAggregationService(
+            SearchSnapshotRepository(runtime),
+            page_size=60,
+            ttl_seconds=900,
+            max_candidates=1200,
+        )
+        calls: list[tuple[str, int]] = []
+
+        def fetch(source: str, page: int) -> SearchResult:
+            calls.append((source, page))
+            per_page = 20 if source in {"hh", "superjob"} else 60
+            items = [
+                _vacancy(
+                    source=source,
+                    external_id=f"{source}-{page}-{index}",
+                    title=f"{source} role {page}-{index}",
+                    minutes_ago=index + 1,
+                    company=f"{source}-{index}",
+                )
+                for index in range(per_page)
+            ]
+            return SearchResult(
+                items=items,
+                total=10_000,
+                page=page,
+                pages=100,
+                has_next=True,
+            )
+
+        result = service.search(
+            filters=VacancySearchFilters(period_days=30),
+            selected_sources=["hh", "reed", "superjob", "trudvsem"],
+            page=0,
+            snapshot_id=None,
+            fetch_source=fetch,
+        )
+
+        assert len(result.items) == 60
+        assert sorted(calls) == [
+            ("hh", 0),
+            ("reed", 0),
+            ("superjob", 0),
+            ("trudvsem", 0),
+        ]
+    finally:
+        runtime.dispose()
+
+
+def test_candidate_bulk_upsert_updates_without_duplicate_rows(tmp_path):
+    _url, runtime = _runtime(tmp_path)
+    try:
+        repository = SearchSnapshotRepository(runtime)
+        snapshot = repository.create(
+            query_fingerprint="f" * 64,
+            selected_sources=["hh"],
+            sort_code="date",
+            page_size=60,
+            ttl_seconds=900,
+        )
+        first = _vacancy(
+            source="hh",
+            external_id="h1",
+            title="Original title",
+            minutes_ago=1,
+        )
+        changed = {**first, "title": "Updated title"}
+
+        assert repository.upsert_candidates(
+            snapshot.id,
+            source="hh",
+            provider_page=0,
+            candidates=[("identity-h1", first)],
+        ) == 1
+        assert repository.upsert_candidates(
+            snapshot.id,
+            source="hh",
+            provider_page=1,
+            candidates=[("identity-h1", changed)],
+        ) == 0
+
+        rows = repository.candidates(snapshot.id)
+        assert len(rows) == 1
+        assert rows[0].provider_page == 0
+        assert '"Updated title"' in rows[0].payload_json
+    finally:
+        runtime.dispose()

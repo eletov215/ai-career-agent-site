@@ -267,7 +267,7 @@ Production negative-smoke: контрольный multi-source поиск обр
 - deterministic sort имеет явные tie-breakers и не зависит от порядка provider futures;
 - уже показанные pages фиксируются committed prefix; late arrivals не переставляют page 0;
 - per-provider cursor/error/exhausted state и snapshot items переживают restart;
-- per-provider coverage invariant не фиксирует global page boundary, пока каждый non-terminal source не покрывает required depth accepted identities либо не становится exhausted/bounded;
+- progressive coverage: UI page size = 20; один HTTP request по умолчанию делает не более одного provider-page round, а committed prefix не перестраивается поздними результатами;
 - provider-reported/known unique/exact totals разделены;
 - `/health/search-pagination?snapshot=<uuid>` отдаёт только secret-free aggregate state;
 - TTL cleanup изолирован от canonical vacancy cache.

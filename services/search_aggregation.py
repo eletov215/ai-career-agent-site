@@ -269,7 +269,7 @@ class SearchAggregationService:
         ttl_seconds: int = 1800,
         max_pages_per_source: int = 8,
         max_candidates: int = 2000,
-        max_rounds_per_request: int = 3,
+        max_rounds_per_request: int = 1,
         buffer_items: int = 1,
         extension_lease_seconds: int = 90,
     ) -> None:
@@ -780,19 +780,13 @@ class SearchAggregationService:
                     if after_candidates <= before_candidates and failures:
                         break
 
-                # Commit only the requested page boundary. Any small buffered
-                # tail remains movable until a later page is actually served.
-                materialized = self._materialize(
+                # Commit only the requested page boundary. The latest
+                # materialization was already persisted above; advancing the
+                # immutable prefix must not delete and reinsert the same rows a
+                # second time. This keeps remote PostgreSQL latency bounded.
+                snapshot = self.repository.commit_boundary(
                     snapshot.id,
-                    sort_code=filters.sort,
-                    previous_committed_count=snapshot.committed_count,
-                    previous_late_arrivals=snapshot.late_arrival_count,
-                )
-                snapshot = self._persist_materialization(
-                    snapshot.id,
-                    materialized=materialized,
                     requested_commit_count=required_count,
-                    source_states=source_states,
                 )
             else:
                 # Another request is extending this snapshot. Reuse the latest
