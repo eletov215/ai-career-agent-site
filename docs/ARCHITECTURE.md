@@ -1,8 +1,8 @@
 # AI Career Agent — архитектура проекта
 
-> Последнее обновление: 07 августа 2026 года  
-> Текущий пакет: `SYNC-002` — incremental freshness и lifecycle cleanup  
-> Статус пакета: **НУЖНА ПРОВЕРКА В GITHUB ACTIONS И НА RENDER**; candidate revision `20260807_0004`, production baseline `20260807_0003`
+> Последнее обновление: 09 августа 2026 года  
+> Текущий пакет: `SEARCH-002` — conservative cross-source deduplication  
+> Статус пакета: **НУЖНА ПРОВЕРКА В GITHUB ACTIONS И НА RENDER**; candidate database revision — `20260809_0006`
 
 ## 1. Цель архитектуры
 
@@ -38,7 +38,8 @@ project/
 ├── operations/
 │   └── backup.py                  # encrypted backup/verified restore
 ├── domain/
-│   └── entities.py                # immutable detached records
+│   ├── entities.py                # immutable detached records
+│   └── vacancy_contract.py        # SEARCH-001 typed vacancy contract
 ├── models/
 │   ├── base.py
 │   ├── user.py
@@ -59,12 +60,16 @@ project/
 │   ├── 20260804_0001_initial_schema.py
 │   ├── 20260804_0002_domain_model.py
 │   ├── 20260807_0003_external_sync_worker.py
-│   └── 20260807_0004_incremental_sync_cleanup.py
+│   ├── 20260807_0004_incremental_sync_cleanup.py
+│   ├── 20260808_0005_vacancy_normalization_contract.py
+│   └── 20260809_0006_cross_source_dedup_keys.py
 ├── services/
 │   ├── storage.py                 # StorageServices bundle for app.py
 │   ├── vacancy_store.py           # cache/query service API
 │   ├── trudvsem_sync.py           # external sync orchestration
 │   ├── sync_lock.py               # PostgreSQL/SQLite process lock
+│   ├── vacancy_normalizer.py      # SEARCH-001 canonical boundary
+│   ├── vacancy_deduplication.py   # SEARCH-002 cross-source grouping
 │   └── *_provider.py
 ├── scripts/
 │   ├── backup_database.py
@@ -141,7 +146,7 @@ Legacy tables `accounts` и `hh_accounts` сохраняются временн�
 - `Vacancy` — canonical record;
 - `VacancySourceRecord` — payload конкретного source.
 
-На DATA-002 связь один-к-одному по фактическим данным. `SEARCH-002` сможет связать несколько source records с одной canonical vacancy, не меняя provider ingestion.
+После SEARCH-002 связь фактически one-to-many: strict exact duplicates разных providers могут ссылаться на одну canonical vacancy. Каждый provider payload остаётся отдельным `VacancySourceRecord`; same-provider разные external IDs не объединяются.
 
 ### SyncRun и SyncCheckpoint
 
@@ -372,3 +377,16 @@ VPS / Docker Compose
 
 Ключевая гарантия: web request не запускает network sync и не ждёт provider API. Failure external worker не удаляет cache и не останавливает web.
 
+
+## 18. SEARCH-002 deduplication boundary
+
+```text
+provider results
+  -> SEARCH-001 canonical filters
+  -> SEARCH-002 conservative dedup
+      -> one presented card
+      -> sources[] with every provider URL/ID
+  -> global sort
+```
+
+Hard gates сравнивают employer/title/seniority/location/canonical codes/date/salary. Complete-link grouping не допускает transitive overmerge. Search-time similarity не переписывает provider rows; strict fingerprint используется на persistence boundary только для безопасных exact matches. Migration `20260809_0006` добавляет nullable dedup metadata в canonical/source tables без historical guessing. Grouping обратим: изменившийся source отделяется в отдельную canonical vacancy.

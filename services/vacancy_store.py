@@ -12,6 +12,12 @@ from sqlalchemy import Engine
 from database import DatabaseRuntime, create_database
 from repositories import VacancyRepository
 
+from .vacancy_deduplication import (
+    DEDUP_VERSION,
+    compare_vacancies,
+    dedup_key_for,
+    deduplicate_vacancies,
+)
 from .vacancy_normalizer import normalize_datetime, normalize_vacancy_mapping
 
 
@@ -94,6 +100,8 @@ class VacancyStore:
         payloads: list[dict[str, Any]] = []
         for item in items:
             normalized = normalize_vacancy_mapping(item).as_mapping()
+            normalized["dedup_key"] = dedup_key_for(normalized)
+            normalized["dedup_version"] = DEDUP_VERSION
             external_id = normalized["external_id"]
             source = normalized["source"]
             if not source or not external_id:
@@ -102,6 +110,8 @@ class VacancyStore:
                 {
                     "source": source,
                     "external_id": external_id,
+                    "dedup_key": normalized["dedup_key"],
+                    "dedup_version": normalized["dedup_version"],
                     "title": normalized["title"],
                     "company": normalized["company"],
                     "salary_from": normalized["salary_from"],
@@ -131,7 +141,117 @@ class VacancyStore:
                     "updated_at": now,
                 }
             )
-        return self.repository.upsert_source_records(payloads)
+        self._detach_changed_group_members(payloads)
+        saved = self.repository.upsert_source_records(payloads)
+        self._reconcile_dedup_keys(
+            {payload.get("dedup_key") for payload in payloads if payload.get("dedup_key")}
+        )
+        return saved
+
+    @staticmethod
+    def _record_mapping(record) -> dict[str, Any]:  # noqa: ANN001
+        try:
+            payload = json.loads(record.raw_json or "{}")
+        except (TypeError, json.JSONDecodeError):
+            payload = {}
+        if not isinstance(payload, dict):
+            payload = {}
+        payload.update(
+            {
+                "source": record.source,
+                "external_id": record.external_id,
+                "title": record.title,
+                "company": record.company,
+                "salary_from": record.salary_from,
+                "salary_to": record.salary_to,
+                "currency": record.currency,
+                "location": record.location,
+                "remote": record.remote,
+                "work_format": record.work_format,
+                "employment_code": record.employment_code,
+                "experience_code": record.experience_code,
+                "schedule": record.schedule,
+                "employment": record.employment,
+                "experience": record.experience,
+                "description": record.description,
+                "requirements": record.requirements,
+                "published_at": record.published_at,
+                "url": record.url,
+                "source_status": record.source_status,
+                "dedup_key": record.dedup_key,
+                "dedup_version": record.dedup_version,
+            }
+        )
+        return payload
+
+    def _detach_changed_group_members(
+        self,
+        payloads: list[dict[str, Any]],
+    ) -> None:
+        for payload in payloads:
+            if payload.get("source_status") != "active":
+                continue
+            existing = self.repository.get_source(
+                str(payload.get("source") or ""),
+                str(payload.get("external_id") or ""),
+            )
+            if existing is None:
+                continue
+            group = self.repository.list_sources(existing.vacancy_id)
+            active_others = [
+                record
+                for record in group
+                if record.source_status == "active"
+                and (record.source, record.external_id)
+                != (existing.source, existing.external_id)
+            ]
+            if not active_others:
+                continue
+            incoming = dict(payload)
+            decisions = [
+                compare_vacancies(incoming, self._record_mapping(record))
+                for record in active_others
+            ]
+            if decisions and all(decision.matched for decision in decisions):
+                continue
+            self.repository.detach_source_record(
+                source=existing.source,
+                external_id=existing.external_id,
+                canonical_values=incoming,
+                dedup_key=incoming.get("dedup_key"),
+                dedup_version=int(
+                    incoming.get("dedup_version") or DEDUP_VERSION
+                ),
+            )
+
+    def _reconcile_dedup_keys(self, dedup_keys: set[str]) -> None:
+        records = self.repository.list_sources_by_dedup_keys(dedup_keys)
+        by_key: dict[str, list[Any]] = {}
+        for record in records:
+            if record.dedup_key:
+                by_key.setdefault(record.dedup_key, []).append(record)
+
+        for key_records in by_key.values():
+            if len({record.source for record in key_records}) < 2:
+                continue
+            result = deduplicate_vacancies(
+                self._record_mapping(record) for record in key_records
+            )
+            for merged in result.items:
+                source_records = merged.get("source_records") or []
+                source_keys = [
+                    (record.get("source"), record.get("external_id"))
+                    for record in source_records
+                    if record.get("source") and record.get("external_id")
+                ]
+                if len({source for source, _ in source_keys}) < 2:
+                    continue
+                self.repository.merge_source_record_group(
+                    source_keys=source_keys,
+                    canonical_values=merged,
+                    dedup_key=merged.get("dedup_key"),
+                    dedup_version=int(merged.get("dedup_version") or DEDUP_VERSION),
+                )
 
     def cleanup_source(
         self,
@@ -207,7 +327,10 @@ class VacancyStore:
             except (TypeError, json.JSONDecodeError):
                 continue
             if isinstance(item, dict):
-                result.append(normalize_vacancy_mapping(item).as_mapping())
+                normalized = normalize_vacancy_mapping(item).as_mapping()
+                normalized["dedup_key"] = item.get("dedup_key") or dedup_key_for(normalized)
+                normalized["dedup_version"] = int(item.get("dedup_version") or DEDUP_VERSION)
+                result.append(normalized)
         return result
 
     def count(self, **filters: Any) -> int:

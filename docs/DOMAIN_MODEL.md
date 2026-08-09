@@ -26,11 +26,11 @@ Legacy-таблицы `accounts` и `hh_accounts` пока не удаляютс
 
 ### Vacancy
 
-Каноническая вакансия. На первом шаге каждой source record соответствует отдельная canonical vacancy. Это сохраняет текущую выдачу без изменения поведения и подготавливает модель для `SEARCH-002`, где несколько source records смогут быть привязаны к одной вакансии.
+Каноническая вакансия. После SEARCH-002 несколько безопасно совпавших публикаций разных providers могут ссылаться на одну canonical vacancy. Existing `fingerprint` сохраняет source-identity роль; SEARCH-002 хранит versioned candidate key отдельно в nullable `dedup_key`/`dedup_version`. Same-provider разные external IDs остаются разными canonical vacancies.
 
 ### VacancySourceRecord
 
-Оригинальная запись конкретного источника: `source + external_id`, raw JSON, URL, индексы фильтрации и timestamps. Старая таблица `vacancies` преобразуется в `vacancy_source_records`; данные копируются без потери, а IDs source rows сохраняются.
+Оригинальная запись конкретного источника: `source + external_id`, raw JSON, URL, canonical filter fields и timestamps. SEARCH-002 не удаляет source rows: объединение означает только общую ссылку `vacancy_id` на canonical Vacancy.
 
 ### SyncRun
 
@@ -54,7 +54,7 @@ repositories/
 - External sync worker пишет lifecycle через `SyncRunRepository`, а heartbeat — через `SyncWorkerRepository`.
 - Repositories возвращают immutable User/OAuth/Vacancy/Source/SyncRun records, а не session-bound ORM objects.
 
-## Migrations 20260804_0002, 20260807_0003 и 20260807_0004
+## Migrations 20260804_0002 — 20260809_0006
 
 Migration `20260804_0002` выполняет:
 
@@ -78,13 +78,17 @@ Migration поддерживает SQLite и PostgreSQL. Downgrade восста�
 5. поддерживает SQLite и PostgreSQL, а downgrade удаляет только worker heartbeat/index.
 
 
+### SEARCH-002 migration 20260809_0006
+
+DATA-002 уже создал relationship `Vacancy 1 — * VacancySourceRecord`, а SEARCH-001 добавил canonical fields. SEARCH-002 revision `20260809_0006` добавляет nullable `dedup_key` и `dedup_version` в обе таблицы и non-unique lookup indexes. Existing `fingerprint` сохраняет прежнюю source-identity роль; исторический backfill dedup metadata не выполняется. Controlled downgrade удаляет только новые indexes/columns после verified backup.
+
 ## Совместимость
 
 - Текущие OAuth sessions продолжают использовать provider external ID.
 - Текущие templates получают прежние dict keys (`name`, `first_name`, `access_token` и т. д.).
 - Публичный API `VacancyStore` не меняется.
-- UI, маршруты поиска и формат карточек не меняются.
-- Existing PostgreSQL rows переходят на candidate revision `20260807_0004` при deploy; business vacancy/OAuth data не переписываются migration 0003.
+- Маршрут и фильтры не меняются; одна карточка может показывать несколько provider sources.
+- Existing PostgreSQL rows переходят на candidate revision `20260809_0006` при deploy; business vacancy/OAuth data не переписываются migration 0006.
 
 ## Проверки
 
@@ -102,17 +106,17 @@ Migration поддерживает SQLite и PostgreSQL. Downgrade восста�
 
 После merge/deploy:
 
-1. `python scripts/manage_db.py upgrade` должен применить `20260807_0004`;
-2. `/health` должен показать `revision=20260807_0004`;
-3. `/`, `/vacancies/internal`, OAuth dashboard и `/trudvsem/status` должны работать;
+1. `python scripts/manage_db.py upgrade` должен применить `20260809_0006`;
+2. `/health/ready` должен показать `current_revision=expected_revision=20260809_0006`;
+3. `/`, `/vacancies/internal`, OAuth dashboard и публичный Trudvsem status должны работать;
 4. legacy OAuth connection, если он существует, должен остаться доступным;
 5. `cached_total` до и после restart должен сохраниться;
-6. `/trudvsem/status` в diagnostics mode должен показать external worker heartbeat и persisted run; public status остаётся sanitised.
-7. web process не должен создавать Trudvsem daemon thread.
+6. Multi-source smoke должен показать одну карточку с несколькими source links для доказанного duplicate и раздельные карточки для конфликтующих roles.
+7. web process не должен создавать Trudvsem daemon thread; existing sync checkpoint/cache сохраняются.
 
 ## Rollback
 
 - Не удалять PostgreSQL.
-- Откат application commit допустим только с пониманием, что старый код ожидает schema `0001`.
+- Application rollback допустим с сохранением additive columns `0006`; старый код их игнорирует.
 - Предпочтительный rollback — restore backup/new database + переключение `DATABASE_URL`.
-- `alembic downgrade 20260804_0001` выполнять только на backup/staging, не на единственной production database.
+- Controlled `alembic downgrade 20260808_0005` выполнять только после verified backup и после развертывания совместимого старого кода.

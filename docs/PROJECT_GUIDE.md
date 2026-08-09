@@ -35,16 +35,16 @@
 
 ## 4. Текущая ветка
 
-Для SYNC-002 рекомендуется отдельная ветка:
+Для SEARCH-002 рекомендуется отдельная ветка:
 
 ```text
-sync-002-incremental-cleanup
+search-002-cross-source-dedup
 ```
 
 Commit:
 
 ```text
-sync: add incremental Trudvsem freshness and cleanup
+search: add conservative cross-source deduplication
 ```
 
 Не очищать ветку. Сохранять `.github`, `.gitignore`, migrations, INFRA-PREP и существующие docs.
@@ -88,7 +88,7 @@ Probe не использует базу или внешние API и предн
 ## 6. OPS-001 проверки
 
 - `/health/live` отвечает без DB dependency;
-- `/health/ready` проверяет DB и candidate revision `20260807_0004`;
+- `/health/ready` проверяет DB и current revision `20260809_0006`;
 - `X-Request-ID` генерируется/сохраняется;
 - access/provider logs не содержат query/body/token/resume text;
 - `/ops/status` и `/ops/alerts/test` закрыты diagnostics secret;
@@ -150,22 +150,21 @@ python scripts/manage_db.py current
 python scripts/manage_db.py check
 ```
 
-SYNC-002 candidate добавляет migration `20260807_0004`; `/health/ready` после deploy должен показать:
+SEARCH-002 candidate добавляет migration `20260809_0006`; `/health/ready` после deploy должен показать:
 
 ```text
-revision=20260807_0004
+revision=20260809_0006
 ```
 
-Rollback SYNC-002 предпочтительно выполняется application commit/redeploy с сохранением schema `20260807_0004`; controlled downgrade до `20260807_0003` допустим только на backup/staging. Backup/restore scripts остаются отдельно; downgrade production schema без verified backup запрещён.
+Migration добавляет только nullable dedup metadata и indexes без historical backfill. Application rollback может оставить schema `0006`; controlled downgrade до `0005` допустим только после verified backup и после развертывания совместимого старого кода.
 
 ## 10. Hosting, домен и VPS
 
 Render остаётся staging/резервной площадкой. Действует hosting-independent очередь PLAN_CURRENT 1.4.x:
 
 ```text
-SYNC-001 verification
--> SYNC-002
--> SEARCH core
+SEARCH-002 verification
+-> SEARCH-003/004
 -> AUTH/PROFILE
 -> AI/JOB functional MVP
 -> INFRA-001 real VPS verification before beta
@@ -198,7 +197,7 @@ docker compose --env-file .env up -d web
 Полная последовательность, TLS, probe и production restore drill описаны в `docs/INFRA001_VPS_TEST.md`.
 
 
-## 12. SYNC-002 verification
+## 13. SYNC-002 verification
 
 Перед merge:
 
@@ -217,3 +216,11 @@ python -m pytest -ra
 - повторный window не создаёт duplicate source records;
 - controlled failure сохраняет cache/watermark и выставляет retry;
 - TTL closure/purge/reactivation подтверждены на test data или diagnostics drill.
+
+## 14. SEARCH-002 verification boundary
+
+- CI обязан проверить positive/negative dedup cases, migration `0006`, PostgreSQL one-canonical/multi-source relation и reversible split.
+- После merge ожидается production revision `20260809_0006`.
+- Render smoke подтверждает отсутствие HTTP 500, сохранение filters/cards и multi-source links.
+- Same-provider IDs, seniority/location/salary conflicts не должны склеиваться.
+- При ложном merge выполняется application rollback; additive columns `0006` могут остаться, downgrade требует backup.

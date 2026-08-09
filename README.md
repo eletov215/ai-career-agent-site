@@ -2,11 +2,11 @@
 
 | Поле | Значение |
 |---|---|
-| Канонический план | `docs/PLAN_CURRENT.md` — 1.4.5 |
-| Паспорт | `docs/PROJECT_PASSPORT.md` — 2.19 |
-| Текущий пакет | `SEARCH-001 — НУЖНА ПРОВЕРКА` |
-| Следующий пакет | `SEARCH-002` после подтверждения SEARCH-001 |
-| Database revision candidate | `20260808_0005` |
+| Канонический план | `docs/PLAN_CURRENT.md` — 1.4.7 |
+| Паспорт | `docs/PROJECT_PASSPORT.md` — 2.21 |
+| Текущий пакет | `SEARCH-002 — НУЖНА ПРОВЕРКА` |
+| Следующий пакет | `SEARCH-003` после подтверждения SEARCH-002 |
+| Database revision candidate | `20260809_0006` — dedup metadata и reversible grouping |
 | Production | Render остаётся staging/rollback; real VPS отложен до предрелизного INFRA-001 |
 
 > GitHub является главным источником кода. Более новый ZIP текущего чата становится рабочей основой. Секреты, `.env`, базы, dumps, backups, virtualenv, caches и bytecode не входят в репозиторий.
@@ -24,31 +24,32 @@ AI Career Agent — Flask-сервис карьерного сопровожде
 | SEC-001 / OPS-001 / INFRA-PREP-001 | ВЫПОЛНЕНО |
 | DOC-001 | В РАБОТЕ как постоянный процесс |
 | SYNC-001 / SYNC-002 | ВЫПОЛНЕНО |
-| SEARCH-001 | НУЖНА ПРОВЕРКА |
-| SEARCH-002 | ЗАПЛАНИРОВАНО |
+| SEARCH-001 | ВЫПОЛНЕНО |
+| SEARCH-002 | НУЖНА ПРОВЕРКА |
+| SEARCH-003 | ГОТОВО К СТАРТУ ПОСЛЕ SEARCH-002 |
 | INFRA-001 | ОТЛОЖЕНО ДО ПРЕДРЕЛИЗНОГО ЭТАПА |
 
-## 3. SEARCH-001 candidate
+## 3. SEARCH-002 candidate
 
 ```text
-raw HH / Reed / SuperJob / Trudvsem
-→ provider adapter
-→ NormalizedVacancy contract
-→ common exact-code filters
-→ canonical/source persistence
+canonical provider results
+→ exact canonical filters
+→ conservative cross-source dedup
+→ stable sort
 → presenter
+→ one card + all provider links
 ```
 
 Ключевые компоненты:
 
-- `domain/vacancy_contract.py` — typed contract и enums;
-- `services/vacancy_normalizer.py` — central normalization;
-- `services/search_filters.py` — common filter policy;
-- migration `20260808_0005` — canonical code columns/indexes;
-- provider/store/repository/presenter integration;
-- `tests/test_search_normalization.py` и отдельный CI gate.
+- `services/vacancy_deduplication.py` — versioned fingerprint, hard gates, complete-link grouping и explainability;
+- `services/vacancy_store.py` / `repositories/vacancies.py` — exact grouping, сохранение нескольких source rows и reversible split;
+- `services/vacancy_presenter.py` — multi-source card contract;
+- `templates/vacancies_unified.html` — stacked logos и список площадок;
+- `tests/test_search_deduplication.py` — positive/negative/persistence/security cases;
+- отдельный CI gate `Verify SEARCH-002 cross-source deduplication controls`.
 
-Cross-source dedup не входит и остаётся SEARCH-002.
+SEARCH-002 добавляет только nullable dedup metadata revision `20260809_0006`, не меняет `/vacancies/internal` и не решает stable total/pagination — это SEARCH-003.
 
 ## 4. Основной стек
 
@@ -90,27 +91,12 @@ Start Command:
 python scripts/manage_db.py upgrade && python scripts/start_runtime.py
 ```
 
-После merge SEARCH-001 ожидается revision `20260808_0005`.
+После merge SEARCH-002 ожидается revision `20260809_0006`.
 
-## 8. Структура SEARCH-001
+## 8. Ближайшие действия
 
-```text
-domain/vacancy_contract.py
-services/vacancy_normalizer.py
-services/search_filters.py
-models/vacancy.py
-repositories/vacancies.py
-services/*_provider.py
-services/vacancy_store.py
-services/vacancy_presenter.py
-migrations/versions/20260808_0005_*.py
-tests/test_search_normalization.py
-```
-
-## 9. Ближайшие действия
-
-1. Candidate branch.
-2. Полностью зелёный GitHub Actions.
-3. Merge в main.
-4. Render revision/health + multi-source search smoke.
-5. Закрыть SEARCH-001 и начать SEARCH-002.
+1. Загрузить SEARCH-002 candidate в отдельную branch.
+2. Получить полностью зелёный GitHub Actions.
+3. Merge в `main`.
+4. Проверить Render readiness и multi-source positive/negative smoke.
+5. Закрыть SEARCH-002 и начать SEARCH-003.

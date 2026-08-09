@@ -1,5 +1,47 @@
 # AI Career Agent — журнал изменений
 
+## Unreleased — SEARCH-002 (09 августа 2026)
+
+### Added
+
+- `services/vacancy_deduplication.py`: versioned strict fingerprint, conservative similarity and complete-link grouping.
+- Explainability fields, deterministic primary card and retained multi-provider source list.
+- Persistence exact-match grouping: one canonical `Vacancy`, multiple `VacancySourceRecord`, reversible split после изменения source publication.
+- Multi-source card UI with stacked logos and expandable provider links.
+- Dedicated SEARCH-002 tests and GitHub Actions gate.
+- SEARCH-002 implementation, verification, runbook and dedup reference documents.
+
+### Changed
+
+- Search aggregation applies dedup after canonical filters and before global sort/presentation.
+- Additive Alembic revision `20260809_0006` adds nullable `dedup_key`/`dedup_version` columns and non-unique lookup indexes.
+- Presenter and save key support merged cards.
+- PLAN_CURRENT, passport, README, ROADMAP and source audit synchronized to 1.4.7/2.21.
+
+### Security and compatibility
+
+- Additional provider links accept only public HTTP/HTTPS URLs without credentials.
+- Same-provider different IDs, different seniority/location/canonical codes and incompatible salary ranges are not merged.
+- Candidate database revision is `20260809_0006`; application rollback may leave additive columns, controlled downgrade requires backup.
+
+### Verification status
+
+- Focused SEARCH-002/persistence/presenter tests: passed.
+- SEARCH-002 dedup/migration suite: 15 passed; presenter suite: 5 passed; available regression groups passed.
+- GitHub PostgreSQL/CI and Render multi-source smoke: pending.
+
+### Scope exclusions
+
+- Global pagination/sort/total after dedup remains SEARCH-003.
+- Fuzzy company aliases, embeddings and ML merge are not used.
+
+## 1.4.6 — 2026-08-08 — SEARCH-001 complete
+
+- Green GitHub Actions confirmed SEARCH-001 contract/migration/regression gates.
+- Render `/health/ready` confirmed revision `20260808_0005`.
+- Production filters and cards passed smoke without HTTP 500.
+- SEARCH-002 became the next package.
+
 ## Unreleased — SEARCH-001 (08 августа 2026)
 
 ### Added

@@ -1,5 +1,11 @@
-SEARCH-001 CI fix 1
+SEARCH-002 — загрузка candidate
 
-Replace tests/test_routes.py in the current SEARCH-001 branch with the file from this archive.
-No production code or database migration changes are included.
-Reason: the SEC-001 provider-failure isolation test used keyword=python while its mocked successful vacancy did not contain that keyword. SEARCH-001 now applies canonical aggregation filters, so the fixture must satisfy the query it is testing.
+Полный архив загружается в отдельную ветку search-002-cross-source-dedup с заменой файлов.
+Проверь наличие:
+- .github/workflows/ci.yml
+- migrations/versions/20260809_0006_cross_source_dedup_keys.py
+- services/vacancy_deduplication.py
+- tests/test_search_deduplication.py
+- docs/SEARCH002_*.md
+
+Не объединять Pull Request до зелёного шага Verify SEARCH-002 cross-source deduplication controls.

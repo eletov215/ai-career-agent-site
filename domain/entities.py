@@ -90,6 +90,8 @@ class VacancyRecord:
 
     id: str
     fingerprint: str | None
+    dedup_key: str | None
+    dedup_version: int | None
     title: str
     company: str | None
     salary_from: float | None
@@ -119,6 +121,8 @@ class SourceRecord:
     vacancy_id: str
     source: str
     external_id: str
+    dedup_key: str | None
+    dedup_version: int | None
     title: str
     company: str | None
     salary_from: float | None

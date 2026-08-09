@@ -18,6 +18,7 @@ from services.hh_provider import HeadHunterProvider
 from services.superjob_provider import SuperJobProvider
 from services.reed_provider import ReedProvider
 from services.search_filters import VacancySearchFilters, filter_vacancies
+from services.vacancy_deduplication import deduplicate_vacancies
 from services.vacancy_presenter import present_vacancy
 from services.resume_parser import ResumeParseError, build_resume_preview, parse_resume_pdf
 from services.university_logo import find_university_logo
@@ -816,6 +817,16 @@ def vacancies():
     total = 0
     has_next = False
     cache_note = None
+    deduplication_stats = {
+        "input_count": 0,
+        "output_count": 0,
+        "duplicate_count": 0,
+        "identity_duplicate_count": 0,
+        "cross_source_duplicate_count": 0,
+        "cross_source_groups": 0,
+        "exact_groups": 0,
+        "similarity_groups": 0,
+    }
 
     if search_requested:
         # Работа России is always searched locally. Network synchronization
@@ -923,12 +934,21 @@ def vacancies():
         # HH, Reed, SuperJob and cached Trudvsem behavior consistent.
         all_items = filter_vacancies(all_items, filters)
 
-        # Remove duplicates across providers and sort newest first.
-        unique_items = {}
-        for item in all_items:
-            key = (item.get("source"), item.get("external_id") or item.get("url"))
-            unique_items[key] = item
-        all_items = list(unique_items.values())
+        # SEARCH-002: group only high-confidence cross-source duplicates.
+        # Source publications remain attached to the representative card so the
+        # decision is reversible and users can open any original listing.
+        deduplication_result = deduplicate_vacancies(all_items)
+        all_items = deduplication_result.items
+        deduplication_stats = deduplication_result.stats.as_dict()
+        logger.info(
+            "Vacancy deduplication completed input=%s output=%s "
+            "identity_duplicates=%s cross_source_duplicates=%s groups=%s",
+            deduplication_stats["input_count"],
+            deduplication_stats["output_count"],
+            deduplication_stats["identity_duplicate_count"],
+            deduplication_stats["cross_source_duplicate_count"],
+            deduplication_stats["cross_source_groups"],
+        )
         if filters.sort == "salary_desc":
             all_items.sort(
                 key=lambda item: (
@@ -996,6 +1016,7 @@ def vacancies():
         cache_note=cache_note,
         filter_query=filter_query,
         show_manual_refresh=not SETTINGS.is_production,
+        deduplication_stats=deduplication_stats,
     )
 
 

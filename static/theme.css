@@ -2397,6 +2397,53 @@ input:focus,select:focus,textarea:focus{outline:3px solid rgba(109,91,255,.14);b
   align-items:center;
   gap:10px;
 }
+
+.vacancy-source-logos{
+  display:flex;
+  flex:0 0 auto;
+  align-items:center;
+  padding-left:0;
+}
+.vacancy-source-logo--stacked{
+  margin-left:-12px;
+  box-shadow:0 0 0 3px #fff;
+}
+.vacancy-source-details{
+  margin-top:4px;
+}
+.vacancy-source-details summary{
+  width:max-content;
+  color:var(--primary-solid);
+  cursor:pointer;
+  font-size:10px;
+  font-weight:750;
+  line-height:1.35;
+  list-style:none;
+}
+.vacancy-source-details summary::-webkit-details-marker{display:none}
+.vacancy-source-details summary::after{
+  content:" +";
+}
+.vacancy-source-details[open] summary::after{content:" −"}
+.vacancy-source-details summary:focus-visible{
+  border-radius:5px;
+  outline:2px solid color-mix(in srgb,var(--primary-solid) 45%,transparent);
+  outline-offset:2px;
+}
+.vacancy-source-links{
+  display:flex;
+  flex-wrap:wrap;
+  gap:4px 8px;
+  margin-top:5px;
+}
+.vacancy-source-links a{
+  color:var(--primary-solid);
+  font-size:10px;
+  font-weight:700;
+  line-height:1.35;
+  text-decoration:none;
+}
+.vacancy-source-links a:hover,.vacancy-source-links a:focus-visible{text-decoration:underline}
 .vacancy-source-logo{
   display:flex;
   width:42px;

@@ -358,7 +358,12 @@
     <div class="results-heading results-summary">
       <div>
         <strong>{{ "{:,}".format(total).replace(",", " ") }} вакансий найдено</strong>
-        <div class="muted">На этой странице показано {{ vacancies|length }}. Количество указано по данным выбранных площадок.</div>
+        <div class="muted">
+          На этой странице показано {{ vacancies|length }} уникальных вакансий. Количество указано по данным выбранных площадок.
+          {% if deduplication_stats.duplicate_count %}
+            Объединено повторов: {{ deduplication_stats.duplicate_count }}.
+          {% endif %}
+        </div>
       </div>
       <div class="source-badges">
         {% for key, result in source_results.items() %}
@@ -409,7 +414,7 @@
 
     <div class="vacancy-list vacancy-results-grid">
       {% for vacancy in vacancies %}
-        <article class="vacancy-card unified-vacancy-card" data-vacancy-card>
+        <article class="vacancy-card unified-vacancy-card" data-vacancy-card data-source-count="{{ vacancy.source_count }}"{% if vacancy.deduplication %} data-dedup-method="{{ vacancy.deduplication.method }}" data-dedup-confidence="{{ vacancy.deduplication.confidence }}"{% endif %}>
           <div class="vacancy-card__topline">
             <h2>{{ vacancy.title }}</h2>
             {% if vacancy.salary_display %}
@@ -436,16 +441,30 @@
 
           <div class="vacancy-card__footer">
             <div class="vacancy-card__source-date">
-              <span class="vacancy-source-logo" aria-hidden="true">
-                {% if vacancy.source in ['hh', 'superjob', 'trudvsem', 'reed'] %}
-                  <img src="{{ url_for('static', filename='images/sources/' ~ vacancy.source ~ '.svg') }}" alt="">
-                {% else %}
-                  <span>{{ vacancy.source_title[:1] }}</span>
-                {% endif %}
+              <span class="vacancy-source-logos" aria-hidden="true">
+                {% for source_record in vacancy.source_records[:3] %}
+                  <span class="vacancy-source-logo{% if not loop.first %} vacancy-source-logo--stacked{% endif %}">
+                    {% if source_record.source in ['hh', 'superjob', 'trudvsem', 'reed'] %}
+                      <img src="{{ url_for('static', filename='images/sources/' ~ source_record.source ~ '.svg') }}" alt="">
+                    {% else %}
+                      <span>{{ source_record.source_title[:1] }}</span>
+                    {% endif %}
+                  </span>
+                {% endfor %}
               </span>
               <span class="vacancy-source-copy">
-                <strong>{{ vacancy.source_title }}</strong>
+                <strong>{{ vacancy.source_display }}</strong>
                 {% if vacancy.published_display %}<small>Опубликовано {{ vacancy.published_display }}</small>{% endif %}
+                {% if vacancy.source_count > 1 %}
+                  <details class="vacancy-source-details">
+                    <summary>Все площадки</summary>
+                    <span class="vacancy-source-links" aria-label="Исходные публикации вакансии">
+                      {% for source_record in vacancy.source_links %}
+                        <a href="{{ source_record.url }}" target="_blank" rel="noopener noreferrer">{{ source_record.source_title }}</a>
+                      {% endfor %}
+                    </span>
+                  </details>
+                {% endif %}
               </span>
             </div>
 
@@ -454,7 +473,7 @@
                 class="btn btn-ghost vacancy-save-button"
                 type="button"
                 data-save-vacancy
-                data-save-key="{{ vacancy.url or (vacancy.source ~ ':' ~ vacancy.title ~ ':' ~ vacancy.company) }}"
+                data-save-key="{{ vacancy.save_key }}"
                 aria-pressed="false"
               >
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4.8A1.8 1.8 0 0 1 7.8 3h8.4A1.8 1.8 0 0 1 18 4.8V21l-6-3.8L6 21V4.8Z"></path></svg>
