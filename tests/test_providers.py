@@ -198,6 +198,49 @@ def test_superjob_success_and_failure(monkeypatch):
     assert "timeout" not in failed.error
 
 
+
+def test_superjob_public_search_does_not_require_user_oauth(monkeypatch):
+    captured = {}
+
+    response = FakeResponse(
+        200,
+        {
+            "objects": [
+                {
+                    "id": 11,
+                    "profession": "Python developer",
+                    "firm_name": "ACME",
+                    "payment_from": 150000,
+                    "payment_to": 200000,
+                    "currency": "rub",
+                    "town": {"title": "Москва"},
+                    "link": "https://sj.test/11",
+                }
+            ],
+            "total": 1,
+            "more": False,
+        },
+    )
+
+    def fake_get(url, *, params, headers, timeout):
+        captured["headers"] = headers
+        return response
+
+    monkeypatch.setattr("services.superjob_provider.requests.get", fake_get)
+
+    def header_factory(token):
+        assert token is None
+        return {"X-Api-App-Id": "app-secret", "Accept": "application/json"}
+
+    provider = SuperJobProvider("https://sj.test", header_factory)
+    result = provider.search(filters=VacancySearchFilters(keyword="python"), page=0)
+
+    assert result.error is None
+    assert result.total == 1
+    assert result.items[0]["source"] == "superjob"
+    assert captured["headers"]["X-Api-App-Id"] == "app-secret"
+    assert "Authorization" not in captured["headers"]
+
 def test_trudvsem_fetch_batch_normalizes_valid_and_empty_payloads(monkeypatch):
     provider = TrudvsemProvider("test-agent", request_attempts=1)
     responses = iter(

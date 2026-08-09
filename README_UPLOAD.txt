@@ -9,3 +9,12 @@ SEARCH-002 — загрузка candidate
 - docs/SEARCH002_*.md
 
 Не объединять Pull Request до зелёного шага Verify SEARCH-002 cross-source deduplication controls.
+
+
+SuperJob public search hotfix:
+- services/superjob_provider.py supports app-level vacancy search without user OAuth
+- app.py exposes SuperJob as a search source when app credentials are configured
+- templates/vacancies_unified.html labels it as available without login
+- tests cover anonymous SuperJob search
+
+After upload, wait for green CI and verify HH + SuperJob search on Render.

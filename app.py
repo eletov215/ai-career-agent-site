@@ -804,11 +804,13 @@ def vacancies():
     }
     if REED_API_KEY:
         providers["reed"] = ReedProvider(REED_API_KEY)
-    if superjob_row:
+    # Vacancy listings from SuperJob do not require user OAuth. The app-level
+    # X-Api-App-Id credential is enough for search; OAuth remains available for
+    # user-specific SuperJob features in the dashboard.
+    if CLIENT_SECRET:
         providers["superjob"] = SuperJobProvider(
             VACANCIES_URL,
             headers,
-            lambda: valid_token(superjob_row),
         )
 
     all_items = []
@@ -901,7 +903,7 @@ def vacancies():
                     provider = providers.get(source_key)
                     if not provider:
                         if source_key == "superjob":
-                            errors.append("SuperJob не подключён. Подключите аккаунт в личном кабинете.")
+                            errors.append("SuperJob временно недоступен. Проверьте конфигурацию API приложения.")
                         elif source_key == "reed":
                             errors.append("Reed.co.uk не подключён. Добавьте REED_API_KEY в Render.")
                         continue
@@ -979,7 +981,13 @@ def vacancies():
 
     source_options = [
         {"key": "trudvsem", "title": "Работа России", "available": True},
-        {"key": "superjob", "title": "SuperJob", "available": bool(superjob_row)},
+        {
+            "key": "superjob",
+            "title": "SuperJob",
+            "available": bool(CLIENT_SECRET),
+            "note": None if CLIENT_SECRET else "Источник временно недоступен",
+            "status_text": "Поиск доступен без входа" if CLIENT_SECRET else None,
+        },
         {
             "key": "reed",
             "title": "Reed.co.uk",
