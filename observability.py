@@ -261,6 +261,15 @@ class OperationsState:
             "last_sent_at": None,
             "last_failure_at": None,
         }
+        self._search_dedup_state: dict[str, Any] = {
+            "available": False,
+            "recorded_at": None,
+            "recorded_monotonic": None,
+            "page": None,
+            "selected_sources": [],
+            "candidate_counts_by_source": {},
+            "stats": {},
+        }
         self.service_name = "ai-career-agent"
         self.environment = "unknown"
         self.app_version = "unknown"
@@ -358,6 +367,74 @@ class OperationsState:
                 self._alert_state["failed"] += 1
                 self._alert_state["last_failure_at"] = now
 
+    def record_search_dedup(
+        self,
+        *,
+        page: int,
+        selected_sources: list[str],
+        candidate_counts_by_source: dict[str, int],
+        stats: dict[str, Any],
+    ) -> None:
+        """Store aggregate SEARCH-002 telemetry for the most recent search.
+
+        The snapshot intentionally excludes keyword, region and other user-entered
+        filters so a browser-readable verification endpoint can stay privacy-safe.
+        """
+
+        allowed_stat_keys = (
+            "input_count",
+            "output_count",
+            "duplicate_count",
+            "identity_duplicate_count",
+            "cross_source_duplicate_count",
+            "cross_source_groups",
+            "exact_groups",
+            "similarity_groups",
+        )
+        safe_stats = {
+            key: max(0, int(stats.get(key, 0) or 0))
+            for key in allowed_stat_keys
+        }
+        safe_sources = sorted(
+            {str(source).strip() for source in selected_sources if str(source).strip()}
+        )
+        safe_counts = {
+            str(source): max(0, int(count or 0))
+            for source, count in sorted(candidate_counts_by_source.items())
+        }
+        with self._lock:
+            self._search_dedup_state = {
+                "available": True,
+                "recorded_at": _utc_timestamp(),
+                "recorded_monotonic": time.monotonic(),
+                "page": max(0, int(page)),
+                "selected_sources": safe_sources,
+                "candidate_counts_by_source": safe_counts,
+                "stats": safe_stats,
+            }
+
+    def search_dedup_snapshot(self) -> dict[str, Any]:
+        """Return a secret-free aggregate snapshot of the latest SEARCH-002 run."""
+
+        with self._lock:
+            state = dict(self._search_dedup_state)
+            state["selected_sources"] = list(
+                self._search_dedup_state.get("selected_sources", [])
+            )
+            state["candidate_counts_by_source"] = dict(
+                self._search_dedup_state.get("candidate_counts_by_source", {})
+            )
+            state["stats"] = dict(self._search_dedup_state.get("stats", {}))
+
+        recorded_monotonic = state.pop("recorded_monotonic", None)
+        if recorded_monotonic is None:
+            state["age_seconds"] = None
+        else:
+            state["age_seconds"] = max(
+                0, int(time.monotonic() - float(recorded_monotonic))
+            )
+        return state
+
     def snapshot(self, *, include_recent_errors: bool = True) -> dict[str, Any]:
         with self._lock:
             payload = {
@@ -388,6 +465,15 @@ class OperationsState:
             self._http.clear()
             self._providers.clear()
             self._recent_errors.clear()
+            self._search_dedup_state = {
+                "available": False,
+                "recorded_at": None,
+                "recorded_monotonic": None,
+                "page": None,
+                "selected_sources": [],
+                "candidate_counts_by_source": {},
+                "stats": {},
+            }
             configured = self._alert_state["configured"]
             self._alert_state = {
                 "configured": configured,

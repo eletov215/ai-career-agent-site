@@ -1,20 +1,16 @@
-SEARCH-002 — загрузка candidate
+SEARCH-002 verification hotfix: aggregate dedup status endpoint.
 
-Полный архив загружается в отдельную ветку search-002-cross-source-dedup с заменой файлов.
-Проверь наличие:
-- .github/workflows/ci.yml
-- migrations/versions/20260809_0006_cross_source_dedup_keys.py
-- services/vacancy_deduplication.py
-- tests/test_search_deduplication.py
-- docs/SEARCH002_*.md
+Changed files:
+- app.py
+- observability.py
+- tests/test_observability.py
+- tests/test_routes.py
+- docs/CHANGELOG.md
+- docs/SEARCH002_VERIFICATION_STATUS.md
 
-Не объединять Pull Request до зелёного шага Verify SEARCH-002 cross-source deduplication controls.
+After deploy:
+1. Run any normal vacancy search on /vacancies/internal.
+2. Open /health/search-dedup in the browser.
+3. Read dedup.stats.cross_source_duplicate_count and dedup.stats.cross_source_groups.
 
-
-SuperJob public search hotfix:
-- services/superjob_provider.py supports app-level vacancy search without user OAuth
-- app.py exposes SuperJob as a search source when app credentials are configured
-- templates/vacancies_unified.html labels it as available without login
-- tests cover anonymous SuperJob search
-
-After upload, wait for green CI and verify HH + SuperJob search on Render.
+The endpoint does not call vacancy providers and does not store/expose keyword, region, salary, credentials or tokens.
