@@ -357,19 +357,35 @@
     {% if search_requested %}
     <div class="results-heading results-summary">
       <div>
-        <strong>{{ "{:,}".format(total).replace(",", " ") }} вакансий найдено</strong>
+        {% if total_is_exact %}
+          <strong>{{ "{:,}".format(known_unique_total).replace(",", " ") }} уникальных вакансий найдено</strong>
+        {% else %}
+          <strong>Известно не менее {{ "{:,}".format(known_unique_total).replace(",", " ") }} уникальных вакансий</strong>
+        {% endif %}
         <div class="muted">
-          На этой странице показано {{ vacancies|length }} уникальных вакансий. Количество указано по данным выбранных площадок.
+          {% if vacancies %}
+            Страница {{ page + 1 }}: показаны позиции {{ page_start }}–{{ page_end }} из стабильного снимка поиска.
+          {% else %}
+            В текущем снимке пока нет подходящих вакансий.
+          {% endif %}
+          {% if provider_reported_total %}
+            Площадки сообщают примерно {{ "{:,}".format(provider_reported_total).replace(",", " ") }} публикаций; это не точное число после фильтрации и объединения повторов.
+          {% endif %}
           {% if deduplication_stats.duplicate_count %}
             Объединено повторов: {{ deduplication_stats.duplicate_count }}.
           {% endif %}
         </div>
+        {% if snapshot_restarted %}
+          <div class="vacancy-snapshot-note">Предыдущий снимок истёк или не совпал с фильтрами. Поиск начат заново с первой страницы.</div>
+        {% elif snapshot_bounded %}
+          <div class="vacancy-snapshot-note">Показан ограниченный стабильный снимок. Для уточнения результатов измените фильтры.</div>
+        {% endif %}
       </div>
       <div class="source-badges">
         {% for key, result in source_results.items() %}
-          <span class="source-count source-count-{{ key }}">
+          <span class="source-count source-count-{{ key }}" title="Количество сообщено площадкой до глобальной фильтрации и dedup">
             {{ key|replace('trudvsem', 'Работа России')|replace('superjob', 'SuperJob')|replace('hh', 'HeadHunter')|replace('reed', 'Reed.co.uk') }}
-            <strong>{{ "{:,}".format(result.total).replace(",", " ") }}</strong>
+            <strong>≈ {{ "{:,}".format(result.total).replace(",", " ") }}</strong>
           </span>
         {% endfor %}
       </div>
@@ -534,12 +550,15 @@
       </section>
     {% endif %}
 
-    <div class="pagination">
+    <div class="pagination" aria-label="Навигация по стабильному снимку поиска">
       {% if page > 0 %}
-        <a class="btn btn-secondary" href="?{{ filter_query }}&page={{ page - 1 }}">Назад</a>
+        <a class="btn btn-secondary" href="?{{ pagination_query }}&page={{ page - 1 }}">Назад</a>
+      {% endif %}
+      {% if search_requested %}
+        <span class="pagination__status">Страница {{ page + 1 }}</span>
       {% endif %}
       {% if has_next %}
-        <a class="btn btn-secondary" href="?{{ filter_query }}&page={{ page + 1 }}">Далее</a>
+        <a class="btn btn-secondary" href="?{{ pagination_query }}&page={{ page + 1 }}">Далее</a>
       {% endif %}
     </div>
 
@@ -548,6 +567,18 @@
   </div>
 </main>
 <script nonce="{{ csp_nonce }}">
+{% if search_requested and snapshot_id %}
+(() => {
+  const snapshotId = {{ snapshot_id|tojson }};
+  const pageNumber = {{ page|tojson }};
+  const currentUrl = new URL(window.location.href);
+  if (currentUrl.searchParams.get("snapshot") !== snapshotId || currentUrl.searchParams.get("page") !== String(pageNumber)) {
+    currentUrl.searchParams.set("snapshot", snapshotId);
+    currentUrl.searchParams.set("page", String(pageNumber));
+    window.history.replaceState({ snapshot: snapshotId, page: pageNumber }, "", currentUrl);
+  }
+})();
+{% endif %}
 (() => {
   const keywordInput = document.getElementById('vacancy-keyword');
   if (!keywordInput) return;

@@ -146,6 +146,12 @@ def validate(root: Path = ROOT) -> list[str]:
         env_example = _read("infra/vps/.env.example")
         for marker in [
             "CHANGE_ME",
+            "SEARCH_SNAPSHOT_TTL_SECONDS=1800",
+            "SEARCH_SNAPSHOT_MAX_CANDIDATES=1200",
+            "SEARCH_SNAPSHOT_MAX_PAGES_PER_SOURCE=8",
+            "SEARCH_SNAPSHOT_MAX_ROUNDS_PER_REQUEST=3",
+            "SEARCH_SNAPSHOT_BUFFER_ITEMS=1",
+            "SEARCH_SNAPSHOT_EXTENSION_LEASE_SECONDS=90",
             "TRUDVSEM_SYNC_ENABLED=0",
             "TRUDVSEM_SYNC_INTERVAL=1800",
             "TRUDVSEM_SYNC_ITEMS=300",

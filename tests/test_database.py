@@ -38,6 +38,10 @@ def test_sqlite_migration_is_repeatable_and_health_is_secret_free(tmp_path):
             "vacancies",
             "vacancy_source_records",
             "sync_runs",
+            "search_snapshots",
+            "search_snapshot_sources",
+            "search_snapshot_candidates",
+            "search_snapshot_items",
             "alembic_version",
         } <= tables
         assert current_revision(runtime.engine) == CURRENT_REVISION

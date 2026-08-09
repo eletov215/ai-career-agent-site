@@ -26,6 +26,7 @@ from models import (
 )
 from repositories import (
     OAuthConnectionRepository,
+    SearchSnapshotRepository,
     SyncCheckpointRepository,
     SyncRunRepository,
     UserRepository,
@@ -257,6 +258,16 @@ def test_postgresql_migration_and_persistence_round_trip():
             assert legacy_mirror is not None
             assert legacy_mirror.access_token == "encrypted-ci-token"
 
+        search_snapshots = SearchSnapshotRepository(runtime)
+        search_snapshot = search_snapshots.create(
+            query_fingerprint="a" * 64,
+            selected_sources=["hh", "superjob"],
+            sort_code="date",
+            page_size=20,
+            ttl_seconds=900,
+        )
+        assert search_snapshots.get(search_snapshot.id) is not None
+
         # Dispose/recreate the engine to prove data is committed, detached from
         # ORM sessions, and accessible through the repository contracts.
         runtime.dispose()
@@ -280,6 +291,9 @@ def test_postgresql_migration_and_persistence_round_trip():
         )
         assert persisted_source is not None
         assert persisted_source.vacancy_id == inserted_source.vacancy_id
+        persisted_snapshot = SearchSnapshotRepository(runtime).get(search_snapshot.id)
+        assert persisted_snapshot is not None
+        assert persisted_snapshot.query_fingerprint == "a" * 64
 
         with runtime.session() as session:
             assert session.scalar(

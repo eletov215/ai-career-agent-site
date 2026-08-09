@@ -1,4 +1,37 @@
-# AI Career Agent — журнал изменений
+# Changelog
+
+## Unreleased — SEARCH-003 candidate (09 августа 2026)
+
+### Added
+
+- Persistent bounded `SearchSnapshot`/source/candidate/item schema and repository.
+- Alembic revision `20260809_0007`.
+- `SearchAggregationService` with per-provider cursor state, per-provider coverage/global-boundary invariant, deterministic sort and committed page prefix.
+- Honest `provider_reported_total` / `known_unique_total` / `total_is_exact` semantics.
+- Secret-free `/health/search-pagination?snapshot=<uuid>`.
+- SEARCH-003 route/migration/restart/failure/TTL/late-arrival tests and dedicated GitHub Actions gate.
+- Same-provider anonymous publications now require a real external ID/URL for identity collapse; semantic fingerprints are reserved for conservative cross-source comparison.
+
+### Changed
+
+- `/vacancies/internal` pagination now carries an opaque snapshot ID.
+- Canonical filter + SEARCH-002 dedup run before stable ordinal/page slicing.
+- Approximate provider totals are no longer presented as exact unique totals.
+- Render/Compose/VPS templates include bounded snapshot policy defaults.
+- Backup inventory and PostgreSQL integration cover snapshot tables.
+
+### Verification status
+
+- Local compile and full available pytest: 182 passed, 6 skipped.
+- SEARCH-003 focused suite: 18 passed.
+- SQLite migration `0006 -> 0007 -> 0006 -> 0007` and Alembic check: passed.
+- GitHub PostgreSQL/Flask/Docker and Render cross-page smoke: pending.
+
+### Scope exclusions
+
+- `/vacancies` route redesign remains SEARCH-004.
+- SEARCH-002 thresholds and OAuth strategy are unchanged.
+- Exact total is not obtained by synchronous full upstream scan.
 
 ## Unreleased — SEARCH-002 (09 августа 2026)
 

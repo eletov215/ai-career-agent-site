@@ -1,155 +1,68 @@
-# PostgreSQL и Alembic — production runbook
+# AI Career Agent — миграции базы данных
 
-| Поле | Значение |
-|---|---|
-| Candidate revision | `20260807_0004` |
-| PostgreSQL | 17 |
-| Последний пакет schema | SYNC-002 candidate |
-| Статус | НУЖНА ПРОВЕРКА НА GITHUB/RENDER |
-
-## 1. Текущее состояние
-
-- DATA-001/002 подтверждены на production PostgreSQL.
-- DATA-002 schema revision: `20260804_0002`.
-- SYNC-001 добавил `20260807_0003`.
-- SYNC-002 candidate добавляет `20260807_0004`.
-- `DATABASE_URL` хранится только в environment.
-- `TOKEN_ENCRYPTION_KEY` нельзя менять при наличии OAuth connections.
-
-## 2. Revision history
-
-### 20260804_0001
-
-- legacy `accounts`, `hh_accounts`, source-only `vacancies`;
-- indexes/search backfill;
-- adoption старого SQLite.
-
-### 20260804_0002
-
-- `users`;
-- unified `oauth_connections`;
-- canonical `vacancies`;
-- `vacancy_source_records`;
-- `sync_runs`;
-- legacy OAuth/vacancy conversion.
-
-### 20260807_0003
-
-- закрывает legacy `sync_runs.status=running` как `failed/WorkerRestarted` перед включением нового constraint;
-- создаёт partial unique index `uq_sync_runs_active_source` для `queued/running`;
-- создаёт `sync_workers` heartbeat table;
-- не изменяет vacancy/user/OAuth rows;
-- поддерживает SQLite/PostgreSQL downgrade.
-
-### 20260807_0004
-
-- создаёт `sync_checkpoints` с committed watermark, fixed window continuation и persistent retry/backoff;
-- добавляет lifecycle metadata `source_modified_at`, `closed_at`, `closed_reason`, `last_seen_run_id`;
-- добавляет индексы active/closed lifecycle;
-- seed-ит checkpoint из последнего successful run по каждому source;
-- поддерживает SQLite/PostgreSQL и controlled downgrade до `20260807_0003`.
-
-## 3. CI
-
-GitHub Actions поднимает PostgreSQL 17 и проверяет:
-
-- upgrade всех revisions до `20260807_0004`;
-- migration metadata и `alembic check`;
-- PostgreSQL integration;
-- legacy running-run cleanup;
-- active-run constraint;
-- queue/worker/checkpoint repositories;
-- lifecycle columns, incremental cursor and cleanup;
-- encrypted backup/restore в отдельную DB;
-- полный pytest без внешнего provider network.
-
-## 4. Deploy SYNC-002 candidate
-
-Для существующего Render service Start Command:
+## 1. Текущая цепочка
 
 ```text
-python scripts/manage_db.py upgrade && python scripts/start_runtime.py
+20260804_0001 initial legacy schema
+→ 20260804_0002 domain model
+→ 20260807_0003 external sync worker
+→ 20260807_0004 incremental sync/checkpoint lifecycle
+→ 20260808_0005 canonical vacancy normalization
+→ 20260809_0006 reversible cross-source dedup metadata
+→ 20260809_0007 stable search snapshots (candidate)
 ```
 
-Ожидаемая строка/health:
+Production до SEARCH-003 работает на `20260809_0006`; после candidate deploy ожидается `20260809_0007`.
 
-```text
-Database ready: backend=postgresql, persistent=True, configured=True, revision=20260807_0004
-```
+## 2. Revision 20260809_0007
 
-Migration error должен остановить deploy до запуска supervisor/Gunicorn.
+Создаёт четыре additive ephemeral tables:
 
-## 5. Проверка
+- `search_snapshots`;
+- `search_snapshot_sources`;
+- `search_snapshot_candidates`;
+- `search_snapshot_items`.
 
-### Health
+Миграция не переписывает `vacancies`, `vacancy_source_records`, OAuth, sync runs/checkpoints или encrypted tokens. Foreign keys используют cascade только внутри snapshot aggregate.
 
-```text
-status = ok
-database.ok = true
-database.backend = postgresql
-database.persistent = true
-database.configured = true
-database.revision = 20260807_0004
-migrations.current_revision = 20260807_0004
-migrations.expected_revision = 20260807_0004
-```
-
-### Sync schema
-
-В diagnostics mode:
-
-- queued run сохраняется между requests/process restarts;
-- active source имеет максимум один `queued/running` row;
-- worker heartbeat появляется в `sync_workers`;
-- completed run сохраняет processed/saved/cursor/terminal status.
-
-### Application smoke
-
-```text
-/
-/privacy
-/ai-career
-/resume-builder
-/vacancies/internal
-/health/live
-/health/ready
-/api/sources/trudvsem/status
-```
-
-## 6. Legacy SQLite import
+## 3. Upgrade/check
 
 ```bash
-DATABASE_URL='postgresql+psycopg://...' \
-python scripts/import_legacy_sqlite.py --source /secure/path/app.db
+python scripts/manage_db.py upgrade
+python scripts/manage_db.py current
+python scripts/manage_db.py check
+python -m alembic check
 ```
 
-Importer пишет OAuth connections и vacancy cache через repositories. `sync_workers` импортировать не нужно; это ephemeral operational state.
+Readiness после deploy:
 
-## 7. Rollback
+```text
+current_revision  = 20260809_0007
+expected_revision = 20260809_0007
+database.ok       = true
+persistent        = true
+```
 
-### Application rollback без downgrade
+## 4. Compatibility
 
-- остановить external worker;
-- закрыть queued/running rows как failed;
-- вернуть предыдущий application commit;
-- оставить PostgreSQL на `20260807_0003`, если старый код не конфликтует с дополнительной таблицей/index.
+- application rollback может оставить additive tables `0007`; старый код их не читает;
+- snapshot rows TTL/ephemeral и не являются источником вакансий;
+- backup inventory включает новые tables для проверки полноты schema;
+- existing cache и dedup metadata `0006` не изменяются.
 
-### Schema downgrade
-
-Только после backup/clone:
+## 5. Controlled downgrade
 
 ```bash
-python -m alembic downgrade 20260804_0002
+# только после verified backup и deployment совместимого старого кода
+python -m alembic downgrade 20260809_0006
 ```
 
-Downgrade удаляет `sync_workers` и active-run index. Production database не downgrade-ится без verified backup.
+Downgrade удаляет только четыре snapshot tables/indexes. Он не должен удалять canonical vacancy data.
 
-## 8. Критерии SYNC-001 schema verification
+## 6. Проверки candidate
 
-- GitHub PostgreSQL migration/integration зелёные;
-- Render `/health/ready` revision `20260807_0004`;
-- worker heartbeat записывается;
-- queue survives process boundary;
-- one-active-run constraint работает;
-- redeploy не повреждает vacancy cache;
-- rollback procedure документирована.
+- clean upgrade до `0007`;
+- `0007 → 0006 → 0007`;
+- `alembic check`;
+- PostgreSQL integration и cascade isolation в GitHub CI;
+- `/health/ready` на Render.

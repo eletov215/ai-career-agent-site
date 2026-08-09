@@ -3,224 +3,63 @@
 ## 1. Источник истины
 
 1. GitHub — основной источник актуального кода.
-2. Более новый ZIP в текущем чате является рабочей основой задачи.
-3. Канонический план — `AI_Career_Agent_PLAN_CURRENT` с наибольшей версией и датой.
-4. Старые дубликаты плана/паспорта удаляются после каждого пакета.
+2. Более новый ZIP текущего чата становится рабочей основой.
+3. Канонический PLAN_CURRENT определяется наибольшей версией и датой.
+4. Главный entrypoint — `app.py`, WSGI — `app:app`; `app_fixed.py` не используется.
 
-## 2. Обязательный цикл
-
-```text
-актуальный ZIP + PLAN_CURRENT
--> один пакет по ID
--> inventory/risks/rollback
--> изменения
--> compile/tests/migrations
--> ZIP + branch + PR
--> зелёный CI
--> deploy/manual verification
--> status/docs update
-```
-
-## 3. Неприкосновенные правила
-
-- Главный файл — `app.py`; WSGI — `app:app`.
-- `app_fixed.py` не создаётся.
-- `.env`, credentials, databases, backups, virtualenv, caches и bytecode не попадают в ZIP/GitHub.
-- OAuth `state` не отключается, проверяется до success/error callback и не отражается в URL/logs после callback.
-- Credentials, tokens и arbitrary provider response bodies не выводятся в logs/health/public endpoints.
-- Реальные API не вызываются из CI.
-- Production schema меняет только Alembic.
-- State-changing browser routes используют CSRF; machine endpoints требуют отдельный secret.
-- Статус `ВЫПОЛНЕНО` ставится только после всех критериев пакета.
-
-## 4. Текущая ветка
-
-Для SEARCH-002 рекомендуется отдельная ветка:
+## 2. Текущий пакет
 
 ```text
-search-002-cross-source-dedup
+SEARCH-003 — НУЖНА ПРОВЕРКА
+branch: search-003-stable-pagination
+commit: search: add persistent stable pagination and honest totals
+candidate revision: 20260809_0007
 ```
 
-Commit:
+## 3. Обязательный цикл
 
 ```text
-search: add conservative cross-source deduplication
+актуальный ZIP + canonical docs
+→ один package ID
+→ inventory/risks/rollback
+→ code + tests + migrations
+→ branch/PR
+→ green GitHub Actions
+→ Render/API/E2E smoke
+→ final status/docs
 ```
 
-Не очищать ветку. Сохранять `.github`, `.gitignore`, migrations, INFRA-PREP и существующие docs.
-
-## 5. Проверки перед push
+## 4. Проверки перед push
 
 ```bash
 python scripts/check_repository_hygiene.py
-python -m compileall -q app.py config.py database.py observability.py security.py domain models repositories operations migrations services tests scripts
-python scripts/manage_db.py upgrade
+python scripts/check_document_structure.py
+python scripts/infra_manifest_check.py
+python -m compileall -q app.py config.py database.py observability.py security.py domain models repositories services operations scripts tests infra migrations
+python -m pytest -q
 python -m alembic check
-python -m pytest -ra
 ```
 
-SEC-001 дополнительно проверяет:
+GitHub Actions должен отдельно выполнить `Verify SEARCH-003 stable pagination and totals controls`, PostgreSQL migration/integration, backup/restore, Docker build/runtime и полный pytest.
 
-- production не позволяет отключить secure cookie, CSRF, rate limits и security headers, требует `SameSite=Lax` и HTTPS OAuth callbacks;
-- все template scripts используют CSP nonce;
-- POST forms имеют CSRF token;
-- inline event handlers отсутствуют;
-- API/form POST без CSRF отклоняется, с token доходит до route validation;
-- logout — POST only;
-- diagnostics скрыты без header secret;
-- public Trudvsem status не содержит raw error/internal run;
-- rate limit использует стабильный HMAC bucket за Cloudflare/Render и выдаёт controlled 429;
-- PDF page/text/body limits;
-- university-logo resolver не следует на private redirect и проверяет image signature;
-- startup modes и PostgreSQL integration остаются зелёными.
+## 5. SEARCH-003 production verification
 
+1. `/health/ready` показывает revision `20260809_0007`.
+2. Выполнить широкий multi-source search.
+3. Проверить page 0 → page 1 → page 0 с одним `snapshot` ID.
+4. На соседних страницах нет одинаковых stable identities.
+5. Возврат на page 0 воспроизводит прежний порядок.
+6. `/health/search-pagination?snapshot=<uuid>` показывает honest totals, per-source cursors и candidate coverage без query text/credentials.
+7. Каждый non-terminal provider покрывает required depth для committed boundary либо отмечен exhausted/bounded.
 
-### Production rate-limit probe
+## 6. Неприкосновенные правила
 
-```text
-GET /api/security/rate-limit-probe
-1-5 запросы: 200
-6-й запрос в течение минуты: 429 + Retry-After
-```
+- `.env`, credentials, databases, dumps, backups, virtualenv, caches и bytecode не включаются в ZIP/GitHub.
+- Реальные APIs в CI mocked.
+- Production schema меняет только Alembic.
+- Snapshot exact total не добывается массовым synchronous upstream scan.
+- SEARCH-003 не меняет SEARCH-002 thresholds, OAuth strategy и route redesign SEARCH-004.
 
-Probe не использует базу или внешние API и предназначен только для проверки limiter wiring.
+## 7. Rollback
 
-## 6. OPS-001 проверки
-
-- `/health/live` отвечает без DB dependency;
-- `/health/ready` проверяет DB и current revision `20260809_0006`;
-- `X-Request-ID` генерируется/сохраняется;
-- access/provider logs не содержат query/body/token/resume text;
-- `/ops/status` и `/ops/alerts/test` закрыты diagnostics secret;
-- optional webhook получает sanitised test alert;
-- production backup требует `BACKUP_ENCRYPTION_KEY`;
-- manifest/size/SHA-256 проверяются;
-- restore в отдельную DB подтверждает revision и row counts;
-- CI выполняет реальный PostgreSQL encrypted backup/restore.
-
-## 7. Security surfaces
-
-### Browser
-
-```text
-aca_session
-Secure + HttpOnly + SameSite=Lax
-CSRF token
-CSP nonce
-route-specific rate limit
-proxy-aware client fingerprint
-```
-
-### Machine sync
-
-```text
-POST /sync/trudvsem
-X-Sync-Secret
-CSRF exempt only because it is not a browser form
-```
-
-### Diagnostics
-
-```text
-DEBUG_DIAGNOSTICS=1
-DIAGNOSTICS_SECRET=<secret>
-X-Diagnostics-Secret: <secret>
-```
-
-Без всех трёх условий `/debug/*` и `/trudvsem/status` возвращают 404. Public UI использует `/api/sources/trudvsem/status`.
-
-## 8. Слои данных
-
-```text
-routes -> StorageServices/application services -> repositories -> models/database
-```
-
-- Routes получают persistence через `StorageServices` и не выполняют SQL.
-- Repositories возвращают detached User/OAuth/Vacancy/Source/SyncRun records.
-- `VacancyStore` нормализует payload, `VacancyRepository` выполняет query.
-- Legacy `accounts`/`hh_accounts` не удаляются до отдельной cleanup migration.
-
-## 9. Миграции и rollback
-
-Команды:
-
-```bash
-python scripts/manage_db.py upgrade
-python scripts/manage_db.py current
-python scripts/manage_db.py check
-```
-
-SEARCH-002 candidate добавляет migration `20260809_0006`; `/health/ready` после deploy должен показать:
-
-```text
-revision=20260809_0006
-```
-
-Migration добавляет только nullable dedup metadata и indexes без historical backfill. Application rollback может оставить schema `0006`; controlled downgrade до `0005` допустим только после verified backup и после развертывания совместимого старого кода.
-
-## 10. Hosting, домен и VPS
-
-Render остаётся staging/резервной площадкой. Действует hosting-independent очередь PLAN_CURRENT 1.4.x:
-
-```text
-SEARCH-002 verification
--> SEARCH-003/004
--> AUTH/PROFILE
--> AI/JOB functional MVP
--> INFRA-001 real VPS verification before beta
--> REED-COMPAT-001 -> HOST-001 -> OPS-002 -> DOMAIN-001 -> MIG-001 -> REL-001
-```
-
-При DOMAIN-001 нужно добавить коммерческий hostname в `TRUSTED_HOSTS`, обновить OAuth redirect URI и проверить secure cookie/CSRF/HSTS на новом HTTPS-домене.
-
-## 11. После каждого пакета вернуть
-
-- новый ZIP;
-- список файлов/изменений;
-- test/migration results;
-- GitHub/Render checklist;
-- limitations/rollback;
-- PLAN_CURRENT DOCX/PDF/MD;
-- паспорт при изменении архитектуры/статуса.
-
-## 12. INFRA-001 commands
-
-```bash
-cp infra/vps/.env.example .env
-python3 scripts/infra_manifest_check.py
-docker compose --env-file .env build web ops
-docker compose --env-file .env up -d db
-docker compose --env-file .env run --rm migrate
-docker compose --env-file .env up -d web
-```
-
-Полная последовательность, TLS, probe и production restore drill описаны в `docs/INFRA001_VPS_TEST.md`.
-
-
-## 13. SYNC-002 verification
-
-Перед merge:
-
-```bash
-python -m pytest -q tests/test_sync_incremental.py tests/test_sync_worker.py tests/test_config.py tests/test_infra_manifests.py
-python scripts/manage_db.py upgrade
-python -m alembic check
-python -m pytest -ra
-```
-
-После Render deploy:
-
-- `/health/ready` -> current/expected `20260807_0004`;
-- diagnostic checkpoint показывает committed watermark;
-- continuation offset переживает restart/redeploy;
-- повторный window не создаёт duplicate source records;
-- controlled failure сохраняет cache/watermark и выставляет retry;
-- TTL closure/purge/reactivation подтверждены на test data или diagnostics drill.
-
-## 14. SEARCH-002 verification boundary
-
-- CI обязан проверить positive/negative dedup cases, migration `0006`, PostgreSQL one-canonical/multi-source relation и reversible split.
-- После merge ожидается production revision `20260809_0006`.
-- Render smoke подтверждает отсутствие HTTP 500, сохранение filters/cards и multi-source links.
-- Same-provider IDs, seniority/location/salary conflicts не должны склеиваться.
-- При ложном merge выполняется application rollback; additive columns `0006` могут остаться, downgrade требует backup.
+Application revert без очистки vacancy cache. Additive `0007` может остаться; downgrade до `0006` — только после verified backup и deployment совместимого старого кода.

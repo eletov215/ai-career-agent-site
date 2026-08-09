@@ -5,7 +5,6 @@ import platform
 import time
 import logging
 from pathlib import Path
-from concurrent.futures import ThreadPoolExecutor, as_completed
 from urllib.parse import urlencode
 
 import requests
@@ -14,11 +13,12 @@ from flask import Flask, jsonify, redirect, render_template, request, session, u
 from werkzeug.utils import secure_filename
 
 
+from services.base_provider import SearchResult
 from services.hh_provider import HeadHunterProvider
 from services.superjob_provider import SuperJobProvider
 from services.reed_provider import ReedProvider
-from services.search_filters import VacancySearchFilters, filter_vacancies
-from services.vacancy_deduplication import deduplicate_vacancies
+from services.search_filters import VacancySearchFilters
+from services.search_aggregation import SearchAggregationService
 from services.vacancy_presenter import present_vacancy
 from services.resume_parser import ResumeParseError, build_resume_preview, parse_resume_pdf
 from services.university_logo import find_university_logo
@@ -92,6 +92,16 @@ OAUTH_CONNECTIONS = STORAGE.oauth_connections
 SYNC_RUNS = STORAGE.sync_runs
 USERS = STORAGE.users
 VACANCY_STORE = STORAGE.vacancies
+SEARCH_AGGREGATION = SearchAggregationService(
+    STORAGE.search_snapshots,
+    page_size=SETTINGS.vacancy_page_size,
+    ttl_seconds=SETTINGS.search_snapshot_ttl_seconds,
+    max_pages_per_source=SETTINGS.search_snapshot_max_pages_per_source,
+    max_candidates=SETTINGS.search_snapshot_max_candidates,
+    max_rounds_per_request=SETTINGS.search_snapshot_max_rounds_per_request,
+    buffer_items=SETTINGS.search_snapshot_buffer_items,
+    extension_lease_seconds=SETTINGS.search_snapshot_extension_lease_seconds,
+)
 
 logger.info(
     "Application runtime initialized",
@@ -783,16 +793,21 @@ def vacancies():
     search_requested = request.args.get("search") == "1"
     sync_queued = request.args.get("sync") == "queued"
     try:
-        page = max(int(request.args.get("page", "0") or 0), 0)
+        requested_page = max(int(request.args.get("page", "0") or 0), 0)
     except ValueError:
-        page = 0
+        requested_page = 0
 
-    superjob_row = account()
-    selected_sources = request.args.getlist("source")
+    requested_snapshot_id = str(request.args.get("snapshot") or "").strip() or None
+    allowed_sources = {"trudvsem", "superjob", "reed", "hh"}
+    selected_sources = [
+        source
+        for source in request.args.getlist("source")
+        if source in allowed_sources
+    ]
     if not selected_sources:
         selected_sources = ["trudvsem"]
+    selected_sources = list(dict.fromkeys(selected_sources))
 
-    hh_row = hh_account()
     providers = {
         "hh": HeadHunterProvider(
             HH_VACANCIES_URL,
@@ -816,9 +831,16 @@ def vacancies():
     all_items = []
     source_results = {}
     errors = []
-    total = 0
-    has_next = False
     cache_note = None
+    page = requested_page
+    has_next = False
+    provider_reported_total = 0
+    known_unique_total = 0
+    total_is_exact = False
+    snapshot_bounded = False
+    snapshot_id = None
+    snapshot_restarted = False
+    page_size = VACANCY_PAGE_SIZE
     deduplication_stats = {
         "input_count": 0,
         "output_count": 0,
@@ -831,42 +853,9 @@ def vacancies():
     }
 
     if search_requested:
-        # Работа России is always searched locally. Network synchronization
-        # is performed only by the external SYNC-001 worker process.
         if "trudvsem" in selected_sources:
-            offset = page * VACANCY_PAGE_SIZE
-            cached_items = VACANCY_STORE.search(
-                keyword=keyword,
-                sources=["trudvsem"],
-                remote_only=filters.remote_only,
-                salary_from=filters.salary_from,
-                salary_only=filters.salary_only,
-                period_days=filters.period_days,
-                sort=filters.sort,
-                region=filters.region,
-                experience=filters.experience,
-                employment=filters.employment,
-                work_format=filters.work_format,
-                currency=filters.currency,
-                limit=VACANCY_PAGE_SIZE,
-                offset=offset,
-            )
-            cached_total = VACANCY_STORE.count(
-                keyword=keyword,
-                sources=["trudvsem"],
-                remote_only=filters.remote_only,
-                salary_from=filters.salary_from,
-                salary_only=filters.salary_only,
-                period_days=filters.period_days,
-                region=filters.region,
-                experience=filters.experience,
-                employment=filters.employment,
-                work_format=filters.work_format,
-                currency=filters.currency,
-            )
             cache_age = VACANCY_STORE.source_age_seconds("trudvsem")
             sync_state = trudvsem_sync_status()
-
             if sync_state["running"]:
                 cache_note = "Данные «Работы России» обновляются в фоне. Сайт продолжает работать из кэша."
             elif sync_state["queued"] or sync_queued:
@@ -883,114 +872,126 @@ def vacancies():
                 if latest_run and latest_run.status == "failed":
                     cache_note += " Последнее обновление завершилось ошибкой, сохранённые вакансии доступны."
 
-            source_results["trudvsem"] = type("CachedResult", (), {
-                "total": cached_total,
-                "items": cached_items,
-                "has_next": offset + len(cached_items) < cached_total,
-                "error": None,
-            })()
-            all_items.extend(cached_items)
-            total += cached_total
-            has_next = has_next or offset + len(cached_items) < cached_total
+        def fetch_source_page(source_key: str, source_page: int) -> SearchResult:
+            if source_key == "trudvsem":
+                offset = source_page * VACANCY_PAGE_SIZE
+                cached_items = VACANCY_STORE.search(
+                    keyword=keyword,
+                    sources=["trudvsem"],
+                    remote_only=filters.remote_only,
+                    salary_from=filters.salary_from,
+                    salary_only=filters.salary_only,
+                    period_days=filters.period_days,
+                    sort=filters.sort,
+                    region=filters.region,
+                    experience=filters.experience,
+                    employment=filters.employment,
+                    work_format=filters.work_format,
+                    currency=filters.currency,
+                    limit=VACANCY_PAGE_SIZE,
+                    offset=offset,
+                )
+                cached_total = VACANCY_STORE.count(
+                    keyword=keyword,
+                    sources=["trudvsem"],
+                    remote_only=filters.remote_only,
+                    salary_from=filters.salary_from,
+                    salary_only=filters.salary_only,
+                    period_days=filters.period_days,
+                    region=filters.region,
+                    experience=filters.experience,
+                    employment=filters.employment,
+                    work_format=filters.work_format,
+                    currency=filters.currency,
+                )
+                return SearchResult(
+                    items=cached_items,
+                    total=cached_total,
+                    page=source_page,
+                    pages=(cached_total + VACANCY_PAGE_SIZE - 1) // VACANCY_PAGE_SIZE
+                    if cached_total
+                    else 0,
+                    has_next=offset + len(cached_items) < cached_total,
+                )
 
-        # Other providers remain direct, but run concurrently and cannot block
-        # the cached Работа России results.
-        direct_sources = [source for source in selected_sources if source != "trudvsem"]
-        tasks = {}
-        if direct_sources:
-            with ThreadPoolExecutor(max_workers=min(len(direct_sources), 2) or 1) as executor:
-                for source_key in direct_sources:
-                    provider = providers.get(source_key)
-                    if not provider:
-                        if source_key == "superjob":
-                            errors.append("SuperJob временно недоступен. Проверьте конфигурацию API приложения.")
-                        elif source_key == "reed":
-                            errors.append("Reed.co.uk не подключён. Добавьте REED_API_KEY в Render.")
-                        continue
-                    future = executor.submit(
-                        _search_provider_with_metrics,
-                        source_key,
-                        provider,
-                        filters=filters,
-                        page=page,
-                    )
-                    tasks[future] = source_key
-
-                for future in as_completed(tasks):
-                    source_key = tasks[future]
-                    try:
-                        result = future.result()
-                    except Exception:
-                        logger.exception("Vacancy provider failed source=%s", source_key)
-                        errors.append(f"{source_key}: unavailable")
-                        continue
-                    source_results[source_key] = result
-                    all_items.extend(result.items)
-                    total += result.total
-                    has_next = has_next or result.has_next
-                    if result.error:
-                        errors.append(result.error)
-
-        # Apply the same canonical contract at the aggregation boundary.
-        # Provider-side filters are only an optimization; this final pass keeps
-        # HH, Reed, SuperJob and cached Trudvsem behavior consistent.
-        all_items = filter_vacancies(all_items, filters)
-
-        # SEARCH-002: group only high-confidence cross-source duplicates.
-        # Source publications remain attached to the representative card so the
-        # decision is reversible and users can open any original listing.
-        candidate_counts_by_source: dict[str, int] = {}
-        for candidate in all_items:
-            source_key = str(candidate.get("source") or "unknown").strip() or "unknown"
-            candidate_counts_by_source[source_key] = (
-                candidate_counts_by_source.get(source_key, 0) + 1
+            provider = providers.get(source_key)
+            if provider is None:
+                if source_key == "superjob":
+                    message = "SuperJob временно недоступен. Проверьте конфигурацию API приложения."
+                elif source_key == "reed":
+                    message = "Reed.co.uk не подключён. Добавьте REED_API_KEY в Render."
+                elif source_key == "hh":
+                    message = "HeadHunter временно недоступен. Проверьте HH_APP_TOKEN."
+                else:
+                    message = f"{source_key}: unavailable"
+                return SearchResult(page=source_page, error=message)
+            return _search_provider_with_metrics(
+                source_key,
+                provider,
+                filters=filters,
+                page=source_page,
             )
 
-        deduplication_result = deduplicate_vacancies(all_items)
-        all_items = deduplication_result.items
-        deduplication_stats = deduplication_result.stats.as_dict()
+        aggregation = SEARCH_AGGREGATION.search(
+            filters=filters,
+            selected_sources=selected_sources,
+            page=requested_page,
+            snapshot_id=requested_snapshot_id,
+            fetch_source=fetch_source_page,
+        )
+        page = aggregation.page
+        page_size = aggregation.page_size
+        has_next = aggregation.has_next
+        source_results = aggregation.source_results
+        errors = aggregation.errors
+        provider_reported_total = aggregation.provider_reported_total
+        known_unique_total = aggregation.known_unique_total
+        total_is_exact = aggregation.total_is_exact
+        snapshot_bounded = aggregation.bounded
+        snapshot_id = aggregation.snapshot_id
+        snapshot_restarted = aggregation.snapshot_restarted
+        deduplication_stats = aggregation.deduplication_stats
+        all_items = [present_vacancy(item) for item in aggregation.items]
+
+        candidate_counts_by_source = {
+            key: summary.fetched_items
+            for key, summary in source_results.items()
+        }
         OPS_STATE.record_search_dedup(
             page=page,
             selected_sources=selected_sources,
             candidate_counts_by_source=candidate_counts_by_source,
             stats=deduplication_stats,
         )
-        logger.info(
-            "Vacancy deduplication completed input=%s output=%s "
-            "identity_duplicates=%s cross_source_duplicates=%s groups=%s",
-            deduplication_stats["input_count"],
-            deduplication_stats["output_count"],
-            deduplication_stats["identity_duplicate_count"],
-            deduplication_stats["cross_source_duplicate_count"],
-            deduplication_stats["cross_source_groups"],
+        OPS_STATE.record_search_pagination(
+            snapshot_id=snapshot_id or "",
+            page=page,
+            page_size=page_size,
+            source_results=source_results,
+            known_unique_total=known_unique_total,
+            provider_reported_total=provider_reported_total,
+            total_is_exact=total_is_exact,
+            bounded=snapshot_bounded,
+            has_next=has_next,
+            committed_count=aggregation.committed_count,
+            late_arrival_count=aggregation.late_arrival_count,
+            snapshot_age_seconds=aggregation.snapshot_age_seconds,
         )
-        if filters.sort == "salary_desc":
-            all_items.sort(
-                key=lambda item: (
-                    float(item.get("salary_to") or item.get("salary_from") or 0),
-                    str(item.get("published_at") or ""),
-                ),
-                reverse=True,
-            )
-        elif filters.sort == "salary_asc":
-            all_items.sort(
-                key=lambda item: (
-                    item.get("salary_from") is None and item.get("salary_to") is None,
-                    float(item.get("salary_from") or item.get("salary_to") or 0),
-                    str(item.get("published_at") or ""),
-                )
-            )
-        else:
-            all_items.sort(
-                key=lambda item: (
-                    bool(item.get("published_at")),
-                    str(item.get("published_at") or ""),
-                    str(item.get("title") or ""),
-                ),
-                reverse=True,
-            )
-
-        all_items = [present_vacancy(item) for item in all_items]
+        logger.info(
+            "Stable search snapshot page served snapshot_prefix=%s page=%s page_size=%s "
+            "known_unique=%s provider_total=%s exact=%s bounded=%s has_next=%s "
+            "committed=%s late_arrivals=%s",
+            (snapshot_id or "")[:12],
+            page,
+            page_size,
+            known_unique_total,
+            provider_reported_total,
+            total_is_exact,
+            snapshot_bounded,
+            has_next,
+            aggregation.committed_count,
+            aggregation.late_arrival_count,
+        )
 
     source_options = [
         {"key": "trudvsem", "title": "Работа России", "available": True},
@@ -1019,6 +1020,13 @@ def vacancies():
     for source in selected_sources:
         filter_pairs.append(("source", source))
     filter_query = urlencode(filter_pairs)
+    pagination_pairs = list(filter_pairs)
+    if snapshot_id:
+        pagination_pairs.append(("snapshot", snapshot_id))
+    pagination_query = urlencode(pagination_pairs)
+
+    page_start = page * page_size + 1 if all_items else 0
+    page_end = page * page_size + len(all_items)
 
     return render_template(
         "vacancies_unified.html",
@@ -1030,12 +1038,22 @@ def vacancies():
         source_options=source_options,
         source_results=source_results,
         page=page,
+        page_size=page_size,
+        page_start=page_start,
+        page_end=page_end,
         has_next=has_next,
-        total=total,
+        total=provider_reported_total,
+        provider_reported_total=provider_reported_total,
+        known_unique_total=known_unique_total,
+        total_is_exact=total_is_exact,
+        snapshot_bounded=snapshot_bounded,
+        snapshot_id=snapshot_id,
+        snapshot_restarted=snapshot_restarted,
         errors=errors,
         search_requested=search_requested,
         cache_note=cache_note,
         filter_query=filter_query,
+        pagination_query=pagination_query,
         show_manual_refresh=not SETTINGS.is_production,
         deduplication_stats=deduplication_stats,
     )
@@ -1380,6 +1398,43 @@ def health_search_dedup():
             "Counts describe only the vacancy candidates fetched for the latest "
             "search page after canonical filtering; provider-reported global totals "
             "are not scanned here."
+        ),
+    }, 200
+
+
+@app.get("/health/search-pagination")
+@limiter.limit("120 per 5 minutes")
+def health_search_pagination():
+    """Return secret-free SEARCH-003 state for one opaque snapshot ID."""
+
+    snapshot_id = str(request.args.get("snapshot") or "").strip()
+    if not snapshot_id or len(snapshot_id) > 64:
+        return {
+            "ok": False,
+            "status": "invalid_request",
+            "package": "SEARCH-003",
+            "request_id": current_request_id(),
+            "error": "snapshot is required",
+        }, 400
+    summary = STORAGE.search_snapshots.aggregate_summary(snapshot_id)
+    if summary is None:
+        return {
+            "ok": False,
+            "status": "not_found",
+            "package": "SEARCH-003",
+            "request_id": current_request_id(),
+        }, 404
+    return {
+        "ok": True,
+        "status": "ok",
+        "service": SETTINGS.service_name,
+        "package": "SEARCH-003",
+        "request_id": current_request_id(),
+        "scope": "bounded_persistent_search_snapshot",
+        "snapshot": summary,
+        "note": (
+            "provider_reported_total is approximate until all source cursors are exhausted; "
+            "known_unique_total counts stable materialized cards after canonical filters and dedup."
         ),
     }, 200
 

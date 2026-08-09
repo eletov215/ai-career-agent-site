@@ -22,6 +22,18 @@ services:
         value: json
       - key: LOG_LEVEL
         value: INFO
+      - key: SEARCH_SNAPSHOT_TTL_SECONDS
+        value: "1800"
+      - key: SEARCH_SNAPSHOT_MAX_CANDIDATES
+        value: "1200"
+      - key: SEARCH_SNAPSHOT_MAX_PAGES_PER_SOURCE
+        value: "8"
+      - key: SEARCH_SNAPSHOT_MAX_ROUNDS_PER_REQUEST
+        value: "3"
+      - key: SEARCH_SNAPSHOT_BUFFER_ITEMS
+        value: "1"
+      - key: SEARCH_SNAPSHOT_EXTENSION_LEASE_SECONDS
+        value: "90"
       - key: TRUDVSEM_SYNC_ENABLED
         value: "1"
       - key: TRUDVSEM_SYNC_INTERVAL

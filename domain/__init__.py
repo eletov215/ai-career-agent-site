@@ -12,6 +12,10 @@ from .vacancy_contract import (
 )
 from .entities import (
     OAuthConnectionRecord,
+    SearchSnapshotCandidateRecord,
+    SearchSnapshotItemRecord,
+    SearchSnapshotRecord,
+    SearchSnapshotSourceRecord,
     SourceRecord,
     SyncCheckpointRecord,
     SyncRunRecord,
@@ -19,7 +23,6 @@ from .entities import (
     UserRecord,
     VacancyRecord,
 )
-
 __all__ = [
     "CONTRACT_VERSION",
     "EMPLOYMENT_VALUES",
@@ -30,6 +33,10 @@ __all__ = [
     "NormalizedVacancy",
     "WorkFormat",
     "OAuthConnectionRecord",
+    "SearchSnapshotCandidateRecord",
+    "SearchSnapshotItemRecord",
+    "SearchSnapshotRecord",
+    "SearchSnapshotSourceRecord",
     "SourceRecord",
     "SyncCheckpointRecord",
     "SyncRunRecord",

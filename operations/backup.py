@@ -40,6 +40,10 @@ _INVENTORY_TABLES = (
     "vacancy_source_records",
     "sync_runs",
     "sync_checkpoints",
+    "search_snapshots",
+    "search_snapshot_sources",
+    "search_snapshot_candidates",
+    "search_snapshot_items",
     "accounts",
     "hh_accounts",
 )

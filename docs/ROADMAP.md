@@ -2,16 +2,16 @@
 
 | Поле | Значение |
 |---|---|
-| Версия | 1.4.7 |
+| Версия | 1.4.9 |
 | Дата | 2026-08-09 |
 | Источник | `docs/PLAN_CURRENT.md` |
-| Текущий gate | SEARCH-002 GitHub/Render verification |
+| Текущий gate | SEARCH-003 GitHub/Render verification |
 
 ## 1. Функциональная очередь без аренды VPS
 
 ```text
-SEARCH-002 verification
-→ SEARCH-003 → SEARCH-004
+SEARCH-003 verification
+→ SEARCH-004
 → AUTH-001 → AUTH-002
 → PROF-001 → PROF-002 → PROF-003 → PRIV-001
 → SEARCH-005
@@ -36,7 +36,28 @@ INFRA-001 → REED-COMPAT-001 → HOST-001
 | DOC-001 | В РАБОТЕ | Единый DOC-STD-001 с каждым package |
 | SYNC-001 / SYNC-002 | ВЫПОЛНЕНО | External worker и incremental lifecycle |
 | SEARCH-001 | ВЫПОЛНЕНО | Typed contract и canonical filters |
-| SEARCH-002 | НУЖНА ПРОВЕРКА | CI + Render multi-source dedup smoke |
-| SEARCH-003 | ГОТОВО ПОСЛЕ SEARCH-002 | Stable pagination/sort/total после dedup |
+| SEARCH-002 | ВЫПОЛНЕНО | Conservative reversible cross-source dedup |
+| SEARCH-003 | НУЖНА ПРОВЕРКА | CI + Render revision 0007 + cross-page smoke |
 | SEARCH-004/005 | ЗАПЛАНИРОВАНО | Canonical route/admin source status |
 | INFRA-001 | ОТЛОЖЕНО | Real VPS перед beta |
+
+## 4. SEARCH-003 gate
+
+```text
+persistent bounded snapshot
++ per-provider cursor state
++ canonical filter/dedup before ordinal
++ deterministic global sort
++ committed page prefix
++ honest totals
++ TTL cleanup
+```
+
+Пакет закрывается только после зелёного CI и production проверки page 0 → page 1 → page 0 с одним snapshot ID.
+
+## 5. Ограничения
+
+- Exact total не вычисляется массовым synchronous scan upstream.
+- `/vacancies/internal` остаётся до SEARCH-004.
+- Dedup thresholds SEARCH-002 не меняются.
+- Real VPS остаётся предрелизным gate.

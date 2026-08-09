@@ -644,11 +644,22 @@ def _source_record(item: Mapping[str, Any]) -> dict[str, Any]:
 
 def _group_id(items: Sequence[Mapping[str, Any]]) -> str:
     identities: list[str] = []
-    for item in items:
+    for index, item in enumerate(items):
         stable_identity = clean_text(item.get("external_id") or item.get("url"))
         if not stable_identity:
             identity = build_dedup_identity(item)
-            stable_identity = identity.strict_key or f"{identity.title_key}:{identity.company_key}"
+            anonymous_key = clean_text(item.get("_dedup_anonymous_key"))
+            if anonymous_key:
+                stable_identity = (
+                    f"{anonymous_key}:"
+                    f"{identity.strict_key or identity.title_key}"
+                )
+            else:
+                # Defensive fallback for callers that bypass identity collapse.
+                stable_identity = (
+                    f"anonymous:{index}:"
+                    f"{identity.strict_key or f'{identity.title_key}:{identity.company_key}'}"
+                )
         identities.append(f"{_source(item)}:{stable_identity}")
     return f"dedup-v{DEDUP_VERSION}-{_hash_key(*sorted(identities))[:20]}"
 
@@ -716,6 +727,7 @@ def _merge_group(
     identity = build_dedup_identity(merged)
     group_id = _group_id(items)
 
+    merged.pop("_dedup_anonymous_key", None)
     merged.update(
         {
             "dedup_key": identity.strict_key,
@@ -747,8 +759,18 @@ def _identity_key(
     source = _source(item) or "unknown"
     stable = clean_text(item.get("external_id") or item.get("url"))
     if not stable:
-        identity = build_dedup_identity(item)
-        stable = identity.strict_key or f"anonymous:{index}"
+        # Same-provider identity collapsing must never infer identity from a
+        # semantic fingerprint. Two anonymous publications from one provider
+        # can legitimately share title/company/location signals, especially
+        # for remote roles. Snapshot page/position is preferred because it
+        # survives repeated materialization; the input ordinal is a deterministic
+        # fallback for non-snapshot callers.
+        provider_page = item.get("_snapshot_provider_page")
+        provider_position = item.get("_snapshot_provider_position")
+        if provider_page is not None or provider_position is not None:
+            stable = f"anonymous:{int(provider_page or 0)}:{int(provider_position or 0)}"
+        else:
+            stable = f"anonymous:{index}"
     return source, stable
 
 
@@ -759,13 +781,16 @@ def _collapse_identity_duplicates(
     duplicates = 0
     for index, item in enumerate(items):
         key = _identity_key(item, index)
+        candidate = dict(item)
+        if key[1].startswith("anonymous:"):
+            candidate["_dedup_anonymous_key"] = key[1]
         existing = by_identity.get(key)
         if existing is None:
-            by_identity[key] = item
+            by_identity[key] = candidate
             continue
         duplicates += 1
-        if _completeness_score(item) > _completeness_score(existing):
-            by_identity[key] = item
+        if _completeness_score(candidate) > _completeness_score(existing):
+            by_identity[key] = candidate
     return list(by_identity.values()), duplicates
 
 

@@ -6,6 +6,12 @@ from .oauth_connection import OAuthConnection
 from .sync_checkpoint import SyncCheckpoint
 from .sync_run import SyncRun
 from .sync_worker import SyncWorker
+from .search_snapshot import (
+    SearchSnapshot,
+    SearchSnapshotCandidate,
+    SearchSnapshotItem,
+    SearchSnapshotSource,
+)
 from .user import User
 from .vacancy import Vacancy, VacancySourceRecord
 
@@ -17,6 +23,10 @@ __all__ = [
     "SyncCheckpoint",
     "SyncRun",
     "SyncWorker",
+    "SearchSnapshot",
+    "SearchSnapshotCandidate",
+    "SearchSnapshotItem",
+    "SearchSnapshotSource",
     "User",
     "Vacancy",
     "VacancySourceRecord",

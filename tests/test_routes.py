@@ -641,3 +641,98 @@ def test_oversized_resume_is_rejected_before_pdf_parsing(client, csrf_token):
 
     assert response.status_code == 413
     assert "8 МБ" in response.get_json()["error"]
+
+
+def test_search003_snapshot_pagination_links_and_health_endpoint(
+    app_module,
+    client,
+    monkeypatch,
+):
+    from datetime import datetime, timedelta, timezone
+    from services.search_aggregation import SearchAggregationService
+
+    now = datetime.now(timezone.utc)
+
+    class PagedHHProvider:
+        def search(self, *, filters, page=0):
+            page_items = []
+            for offset in range(2):
+                index = page * 2 + offset
+                if index >= 4:
+                    break
+                page_items.append(
+                    {
+                        "external_id": f"search003-{index}",
+                        "source": "hh",
+                        "source_title": "HeadHunter",
+                        "title": f"SEARCH003 stable role {index}",
+                        "company": "Snapshot Test",
+                        "location": "Москва",
+                        "work_format": "remote",
+                        "employment_code": "full",
+                        "experience_code": "between_1_and_3",
+                        "published_at": (
+                            now - timedelta(minutes=index)
+                        ).isoformat(),
+                        "url": f"https://hh.example.test/search003-{index}",
+                        "source_status": "active",
+                    }
+                )
+            return SearchResult(
+                items=page_items,
+                total=4,
+                page=page,
+                pages=2,
+                has_next=page == 0,
+            )
+
+    monkeypatch.setattr(app_module, "HH_APP_TOKEN", "test-hh-token")
+    monkeypatch.setattr(
+        app_module,
+        "HeadHunterProvider",
+        lambda *args, **kwargs: PagedHHProvider(),
+    )
+    monkeypatch.setattr(
+        app_module,
+        "SEARCH_AGGREGATION",
+        SearchAggregationService(
+            app_module.STORAGE.search_snapshots,
+            page_size=2,
+            ttl_seconds=900,
+            max_candidates=20,
+            max_rounds_per_request=2,
+        ),
+    )
+
+    first = client.get(
+        "/vacancies/internal?search=1&source=hh&keyword=SEARCH003"
+    )
+    first_body = first.get_data(as_text=True)
+    assert first.status_code == 200
+    assert "SEARCH003 stable role 0" in first_body
+    assert "SEARCH003 stable role 1" in first_body
+    assert "SEARCH003 stable role 2" not in first_body
+    snapshot_match = re.search(r"snapshot=([0-9a-f-]{36})", first_body)
+    assert snapshot_match
+    snapshot_id = snapshot_match.group(1)
+
+    second = client.get(
+        "/vacancies/internal?search=1&source=hh&keyword=SEARCH003"
+        f"&snapshot={snapshot_id}&page=1"
+    )
+    second_body = second.get_data(as_text=True)
+    assert second.status_code == 200
+    assert "SEARCH003 stable role 0" not in second_body
+    assert "SEARCH003 stable role 2" in second_body
+    assert "SEARCH003 stable role 3" in second_body
+
+    status = client.get(f"/health/search-pagination?snapshot={snapshot_id}")
+    payload = status.get_json()
+    assert status.status_code == 200
+    assert payload["package"] == "SEARCH-003"
+    assert payload["snapshot"]["known_unique_total"] == 4
+    assert payload["snapshot"]["total_is_exact"] is True
+    assert payload["snapshot"]["sources"]["hh"]["fetched_pages"] == 2
+    response_text = status.get_data(as_text=True)
+    assert "SEARCH003" not in response_text
+    assert "keyword" not in response_text

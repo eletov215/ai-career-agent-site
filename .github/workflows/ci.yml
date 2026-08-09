@@ -148,6 +148,16 @@ jobs:
           tests/test_vacancy_store.py
           tests/test_repositories.py
 
+      - name: Verify SEARCH-003 stable pagination and totals controls
+        run: >-
+          python -m pytest -q
+          tests/test_search_pagination.py
+          tests/test_routes.py
+          tests/test_observability.py
+          tests/test_config.py
+          tests/test_database.py
+          tests/test_postgresql_integration.py
+
       - name: Verify PostgreSQL encrypted backup and restore
         env:
           DATABASE_URL: ${{ env.POSTGRES_TEST_URL }}
