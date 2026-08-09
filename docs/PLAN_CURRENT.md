@@ -3,15 +3,15 @@
 | Поле | Значение |
 |---|---|
 | Документ | PLAN_CURRENT |
-| Версия | 1.4.5 |
-| Дата | 08 августа 2026 |
+| Версия | 1.4.7 |
+| Дата | 09 августа 2026 |
 | Статус | ДЕЙСТВУЮЩИЙ |
-| Основа кода | `ai-career-agent-site-main (11).zip` — актуальный GitHub `main` после закрытия SYNC-002; поверх него реализован кандидат SEARCH-001 |
-| Следующий gate | Проверка `SEARCH-001` в GitHub Actions и на Render; после подтверждения — `SEARCH-002` |
+| Основа кода | `ai-career-agent-site-main (12).zip` из актуального GitHub `main`; поверх подтверждённого SEARCH-001 реализован candidate SEARCH-002 с Alembic revision `20260809_0006` |
+| Следующий gate | `SEARCH-002` — GitHub/Render verification консервативной cross-source deduplication; после подтверждения — `SEARCH-003` |
 
 > ОБЯЗАТЕЛЬНО ДЛЯ КАЖДОГО НОВОГО ЧАТА: прочитать этот план, новый паспорт и актуальный архив. После завершения любого пункта вернуть обновлённые DOCX/PDF/Markdown, новый ZIP, доказательства проверки и запись в журнале версий.
 
-> КОНТРОЛЬНЫЕ СТАТУСЫ ЭТОЙ ВЕРСИИ: `FND-001`, `FND-002`, `DATA-001`, `DATA-002`, `SEC-001`, `OPS-001`, `INFRA-PREP-001`, `SYNC-001` и `SYNC-002` — **ВЫПОЛНЕНО**; `SEARCH-001` — **НУЖНА ПРОВЕРКА**; `SEARCH-002` — **ЗАПЛАНИРОВАНО**; `DOC-001` — **В РАБОТЕ как постоянный процесс**; `INFRA-001` — **ОТЛОЖЕНО ДО ПРЕДРЕЛИЗНОГО ЭТАПА**. Документы с версией ниже `1.4.5` считаются устаревшими для определения очереди разработки.
+> КОНТРОЛЬНЫЕ СТАТУСЫ ЭТОЙ ВЕРСИИ: `FND-001`, `FND-002`, `DATA-001`, `DATA-002`, `SEC-001`, `OPS-001`, `INFRA-PREP-001`, `SYNC-001`, `SYNC-002` и `SEARCH-001` — **ВЫПОЛНЕНО**; `SEARCH-002` — **НУЖНА ПРОВЕРКА**; `SEARCH-003` — **ГОТОВО К СТАРТУ ПОСЛЕ ПОДТВЕРЖДЕНИЯ SEARCH-002**; `DOC-001` — **В РАБОТЕ как постоянный процесс**; `INFRA-001` — **ОТЛОЖЕНО ДО ПРЕДРЕЛИЗНОГО ЭТАПА**. Документы с версией ниже `1.4.7` считаются устаревшими для определения очереди разработки.
 
 ## 1. Источник истины и аудит источников
 
@@ -20,7 +20,7 @@
 - Канонический план определяется наибольшей версией и датой; старые дубликаты не должны оставаться действующими.
 - Перед DATA-002 проверено, что актуальный код находится в `ai-career-agent-site-main (1).zip` и соответствует завершённому DATA-001.
 - Загруженные планы/паспорт были устаревшими: они содержали версии 1.0.0/1.0.1 и раннее состояние HH 403, не отражали подтверждение FND-001/FND-002 и согласованную стратегию собственного домена/VPS.
-- Версия 1.4.5 реализует кандидат SEARCH-001 поверх подтверждённой схемы `20260807_0004`. Добавлены typed `NormalizedVacancy`, централизованная нормализация зарплаты/валюты/дат/текста, canonical codes для формата работы, занятости и опыта, additive migration `20260808_0005`, provider adapters и единая post-aggregation filter policy. Пакет не объявляется выполненным до зелёного GitHub CI и Render smoke с revision `20260808_0005`. Cross-source dedup намеренно остаётся SEARCH-002; предыдущие пакеты и принятый Trudvsem provider-risk не пересматриваются.
+- Версия 1.4.7 реализует SEARCH-002 поверх подтверждённого canonical contract SEARCH-001. Добавлены консервативный cross-source fingerprint/similarity service, complete-link grouping, explainability metadata, сохранение всех provider URLs, deterministic primary source, persistence exact-match grouping и отдельный CI gate. Same-provider публикации, разные seniority/location/canonical codes или конфликтующие зарплаты не объединяются. Additive migration `20260809_0006` добавляет nullable dedup metadata без historical guessing; production до merge остаётся на `20260808_0005`. Пакет остаётся в статусе НУЖНА ПРОВЕРКА до зелёного GitHub Actions и Render search smoke.
 
 ## 2. Обязательный протокол работы
 
@@ -69,7 +69,7 @@
 | Резюме | PDF extraction на pypdf и browser resume builder; LLM пока нет. |
 | Тесты | GitHub Actions, unit/provider/route/config/database/migration/security/observability/backup tests. |
 | Hosting | Render временно используется как staging/резервная площадка. Для production требуется проверенный VPS с доступностью из РФ/РБ, собственный домен и план миграции. |
-| Текущая схема | Alembic candidate `20260808_0005`: canonical vacancy codes поверх incremental checkpoints/lifecycle `0004`. |
+| Текущая схема | Production `20260808_0005`; SEARCH-002 candidate `20260809_0006` добавляет dedup metadata поверх canonical vacancy contract. |
 
 ### 5.1 Выполнено/частично
 
@@ -77,7 +77,7 @@
 - BASE-002: единый поиск по текущим providers - реализован в текущем объёме.
 - BASE-003: HH/SJ OAuth и encryption - частично, нужен User binding/E2E.
 - BASE-004: Trudvsem cache, внешний worker и SYNC-002 incremental checkpoint/retry/lifecycle policy реализованы и подтверждены; внешний success-smoke Trudvsem повторяется на российском VPS без блокировки текущей разработки.
-- BASE-005: SEARCH-001 candidate вводит единый typed provider contract и canonical filtering; cross-source dedup/pagination остаются SEARCH-002/003.
+- BASE-005: SEARCH-001 typed contract и canonical filtering подтверждены; SEARCH-002 candidate добавляет консервативную cross-source deduplication, reversible canonical grouping, explainability и сохранение всех source links; stable pagination/total остаётся SEARCH-003.
 - BASE-006: PDF parse - частично, это не AI.
 - BASE-007: resume builder/live preview/PDF/mobile - реализовано.
 - BASE-008: спокойные homepage transitions/reduced motion - реализовано.
@@ -129,9 +129,9 @@ MVP не готов, если работает только отдельная �
 |---|---|---|---|
 | SYNC-001 | P0 | ВЫПОЛНЕНО | Durable queue и внешний worker подтверждены GitHub CI и production Render; cache переживает restart |
 | SYNC-002 | P1 | ВЫПОЛНЕНО | GitHub CI и Render revision 0004 подтверждены; checkpoint/retry/restart persistence проверены на реальных upstream timeouts; внешний success-smoke перенесён в INFRA-001/OPS-002 |
-| SEARCH-001 | P0 | НУЖНА ПРОВЕРКА | Typed `NormalizedVacancy`, central normalizer, canonical code columns `0005`, provider adapters и contract tests реализованы |
-| SEARCH-002 | P0 | ЗАПЛАНИРОВАНО | Дедупликация между источниками |
-| SEARCH-003 | P0 | ЗАПЛАНИРОВАНО | Стабильная пагинация, сортировка и итоговые счётчики |
+| SEARCH-001 | P0 | ВЫПОЛНЕНО | Typed `NormalizedVacancy`, central normalizer, canonical code columns `0005`, provider adapters, CI и Render/search smoke подтверждены |
+| SEARCH-002 | P0 | НУЖНА ПРОВЕРКА | Консервативная cross-source deduplication с explainability и сохранением всех source links |
+| SEARCH-003 | P0 | ГОТОВО К СТАРТУ ПОСЛЕ SEARCH-002 | Стабильная пагинация, сортировка и итоговые счётчики |
 | SEARCH-004 | P1 | ЗАПЛАНИРОВАНО | Основной маршрут /vacancies и честные состояния источников |
 | SEARCH-005 | P1 | ЗАПЛАНИРОВАНО | Центр состояния источников для администратора |
 
@@ -324,7 +324,7 @@ MVP не готов, если работает только отдельная �
 
 **Реализация:** Канонические PLAN_CURRENT и паспорт обновляются после каждого архитектурного решения; README/ROADMAP/CHANGELOG и package-specific docs синхронизируются вместе с ближайшим кодовым пакетом, чтобы документация и код проходили один CI/merge cycle.
 
-**Текущее состояние:** PLAN_CURRENT 1.4.5 и паспорт 2.19 фиксируют SEARCH-001 как НУЖНА ПРОВЕРКА. Repository docs, contract reference, implementation report и verification runbook включены в один candidate merge.
+**Текущее состояние:** PLAN_CURRENT 1.4.7 и паспорт 2.21 фиксируют SEARCH-001 как ВЫПОЛНЕНО, SEARCH-002 как НУЖНА ПРОВЕРКА и SEARCH-003 как следующий gate после подтверждения. Repository/package docs синхронизированы в одном candidate merge.
 
 **Влияние на сайт:** Нет.
 
@@ -417,7 +417,7 @@ MVP не готов, если работает только отдельная �
 #### SEARCH-001 - Единая схема вакансии и нормализация данных
 
 **Приоритет:** P0  
-**Статус:** НУЖНА ПРОВЕРКА
+**Статус:** ВЫПОЛНЕНО
 
 **Цель:** Убрать provider-specific трактовку одинаковых полей и дать HH, SuperJob, Reed и Trudvsem единый typed contract для зарплаты, валюты, даты, формата работы, занятости, опыта и lifecycle.
 
@@ -436,7 +436,7 @@ MVP не готов, если работает только отдельная �
 
 **Влияние на сайт:** URL и визуальный layout не меняются. Фильтры remote/hybrid/onsite, employment, experience, salary/currency и period получают одинаковую semantics у всех источников. Unknown остаётся unknown; existing cache не обнуляется.
 
-**Локальные доказательства:** полный доступный pytest — `139 passed, 6 skipped`; SEARCH-001 focused suite — `29 passed`; SQLite upgrade/check/downgrade/re-upgrade до `20260808_0005` пройдены; workflow YAML и compileall проходят. Локальные skips относятся к Flask/Psycopg/PostgreSQL scenarios, которые обязан выполнить GitHub Actions.
+**Доказательства:** локально пройдены `139 passed, 6 skipped`, focused SEARCH-001 suite и migration round-trip до `20260808_0005`. Первый GitHub run выявил только устаревший SEC-001 fixture: запрос `keyword=python` ожидал mock-вакансию без слова Python; fixture исправлен без изменения production-кода. Повторный GitHub Actions полностью зелёный, включая отдельный SEARCH-001 gate, PostgreSQL migration/integration, SEC/OPS/SYNC, encrypted backup/restore, Docker/Compose и полный pytest. Render `/health/ready` подтвердил `backend=postgresql`, `persistent=true`, `current_revision=expected_revision=20260808_0005`, `migrations.ok=true`. Пользовательский production smoke подтвердил штатную выдачу и filters `remote`/`onsite`, `experience=between_1_and_3`, `employment=full`.
 
 **Критерии завершения:**
 
@@ -451,24 +451,61 @@ MVP не готов, если работает только отдельная �
 
 **Rollback:** откатить application commit, сохранив additive `0005` columns. Schema downgrade до `0004` выполнять только после verified backup и только если старый код уже развернут; vacancy cache не очищать.
 
-**Зависимости:** DATA-002 и SYNC-002 выполнены. После подтверждения SEARCH-001 следующий пакет — SEARCH-002.
+**Зависимости:** DATA-002 и SYNC-002 выполнены. SEARCH-001 закрыт; следующий пакет — SEARCH-002.
 
 #### SEARCH-002 - Дедупликация между источниками
 
-**Приоритет:** P0
-**Статус:** ЗАПЛАНИРОВАНО
+**Приоритет:** P0  
+**Статус:** НУЖНА ПРОВЕРКА
 
-**Цель:** Не показывать одну вакансию несколько раз из разных площадок.
+**Цель:** Не показывать одну и ту же вакансию несколько раз, когда она опубликована на HH, Reed, SuperJob и/или Trudvsem, при этом не склеивать разные роли и не терять исходные ссылки.
 
-**Реализация:** Fingerprint по нормализованным полям и осторожная similarity; хранить несколько source records.
+**Реализация:**
 
-**Влияние на код:** deduplication service, Vacancy/SourceRecord, search service, presenter, tests.
+- добавлен `services/vacancy_deduplication.py` с versioned candidate key, hard gates и осторожной title/company similarity;
+- same-provider identity duplicates схлопываются только по одинаковому `source + external_id`; разные IDs одного provider не объединяются;
+- employer/title/location/work format/employment/experience/seniority/publication date/salary используются как объяснимые признаки, а unknown не превращается в догадку;
+- grouping использует complete-link rule: новый элемент должен совпасть со всеми членами группы, поэтому transitive overmerge не допускается;
+- primary card выбирается детерминированно по completeness, recency и фиксированному source priority;
+- каждая объединённая карточка сохраняет `source_records`, provider URLs/IDs, `dedup_group_id`, `dedup_key` и bounded `deduplication` metadata;
+- дополнительные provider links проходят HTTP/HTTPS validation и не допускают URL credentials;
+- search route выполняет dedup после canonical filters и до общей сортировки/presentation;
+- migration `20260809_0006` добавляет nullable `dedup_key`/`dedup_version` и non-unique indexes в `vacancies` и `vacancy_source_records` без historical backfill;
+- `VacancyStore`/`VacancyRepository` связывают доказанные cross-source duplicates с одной canonical `Vacancy`, сохраняя несколько `VacancySourceRecord`;
+- persisted grouping обратим: если обновлённый source перестал совпадать со всеми активными членами группы, он отделяется в собственную canonical vacancy, а прежняя canonical перестраивается из оставшихся source rows;
+- шаблон показывает stacked provider logos, корректный счётчик площадок и раскрываемый список исходных публикаций;
+- GitHub workflow получает отдельный gate `Verify SEARCH-002 cross-source deduplication controls`.
 
-**Влияние на сайт:** Выдача короче и чище; карточка может показать несколько источников.
+**Консервативные запреты merge:**
 
-**Критерии готовности:** Known duplicates объединяются, разные роли не склеиваются, решение объяснимо.
+- разные seniority (`junior`/`senior`/`lead` и т. п.);
+- разные onsite locations;
+- конфликтующие canonical work/employment/experience codes;
+- разные валюты или явно несовместимые зарплатные интервалы;
+- публикации одного provider с разными external IDs;
+- placeholder employer, пустой title или generic role без дополнительного description/salary evidence.
 
-**Зависимости:** SEARCH-001, DATA-002.
+**Влияние на код:** `database.py`, `domain/entities.py`, `models/vacancy.py`, migration `20260809_0006`, `services/vacancy_deduplication.py`, `services/vacancy_store.py`, `repositories/vacancies.py`, `services/vacancy_presenter.py`, `app.py`, `templates/vacancies_unified.html`, `static/theme.css`, tests, CI и docs.
+
+**Влияние на сайт:** High-confidence дубли между площадками отображаются одной карточкой; пользователь видит число площадок и может открыть каждую исходную публикацию. URL `/vacancies/internal`, filters и общий layout сохраняются. Итоговый provider `total` остаётся approximate до SEARCH-003.
+
+**Локальные доказательства candidate:** SEARCH-002 dedup/migration suite — `15 passed`; presenter suite — `5 passed`; provider/search normalization/filter, repository/store/sync migration regressions пройдены; compile, Jinja parse, SQLite migration `0005 -> 0006 -> 0005 -> 0006` и Alembic check пройдены. Flask/Psycopg/PostgreSQL/Docker scenarios должен подтвердить GitHub Actions.
+
+**Критерии завершения:**
+
+1. GitHub Actions зелёный, включая отдельный SEARCH-002 gate, PostgreSQL migration/integration, SEC/OPS/SYNC/SEARCH-001 regressions, backup/restore и container smoke.
+2. Render `/health/ready` показывает `current_revision=expected_revision=20260809_0006`, PostgreSQL `persistent=true`.
+3. Production search не даёт HTTP 500 и существующие filters/cards остаются работоспособными.
+4. Контрольная cross-source duplicate pair отображается одной карточкой с несколькими source links либо positive semantics подтверждены CI fixture при отсутствии реальной пары.
+5. Контрольные разные вакансии (seniority/location/currency/salary/provider identity) не склеиваются.
+6. Persisted exact group хранит несколько source rows и корректно split-ится после изменения роли.
+7. Provider URLs и identifiers сохраняются; решение explainable и source rows не удаляются.
+
+**Ограничения:** embeddings/AI merge и широкие company aliases не используются; similarity работает внутри текущего агрегированного набора; historical rows не объединяются массово. Global total/pagination после dedup относится к SEARCH-003.
+
+**Rollback:** откатить application commit и redeploy. Additive columns revision `0006` могут остаться. Controlled downgrade до `0005` выполняется только после verified backup и после развертывания совместимого старого кода. Existing cache/source rows не удалять.
+
+**Зависимости:** SEARCH-001 и DATA-002 выполнены. После подтверждения SEARCH-002 следующий пакет — SEARCH-003.
 
 #### SEARCH-003 - Стабильная пагинация, сортировка и итоговые счётчики
 
@@ -1349,7 +1386,6 @@ Render остаётся staging/резервной площадкой на пе�
 
 ```text
 DOC-001 (постоянная синхронизация, не блокирует код)
--> SEARCH-001
 -> SEARCH-002
 -> SEARCH-003
 -> SEARCH-004
@@ -1393,17 +1429,17 @@ INFRA-001 real VPS test
 
 ## 16. Следующий пакет
 
-`SYNC-002` остаётся **ВЫПОЛНЕНО** с принятым provider-smoke на будущем российском VPS.
+`SEARCH-001` остаётся **ВЫПОЛНЕНО**; production до merge работает на `20260808_0005`, SEARCH-002 candidate ожидает `20260809_0006`.
 
 Текущий candidate:
 
 ```text
-SEARCH-001 - Единая схема вакансии и нормализация данных
+SEARCH-002 - Дедупликация между источниками
 Статус: НУЖНА ПРОВЕРКА
-Alembic candidate: 20260808_0005
+Candidate migration: 20260809_0006
 ```
 
-Следующий gate: зелёный GitHub Actions, Render migration/health и multi-source search smoke. После подтверждения SEARCH-001 переводится в ВЫПОЛНЕНО, а `SEARCH-002` — в ГОТОВО К СТАРТУ. `DOC-001` остаётся постоянным процессом.
+Следующий gate: полностью зелёный GitHub Actions, Render readiness и production multi-source dedup smoke с положительным и отрицательным примером. После подтверждения SEARCH-002 переводится в ВЫПОЛНЕНО, а `SEARCH-003` — в ГОТОВО К СТАРТУ. `DOC-001` остаётся постоянным процессом.
 
 ## 17. Обязательный отчёт после каждого пакета
 
@@ -1451,3 +1487,5 @@ GitHub/production/API: <подтверждено или требуется>
 | 1.4.3 | 07.08.2026 | SYNC-002 | Добавлены migration 20260807_0004, persistent watermark/cursor, bounded modified windows, idempotent lifecycle upsert, retry/backoff, TTL closure и retention purge; пакет ожидает GitHub/Render verification. |
 | 1.4.4 | 08.08.2026 | SYNC-002-COMPLETE / SEARCH-001-PREP | GitHub CI и Render revision 0004 подтверждены; production доказал checkpoint/retry/backoff/cache/restart persistence на реальных Trudvsem timeouts. Остаточный successful provider-smoke принят и перенесён в INFRA-001/OPS-002; SEARCH-001 подготовлен и переведён в ГОТОВО К СТАРТУ. |
 | 1.4.5 | 08.08.2026 | SEARCH-001 | Добавлены typed `NormalizedVacancy`, central provider normalization, canonical vacancy codes и migration `20260808_0005`, exact-code filters, compatibility fallback, contract tests и единый документный шаблон v1.1. Статус — НУЖНА ПРОВЕРКА. |
+| 1.4.6 | 08.08.2026 | SEARCH-001-COMPLETE | Подтверждены зелёный CI, Render revision `20260808_0005` и production canonical filter smoke; SEARCH-002 готов к старту. |
+| 1.4.7 | 09.08.2026 | SEARCH-002 | Добавлены conservative cross-source fingerprint/similarity, complete-link grouping, explainability, multi-source card/persistence integration и отдельный CI gate. Additive migration `20260809_0006` добавляет dedup metadata и reversible grouping; статус — НУЖНА ПРОВЕРКА. |

@@ -139,6 +139,15 @@ jobs:
           tests/test_vacancy_presenter.py
           tests/test_repositories.py
 
+      - name: Verify SEARCH-002 cross-source deduplication controls
+        run: >-
+          python -m pytest -q
+          tests/test_search_deduplication.py
+          tests/test_routes.py
+          tests/test_vacancy_presenter.py
+          tests/test_vacancy_store.py
+          tests/test_repositories.py
+
       - name: Verify PostgreSQL encrypted backup and restore
         env:
           DATABASE_URL: ${{ env.POSTGRES_TEST_URL }}

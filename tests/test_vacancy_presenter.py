@@ -47,3 +47,59 @@ def test_present_vacancy_cleans_html_and_builds_unique_labels():
         "Полная занятость",
         "Без опыта",
     ]
+
+
+def test_present_vacancy_exposes_grouped_sources_and_stable_save_key():
+    result = present_vacancy(
+        {
+            "source": "hh",
+            "source_title": "HeadHunter",
+            "external_id": "hh-1",
+            "title": "Python developer",
+            "company": "ACME",
+            "url": "https://hh.test/1",
+            "dedup_group_id": "dedup-v1-test",
+            "source_records": [
+                {
+                    "source": "hh",
+                    "source_title": "HeadHunter",
+                    "external_id": "hh-1",
+                    "url": "https://hh.test/1",
+                    "published_at": "2026-08-08T10:00:00Z",
+                },
+                {
+                    "source": "trudvsem",
+                    "source_title": "Работа России",
+                    "external_id": "tv-1",
+                    "url": "https://trudvsem.test/1",
+                    "published_at": "2026-08-08T09:00:00Z",
+                },
+            ],
+        }
+    )
+
+    assert result["source_count"] == 2
+    assert result["source_display"] == "2 источника"
+    assert [row["source"] for row in result["source_links"]] == ["hh", "trudvsem"]
+    assert result["save_key"] == "dedup-v1-test"
+
+
+def test_present_vacancy_uses_correct_russian_source_count_form():
+    source_records = [
+        {
+            "source": f"source-{index}",
+            "source_title": f"Источник {index}",
+            "external_id": str(index),
+            "url": f"https://example.test/{index}",
+        }
+        for index in range(5)
+    ]
+    result = present_vacancy(
+        {
+            "source": "source-0",
+            "title": "Role",
+            "company": "ACME",
+            "source_records": source_records,
+        }
+    )
+    assert result["source_display"] == "5 источников"

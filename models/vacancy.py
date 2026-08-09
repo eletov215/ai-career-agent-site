@@ -9,13 +9,14 @@ from .base import Base
 
 
 class Vacancy(Base):
-    """Canonical vacancy prepared for later cross-source deduplication."""
+    """Canonical vacancy that can aggregate proven source publications."""
 
     __tablename__ = "vacancies"
     __table_args__ = (
         UniqueConstraint("fingerprint", name="uq_vacancies_fingerprint"),
         Index("idx_vacancies_active_updated", "is_active", "updated_at"),
         Index("idx_vacancies_location", "location"),
+        Index("idx_vacancies_dedup_key", "dedup_key"),
         Index("idx_vacancies_work_format", "work_format"),
         Index("idx_vacancies_employment_code", "employment_code"),
         Index("idx_vacancies_experience_code", "experience_code"),
@@ -23,6 +24,8 @@ class Vacancy(Base):
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True)
     fingerprint: Mapped[str | None] = mapped_column(Text)
+    dedup_key: Mapped[str | None] = mapped_column(String(64))
+    dedup_version: Mapped[int | None] = mapped_column(Integer)
     title: Mapped[str] = mapped_column(Text, nullable=False)
     company: Mapped[str | None] = mapped_column(Text)
     salary_from: Mapped[float | None] = mapped_column(Float)
@@ -65,6 +68,7 @@ class VacancySourceRecord(Base):
         Index("idx_vacancy_source_records_source_fetched", "source", "fetched_at"),
         Index("idx_vacancy_source_records_remote", "remote"),
         Index("idx_vacancy_source_records_location", "location"),
+        Index("idx_vacancy_source_records_dedup_key", "dedup_key"),
         Index(
             "idx_vacancy_source_records_source_work_format",
             "source",
@@ -97,6 +101,8 @@ class VacancySourceRecord(Base):
     )
     source: Mapped[str] = mapped_column(Text, nullable=False)
     external_id: Mapped[str] = mapped_column(Text, nullable=False)
+    dedup_key: Mapped[str | None] = mapped_column(String(64))
+    dedup_version: Mapped[int | None] = mapped_column(Integer)
     title: Mapped[str] = mapped_column(Text, nullable=False)
     company: Mapped[str | None] = mapped_column(Text)
     salary_from: Mapped[float | None] = mapped_column(Float)

@@ -129,6 +129,60 @@ def _unique_labels(values: list[Any]) -> list[str]:
     return result
 
 
+
+def _source_count_label(count: int) -> str:
+    remainder_100 = count % 100
+    remainder_10 = count % 10
+    if 11 <= remainder_100 <= 14:
+        noun = "источников"
+    elif remainder_10 == 1:
+        noun = "источник"
+    elif 2 <= remainder_10 <= 4:
+        noun = "источника"
+    else:
+        noun = "источников"
+    return f"{count} {noun}"
+
+
+def _source_records(vacancy: dict[str, Any]) -> list[dict[str, Any]]:
+    raw_records = vacancy.get("source_records")
+    if not isinstance(raw_records, list) or not raw_records:
+        raw_records = [
+            {
+                "source": vacancy.get("source"),
+                "source_title": vacancy.get("source_title"),
+                "external_id": vacancy.get("external_id"),
+                "url": vacancy.get("url"),
+                "published_at": vacancy.get("published_at"),
+            }
+        ]
+
+    result: list[dict[str, Any]] = []
+    seen: set[tuple[str, str, str]] = set()
+    for raw in raw_records:
+        if not isinstance(raw, dict):
+            continue
+        source = str(raw.get("source") or "").strip().casefold()
+        source_title = _clean_text(raw.get("source_title")) or source
+        external_id = _clean_text(raw.get("external_id"))
+        url = _clean_text(raw.get("url"))
+        key = (source, external_id, url)
+        if key in seen:
+            continue
+        seen.add(key)
+        result.append(
+            {
+                **raw,
+                "source": source,
+                "source_title": source_title,
+                "external_id": external_id,
+                "url": url,
+                "published_display": format_published_at(raw.get("published_at")),
+            }
+        )
+    return result
+
+
 def present_vacancy(raw: dict[str, Any]) -> dict[str, Any]:
     vacancy = dict(raw)
     vacancy["title"] = _clean_text(vacancy.get("title")) or "Без названия"
@@ -171,6 +225,25 @@ def present_vacancy(raw: dict[str, Any]) -> dict[str, Any]:
         localize_label(vacancy.get("experience")),
     )
     vacancy["published_display"] = format_published_at(vacancy.get("published_at"))
+
+    source_records = _source_records(vacancy)
+    vacancy["source_records"] = source_records
+    vacancy["source_count"] = len({record["source"] for record in source_records if record["source"]}) or 1
+    vacancy["source_links"] = [record for record in source_records if record.get("url")]
+    vacancy["source_display"] = (
+        _source_count_label(vacancy["source_count"])
+        if vacancy["source_count"] > 1
+        else (
+            source_records[0]["source_title"]
+            if source_records
+            else vacancy.get("source_title", "")
+        )
+    )
+    vacancy["save_key"] = (
+        vacancy.get("dedup_group_id")
+        or vacancy.get("url")
+        or f"{vacancy.get('source', '')}:{vacancy.get('title', '')}:{vacancy.get('company', '')}"
+    )
 
     format_label = vacancy["work_format_display"]
     if not format_label:

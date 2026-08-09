@@ -28,6 +28,8 @@ class VacancyRepository(RepositoryBase):
         return VacancyRecord(
             id=row.id,
             fingerprint=row.fingerprint,
+            dedup_key=row.dedup_key,
+            dedup_version=row.dedup_version,
             title=row.title,
             company=row.company,
             salary_from=row.salary_from,
@@ -56,6 +58,8 @@ class VacancyRepository(RepositoryBase):
             vacancy_id=row.vacancy_id,
             source=row.source,
             external_id=row.external_id,
+            dedup_key=row.dedup_key,
+            dedup_version=row.dedup_version,
             title=row.title,
             company=row.company,
             salary_from=row.salary_from,
@@ -110,9 +114,117 @@ class VacancyRepository(RepositoryBase):
             ).all()
             return [self._source_record(row) for row in rows]
 
+
+    def list_sources_by_dedup_keys(self, dedup_keys: Iterable[str]) -> list[SourceRecord]:
+        keys = sorted({str(key).strip() for key in dedup_keys if str(key).strip()})
+        if not keys:
+            return []
+        with self.session() as session:
+            rows = session.scalars(
+                select(VacancySourceRecord)
+                .where(
+                    VacancySourceRecord.dedup_key.in_(keys),
+                    VacancySourceRecord.source_status == "active",
+                )
+                .order_by(
+                    VacancySourceRecord.dedup_key,
+                    VacancySourceRecord.first_seen_at,
+                    VacancySourceRecord.id,
+                )
+            ).all()
+            return [self._source_record(row) for row in rows]
+
+    def merge_source_record_group(
+        self,
+        *,
+        source_keys: Iterable[tuple[str, str]],
+        canonical_values: dict[str, Any],
+        dedup_key: str | None,
+        dedup_version: int | None,
+    ) -> str | None:
+        """Attach proven duplicate source rows to one canonical vacancy.
+
+        SEARCH-002 performs the decision outside the repository.  This method
+        only applies that explicit group and removes canonicals that become
+        orphaned after reassignment.
+        """
+
+        keys = sorted(
+            {
+                (str(source).strip(), str(external_id).strip())
+                for source, external_id in source_keys
+                if str(source).strip() and str(external_id).strip()
+            }
+        )
+        if len(keys) < 2:
+            return None
+        now = int(time.time())
+        with self.session() as session:
+            rows = session.scalars(
+                select(VacancySourceRecord)
+                .where(
+                    tuple_(
+                        VacancySourceRecord.source,
+                        VacancySourceRecord.external_id,
+                    ).in_(keys)
+                )
+                .order_by(VacancySourceRecord.first_seen_at, VacancySourceRecord.id)
+            ).all()
+            if len(rows) < 2 or len({row.source for row in rows}) < 2:
+                return None
+
+            canonical_rows = {
+                row.vacancy_id: session.get(Vacancy, row.vacancy_id)
+                for row in rows
+            }
+            target = min(
+                (row for row in rows if canonical_rows.get(row.vacancy_id) is not None),
+                key=lambda row: (
+                    canonical_rows[row.vacancy_id].created_at,
+                    row.first_seen_at,
+                    row.id,
+                ),
+                default=None,
+            )
+            if target is None:
+                return None
+            target_id = target.vacancy_id
+            target_canonical = canonical_rows[target_id]
+            old_ids = {row.vacancy_id for row in rows if row.vacancy_id != target_id}
+            for row in rows:
+                row.vacancy_id = target_id
+                row.dedup_key = dedup_key
+                row.dedup_version = dedup_version
+
+            values = dict(canonical_values)
+            values["dedup_key"] = dedup_key
+            values["dedup_version"] = dedup_version
+            for name, value in self._canonical_values(values, now=now).items():
+                setattr(target_canonical, name, value)
+            target_canonical.dedup_key = dedup_key
+            target_canonical.dedup_version = dedup_version
+
+            session.flush()
+            if old_ids:
+                session.execute(
+                    delete(Vacancy).where(
+                        Vacancy.id.in_(old_ids),
+                        ~exists(
+                            select(VacancySourceRecord.id).where(
+                                VacancySourceRecord.vacancy_id == Vacancy.id
+                            )
+                        ),
+                    )
+                )
+            self._refresh_canonical_activity(session, {target_id, *old_ids})
+            session.commit()
+            return target_id
+
     @staticmethod
     def _canonical_values(values: dict[str, Any], *, now: int) -> dict[str, Any]:
         return {
+            "dedup_key": values.get("dedup_key"),
+            "dedup_version": values.get("dedup_version"),
             "title": values["title"],
             "company": values.get("company"),
             "salary_from": values.get("salary_from"),
@@ -132,6 +244,181 @@ class VacancyRepository(RepositoryBase):
             "is_active": values.get("source_status", "active") == "active",
             "updated_at": now,
         }
+
+    @staticmethod
+    def _source_row_values(row: VacancySourceRecord) -> dict[str, Any]:
+        return {
+            "dedup_key": row.dedup_key,
+            "dedup_version": row.dedup_version,
+            "title": row.title,
+            "company": row.company,
+            "salary_from": row.salary_from,
+            "salary_to": row.salary_to,
+            "currency": row.currency,
+            "location": row.location,
+            "remote": bool(row.remote),
+            "work_format": row.work_format,
+            "employment_code": row.employment_code,
+            "experience_code": row.experience_code,
+            "schedule": row.schedule,
+            "employment": row.employment,
+            "experience": row.experience,
+            "description": row.description,
+            "requirements": row.requirements,
+            "published_at": row.published_at,
+            "source_status": row.source_status,
+        }
+
+    @staticmethod
+    def _source_row_score(row: VacancySourceRecord) -> tuple[int, int, str, str]:
+        score = 0
+        score += 3 if str(row.url or "").strip() else 0
+        score += 2 if row.salary_from is not None or row.salary_to is not None else 0
+        score += 1 if str(row.company or "").strip() else 0
+        score += 1 if str(row.location or "").strip() else 0
+        score += min(len(str(row.description or "")) // 180, 3)
+        score += min(len(str(row.requirements or "")) // 120, 2)
+        score += sum(
+            1
+            for value in (row.work_format, row.employment_code, row.experience_code)
+            if value not in (None, "", "unknown")
+        )
+        return score, int(row.last_seen_at or 0), row.source, row.external_id
+
+    @classmethod
+    def _merged_values_from_source_rows(
+        cls,
+        rows: list[VacancySourceRecord],
+    ) -> dict[str, Any]:
+        representative = max(rows, key=cls._source_row_score)
+        values = cls._source_row_values(representative)
+        fill_fields = (
+            "company",
+            "salary_from",
+            "salary_to",
+            "currency",
+            "location",
+            "work_format",
+            "employment_code",
+            "experience_code",
+            "schedule",
+            "employment",
+            "experience",
+        )
+        ordered = sorted(rows, key=cls._source_row_score, reverse=True)
+        for field in fill_fields:
+            if values.get(field) not in (None, "", "unknown"):
+                continue
+            for row in ordered:
+                candidate = getattr(row, field)
+                if candidate not in (None, "", "unknown"):
+                    values[field] = candidate
+                    break
+        for field in ("description", "requirements"):
+            values[field] = max(
+                (str(getattr(row, field) or "") for row in rows),
+                key=len,
+                default="",
+            )
+        published = [str(row.published_at) for row in rows if row.published_at]
+        values["published_at"] = max(published, default=None)
+        values["source_status"] = (
+            "active" if any(row.source_status == "active" for row in rows) else "closed"
+        )
+        active_keys = {
+            row.dedup_key
+            for row in rows
+            if row.source_status == "active" and row.dedup_key
+        }
+        if len(active_keys) == 1:
+            values["dedup_key"] = next(iter(active_keys))
+            values["dedup_version"] = max(
+                (int(row.dedup_version or 0) for row in rows),
+                default=0,
+            ) or None
+        else:
+            values["dedup_key"] = None
+            values["dedup_version"] = None
+        return values
+
+    def detach_source_record(
+        self,
+        *,
+        source: str,
+        external_id: str,
+        canonical_values: dict[str, Any],
+        dedup_key: str | None,
+        dedup_version: int | None,
+    ) -> str | None:
+        """Detach one changed publication from a previously merged canonical.
+
+        The operation makes SEARCH-002 grouping reversible.  Source rows are
+        never deleted; when a publication no longer matches every other active
+        member, it receives its own canonical vacancy before the update is
+        applied.
+        """
+
+        now = int(time.time())
+        source = str(source).strip()
+        external_id = str(external_id).strip()
+        if not source or not external_id:
+            return None
+        with self.session() as session:
+            row = session.scalar(
+                select(VacancySourceRecord).where(
+                    VacancySourceRecord.source == source,
+                    VacancySourceRecord.external_id == external_id,
+                )
+            )
+            if row is None:
+                return None
+            source_count = int(
+                session.scalar(
+                    select(func.count(VacancySourceRecord.id)).where(
+                        VacancySourceRecord.vacancy_id == row.vacancy_id
+                    )
+                )
+                or 0
+            )
+            if source_count <= 1:
+                return row.vacancy_id
+
+            previous_id = row.vacancy_id
+            new_id = str(uuid.uuid4())
+            values = dict(canonical_values)
+            values["dedup_key"] = dedup_key
+            values["dedup_version"] = dedup_version
+            new_canonical = Vacancy(
+                id=new_id,
+                fingerprint=(
+                    f"source:{source}:{external_id}:split:{uuid.uuid4().hex[:12]}"
+                ),
+                created_at=now,
+                **self._canonical_values(values, now=now),
+            )
+            session.add(new_canonical)
+            session.flush()
+            row.vacancy_id = new_id
+            row.dedup_key = dedup_key
+            row.dedup_version = dedup_version
+            session.flush()
+
+            remaining = session.scalars(
+                select(VacancySourceRecord)
+                .where(VacancySourceRecord.vacancy_id == previous_id)
+                .order_by(VacancySourceRecord.first_seen_at, VacancySourceRecord.id)
+            ).all()
+            previous = session.get(Vacancy, previous_id)
+            if previous is not None and remaining:
+                rebuilt = self._merged_values_from_source_rows(list(remaining))
+                for name, value in self._canonical_values(rebuilt, now=now).items():
+                    setattr(previous, name, value)
+                previous.dedup_key = rebuilt.get("dedup_key")
+                previous.dedup_version = rebuilt.get("dedup_version")
+
+            self._refresh_canonical_activity(session, {previous_id, new_id})
+            session.commit()
+            return new_id
 
     @staticmethod
     def _refresh_canonical_activity(session, vacancy_ids: set[str]) -> None:  # noqa: ANN001

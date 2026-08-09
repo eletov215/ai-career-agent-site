@@ -138,6 +138,94 @@ def test_one_provider_failure_does_not_hide_another_provider_result(
     assert "provider unavailable" not in body
 
 
+
+def test_cross_source_duplicates_render_once_with_all_source_links(
+    app_module,
+    client,
+    monkeypatch,
+):
+    from datetime import datetime, timezone
+
+    published = datetime.now(timezone.utc).isoformat()
+
+    class HHProvider:
+        def search(self, *, filters, page=0):
+            return SearchResult(
+                items=[
+                    {
+                        "external_id": "hh-dedup-1",
+                        "source": "hh",
+                        "source_title": "HeadHunter",
+                        "title": "SEARCH002 Unique Python backend developer",
+                        "company": "ООО ACME",
+                        "location": "Москва",
+                        "work_format": "remote",
+                        "employment_code": "full",
+                        "experience_code": "between_1_and_3",
+                        "salary_from": 180000,
+                        "salary_to": 240000,
+                        "currency": "RUB",
+                        "description": "Python API PostgreSQL integrations",
+                        "requirements": "Python SQL REST",
+                        "published_at": published,
+                        "url": "https://hh.example.test/dedup-1",
+                        "source_status": "active",
+                    }
+                ],
+                total=1,
+                page=page,
+                pages=1,
+                has_next=False,
+            )
+
+    class ReedProviderFake:
+        def search(self, *, filters, page=0):
+            return SearchResult(
+                items=[
+                    {
+                        "external_id": "reed-dedup-1",
+                        "source": "reed",
+                        "source_title": "Reed.co.uk",
+                        "title": "SEARCH002 Unique Python backend-разработчик",
+                        "company": "ACME",
+                        "location": "Россия",
+                        "work_format": "remote",
+                        "employment_code": "full",
+                        "experience_code": "between_1_and_3",
+                        "salary_from": 185000,
+                        "salary_to": 235000,
+                        "currency": "RUB",
+                        "description": "Python API PostgreSQL integrations",
+                        "requirements": "Python SQL REST",
+                        "published_at": published,
+                        "url": "https://reed.example.test/dedup-1",
+                        "source_status": "active",
+                    }
+                ],
+                total=1,
+                page=page,
+                pages=1,
+                has_next=False,
+            )
+
+    monkeypatch.setattr(app_module, "REED_API_KEY", "test-reed-key")
+    monkeypatch.setattr(app_module, "HH_APP_TOKEN", "test-hh-token")
+    monkeypatch.setattr(app_module, "ReedProvider", lambda *args, **kwargs: ReedProviderFake())
+    monkeypatch.setattr(app_module, "HeadHunterProvider", lambda *args, **kwargs: HHProvider())
+
+    response = client.get(
+        "/vacancies/internal?search=1&source=reed&source=hh&keyword=SEARCH002"
+    )
+    body = response.get_data(as_text=True)
+
+    assert response.status_code == 200
+    assert body.count("SEARCH002 Unique Python backend") == 1
+    assert "2 источника" in body
+    assert "Все площадки" in body
+    assert "https://hh.example.test/dedup-1" in body
+    assert "https://reed.example.test/dedup-1" in body
+    assert "Объединено повторов: 1" in body
+
 def test_sqlalchemy_account_storage_round_trip(app_module):
     from flask import session
 
