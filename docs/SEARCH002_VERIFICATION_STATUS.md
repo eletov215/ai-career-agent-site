@@ -59,6 +59,8 @@ Production migration уже подтверждена: `/health/ready` показ
 
 Для live dedup smoke SuperJob vacancy search переведён на app-level API access без обязательного user OAuth. OAuth SuperJob остаётся только для user-specific методов (резюме, contacts/applications). Это увеличивает шанс реальной duplicate-пары HH/SuperJob без искусственного login-gate.
 
+Для ускорения production-проверки добавлен временный browser-readable endpoint `GET /health/search-dedup`. Он не инициирует provider I/O и показывает только aggregate telemetry последнего завершённого поиска текущего web process: input/output, duplicate counts, cross-source groups, exact/similarity groups и число кандидатов по источникам. Keyword, region, salary и credentials в endpoint не сохраняются и не выдаются. Это verification aid; global/persistent search metrics остаются вне SEARCH-002.
+
 После merge hotfix:
 
 ```text
@@ -70,12 +72,14 @@ status            = ok
 
 Затем проверить:
 
-1. обычный поиск не даёт HTTP 500;
-2. known cross-source duplicate отображается один раз;
-3. карточка показывает минимум две площадки и обе исходные ссылки;
-4. разные seniority/location/currency/salary остаются отдельными;
-5. remote/onsite/hybrid и дополнительные filters продолжают работать;
-6. существующий cache и карточки визуально не повреждены.
+1. выполнить широкий поиск и открыть `/health/search-dedup`; `dedup.available=true` и `candidate_counts_by_source` подтверждают, какие площадки реально участвовали в fetched candidate set;
+2. `dedup.stats.cross_source_duplicate_count` показывает число публикаций разных площадок, объединённых алгоритмом, а `cross_source_groups` — число multi-source карточек;
+3. обычный поиск не даёт HTTP 500;
+4. known cross-source duplicate отображается один раз;
+5. карточка показывает минимум две площадки и обе исходные ссылки;
+6. разные seniority/location/currency/salary остаются отдельными;
+7. remote/onsite/hybrid и дополнительные filters продолжают работать;
+8. существующий cache и карточки визуально не повреждены.
 
 ## 6. Ограничения и риски
 
@@ -95,3 +99,4 @@ Application rollback может оставить additive columns `0006`. Schema
 |---|---|---|
 | 1.0 | 09.08.2026 | Candidate verification status создан для migration `0006` и reversible dedup. |
 | 1.0.1 | 09.08.2026 | Render `0006` подтверждён; SuperJob vacancy search отвязан от обязательного user OAuth для live dedup smoke. |
+| 1.0.2 | 09.08.2026 | Добавлен aggregate `/health/search-dedup` для быстрой production-проверки числа cross-source duplicates без ручного поиска карточки. |

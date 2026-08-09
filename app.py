@@ -939,9 +939,22 @@ def vacancies():
         # SEARCH-002: group only high-confidence cross-source duplicates.
         # Source publications remain attached to the representative card so the
         # decision is reversible and users can open any original listing.
+        candidate_counts_by_source: dict[str, int] = {}
+        for candidate in all_items:
+            source_key = str(candidate.get("source") or "unknown").strip() or "unknown"
+            candidate_counts_by_source[source_key] = (
+                candidate_counts_by_source.get(source_key, 0) + 1
+            )
+
         deduplication_result = deduplicate_vacancies(all_items)
         all_items = deduplication_result.items
         deduplication_stats = deduplication_result.stats.as_dict()
+        OPS_STATE.record_search_dedup(
+            page=page,
+            selected_sources=selected_sources,
+            candidate_counts_by_source=candidate_counts_by_source,
+            stats=deduplication_stats,
+        )
         logger.info(
             "Vacancy deduplication completed input=%s output=%s "
             "identity_duplicates=%s cross_source_duplicates=%s groups=%s",
@@ -1342,6 +1355,33 @@ def health_ready():
 def health():
     # Backwards-compatible readiness alias used by existing monitoring.
     return _readiness_response()
+
+
+@app.get("/health/search-dedup")
+@limiter.limit("120 per 5 minutes")
+def health_search_dedup():
+    """Expose aggregate SEARCH-002 results from the most recent completed search.
+
+    This endpoint never calls vacancy providers. It is intentionally limited to
+    counts and source names so it can be opened directly in a browser during
+    staging verification without exposing keywords, regions or credentials.
+    """
+
+    snapshot = OPS_STATE.search_dedup_snapshot()
+    return {
+        "ok": True,
+        "status": "ok",
+        "service": SETTINGS.service_name,
+        "package": "SEARCH-002",
+        "request_id": current_request_id(),
+        "scope": "last_completed_search_in_current_web_process",
+        "dedup": snapshot,
+        "note": (
+            "Counts describe only the vacancy candidates fetched for the latest "
+            "search page after canonical filtering; provider-reported global totals "
+            "are not scanned here."
+        ),
+    }, 200
 
 
 @app.get("/api/security/rate-limit-probe")

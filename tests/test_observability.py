@@ -114,6 +114,42 @@ def test_liveness_and_readiness_are_secret_free(client):
     assert "password" not in body.casefold()
 
 
+def test_search_dedup_health_snapshot_is_aggregate_and_secret_free(client):
+    OPS_STATE.record_search_dedup(
+        page=0,
+        selected_sources=["hh", "superjob"],
+        candidate_counts_by_source={"hh": 20, "superjob": 20},
+        stats={
+            "input_count": 40,
+            "output_count": 38,
+            "duplicate_count": 2,
+            "identity_duplicate_count": 0,
+            "cross_source_duplicate_count": 2,
+            "cross_source_groups": 2,
+            "exact_groups": 1,
+            "similarity_groups": 1,
+        },
+    )
+
+    response = client.get("/health/search-dedup")
+    payload = response.get_json()
+
+    assert response.status_code == 200
+    assert payload["package"] == "SEARCH-002"
+    assert payload["dedup"]["available"] is True
+    assert payload["dedup"]["stats"]["cross_source_duplicate_count"] == 2
+    assert payload["dedup"]["stats"]["cross_source_groups"] == 2
+    assert payload["dedup"]["candidate_counts_by_source"] == {
+        "hh": 20,
+        "superjob": 20,
+    }
+    body = response.get_data(as_text=True).casefold()
+    assert "keyword" not in body
+    assert "region" not in body
+    assert "authorization" not in body
+    assert "token" not in body
+
+
 def test_readiness_fails_on_revision_mismatch(app_module, client, monkeypatch):
     monkeypatch.setattr(
         app_module,

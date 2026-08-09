@@ -1,58 +1,11 @@
-AI Career Agent - SEARCH-002 changed files
-Package: SEARCH-002 cross-source deduplication
-Candidate plan: 1.4.7
-Candidate Alembic revision: 20260809_0006
-Status: NEEDS VERIFICATION in GitHub Actions and Render
+SEARCH-002 dedup verification endpoint hotfix
 
-Added (7):
-+ docs/SEARCH002_DEDUP_REFERENCE.md
-+ docs/SEARCH002_IMPLEMENTATION.md
-+ docs/SEARCH002_RUNBOOK.md
-+ docs/SEARCH002_VERIFICATION_STATUS.md
-+ migrations/versions/20260809_0006_cross_source_dedup_keys.py
-+ services/vacancy_deduplication.py
-+ tests/test_search_deduplication.py
-
-Modified (25):
-~ .github/workflows/ci.yml
-~ README.md
-~ README_FIRST.txt
-~ README_UPLOAD.txt
-~ app.py
-~ database.py
-~ docs/ARCHITECTURE.md
-~ docs/CHANGELOG.md
-~ docs/DOMAIN_MODEL.md
-~ docs/PLAN_CURRENT.md
-~ docs/PROJECT_GUIDE.md
-~ docs/PROJECT_PASSPORT.md
-~ docs/ROADMAP.md
-~ docs/SOURCE_AUDIT.md
-~ domain/entities.py
-~ models/vacancy.py
-~ repositories/vacancies.py
-~ scripts/check_document_structure.py
-~ services/vacancy_presenter.py
-~ services/vacancy_store.py
-~ static/theme.css
-~ templates/vacancies_unified.html
-~ tests/test_document_structure.py
-~ tests/test_routes.py
-~ tests/test_vacancy_presenter.py
-
-Removed (0):
-
-No real secrets, databases, dumps, backups, virtualenv, caches or bytecode are included.
-
-
-Verification hotfix: SuperJob public vacancy search
-~ app.py
-~ services/superjob_provider.py
-~ templates/vacancies_unified.html
-~ tests/test_providers.py
-~ tests/test_routes.py
-~ docs/CHANGELOG.md
-~ docs/SEARCH002_VERIFICATION_STATUS.md
-~ README_UPLOAD.txt
-
-Purpose: allow SuperJob vacancy listings in unified search without requiring a user OAuth session; OAuth remains for user-specific features.
+Modified:
+app.py
+observability.py
+tests/test_observability.py
+tests/test_routes.py
+docs/CHANGELOG.md
+docs/SEARCH002_VERIFICATION_STATUS.md
+README_UPLOAD.txt
+CHANGED_FILES.txt

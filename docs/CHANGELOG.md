@@ -10,6 +10,7 @@
 - Multi-source card UI with stacked logos and expandable provider links.
 - Dedicated SEARCH-002 tests and GitHub Actions gate.
 - SEARCH-002 implementation, verification, runbook and dedup reference documents.
+- Browser-readable aggregate verification endpoint `/health/search-dedup` for the latest completed search page; it exposes only counts/source names and never calls providers itself.
 
 ### Changed
 

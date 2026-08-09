@@ -20,6 +20,7 @@ from services.base_provider import SearchResult
         ("/vacancies", 302),
         ("/vacancies/internal", 200),
         ("/health", 200),
+        ("/health/search-dedup", 200),
         ("/dashboard", 302),
     ],
 )
@@ -263,6 +264,17 @@ def test_cross_source_duplicates_render_once_with_all_source_links(
     assert "https://hh.example.test/dedup-1" in body
     assert "https://reed.example.test/dedup-1" in body
     assert "Объединено повторов: 1" in body
+
+    status_response = client.get("/health/search-dedup")
+    status_payload = status_response.get_json()
+    assert status_response.status_code == 200
+    assert status_payload["dedup"]["available"] is True
+    assert status_payload["dedup"]["stats"]["input_count"] == 2
+    assert status_payload["dedup"]["stats"]["output_count"] == 1
+    assert status_payload["dedup"]["stats"]["cross_source_duplicate_count"] == 1
+    assert status_payload["dedup"]["stats"]["cross_source_groups"] == 1
+    assert status_payload["dedup"]["candidate_counts_by_source"] == {"hh": 1, "reed": 1}
+
 
 def test_sqlalchemy_account_storage_round_trip(app_module):
     from flask import session
