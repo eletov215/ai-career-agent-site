@@ -139,6 +139,44 @@ def test_one_provider_failure_does_not_hide_another_provider_result(
 
 
 
+
+def test_superjob_source_is_available_without_oauth_account(app_module, client, monkeypatch):
+    class PublicSuperJobProvider:
+        def search(self, *, filters, page=0):
+            return SearchResult(
+                items=[
+                    {
+                        "external_id": "sj-public-1",
+                        "source": "superjob",
+                        "source_title": "SuperJob",
+                        "title": "Python public SuperJob vacancy",
+                        "company": "ACME",
+                        "published_at": "2026-08-09T08:00:00Z",
+                        "url": "https://sj.example.test/1",
+                    }
+                ],
+                total=1,
+                page=page,
+                pages=1,
+                has_next=False,
+            )
+
+    monkeypatch.setattr(app_module, "CLIENT_SECRET", "test-superjob-app-secret")
+    monkeypatch.setattr(app_module, "SuperJobProvider", lambda *args, **kwargs: PublicSuperJobProvider())
+
+    with client.session_transaction() as browser_session:
+        browser_session.pop("superjob_user_id", None)
+
+    response = client.get(
+        "/vacancies/internal?search=1&source=superjob&keyword=python"
+    )
+    body = response.get_data(as_text=True)
+
+    assert response.status_code == 200
+    assert "Python public SuperJob vacancy" in body
+    assert "SuperJob не подключён" not in body
+
+
 def test_cross_source_duplicates_render_once_with_all_source_links(
     app_module,
     client,

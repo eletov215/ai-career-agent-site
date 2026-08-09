@@ -55,7 +55,11 @@ Verify SEARCH-002 cross-source deduplication controls
 
 ## 5. Render smoke
 
-После merge:
+Production migration уже подтверждена: `/health/ready` показывает `current_revision=expected_revision=20260809_0006`, PostgreSQL persistent/ok и `status=ok`.
+
+Для live dedup smoke SuperJob vacancy search переведён на app-level API access без обязательного user OAuth. OAuth SuperJob остаётся только для user-specific методов (резюме, contacts/applications). Это увеличивает шанс реальной duplicate-пары HH/SuperJob без искусственного login-gate.
+
+После merge hotfix:
 
 ```text
 /health/ready -> 200
@@ -83,10 +87,11 @@ Application rollback может оставить additive columns `0006`. Schema
 
 ## 8. Следующее действие
 
-Загрузить candidate, выполнить GitHub Actions и только после зелёного CI переходить к Render smoke.
+Загрузить SuperJob public-search hotfix, дождаться зелёного GitHub Actions и Render redeploy, затем выполнить широкий HH + SuperJob поиск и проверить dedup log/UI.
 
 ## 9. Журнал версий
 
 | Версия | Дата | Изменение |
 |---|---|---|
 | 1.0 | 09.08.2026 | Candidate verification status создан для migration `0006` и reversible dedup. |
+| 1.0.1 | 09.08.2026 | Render `0006` подтверждён; SuperJob vacancy search отвязан от обязательного user OAuth для live dedup smoke. |

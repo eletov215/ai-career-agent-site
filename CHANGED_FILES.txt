@@ -43,3 +43,16 @@ Modified (25):
 Removed (0):
 
 No real secrets, databases, dumps, backups, virtualenv, caches or bytecode are included.
+
+
+Verification hotfix: SuperJob public vacancy search
+~ app.py
+~ services/superjob_provider.py
+~ templates/vacancies_unified.html
+~ tests/test_providers.py
+~ tests/test_routes.py
+~ docs/CHANGELOG.md
+~ docs/SEARCH002_VERIFICATION_STATUS.md
+~ README_UPLOAD.txt
+
+Purpose: allow SuperJob vacancy listings in unified search without requiring a user OAuth session; OAuth remains for user-specific features.

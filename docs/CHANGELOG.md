@@ -13,6 +13,7 @@
 
 ### Changed
 
+- SuperJob vacancy search no longer depends on a browser OAuth session: public vacancy listings use the application `X-Api-App-Id` credential, while OAuth remains reserved for user-specific SuperJob features. This makes SuperJob available in unified search and SEARCH-002 live dedup smoke without forcing account login.
 - Search aggregation applies dedup after canonical filters and before global sort/presentation.
 - Additive Alembic revision `20260809_0006` adds nullable `dedup_key`/`dedup_version` columns and non-unique lookup indexes.
 - Presenter and save key support merged cards.

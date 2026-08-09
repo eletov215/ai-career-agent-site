@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Callable
+from typing import Callable, Optional
 
 import requests
 
@@ -16,7 +16,13 @@ class SuperJobProvider(VacancyProvider):
     key = "superjob"
     title = "SuperJob"
 
-    def __init__(self, api_url: str, header_factory: Callable[[str], dict], token_factory: Callable[[], str], per_page: int = 20):
+    def __init__(
+        self,
+        api_url: str,
+        header_factory: Callable[[Optional[str]], dict],
+        token_factory: Optional[Callable[[], str]] = None,
+        per_page: int = 20,
+    ):
         self.api_url = api_url
         self.header_factory = header_factory
         self.token_factory = token_factory
@@ -45,10 +51,17 @@ class SuperJobProvider(VacancyProvider):
             params["town"] = filters.region
 
         try:
+            # SuperJob vacancy search is public for listings themselves: the
+            # application secret in X-Api-App-Id is sufficient. A user OAuth
+            # token is optional and is reserved for user-specific methods
+            # (resumes, contacts, applications). Keeping search independent of
+            # the browser session lets SuperJob participate in unified search
+            # and cross-source deduplication without forcing account login.
+            token = self.token_factory() if self.token_factory else None
             response = requests.get(
                 self.api_url,
                 params=params,
-                headers=self.header_factory(self.token_factory()),
+                headers=self.header_factory(token),
                 timeout=8,
             )
             response.raise_for_status()

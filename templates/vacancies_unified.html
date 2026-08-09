@@ -110,7 +110,7 @@
               </span>
               <span class="source-option__copy">
                 <strong>{{ source.title }}</strong>
-                {% if source.available %}<small>Поиск доступен</small>{% elif source.note %}<small>{{ source.note }}</small>{% else %}<small>Поиск недоступен</small>{% endif %}
+                {% if source.available %}<small>{{ source.status_text or 'Поиск доступен' }}</small>{% elif source.note %}<small>{{ source.note }}</small>{% else %}<small>Поиск недоступен</small>{% endif %}
               </span>
               <span class="source-option__check" aria-hidden="true">✓</span>
             </label>
