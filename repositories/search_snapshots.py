@@ -8,7 +8,7 @@ import uuid
 from collections.abc import Iterable, Sequence
 from typing import Any
 
-from sqlalchemy import delete, func, or_, select, update
+from sqlalchemy import delete, func, insert, or_, select, update
 
 from domain import (
     SearchSnapshotCandidateRecord,
@@ -374,41 +374,68 @@ class SearchSnapshotRepository(RepositoryBase):
         candidates: Iterable[tuple[str, dict[str, Any]]],
         now: int | None = None,
     ) -> int:
+        """Persist a provider page with bounded round-trips.
+
+        SEARCH-003 can receive dozens of candidates per provider page.  The
+        original implementation executed one SELECT per candidate before every
+        insert, which becomes prohibitively slow against a remote PostgreSQL
+        database.  Fetch existing identities once, update the rare existing
+        rows in-memory, and bulk-insert the new rows in one executemany call.
+        """
+
         current = int(time.time()) if now is None else int(now)
-        saved = 0
+        safe_page = max(0, int(provider_page))
+        prepared: list[tuple[str, str]] = []
+        for identity_key, payload in candidates:
+            prepared.append(
+                (
+                    str(identity_key),
+                    json.dumps(
+                        payload,
+                        ensure_ascii=False,
+                        sort_keys=True,
+                        separators=(",", ":"),
+                    ),
+                )
+            )
+        if not prepared:
+            return 0
+
+        identity_keys = [identity_key for identity_key, _payload_json in prepared]
         with self.session() as session, session.begin():
-            for identity_key, payload in candidates:
-                row = session.scalar(
-                    select(SearchSnapshotCandidate).where(
-                        SearchSnapshotCandidate.snapshot_id == snapshot_id,
-                        SearchSnapshotCandidate.source == source,
-                        SearchSnapshotCandidate.identity_key == identity_key,
-                    )
+            existing_rows = session.scalars(
+                select(SearchSnapshotCandidate).where(
+                    SearchSnapshotCandidate.snapshot_id == snapshot_id,
+                    SearchSnapshotCandidate.source == source,
+                    SearchSnapshotCandidate.identity_key.in_(identity_keys),
                 )
-                payload_json = json.dumps(
-                    payload,
-                    ensure_ascii=False,
-                    sort_keys=True,
-                    separators=(",", ":"),
-                )
+            ).all()
+            existing = {row.identity_key: row for row in existing_rows}
+
+            new_rows: list[dict[str, Any]] = []
+            for identity_key, payload_json in prepared:
+                row = existing.get(identity_key)
                 if row is None:
-                    row = SearchSnapshotCandidate(
-                        snapshot_id=snapshot_id,
-                        source=source,
-                        identity_key=identity_key,
-                        provider_page=max(0, int(provider_page)),
-                        payload_json=payload_json,
-                        created_at=current,
-                        updated_at=current,
+                    new_rows.append(
+                        {
+                            "snapshot_id": snapshot_id,
+                            "source": source,
+                            "identity_key": identity_key,
+                            "provider_page": safe_page,
+                            "payload_json": payload_json,
+                            "created_at": current,
+                            "updated_at": current,
+                        }
                     )
-                    session.add(row)
-                    saved += 1
-                else:
-                    row.provider_page = min(row.provider_page, max(0, int(provider_page)))
-                    row.payload_json = payload_json
-                    row.updated_at = current
+                    continue
+                row.provider_page = min(row.provider_page, safe_page)
+                row.payload_json = payload_json
+                row.updated_at = current
+
+            if new_rows:
+                session.execute(insert(SearchSnapshotCandidate), new_rows)
             session.flush()
-        return saved
+            return len(new_rows)
 
     def replace_items(
         self,
@@ -433,27 +460,29 @@ class SearchSnapshotRepository(RepositoryBase):
                     SearchSnapshotItem.snapshot_id == snapshot_id
                 )
             )
-            for ordinal, item in enumerate(items):
-                session.add(
-                    SearchSnapshotItem(
-                        snapshot_id=snapshot_id,
-                        ordinal=ordinal,
-                        stable_key=str(item["stable_key"]),
-                        source_keys_json=json.dumps(
-                            list(item.get("source_keys") or []),
-                            ensure_ascii=False,
-                            separators=(",", ":"),
-                        ),
-                        payload_json=json.dumps(
-                            item["payload"],
-                            ensure_ascii=False,
-                            sort_keys=True,
-                            separators=(",", ":"),
-                        ),
-                        created_at=current,
-                        updated_at=current,
-                    )
-                )
+            item_rows = [
+                {
+                    "snapshot_id": snapshot_id,
+                    "ordinal": ordinal,
+                    "stable_key": str(item["stable_key"]),
+                    "source_keys_json": json.dumps(
+                        list(item.get("source_keys") or []),
+                        ensure_ascii=False,
+                        separators=(",", ":"),
+                    ),
+                    "payload_json": json.dumps(
+                        item["payload"],
+                        ensure_ascii=False,
+                        sort_keys=True,
+                        separators=(",", ":"),
+                    ),
+                    "created_at": current,
+                    "updated_at": current,
+                }
+                for ordinal, item in enumerate(items)
+            ]
+            if item_rows:
+                session.execute(insert(SearchSnapshotItem), item_rows)
             row = session.get(SearchSnapshot, snapshot_id)
             if row is None:
                 raise LookupError("Search snapshot not found")
@@ -474,6 +503,28 @@ class SearchSnapshotRepository(RepositoryBase):
                 row.status = "complete"
             elif row.status == "complete":
                 row.status = "active"
+            row.updated_at = current
+            session.flush()
+            return self._snapshot_record(row)
+
+    def commit_boundary(
+        self,
+        snapshot_id: str,
+        *,
+        requested_commit_count: int,
+        now: int | None = None,
+    ) -> SearchSnapshotRecord:
+        """Advance the immutable served prefix without rewriting materialized rows."""
+
+        current = int(time.time()) if now is None else int(now)
+        with self.session() as session, session.begin():
+            row = session.get(SearchSnapshot, snapshot_id)
+            if row is None:
+                raise LookupError("Search snapshot not found")
+            row.committed_count = max(
+                row.committed_count,
+                min(max(0, int(requested_commit_count)), row.known_unique_total),
+            )
             row.updated_at = current
             session.flush()
             return self._snapshot_record(row)

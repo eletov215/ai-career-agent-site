@@ -50,7 +50,7 @@ Snapshot tables отделены от `vacancies`/`vacancy_source_records`. TTL 
 2. Canonical filtering и dedup выполняются до stable ordinal/page slicing.
 3. Уже committed ordinal prefix не переставляется при поздних provider updates.
 4. Per-provider state (`next_page`, `fetched_pages`, `reported_total`, `exhausted`, `bounded`, errors) живёт в БД.
-5. До commit новой global boundary каждый non-terminal provider покрывает required depth accepted identities либо становится `exhausted/bounded`; большой source не скрывает непрочитанный HH/SuperJob.
+5. Каждый HTTP request расширяет snapshot не более чем одним provider-page round по умолчанию. Уже показанный committed prefix не перестраивается; поздние более приоритетные элементы добавляются только в ещё не показанный tail и учитываются в diagnostics.
 6. `provider_reported_total`, `known_unique_total` и `total_is_exact` имеют разные значения; approximate total не выдаётся за exact post-dedup total.
 7. Extension bounded limits запрещают synchronous scan десятков тысяч upstream results.
 

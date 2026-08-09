@@ -91,21 +91,26 @@ Sort keys не зависят от порядка завершения provider 
 
 Так page 0 не меняет состав после перехода на page 1. Число поздних arrivals фиксируется в `late_arrival_count` и не увеличивается повторно при простом чтении snapshot.
 
-### 3.5 Per-provider coverage invariant
+### 3.5 Progressive provider coverage и latency budget
 
-До фиксации новой page boundary агрегатор не полагается только на общий размер aggregate pool. Для каждой выбранной площадки действует отдельное условие: provider должен либо дать не меньше количества accepted identities, необходимых для текущей границы (`(page + 1) * page_size + buffer`), либо перейти в terminal state `exhausted/bounded`. Поэтому большой поток Reed/Trudvsem не может скрыть то, что HH или SuperJob ещё не были прочитаны достаточно глубоко.
+SEARCH-003 сохраняет стабильность страниц через immutable committed prefix, а не через синхронное чтение нескольких страниц каждого provider до глубины всей UI-страницы. Логическая страница интерфейса отделена от provider page и по умолчанию содержит 20 карточек (`SEARCH_PAGE_SIZE=20`).
 
-Coverage считается по уникальным candidate identities после canonical filtering. Ошибка provider не удаляет уже materialized rows; snapshot продолжает отдавать committed pages и сохраняет cursor/error state для следующего расширения.
+Каждый HTTP request по умолчанию выполняет не более одного concurrent provider-page round (`SEARCH_SNAPSHOT_MAX_ROUNDS_PER_REQUEST=1`). Это ограничивает пользовательскую задержку временем самого медленного участвующего provider request плюс bounded PostgreSQL persistence. При переходе на следующую страницу snapshot дозагружается только если уже materialized tail недостаточен или выбранному source нужно продвинуть cursor.
+
+После выдачи карточки входят в committed prefix и больше не перемещаются. Поздний результат, который по sort key должен был бы попасть выше уже показанной границы, остаётся в ещё не показанном tail и увеличивает `late_arrival_count`. Поэтому page 0/page 1 остаются воспроизводимыми без многократного синхронного prefetch.
+
+Persistence candidate pages выполняется batch-операциями: один lookup существующих identity keys на provider page и bulk insert новых rows; materialized items также записываются bulk insert. Финальный commit boundary обновляет только metadata snapshot и не переписывает тот же item set повторно.
 
 ### 3.6 Bounded extension и concurrency
 
 Default policy:
 
 ```text
+SEARCH_PAGE_SIZE=20
 SEARCH_SNAPSHOT_TTL_SECONDS=1800
 SEARCH_SNAPSHOT_MAX_CANDIDATES=1200
 SEARCH_SNAPSHOT_MAX_PAGES_PER_SOURCE=8
-SEARCH_SNAPSHOT_MAX_ROUNDS_PER_REQUEST=3
+SEARCH_SNAPSHOT_MAX_ROUNDS_PER_REQUEST=1
 SEARCH_SNAPSHOT_BUFFER_ITEMS=1
 SEARCH_SNAPSHOT_EXTENSION_LEASE_SECONDS=90
 ```

@@ -39,7 +39,7 @@ Deduplicated card с постоянным ordinal, stable source-key set и safe
 
 ## 5. Coverage invariant
 
-Для page `N` каждый non-terminal source должен покрыть required depth accepted identities (`(N+1)*page_size + buffer`) либо стать exhausted/bounded. Это предотвращает commit global boundary только за счёт большого результата одной площадки.
+Search snapshot расширяется постепенно: логическая UI-страница равна 20 карточкам, а один HTTP request по умолчанию выполняет не более одного provider-page round. Уже committed ordinal range не перестраивается поздними результатами; source cursor продолжает расширяться при переходе на следующие страницы.
 
 ## 6. Lifecycle
 

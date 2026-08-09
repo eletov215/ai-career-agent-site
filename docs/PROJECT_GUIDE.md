@@ -50,7 +50,7 @@ GitHub Actions должен отдельно выполнить `Verify SEARCH-0
 4. На соседних страницах нет одинаковых stable identities.
 5. Возврат на page 0 воспроизводит прежний порядок.
 6. `/health/search-pagination?snapshot=<uuid>` показывает honest totals, per-source cursors и candidate coverage без query text/credentials.
-7. Каждый non-terminal provider покрывает required depth для committed boundary либо отмечен exhausted/bounded.
+7. Search snapshot расширяется постепенно и bounded: по умолчанию один provider round на HTTP request; уже committed страницы не пересортировываются поздними ответами.
 
 ## 6. Неприкосновенные правила
 

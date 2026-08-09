@@ -37,7 +37,7 @@ INFRA-001 → REED-COMPAT-001 → HOST-001
 | SYNC-001 / SYNC-002 | ВЫПОЛНЕНО | External worker и incremental lifecycle |
 | SEARCH-001 | ВЫПОЛНЕНО | Typed contract и canonical filters |
 | SEARCH-002 | ВЫПОЛНЕНО | Conservative reversible cross-source dedup |
-| SEARCH-003 | НУЖНА ПРОВЕРКА | CI + Render revision 0007 + cross-page smoke |
+| SEARCH-003 | НУЖНА ПРОВЕРКА | CI и revision 0007 подтверждены; deploy latency hotfix → search/cross-page smoke |
 | SEARCH-004/005 | ЗАПЛАНИРОВАНО | Canonical route/admin source status |
 | INFRA-001 | ОТЛОЖЕНО | Real VPS перед beta |
 
@@ -53,7 +53,7 @@ persistent bounded snapshot
 + TTL cleanup
 ```
 
-Пакет закрывается только после зелёного CI и production проверки page 0 → page 1 → page 0 с одним snapshot ID.
+Пакет закрывается только после production проверки latency hotfix и page 0 → page 1 → page 0 с одним snapshot ID. Hotfix использует `SEARCH_PAGE_SIZE=20`, максимум один provider round на request и batch PostgreSQL persistence.
 
 ## 5. Ограничения
 

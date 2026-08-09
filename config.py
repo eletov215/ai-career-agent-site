@@ -372,6 +372,7 @@ class AppSettings:
     database_url_explicit: bool
     vacancy_cache_ttl: int
     vacancy_page_size: int
+    search_page_size: int
     search_snapshot_ttl_seconds: int
     search_snapshot_max_candidates: int
     search_snapshot_max_pages_per_source: int
@@ -622,6 +623,7 @@ def load_settings(environ: Mapping[str, str] | None = None) -> AppSettings:
         database_url_explicit=database_url_explicit,
         vacancy_cache_ttl=_int(source, "VACANCY_CACHE_TTL", 1800, minimum=1),
         vacancy_page_size=_int(source, "VACANCY_PAGE_SIZE", 60, minimum=1, maximum=100),
+        search_page_size=_int(source, "SEARCH_PAGE_SIZE", 20, minimum=1, maximum=60),
         search_snapshot_ttl_seconds=_int(
             source,
             "SEARCH_SNAPSHOT_TTL_SECONDS",
@@ -646,7 +648,7 @@ def load_settings(environ: Mapping[str, str] | None = None) -> AppSettings:
         search_snapshot_max_rounds_per_request=_int(
             source,
             "SEARCH_SNAPSHOT_MAX_ROUNDS_PER_REQUEST",
-            3,
+            1,
             minimum=1,
             maximum=20,
         ),

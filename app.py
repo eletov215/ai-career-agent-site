@@ -94,7 +94,7 @@ USERS = STORAGE.users
 VACANCY_STORE = STORAGE.vacancies
 SEARCH_AGGREGATION = SearchAggregationService(
     STORAGE.search_snapshots,
-    page_size=SETTINGS.vacancy_page_size,
+    page_size=SETTINGS.search_page_size,
     ttl_seconds=SETTINGS.search_snapshot_ttl_seconds,
     max_pages_per_source=SETTINGS.search_snapshot_max_pages_per_source,
     max_candidates=SETTINGS.search_snapshot_max_candidates,
@@ -840,7 +840,7 @@ def vacancies():
     snapshot_bounded = False
     snapshot_id = None
     snapshot_restarted = False
-    page_size = VACANCY_PAGE_SIZE
+    page_size = SETTINGS.search_page_size
     deduplication_stats = {
         "input_count": 0,
         "output_count": 0,

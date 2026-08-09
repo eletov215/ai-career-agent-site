@@ -55,10 +55,11 @@ python scripts/manage_db.py upgrade && python scripts/start_runtime.py
 Новые обязательные Render variables отсутствуют: defaults безопасны. При необходимости можно явно задать:
 
 ```text
+SEARCH_PAGE_SIZE=20
 SEARCH_SNAPSHOT_TTL_SECONDS=1800
 SEARCH_SNAPSHOT_MAX_CANDIDATES=1200
 SEARCH_SNAPSHOT_MAX_PAGES_PER_SOURCE=8
-SEARCH_SNAPSHOT_MAX_ROUNDS_PER_REQUEST=3
+SEARCH_SNAPSHOT_MAX_ROUNDS_PER_REQUEST=1
 SEARCH_SNAPSHOT_BUFFER_ITEMS=1
 SEARCH_SNAPSHOT_EXTENSION_LEASE_SECONDS=90
 ```
@@ -72,7 +73,7 @@ SEARCH_SNAPSHOT_EXTENSION_LEASE_SECONDS=90
 5. Сравнить карточки page 0/page 1: overlap отсутствует.
 6. Нажать `Назад`: page 0 и порядок совпадают с первым просмотром.
 7. Обновить page 0/page 1: snapshot сохраняет границы.
-8. В diagnostics проверить, что каждый non-terminal source либо имеет достаточную candidate coverage для committed boundary, либо отмечен exhausted/bounded.
+8. В diagnostics проверить, что snapshot увеличивает `committed_count` постепенно, source cursors двигаются между страницами, а один пользовательский request не вызывает несколько последовательных provider rounds.
 
 ## 6. Диагностика
 

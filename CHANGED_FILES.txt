@@ -58,3 +58,27 @@ Removed (0):
 
 Expected Alembic revision after deploy: 20260809_0007.
 Package status: SEARCH-003 — НУЖНА ПРОВЕРКА.
+
+SEARCH-003 latency hotfix 1 (after first Render smoke):
+- app.py
+- config.py
+- repositories/search_snapshots.py
+- services/search_aggregation.py
+- tests/test_config.py
+- tests/test_infra_manifests.py
+- tests/test_search_pagination.py
+- scripts/infra_manifest_check.py
+- infra/vps/.env.example
+- README.md
+- README_UPLOAD.txt
+- docs/ARCHITECTURE.md
+- docs/CHANGELOG.md
+- docs/DOMAIN_MODEL.md
+- docs/PROJECT_GUIDE.md
+- docs/PROJECT_PASSPORT.md
+- docs/SEARCH003_IMPLEMENTATION.md
+- docs/SEARCH003_PAGINATION_REFERENCE.md
+- docs/SEARCH003_RUNBOOK.md
+- docs/SEARCH003_VERIFICATION_STATUS.md
+
+No new migration. Expected Alembic revision remains 20260809_0007.

@@ -42,7 +42,7 @@ provider pages
 
 Ключевые компоненты:
 
-- `services/search_aggregation.py` — bounded persistent aggregation и per-provider coverage invariant;
+- `services/search_aggregation.py` — bounded persistent aggregation, progressive provider coverage и committed-prefix stability;
 - `repositories/search_snapshots.py` — snapshot/source/candidate/item persistence;
 - `models/search_snapshot.py` — isolated TTL schema;
 - migration `20260809_0007`;

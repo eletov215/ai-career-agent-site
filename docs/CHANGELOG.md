@@ -6,7 +6,7 @@
 
 - Persistent bounded `SearchSnapshot`/source/candidate/item schema and repository.
 - Alembic revision `20260809_0007`.
-- `SearchAggregationService` with per-provider cursor state, per-provider coverage/global-boundary invariant, deterministic sort and committed page prefix.
+- `SearchAggregationService` with per-provider cursor state, progressive bounded coverage, deterministic sort and committed page prefix.
 - Honest `provider_reported_total` / `known_unique_total` / `total_is_exact` semantics.
 - Secret-free `/health/search-pagination?snapshot=<uuid>`.
 - SEARCH-003 route/migration/restart/failure/TTL/late-arrival tests and dedicated GitHub Actions gate.
@@ -19,6 +19,15 @@
 - Approximate provider totals are no longer presented as exact unique totals.
 - Render/Compose/VPS templates include bounded snapshot policy defaults.
 - Backup inventory and PostgreSQL integration cover snapshot tables.
+
+### Production hotfix — SEARCH-003 latency
+
+- Первый Render smoke после revision `20260809_0007` выявил неприемлемую длительность первого поиска: candidate persistence выполняла SELECT на каждую вакансию, а default policy могла делать до трёх последовательных provider rounds в одном HTTP request.
+- Candidate/source persistence переведена на batch lookup + bulk insert; materialized items записываются bulk insert.
+- Повторная полная перезапись materialized rows при commit boundary удалена: commit обновляет только snapshot metadata.
+- Добавлен отдельный логический `SEARCH_PAGE_SIZE=20`; `VACANCY_PAGE_SIZE=60` остаётся provider/cache page size.
+- `SEARCH_SNAPSHOT_MAX_ROUNDS_PER_REQUEST` default снижен `3 -> 1`, поэтому snapshot расширяется постепенно между переходами по страницам.
+- Migration не меняется: production schema остаётся `20260809_0007`.
 
 ### Verification status
 

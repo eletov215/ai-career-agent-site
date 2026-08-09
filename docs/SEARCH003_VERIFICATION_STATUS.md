@@ -24,7 +24,7 @@ Candidate реализован и локально проверен. Пакет 
 - cross-page duplicate отображается один раз;
 - поздняя более новая публикация не перемещает уже показанную страницу;
 - provider failure не стирает materialized pages;
-- глубокий Reed/Trudvsem pool не позволяет commit page boundary, пока HH/SuperJob не покрыли required depth либо не стали exhausted/bounded;
+- первый поиск и каждое дальнейшее расширение не выполняют несколько последовательных provider rounds в одном HTTP request; UI page size = 20, committed prefix остаётся стабильным при поздних arrivals;
 - exact total устанавливается только при исчерпании всех sources;
 - approximate provider totals не показываются как exact unique total;
 - TTL cleanup удаляет только snapshot state;

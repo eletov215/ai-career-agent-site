@@ -101,23 +101,13 @@ last_fetched_at
 
 Provider error не стирает кандидатов и items, ранее materialized в snapshot.
 
-## 8. Per-provider coverage invariant
+## 8. Progressive provider coverage
 
-Перед присвоением/commit ordinal диапазона для page `N` required depth равна:
+UI pagination использует `SEARCH_PAGE_SIZE=20`, независимо от provider-specific page size. Snapshot расширяется постепенно: один HTTP request по умолчанию выполняет максимум один concurrent provider round. Это предотвращает длинные цепочки внешних HTTP calls и большого числа PostgreSQL round-trips внутри одного пользовательского запроса.
 
-```text
-required = (N + 1) * page_size + buffer_items
-```
+Уже показанный ordinal range является committed prefix и не перемещается. Если поздно загруженная публикация имеет более высокий global sort priority, она не вставляется перед уже показанными карточками, а остаётся в uncommitted tail. `late_arrival_count` делает такое событие наблюдаемым.
 
-Для каждого выбранного source должно выполняться одно из условий:
-
-```text
-accepted_unique_candidates[source] >= required
-OR source.exhausted = true
-OR source.bounded = true
-```
-
-Это защищает global boundary от перекоса: большой Reed/Trudvsem response не может заменить непрочитанную глубину HH/SuperJob. Provider error сохраняется как state и не удаляет committed pages.
+Следующая страница может потребовать новый provider round; источники, у которых уже достаточно materialized candidates для этой границы, повторно не запрашиваются без необходимости.
 
 ## 9. TTL и limits
 
