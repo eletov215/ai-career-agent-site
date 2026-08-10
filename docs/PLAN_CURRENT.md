@@ -3,15 +3,15 @@
 | Поле | Значение |
 |---|---|
 | Документ | PLAN_CURRENT |
-| Версия | 1.4.11 |
+| Версия | 1.4.13 |
 | Дата | 10 августа 2026 |
 | Статус | ДЕЙСТВУЮЩИЙ |
-| Основа кода | `ai-career-agent-site-main (14).zip` из актуального GitHub `main`; SEARCH-004 candidate реализован поверх production revision `20260809_0007` |
-| Следующий gate | `SEARCH-004` — GitHub Actions и Render route/source-state verification |
+| Основа кода | `ai-career-agent-site-main (6).zip` из актуального GitHub `main`; AUTH-001 candidate реализован поверх SEARCH-004; production до deploy остаётся `20260809_0007` |
+| Следующий gate | `AUTH-001` — GitHub Actions, PostgreSQL migration `20260810_0008`, SMTP и Render account E2E |
 
 > ОБЯЗАТЕЛЬНО ДЛЯ КАЖДОГО НОВОГО ЧАТА: прочитать этот план, новый паспорт и актуальный архив. После завершения любого пункта вернуть обновлённые DOCX/PDF/Markdown, новый ZIP, доказательства проверки и запись в журнале версий.
 
-> КОНТРОЛЬНЫЕ СТАТУСЫ ЭТОЙ ВЕРСИИ: `FND-001`, `FND-002`, `DATA-001`, `DATA-002`, `SEC-001`, `OPS-001`, `INFRA-PREP-001`, `SYNC-001`, `SYNC-002`, `SEARCH-001`, `SEARCH-002` и `SEARCH-003` — **ВЫПОЛНЕНО**; `SEARCH-004` — **НУЖНА ПРОВЕРКА**; `SEARCH-005` — **ЗАПЛАНИРОВАНО**; `DOC-001` — **В РАБОТЕ как постоянный процесс**; `INFRA-001` — **ОТЛОЖЕНО ДО ПРЕДРЕЛИЗНОГО ЭТАПА**. Документы с версией ниже `1.4.11` считаются устаревшими для определения очереди разработки.
+> КОНТРОЛЬНЫЕ СТАТУСЫ ЭТОЙ ВЕРСИИ: `FND-001`, `FND-002`, `DATA-001`, `DATA-002`, `SEC-001`, `OPS-001`, `INFRA-PREP-001`, `SYNC-001`, `SYNC-002`, `SEARCH-001`, `SEARCH-002` и `SEARCH-003` — **ВЫПОЛНЕНО**; `SEARCH-004` — **ВЫПОЛНЕНО**; `AUTH-001` — **НУЖНА ПРОВЕРКА**; `SEARCH-005` — **ЗАПЛАНИРОВАНО**; `DOC-001` — **В РАБОТЕ как постоянный процесс**; `INFRA-001` — **ОТЛОЖЕНО ДО ПРЕДРЕЛИЗНОГО ЭТАПА**. Документы с версией ниже `1.4.13` считаются устаревшими для определения очереди разработки.
 
 ## 1. Источник истины и аудит источников
 
@@ -23,7 +23,9 @@
 - Версия 1.4.8 закрывает SEARCH-002 как ВЫПОЛНЕНО. GitHub Actions полностью зелёный, включая отдельный `Verify SEARCH-002 cross-source deduplication controls`, PostgreSQL migration/integration, SEC/OPS/SYNC/SEARCH-001 regressions, backup/restore и container smoke. Render `/health/ready` подтвердил `current_revision=expected_revision=20260809_0006`, PostgreSQL `persistent=true`, `status=ok`. Public SuperJob vacancy search отвязан от обязательного user OAuth и работает по app-level credential. Production verification endpoint `/health/search-dedup` подтвердил реальную обработку multi-source candidate sets без ложных merge: контрольный поиск обработал 164 вакансии (`hh=20`, `reed=60`, `superjob=24`, `trudvsem=60`), `input_count=output_count=164`, `cross_source_duplicate_count=0`, `cross_source_groups=0`. Дополнительные реальные поиски также не выявили безопасной duplicate-pair; positive merge semantics подтверждены зелёным CI fixture. Остаточная задача — не dedup, а стабильная cross-page пагинация/сортировка/total в SEARCH-003.
 - Версия 1.4.9 реализует SEARCH-003: persistent bounded snapshots, per-provider cursor state, canonical filter + SEARCH-002 dedup до stable ordinal, deterministic global sort, committed page prefix, honest totals и secret-free `/health/search-pagination`. Additive migration `20260809_0007` создаёт четыре TTL snapshot tables и не затрагивает canonical vacancy cache. Пакет остаётся НУЖНА ПРОВЕРКА до зелёного GitHub Actions и Render cross-page smoke.
 - Версия 1.4.10 закрывает SEARCH-003 как ВЫПОЛНЕНО. GitHub Actions полностью зелёный, включая отдельный `Verify SEARCH-003 stable pagination and totals controls`, PostgreSQL migration/integration, SEC/OPS/SYNC/SEARCH-001/002 regressions, encrypted backup/restore и container smoke. Render `/health/ready` подтвердил `current_revision=expected_revision=20260809_0007`, PostgreSQL `persistent=true`, `status=ok`. Первая production-версия выявила latency regression с бесконечной загрузкой поиска; hotfix разделил provider page size и UI page size (`SEARCH_PAGE_SIZE=20`), ограничил extension одним round на request (`SEARCH_SNAPSHOT_MAX_ROUNDS_PER_REQUEST=1`) и перевёл snapshot persistence на batch-операции. После hotfix поиск работает штатно. Production snapshot `9368cb00-e7fd-4b67-9276-ea3afcf428ff` подтвердил `page_size=20`, `committed_count=40`, `known_unique_total=69`, `candidate_count=69`, `provider_reported_total=64027`, `late_arrival_count=19`, `total_is_exact=false`, `bounded=false`; page 0 сохранил состав/порядок после перехода на следующую страницу. После Render restart тот же snapshot и source cursor state сохранились в PostgreSQL. Следующий пакет — SEARCH-004.
-- Версия 1.4.11 реализует SEARCH-004 candidate без migration: `/vacancies` стал canonical search route, `/vacancies/internal` возвращает permanent method-preserving compatibility redirect с точным сохранением raw query string, repeated `source`, `snapshot` и `page`. Добавлен безопасный `SourceState` contract (`available`, `cached`, `degraded`, `auth_required`, `temporarily_unavailable`), Trudvsem явно показывается как PostgreSQL-backed cache, а provider failures не раскрывают exception bodies, tokens или имена environment variables. Forms, pagination, navbar/footer/home CTA и canonical meta используют `/vacancies`. Локально пройдены compile/Jinja parse, focused source-state tests `6 passed` и полный доступный pytest `193 passed, 6 skipped`; GitHub Flask/PostgreSQL и Render route smoke ещё требуются.
+- Версия 1.4.11 реализовала SEARCH-004 candidate без migration: `/vacancies` стал canonical search route, `/vacancies/internal` получил query-preserving compatibility redirect, а public `SourceState` contract разделил `available`, `cached`, `degraded`, `auth_required`, `temporarily_unavailable`.
+- Версия 1.4.12 закрывает SEARCH-004 как ВЫПОЛНЕНО. GitHub Actions полностью зелёный, включая отдельный `Verify SEARCH-004 canonical route and source-state controls` и все regression/infrastructure gates. Production `/health/ready` на Render подтвердил PostgreSQL `persistent=true`, `current_revision=expected_revision=20260809_0007`, `migrations.ok=true`, `status=ok`. Мобильный production-smoke подтвердил штатный поиск на canonical `/vacancies` с SEARCH-003 snapshot и page=0. Старый `/vacancies/internal?search=1&keyword=Бухгалтер&source=hh&source=superjob` корректно перенаправился на `/vacancies` с сохранением `keyword` и обоих repeated `source`; новый snapshot/page были сформированы уже canonical route. Database migration не добавлялась. SEARCH-004 закрыт как ВЫПОЛНЕНО.
+- Версия 1.4.13 реализует AUTH-001 candidate: существующий `users` становится first-party identity root; migration `20260810_0008` добавляет password fields, revocable `auth_sessions` и single-use `auth_tokens`; добавлены versioned scrypt, enumeration-safe register/login/reset, session rotation/revoke, provider-neutral email adapter, auth blueprint/UI и dedicated CI gate. Production email default `disabled`; пакет остаётся НУЖНА ПРОВЕРКА до green CI, Render `0008`, SMTP и полного account E2E.
 
 ## 2. Обязательный протокол работы
 
@@ -135,14 +137,14 @@ MVP не готов, если работает только отдельная �
 | SEARCH-001 | P0 | ВЫПОЛНЕНО | Typed `NormalizedVacancy`, central normalizer, canonical code columns `0005`, provider adapters, CI и Render/search smoke подтверждены |
 | SEARCH-002 | P0 | ВЫПОЛНЕНО | Консервативная cross-source deduplication, reversible grouping и multi-source карточки подтверждены CI/Render |
 | SEARCH-003 | P0 | ВЫПОЛНЕНО | Persistent bounded snapshots, stable committed pages, deterministic sort и honest totals подтверждены CI/Render |
-| SEARCH-004 | P1 | НУЖНА ПРОВЕРКА | Canonical `/vacancies`, compatibility redirect и безопасные пользовательские source states реализованы; требуются CI/Render smoke |
+| SEARCH-004 | P1 | ВЫПОЛНЕНО | Canonical `/vacancies`, compatibility redirect и safe source states подтверждены GitHub CI и Render/mobile production smoke |
 | SEARCH-005 | P1 | ЗАПЛАНИРОВАНО | Центр состояния источников для администратора |
 
 ### Этап 3. Собственный аккаунт и карьерный профиль
 
 | ID | Приоритет | Статус | Пункт |
 |---|---|---|---|
-| AUTH-001 | P0 | ЗАПЛАНИРОВАНО | Аккаунт AI Career Agent |
+| AUTH-001 | P0 | НУЖНА ПРОВЕРКА | First-party account, verification/reset, revocable sessions и SMTP adapter реализованы; требуются CI/Render E2E |
 | AUTH-002 | P0 | ЗАПЛАНИРОВАНО | Привязка OAuth HeadHunter и SuperJob к пользователю сервиса |
 | PROF-001 | P1 | ЗАПЛАНИРОВАНО | Структурированный карьерный профиль |
 | PROF-002 | P1 | ЗАПЛАНИРОВАНО | Импорт резюме в профиль с проверкой пользователем |
@@ -327,7 +329,7 @@ MVP не готов, если работает только отдельная �
 
 **Реализация:** Канонические PLAN_CURRENT и паспорт обновляются после каждого архитектурного решения; README/ROADMAP/CHANGELOG и package-specific docs синхронизируются вместе с ближайшим кодовым пакетом, чтобы документация и код проходили один CI/merge cycle.
 
-**Текущее состояние:** PLAN_CURRENT 1.4.11 и паспорт 2.25 фиксируют SEARCH-001/002/003 как ВЫПОЛНЕНО и SEARCH-004 как НУЖНА ПРОВЕРКА. Repository/package docs синхронизированы с candidate implementation и локальными доказательствами.
+**Текущее состояние:** PLAN_CURRENT 1.4.13 и паспорт 2.27 фиксируют SEARCH-001/002/003/004 как ВЫПОЛНЕНО и AUTH-001 как НУЖНА ПРОВЕРКА. Repository/package docs синхронизированы с candidate code, migration 0008 и локальными доказательствами.
 
 **Влияние на сайт:** Нет.
 
@@ -546,7 +548,7 @@ MVP не готов, если работает только отдельная �
 #### SEARCH-004 - Основной маршрут /vacancies и честные состояния источников
 
 **Приоритет:** P1
-**Статус:** НУЖНА ПРОВЕРКА
+**Статус:** ВЫПОЛНЕНО
 
 **Цель:** Убрать технический public URL `/vacancies/internal`, сделать `/vacancies` единственным canonical route выдачи и показывать безопасное фактическое состояние каждого источника.
 
@@ -575,7 +577,9 @@ MVP не готов, если работает только отдельная �
 
 **Rollback:** application revert без schema downgrade. Revision `0007`, vacancy cache и search snapshots не очищаются.
 
-**Зависимости:** SEARCH-001/002/003 выполнены. После verification следующий обязательный пакет — AUTH-001; SEARCH-005 остаётся после account/profile/privacy foundation.
+**Финальные доказательства:** GitHub Actions полностью зелёный, включая отдельный `Verify SEARCH-004 canonical route and source-state controls` и все regression/infrastructure gates. Production `/health/ready` на Render подтвердил PostgreSQL `persistent=true`, `current_revision=expected_revision=20260809_0007`, `migrations.ok=true`, `status=ok`. Мобильный production-smoke подтвердил штатный поиск на canonical `/vacancies` с SEARCH-003 snapshot и page=0. Старый `/vacancies/internal?search=1&keyword=Бухгалтер&source=hh&source=superjob` корректно перенаправился на `/vacancies` с сохранением `keyword` и обоих repeated `source`; новый snapshot/page были сформированы уже canonical route. Database migration не добавлялась. SEARCH-004 закрыт как ВЫПОЛНЕНО.
+
+**Зависимости:** SEARCH-001/002/003 выполнены. Следующий обязательный пакет — AUTH-001; SEARCH-005 остаётся после account/profile/privacy foundation.
 
 #### SEARCH-005 - Центр состояния источников для администратора
 
@@ -599,19 +603,23 @@ MVP не готов, если работает только отдельная �
 #### AUTH-001 - Аккаунт AI Career Agent
 
 **Приоритет:** P0
-**Статус:** ЗАПЛАНИРОВАНО
+**Статус:** НУЖНА ПРОВЕРКА
 
-**Цель:** Создать собственную identity; HH/SuperJob становятся дополнительными подключениями.
+**Цель:** Создать собственную first-party identity; HH/SuperJob становятся независимыми дополнительными подключениями и не привязываются автоматически.
 
-**Реализация:** Email/password или passwordless, verification, reset, sessions, logout/revoke.
+**Реализация:** Существующий `users`; versioned scrypt; additive migration `20260810_0008`; hashed TTL/single-use verification/reset tokens; revocable PostgreSQL sessions; register/verify/login/logout/reset/revoke blueprint; disabled/memory/SMTP email adapters; enumeration-safe responses и route limits.
 
-**Влияние на код:** User/AuthToken/Session, auth service, routes/templates, email provider, migrations/tests.
+**Влияние на код:** `domain/auth.py`, `models/auth.py`, `repositories/auth.py`, `services/auth.py`, `services/passwords.py`, `services/email_delivery.py`, `routes/auth.py`, auth templates, dashboard/navigation, config/backup/CI/tests/docs.
 
-**Влияние на сайт:** Появляются регистрация, вход и единый кабинет между устройствами.
+**Влияние на сайт:** Появляются регистрация, подтверждение email, вход, recovery и управление активными устройствами. При не настроенной почте registration/reset fail-closed с честным сообщением.
 
-**Критерии готовности:** E2E registration/reset; пароль не хранится открыто; sessions отзываются; rate limit.
+**Критерии готовности:** Green dedicated CI/PostgreSQL migration; Render revision `0008`; production SMTP configured; E2E registration/verification/login/logout/revoke/reset; no plaintext/secret leakage; sessions отзываются и reset закрывает старые sessions.
 
-**Зависимости:** DATA-002, SEC-001.
+**Ограничения:** AUTH-002 OAuth binding, profile, account deletion/export, MFA и admin roles не входят. До SMTP configuration пакет не может быть закрыт.
+
+**Rollback:** Application revert; additive `0008` оставить после появления real users. Downgrade до `0007` — только до account creation либо после verified backup/explicit decision.
+
+**Зависимости:** DATA-002, SEC-001; SEARCH-004 выполнен.
 
 #### AUTH-002 - Привязка OAuth HeadHunter и SuperJob к пользователю сервиса
 
@@ -1464,21 +1472,22 @@ INFRA-001 real VPS test
 
 ## 16. Следующий пакет
 
-`SEARCH-004` — **НУЖНА ПРОВЕРКА**. Candidate реализует canonical `/vacancies`, compatibility redirect и safe public source states без migration.
+`AUTH-001` — **НУЖНА ПРОВЕРКА**. Candidate реализует first-party account с migration `20260810_0008`, versioned scrypt, hashed one-time tokens, revocable PostgreSQL sessions, auth UI и SMTP adapter. Production до deploy остаётся на `20260809_0007`; email backend по умолчанию `disabled`.
 
 Verification gate:
 
 ```text
-Verify SEARCH-004 canonical route and source-state controls — green
--> Render current/expected revision 20260809_0007
--> /vacancies 200
--> /vacancies/internal?<query> redirect сохраняет query/snapshot/page
--> navbar/forms/pagination используют /vacancies
--> Trudvsem = cached/degraded, provider failure = neutral degraded state
--> SEARCH-004 COMPLETE
+Verify AUTH-001 first-party account controls — green
+-> PostgreSQL migration/integration + all regressions green
+-> Render current/expected revision 20260810_0008
+-> auth.email_backend=smtp; email_delivery_configured=true
+-> register -> verify -> login -> two sessions -> revoke/logout
+-> forgot/reset -> token single-use -> old sessions invalid
+-> no secrets/email/password/raw tokens in logs
+-> AUTH-001 COMPLETE
 ```
 
-После подтверждения следующий обязательный кодовый пакет — `AUTH-001`: собственный аккаунт AI Career Agent. `SEARCH-005` остаётся после account/profile/privacy foundation. `DOC-001` остаётся постоянным процессом.
+После подтверждения следующий обязательный кодовый пакет — `AUTH-002`: привязка OAuth HeadHunter/SuperJob к first-party User. `SEARCH-005` остаётся после account/profile/privacy foundation. `DOC-001` остаётся постоянным процессом.
 
 
 ## 17. Обязательный отчёт после каждого пакета
@@ -1533,3 +1542,5 @@ GitHub/production/API: <подтверждено или требуется>
 | 1.4.9 | 09.08.2026 | SEARCH-003 | Добавлены persistent bounded snapshots, per-provider cursor state, stable committed ordinals, deterministic global sort, honest totals, migration `20260809_0007`, health verification endpoint и отдельный CI gate. Статус — НУЖНА ПРОВЕРКА. |
 | 1.4.10 | 09.08.2026 | SEARCH-003-COMPLETE / SEARCH-004-PREP | CI и Render `0007` подтверждены; исправлена latency regression (`SEARCH_PAGE_SIZE=20`, one extension round, batch persistence); production snapshot подтвердил stable committed pages, honest totals, late arrivals и restart persistence. SEARCH-003 закрыт, SEARCH-004 готов к старту. |
 | 1.4.11 | 10.08.2026 | SEARCH-004 | `/vacancies` стал canonical route; legacy query-preserving redirect, safe source-state contract, cached/degraded Trudvsem labels, canonical links/forms/pagination и dedicated tests/CI gate реализованы. Статус — НУЖНА ПРОВЕРКА. |
+| 1.4.12 | 10.08.2026 | SEARCH-004-COMPLETE / AUTH-001-PREP | Green CI, Render revision 0007, canonical `/vacancies` mobile search and legacy redirect confirmed; SEARCH-004 closed, AUTH-001 ready. |
+| 1.4.13 | 10.08.2026 | AUTH-001-CANDIDATE | First-party account, migration `20260810_0008`, scrypt, verification/reset tokens, revocable sessions, SMTP adapter, UI/tests/CI готовы; требуется GitHub/Render/SMTP E2E. |

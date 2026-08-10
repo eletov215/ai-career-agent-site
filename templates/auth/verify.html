@@ -1,0 +1,17 @@
+{% extends "auth/base_auth.html" %}
+{% block title %}Подтверждение email — AI Career Agent{% endblock %}
+{% block auth_title %}Подтвердите email{% endblock %}
+{% block auth_lead %}Проверка ссылки не выполняется автоматически: подтверждение произойдёт только после нажатия кнопки.{% endblock %}
+{% block auth_card %}
+  <div class="auth-card__heading"><span class="auth-card__icon" aria-hidden="true">✓</span><div><h2>Подтверждение аккаунта</h2><p>Это защитит ссылку от автоматических почтовых сканеров.</p></div></div>
+  {% if token_present %}
+    <form class="auth-form" method="post" action="{{ url_for('auth.verify_email_submit') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="token" value="{{ token }}">
+      <button class="btn btn-primary auth-submit" type="submit">Подтвердить email</button>
+    </form>
+  {% else %}
+    <div class="auth-alert auth-alert--error">В ссылке отсутствует токен подтверждения.</div>
+    <a class="btn btn-secondary auth-submit" href="{{ url_for('auth.resend_verification') }}">Запросить новое письмо</a>
+  {% endif %}
+{% endblock %}

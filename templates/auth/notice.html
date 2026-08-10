@@ -1,0 +1,12 @@
+{% extends "auth/base_auth.html" %}
+{% block title %}{{ title }} — AI Career Agent{% endblock %}
+{% block auth_title %}{{ title }}{% endblock %}
+{% block auth_lead %}Безопасный аккаунт AI Career Agent{% endblock %}
+{% block auth_card %}
+  <div class="auth-notice {{ 'auth-notice--error' if success is defined and not success else '' }}">
+    <span class="auth-notice__icon" aria-hidden="true">{{ '!' if success is defined and not success else '✓' }}</span>
+    <h2>{{ title }}</h2>
+    <p>{{ message }}</p>
+    <a class="btn btn-primary auth-submit" href="{{ action_url }}">{{ action_label }}</a>
+  </div>
+{% endblock %}

@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block head_extra %}<meta name="robots" content="noindex,nofollow">{% endblock %}
+{% block content %}
+<main class="auth-page">
+  <div class="container auth-layout">
+    <section class="auth-intro" aria-labelledby="auth-page-title">
+      <div class="auth-kicker"><span aria-hidden="true">✦</span> AI Career Agent</div>
+      <h1 id="auth-page-title">{% block auth_title %}Ваш карьерный аккаунт{% endblock %}</h1>
+      <p>{% block auth_lead %}Единый вход для резюме, вакансий и следующих карьерных шагов.{% endblock %}</p>
+      <ul class="auth-benefits" aria-label="Преимущества аккаунта">
+        <li><span aria-hidden="true">✓</span> Данные сохраняются между устройствами</li>
+        <li><span aria-hidden="true">✓</span> Сессии можно завершить в любой момент</li>
+        <li><span aria-hidden="true">✓</span> HH и SuperJob останутся отдельными подключениями</li>
+      </ul>
+    </section>
+    <section class="auth-card">
+      {% block auth_card %}{% endblock %}
+    </section>
+  </div>
+</main>
+{% endblock %}

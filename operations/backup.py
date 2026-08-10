@@ -36,6 +36,8 @@ _TAG_SIZE = 16
 _INVENTORY_TABLES = (
     "users",
     "oauth_connections",
+    "auth_sessions",
+    "auth_tokens",
     "vacancies",
     "vacancy_source_records",
     "sync_runs",

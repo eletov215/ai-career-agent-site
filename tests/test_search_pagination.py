@@ -334,7 +334,7 @@ def test_provider_failure_keeps_materialized_page_available(tmp_path):
 
 def test_migration_0007_round_trip(tmp_path):
     database_url = f"sqlite:///{(tmp_path / 'migrate.db').resolve().as_posix()}"
-    upgrade_database(database_url)
+    upgrade_database(database_url, "20260809_0007")
     runtime = create_database(database_url)
     try:
         tables = set(__import__("sqlalchemy").inspect(runtime.engine).get_table_names())

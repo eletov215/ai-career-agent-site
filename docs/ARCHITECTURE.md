@@ -1,110 +1,66 @@
 # AI Career Agent — архитектура проекта
 
 > Последнее обновление: 10 августа 2026 года  
-> Текущий пакет: `SEARCH-004` — canonical vacancy route и safe public source states  
-> Статус: **НУЖНА ПРОВЕРКА**; production revision остаётся `20260809_0007`
+> Текущий пакет: `AUTH-001` — first-party account  
+> Статус: **НУЖНА ПРОВЕРКА**; candidate revision `20260810_0008`
 
 ## 1. Архитектурная цель
 
 ```text
-provider adapters
-→ SEARCH-001 canonical normalization/filtering
-→ SEARCH-002 conservative dedup
-→ SEARCH-003 persistent snapshot/global ordering
-→ SEARCH-004 canonical /vacancies + safe source-state presentation
+Flask routes / blueprints
+→ application services
+→ repositories
+→ SQLAlchemy models/session
 ```
 
-Бизнес-логика остаётся hosting-independent: Flask/Gunicorn `app:app`, PostgreSQL через `DATABASE_URL`, schema только Alembic, Render — staging/rollback до предрелизного VPS блока.
+SEARCH-001..004 остаются завершённым vacancy contour. AUTH-001 добавляет first-party identity contour без связывания внешних OAuth connections.
 
-## 2. Основные слои
+## 2. Identity/auth layers
 
 ```text
-Flask route
-  → application services
-    → repositories
-      → SQLAlchemy models/session
+routes/auth.py
+  → services/auth.py
+    → repositories/auth.py
+      → users + auth_sessions + auth_tokens
+
+services/passwords.py       versioned scrypt
+services/email_delivery.py  disabled/memory/SMTP adapter
 ```
 
-- `app.py` не выполняет SQL и получает persistence через `StorageServices`;
-- `services/vacancy_normalizer.py` — единая contract boundary SEARCH-001;
-- `services/vacancy_deduplication.py` — conservative complete-link grouping SEARCH-002;
-- `services/search_aggregation.py` — bounded snapshot/cursor orchestration SEARCH-003;
-- `services/source_status.py` — safe user-facing state contract SEARCH-004;
-- `repositories/search_snapshots.py` — snapshot persistence;
-- `models/search_snapshot.py` — isolated TTL snapshot tables.
+`app.py` только wire-ит AuthService через `StorageServices`; routes не импортируют ORM.
 
-## 3. Public routing
+## 3. Identity boundary
 
-Canonical vacancy search:
-
-```text
-GET /vacancies
-```
-
-Compatibility route:
-
-```text
-GET /vacancies/internal
-→ 308 /vacancies с raw query string без пересборки
-```
-
-Legacy redirect сохраняет repeated `source`, filters, `snapshot` и `page`, получает `Cache-Control: no-store, max-age=0` и `X-Robots-Tag: noindex`. Generated navbar/footer/home CTA, forms и pagination используют только `/vacancies`.
+`users` — единственный root. Legacy users/OAuth rows могут иметь null password fields. AUTH-001 не присваивает HH/SJ connections. AUTH-002 выполнит explicit binding later.
 
 ## 4. Persistence schema
 
-Production revision: `20260809_0007`. SEARCH-004 migration не добавляет.
+Candidate revision `20260810_0008`:
 
 ```text
-search_snapshots 1 ── * search_snapshot_sources
-search_snapshots 1 ── * search_snapshot_candidates
-search_snapshots 1 ── * search_snapshot_items
+users 1 ── * auth_sessions
+users 1 ── * auth_tokens
+users 1 ── * oauth_connections  (binding remains AUTH-002)
 ```
 
-Snapshot tables отделены от `vacancies`/`vacancy_source_records`. TTL cleanup каскадно удаляет только ephemeral search state и не может удалить canonical vacancy cache, OAuth или sync checkpoints.
+Auth rows cascade only when User is intentionally deleted. Password/session/action raw secrets are not stored.
 
-## 5. SEARCH-003 invariants
+## 5. HTTP/session flow
 
-1. Query metadata хранится как SHA-256 fingerprint, а не raw keyword/region/salary.
-2. Canonical filtering и dedup выполняются до stable ordinal/page slicing.
-3. Уже committed ordinal prefix не переставляется при поздних provider updates.
-4. Per-provider cursor/error/exhausted state живёт в БД.
-5. Один request расширяет snapshot не более чем одним provider-page round по умолчанию.
-6. `provider_reported_total`, `known_unique_total` и `total_is_exact` имеют разные значения.
-7. Extension bounded limits запрещают synchronous scan десятков тысяч upstream results.
+1. Registration creates pending User + hashed verification token.
+2. Verification POST atomically consumes token and activates User.
+3. Login performs bounded scrypt verification and creates hashed server session.
+4. Browser Flask session stores opaque raw token; server checks DB on each request.
+5. Logout/revoke sets `revoked_at`; reset changes password and revokes all sessions atomically.
 
-## 6. SEARCH-004 source-state contract
+## 6. Email/configuration
 
-Разрешённые public states:
-
-```text
-available
-cached
-degraded
-auth_required
-temporarily_unavailable
-```
-
-Контракт не содержит raw exception, response body, credential, token или имя environment variable. Trudvsem показывается как PostgreSQL-backed cache. HH/SuperJob/Reed показываются как live providers только при фактической настройке/ответе. Недоступный source исключается из текущего search request до provider invocation.
-
-Подробная admin telemetry остаётся SEARCH-005.
+Production default is `disabled`. `smtp` uses STARTTLS and environment secrets. `memory` is test-only and forbidden in production. Readiness exposes only backend/configured boolean.
 
 ## 7. Security/observability
 
-- `/health/search-pagination?snapshot=<uuid>` показывает только aggregate state;
-- raw query text, cookies, credentials и provider payloads в telemetry не попадают;
-- provider failure сохраняет materialized pages и не ломает общую выдачу;
-- canonical/legacy routes не раскрывают техническую конфигурацию;
-- public source-state labels используют neutral copy.
+CSRF, secure cookie, trusted hosts, ProxyFix and security headers come from SEC-001. Auth routes add strict rate limits, no-store/no-referrer and enumeration-safe copy. Logs exclude email/password/raw token/SMTP body.
 
-## 8. Проверка и rollback
+## 8. Compatibility and rollback
 
-Candidate проверяется отдельным GitHub gate, full regression suite и Render smoke:
-
-```text
-/vacancies 200
-/vacancies/internal?<query> 308 с тем же query/snapshot/page
-Trudvsem cached/degraded
-one-provider failure -> page 200
-```
-
-Application rollback не очищает vacancy cache и SEARCH-003 snapshots. Database downgrade не требуется; revision `0007` остаётся.
+Search snapshot/dedup, sync state and OAuth tables are unchanged. Application revert may retain 0008. Downgrade removes auth data and is not allowed after real account creation without backup/explicit policy.

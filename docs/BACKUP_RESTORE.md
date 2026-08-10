@@ -1,7 +1,7 @@
 # AI Career Agent - backup и восстановление PostgreSQL
 
 **Пакет:** `OPS-001`  
-**Candidate схема:** Alembic `20260807_0004`  
+**Candidate схема:** Alembic `20260810_0008`  
 **Правило:** backup не считается рабочим, пока restore не проверен на отдельной базе.
 
 
@@ -109,7 +109,7 @@ python scripts/restore_database.py \
 После restore скрипт сравнивает:
 
 - Alembic revision;
-- counts для `users`, `oauth_connections`, `vacancies`, `vacancy_source_records`, `sync_runs`, legacy OAuth tables.
+- counts для `users`, `auth_sessions`, `auth_tokens`, `oauth_connections`, `vacancies`, `vacancy_source_records`, `sync_runs`, legacy OAuth tables.
 
 Несовпадение завершает команду ошибкой.
 
@@ -179,4 +179,4 @@ docker compose --env-file .env --profile ops --profile restore-test run --rm \
   --backup /var/backups/ai-career-agent/render-production.dump.enc
 ```
 
-Перед выполнением сверить `RESTORE_DATABASE_URL`, manifest, SHA-256 и целевую revision `20260807_0004`.
+Перед выполнением сверить `RESTORE_DATABASE_URL`, manifest, SHA-256 и целевую revision `20260810_0008`.

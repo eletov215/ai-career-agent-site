@@ -160,6 +160,18 @@ def _validated_optional_url(
     return value
 
 
+def _validated_optional_email(source: Mapping[str, str], name: str) -> str | None:
+    value = _optional(source, name)
+    if not value:
+        return None
+    if len(value) > 254 or value.count("@") != 1 or any(ch.isspace() for ch in value):
+        raise ConfigurationError(f"{name} должен содержать корректный email-адрес.")
+    local, domain = value.rsplit("@", 1)
+    if not local or not domain or "." not in domain:
+        raise ConfigurationError(f"{name} должен содержать корректный email-адрес.")
+    return value
+
+
 def _service_name(source: Mapping[str, str]) -> str:
     value = _clean(source.get("SERVICE_NAME", "ai-career-agent")) or "ai-career-agent"
     if not re.fullmatch(r"[A-Za-z0-9._-]{3,80}", value):
@@ -401,6 +413,19 @@ class AppSettings:
     session_cookie_secure: bool
     session_cookie_samesite: str
     session_lifetime_seconds: int
+    auth_session_ttl_seconds: int
+    auth_verification_ttl_seconds: int
+    auth_reset_ttl_seconds: int
+    auth_password_min_length: int
+    auth_email_backend: str
+    auth_email_from: str | None
+    auth_email_from_name: str
+    auth_smtp_host: str | None
+    auth_smtp_port: int
+    auth_smtp_username: str | None
+    auth_smtp_password: str | None
+    auth_smtp_use_tls: bool
+    auth_smtp_timeout_seconds: float
     csrf_enabled: bool
     csrf_time_limit_seconds: int
     rate_limit_enabled: bool
@@ -563,6 +588,38 @@ def load_settings(environ: Mapping[str, str] | None = None) -> AppSettings:
         raise ConfigurationError(
             "DEBUG_DIAGNOSTICS требует DIAGNOSTICS_SECRET."
         )
+
+    auth_email_backend = _choice(
+        {**source, "AUTH_EMAIL_BACKEND": _clean(source.get("AUTH_EMAIL_BACKEND", "memory" if environment == "test" else "disabled")).lower()},
+        "AUTH_EMAIL_BACKEND",
+        "memory" if environment == "test" else "disabled",
+        choices={"disabled", "memory", "smtp"},
+    )
+    if environment == "production" and auth_email_backend == "memory":
+        raise ConfigurationError("AUTH_EMAIL_BACKEND=memory запрещён в production.")
+    auth_email_from = _validated_optional_email(source, "AUTH_EMAIL_FROM")
+    auth_smtp_host = _optional(source, "AUTH_SMTP_HOST")
+    auth_smtp_username = _optional(source, "AUTH_SMTP_USERNAME")
+    auth_smtp_password = _optional(source, "AUTH_SMTP_PASSWORD")
+    auth_smtp_use_tls = _bool(source, "AUTH_SMTP_USE_TLS", True)
+    if auth_email_backend == "smtp":
+        missing_auth_email = []
+        if not auth_email_from:
+            missing_auth_email.append("AUTH_EMAIL_FROM")
+        if not auth_smtp_host:
+            missing_auth_email.append("AUTH_SMTP_HOST")
+        if auth_smtp_username and not auth_smtp_password:
+            missing_auth_email.append("AUTH_SMTP_PASSWORD")
+        if auth_smtp_password and not auth_smtp_username:
+            missing_auth_email.append("AUTH_SMTP_USERNAME")
+        if missing_auth_email:
+            raise ConfigurationError(
+                "AUTH_EMAIL_BACKEND=smtp требует: " + ", ".join(missing_auth_email) + "."
+            )
+        if environment == "production" and not auth_smtp_use_tls:
+            raise ConfigurationError(
+                "AUTH_SMTP_USE_TLS=1 обязателен для SMTP в production."
+            )
 
     superjob_redirect_uri = _validated_redirect_uri(
         "SUPERJOB_REDIRECT_URI",
@@ -769,6 +826,49 @@ def load_settings(environ: Mapping[str, str] | None = None) -> AppSettings:
             43_200,
             minimum=900,
             maximum=604_800,
+        ),
+        auth_session_ttl_seconds=_int(
+            source,
+            "AUTH_SESSION_TTL_SECONDS",
+            43_200,
+            minimum=900,
+            maximum=2_592_000,
+        ),
+        auth_verification_ttl_seconds=_int(
+            source,
+            "AUTH_VERIFICATION_TTL_SECONDS",
+            86_400,
+            minimum=900,
+            maximum=604_800,
+        ),
+        auth_reset_ttl_seconds=_int(
+            source,
+            "AUTH_RESET_TTL_SECONDS",
+            3_600,
+            minimum=300,
+            maximum=86_400,
+        ),
+        auth_password_min_length=_int(
+            source,
+            "AUTH_PASSWORD_MIN_LENGTH",
+            12,
+            minimum=10,
+            maximum=64,
+        ),
+        auth_email_backend=auth_email_backend,
+        auth_email_from=auth_email_from,
+        auth_email_from_name=_clean(source.get("AUTH_EMAIL_FROM_NAME", "AI Career Agent")) or "AI Career Agent",
+        auth_smtp_host=auth_smtp_host,
+        auth_smtp_port=_int(source, "AUTH_SMTP_PORT", 587, minimum=1, maximum=65535),
+        auth_smtp_username=auth_smtp_username,
+        auth_smtp_password=auth_smtp_password,
+        auth_smtp_use_tls=auth_smtp_use_tls,
+        auth_smtp_timeout_seconds=_float(
+            source,
+            "AUTH_SMTP_TIMEOUT_SECONDS",
+            8.0,
+            minimum=1.0,
+            maximum=30.0,
         ),
         csrf_enabled=csrf_enabled,
         csrf_time_limit_seconds=_int(

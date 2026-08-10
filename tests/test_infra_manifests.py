@@ -28,6 +28,11 @@ def test_compose_has_isolated_postgresql_and_profiles():
         "scripts/trudvsem_sync_worker.py",
     ]
     assert "ports" not in services["sync-worker"]
+    app_environment = compose["x-app-environment"]
+    assert app_environment["AUTH_EMAIL_BACKEND"] == "${AUTH_EMAIL_BACKEND:-disabled}"
+    assert app_environment["AUTH_SESSION_TTL_SECONDS"] == "${AUTH_SESSION_TTL_SECONDS:-43200}"
+    assert app_environment["SEARCH_PAGE_SIZE"] == "${SEARCH_PAGE_SIZE:-20}"
+    assert app_environment["SEARCH_SNAPSHOT_MAX_ROUNDS_PER_REQUEST"] == "${SEARCH_SNAPSHOT_MAX_ROUNDS_PER_REQUEST:-1}"
 
 
 def test_dockerfile_has_non_root_runtime_and_ops_targets():
@@ -42,6 +47,12 @@ def test_dockerfile_has_non_root_runtime_and_ops_targets():
 def test_env_template_contains_placeholders_not_real_secrets():
     text = (ROOT / "infra/vps/.env.example").read_text(encoding="utf-8")
     assert "CHANGE_ME_STRONG_DATABASE_PASSWORD" in text
+    assert "AUTH_EMAIL_BACKEND=smtp" in text
+    assert "AUTH_SMTP_PASSWORD=CHANGE_ME_SMTP_PASSWORD" in text
+    assert "AUTH_SESSION_TTL_SECONDS=43200" in text
+    assert "AUTH_VERIFICATION_TTL_SECONDS=86400" in text
+    assert "AUTH_RESET_TTL_SECONDS=3600" in text
+    assert "AUTH_PASSWORD_MIN_LENGTH=12" in text
     assert "SEARCH_PAGE_SIZE=20" in text
     assert "SEARCH_SNAPSHOT_TTL_SECONDS=1800" in text
     assert "SEARCH_SNAPSHOT_MAX_CANDIDATES=1200" in text
@@ -69,6 +80,10 @@ def test_render_uses_external_worker_runtime_supervisor():
     render = yaml.safe_load((ROOT / "render.yaml").read_text(encoding="utf-8"))
     service = render["services"][0]
     assert "scripts/start_runtime.py" in service["startCommand"]
+    env = {item["key"]: item for item in service["envVars"]}
+    assert env["AUTH_EMAIL_BACKEND"]["value"] == "disabled"
+    assert env["AUTH_SMTP_PASSWORD"]["sync"] is False
+    assert env["SEARCH_SNAPSHOT_MAX_ROUNDS_PER_REQUEST"]["value"] == "1"
 
     app_text = (ROOT / "app.py").read_text(encoding="utf-8")
     assert "TRUDVSEM_SYNC_THREAD" not in app_text

@@ -1,24 +1,13 @@
-SEARCH-004 candidate v1.4.11
+AUTH-001 CI FIX 1
 
-Upload the complete project into a branch created from current main:
-  search-004-canonical-vacancies
+Replace only:
+  tests/test_routes.py
 
-Recommended commit:
-  search: make vacancies route canonical and expose safe source states
+Reason:
+The SEC-001 regression fixture used a hard-coded published_at=2026-08-03.
+The vacancy search defaults to period=7 days, so on 2026-08-10 the fixture
+became older than the active search window and was correctly filtered out.
+The fixture now uses the current UTC timestamp. The SuperJob route fixture was
+updated the same way to prevent the same future time-dependent failure.
 
-Required files/directories that must be preserved:
-  .github/
-  .gitignore
-  .dockerignore
-  services/source_status.py
-  tests/test_source_status.py
-  docs/SEARCH004_*.md
-
-Expected GitHub Actions step:
-  Verify SEARCH-004 canonical route and source-state controls
-
-No new migration. Expected revision after deploy:
-  20260809_0007
-
-Do not upload .env, secrets, databases, dumps, backups, virtualenv,
-caches or bytecode.
+No production code, database migration, environment variables or Render settings change.

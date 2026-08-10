@@ -6,6 +6,8 @@ from sqlalchemy.exc import IntegrityError
 
 from database import create_database, upgrade_database
 from models import (
+    AuthSession,
+    AuthToken,
     HeadHunterAccount,
     OAuthConnection,
     SuperJobAccount,
@@ -14,7 +16,7 @@ from models import (
     Vacancy,
     VacancySourceRecord,
 )
-from repositories import OAuthConnectionRepository, SyncRunRepository, UserRepository
+from repositories import AuthRepository, OAuthConnectionRepository, SyncRunRepository, UserRepository
 from services.vacancy_store import VacancyStore
 
 
@@ -209,5 +211,43 @@ def test_user_delete_cascades_unified_oauth_and_keeps_rollback_mirror(tmp_path):
         with runtime.session() as session:
             assert session.get(OAuthConnection, connection.id) is None
             assert session.get(SuperJobAccount, 202) is not None
+    finally:
+        runtime.dispose()
+
+
+def test_user_delete_cascades_first_party_sessions_and_tokens(tmp_path):
+    runtime = _runtime(tmp_path)
+    try:
+        auth = AuthRepository(runtime)
+        user = auth.create_user(
+            email="auth-cascade@example.test",
+            normalized_email="auth-cascade@example.test",
+            password_hash="aca_scrypt$1$32768$8$1$placeholder$placeholder",
+            display_name=None,
+            now=10,
+        )
+        assert user is not None
+        auth.create_session(
+            user_id=user.id,
+            token_hash="a" * 64,
+            expires_at=10_000,
+            user_agent_hash=None,
+            now=11,
+        )
+        auth.issue_token(
+            user_id=user.id,
+            purpose="verify_email",
+            token_hash="b" * 64,
+            expires_at=10_000,
+            now=11,
+        )
+
+        with runtime.session() as session:
+            session.execute(delete(User).where(User.id == user.id))
+            session.commit()
+
+        with runtime.session() as session:
+            assert session.scalar(select(func.count(AuthSession.id))) == 0
+            assert session.scalar(select(func.count(AuthToken.id))) == 0
     finally:
         runtime.dispose()

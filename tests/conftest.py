@@ -57,6 +57,19 @@ for variable in (
     "OPS_ALERT_MIN_LEVEL",
     "BACKUP_ENCRYPTION_KEY",
     "RESTORE_DATABASE_URL",
+    "AUTH_EMAIL_BACKEND",
+    "AUTH_EMAIL_FROM",
+    "AUTH_EMAIL_FROM_NAME",
+    "AUTH_SMTP_HOST",
+    "AUTH_SMTP_PORT",
+    "AUTH_SMTP_USERNAME",
+    "AUTH_SMTP_PASSWORD",
+    "AUTH_SMTP_USE_TLS",
+    "AUTH_SMTP_TIMEOUT_SECONDS",
+    "AUTH_SESSION_TTL_SECONDS",
+    "AUTH_VERIFICATION_TTL_SECONDS",
+    "AUTH_RESET_TTL_SECONDS",
+    "AUTH_PASSWORD_MIN_LENGTH",
 ):
     os.environ.pop(variable, None)
 
@@ -97,10 +110,15 @@ def client(app_module):
 
     limiter.reset()
     OPS_STATE.reset_for_tests()
+    sender = getattr(app_module, "AUTH_EMAIL_SENDER", None)
+    if sender is not None and hasattr(sender, "clear"):
+        sender.clear()
     test_client = app_module.app.test_client()
     yield test_client
     limiter.reset()
     OPS_STATE.reset_for_tests()
+    if sender is not None and hasattr(sender, "clear"):
+        sender.clear()
 
 
 @pytest.fixture()

@@ -1,0 +1,19 @@
+{% extends "auth/base_auth.html" %}
+{% block title %}{{ title }} — AI Career Agent{% endblock %}
+{% block auth_title %}{{ title }}{% endblock %}
+{% block auth_lead %}{{ description }}{% endblock %}
+{% block auth_card %}
+  <div class="auth-card__heading"><span class="auth-card__icon" aria-hidden="true">✉</span><div><h2>{{ title }}</h2><p>{{ description }}</p></div></div>
+  {% if not delivery_available %}
+    <div class="auth-alert auth-alert--warning" role="status">Отправка писем временно недоступна.</div>
+  {% endif %}
+  {% if error %}<div class="auth-alert auth-alert--error" role="alert">{{ error }}</div>{% endif %}
+  <form class="auth-form" method="post">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <label>Email
+      <input name="email" type="email" maxlength="254" autocomplete="email" required value="{{ email }}" placeholder="name@example.com">
+    </label>
+    <button class="btn btn-primary auth-submit" type="submit" {% if not delivery_available %}disabled aria-disabled="true"{% endif %}>{{ submit_label }}</button>
+  </form>
+  <p class="auth-switch"><a href="{{ url_for('auth.login') }}">Вернуться ко входу</a></p>
+{% endblock %}

@@ -3,44 +3,35 @@
 ## 1. Основные агрегаты
 
 ```text
-User 1 ── * OAuthConnection
+User 1 ── * AuthSession
+User 1 ── * AuthToken
+User 1 ── * OAuthConnection        (AUTH-002 binding)
 Vacancy 1 ── * VacancySourceRecord
 SyncRun / SyncWorker / SyncCheckpoint
 SearchSnapshot 1 ── * SourceState / Candidate / Item
 ```
 
-`Vacancy` и `VacancySourceRecord` — долговечный canonical/source cache. `SearchSnapshot*` — короткоживущий анонимный aggregate для стабильной пагинации; эти контуры намеренно разделены.
+## 2. AuthUserRecord
 
-## 2. SEARCH-001 contract
+Immutable service-facing projection: identity/contact/status/verification/password/login timestamps and hash. Flask routes never receive ORM entities.
 
-`NormalizedVacancy` фиксирует canonical `work_format`, `employment_code`, `experience_code`, salary/currency, UTC dates и lifecycle. Unknown не заменяется догадкой.
+## 3. AuthSessionRecord
 
-## 3. SEARCH-002 grouping
+Opaque hashed bearer session with absolute expiry, last-seen, revoke state/reason and hashed user-agent. It is server-revocable and independent of provider OAuth identities.
 
-Conservative dedup сохраняет все source records. Same-provider разные external IDs не объединяются. Cross-source merge требует hard gates/complete-link evidence и может быть обратимо разделён.
+## 4. AuthTokenRecord
 
-## 4. SEARCH-003 snapshot records
+Purpose-bound verification/reset token hash with created/expiry/consumed state. New same-purpose token supersedes previous. Consumption and user mutation occur atomically.
 
-### SearchSnapshot
+## 5. Invariants
 
-Хранит fingerprint, selected sources, sort/page size, aggregate counters, exact/bounded status, lease, TTL и committed prefix. Raw query text не хранится.
+- normalized email is unique;
+- pending User cannot login;
+- verification activates only pending User;
+- password reset revokes all first-party sessions;
+- raw password/session/action tokens never persist;
+- HH/SJ connection ownership is unchanged until AUTH-002.
 
-### SearchSnapshotSource
+## 6. Existing search/sync aggregates
 
-Per-provider cursor/state: `next_page`, fetched pages/items, reported total, `exhausted`, `bounded`, error count/type и last fetched time.
-
-### SearchSnapshotCandidate
-
-Bounded normalized provider publication до global dedup. Identity предпочитает external ID/URL; anonymous fallback включает provider page/position, поэтому разные anonymous rows не перезаписываются.
-
-### SearchSnapshotItem
-
-Deduplicated card с постоянным ordinal, stable source-key set и safe JSON payload. Existing committed ordinal не меняется; поздние arrivals добавляются после committed prefix.
-
-## 5. Coverage invariant
-
-Search snapshot расширяется постепенно: логическая UI-страница равна 20 карточкам, а один HTTP request по умолчанию выполняет не более одного provider-page round. Уже committed ordinal range не перестраивается поздними результатами; source cursor продолжает расширяться при переходе на следующие страницы.
-
-## 6. Lifecycle
-
-Snapshot создаётся/расширяется bounded rounds, touch продлевает TTL, expired rows удаляются каскадно. Cleanup не затрагивает canonical vacancy cache.
+SEARCH-001..004 vacancy/snapshot semantics and SYNC checkpoints remain unchanged by AUTH-001.

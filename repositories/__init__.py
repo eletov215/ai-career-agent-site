@@ -1,5 +1,6 @@
 """Repository layer hiding SQLAlchemy from routes and services."""
 
+from .auth import AuthRepository
 from .oauth_connections import OAuthConnectionRepository
 from .search_snapshots import SearchSnapshotRepository
 from .sync_checkpoints import SyncCheckpointRepository
@@ -9,6 +10,7 @@ from .users import UserRepository, normalize_email
 from .vacancies import VacancyRepository
 
 __all__ = [
+    "AuthRepository",
     "OAuthConnectionRepository",
     "SearchSnapshotRepository",
     "SyncCheckpointRepository",

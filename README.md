@@ -2,59 +2,51 @@
 
 | Поле | Значение |
 |---|---|
-| Канонический план | `docs/PLAN_CURRENT.md` — 1.4.11 |
-| Паспорт | `docs/PROJECT_PASSPORT.md` — 2.25 |
-| Текущий пакет | `SEARCH-004 — НУЖНА ПРОВЕРКА` |
-| Следующий пакет | `AUTH-001` после подтверждения SEARCH-004 |
-| Database revision | `20260809_0007` — без новой migration в SEARCH-004 |
-| Production | Render остаётся staging/rollback; real VPS отложен до предрелизного INFRA-001 |
+| Канонический план | `docs/PLAN_CURRENT.md` — 1.4.13 |
+| Паспорт | `docs/PROJECT_PASSPORT.md` — 2.27 |
+| Текущий пакет | `AUTH-001 — НУЖНА ПРОВЕРКА` |
+| Следующий пакет | `AUTH-002` после подтверждения AUTH-001 |
+| Candidate database revision | `20260810_0008` |
+| Production до deploy | Render revision `20260809_0007` |
 
 > GitHub является главным источником кода. Более новый ZIP текущего чата становится рабочей основой. Секреты, `.env`, базы, dumps, backups, virtualenv, caches и bytecode не входят в репозиторий.
 
 ## 1. Назначение проекта
 
-AI Career Agent — Flask-сервис карьерного сопровождения: резюме, карьерный профиль, поиск вакансий, OAuth HeadHunter/SuperJob, PostgreSQL cache Trudvsem и будущий AI-контур. WSGI entrypoint: `app:app`.
+AI Career Agent — Flask-сервис карьерного сопровождения. WSGI entrypoint: `app:app`. SEARCH-001..004 подтверждены; AUTH-001 добавляет собственный email/password account поверх существующего `User`.
 
 ## 2. Статусы пакетов
 
 | Пакет | Статус |
 |---|---|
-| FND-001 / FND-002 | ВЫПОЛНЕНО |
-| DATA-001 / DATA-002 | ВЫПОЛНЕНО |
-| SEC-001 / OPS-001 / INFRA-PREP-001 | ВЫПОЛНЕНО |
+| FND/DATA/SEC/OPS/INFRA-PREP | ВЫПОЛНЕНО |
+| SYNC-001/002, SEARCH-001..004 | ВЫПОЛНЕНО |
 | DOC-001 | В РАБОТЕ как постоянный процесс |
-| SYNC-001 / SYNC-002 | ВЫПОЛНЕНО |
-| SEARCH-001 / SEARCH-002 / SEARCH-003 | ВЫПОЛНЕНО |
-| SEARCH-004 | НУЖНА ПРОВЕРКА |
-| SEARCH-005 | ЗАПЛАНИРОВАНО |
+| AUTH-001 | НУЖНА ПРОВЕРКА |
+| AUTH-002 / PROF / PRIV / SEARCH-005 | ЗАПЛАНИРОВАНО |
 | INFRA-001 | ОТЛОЖЕНО ДО ПРЕДРЕЛИЗНОГО ЭТАПА |
 
-## 3. SEARCH-004 candidate
+## 3. AUTH-001 candidate
 
 ```text
-/vacancies                 canonical public search
-/vacancies/internal        permanent method-preserving compatibility redirect
-services/source_status.py  safe public source-state contract
+existing users + password fields
+auth_sessions + auth_tokens
+versioned scrypt
+/auth registration, verification, login, logout, reset, session revoke
+provider-neutral disabled/memory/SMTP email
 ```
 
-Ключевые свойства:
+Ключевые свойства: password/token plaintext не сохраняется; sessions server-side revocable; reset отзывает все sessions; public account-recovery/login copy enumeration-safe; HH/SJ остаются independent до AUTH-002.
 
-- raw query string, repeated `source`, SEARCH-003 `snapshot` и `page` сохраняются при redirect;
-- forms, pagination, navbar/footer/home CTA генерируют `/vacancies`;
-- HH/SuperJob/Reed различают `available`, `degraded`, `temporarily_unavailable`;
-- Trudvsem показывается как `cached`/`degraded`, а не live provider;
-- public UI не раскрывает exception bodies, tokens, credentials или имена environment variables;
-- migration отсутствует, revision остаётся `20260809_0007`.
+## 4. Email delivery
 
-## 4. Основной стек
+Production default `AUTH_EMAIL_BACKEND=disabled` fail-closed. Для полного E2E настроить SMTP STARTTLS через Render/VPS secrets. `memory` используется только в test и запрещён в production.
 
-- Python 3.11, Flask, Gunicorn;
-- SQLAlchemy 2, Alembic, PostgreSQL 17/Psycopg 3;
-- GitHub Actions;
-- Docker/Compose/Caddy test TLS;
-- HTML/CSS/JavaScript без отдельного frontend build.
+## 5. Основной стек
 
-## 5. Локальный запуск
+Python 3.11, Flask/Gunicorn, SQLAlchemy/Alembic, PostgreSQL 17/Psycopg 3, GitHub Actions, Docker/Compose, server-rendered HTML/CSS/JS.
+
+## 6. Локальный запуск
 
 ```bash
 python -m venv .venv
@@ -66,35 +58,36 @@ python scripts/manage_db.py upgrade
 python scripts/start_runtime.py
 ```
 
-## 6. Проверки качества
+Для no-network local mail sink можно использовать `AUTH_EMAIL_BACKEND=memory` только не в production.
+
+## 7. Проверки качества
 
 ```bash
 python scripts/check_repository_hygiene.py
 python scripts/check_document_structure.py
 python scripts/infra_manifest_check.py
-python -m compileall -q app.py config.py database.py observability.py security.py domain models repositories services operations scripts tests infra migrations
+python -m compileall -q .
 python -m pytest -q
 python -m alembic check
 ```
 
-GitHub Actions дополнительно запускает PostgreSQL 17, migration/integration, SEC/OPS/SYNC/SEARCH gates, encrypted backup/restore, Docker build и runtime smoke.
+Локально подтверждено: `217 passed, 7 skipped`; focused AUTH-001 gate: `83 passed, 2 skipped`; migration `0008 -> 0007 -> 0008` и `alembic check` пройдены. GitHub Actions дополнительно выполняет dedicated AUTH-001 gate, PostgreSQL migration/integration, SEC/OPS/SYNC/SEARCH regressions, backup/restore и container smoke.
 
-## 7. Render staging
+## 8. Render staging
 
-Start Command:
+Start Command не меняется:
 
 ```text
 python scripts/manage_db.py upgrade && python scripts/start_runtime.py
 ```
 
-Ожидаемая revision после SEARCH-004 остаётся `20260809_0007`.
+Ожидаемая revision после candidate deploy: `20260810_0008`. Полная verification требует SMTP и account E2E по `docs/AUTH001_RUNBOOK.md`.
 
-## 8. Ближайшие действия
+## 9. Ближайшие действия
 
-1. Загрузить SEARCH-004 candidate в отдельную branch.
-2. Получить полностью зелёный GitHub Actions.
-3. Merge в `main`; проверить `/health/ready` revision `0007`.
-4. Проверить `/vacancies` 200.
-5. Проверить `/vacancies/internal?<query>` 308 с сохранением query/snapshot/page.
-6. Проверить live/cached/degraded source states и отсутствие technical leakage.
-7. Закрыть SEARCH-004 и начать AUTH-001.
+1. Branch `auth-001-first-party-account`.
+2. Green GitHub Actions.
+3. Configure SMTP secrets вне GitHub/chat.
+4. Merge/deploy; readiness `0008`.
+5. Register/verify/login/session revoke/logout/reset E2E.
+6. Закрыть AUTH-001 и начать AUTH-002.

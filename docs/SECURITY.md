@@ -255,3 +255,22 @@ limit: 5 per minute
 ```
 
 Первые пять запросов одного клиента должны вернуть `200`, следующий — `429` с `Retry-After`. Endpoint не обращается к базе или внешним API и не раскрывает диагностику.
+
+## 9. AUTH-001 security controls
+
+- password storage: versioned bounded scrypt, random 16-byte salt, constant-time compare;
+- unknown-user login performs a fixed-cost dummy hash verification;
+- email uniqueness uses conservative normalized email without provider alias guessing;
+- verification/reset/session raw tokens are never persisted; only SHA-256 hashes are stored;
+- verification/reset are TTL, single-use and POST-confirmed with CSRF;
+- password reset atomically revokes all first-party sessions and invalidates other auth tokens;
+- open redirect attempts through external scheme/netloc, `//`, backslash or control characters are rejected;
+- auth pages set `Cache-Control: no-store`, `Pragma: no-cache`, `Referrer-Policy: no-referrer`;
+- registration/login/resend/forgot/reset/revoke endpoints have dedicated rate limits;
+- public registration/forgot/login failures do not reveal account existence;
+- SMTP logs exclude recipient, token, SMTP response text and credentials;
+- production forbids `AUTH_EMAIL_BACKEND=memory`; safe default is `disabled`;
+- first-party auth does not claim or delete pre-AUTH-002 OAuth identities.
+
+Remaining gate: green GitHub/PostgreSQL CI and Render SMTP E2E on revision `20260810_0008`.
+

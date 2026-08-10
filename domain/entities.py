@@ -49,8 +49,8 @@ class OAuthConnectionRecord:
         """Return the mapping expected by the current OAuth/dashboard code.
 
         DATA-002 changes persistence without changing the established session,
-        token-refresh, or template contracts.  AUTH-001/AUTH-002 will replace
-        this compatibility mapping after first-party accounts are introduced.
+        token-refresh, or template contracts.  AUTH-002 will replace this compatibility mapping after external
+        provider connections are explicitly bound to first-party accounts.
         """
 
         common: dict[str, Any] = {
