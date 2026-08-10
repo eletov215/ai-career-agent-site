@@ -158,6 +158,14 @@ jobs:
           tests/test_database.py
           tests/test_postgresql_integration.py
 
+      - name: Verify SEARCH-004 canonical route and source-state controls
+        run: >-
+          python -m pytest -q
+          tests/test_source_status.py
+          tests/test_routes.py
+          tests/test_template_security.py
+          tests/test_search_pagination.py
+
       - name: Verify PostgreSQL encrypted backup and restore
         env:
           DATABASE_URL: ${{ env.POSTGRES_TEST_URL }}
