@@ -1,19 +1,19 @@
-# AI Career Agent — аудит источников v1.4.13
+# AI Career Agent — аудит источников v1.4.14
 
 | Поле | Значение |
 |---|---|
 | Документ | SOURCE_AUDIT |
-| Версия | 1.4.13 |
+| Версия | 1.4.14 |
 | Дата | 10 августа 2026 |
-| Проверяемый пакет | AUTH-001 candidate implementation |
-| Рабочий источник кода | `ai-career-agent-site-main (6).zip` из актуального GitHub `main` |
+| Проверяемый пакет | AUTH-001 production verification + Safari CSRF hotfix |
+| Рабочий источник кода | `ai-career-agent-site-main (9).zip` из актуального GitHub `main` |
 | Канонический план до обновления | PLAN_CURRENT 1.4.12 |
 | Канонический паспорт до обновления | PROJECT_PASSPORT 2.26 |
-| Результат | AUTH-001 реализован локально; требуется GitHub/Render/SMTP verification |
+| Результат | Render revision `20260810_0008` и SMTP readiness подтверждены; реальный Safari E2E выявил conflict `no-referrer` vs `WTF_CSRF_SSL_STRICT`; hotfix подготовлен, требуется CI/Render retest |
 
 ## 1. Контрольный статус
 
-SEARCH-004 остаётся ВЫПОЛНЕНО. AUTH-001 переводится из ГОТОВО К СТАРТУ в НУЖНА ПРОВЕРКА. Candidate schema head = `20260810_0008`; production до deploy остаётся `20260809_0007`. DOC-STD-001 v1.1 обязателен.
+SEARCH-004 остаётся ВЫПОЛНЕНО. AUTH-001 остаётся НУЖНА ПРОВЕРКА. Production уже применил schema `20260810_0008`; `/health/ready` подтвердил PostgreSQL persistent=true, migrations.ok=true, `auth.email_backend=smtp` и `auth.email_delivery_configured=true`. Реальный Safari registration smoke выявил CSRF rejection `reason=The referrer header is missing.`: auth blueprint выставлял `Referrer-Policy: no-referrer`, тогда как production сохранял `WTF_CSRF_SSL_STRICT=true`. Hotfix меняет только auth response policy на `strict-origin`, не отключая CSRF strict mode. DOC-STD-001 v1.1 обязателен.
 
 ## 2. Проверка актуального источника кода
 
@@ -26,7 +26,7 @@ SEARCH-004 остаётся ВЫПОЛНЕНО. AUTH-001 переводится 
 | Sessions | server-side revocable `auth_sessions`, hash-only bearer storage |
 | Action tokens | hash-only, TTL, purpose, supersede/single-use |
 | Email | disabled/memory/SMTP STARTTLS adapter; production memory forbidden |
-| HTTP security | CSRF, rate limits, no-store/no-referrer, local redirect validation |
+| HTTP security | CSRF strict mode сохранён; rate limits; no-store; auth `Referrer-Policy: strict-origin`; local redirect validation |
 | OAuth compatibility | HH/SJ browser identities remain independent until AUTH-002 |
 | Backups | inventory includes `auth_sessions` and `auth_tokens` |
 | Prohibited artifacts | `.env`, secrets, DB/dump/backup/venv/cache/bytecode excluded from release |
@@ -69,8 +69,11 @@ Flask/Psycopg/PostgreSQL scenarios подтверждаются только Git
 
 ## 6. Ограничения и риски
 
-- Production email provider not selected/configured by code package.
-- `disabled` is safe default but blocks package completion.
+- Safari production registration до hotfix блокировался до auth business logic из-за отсутствующего Referer; SMTP при этом не вызывался.
+- Hotfix не меняет migration/schema и не отключает `WTF_CSRF_SSL_STRICT`; после merge обязателен реальный Safari/iPhone retest register/verify/reset.
+
+
+- Production SMTP configuration is now present and readiness reports `smtp` / `email_delivery_configured=true`; actual delivery still requires register/reset E2E.
 - Existing OAuth rows are not auto-bound.
 - Pending/session/token cleanup and identity erasure policy remain future PRIV/OPS work.
 - Shared rate-limit storage is required before multiple replicas.
@@ -82,10 +85,10 @@ Application revert without touching search/OAuth/sync data. Keep additive `0008`
 ## 8. Следующее действие
 
 ```text
-AUTH-001 CANDIDATE
+AUTH-001 SAFARI CSRF HOTFIX
 -> GitHub green
--> Render 0008 + SMTP
--> account E2E
+-> Render redeploy (revision remains 0008)
+-> Safari register/verify/login/session/reset E2E
 -> AUTH-001 COMPLETE
 -> AUTH-002 START
 ```
@@ -93,9 +96,9 @@ AUTH-001 CANDIDATE
 ## 9. Новые канонические версии
 
 ```text
-PLAN_CURRENT 1.4.13
-PROJECT_PASSPORT 2.27
-SOURCE_AUDIT 1.4.13
+PLAN_CURRENT 1.4.14
+PROJECT_PASSPORT 2.28
+SOURCE_AUDIT 1.4.14
 AUTH001_IMPLEMENTATION 1.0
 AUTH001_VERIFICATION_STATUS 1.0
 AUTH001_RUNBOOK 1.0
@@ -109,3 +112,4 @@ DOCUMENT_STANDARD 1.1 (без изменений)
 |---|---|---|
 | 1.4.12 | 10.08.2026 | SEARCH-004 final; AUTH-001 prepared. |
 | 1.4.13 | 10.08.2026 | AUTH-001 candidate implemented with migration 0008; external verification pending. |
+| 1.4.14 | 10.08.2026 | Render 0008 + SMTP readiness confirmed; Safari missing-Referer CSRF conflict localized; strict-origin hotfix prepared without weakening CSRF. |

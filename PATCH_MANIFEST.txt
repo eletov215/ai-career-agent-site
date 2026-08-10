@@ -1,96 +1,30 @@
-AI Career Agent - AUTH-001 patch manifest
+AI Career Agent - AUTH-001 Safari CSRF hotfix manifest
 
-Overlay this archive onto the current GitHub main after SEARCH-004.
-Do not delete the existing .git directory. Copy with replacement and preserve
-all relative paths, including dot-directories.
+Baseline:
+  ai-career-agent-site-main (9).zip from current GitHub main
 
-Branch:
-  auth-001-first-party-account
+Problem confirmed in Render logs:
+  CSRF validation rejected method=POST path=/auth/register
+  reason=The referrer header is missing.
 
-Recommended commit:
-  auth: add first-party account and revocable sessions
+Root cause:
+  routes/auth.py forced Referrer-Policy: no-referrer on all /auth responses,
+  while production config.py keeps WTF_CSRF_SSL_STRICT=true. Browser POSTs
+  therefore omitted Referer and Flask-WTF rejected them before auth/SMTP logic.
 
-Required CI gate:
-  Verify AUTH-001 first-party account controls
+Fix:
+  Referrer-Policy: strict-origin for /auth responses. This preserves origin-only
+  Referer for strict same-origin CSRF checks while stripping path/query token data.
 
-Expected database revision after deploy:
+Security invariants:
+  WTF_CSRF_ENABLED remains enabled.
+  WTF_CSRF_SSL_STRICT remains enabled in production.
+  No CSRF exemption added.
+  No migration. No environment variable changes. No secrets.
+
+Required gate after GitHub upload:
+  full GitHub Actions including Verify AUTH-001 first-party account controls
+  then Render redeploy and real Safari registration/verification/reset E2E.
+
+Expected database revision:
   20260810_0008
-
-Patch files (70):
-- .github/workflows/ci.yml
-- CHANGED_FILES.txt
-- PATCH_MANIFEST.txt
-- README.md
-- README_FIRST.txt
-- README_UPLOAD.txt
-- app.py
-- compose.yaml
-- config.py
-- database.py
-- docs/ARCHITECTURE.md
-- docs/AUTH001_IMPLEMENTATION.md
-- docs/AUTH001_RUNBOOK.md
-- docs/AUTH001_SECURITY_REFERENCE.md
-- docs/AUTH001_VERIFICATION_STATUS.md
-- docs/BACKUP_RESTORE.md
-- docs/CHANGELOG.md
-- docs/DATABASE_MIGRATION.md
-- docs/DOMAIN_MODEL.md
-- docs/PLAN_CURRENT.md
-- docs/PROJECT_GUIDE.md
-- docs/PROJECT_PASSPORT.md
-- docs/ROADMAP.md
-- docs/SECURITY.md
-- docs/SOURCE_AUDIT.md
-- domain/__init__.py
-- domain/auth.py
-- domain/entities.py
-- infra/vps/.env.example
-- infra/vps/compose.test.env
-- migrations/versions/20260810_0008_first_party_auth.py
-- models/__init__.py
-- models/auth.py
-- models/user.py
-- operations/backup.py
-- render.yaml
-- repositories/__init__.py
-- repositories/auth.py
-- routes/__init__.py
-- routes/auth.py
-- scripts/check_document_structure.py
-- scripts/infra_manifest_check.py
-- services/auth.py
-- services/email_delivery.py
-- services/passwords.py
-- services/storage.py
-- static/theme.css
-- templates/auth/base_auth.html
-- templates/auth/login.html
-- templates/auth/notice.html
-- templates/auth/register.html
-- templates/auth/reset.html
-- templates/auth/simple_form.html
-- templates/auth/verify.html
-- templates/base.html
-- templates/dashboard.html
-- templates/privacy.html
-- tests/conftest.py
-- tests/test_auth_migration.py
-- tests/test_auth_routes.py
-- tests/test_auth_service.py
-- tests/test_config.py
-- tests/test_database.py
-- tests/test_infra_manifests.py
-- tests/test_passwords.py
-- tests/test_postgresql_integration.py
-- tests/test_providers.py
-- tests/test_repositories.py
-- tests/test_routes.py
-- tests/test_search_pagination.py
-
-No files are deleted by this patch.
-
-Production email delivery is fail-closed by default. Configure SMTP secrets
-only in Render/VPS Environment and follow docs/AUTH001_RUNBOOK.md.
-Never upload .env, credentials, databases, dumps, backups, virtualenv, caches
-or bytecode.

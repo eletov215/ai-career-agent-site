@@ -101,7 +101,7 @@ python scripts/manage_db.py upgrade && python scripts/start_runtime.py
 
 ## 8. Security/log checks
 
-- auth pages: `Cache-Control: no-store`, `Referrer-Policy: no-referrer`;
+- auth pages: `Cache-Control: no-store`, `Referrer-Policy: strict-origin`; token path/query are stripped from Referer, but HTTPS form POST retains origin for strict CSRF validation;
 - POST без CSRF: neutral 400;
 - repeated login/register/reset достигают controlled 429;
 - external/backslash `next` не выполняет open redirect;

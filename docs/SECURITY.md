@@ -265,7 +265,7 @@ limit: 5 per minute
 - verification/reset are TTL, single-use and POST-confirmed with CSRF;
 - password reset atomically revokes all first-party sessions and invalidates other auth tokens;
 - open redirect attempts through external scheme/netloc, `//`, backslash or control characters are rejected;
-- auth pages set `Cache-Control: no-store`, `Pragma: no-cache`, `Referrer-Policy: no-referrer`;
+- auth pages set `Cache-Control: no-store`, `Pragma: no-cache`, `Referrer-Policy: strict-origin`; path/query (including one-time tokens) are not forwarded, while the HTTPS origin remains available for Flask-WTF strict CSRF validation;
 - registration/login/resend/forgot/reset/revoke endpoints have dedicated rate limits;
 - public registration/forgot/login failures do not reveal account existence;
 - SMTP logs exclude recipient, token, SMTP response text and credentials;

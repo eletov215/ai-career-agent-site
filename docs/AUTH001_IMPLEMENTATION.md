@@ -93,7 +93,7 @@ POST     /auth/sessions/revoke-others
 POST     /auth/sessions/<id>/revoke
 ```
 
-Authentication pages имеют `no-store`, `Pragma: no-cache`, `Referrer-Policy: no-referrer` и `noindex`. Dashboard показывает first-party identity и active server sessions; HH/SuperJob остаются отдельным блоком до AUTH-002.
+Authentication pages имеют `no-store`, `Pragma: no-cache`, `Referrer-Policy: strict-origin` и `noindex`. Это скрывает path/query с verification/reset token из Referer, но сохраняет origin для production `WTF_CSRF_SSL_STRICT`. Dashboard показывает first-party identity и active server sessions; HH/SuperJob остаются отдельным блоком до AUTH-002.
 
 ## 4. Влияние на код и сайт
 

@@ -1,3 +1,12 @@
+## Unreleased — AUTH-001 Safari CSRF hotfix (10 августа 2026)
+
+- Production Render already reports revision `20260810_0008`, migrations ok, SMTP backend configured and delivery configured.
+- Real Safari registration exposed `CSRF validation rejected ... reason=The referrer header is missing.` before auth business logic or SMTP delivery.
+- Root cause: auth blueprint forced `Referrer-Policy: no-referrer` while production keeps `WTF_CSRF_SSL_STRICT=true`.
+- Auth responses now use `Referrer-Policy: strict-origin`: path/query (including one-time tokens) are not forwarded, while Flask-WTF receives the HTTPS origin needed for same-origin CSRF validation.
+- Strict CSRF remains enabled; no database migration or environment variable change.
+- Added regression coverage for production-like HTTPS POST: missing Referer still fails 400, origin Referer succeeds with a valid CSRF token.
+
 # Changelog
 
 ## Unreleased — AUTH-001 candidate (10 августа 2026)
@@ -16,7 +25,7 @@
 
 - Password/action/session plaintext is never persisted or logged.
 - Register/reset and login failures use enumeration-safe public copy.
-- Auth pages are no-store/no-referrer; actions are POST + CSRF + route rate limits.
+- Auth pages are no-store/strict-origin; actions are POST + CSRF + route rate limits. `strict-origin` keeps token path/query out of Referer while remaining compatible with Flask-WTF production HTTPS same-origin validation.
 - Login rotates browser session and rejects non-local `next` redirects.
 - Password reset atomically revokes all existing first-party sessions.
 
@@ -498,7 +507,7 @@
 
 ### Security
 
-- auth responses are no-store/no-referrer;
+- auth responses are no-store/strict-origin; token path/query are not forwarded and strict HTTPS CSRF remains enabled;
 - public registration/login/recovery responses are enumeration-safe;
 - reset revokes all first-party sessions;
 - first-party login/logout preserves independent provider identities until AUTH-002;

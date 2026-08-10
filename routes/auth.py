@@ -82,11 +82,14 @@ def create_auth_blueprint(auth_service: AuthService, settings: AppSettings) -> B
 
     @bp.after_request
     def protect_auth_responses(response):
-        # Authentication pages may carry one-time tokens in the URL. They must
-        # not be cached or forwarded through a Referer header.
+        # Authentication pages may carry one-time tokens in the URL. Keep them
+        # out of caches and strip path/query details from Referer while still
+        # allowing Flask-WTF's production HTTPS same-origin CSRF check to see
+        # the request origin on form POSTs. ``no-referrer`` breaks every
+        # production auth POST when WTF_CSRF_SSL_STRICT is enabled.
         response.headers["Cache-Control"] = "no-store, max-age=0"
         response.headers["Pragma"] = "no-cache"
-        response.headers["Referrer-Policy"] = "no-referrer"
+        response.headers["Referrer-Policy"] = "strict-origin"
         return response
 
     @bp.app_context_processor

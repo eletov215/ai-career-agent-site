@@ -59,7 +59,7 @@ SMTP adapter uses STARTTLS with default certificate validation. Production refus
 
 ## 8. HTTP controls
 
-All state changes are POST + CSRF. Route-specific rate limits supplement SEC-001 defaults. Auth responses are no-store/no-referrer. Templates use CSRF tokens and no third-party auth-page resources.
+All state changes are POST + CSRF. Route-specific rate limits supplement SEC-001 defaults. Auth responses are no-store and use `Referrer-Policy: strict-origin`: token path/query data is not forwarded, while same-origin HTTPS form POSTs retain the origin required by Flask-WTF strict CSRF validation. Templates use CSRF tokens and no third-party auth-page resources.
 
 ## 9. Known residual risks
 

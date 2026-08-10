@@ -59,7 +59,7 @@ Production default is `disabled`. `smtp` uses STARTTLS and environment secrets. 
 
 ## 7. Security/observability
 
-CSRF, secure cookie, trusted hosts, ProxyFix and security headers come from SEC-001. Auth routes add strict rate limits, no-store/no-referrer and enumeration-safe copy. Logs exclude email/password/raw token/SMTP body.
+CSRF, secure cookie, trusted hosts, ProxyFix and security headers come from SEC-001. Auth routes add strict rate limits, no-store/strict-origin and enumeration-safe copy. Origin-only referrers preserve Flask-WTF HTTPS same-origin CSRF validation without forwarding token paths/queries. Logs exclude email/password/raw token/SMTP body.
 
 ## 8. Compatibility and rollback
 

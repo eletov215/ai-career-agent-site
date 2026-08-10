@@ -1,13 +1,17 @@
-AUTH-001 CI FIX 1
+AUTH-001 SAFARI CSRF HOTFIX v1.4.14
 
-Replace only:
-  tests/test_routes.py
+Baseline: current GitHub archive ai-career-agent-site-main (9).zip.
+
+Primary production change:
+  routes/auth.py
+  Referrer-Policy: no-referrer -> strict-origin
 
 Reason:
-The SEC-001 regression fixture used a hard-coded published_at=2026-08-03.
-The vacancy search defaults to period=7 days, so on 2026-08-10 the fixture
-became older than the active search window and was correctly filtered out.
-The fixture now uses the current UTC timestamp. The SuperJob route fixture was
-updated the same way to prevent the same future time-dependent failure.
+  Render Safari logs proved valid auth POSTs were rejected by Flask-WTF strict
+  HTTPS CSRF before auth logic because no-referrer suppressed the Referer header.
 
-No production code, database migration, environment variables or Render settings change.
+Security:
+  CSRF remains enabled and WTF_CSRF_SSL_STRICT remains true in production.
+  strict-origin sends only scheme/host/port, not verification/reset token path/query.
+
+No migration. No new environment variables. SMTP settings remain unchanged.

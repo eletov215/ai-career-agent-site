@@ -50,7 +50,7 @@ GitHub Actions должен выполнить dedicated AUTH-001, PostgreSQL mi
 3. Register unique user and verify email.
 4. Login, create second session, revoke it, logout current.
 5. Forgot/reset; old token/password/sessions invalid.
-6. CSRF/rate limits/no-store/no-referrer/open-redirect and secret-free logs.
+6. CSRF/rate limits/no-store/strict-origin/open-redirect and secret-free logs; production Safari form POST must pass without weakening `WTF_CSRF_SSL_STRICT`.
 
 ## 6. Неприкосновенные правила
 

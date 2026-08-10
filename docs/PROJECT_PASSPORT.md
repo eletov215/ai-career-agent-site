@@ -3,11 +3,11 @@
 | Поле | Значение |
 |---|---|
 | Документ        | PROJECT_PASSPORT                                                                              |
-| Версия паспорта | 2.27 |
+| Версия паспорта | 2.28 |
 | Дата            | 10 августа 2026                                                                               |
 | Статус          | ДЕЙСТВУЮЩИЙ                                                                                   |
-| Связанный план | `AI_Career_Agent_PLAN_CURRENT v1.4.13` |
-| Основа кода | `ai-career-agent-site-main (6).zip` из актуального GitHub `main`; AUTH-001 candidate реализован поверх SEARCH-004; production до deploy остаётся `20260809_0007` |
+| Связанный план | `AI_Career_Agent_PLAN_CURRENT v1.4.14` |
+| Основа кода | `ai-career-agent-site-main (9).zip` из актуального GitHub `main`; production AUTH-001 revision `20260810_0008` и SMTP readiness подтверждены; Safari CSRF/referrer hotfix подготовлен |
 
 > Контрольные статусы: FND-001/FND-002/DATA-001/DATA-002/SEC-001/OPS-001/INFRA-PREP-001/SYNC-001/SYNC-002/SEARCH-001/SEARCH-002/SEARCH-003 — ВЫПОЛНЕНО; SEARCH-004 — ВЫПОЛНЕНО; AUTH-001 — НУЖНА ПРОВЕРКА; DOC-001 — В РАБОТЕ как постоянный процесс; INFRA-001 — ОТЛОЖЕНО ДО ПРЕДРЕЛИЗНОГО ЭТАПА.
 
@@ -308,7 +308,7 @@ Production snapshot `9368cb00-e7fd-4b67-9276-ea3afcf428ff` подтвердил 
 - dashboard показывает first-party account и active sessions, а HH/SuperJob остаются независимыми до AUTH-002;
 - dedicated GitHub Actions gate и PostgreSQL integration подготовлены.
 
-Локально compile, migration round-trip, config/password/auth service tests и полный доступный pytest пройдены. Пакет остаётся НУЖНА ПРОВЕРКА до green CI, Render revision `0008`, SMTP configuration и real register/verify/login/logout/reset/session-revoke E2E.
+Candidate implementation ранее прошёл compile/migration/config/password/auth tests и GitHub gate; production Render уже применил revision `0008`, а `/health/ready` подтвердил SMTP configuration. Реальный Safari register POST выявил conflict между auth `Referrer-Policy: no-referrer` и production `WTF_CSRF_SSL_STRICT=true` (`The referrer header is missing.`). Hotfix v1.4.14 использует `strict-origin`, сохраняет strict CSRF и не меняет schema. Пакет остаётся НУЖНА ПРОВЕРКА до green CI/redeploy и полного register/verify/login/logout/reset/session-revoke E2E.
 
 Ограничение: при `AUTH_EMAIL_BACKEND=disabled` deploy healthy, но new registration/reset fail-closed; AUTH-001 не закрывается.
 
@@ -390,7 +390,7 @@ Render не считается гарантированным production для 
 
 ## 19. Следующий пакет
 
-AUTH-001 — НУЖНА ПРОВЕРКА. Candidate использует existing User, migration `20260810_0008`, versioned scrypt, hashed verification/reset tokens, revocable PostgreSQL sessions, auth blueprint/UI и SMTP adapter. Production до deploy остаётся `20260809_0007`; email delivery default `disabled`.
+AUTH-001 — НУЖНА ПРОВЕРКА. Production использует existing User и migration `20260810_0008`; SMTP readiness уже подтверждена. Safari register smoke выявил и локализовал CSRF/referrer regression до вызова auth/SMTP business logic. Hotfix меняет auth response policy `no-referrer -> strict-origin` при сохранённом `WTF_CSRF_SSL_STRICT=true`; требуется green CI, redeploy и полный E2E.
 
 Verification gate:
 
@@ -431,3 +431,4 @@ GitHub Actions green, включая AUTH-001 gate
 | 2.25 | 10.08.2026 | SEARCH-004 candidate: canonical `/vacancies`, permanent method-preserving legacy redirect, safe public source-state contract и dedicated CI gate; требуется GitHub/Render verification. |
 | 2.26 | 10.08.2026 | SEARCH-004 complete: green CI, Render `0007`, canonical `/vacancies` mobile search and legacy redirect; AUTH-001 ready. |
 | 2.27 | 10.08.2026 | AUTH-001 candidate: migration `20260810_0008`, first-party identity, versioned scrypt, one-time tokens, revocable sessions, SMTP adapter, UI/tests/CI; требуется GitHub/Render/SMTP E2E. |
+| 2.28 | 10.08.2026 | Render `0008` + SMTP readiness confirmed; Safari missing-Referer CSRF regression localized; `strict-origin` hotfix prepared without weakening strict CSRF. |

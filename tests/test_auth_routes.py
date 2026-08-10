@@ -212,12 +212,12 @@ def test_registration_public_response_does_not_disclose_duplicate_email(app_modu
     assert "Если адрес можно использовать" in body
 
 
-def test_auth_token_pages_are_no_store_and_no_referrer(client):
+def test_auth_token_pages_are_no_store_and_origin_only_referrer(client):
     response = client.get("/auth/verify?token=opaque-test-token")
     assert response.status_code == 200
     assert response.headers["Cache-Control"] == "no-store, max-age=0"
     assert response.headers["Pragma"] == "no-cache"
-    assert response.headers["Referrer-Policy"] == "no-referrer"
+    assert response.headers["Referrer-Policy"] == "strict-origin"
 
 
 def test_first_party_logout_preserves_independent_provider_identities(app_module, client):
@@ -271,12 +271,56 @@ def test_disabled_email_backend_blocks_account_creation_without_writing_user(app
     assert app_module.STORAGE.auth.find_user_by_email(email.casefold()) is None
 
 
-def test_auth_pages_are_no_store_and_do_not_forward_token_referrers(client):
+def test_auth_pages_are_no_store_and_do_not_forward_token_paths(client):
     response = client.get("/auth/verify?token=public-test-token")
     assert response.status_code == 200
     assert response.headers["Cache-Control"] == "no-store, max-age=0"
     assert response.headers["Pragma"] == "no-cache"
-    assert response.headers["Referrer-Policy"] == "no-referrer"
+    assert response.headers["Referrer-Policy"] == "strict-origin"
+
+
+def test_production_https_auth_post_accepts_origin_referrer_and_keeps_strict_csrf(
+    app_module,
+    client,
+):
+    app_module.app.config["WTF_CSRF_SSL_STRICT"] = True
+    try:
+        page = client.get("/auth/register", base_url="https://localhost")
+        assert page.status_code == 200
+        assert page.headers["Referrer-Policy"] == "strict-origin"
+        csrf_token = _csrf(page)
+
+        missing_referrer = client.post(
+            "/auth/register",
+            base_url="https://localhost",
+            data={
+                "csrf_token": csrf_token,
+                "display_name": "Missing referrer",
+                "email": f"missing-referrer-{uuid.uuid4().hex}@example.test",
+                "password": "Missing referrer password 42!",
+                "password_confirm": "Missing referrer password 42!",
+            },
+        )
+        assert missing_referrer.status_code == 400
+        assert "Сессия формы устарела" in missing_referrer.get_data(as_text=True)
+
+        fresh_page = client.get("/auth/register", base_url="https://localhost")
+        accepted = client.post(
+            "/auth/register",
+            base_url="https://localhost",
+            headers={"Referer": "https://localhost/"},
+            data={
+                "csrf_token": _csrf(fresh_page),
+                "display_name": "Origin referrer",
+                "email": f"origin-referrer-{uuid.uuid4().hex}@example.test",
+                "password": "Origin referrer password 42!",
+                "password_confirm": "Origin referrer password 42!",
+            },
+        )
+        assert accepted.status_code == 200
+        assert "Проверьте почту" in accepted.get_data(as_text=True)
+    finally:
+        app_module.app.config["WTF_CSRF_SSL_STRICT"] = False
 
 
 def test_registration_is_unavailable_when_transactional_email_is_disabled(

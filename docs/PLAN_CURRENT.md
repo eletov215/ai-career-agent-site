@@ -3,15 +3,15 @@
 | Поле | Значение |
 |---|---|
 | Документ | PLAN_CURRENT |
-| Версия | 1.4.13 |
+| Версия | 1.4.14 |
 | Дата | 10 августа 2026 |
 | Статус | ДЕЙСТВУЮЩИЙ |
-| Основа кода | `ai-career-agent-site-main (6).zip` из актуального GitHub `main`; AUTH-001 candidate реализован поверх SEARCH-004; production до deploy остаётся `20260809_0007` |
-| Следующий gate | `AUTH-001` — GitHub Actions, PostgreSQL migration `20260810_0008`, SMTP и Render account E2E |
+| Основа кода | `ai-career-agent-site-main (9).zip` из актуального GitHub `main`; production AUTH-001 уже на revision `20260810_0008`, SMTP readiness подтверждена; Safari E2E выявил CSRF/referrer regression, hotfix подготовлен |
+| Следующий gate | `AUTH-001` — merge Safari CSRF hotfix, green GitHub Actions и полный Render account E2E |
 
 > ОБЯЗАТЕЛЬНО ДЛЯ КАЖДОГО НОВОГО ЧАТА: прочитать этот план, новый паспорт и актуальный архив. После завершения любого пункта вернуть обновлённые DOCX/PDF/Markdown, новый ZIP, доказательства проверки и запись в журнале версий.
 
-> КОНТРОЛЬНЫЕ СТАТУСЫ ЭТОЙ ВЕРСИИ: `FND-001`, `FND-002`, `DATA-001`, `DATA-002`, `SEC-001`, `OPS-001`, `INFRA-PREP-001`, `SYNC-001`, `SYNC-002`, `SEARCH-001`, `SEARCH-002` и `SEARCH-003` — **ВЫПОЛНЕНО**; `SEARCH-004` — **ВЫПОЛНЕНО**; `AUTH-001` — **НУЖНА ПРОВЕРКА**; `SEARCH-005` — **ЗАПЛАНИРОВАНО**; `DOC-001` — **В РАБОТЕ как постоянный процесс**; `INFRA-001` — **ОТЛОЖЕНО ДО ПРЕДРЕЛИЗНОГО ЭТАПА**. Документы с версией ниже `1.4.13` считаются устаревшими для определения очереди разработки.
+> КОНТРОЛЬНЫЕ СТАТУСЫ ЭТОЙ ВЕРСИИ: `FND-001`, `FND-002`, `DATA-001`, `DATA-002`, `SEC-001`, `OPS-001`, `INFRA-PREP-001`, `SYNC-001`, `SYNC-002`, `SEARCH-001`, `SEARCH-002` и `SEARCH-003` — **ВЫПОЛНЕНО**; `SEARCH-004` — **ВЫПОЛНЕНО**; `AUTH-001` — **НУЖНА ПРОВЕРКА**; `SEARCH-005` — **ЗАПЛАНИРОВАНО**; `DOC-001` — **В РАБОТЕ как постоянный процесс**; `INFRA-001` — **ОТЛОЖЕНО ДО ПРЕДРЕЛИЗНОГО ЭТАПА**. Документы с версией ниже `1.4.14` считаются устаревшими для определения очереди разработки.
 
 ## 1. Источник истины и аудит источников
 
@@ -26,6 +26,7 @@
 - Версия 1.4.11 реализовала SEARCH-004 candidate без migration: `/vacancies` стал canonical search route, `/vacancies/internal` получил query-preserving compatibility redirect, а public `SourceState` contract разделил `available`, `cached`, `degraded`, `auth_required`, `temporarily_unavailable`.
 - Версия 1.4.12 закрывает SEARCH-004 как ВЫПОЛНЕНО. GitHub Actions полностью зелёный, включая отдельный `Verify SEARCH-004 canonical route and source-state controls` и все regression/infrastructure gates. Production `/health/ready` на Render подтвердил PostgreSQL `persistent=true`, `current_revision=expected_revision=20260809_0007`, `migrations.ok=true`, `status=ok`. Мобильный production-smoke подтвердил штатный поиск на canonical `/vacancies` с SEARCH-003 snapshot и page=0. Старый `/vacancies/internal?search=1&keyword=Бухгалтер&source=hh&source=superjob` корректно перенаправился на `/vacancies` с сохранением `keyword` и обоих repeated `source`; новый snapshot/page были сформированы уже canonical route. Database migration не добавлялась. SEARCH-004 закрыт как ВЫПОЛНЕНО.
 - Версия 1.4.13 реализует AUTH-001 candidate: существующий `users` становится first-party identity root; migration `20260810_0008` добавляет password fields, revocable `auth_sessions` и single-use `auth_tokens`; добавлены versioned scrypt, enumeration-safe register/login/reset, session rotation/revoke, provider-neutral email adapter, auth blueprint/UI и dedicated CI gate. Production email default `disabled`; пакет остаётся НУЖНА ПРОВЕРКА до green CI, Render `0008`, SMTP и полного account E2E.
+- Версия 1.4.14 фиксирует production Safari CSRF regression, обнаруженный после успешных Render `0008` и SMTP readiness checks: auth responses использовали `Referrer-Policy: no-referrer`, а production `WTF_CSRF_SSL_STRICT=true` требовал same-origin Referer. Hotfix заменяет policy на `strict-origin`, сохраняя CSRF strict mode и скрывая path/query token data. Новой migration нет; требуется green CI и полный Render Safari E2E.
 
 ## 2. Обязательный протокол работы
 
@@ -1472,7 +1473,7 @@ INFRA-001 real VPS test
 
 ## 16. Следующий пакет
 
-`AUTH-001` — **НУЖНА ПРОВЕРКА**. Candidate реализует first-party account с migration `20260810_0008`, versioned scrypt, hashed one-time tokens, revocable PostgreSQL sessions, auth UI и SMTP adapter. Production до deploy остаётся на `20260809_0007`; email backend по умолчанию `disabled`.
+`AUTH-001` — **НУЖНА ПРОВЕРКА**. Production уже работает на migration `20260810_0008`; `/health/ready` подтвердил PostgreSQL/migrations и `auth.email_backend=smtp`, `email_delivery_configured=true`. Первый реальный Safari registration smoke был остановлен CSRF до auth business logic из-за conflict `Referrer-Policy: no-referrer` с `WTF_CSRF_SSL_STRICT=true`. Candidate v1.4.14 меняет auth policy на `strict-origin`, не отключая strict CSRF. Требуется green CI, redeploy и полный account E2E.
 
 Verification gate:
 
@@ -1544,3 +1545,4 @@ GitHub/production/API: <подтверждено или требуется>
 | 1.4.11 | 10.08.2026 | SEARCH-004 | `/vacancies` стал canonical route; legacy query-preserving redirect, safe source-state contract, cached/degraded Trudvsem labels, canonical links/forms/pagination и dedicated tests/CI gate реализованы. Статус — НУЖНА ПРОВЕРКА. |
 | 1.4.12 | 10.08.2026 | SEARCH-004-COMPLETE / AUTH-001-PREP | Green CI, Render revision 0007, canonical `/vacancies` mobile search and legacy redirect confirmed; SEARCH-004 closed, AUTH-001 ready. |
 | 1.4.13 | 10.08.2026 | AUTH-001-CANDIDATE | First-party account, migration `20260810_0008`, scrypt, verification/reset tokens, revocable sessions, SMTP adapter, UI/tests/CI готовы; требуется GitHub/Render/SMTP E2E. |
+| 1.4.14 | 10.08.2026 | AUTH-001-SAFARI-CSRF-HOTFIX | Render `0008` и SMTP readiness подтверждены; Safari register POST выявил missing Referer из-за auth `no-referrer`; policy изменена на `strict-origin`, strict CSRF сохранён; требуется CI/Render E2E. |

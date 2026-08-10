@@ -1,85 +1,27 @@
-AI Career Agent - AUTH-001 changed files
+AI Career Agent - AUTH-001 Safari CSRF hotfix changed files
 
-Package: AUTH-001 first-party account
-Candidate version: 1.4.13
-Candidate database revision: 20260810_0008
-Baseline: ai-career-agent-site-main (6).zip from GitHub main after SEARCH-004
+Package: AUTH-001 production verification hotfix
+Candidate version: 1.4.14
+Database revision: unchanged 20260810_0008
+Baseline: ai-career-agent-site-main (9).zip from current GitHub main
 
-Added files (24):
+Production code:
+- routes/auth.py
+
+Tests:
+- tests/test_auth_routes.py
+
+Repository documentation:
+- docs/ARCHITECTURE.md
 - docs/AUTH001_IMPLEMENTATION.md
 - docs/AUTH001_RUNBOOK.md
 - docs/AUTH001_SECURITY_REFERENCE.md
 - docs/AUTH001_VERIFICATION_STATUS.md
-- domain/auth.py
-- migrations/versions/20260810_0008_first_party_auth.py
-- models/auth.py
-- repositories/auth.py
-- routes/__init__.py
-- routes/auth.py
-- services/auth.py
-- services/email_delivery.py
-- services/passwords.py
-- templates/auth/base_auth.html
-- templates/auth/login.html
-- templates/auth/notice.html
-- templates/auth/register.html
-- templates/auth/reset.html
-- templates/auth/simple_form.html
-- templates/auth/verify.html
-- tests/test_auth_migration.py
-- tests/test_auth_routes.py
-- tests/test_auth_service.py
-- tests/test_passwords.py
-
-Modified files (46):
-- .github/workflows/ci.yml
-- CHANGED_FILES.txt
-- PATCH_MANIFEST.txt
-- README.md
-- README_FIRST.txt
-- README_UPLOAD.txt
-- app.py
-- compose.yaml
-- config.py
-- database.py
-- docs/ARCHITECTURE.md
-- docs/BACKUP_RESTORE.md
 - docs/CHANGELOG.md
-- docs/DATABASE_MIGRATION.md
-- docs/DOMAIN_MODEL.md
 - docs/PLAN_CURRENT.md
 - docs/PROJECT_GUIDE.md
 - docs/PROJECT_PASSPORT.md
-- docs/ROADMAP.md
 - docs/SECURITY.md
 - docs/SOURCE_AUDIT.md
-- domain/__init__.py
-- domain/entities.py
-- infra/vps/.env.example
-- infra/vps/compose.test.env
-- models/__init__.py
-- models/user.py
-- operations/backup.py
-- render.yaml
-- repositories/__init__.py
-- scripts/check_document_structure.py
-- scripts/infra_manifest_check.py
-- services/storage.py
-- static/theme.css
-- templates/base.html
-- templates/dashboard.html
-- templates/privacy.html
-- tests/conftest.py
-- tests/test_config.py
-- tests/test_database.py
-- tests/test_infra_manifests.py
-- tests/test_postgresql_integration.py
-- tests/test_providers.py
-- tests/test_repositories.py
-- tests/test_routes.py
-- tests/test_search_pagination.py
 
-Deleted files (0):
-- none
-
-Total patch paths: 70
+No database migration. No environment variable changes. No secrets included.

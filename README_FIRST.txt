@@ -1,33 +1,11 @@
-AI Career Agent — AUTH-001 candidate v1.4.13
+AI Career Agent — AUTH-001 Safari CSRF hotfix v1.4.14
 
-1. Создать ветку от актуального main:
-   auth-001-first-party-account
+1. Upload this full archive to the current GitHub main/working branch with replacement.
+2. Do not create app_fixed.py; WSGI remains app:app.
+3. No database migration or Render environment variable change is required.
+4. Merge only after GitHub Actions is fully green, including AUTH-001 gate.
+5. Render redeploy. Confirm /health/ready remains revision 20260810_0008 and SMTP configured.
+6. Repeat Safari/iPhone registration. The valid form POST must no longer return the CSRF missing-referrer 400.
+7. Continue full AUTH-001 E2E: verification, login, two sessions, revoke, logout, forgot/reset, old password/session invalidation.
 
-2. Скопировать полный архив с заменой файлов. Папку .git не удалять.
-
-3. Проверить наличие:
-   routes/auth.py
-   services/auth.py
-   services/passwords.py
-   services/email_delivery.py
-   repositories/auth.py
-   models/auth.py
-   migrations/versions/20260810_0008_first_party_auth.py
-   templates/auth/
-   tests/test_auth_*.py
-   docs/AUTH001_*.md
-
-4. Commit:
-   auth: add first-party account and revocable sessions
-
-5. Merge только после полностью зелёного GitHub Actions, включая:
-   Verify AUTH-001 first-party account controls
-
-6. До production E2E настроить SMTP secrets по docs/AUTH001_RUNBOOK.md.
-   Не публиковать значения в GitHub, ZIP или чат.
-
-7. Render Start Command не менять. После deploy ожидать revision 20260810_0008.
-
-8. Выполнить register/verify/login/two-session revoke/logout/forgot/reset smoke.
-
-AUTH-001 остаётся НУЖНА ПРОВЕРКА до green CI, Render 0008, SMTP и полного E2E.
+AUTH-001 remains НУЖНА ПРОВЕРКА until that production E2E is complete.

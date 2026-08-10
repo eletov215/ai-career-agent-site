@@ -24,7 +24,7 @@
 | Atomic verification/reset/session revocation | ПРОЙДЕНО ЛОКАЛЬНО |
 | Session rotation + server-side logout/revoke | ПРОЙДЕНО ЛОКАЛЬНО |
 | Enumeration-safe register/reset/login copy | ПРОЙДЕНО ЛОКАЛЬНО |
-| CSRF/rate-limit/no-store/no-referrer templates | ПРОЙДЕНО ЛОКАЛЬНО; CI RUNTIME ОЖИДАЕТСЯ |
+| CSRF/rate-limit/no-store/strict-origin templates | SAFARI HOTFIX ПОДГОТОВЛЕН; CI/RENDER RETEST ОЖИДАЕТСЯ |
 | Migration `0008 -> 0007 -> 0008` | ПРОЙДЕНО SQLITE; POSTGRESQL CI ОЖИДАЕТСЯ |
 | Dedicated AUTH-001 CI gate | ОЖИДАЕТСЯ GITHUB |
 | Render current/expected revision `0008` | ОЖИДАЕТСЯ |
