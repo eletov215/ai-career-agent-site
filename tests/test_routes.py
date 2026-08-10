@@ -17,8 +17,8 @@ from services.base_provider import SearchResult
         ("/privacy", 200),
         ("/ai-career", 200),
         ("/resume-builder", 200),
-        ("/vacancies", 302),
-        ("/vacancies/internal", 200),
+        ("/vacancies", 200),
+        ("/vacancies/internal", 308),
         ("/health", 200),
         ("/health/search-dedup", 200),
         ("/dashboard", 302),
@@ -29,9 +29,24 @@ def test_public_route_smoke(client, path, expected_status):
     assert response.status_code == expected_status
 
 
-def test_vacancies_redirect_keeps_current_behavior(client):
-    response = client.get("/vacancies")
-    assert response.headers["Location"].endswith("/ai-career")
+def test_vacancies_is_canonical_and_legacy_route_preserves_query(client):
+    canonical = client.get("/vacancies")
+    body = canonical.get_data(as_text=True)
+
+    assert canonical.status_code == 200
+    assert 'rel="canonical"' in body
+    assert 'href="http://localhost/vacancies"' in body
+
+    query = (
+        "search=1&keyword=Python&source=hh&source=superjob"
+        "&snapshot=9368cb00-e7fd-4b67-9276-ea3afcf428ff&page=1"
+    )
+    legacy = client.get(f"/vacancies/internal?{query}")
+
+    assert legacy.status_code == 308
+    assert legacy.headers["Location"].endswith(f"/vacancies?{query}")
+    assert legacy.headers["Cache-Control"] == "no-store, max-age=0"
+    assert legacy.headers["X-Robots-Tag"] == "noindex"
 
 
 def test_resume_preview_validation_does_not_require_network(client, csrf_token):
@@ -129,13 +144,15 @@ def test_one_provider_failure_does_not_hide_another_provider_result(
     monkeypatch.setattr(app_module, "HeadHunterProvider", lambda *args, **kwargs: FailingProvider())
 
     response = client.get(
-        "/vacancies/internal?search=1&source=reed&source=hh&keyword=python"
+        "/vacancies?search=1&source=reed&source=hh&keyword=python"
     )
     body = response.get_data(as_text=True)
 
     assert response.status_code == 200
     assert "Visible test vacancy" in body
-    assert "Один из источников временно не смог выполнить поиск" in body
+    assert "Часть источников работает с ограничениями" in body
+    assert "Работает с ограничениями" in body
+    assert 'data-source-state="degraded"' in body
     assert "provider unavailable" not in body
 
 
@@ -169,13 +186,46 @@ def test_superjob_source_is_available_without_oauth_account(app_module, client, 
         browser_session.pop("superjob_user_id", None)
 
     response = client.get(
-        "/vacancies/internal?search=1&source=superjob&keyword=python"
+        "/vacancies?search=1&source=superjob&keyword=python"
     )
     body = response.get_data(as_text=True)
 
     assert response.status_code == 200
     assert "Python public SuperJob vacancy" in body
     assert "SuperJob не подключён" not in body
+
+
+def test_unconfigured_source_is_excluded_with_safe_user_message(
+    app_module,
+    client,
+    monkeypatch,
+):
+    called = False
+
+    class ReedShouldNotRun:
+        def search(self, *, filters, page=0):
+            nonlocal called
+            called = True
+            raise AssertionError("unconfigured provider must not run")
+
+    monkeypatch.setattr(app_module, "REED_API_KEY", None)
+    monkeypatch.setattr(
+        app_module,
+        "ReedProvider",
+        lambda *args, **kwargs: ReedShouldNotRun(),
+    )
+
+    response = client.get(
+        "/vacancies?search=1&source=reed&keyword=python"
+    )
+    body = response.get_data(as_text=True)
+
+    assert response.status_code == 200
+    assert called is False
+    assert "Недоступные сейчас источники не включены в поиск: Reed.co.uk." in body
+    assert "Временно недоступен" in body
+    assert "REED_API_KEY" not in body
+    assert "Render" not in body
 
 
 def test_cross_source_duplicates_render_once_with_all_source_links(
@@ -253,7 +303,7 @@ def test_cross_source_duplicates_render_once_with_all_source_links(
     monkeypatch.setattr(app_module, "HeadHunterProvider", lambda *args, **kwargs: HHProvider())
 
     response = client.get(
-        "/vacancies/internal?search=1&source=reed&source=hh&keyword=SEARCH002"
+        "/vacancies?search=1&source=reed&source=hh&keyword=SEARCH002"
     )
     body = response.get_data(as_text=True)
 
@@ -705,7 +755,7 @@ def test_search003_snapshot_pagination_links_and_health_endpoint(
     )
 
     first = client.get(
-        "/vacancies/internal?search=1&source=hh&keyword=SEARCH003"
+        "/vacancies?search=1&source=hh&keyword=SEARCH003"
     )
     first_body = first.get_data(as_text=True)
     assert first.status_code == 200
@@ -717,7 +767,7 @@ def test_search003_snapshot_pagination_links_and_health_endpoint(
     snapshot_id = snapshot_match.group(1)
 
     second = client.get(
-        "/vacancies/internal?search=1&source=hh&keyword=SEARCH003"
+        "/vacancies?search=1&source=hh&keyword=SEARCH003"
         f"&snapshot={snapshot_id}&page=1"
     )
     second_body = second.get_data(as_text=True)

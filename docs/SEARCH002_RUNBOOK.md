@@ -64,7 +64,7 @@ migrations.ok=true
 
 ## 5. Positive dedup smoke
 
-1. Открыть `/vacancies/internal`.
+1. Открыть `/vacancies`.
 2. Выбрать минимум два доступных источника.
 3. Найти known duplicate по совместимым employer/title/location/canonical fields.
 4. Убедиться, что карточка одна.

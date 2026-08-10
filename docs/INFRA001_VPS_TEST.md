@@ -148,7 +148,7 @@ Optional checks:
 /privacy
 /ai-career
 /resume-builder
-/vacancies/internal
+/vacancies
 /health/live
 /health/ready
 /api/sources/trudvsem/status

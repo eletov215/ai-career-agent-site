@@ -19,6 +19,7 @@ from services.superjob_provider import SuperJobProvider
 from services.reed_provider import ReedProvider
 from services.search_filters import VacancySearchFilters
 from services.search_aggregation import SearchAggregationService
+from services.source_status import build_source_states, selectable_source_keys
 from services.vacancy_presenter import present_vacancy
 from services.resume_parser import ResumeParseError, build_resume_preview, parse_resume_pdf
 from services.university_logo import find_university_logo
@@ -780,11 +781,6 @@ def resume_builder():
 
 
 @app.get("/vacancies")
-def vacancies_redirect():
-    return redirect(url_for("ai_career"))
-
-
-@app.get("/vacancies/internal")
 @limiter.limit("60 per 5 minutes")
 def vacancies():
     filters = VacancySearchFilters.from_query(request.args)
@@ -798,15 +794,77 @@ def vacancies():
         requested_page = 0
 
     requested_snapshot_id = str(request.args.get("snapshot") or "").strip() or None
-    allowed_sources = {"trudvsem", "superjob", "reed", "hh"}
-    selected_sources = [
+    allowed_source_order = ("trudvsem", "superjob", "reed", "hh")
+    allowed_sources = set(allowed_source_order)
+    requested_source_values = list(
+        dict.fromkeys(
+            source
+            for source in request.args.getlist("source")
+            if source in allowed_sources
+        )
+    )
+
+    configured_sources = {
+        "superjob": bool(CLIENT_SECRET),
+        "reed": bool(REED_API_KEY),
+        "hh": bool(HH_APP_TOKEN),
+    }
+    trudvsem_cache_age = VACANCY_STORE.source_age_seconds("trudvsem")
+    trudvsem_cache_total = VACANCY_STORE.count(
+        keyword="",
+        sources=["trudvsem"],
+    )
+    trudvsem_runtime_state = trudvsem_sync_status()
+    trudvsem_latest_run = trudvsem_runtime_state.get("latest_run")
+    trudvsem_last_run_failed = bool(
+        trudvsem_latest_run
+        and getattr(trudvsem_latest_run, "status", None) == "failed"
+    )
+    initial_source_states = build_source_states(
+        configured_sources=configured_sources,
+        selected_sources=requested_source_values,
+        trudvsem_cache_total=trudvsem_cache_total,
+        trudvsem_cache_age_seconds=trudvsem_cache_age,
+        trudvsem_cache_ttl_seconds=VACANCY_CACHE_TTL,
+        trudvsem_sync_enabled=TRUDVSEM_SYNC_ENABLED,
+        trudvsem_sync_running=bool(trudvsem_runtime_state.get("running")),
+        trudvsem_sync_queued=bool(
+            trudvsem_runtime_state.get("queued") or sync_queued
+        ),
+        trudvsem_last_run_failed=trudvsem_last_run_failed,
+    )
+    selectable_sources = selectable_source_keys(initial_source_states)
+    if requested_source_values:
+        selected_sources = [
+            source for source in requested_source_values if source in selectable_sources
+        ]
+    else:
+        preferred_default = next(
+            (source for source in allowed_source_order if source in selectable_sources),
+            None,
+        )
+        selected_sources = [preferred_default] if preferred_default else []
+
+    excluded_sources = [
         source
-        for source in request.args.getlist("source")
-        if source in allowed_sources
+        for source in requested_source_values
+        if source not in selectable_sources
     ]
-    if not selected_sources:
-        selected_sources = ["trudvsem"]
-    selected_sources = list(dict.fromkeys(selected_sources))
+    source_selection_notice = None
+    if excluded_sources:
+        excluded_titles = [
+            next(
+                state.title
+                for state in initial_source_states
+                if state.key == source
+            )
+            for source in excluded_sources
+        ]
+        source_selection_notice = (
+            "Недоступные сейчас источники не включены в поиск: "
+            + ", ".join(excluded_titles)
+            + "."
+        )
 
     providers = {
         "hh": HeadHunterProvider(
@@ -852,25 +910,26 @@ def vacancies():
         "similarity_groups": 0,
     }
 
-    if search_requested:
+    if search_requested and selected_sources:
         if "trudvsem" in selected_sources:
-            cache_age = VACANCY_STORE.source_age_seconds("trudvsem")
-            sync_state = trudvsem_sync_status()
-            if sync_state["running"]:
-                cache_note = "Данные «Работы России» обновляются в фоне. Сайт продолжает работать из кэша."
-            elif sync_state["queued"] or sync_queued:
+            if trudvsem_runtime_state.get("running"):
+                cache_note = "Данные «Работы России» обновляются в фоне. Поиск продолжает работать по сохранённому кэшу."
+            elif trudvsem_runtime_state.get("queued") or sync_queued:
                 cache_note = "Фоновое обновление «Работы России» поставлено в очередь."
-            elif cache_age is None:
+            elif trudvsem_cache_age is None:
                 queued_run = request_trudvsem_sync(trigger="cache-miss")
                 if queued_run is not None:
-                    cache_note = "Кэш пока пуст. Загрузка поставлена в очередь; обнови страницу немного позже."
+                    trudvsem_runtime_state["queued"] = True
+                    cache_note = "Кэш пока пуст. Загрузка поставлена в очередь; обновите страницу немного позже."
                 else:
                     cache_note = "Кэш пока пуст, а внешняя синхронизация сейчас отключена."
             else:
-                cache_note = f"Работа России загружена из локального кэша ({cache_age // 60} мин. назад)."
-                latest_run = sync_state.get("latest_run")
-                if latest_run and latest_run.status == "failed":
-                    cache_note += " Последнее обновление завершилось ошибкой, сохранённые вакансии доступны."
+                cache_note = (
+                    "Работа России используется из сохранённого кэша "
+                    f"({trudvsem_cache_age // 60} мин. назад)."
+                )
+                if trudvsem_last_run_failed:
+                    cache_note += " Последнее обновление не завершилось, сохранённые вакансии доступны."
 
         def fetch_source_page(source_key: str, source_page: int) -> SearchResult:
             if source_key == "trudvsem":
@@ -917,11 +976,11 @@ def vacancies():
             provider = providers.get(source_key)
             if provider is None:
                 if source_key == "superjob":
-                    message = "SuperJob временно недоступен. Проверьте конфигурацию API приложения."
+                    message = "SuperJob временно недоступен."
                 elif source_key == "reed":
-                    message = "Reed.co.uk не подключён. Добавьте REED_API_KEY в Render."
+                    message = "Reed.co.uk временно недоступен."
                 elif source_key == "hh":
-                    message = "HeadHunter временно недоступен. Проверьте HH_APP_TOKEN."
+                    message = "HeadHunter временно недоступен."
                 else:
                     message = f"{source_key}: unavailable"
                 return SearchResult(page=source_page, error=message)
@@ -992,28 +1051,28 @@ def vacancies():
             aggregation.committed_count,
             aggregation.late_arrival_count,
         )
+    elif search_requested:
+        source_selection_notice = (
+            source_selection_notice
+            or "Сейчас нет доступных источников для выбранного поиска."
+        )
 
-    source_options = [
-        {"key": "trudvsem", "title": "Работа России", "available": True},
-        {
-            "key": "superjob",
-            "title": "SuperJob",
-            "available": bool(CLIENT_SECRET),
-            "note": None if CLIENT_SECRET else "Источник временно недоступен",
-            "status_text": "Поиск доступен без входа" if CLIENT_SECRET else None,
-        },
-        {
-            "key": "reed",
-            "title": "Reed.co.uk",
-            "available": bool(REED_API_KEY),
-            "note": None if REED_API_KEY else "Источник временно недоступен",
-        },
-        {
-            "key": "hh",
-            "title": "HeadHunter",
-            "available": bool(HH_APP_TOKEN),
-            "note": None if HH_APP_TOKEN else "Источник временно недоступен",
-        },
+    source_options = build_source_states(
+        configured_sources=configured_sources,
+        selected_sources=selected_sources,
+        source_results=source_results,
+        trudvsem_cache_total=trudvsem_cache_total,
+        trudvsem_cache_age_seconds=trudvsem_cache_age,
+        trudvsem_cache_ttl_seconds=VACANCY_CACHE_TTL,
+        trudvsem_sync_enabled=TRUDVSEM_SYNC_ENABLED,
+        trudvsem_sync_running=bool(trudvsem_runtime_state.get("running")),
+        trudvsem_sync_queued=bool(
+            trudvsem_runtime_state.get("queued") or sync_queued
+        ),
+        trudvsem_last_run_failed=trudvsem_last_run_failed,
+    )
+    selected_source_states = [
+        source for source in source_options if source.key in selected_sources
     ]
 
     filter_pairs = filters.query_pairs()
@@ -1036,7 +1095,9 @@ def vacancies():
         filters=filters,
         selected_sources=selected_sources,
         source_options=source_options,
+        selected_source_states=selected_source_states,
         source_results=source_results,
+        source_selection_notice=source_selection_notice,
         page=page,
         page_size=page_size,
         page_start=page_start,
@@ -1057,6 +1118,20 @@ def vacancies():
         show_manual_refresh=not SETTINGS.is_production,
         deduplication_stats=deduplication_stats,
     )
+
+
+@app.get("/vacancies/internal")
+@limiter.limit("120 per 5 minutes")
+def vacancies_internal_redirect():
+    """Keep historical links working while making /vacancies canonical."""
+
+    target = url_for("vacancies")
+    if request.query_string:
+        target = f"{target}?{request.query_string.decode('latin-1')}"
+    response = redirect(target, code=308)
+    response.headers["Cache-Control"] = "no-store, max-age=0"
+    response.headers["X-Robots-Tag"] = "noindex"
+    return response
 
 
 @app.get("/debug/trudvsem")

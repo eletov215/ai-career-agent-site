@@ -116,7 +116,7 @@ workers: минимум один свежий heartbeat
 
 ## 7. Search smoke
 
-- `/vacancies/internal` открывается без HTTP 500;
+- `/vacancies` открывается без HTTP 500;
 - Trudvsem читается из cache;
 - cache miss только ставит job в очередь;
 - page request не ждёт provider API;
