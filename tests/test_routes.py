@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import io
 import re
+from datetime import datetime, timezone
 
 import pytest
 
@@ -124,7 +125,7 @@ def test_one_provider_failure_does_not_hide_another_provider_result(
                         "source_title": "Reed.co.uk",
                         "title": "Python Visible test vacancy",
                         "company": "Test Company",
-                        "published_at": "2026-08-03T08:00:00Z",
+                        "published_at": datetime.now(timezone.utc).isoformat(),
                         "url": "https://example.test/vacancy",
                     }
                 ],
@@ -169,7 +170,7 @@ def test_superjob_source_is_available_without_oauth_account(app_module, client, 
                         "source_title": "SuperJob",
                         "title": "Python public SuperJob vacancy",
                         "company": "ACME",
-                        "published_at": "2026-08-09T08:00:00Z",
+                        "published_at": datetime.now(timezone.utc).isoformat(),
                         "url": "https://sj.example.test/1",
                     }
                 ],
