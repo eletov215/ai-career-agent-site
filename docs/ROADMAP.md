@@ -2,16 +2,15 @@
 
 | Поле | Значение |
 |---|---|
-| Версия | 1.4.9 |
-| Дата | 2026-08-09 |
+| Версия | 1.4.11 |
+| Дата | 2026-08-10 |
 | Источник | `docs/PLAN_CURRENT.md` |
-| Текущий gate | SEARCH-003 GitHub/Render verification |
+| Текущий gate | SEARCH-004 GitHub/Render verification |
 
 ## 1. Функциональная очередь без аренды VPS
 
 ```text
-SEARCH-003 verification
-→ SEARCH-004
+SEARCH-004 verification
 → AUTH-001 → AUTH-002
 → PROF-001 → PROF-002 → PROF-003 → PRIV-001
 → SEARCH-005
@@ -35,29 +34,28 @@ INFRA-001 → REED-COMPAT-001 → HOST-001
 | FND/DATA/SEC/OPS/INFRA-PREP | ВЫПОЛНЕНО | Базовая платформа |
 | DOC-001 | В РАБОТЕ | Единый DOC-STD-001 с каждым package |
 | SYNC-001 / SYNC-002 | ВЫПОЛНЕНО | External worker и incremental lifecycle |
-| SEARCH-001 | ВЫПОЛНЕНО | Typed contract и canonical filters |
-| SEARCH-002 | ВЫПОЛНЕНО | Conservative reversible cross-source dedup |
-| SEARCH-003 | НУЖНА ПРОВЕРКА | CI и revision 0007 подтверждены; deploy latency hotfix → search/cross-page smoke |
-| SEARCH-004/005 | ЗАПЛАНИРОВАНО | Canonical route/admin source status |
+| SEARCH-001 / SEARCH-002 / SEARCH-003 | ВЫПОЛНЕНО | Contract, dedup, stable pagination |
+| SEARCH-004 | НУЖНА ПРОВЕРКА | Canonical route + safe public source states |
+| SEARCH-005 | ЗАПЛАНИРОВАНО | Protected admin source center |
 | INFRA-001 | ОТЛОЖЕНО | Real VPS перед beta |
 
-## 4. SEARCH-003 gate
+## 4. SEARCH-004 gate
 
 ```text
-persistent bounded snapshot
-+ per-provider cursor state
-+ canonical filter/dedup before ordinal
-+ deterministic global sort
-+ committed page prefix
-+ honest totals
-+ TTL cleanup
+/vacancies 200
++ /vacancies/internal permanent method-preserving redirect
++ query/snapshot/page preservation
++ canonical forms/pagination/navigation
++ safe available/cached/degraded/auth-required/unavailable states
++ Trudvsem cache explicitly labeled
++ no credential/error leakage
 ```
 
-Пакет закрывается только после production проверки latency hotfix и page 0 → page 1 → page 0 с одним snapshot ID. Hotfix использует `SEARCH_PAGE_SIZE=20`, максимум один provider round на request и batch PostgreSQL persistence.
+Пакет закрывается только после зелёного CI и Render route/search/source-state smoke.
 
 ## 5. Ограничения
 
-- Exact total не вычисляется массовым synchronous scan upstream.
-- `/vacancies/internal` остаётся до SEARCH-004.
-- Dedup thresholds SEARCH-002 не меняются.
-- Real VPS остаётся предрелизным gate.
+- Migration отсутствует; revision остаётся `20260809_0007`.
+- Redirect использует permanent method-preserving `308`; no-store защищает verification window от stale cache.
+- Admin telemetry относится к SEARCH-005.
+- SEARCH-003 snapshot algorithm и SEARCH-002 dedup thresholds не меняются.

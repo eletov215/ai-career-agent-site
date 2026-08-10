@@ -66,7 +66,7 @@ SEARCH_SNAPSHOT_EXTENSION_LEASE_SECONDS=90
 
 ## 5. Cross-page smoke
 
-1. Открыть `/vacancies/internal`.
+1. Открыть `/vacancies`.
 2. Выбрать HH + SuperJob + Работа России; Reed можно оставить по необходимости.
 3. Выполнить распространённый query без узких filters.
 4. Открыть `Далее` и убедиться, что URL содержит `snapshot=<uuid>&page=1`.

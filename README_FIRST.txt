@@ -1,27 +1,46 @@
-AI Career Agent — SEARCH-003 candidate v1.4.9
+AI Career Agent — SEARCH-004 candidate v1.4.11
 
 1. Создать ветку от актуального main:
-   search-003-stable-pagination
-2. Загрузить полный проект с заменой файлов через GitHub Desktop.
-3. Убедиться, что сохранены служебные файлы и каталоги:
+   search-004-canonical-vacancies
+
+2. Скопировать содержимое полного архива в локальный GitHub Desktop
+   repository с заменой файлов. Папку .git не удалять и не заменять.
+
+3. Проверить, что сохранены служебные файлы и новые элементы:
    .github/
    .gitignore
    .dockerignore
-   migrations/versions/20260809_0007_stable_search_snapshots.py
+   services/source_status.py
+   tests/test_source_status.py
+   docs/SEARCH004_IMPLEMENTATION.md
+   docs/SEARCH004_VERIFICATION_STATUS.md
+   docs/SEARCH004_RUNBOOK.md
+   docs/SEARCH004_SOURCE_STATE_REFERENCE.md
+
 4. Commit:
-   search: add persistent stable pagination and honest totals
-5. Merge выполнять только после полностью зелёного GitHub Actions, включая шаг:
-   Verify SEARCH-003 stable pagination and totals controls
+   search: make vacancies route canonical and expose safe source states
+
+5. Merge выполнять только после полностью зелёного GitHub Actions,
+   включая шаг:
+   Verify SEARCH-004 canonical route and source-state controls
+
 6. Render Start Command не менять:
    python scripts/manage_db.py upgrade && python scripts/start_runtime.py
+
 7. После deploy проверить:
    /health/ready
    current_revision = expected_revision = 20260809_0007
-8. Выполнить production smoke по docs/SEARCH003_RUNBOOK.md:
-   page 0 -> page 1 -> page 0 с одним snapshot ID;
-   карточки между соседними страницами не повторяются;
-   первая страница после возврата не меняется;
-   /health/search-pagination?snapshot=<ID> показывает secret-free snapshot state.
 
-Не добавлять .env, secrets, databases, dumps, backups, virtualenv, caches или bytecode.
-SEARCH-003 остаётся в статусе НУЖНА ПРОВЕРКА до зелёного CI и Render smoke.
+8. Выполнить production smoke по docs/SEARCH004_RUNBOOK.md:
+   /vacancies -> 200;
+   /vacancies/internal?<query> -> 308 на /vacancies;
+   repeated source, snapshot и page сохранены;
+   Trudvsem отображается как cached/degraded;
+   недоступный provider не вызывается и не раскрывает технические детали;
+   pagination и generated links используют /vacancies.
+
+Не добавлять .env, secrets, databases, dumps, backups, virtualenv,
+caches или bytecode.
+
+SEARCH-004 остаётся в статусе НУЖНА ПРОВЕРКА до зелёного CI и Render smoke.
+После закрытия следующий обязательный пакет по PLAN_CURRENT — AUTH-001.

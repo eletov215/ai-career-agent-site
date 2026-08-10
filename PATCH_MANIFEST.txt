@@ -1,4 +1,7 @@
-SEARCH-004 — canonical /vacancies route and honest public source states
+AI Career Agent SEARCH-004 code patch v1.4.11
+
+Overlay the contents of this directory onto the repository root.
+No database migration is included. Expected revision remains 20260809_0007.
 
 Added (6):
 - docs/SEARCH004_IMPLEMENTATION.md
@@ -34,18 +37,3 @@ Modified (22):
 
 Removed (0):
 - none
-
-Database migration:
-- none
-
-Expected Alembic revision after deploy:
-- 20260809_0007
-
-Package status:
-- SEARCH-004 — НУЖНА ПРОВЕРКА
-
-Local evidence:
-- source-state tests: 6 passed
-- template/route focused checks: 11 passed, 1 skipped locally
-- full available pytest: 193 passed, 6 skipped
-- compile/Jinja/YAML/repository hygiene/document structure/INFRA manifest: passed

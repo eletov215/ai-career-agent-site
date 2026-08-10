@@ -1,5 +1,35 @@
 # Changelog
 
+## Unreleased — SEARCH-004 candidate (10 августа 2026)
+
+### Added
+
+- Canonical public vacancy route `/vacancies`.
+- Safe `SourceState` contract: `available`, `cached`, `degraded`, `auth_required`, `temporarily_unavailable`.
+- Explicit cached/degraded Trudvsem presentation and neutral live-provider state copy.
+- SEARCH-004 route/source-state tests and dedicated GitHub Actions gate.
+- Canonical metadata for the vacancy page.
+
+### Changed
+
+- `/vacancies/internal` is now a permanent method-preserving compatibility redirect that preserves the raw query string, repeated sources, SEARCH-003 snapshot ID and page.
+- Main/compact forms, pagination and generated navigation URLs use `/vacancies`.
+- Source cards and result summaries show safe user-facing state rather than binary availability.
+- Provider failures no longer expose technical exception text or environment variable names in public UI.
+- Explicitly requested but unavailable providers are removed before the SEARCH-003 aggregator and reported with neutral user copy.
+
+### Verification status
+
+- Python compile and Jinja parse: passed.
+- Focused `tests/test_source_status.py`: 6 passed.
+- Full available pytest: 193 passed, 6 skipped.
+- GitHub Flask/PostgreSQL/Docker and Render canonical-route/source-state smoke: pending.
+
+### Compatibility and rollback
+
+- No database migration; production revision remains `20260809_0007`.
+- Application revert is sufficient; legacy route remains redirect-safe.
+
 ## Unreleased — SEARCH-003 candidate (09 августа 2026)
 
 ### Added
@@ -34,11 +64,11 @@
 - Local compile and full available pytest: 182 passed, 6 skipped.
 - SEARCH-003 focused suite: 18 passed.
 - SQLite migration `0006 -> 0007 -> 0006 -> 0007` and Alembic check: passed.
-- GitHub PostgreSQL/Flask/Docker and Render cross-page smoke: pending.
+- GitHub Actions and Render cross-page/restart smoke: passed; SEARCH-003 complete.
 
 ### Scope exclusions
 
-- `/vacancies` route redesign remains SEARCH-004.
+- `/vacancies` route redesign is implemented in SEARCH-004 candidate.
 - SEARCH-002 thresholds and OAuth strategy are unchanged.
 - Exact total is not obtained by synchronous full upstream scan.
 

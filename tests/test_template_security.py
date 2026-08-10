@@ -50,3 +50,23 @@ def test_templates_do_not_use_inline_event_handlers():
             failures.append(str(path.relative_to(TEMPLATES_DIR)))
 
     assert not failures, "Inline event handlers violate CSP: " + ", ".join(failures)
+
+
+def test_templates_do_not_generate_legacy_vacancy_route():
+    failures: list[str] = []
+    for path in _templates():
+        text = path.read_text(encoding="utf-8")
+        if "/vacancies/internal" in text:
+            failures.append(str(path.relative_to(TEMPLATES_DIR)))
+
+    assert not failures, "Templates still generate legacy vacancy URLs: " + ", ".join(failures)
+
+
+def test_vacancy_forms_and_canonical_link_use_public_route():
+    vacancy_template = (TEMPLATES_DIR / "vacancies_unified.html").read_text(
+        encoding="utf-8"
+    )
+
+    assert 'action="{{ url_for(\'vacancies\') }}"' in vacancy_template
+    assert 'rel="canonical" href="{{ url_for(\'vacancies\', _external=True) }}"' in vacancy_template
+    assert "url_for('vacancies')" in vacancy_template

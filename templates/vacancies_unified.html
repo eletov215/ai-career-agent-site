@@ -1,5 +1,8 @@
 {% extends "base.html" %}
 {% block title %}Вакансии — AI Career Agent{% endblock %}
+{% block head_extra %}
+  <link rel="canonical" href="{{ url_for('vacancies', _external=True) }}">
+{% endblock %}
 {% block content %}
 <main class="section">
   <div class="container">
@@ -62,7 +65,7 @@
       <a class="btn btn-secondary vacancy-cabinet-link" href="{{ url_for('dashboard') }}">В кабинет</a>
     </section>
 
-    <form class="unified-search" method="get">
+    <form class="unified-search" method="get" action="{{ url_for('vacancies') }}">
       <input type="hidden" name="search" value="1">
 
       <div class="vacancy-primary-search">
@@ -97,10 +100,13 @@
 
         <div class="source-picker__grid">
           {% for source in source_options %}
-            <label class="source-option source-option--{{ source.key }} {% if not source.available %}source-disabled{% endif %}">
+            <label
+              class="source-option source-option--{{ source.key }} source-option--state-{{ source.state }} {% if not source.selectable %}source-disabled{% endif %}"
+              data-source-state="{{ source.state }}"
+            >
               <input type="checkbox" name="source" value="{{ source.key }}"
                      {% if source.key in selected_sources %}checked{% endif %}
-                     {% if not source.available and source.key != 'trudvsem' %}disabled{% endif %}>
+                     {% if not source.selectable %}disabled{% endif %}>
               <span class="source-option__mark" aria-hidden="true">
                 {% if source.key in ['trudvsem', 'superjob', 'hh', 'reed'] %}
                   <img src="{{ url_for('static', filename='images/sources/' ~ source.key ~ '.svg') }}" alt="" loading="lazy">
@@ -110,7 +116,10 @@
               </span>
               <span class="source-option__copy">
                 <strong>{{ source.title }}</strong>
-                {% if source.available %}<small>{{ source.status_text or 'Поиск доступен' }}</small>{% elif source.note %}<small>{{ source.note }}</small>{% else %}<small>Поиск недоступен</small>{% endif %}
+                <small class="source-option__status source-option__status--{{ source.state }}">
+                  <span aria-hidden="true"></span>{{ source.label }}
+                </small>
+                {% if source.detail %}<span class="source-option__detail">{{ source.detail }}</span>{% endif %}
               </span>
               <span class="source-option__check" aria-hidden="true">✓</span>
             </label>
@@ -221,7 +230,7 @@
 
     </form>
 
-    <form class="vacancy-compact-search" data-compact-search method="get" aria-hidden="true">
+    <form class="vacancy-compact-search" data-compact-search method="get" action="{{ url_for('vacancies') }}" aria-hidden="true">
       <input type="hidden" name="search" value="1">
 
       <div class="vacancy-compact-search__primary">
@@ -243,11 +252,15 @@
           </summary>
           <div class="vacancy-compact-sources__menu">
             {% for source in source_options %}
-              <label>
+              <label class="vacancy-compact-source vacancy-compact-source--{{ source.state }} {% if not source.selectable %}is-disabled{% endif %}">
                 <input type="checkbox" name="source" value="{{ source.key }}"
                        {% if source.key in selected_sources %}checked{% endif %}
-                       {% if not source.available and source.key != 'trudvsem' %}disabled{% endif %}>
-                <span>{{ source.title }}</span>
+                       {% if not source.selectable %}disabled{% endif %}>
+                <span class="vacancy-compact-source__dot" aria-hidden="true"></span>
+                <span class="vacancy-compact-source__copy">
+                  <strong>{{ source.title }}</strong>
+                  <small>{{ source.label }}</small>
+                </span>
               </label>
             {% endfor %}
           </div>
@@ -391,12 +404,37 @@
       </div>
     </div>
 
+    {% if source_selection_notice %}
+      <div class="warning-box spaced source-selection-notice">{{ source_selection_notice }}</div>
+    {% endif %}
+
+    {% if selected_source_states %}
+      <section class="source-state-panel spaced" aria-label="Состояние выбранных источников">
+        <div class="source-state-panel__heading">
+          <strong>Состояние источников</strong>
+          <span>Показываем доступность именно для текущего поиска</span>
+        </div>
+        <div class="source-state-panel__grid">
+          {% for source in selected_source_states %}
+            <article class="source-state-item source-state-item--{{ source.state }}">
+              <span class="source-state-item__dot" aria-hidden="true"></span>
+              <span class="source-state-item__copy">
+                <strong>{{ source.title }}</strong>
+                <span>{{ source.label }}</span>
+                {% if source.detail %}<small>{{ source.detail }}</small>{% endif %}
+              </span>
+            </article>
+          {% endfor %}
+        </div>
+      </section>
+    {% endif %}
+
     {% if cache_note %}
       <div class="card spaced"><span class="muted">{{ cache_note }}</span></div>
     {% endif %}
 
     {% if errors %}
-      <div class="warning-box spaced">Один из источников временно не смог выполнить поиск. Результаты остальных площадок показаны ниже.</div>
+      <div class="warning-box spaced">Часть источников работает с ограничениями. Доступные результаты остальных площадок показаны ниже.</div>
     {% endif %}
 
     {% if 'trudvsem' in selected_sources %}
@@ -552,13 +590,13 @@
 
     <div class="pagination" aria-label="Навигация по стабильному снимку поиска">
       {% if page > 0 %}
-        <a class="btn btn-secondary" href="?{{ pagination_query }}&page={{ page - 1 }}">Назад</a>
+        <a class="btn btn-secondary" href="{{ url_for('vacancies') }}?{{ pagination_query }}&page={{ page - 1 }}">Назад</a>
       {% endif %}
       {% if search_requested %}
         <span class="pagination__status">Страница {{ page + 1 }}</span>
       {% endif %}
       {% if has_next %}
-        <a class="btn btn-secondary" href="?{{ pagination_query }}&page={{ page + 1 }}">Далее</a>
+        <a class="btn btn-secondary" href="{{ url_for('vacancies') }}?{{ pagination_query }}&page={{ page + 1 }}">Далее</a>
       {% endif %}
     </div>
 

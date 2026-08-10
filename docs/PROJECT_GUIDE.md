@@ -10,10 +10,10 @@
 ## 2. Текущий пакет
 
 ```text
-SEARCH-003 — НУЖНА ПРОВЕРКА
-branch: search-003-stable-pagination
-commit: search: add persistent stable pagination and honest totals
-candidate revision: 20260809_0007
+SEARCH-004 — НУЖНА ПРОВЕРКА
+branch: search-004-canonical-vacancies
+commit: search: make vacancies route canonical and expose safe source states
+production revision: 20260809_0007 (без новой migration)
 ```
 
 ## 3. Обязательный цикл
@@ -22,7 +22,7 @@ candidate revision: 20260809_0007
 актуальный ZIP + canonical docs
 → один package ID
 → inventory/risks/rollback
-→ code + tests + migrations
+→ code + tests
 → branch/PR
 → green GitHub Actions
 → Render/API/E2E smoke
@@ -40,26 +40,26 @@ python -m pytest -q
 python -m alembic check
 ```
 
-GitHub Actions должен отдельно выполнить `Verify SEARCH-003 stable pagination and totals controls`, PostgreSQL migration/integration, backup/restore, Docker build/runtime и полный pytest.
+GitHub Actions должен отдельно выполнить `Verify SEARCH-004 canonical route and source-state controls`, PostgreSQL migration/integration, backup/restore, Docker build/runtime и полный pytest.
 
-## 5. SEARCH-003 production verification
+## 5. SEARCH-004 production verification
 
 1. `/health/ready` показывает revision `20260809_0007`.
-2. Выполнить широкий multi-source search.
-3. Проверить page 0 → page 1 → page 0 с одним `snapshot` ID.
-4. На соседних страницах нет одинаковых stable identities.
-5. Возврат на page 0 воспроизводит прежний порядок.
-6. `/health/search-pagination?snapshot=<uuid>` показывает honest totals, per-source cursors и candidate coverage без query text/credentials.
-7. Search snapshot расширяется постепенно и bounded: по умолчанию один provider round на HTTP request; уже committed страницы не пересортировываются поздними ответами.
+2. `/vacancies` возвращает 200 и полный search UI.
+3. `/vacancies/internal?<query>` возвращает 308 на `/vacancies` с тем же raw query.
+4. Повторяющиеся `source`, `snapshot` и `page` не теряются.
+5. Generated forms/pagination/navbar/home CTA не содержат `/vacancies/internal`.
+6. Trudvsem показан как cached/degraded; HH/SuperJob/Reed — как live available/degraded/unavailable.
+7. Ошибка одного provider не ломает общую страницу и не выводит traceback/body/token/env name.
 
 ## 6. Неприкосновенные правила
 
 - `.env`, credentials, databases, dumps, backups, virtualenv, caches и bytecode не включаются в ZIP/GitHub.
 - Реальные APIs в CI mocked.
 - Production schema меняет только Alembic.
-- Snapshot exact total не добывается массовым synchronous upstream scan.
-- SEARCH-003 не меняет SEARCH-002 thresholds, OAuth strategy и route redesign SEARCH-004.
+- SEARCH-004 не меняет SEARCH-003 snapshot schema/algorithm, SEARCH-002 thresholds, OAuth strategy или AI matching.
+- Admin source telemetry остаётся SEARCH-005.
 
 ## 7. Rollback
 
-Application revert без очистки vacancy cache. Additive `0007` может остаться; downgrade до `0006` — только после verified backup и deployment совместимого старого кода.
+Application revert и redeploy. Database revision `0007` сохраняется; downgrade не нужен. Legacy route должен оставаться доступным либо redirect-safe на rollback window.

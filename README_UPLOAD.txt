@@ -1,10 +1,24 @@
-SEARCH-003 CI ENV FIX 2
+SEARCH-004 candidate v1.4.11
 
-Replace exactly this repository file:
-  infra/vps/.env.example
+Upload the complete project into a branch created from current main:
+  search-004-canonical-vacancies
 
-Required SEARCH-003 lines included:
-  SEARCH_PAGE_SIZE=20
-  SEARCH_SNAPSHOT_MAX_ROUNDS_PER_REQUEST=1
+Recommended commit:
+  search: make vacancies route canonical and expose safe source states
 
-Do not upload README_UPLOAD.txt if you do not want it in the repository.
+Required files/directories that must be preserved:
+  .github/
+  .gitignore
+  .dockerignore
+  services/source_status.py
+  tests/test_source_status.py
+  docs/SEARCH004_*.md
+
+Expected GitHub Actions step:
+  Verify SEARCH-004 canonical route and source-state controls
+
+No new migration. Expected revision after deploy:
+  20260809_0007
+
+Do not upload .env, secrets, databases, dumps, backups, virtualenv,
+caches or bytecode.
