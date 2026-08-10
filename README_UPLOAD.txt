@@ -1,13 +1,13 @@
-AUTH-001 candidate v1.4.13
+AUTH-001 CI FIX 1
 
-Branch: auth-001-first-party-account
-Commit: auth: add first-party account and revocable sessions
-Required CI: Verify AUTH-001 first-party account controls
-Expected revision: 20260810_0008
+Replace only:
+  tests/test_routes.py
 
-Use the complete project ZIP for GitHub Desktop, or overlay the compact
-AUTH-001 code patch onto the current main branch.
+Reason:
+The SEC-001 regression fixture used a hard-coded published_at=2026-08-03.
+The vacancy search defaults to period=7 days, so on 2026-08-10 the fixture
+became older than the active search window and was correctly filtered out.
+The fixture now uses the current UTC timestamp. The SuperJob route fixture was
+updated the same way to prevent the same future time-dependent failure.
 
-Production SMTP secrets must be configured only in Render/VPS Environment;
-see docs/AUTH001_RUNBOOK.md. Do not upload .env, secrets, databases, dumps,
-backups, virtualenv, caches or bytecode.
+No production code, database migration, environment variables or Render settings change.
