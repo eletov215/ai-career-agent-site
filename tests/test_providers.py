@@ -30,7 +30,7 @@ def test_hh_success_normalizes_result_and_omits_empty_text(monkeypatch):
                         "employment": {"name": "Полная занятость"},
                         "experience": {"name": "От 1 года до 3 лет"},
                         "snippet": {"requirement": "Python", "responsibility": "APIs"},
-                        "published_at": "2026-08-03T08:00:00+00:00",
+                        "published_at": datetime.now(timezone.utc).isoformat(),
                         "alternate_url": "https://hh.test/1",
                     }
                 ],

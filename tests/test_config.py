@@ -42,6 +42,8 @@ def test_test_environment_requires_no_real_secrets():
     assert settings.session_cookie_secure is False
     assert settings.csrf_enabled is True
     assert settings.rate_limit_enabled is True
+    assert settings.auth_email_backend == "memory"
+    assert settings.auth_session_ttl_seconds == 43_200
 
 
 def test_production_reports_all_missing_required_variables():
@@ -102,6 +104,11 @@ def test_production_defaults_preserve_current_runtime_behavior():
     assert settings.hh_currency_scan_pages == 20
     assert settings.session_cookie_secure is True
     assert settings.session_cookie_samesite == "Lax"
+    assert settings.auth_email_backend == "disabled"
+    assert settings.auth_session_ttl_seconds == 43_200
+    assert settings.auth_verification_ttl_seconds == 86_400
+    assert settings.auth_reset_ttl_seconds == 3_600
+    assert settings.auth_password_min_length == 12
     assert settings.csrf_enabled is True
     assert settings.rate_limit_enabled is True
     assert settings.security_headers_enabled is True
@@ -154,6 +161,18 @@ def test_numeric_and_boolean_values_are_validated_centrally(tmp_path):
             MAX_RESUME_PAGES="45",
             MAX_RESUME_TEXT_CHARACTERS="300000",
             SESSION_LIFETIME_SECONDS="3600",
+            AUTH_SESSION_TTL_SECONDS="7200",
+            AUTH_VERIFICATION_TTL_SECONDS="172800",
+            AUTH_RESET_TTL_SECONDS="1800",
+            AUTH_PASSWORD_MIN_LENGTH="14",
+            AUTH_EMAIL_BACKEND="smtp",
+            AUTH_EMAIL_FROM="accounts@example.test",
+            AUTH_SMTP_HOST="smtp.example.test",
+            AUTH_SMTP_PORT="2525",
+            AUTH_SMTP_USERNAME="mailer",
+            AUTH_SMTP_PASSWORD="mail-secret",
+            AUTH_SMTP_USE_TLS="yes",
+            AUTH_SMTP_TIMEOUT_SECONDS="6.5",
             CSRF_TIME_LIMIT_SECONDS="1800",
             MAX_FORM_MEMORY_SIZE="131072",
             MAX_FORM_PARTS="20",
@@ -192,6 +211,16 @@ def test_numeric_and_boolean_values_are_validated_centrally(tmp_path):
     assert settings.max_resume_pages == 45
     assert settings.max_resume_text_characters == 300_000
     assert settings.session_lifetime_seconds == 3600
+    assert settings.auth_session_ttl_seconds == 7200
+    assert settings.auth_verification_ttl_seconds == 172800
+    assert settings.auth_reset_ttl_seconds == 1800
+    assert settings.auth_password_min_length == 14
+    assert settings.auth_email_backend == "smtp"
+    assert settings.auth_email_from == "accounts@example.test"
+    assert settings.auth_smtp_host == "smtp.example.test"
+    assert settings.auth_smtp_port == 2525
+    assert settings.auth_smtp_use_tls is True
+    assert settings.auth_smtp_timeout_seconds == 6.5
     assert settings.csrf_time_limit_seconds == 1800
     assert settings.max_form_memory_size == 131_072
     assert settings.max_form_parts == 20
@@ -237,6 +266,12 @@ def test_numeric_and_boolean_values_are_validated_centrally(tmp_path):
         ("MAX_RESUME_PAGES", "101", "не может быть больше 100"),
         ("SESSION_COOKIE_SAMESITE", "None", "Разрешены"),
         ("SESSION_LIFETIME_SECONDS", "60", "не может быть меньше 900"),
+        ("AUTH_SESSION_TTL_SECONDS", "60", "не может быть меньше 900"),
+        ("AUTH_VERIFICATION_TTL_SECONDS", "60", "не может быть меньше 900"),
+        ("AUTH_RESET_TTL_SECONDS", "60", "не может быть меньше 300"),
+        ("AUTH_PASSWORD_MIN_LENGTH", "9", "не может быть меньше 10"),
+        ("AUTH_EMAIL_BACKEND", "provider", "Разрешены"),
+        ("AUTH_SMTP_TIMEOUT_SECONDS", "0.5", "не может быть меньше 1.0"),
         ("LOG_LEVEL", "verbose", "Разрешены"),
         ("LOG_FORMAT", "xml", "Разрешены"),
         ("SERVICE_NAME", "bad service", "SERVICE_NAME"),
@@ -391,3 +426,38 @@ def test_alert_webhook_rejects_embedded_credentials():
                 OPS_ALERT_WEBHOOK_URL="https://user:secret@alerts.example.test/hook",
             )
         )
+
+
+def test_smtp_backend_requires_host_and_sender():
+    with pytest.raises(ConfigurationError, match="AUTH_EMAIL_BACKEND=smtp"):
+        load_settings(production_environment(AUTH_EMAIL_BACKEND="smtp"))
+
+
+def test_production_rejects_memory_auth_email_backend():
+    with pytest.raises(ConfigurationError, match="memory запрещён"):
+        load_settings(production_environment(AUTH_EMAIL_BACKEND="memory"))
+
+
+def test_production_smtp_requires_tls():
+    with pytest.raises(ConfigurationError, match="AUTH_SMTP_USE_TLS=1"):
+        load_settings(
+            production_environment(
+                AUTH_EMAIL_BACKEND="smtp",
+                AUTH_EMAIL_FROM="accounts@example.test",
+                AUTH_SMTP_HOST="smtp.example.test",
+                AUTH_SMTP_USE_TLS="no",
+            )
+        )
+
+
+def test_development_smtp_can_disable_tls_for_local_mail_sink():
+    settings = load_settings(
+        production_environment(
+            APP_ENV="development",
+            AUTH_EMAIL_BACKEND="smtp",
+            AUTH_EMAIL_FROM="accounts@example.test",
+            AUTH_SMTP_HOST="localhost",
+            AUTH_SMTP_USE_TLS="no",
+        )
+    )
+    assert settings.auth_smtp_use_tls is False

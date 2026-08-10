@@ -25,12 +25,14 @@ from models import (
     VacancySourceRecord,
 )
 from repositories import (
+    AuthRepository,
     OAuthConnectionRepository,
     SearchSnapshotRepository,
     SyncCheckpointRepository,
     SyncRunRepository,
     UserRepository,
 )
+from services.passwords import hash_password
 from services.vacancy_store import VacancyStore
 
 
@@ -184,6 +186,38 @@ def test_postgresql_migration_and_persistence_round_trip():
             )
 
         users = UserRepository(runtime)
+        auth = AuthRepository(runtime)
+        auth_email = f"auth-{suffix}@example.test"
+        auth_user = auth.create_user(
+            email=auth_email,
+            normalized_email=auth_email,
+            password_hash=hash_password("PostgreSQL auth password 42!"),
+            display_name="CI Auth User",
+            now=10_000,
+        )
+        assert auth_user is not None
+        auth.issue_token(
+            user_id=auth_user.id,
+            purpose="verify_email",
+            token_hash="b" * 64,
+            expires_at=20_000,
+            now=10_001,
+        )
+        verified_auth_user = auth.verify_email_with_token(
+            token_hash="b" * 64,
+            purpose="verify_email",
+            now=10_002,
+        )
+        assert verified_auth_user is not None
+        assert verified_auth_user.status == "active"
+        auth_session = auth.create_session(
+            user_id=auth_user.id,
+            token_hash="c" * 64,
+            expires_at=20_000,
+            user_agent_hash="d" * 64,
+            now=10_003,
+        )
+
         sync_runs = SyncRunRepository(runtime)
         sync_checkpoints = SyncCheckpointRepository(runtime)
         user_email = f"ci-{suffix}@example.test"
@@ -274,6 +308,15 @@ def test_postgresql_migration_and_persistence_round_trip():
         runtime = create_database(database_url)
 
         assert UserRepository(runtime).find_by_email(user_email) is not None
+        persisted_auth = AuthRepository(runtime)
+        persisted_auth_user = persisted_auth.find_user_by_email(auth_email)
+        assert persisted_auth_user is not None
+        assert persisted_auth_user.status == "active"
+        assert persisted_auth.get_active_session("c" * 64, now=10_004) is not None
+        assert any(
+            item.id == auth_session.id
+            for item in persisted_auth.list_active_sessions(auth_user.id, now=10_004)
+        )
         persisted_connection = OAuthConnectionRepository(runtime).get(
             "superjob", numeric_external_id
         )

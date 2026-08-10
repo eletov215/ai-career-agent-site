@@ -35,6 +35,8 @@ def test_sqlite_migration_is_repeatable_and_health_is_secret_free(tmp_path):
             "hh_accounts",
             "users",
             "oauth_connections",
+            "auth_sessions",
+            "auth_tokens",
             "vacancies",
             "vacancy_source_records",
             "sync_runs",

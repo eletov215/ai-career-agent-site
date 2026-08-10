@@ -376,6 +376,10 @@ def test_health_reports_migrated_database_without_connection_url(client):
     assert payload["database"]["ok"] is True
     assert payload["database"]["backend"] == "sqlite"
     assert payload["database"]["revision"] == CURRENT_REVISION
+    assert payload["auth"] == {
+        "email_backend": "memory",
+        "email_delivery_configured": True,
+    }
     assert "sqlite:///" not in response.get_data(as_text=True)
 
 

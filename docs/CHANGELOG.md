@@ -1,5 +1,37 @@
 # Changelog
 
+## Unreleased — AUTH-001 candidate (10 августа 2026)
+
+### Added
+
+- First-party email/password account using existing `users`.
+- Versioned bounded scrypt password hashing without new runtime dependency.
+- Revocable `auth_sessions` and single-use `auth_tokens` via Alembic `20260810_0008`.
+- Registration, email verification/resend, login/logout, forgot/reset and session revoke routes/templates.
+- Provider-neutral disabled/memory/SMTP STARTTLS email delivery.
+- Account/session dashboard and safe `/health/ready` email backend status.
+- Focused AUTH-001 tests and dedicated GitHub Actions gate.
+
+### Security
+
+- Password/action/session plaintext is never persisted or logged.
+- Register/reset and login failures use enumeration-safe public copy.
+- Auth pages are no-store/no-referrer; actions are POST + CSRF + route rate limits.
+- Login rotates browser session and rejects non-local `next` redirects.
+- Password reset atomically revokes all existing first-party sessions.
+
+### Verification status
+
+- Local compile, auth/password/config/migration and full available pytest: passed.
+- GitHub Flask/PostgreSQL/container gates: pending.
+- Render migration `0008`, SMTP and account E2E: pending.
+
+### Compatibility and rollback
+
+- HH/SuperJob identities remain independent until AUTH-002.
+- Search/sync/OAuth schema and behavior are not rewritten.
+- Application rollback may retain additive `0008`; downgrade only before real accounts or after verified backup.
+
 ## Unreleased — SEARCH-004 candidate (10 августа 2026)
 
 ### Added
@@ -440,3 +472,38 @@
 - FND-001 and FND-002 are confirmed as COMPLETED.
 - DATA-001 remains NEEDS VERIFICATION.
 - Versioned document filenames are used to prevent stale mobile/PDF cache confusion.
+
+## 10 августа 2026 — AUTH-001 candidate 1.4.13
+
+### Added
+
+- first-party account root based on existing `users`;
+- additive migration `20260810_0008` with password metadata, `auth_sessions`, `auth_tokens`;
+- application-owned versioned scrypt password hashes and fixed-cost unknown-user verification;
+- verification/reset TTL single-use tokens persisted only as hashes;
+- revocable server-side sessions, session list/revoke/revoke-others and reset-all policy;
+- `/auth/*` blueprint, responsive auth pages and first-party dashboard identity/device UI;
+- disabled/memory/SMTP transactional email adapters;
+- dedicated AUTH-001 GitHub Actions gate and auth migration/service/route/password tests;
+- AUTH-001 implementation, verification, runbook and contract-reference documents.
+
+### Changed
+
+- base navigation exposes first-party register/login/logout;
+- dashboard separates own account from HH/SuperJob connections;
+- privacy page documents minimal auth/session/token data;
+- health/readiness report email backend availability without secrets;
+- backup inventory includes auth tables;
+- Render/Compose/VPS templates include secret-free auth configuration.
+
+### Security
+
+- auth responses are no-store/no-referrer;
+- public registration/login/recovery responses are enumeration-safe;
+- reset revokes all first-party sessions;
+- first-party login/logout preserves independent provider identities until AUTH-002;
+- SMTP failure logs omit PII, raw tokens and response bodies.
+
+### Verification status
+
+Local: 217 passed, 7 skipped; focused suite 83 passed, 2 skipped; migration round-trip and Alembic check passed. GitHub/Render/SMTP E2E pending, therefore AUTH-001 remains НУЖНА ПРОВЕРКА.

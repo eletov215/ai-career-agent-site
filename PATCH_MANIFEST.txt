@@ -1,39 +1,96 @@
-AI Career Agent SEARCH-004 code patch v1.4.11
+AI Career Agent - AUTH-001 patch manifest
 
-Overlay the contents of this directory onto the repository root.
-No database migration is included. Expected revision remains 20260809_0007.
+Overlay this archive onto the current GitHub main after SEARCH-004.
+Do not delete the existing .git directory. Copy with replacement and preserve
+all relative paths, including dot-directories.
 
-Added (6):
-- docs/SEARCH004_IMPLEMENTATION.md
-- docs/SEARCH004_RUNBOOK.md
-- docs/SEARCH004_SOURCE_STATE_REFERENCE.md
-- docs/SEARCH004_VERIFICATION_STATUS.md
-- services/source_status.py
-- tests/test_source_status.py
+Branch:
+  auth-001-first-party-account
 
-Modified (22):
+Recommended commit:
+  auth: add first-party account and revocable sessions
+
+Required CI gate:
+  Verify AUTH-001 first-party account controls
+
+Expected database revision after deploy:
+  20260810_0008
+
+Patch files (70):
 - .github/workflows/ci.yml
 - CHANGED_FILES.txt
+- PATCH_MANIFEST.txt
 - README.md
 - README_FIRST.txt
 - README_UPLOAD.txt
 - app.py
+- compose.yaml
+- config.py
+- database.py
 - docs/ARCHITECTURE.md
+- docs/AUTH001_IMPLEMENTATION.md
+- docs/AUTH001_RUNBOOK.md
+- docs/AUTH001_SECURITY_REFERENCE.md
+- docs/AUTH001_VERIFICATION_STATUS.md
+- docs/BACKUP_RESTORE.md
 - docs/CHANGELOG.md
-- docs/INFRA001_VPS_TEST.md
+- docs/DATABASE_MIGRATION.md
+- docs/DOMAIN_MODEL.md
 - docs/PLAN_CURRENT.md
 - docs/PROJECT_GUIDE.md
 - docs/PROJECT_PASSPORT.md
 - docs/ROADMAP.md
-- docs/SEARCH002_RUNBOOK.md
-- docs/SEARCH003_RUNBOOK.md
+- docs/SECURITY.md
 - docs/SOURCE_AUDIT.md
-- docs/SYNC001_VERIFICATION_STATUS.md
+- domain/__init__.py
+- domain/auth.py
+- domain/entities.py
+- infra/vps/.env.example
+- infra/vps/compose.test.env
+- migrations/versions/20260810_0008_first_party_auth.py
+- models/__init__.py
+- models/auth.py
+- models/user.py
+- operations/backup.py
+- render.yaml
+- repositories/__init__.py
+- repositories/auth.py
+- routes/__init__.py
+- routes/auth.py
+- scripts/check_document_structure.py
+- scripts/infra_manifest_check.py
+- services/auth.py
+- services/email_delivery.py
+- services/passwords.py
+- services/storage.py
 - static/theme.css
+- templates/auth/base_auth.html
+- templates/auth/login.html
+- templates/auth/notice.html
+- templates/auth/register.html
+- templates/auth/reset.html
+- templates/auth/simple_form.html
+- templates/auth/verify.html
 - templates/base.html
-- templates/vacancies_unified.html
+- templates/dashboard.html
+- templates/privacy.html
+- tests/conftest.py
+- tests/test_auth_migration.py
+- tests/test_auth_routes.py
+- tests/test_auth_service.py
+- tests/test_config.py
+- tests/test_database.py
+- tests/test_infra_manifests.py
+- tests/test_passwords.py
+- tests/test_postgresql_integration.py
+- tests/test_providers.py
+- tests/test_repositories.py
 - tests/test_routes.py
-- tests/test_template_security.py
+- tests/test_search_pagination.py
 
-Removed (0):
-- none
+No files are deleted by this patch.
+
+Production email delivery is fail-closed by default. Configure SMTP secrets
+only in Render/VPS Environment and follow docs/AUTH001_RUNBOOK.md.
+Never upload .env, credentials, databases, dumps, backups, virtualenv, caches
+or bytecode.

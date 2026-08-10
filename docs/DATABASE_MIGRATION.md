@@ -9,21 +9,17 @@
 → 20260807_0004 incremental sync/checkpoint lifecycle
 → 20260808_0005 canonical vacancy normalization
 → 20260809_0006 reversible cross-source dedup metadata
-→ 20260809_0007 stable search snapshots (candidate)
+→ 20260809_0007 stable search snapshots
+→ 20260810_0008 first-party auth candidate
 ```
 
-Production до SEARCH-003 работает на `20260809_0006`; после candidate deploy ожидается `20260809_0007`.
+Production до AUTH-001 deploy остаётся `20260809_0007`; expected candidate = `20260810_0008`.
 
-## 2. Revision 20260809_0007
+## 2. Revision 20260810_0008
 
-Создаёт четыре additive ephemeral tables:
+Добавляет nullable `password_hash`, `password_changed_at`, `last_login_at` в `users`; создаёт `auth_sessions` и `auth_tokens` с FK cascade, unique hash constraints и lookup/expiry indexes.
 
-- `search_snapshots`;
-- `search_snapshot_sources`;
-- `search_snapshot_candidates`;
-- `search_snapshot_items`.
-
-Миграция не переписывает `vacancies`, `vacancy_source_records`, OAuth, sync runs/checkpoints или encrypted tokens. Foreign keys используют cascade только внутри snapshot aggregate.
+Миграция не переписывает existing User/OAuth rows, vacancies, snapshots, sync runs/checkpoints или encrypted tokens.
 
 ## 3. Upgrade/check
 
@@ -37,32 +33,29 @@ python -m alembic check
 Readiness после deploy:
 
 ```text
-current_revision  = 20260809_0007
-expected_revision = 20260809_0007
+current_revision  = 20260810_0008
+expected_revision = 20260810_0008
 database.ok       = true
 persistent        = true
 ```
 
 ## 4. Compatibility
 
-- application rollback может оставить additive tables `0007`; старый код их не читает;
-- snapshot rows TTL/ephemeral и не являются источником вакансий;
-- backup inventory включает новые tables для проверки полноты schema;
-- existing cache и dedup metadata `0006` не изменяются.
+Legacy users remain valid with null password fields. Old code can ignore additive tables/columns. AUTH-001 app must not auto-bind OAuth rows.
 
 ## 5. Controlled downgrade
 
 ```bash
-# только после verified backup и deployment совместимого старого кода
-python -m alembic downgrade 20260809_0006
+python -m alembic downgrade 20260809_0007
 ```
 
-Downgrade удаляет только четыре snapshot tables/indexes. Он не должен удалять canonical vacancy data.
+Downgrade deletes auth tables and password fields. It is allowed only before real accounts exist or after verified backup/explicit data decision.
 
-## 6. Проверки candidate
+## 6. Verification
 
-- clean upgrade до `0007`;
-- `0007 → 0006 → 0007`;
-- `alembic check`;
-- PostgreSQL integration и cascade isolation в GitHub CI;
-- `/health/ready` на Render.
+- clean upgrade to `0008`;
+- `0008 -> 0007 -> 0008`;
+- Alembic check;
+- PostgreSQL auth persistence/reconnect;
+- backup/restore inventory includes auth tables;
+- Render readiness `0008`.

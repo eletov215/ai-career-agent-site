@@ -11,6 +11,7 @@ from dataclasses import dataclass
 
 from database import DatabaseRuntime
 from repositories import (
+    AuthRepository,
     OAuthConnectionRepository,
     SearchSnapshotRepository,
     SyncCheckpointRepository,
@@ -25,6 +26,7 @@ from services.vacancy_store import VacancyStore
 class StorageServices:
     """Repository-backed persistence entry points for application services."""
 
+    auth: AuthRepository
     users: UserRepository
     oauth_connections: OAuthConnectionRepository
     search_snapshots: SearchSnapshotRepository
@@ -36,6 +38,7 @@ class StorageServices:
     @classmethod
     def from_database(cls, database: DatabaseRuntime) -> "StorageServices":
         return cls(
+            auth=AuthRepository(database),
             users=UserRepository(database),
             oauth_connections=OAuthConnectionRepository(database),
             search_snapshots=SearchSnapshotRepository(database),

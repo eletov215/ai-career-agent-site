@@ -45,6 +45,10 @@ DOCUMENTS = {
     "docs/SEARCH003_VERIFICATION_STATUS.md": ["| Поле | Значение |", "## 1.", "## 2."],
     "docs/SEARCH003_RUNBOOK.md": ["| Поле | Значение |", "## 1.", "## 2."],
     "docs/SEARCH003_PAGINATION_REFERENCE.md": ["| Поле | Значение |", "## 1.", "## 2."],
+    "docs/AUTH001_IMPLEMENTATION.md": ["| Поле | Значение |", "## 1.", "## 2."],
+    "docs/AUTH001_VERIFICATION_STATUS.md": ["| Поле | Значение |", "## 1.", "## 2."],
+    "docs/AUTH001_RUNBOOK.md": ["| Поле | Значение |", "## 1.", "## 2."],
+    "docs/AUTH001_SECURITY_REFERENCE.md": ["| Поле | Значение |", "## 1.", "## 2."],
     "docs/SOURCE_AUDIT.md": ["| Поле | Значение |", "## 1."],
 }
 

@@ -22,6 +22,32 @@ services:
         value: json
       - key: LOG_LEVEL
         value: INFO
+      - key: AUTH_EMAIL_BACKEND
+        value: disabled
+      - key: AUTH_EMAIL_FROM
+        sync: false
+      - key: AUTH_EMAIL_FROM_NAME
+        value: AI Career Agent
+      - key: AUTH_SMTP_HOST
+        sync: false
+      - key: AUTH_SMTP_PORT
+        value: "587"
+      - key: AUTH_SMTP_USERNAME
+        sync: false
+      - key: AUTH_SMTP_PASSWORD
+        sync: false
+      - key: AUTH_SMTP_USE_TLS
+        value: "1"
+      - key: AUTH_SMTP_TIMEOUT_SECONDS
+        value: "8"
+      - key: AUTH_SESSION_TTL_SECONDS
+        value: "43200"
+      - key: AUTH_VERIFICATION_TTL_SECONDS
+        value: "86400"
+      - key: AUTH_RESET_TTL_SECONDS
+        value: "3600"
+      - key: AUTH_PASSWORD_MIN_LENGTH
+        value: "12"
       - key: SEARCH_SNAPSHOT_TTL_SECONDS
         value: "1800"
       - key: SEARCH_SNAPSHOT_MAX_CANDIDATES
@@ -29,7 +55,7 @@ services:
       - key: SEARCH_SNAPSHOT_MAX_PAGES_PER_SOURCE
         value: "8"
       - key: SEARCH_SNAPSHOT_MAX_ROUNDS_PER_REQUEST
-        value: "3"
+        value: "1"
       - key: SEARCH_SNAPSHOT_BUFFER_ITEMS
         value: "1"
       - key: SEARCH_SNAPSHOT_EXTENSION_LEASE_SECONDS

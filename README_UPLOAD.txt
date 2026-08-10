@@ -1,24 +1,13 @@
-SEARCH-004 candidate v1.4.11
+AUTH-001 candidate v1.4.13
 
-Upload the complete project into a branch created from current main:
-  search-004-canonical-vacancies
+Branch: auth-001-first-party-account
+Commit: auth: add first-party account and revocable sessions
+Required CI: Verify AUTH-001 first-party account controls
+Expected revision: 20260810_0008
 
-Recommended commit:
-  search: make vacancies route canonical and expose safe source states
+Use the complete project ZIP for GitHub Desktop, or overlay the compact
+AUTH-001 code patch onto the current main branch.
 
-Required files/directories that must be preserved:
-  .github/
-  .gitignore
-  .dockerignore
-  services/source_status.py
-  tests/test_source_status.py
-  docs/SEARCH004_*.md
-
-Expected GitHub Actions step:
-  Verify SEARCH-004 canonical route and source-state controls
-
-No new migration. Expected revision after deploy:
-  20260809_0007
-
-Do not upload .env, secrets, databases, dumps, backups, virtualenv,
-caches or bytecode.
+Production SMTP secrets must be configured only in Render/VPS Environment;
+see docs/AUTH001_RUNBOOK.md. Do not upload .env, secrets, databases, dumps,
+backups, virtualenv, caches or bytecode.

@@ -9,7 +9,7 @@ from urllib.parse import urlencode
 
 import requests
 from cryptography.fernet import Fernet, InvalidToken
-from flask import Flask, jsonify, redirect, render_template, request, session, url_for
+from flask import Flask, g, jsonify, redirect, render_template, request, session, url_for
 from werkzeug.utils import secure_filename
 
 
@@ -26,6 +26,9 @@ from services.university_logo import find_university_logo
 from config import AppSettings, load_settings
 from database import CURRENT_REVISION, create_database, database_health
 from services.storage import StorageServices
+from services.auth import AuthService
+from services.email_delivery import build_auth_email_sender
+from routes.auth import AUTH_SESSION_KEY, create_auth_blueprint
 from services.trudvsem_sync import TrudvsemSyncService
 from security import csrf, diagnostics_access_allowed, init_security, limiter
 from observability import (
@@ -89,6 +92,9 @@ OAUTH_STATE_TTL_SECONDS = 10 * 60
 
 
 STORAGE = StorageServices.from_database(DATABASE)
+AUTH_EMAIL_SENDER = build_auth_email_sender(SETTINGS)
+AUTH_SERVICE = AuthService(STORAGE.auth, AUTH_EMAIL_SENDER, SETTINGS)
+app.register_blueprint(create_auth_blueprint(AUTH_SERVICE, SETTINGS))
 OAUTH_CONNECTIONS = STORAGE.oauth_connections
 SYNC_RUNS = STORAGE.sync_runs
 USERS = STORAGE.users
@@ -176,6 +182,7 @@ def _establish_authenticated_session(**identities):
     connected = {
         "superjob_user_id": session.get("superjob_user_id"),
         "hh_user_id": session.get("hh_user_id"),
+        AUTH_SESSION_KEY: session.get(AUTH_SESSION_KEY),
     }
     connected.update({key: value for key, value in identities.items() if value is not None})
     session.clear()
@@ -648,6 +655,9 @@ def hh_callback():
 @app.post("/logout")
 @limiter.limit("20 per 10 minutes")
 def logout():
+    # Backward-compatible endpoint for pre-AUTH-001 forms. The canonical
+    # first-party logout lives at /auth/logout and both revoke server state.
+    AUTH_SERVICE.logout(session.get(AUTH_SESSION_KEY))
     session.clear()
     return redirect(url_for("home"))
 
@@ -657,9 +667,24 @@ def logout():
 def dashboard():
     superjob_row = account()
     hh_row = hh_account()
+    first_party_user = getattr(g, "current_user", None)
+    current_auth = getattr(g, "current_auth", None)
 
-    if not superjob_row and not hh_row:
-        return redirect(url_for("home"))
+    if not first_party_user and not superjob_row and not hh_row:
+        return redirect(url_for("auth.login", next=url_for("dashboard")))
+
+    auth_sessions = []
+    if first_party_user and current_auth:
+        for auth_session in AUTH_SERVICE.list_sessions(first_party_user.id):
+            auth_sessions.append(
+                {
+                    "id": auth_session.id,
+                    "is_current": auth_session.id == current_auth.session.id,
+                    "created_at": time.strftime("%d.%m.%Y %H:%M UTC", time.gmtime(auth_session.created_at)),
+                    "last_seen_at": time.strftime("%d.%m.%Y %H:%M UTC", time.gmtime(auth_session.last_seen_at)),
+                    "expires_at": time.strftime("%d.%m.%Y %H:%M UTC", time.gmtime(auth_session.expires_at)),
+                }
+            )
 
     resumes = []
     error = None
@@ -681,6 +706,8 @@ def dashboard():
         "dashboard.html",
         account=superjob_row,
         hh_account=hh_row,
+        first_party_user=first_party_user,
+        auth_sessions=auth_sessions,
         resumes=resumes,
         error=error,
     )
@@ -1413,6 +1440,10 @@ def _readiness_response():
         "request_id": current_request_id(),
         "uptime_seconds": OPS_STATE.uptime_seconds,
         "oauth_configured": True,
+        "auth": {
+            "email_backend": AUTH_SERVICE.email_backend_name,
+            "email_delivery_configured": AUTH_SERVICE.email_delivery_available,
+        },
         "database": {
             **database_status,
             "configured": SETTINGS.database_url_explicit,

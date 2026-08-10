@@ -1,0 +1,24 @@
+{% extends "auth/base_auth.html" %}
+{% block title %}Новый пароль — AI Career Agent{% endblock %}
+{% block auth_title %}Установите новый пароль{% endblock %}
+{% block auth_lead %}После смены пароля все прежние серверные сессии будут завершены.{% endblock %}
+{% block auth_card %}
+  <div class="auth-card__heading"><span class="auth-card__icon" aria-hidden="true">⌁</span><div><h2>Новый пароль</h2><p>Ссылка одноразовая и действует ограниченное время.</p></div></div>
+  {% if error %}<div class="auth-alert auth-alert--error" role="alert">{{ error }}</div>{% endif %}
+  {% if token %}
+    <form class="auth-form" method="post" action="{{ url_for('auth.reset_password') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="token" value="{{ token }}">
+      <label>Новый пароль
+        <input name="password" type="password" minlength="{{ password_min_length }}" maxlength="128" autocomplete="new-password" required>
+      </label>
+      <label>Повторите пароль
+        <input name="password_confirm" type="password" minlength="{{ password_min_length }}" maxlength="128" autocomplete="new-password" required>
+      </label>
+      <button class="btn btn-primary auth-submit" type="submit">Обновить пароль</button>
+    </form>
+  {% else %}
+    <div class="auth-alert auth-alert--error">В ссылке отсутствует токен сброса.</div>
+    <a class="btn btn-secondary auth-submit" href="{{ url_for('auth.forgot_password') }}">Запросить новую ссылку</a>
+  {% endif %}
+{% endblock %}

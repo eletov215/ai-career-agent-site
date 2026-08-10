@@ -146,6 +146,15 @@ def validate(root: Path = ROOT) -> list[str]:
         env_example = _read("infra/vps/.env.example")
         for marker in [
             "CHANGE_ME",
+            "AUTH_EMAIL_BACKEND=smtp",
+            "AUTH_EMAIL_FROM=accounts@example.com",
+            "AUTH_SMTP_HOST=smtp.example.com",
+            "AUTH_SMTP_USERNAME=CHANGE_ME_SMTP_USERNAME",
+            "AUTH_SMTP_PASSWORD=CHANGE_ME_SMTP_PASSWORD",
+            "AUTH_SESSION_TTL_SECONDS=43200",
+            "AUTH_VERIFICATION_TTL_SECONDS=86400",
+            "AUTH_RESET_TTL_SECONDS=3600",
+            "AUTH_PASSWORD_MIN_LENGTH=12",
             "SEARCH_PAGE_SIZE=20",
             "SEARCH_SNAPSHOT_TTL_SECONDS=1800",
             "SEARCH_SNAPSHOT_MAX_CANDIDATES=1200",

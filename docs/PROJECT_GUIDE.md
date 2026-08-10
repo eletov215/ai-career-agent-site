@@ -10,10 +10,11 @@
 ## 2. Текущий пакет
 
 ```text
-SEARCH-004 — НУЖНА ПРОВЕРКА
-branch: search-004-canonical-vacancies
-commit: search: make vacancies route canonical and expose safe source states
-production revision: 20260809_0007 (без новой migration)
+AUTH-001 — НУЖНА ПРОВЕРКА
+branch: auth-001-first-party-account
+commit: auth: add first-party account and revocable sessions
+candidate revision: 20260810_0008
+production before deploy: 20260809_0007
 ```
 
 ## 3. Обязательный цикл
@@ -35,31 +36,30 @@ production revision: 20260809_0007 (без новой migration)
 python scripts/check_repository_hygiene.py
 python scripts/check_document_structure.py
 python scripts/infra_manifest_check.py
-python -m compileall -q app.py config.py database.py observability.py security.py domain models repositories services operations scripts tests infra migrations
+python -m compileall -q .
 python -m pytest -q
 python -m alembic check
 ```
 
-GitHub Actions должен отдельно выполнить `Verify SEARCH-004 canonical route and source-state controls`, PostgreSQL migration/integration, backup/restore, Docker build/runtime и полный pytest.
+GitHub Actions должен выполнить dedicated AUTH-001, PostgreSQL migration/integration, SEC/OPS/SYNC/SEARCH regressions, backup/restore и container smoke.
 
-## 5. SEARCH-004 production verification
+## 5. AUTH-001 production verification
 
-1. `/health/ready` показывает revision `20260809_0007`.
-2. `/vacancies` возвращает 200 и полный search UI.
-3. `/vacancies/internal?<query>` возвращает 308 на `/vacancies` с тем же raw query.
-4. Повторяющиеся `source`, `snapshot` и `page` не теряются.
-5. Generated forms/pagination/navbar/home CTA не содержат `/vacancies/internal`.
-6. Trudvsem показан как cached/degraded; HH/SuperJob/Reed — как live available/degraded/unavailable.
-7. Ошибка одного provider не ломает общую страницу и не выводит traceback/body/token/env name.
+1. Configure SMTP secrets outside GitHub/chat.
+2. `/health/ready` revision `20260810_0008`, auth SMTP configured true.
+3. Register unique user and verify email.
+4. Login, create second session, revoke it, logout current.
+5. Forgot/reset; old token/password/sessions invalid.
+6. CSRF/rate limits/no-store/no-referrer/open-redirect and secret-free logs.
 
 ## 6. Неприкосновенные правила
 
-- `.env`, credentials, databases, dumps, backups, virtualenv, caches и bytecode не включаются в ZIP/GitHub.
-- Реальные APIs в CI mocked.
-- Production schema меняет только Alembic.
-- SEARCH-004 не меняет SEARCH-003 snapshot schema/algorithm, SEARCH-002 thresholds, OAuth strategy или AI matching.
-- Admin source telemetry остаётся SEARCH-005.
+- No `.env`, credentials, databases, dumps, backups, virtualenv, caches or bytecode in release.
+- Password/action/session plaintext never stored/logged.
+- Existing HH/SJ connections are not auto-bound.
+- Production schema changes only through Alembic.
+- AUTH-001 does not modify search/sync semantics.
 
 ## 7. Rollback
 
-Application revert и redeploy. Database revision `0007` сохраняется; downgrade не нужен. Legacy route должен оставаться доступным либо redirect-safe на rollback window.
+Application revert. Keep additive `0008` after any real account. Downgrade only before account creation or after verified backup and explicit owner decision.
