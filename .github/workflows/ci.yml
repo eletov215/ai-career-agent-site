@@ -173,6 +173,7 @@ jobs:
           tests/test_passwords.py
           tests/test_auth_service.py
           tests/test_auth_routes.py
+          tests/test_email_delivery.py
           tests/test_config.py
           tests/test_repositories.py
           tests/test_template_security.py
