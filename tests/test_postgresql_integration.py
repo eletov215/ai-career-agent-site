@@ -5,7 +5,7 @@ import os
 import uuid
 
 import pytest
-from sqlalchemy import func, select, text
+from sqlalchemy import func, inspect, select, text
 
 from database import (
     CURRENT_REVISION,
@@ -31,6 +31,11 @@ from repositories import (
     SyncCheckpointRepository,
     SyncRunRepository,
     UserRepository,
+)
+from services.oauth_identity import (
+    OAuthIdentityOwnedByAnotherUser,
+    OAuthIdentityService,
+    OAuthProviderSlotOccupied,
 )
 from services.passwords import hash_password
 from services.vacancy_store import VacancyStore
@@ -160,8 +165,14 @@ def test_postgresql_migration_and_persistence_round_trip():
         assert runtime.backend == "postgresql"
         assert runtime.persistent is True
         assert current_revision(runtime.engine) == CURRENT_REVISION
+        constraint_names = {
+            item.get("name")
+            for item in inspect(runtime.engine).get_unique_constraints("oauth_connections")
+        }
+        assert "uq_oauth_connections_user_provider" in constraint_names
 
         oauth = OAuthConnectionRepository(runtime)
+        oauth_identities = OAuthIdentityService(oauth)
         migrated_sj = oauth.get("superjob", str(legacy_superjob_id))
         migrated_hh = oauth.get("headhunter", legacy_hh_id)
         assert migrated_sj is not None
@@ -224,7 +235,7 @@ def test_postgresql_migration_and_persistence_round_trip():
         user = users.create(email=user_email, display_name="CI User", status="active")
 
         numeric_external_id = str(20_000_000 + int(suffix[14:21], 16))
-        connection = oauth.upsert(
+        connection_result = oauth_identities.connect(
             provider="superjob",
             external_user_id=numeric_external_id,
             display_name="CI SuperJob",
@@ -235,7 +246,31 @@ def test_postgresql_migration_and_persistence_round_trip():
             profile_json="{}",
             user_id=user.id,
         )
+        connection = connection_result.connection
+        assert connection_result.outcome == "created"
         assert connection.user_id == user.id
+
+        second_user = users.create(
+            email=f"ci-second-{suffix}@example.test",
+            display_name="CI Second User",
+            status="active",
+        )
+        with pytest.raises(OAuthIdentityOwnedByAnotherUser):
+            oauth_identities.connect(
+                provider="superjob",
+                external_user_id=numeric_external_id,
+                access_token="must-not-overwrite",
+                profile_json="{}",
+                user_id=second_user.id,
+            )
+        with pytest.raises(OAuthProviderSlotOccupied):
+            oauth_identities.connect(
+                provider="superjob",
+                external_user_id=str(int(numeric_external_id) + 1),
+                access_token="must-not-create",
+                profile_json="{}",
+                user_id=user.id,
+            )
 
         sync_run = sync_runs.start(
             source="ci-postgresql",
@@ -317,10 +352,14 @@ def test_postgresql_migration_and_persistence_round_trip():
             item.id == auth_session.id
             for item in persisted_auth.list_active_sessions(auth_user.id, now=10_004)
         )
-        persisted_connection = OAuthConnectionRepository(runtime).get(
-            "superjob", numeric_external_id
+        persisted_oauth = OAuthConnectionRepository(runtime)
+        persisted_identities = OAuthIdentityService(persisted_oauth)
+        persisted_connection = persisted_identities.get(
+            user_id=user.id,
+            provider="superjob",
         )
         assert persisted_connection is not None
+        assert persisted_connection.external_user_id == numeric_external_id
         assert persisted_connection.user_id == user.id
         latest_run = SyncRunRepository(runtime).latest("ci-postgresql")
         assert latest_run is not None
@@ -348,5 +387,14 @@ def test_postgresql_migration_and_persistence_round_trip():
             assert session.get(SyncRun, sync_run.id) is not None
             assert session.get(SyncCheckpoint, "ci-postgresql") is not None
             assert session.get(HeadHunterAccount, legacy_hh_id) is not None
+
+        removed = persisted_identities.disconnect(
+            user_id=user.id,
+            provider="superjob",
+        )
+        assert removed is not None
+        assert persisted_identities.get(user_id=user.id, provider="superjob") is None
+        with runtime.session() as session:
+            assert session.get(SuperJobAccount, int(numeric_external_id)) is None
     finally:
         runtime.dispose()

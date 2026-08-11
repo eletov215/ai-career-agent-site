@@ -1,35 +1,58 @@
-AI Career Agent - AUTH-001 Gmail API HTTPS staging candidate changed files
+AI Career Agent - AUTH-002 first-party OAuth identity ownership candidate
 
-Package: AUTH-001 production verification transport fallback
-Candidate version: 1.4.16
-Database revision: unchanged 20260810_0008
-Baseline: ai-career-agent-site-main (11).zip from current GitHub main
+Package: AUTH-002
+Candidate version: 1.4.18
+Candidate database revision: 20260811_0009
+Baseline: ai-career-agent-site-main (12).zip from current GitHub main/Render
 
-Production/config:
-- config.py
-- services/email_delivery.py
-- render.yaml
-- compose.yaml
-- infra/vps/.env.example
+Application/domain/persistence:
+- app.py
+- database.py
+- domain/entities.py
+- models/oauth_connection.py
+- repositories/__init__.py
+- repositories/oauth_connections.py
+- routes/auth.py
+- services/__init__.py
+- services/oauth_identity.py (new)
+- migrations/versions/20260811_0009_oauth_identity_ownership.py (new)
+
+UI:
+- templates/base.html
+- templates/dashboard.html
+- templates/message.html
+- templates/privacy.html
+- static/styles.css
 
 CI/tests/tooling:
 - .github/workflows/ci.yml
-- tests/test_email_delivery.py
-- tests/test_config.py
-- tests/test_infra_manifests.py
-- tests/conftest.py
-- scripts/infra_manifest_check.py
+- scripts/check_document_structure.py
+- tests/test_auth002_migration.py (new)
+- tests/test_auth002_routes.py (new)
+- tests/test_oauth_identity_service.py (new)
+- tests/test_auth_migration.py
+- tests/test_auth_routes.py
+- tests/test_document_structure.py
+- tests/test_postgresql_integration.py
+- tests/test_routes.py
 
 Repository/canonical documentation:
 - README.md
 - README_FIRST.txt
 - README_UPLOAD.txt
 - docs/ARCHITECTURE.md
+- docs/BACKUP_RESTORE.md
+- docs/DATABASE_MIGRATION.md
 - docs/AUTH001_IMPLEMENTATION.md
 - docs/AUTH001_RUNBOOK.md
 - docs/AUTH001_SECURITY_REFERENCE.md
 - docs/AUTH001_VERIFICATION_STATUS.md
+- docs/AUTH002_IMPLEMENTATION.md (new)
+- docs/AUTH002_RUNBOOK.md (new)
+- docs/AUTH002_SECURITY_REFERENCE.md (new)
+- docs/AUTH002_VERIFICATION_STATUS.md (new)
 - docs/CHANGELOG.md
+- docs/DOMAIN_MODEL.md
 - docs/PLAN_CURRENT.md
 - docs/PROJECT_GUIDE.md
 - docs/PROJECT_PASSPORT.md
@@ -39,4 +62,4 @@ Repository/canonical documentation:
 - CHANGED_FILES.txt
 - PATCH_MANIFEST.txt
 
-No database migration. No OAuth/Gmail secrets included.
+No secrets, provider codes/tokens, databases, dumps, backups, virtualenv, caches or bytecode are included.

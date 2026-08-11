@@ -33,7 +33,7 @@ SESSION_REFRESH_EACH_REQUEST=false
 SESSION_LIFETIME_SECONDS=43200
 ```
 
-Cookie остаётся host-only: `SESSION_COOKIE_DOMAIN` намеренно не устанавливается. Production принимает только `SameSite=Lax`, потому что `Strict` не совместим с возвратом браузера из внешнего OAuth-провайдера. После OAuth transient state очищается, а подключённые provider identities переносятся в новую permanent session. OAuth state проверяется и одноразово потребляется как для успешного callback, так и для provider error/cancel, и действует не более 10 минут.
+Cookie остаётся host-only: `SESSION_COOKIE_DOMAIN` намеренно не устанавливается. Production принимает только `SameSite=Lax`, потому что `Strict` не совместим с возвратом браузера из внешнего OAuth-провайдера. После OAuth transient state очищается, а first-party session сохраняется. Provider identities больше не хранятся как browser authentication keys. OAuth state проверяется одноразово, действует не более 10 минут и связан с текущими `user_id` и `auth_session_id`.
 
 ### 2.2 CSRF
 
@@ -232,7 +232,7 @@ SEC-001 не добавляет database migration. Для отката дост
 - memory rate-limit backend не координируется между несколькими processes/instances;
 - CSP пока допускает inline styles из-за существующей разметки;
 - PDF обрабатывается внутри web process без отдельного sandbox/queue;
-- diagnostics используют shared secret, а role-based admin появится после AUTH-001;
+- diagnostics используют shared secret, а role-based admin остаётся отдельным future package;
 - Trudvsem worker остаётся внутри Gunicorn до SYNC-001;
 - WAF, centralized error monitoring, backup alerts и incident runbook относятся к OPS-001.
 
@@ -272,7 +272,22 @@ limit: 5 per minute
 - Gmail API staging backend uses HTTPS and keeps client secret/refresh token only in environment; short-lived access tokens are not persisted;
 - production forbids `AUTH_EMAIL_BACKEND=memory`; safe default is `disabled`;
 - personal Gmail API is staging-only; beta/commercial release requires a project-domain sender with SPF/DKIM/DMARC;
-- first-party auth does not claim or delete pre-AUTH-002 OAuth identities.
+- AUTH-002 claims legacy unbound identity only after fresh provider OAuth proof; email auto-link is forbidden.
 
-Remaining gate: green GitHub/PostgreSQL CI and Render Gmail API HTTPS E2E on revision `20260810_0008`; domain sender migration remains mandatory before beta/commercial release.
+AUTH-001 production security gate is complete on revision `20260810_0008`. The current AUTH-002 gate is green GitHub/PostgreSQL CI, Render revision `20260811_0009`, real HeadHunter/SuperJob ownership E2E and secret-free negative cross-user smoke. Domain sender migration remains mandatory before beta/commercial release.
 
+
+
+## 10. AUTH-002 security controls
+
+- HeadHunter/SuperJob connect requires active first-party authentication.
+- OAuth state is bound to User/AuthSession, TTL-limited and single-use.
+- Callback without the initiating first-party session returns a query-safe 401; OAuth code/state are not copied into login `next`.
+- Unique external identity and unique User/provider constraints are enforced in PostgreSQL/Alembic `20260811_0009`.
+- No automatic linking by email or display name.
+- Cross-user ownership and occupied provider slot return neutral conflict copy without owner identity.
+- Refresh/reconnect/disconnect use owner-scoped repository methods.
+- Disconnect is POST + CSRF and deletes local encrypted credentials plus rollback mirror.
+- Logs may contain only provider, safe outcome/conflict code and existence boolean; authorization code, raw state, external ID, email/profile and tokens are forbidden.
+
+Remote provider revoke is not claimed by this candidate. Local credential erasure is the verified contract; provider-side revocation remains an explicit limitation/runbook item.

@@ -4,15 +4,15 @@
 |---|---|
 | Документ | AUTH001_IMPLEMENTATION |
 | Пакет | AUTH-001 |
-| Версия | 1.2 |
+| Версия | 1.3 |
 | Дата | 11 августа 2026 |
-| Статус | НУЖНА ПРОВЕРКА |
+| Статус | ВЫПОЛНЕНО |
 | Основа кода | `ai-career-agent-site-main (11).zip` из актуального GitHub `main` |
-| Candidate revision | `20260810_0008` |
+| Production revision | `20260810_0008` |
 
 ## 1. Контрольный статус
 
-AUTH-001 реализован как candidate и не объявляется выполненным до зелёного GitHub Actions, применения migration `20260810_0008`, настройки production email delivery и полного Render E2E: registration, verification, login, logout, password reset и session revoke.
+AUTH-001 реализован и подтверждён production E2E. GitHub Actions green; Render применяет migration `20260810_0008`; Gmail API HTTPS delivery и полный registration/verification/login/session/logout/password-reset flow подтверждены. Следующий пакет — AUTH-002.
 
 ## 2. Цель и границы
 
@@ -138,6 +138,33 @@ Jinja template parsing                                    passed
 
 Локальные skips относятся к Flask route runtime, Psycopg и реальному PostgreSQL service; они выполняются GitHub Actions и не объявляются пройденными локально.
 
+### 7.2 Production completion evidence
+
+```text
+GitHub Actions                                      green
+Verify AUTH-001 first-party account controls       green
+Render /health/ready                                status=ok
+auth.email_backend                                  gmail_api
+auth.email_delivery_configured                     true
+PostgreSQL persistent                               true
+current_revision = expected_revision                20260810_0008
+real Gmail API verification delivery                passed
+registration / verification                         passed
+verification link single-use + supersede            passed
+email/password login                                passed
+two independent server-side sessions                passed
+individual session revoke                           passed
+revoke other sessions                               passed
+logout + protected dashboard redirect               passed
+forgot/reset delivery and password change           passed
+old password rejected                               passed
+pre-reset sessions revoked                          passed
+new password login                                  passed
+reset link single-use                               passed
+```
+
+The reset/password/session final checks were user-confirmed in production staging.
+
 ## 7.1 Gmail API staging transport
 
 `services/email_delivery.py` сохраняет provider-neutral contract и добавляет `GmailApiAuthEmailSender`. Backend `gmail_api` не использует SMTP: он по HTTPS обменивает refresh token на short-lived access token и отправляет RFC 2822 MIME как base64url через Gmail API `users.messages.send`. Постоянный access token не хранится. Configuration требует `AUTH_EMAIL_FROM`, `AUTH_GMAIL_CLIENT_ID`, `AUTH_GMAIL_CLIENT_SECRET`, `AUTH_GMAIL_REFRESH_TOKEN`; secrets остаются только в environment. CI mock-ит token/send HTTP calls. Safe failure telemetry records only `delivery_stage`, HTTP status code and exception type; provider response body and OAuth tokens are never logged.
@@ -164,16 +191,12 @@ Jinja template parsing                                    passed
 ## 10. Следующее действие
 
 ```text
-push AUTH-001 candidate
--> green Verify AUTH-001 first-party account controls
--> Render migration 20260810_0008
--> configure Gmail API OAuth secrets -> verify real HTTPS delivery
--> register -> verify -> login -> session revoke -> logout
--> forgot/reset -> old sessions invalid
--> secret-free logs/readiness
--> AUTH-001 COMPLETE
+AUTH-001 COMPLETE
 -> AUTH-002 START
+-> bind HeadHunter/SuperJob OAuth identities to first-party User
 ```
+
+Gmail API remains staging-only. Domain sender + SPF/DKIM/DMARC is a mandatory pre-release gate, not an AUTH-001 reopen condition.
 
 ## 11. Журнал версий
 
@@ -182,3 +205,4 @@ push AUTH-001 candidate
 | 1.0 | 10.08.2026 | Реализован first-party account candidate: scrypt, tokens, revocable sessions, SMTP adapter, routes/UI, migration 0008 и dedicated CI gate. |
 | 1.1 | 11.08.2026 | Добавлен implicit SSL/TLS SMTP mode для Mail.ru; STARTTLS сохранён, plaintext production запрещён, migration отсутствует. |
 | 1.2 | 11.08.2026 | Добавлен Gmail API HTTPS staging backend с OAuth refresh-token flow и mocked CI; обязательный переход на доменный sender зафиксирован до beta/commercial release. |
+| 1.3 | 11.08.2026 | Production completion confirmed: green CI, Gmail API delivery, full verification/login/session/logout/reset E2E; AUTH-001 complete and AUTH-002 next. |

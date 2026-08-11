@@ -1,11 +1,13 @@
 # AI Career Agent - backup и восстановление PostgreSQL
 
 **Пакет:** `OPS-001`  
-**Candidate схема:** Alembic `20260810_0008`  
+**Candidate схема:** Alembic `20260811_0009`  
 **Правило:** backup не считается рабочим, пока restore не проверен на отдельной базе.
 
 
 > SYNC-002 добавляет таблицу `sync_checkpoints` и lifecycle metadata source records. Backup inventory/restore verification должны включать checkpoint rows, чтобы watermark/cursor/retry state не терялись.
+
+> AUTH-002 revision `20260811_0009` не добавляет таблиц, но усиливает ownership constraint `oauth_connections(user_id, provider)`. Restore verification должен сохранять owner-bound и legacy nullable rows без конфликтов.
 
 
 ## 1. Формат
@@ -179,4 +181,4 @@ docker compose --env-file .env --profile ops --profile restore-test run --rm \
   --backup /var/backups/ai-career-agent/render-production.dump.enc
 ```
 
-Перед выполнением сверить `RESTORE_DATABASE_URL`, manifest, SHA-256 и целевую revision `20260810_0008`.
+Перед выполнением сверить `RESTORE_DATABASE_URL`, manifest, SHA-256 и целевую revision `20260811_0009`.

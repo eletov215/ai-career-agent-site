@@ -12,7 +12,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <script nonce="{{ csp_nonce }}">document.documentElement.classList.add("js");</script>
-  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}?v=41">
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}?v=42">
   <link rel="stylesheet" href="{{ url_for('static', filename='theme.css') }}?v=3">
   <link rel="stylesheet" href="{{ url_for('static', filename='mobile-menu-190.css') }}?v=3">
   <link rel="stylesheet" href="{{ url_for('static', filename='mobile-orbit-showcase.css') }}?v=4">
@@ -40,7 +40,7 @@
         <span></span><span></span><span></span>
       </button>
       <div class="nav-links" id="primary-navigation">
-        {% if current_user or session.get('superjob_user_id') or session.get('hh_user_id') %}
+        {% if current_user %}
           <a class="{{ 'is-active' if request.path.startswith('/dashboard') else '' }}" href="{{ url_for('dashboard') }}">Кабинет</a>
         {% endif %}
         <a class="{{ 'is-active' if request.path.startswith('/ai-career') or request.path.startswith('/resume-builder') else '' }}" href="{{ url_for('ai_career') }}">
@@ -51,27 +51,11 @@
           <span class="nav-item-icon nav-item-icon--search" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><circle cx="10.8" cy="10.8" r="6.3"/><path d="m15.5 15.5 4.2 4.2"/></svg></span>
           <span>Вакансии</span>
         </a>
-        {% if not session.get('superjob_user_id') %}
-          <a class="nav-muted-link" href="/oauth/superjob/login">
-          <span class="nav-item-icon nav-item-icon--logo" aria-hidden="true"><img src="{{ url_for('static', filename='images/logos/superjob.svg') }}" alt=""></span>
-          <span>SuperJob</span>
-        </a>
-        {% endif %}
-        {% if not session.get('hh_user_id') %}
-          <a class="nav-muted-link" href="/oauth/hh/login">
-          <span class="nav-item-icon nav-item-icon--logo" aria-hidden="true"><img src="{{ url_for('static', filename='images/logos/hh.svg') }}" alt=""></span>
-          <span>HeadHunter</span>
-        </a>
-        {% endif %}
         {% if current_user %}
+          <a class="nav-muted-link" href="{{ url_for('dashboard') }}#connections">Подключения</a>
           <form class="nav-exit-form" method="post" action="{{ url_for('auth.logout') }}">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <button class="nav-exit" type="submit">Выйти из аккаунта</button>
-          </form>
-        {% elif session.get('superjob_user_id') or session.get('hh_user_id') %}
-          <form class="nav-exit-form" method="post" action="{{ url_for('logout') }}">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            <button class="nav-exit" type="submit">Выйти</button>
           </form>
         {% else %}
           <a class="nav-muted-link" href="{{ url_for('auth.login') }}">Войти</a>

@@ -10,11 +10,10 @@
 ## 2. Текущий пакет
 
 ```text
-AUTH-001 — НУЖНА ПРОВЕРКА
-branch: auth-001-first-party-account
-commit: auth: add first-party account and revocable sessions
-candidate revision: 20260810_0008
-production current revision: 20260810_0008
+AUTH-002 — НУЖНА ПРОВЕРКА
+baseline: ai-career-agent-site-main (12).zip
+candidate revision: 20260811_0009
+production before deploy: 20260810_0008
 ```
 
 ## 3. Обязательный цикл
@@ -23,10 +22,10 @@ production current revision: 20260810_0008
 актуальный ZIP + canonical docs
 → один package ID
 → inventory/risks/rollback
-→ code + tests
-→ branch/PR
+→ code + positive/negative tests
+→ full ZIP + patch ZIP
 → green GitHub Actions
-→ Render/API/E2E smoke
+→ Render migration/API/E2E
 → final status/docs
 ```
 
@@ -41,26 +40,31 @@ python -m pytest -q
 python -m alembic check
 ```
 
-GitHub Actions должен выполнить dedicated AUTH-001, PostgreSQL migration/integration, SEC/OPS/SYNC/SEARCH regressions, backup/restore и container smoke.
+## 5. AUTH-002 rules
 
-## 5. AUTH-001 production verification
+- First-party `User` is the only browser identity.
+- Connect routes require an active server-side auth session.
+- OAuth state is one-time, TTL-bound and tied to `user_id` + `auth_session_id`.
+- Never auto-link by email.
+- Never overwrite another User connection.
+- Tokens remain encrypted and secret-free in logs/public copy.
+- Disconnect is owner-scoped POST + CSRF.
+- Existing app-level SuperJob public-search credential is independent of user OAuth.
 
-1. Current Render Free staging uses `AUTH_EMAIL_BACKEND=gmail_api`; Gmail OAuth Client ID/Secret/Refresh Token remain only in environment and tests mock Google HTTP calls.
-2. `/health/ready` revision `20260810_0008`, `auth.email_backend=gmail_api`, configured true; real success still requires `auth_email_delivered` and message receipt.
-3. Register unique user and verify email.
-4. Login, create second session, revoke it, logout current.
-5. Forgot/reset; old token/password/sessions invalid.
-6. CSRF/rate limits/no-store/strict-origin/open-redirect and secret-free logs; production Safari form POST must pass without weakening `WTF_CSRF_SSL_STRICT`.
-7. Before beta/commercial release replace personal Gmail API with a project-owned domain sender and SPF/DKIM/DMARC; AUTH business logic remains provider-neutral.
+## 6. External verification
 
-## 6. Неприкосновенные правила
+Use `docs/AUTH002_RUNBOOK.md`. Real provider codes/tokens/client secrets must never be pasted into chat, logs, screenshots or GitHub.
 
-- No `.env`, credentials, databases, dumps, backups, virtualenv, caches or bytecode in release.
-- Password/action/session plaintext never stored/logged.
-- Existing HH/SJ connections are not auto-bound.
-- Production schema changes only through Alembic.
-- AUTH-001 does not modify search/sync semantics.
+## 7. Artifacts
 
-## 7. Rollback
+Every code candidate returns:
 
-Application revert. Keep additive `0008` after any real account. Downgrade only before account creation or after verified backup and explicit owner decision.
+```text
+full project ZIP
+patch ZIP with changed/new files only
+PLAN_CURRENT MD/DOCX/PDF
+PROJECT_PASSPORT MD/DOCX/PDF
+SOURCE_AUDIT MD/DOCX/PDF
+package-specific MD/DOCX/PDF
+canonical ZIP + checksums
+```

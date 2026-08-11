@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import io
 import re
+import uuid
+from types import SimpleNamespace
 from datetime import datetime, timezone
 
 import pytest
@@ -183,9 +185,6 @@ def test_superjob_source_is_available_without_oauth_account(app_module, client, 
     monkeypatch.setattr(app_module, "CLIENT_SECRET", "test-superjob-app-secret")
     monkeypatch.setattr(app_module, "SuperJobProvider", lambda *args, **kwargs: PublicSuperJobProvider())
 
-    with client.session_transaction() as browser_session:
-        browser_session.pop("superjob_user_id", None)
-
     response = client.get(
         "/vacancies?search=1&source=superjob&keyword=python"
     )
@@ -327,9 +326,11 @@ def test_cross_source_duplicates_render_once_with_all_source_links(
     assert status_payload["dedup"]["candidate_counts_by_source"] == {"hh": 1, "reed": 1}
 
 
-def test_sqlalchemy_account_storage_round_trip(app_module):
-    from flask import session
-
+def test_sqlalchemy_account_storage_round_trip_is_first_party_owned(app_module):
+    user = app_module.USERS.create(
+        email=f"oauth-owner-{uuid.uuid4().hex}@example.test",
+        status="active",
+    )
     app_module.save_account(
         {"id": 101, "name": "Test SuperJob", "email": "sj@example.test"},
         {
@@ -337,6 +338,7 @@ def test_sqlalchemy_account_storage_round_trip(app_module):
             "refresh_token": "superjob-refresh",
             "expires_in": 3600,
         },
+        user_id=user.id,
     )
     app_module.save_hh_account(
         {
@@ -350,22 +352,20 @@ def test_sqlalchemy_account_storage_round_trip(app_module):
             "refresh_token": "hh-refresh",
             "expires_in": 3600,
         },
+        user_id=user.id,
     )
 
-    # account() and hh_account() intentionally read Flask's request-local
-    # session, so the direct helper check must run inside a request context.
-    with app_module.app.test_request_context("/"):
-        session["superjob_user_id"] = 101
-        session["hh_user_id"] = "hh-101"
+    superjob = app_module.account(user.id)
+    headhunter = app_module.hh_account(user.id)
 
-        superjob = app_module.account()
-        headhunter = app_module.hh_account()
-
-    assert superjob["name"] == "Test SuperJob"
-    assert headhunter["first_name"] == "Test"
-    assert app_module.dec(superjob["access_token"]) == "superjob-access"
-    assert app_module.dec(headhunter["access_token"]) == "hh-access"
-
+    assert superjob is not None
+    assert headhunter is not None
+    assert superjob.display_name == "Test SuperJob"
+    assert headhunter.first_name == "Test"
+    assert superjob.user_id == user.id
+    assert headhunter.user_id == user.id
+    assert app_module.dec(superjob.access_token) == "superjob-access"
+    assert app_module.dec(headhunter.access_token) == "hh-access"
 
 def test_health_reports_migrated_database_without_connection_url(client):
     from database import CURRENT_REVISION
@@ -514,52 +514,19 @@ def test_rate_limit_blocks_repeated_resume_preview_requests(client, csrf_token):
     assert statuses[10] == 429
 
 
-def test_oauth_provider_error_requires_valid_state_and_is_not_reflected(client):
-    start = client.get("/oauth/hh/login")
-    assert start.status_code == 302
-    with client.session_transaction() as browser_session:
-        state = browser_session["hh_oauth_state"]
+def test_oauth_routes_require_first_party_login(client):
+    for path in ("/oauth/hh/login", "/oauth/superjob/login"):
+        response = client.get(path, follow_redirects=False)
+        assert response.status_code == 302
+        assert "/auth/login" in response.headers["Location"]
 
-    response = client.get(
-        f"/oauth/hh/callback?error=secret-provider-detail&state={state}"
-    )
-    body = response.get_data(as_text=True)
-
-    assert response.status_code == 400
-    assert "secret-provider-detail" not in body
-    assert "Подключение HeadHunter было отменено" in body
-    with client.session_transaction() as browser_session:
-        assert "hh_oauth_state" not in browser_session
-
-
-def test_superjob_provider_error_requires_valid_state_and_is_not_reflected(client):
-    start = client.get("/oauth/superjob/login")
-    assert start.status_code == 302
-    with client.session_transaction() as browser_session:
-        state = browser_session["superjob_oauth_state"]
-
-    response = client.get(
-        f"/oauth/superjob/callback?error=secret-provider-detail&state={state}"
-    )
-    body = response.get_data(as_text=True)
-
-    assert response.status_code == 400
-    assert "secret-provider-detail" not in body
-    assert "Подключение SuperJob было отменено" in body
-    with client.session_transaction() as browser_session:
-        assert "superjob_oauth_state" not in browser_session
-
-
-def test_oauth_provider_error_with_invalid_state_is_rejected(client):
-    response = client.get(
-        "/oauth/hh/callback?error=provider-cancelled&state=invalid"
-    )
-    body = response.get_data(as_text=True)
-
-    assert response.status_code == 400
-    assert "Ошибка безопасности" in body
-    assert "Подключение HeadHunter было отменено" not in body
-
+    for path in (
+        "/oauth/hh/callback?error=cancelled&state=invalid",
+        "/oauth/superjob/callback?error=cancelled&state=invalid",
+    ):
+        response = client.get(path, follow_redirects=False)
+        assert response.status_code == 401
+        assert "Сессия подключения завершена" in response.get_data(as_text=True)
 
 def test_token_refresh_network_errors_do_not_expose_sensitive_values(
     app_module,
@@ -571,22 +538,24 @@ def test_token_refresh_network_errors_do_not_expose_sensitive_values(
         )
 
     monkeypatch.setattr(app_module.requests, "get", fail_request)
-    superjob_row = {
-        "expires_at": 1,
-        "refresh_token": app_module.enc("refresh-token-secret"),
-        "profile_json": '{"id": 101}',
-        "access_token": app_module.enc("access-token-secret"),
-    }
+    superjob_row = SimpleNamespace(
+        expires_at=1,
+        refresh_token=app_module.enc("refresh-token-secret"),
+        profile_json='{"id": 101}',
+        access_token=app_module.enc("access-token-secret"),
+        user_id="test-owner",
+    )
     with pytest.raises(RuntimeError) as superjob_error:
         app_module.valid_token(superjob_row)
 
     monkeypatch.setattr(app_module.requests, "post", fail_request)
-    hh_row = {
-        "expires_at": 1,
-        "refresh_token": app_module.enc("hh-refresh-token-secret"),
-        "profile_json": '{"id": "hh-101"}',
-        "access_token": app_module.enc("hh-access-token-secret"),
-    }
+    hh_row = SimpleNamespace(
+        expires_at=1,
+        refresh_token=app_module.enc("hh-refresh-token-secret"),
+        profile_json='{"id": "hh-101"}',
+        access_token=app_module.enc("hh-access-token-secret"),
+        user_id="test-owner",
+    )
     with pytest.raises(RuntimeError) as hh_error:
         app_module.valid_hh_token(hh_row)
 
@@ -663,21 +632,57 @@ def test_machine_sync_endpoint_only_queues_external_job(
     assert payload["message"] == "sync job queued for external worker"
 
 
-def test_oauth_state_is_single_use_and_expires(app_module, monkeypatch):
+def test_oauth_state_is_single_use_session_bound_and_expires(app_module, monkeypatch):
     from flask import session
 
     monkeypatch.setattr(app_module.time, "time", lambda: 1_000)
     with app_module.app.test_request_context("/"):
-        state = app_module._remember_oauth_state("hh")
+        state = app_module._remember_oauth_state(
+            "hh",
+            user_id="user-one",
+            auth_session_id="session-one",
+        )
         assert session["hh_oauth_state"] == state
-        assert app_module._consume_oauth_state("hh", state) is True
-        assert app_module._consume_oauth_state("hh", state) is False
+        assert app_module._consume_oauth_state(
+            "hh",
+            state,
+            user_id="user-one",
+            auth_session_id="session-one",
+        ) is True
+        assert app_module._consume_oauth_state(
+            "hh",
+            state,
+            user_id="user-one",
+            auth_session_id="session-one",
+        ) is False
+
+    with app_module.app.test_request_context("/"):
+        mismatched = app_module._remember_oauth_state(
+            "hh",
+            user_id="user-one",
+            auth_session_id="session-one",
+        )
+        assert app_module._consume_oauth_state(
+            "hh",
+            mismatched,
+            user_id="user-two",
+            auth_session_id="session-one",
+        ) is False
 
     monkeypatch.setattr(app_module.time, "time", lambda: 2_000)
     with app_module.app.test_request_context("/"):
-        expired_state = app_module._remember_oauth_state("superjob")
+        expired_state = app_module._remember_oauth_state(
+            "superjob",
+            user_id="user-one",
+            auth_session_id="session-one",
+        )
         session["superjob_oauth_state_issued_at"] = 1_000
-        assert app_module._consume_oauth_state("superjob", expired_state) is False
+        assert app_module._consume_oauth_state(
+            "superjob",
+            expired_state,
+            user_id="user-one",
+            auth_session_id="session-one",
+        ) is False
 
 
 def test_uploaded_filename_is_sanitized(app_module):

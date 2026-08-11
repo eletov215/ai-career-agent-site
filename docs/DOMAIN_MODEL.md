@@ -5,7 +5,7 @@
 ```text
 User 1 ── * AuthSession
 User 1 ── * AuthToken
-User 1 ── * OAuthConnection        (AUTH-002 binding)
+User 1 ── 0..1 OAuthConnection/provider (AUTH-002 owner-bound)
 Vacancy 1 ── * VacancySourceRecord
 SyncRun / SyncWorker / SyncCheckpoint
 SearchSnapshot 1 ── * SourceState / Candidate / Item
@@ -30,8 +30,21 @@ Purpose-bound verification/reset token hash with created/expiry/consumed state. 
 - verification activates only pending User;
 - password reset revokes all first-party sessions;
 - raw password/session/action tokens never persist;
-- HH/SJ connection ownership is unchanged until AUTH-002.
+- HH/SJ connections are owner-bound by AUTH-002 candidate; legacy nullable rows remain unbound until fresh OAuth proof.
 
 ## 6. Existing search/sync aggregates
 
-SEARCH-001..004 vacancy/snapshot semantics and SYNC checkpoints remain unchanged by AUTH-001.
+SEARCH-001..004 vacancy/snapshot semantics and SYNC checkpoints remain unchanged by AUTH-001/AUTH-002.
+
+
+## 6. AUTH-002 ownership invariants
+
+| Field/constraint | Contract |
+|---|---|
+| `oauth_connections.user_id` | owner User; nullable only for legacy unbound compatibility |
+| unique `(provider, external_user_id)` | one external identity across all Users |
+| unique `(user_id, provider)` | one connection per provider for each User |
+| `access_token` / `refresh_token` | Fernet-encrypted ciphertext |
+| `profile_json` | provider snapshot, not verified career-profile truth |
+
+Create/claim/refresh occurs transactionally after provider callback. Email matching is never an ownership proof. Disconnect deletes the owner row and provider mirror; first-party User remains.

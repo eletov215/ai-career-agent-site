@@ -10,10 +10,11 @@
 → 20260808_0005 canonical vacancy normalization
 → 20260809_0006 reversible cross-source dedup metadata
 → 20260809_0007 stable search snapshots
-→ 20260810_0008 first-party auth candidate
+→ 20260810_0008 first-party auth
+→ 20260811_0009 OAuth identity ownership candidate
 ```
 
-Production до AUTH-001 deploy остаётся `20260809_0007`; expected candidate = `20260810_0008`.
+Production до AUTH-002 deploy остаётся `20260810_0008`; expected candidate = `20260811_0009`.
 
 ## 2. Revision 20260810_0008
 
@@ -21,7 +22,19 @@ Production до AUTH-001 deploy остаётся `20260809_0007`; expected candi
 
 Миграция не переписывает existing User/OAuth rows, vacancies, snapshots, sync runs/checkpoints или encrypted tokens.
 
-## 3. Upgrade/check
+## 3. Revision 20260811_0009
+
+AUTH-002 добавляет database-level unique constraint:
+
+```text
+uq_oauth_connections_user_provider (user_id, provider)
+```
+
+Существующий unique `(provider, external_user_id)` сохраняется. Nullable legacy rows остаются unbound: PostgreSQL допускает несколько `NULL` в unique constraint, а приложение разрешает claim только после свежего OAuth proof. Перед созданием constraint migration fail-closed проверяет duplicate owned `(user_id, provider)` rows и останавливается без автоматического merge.
+
+Revision не добавляет таблиц и не переписывает токены/profile payloads. Она не выполняет email auto-link и не удаляет legacy provider mirror rows.
+
+## 4. Upgrade/check
 
 ```bash
 python scripts/manage_db.py upgrade
@@ -30,32 +43,41 @@ python scripts/manage_db.py check
 python -m alembic check
 ```
 
-Readiness после deploy:
+Readiness после candidate deploy:
 
 ```text
-current_revision  = 20260810_0008
-expected_revision = 20260810_0008
+current_revision  = 20260811_0009
+expected_revision = 20260811_0009
 database.ok       = true
 persistent        = true
 ```
 
-## 4. Compatibility
+## 5. Compatibility
 
-Legacy users remain valid with null password fields. Old code can ignore additive tables/columns. AUTH-001 app must not auto-bind OAuth rows.
+- AUTH-001 users/sessions/tokens сохраняются без изменения.
+- Legacy OAuth rows с `user_id IS NULL` остаются валидными, но не дают browser authentication.
+- Old application code может игнорировать additive ownership constraint.
+- Search/snapshot/sync data и provider application credentials не меняются.
+- Existing rollback mirror tables временно сохраняются до отдельного cleanup package после production acceptance.
 
-## 5. Controlled downgrade
+## 6. Controlled downgrade
 
 ```bash
-python -m alembic downgrade 20260809_0007
+python -m alembic downgrade 20260810_0008
 ```
 
-Downgrade deletes auth tables and password fields. It is allowed only before real accounts exist or after verified backup/explicit data decision.
+Downgrade удаляет только `uq_oauth_connections_user_provider`. OAuth rows, encrypted tokens, first-party auth tables and all search/sync data сохраняются. Перед production downgrade всё равно требуется verified backup и application rollback plan.
 
-## 6. Verification
+Downgrade ниже `20260810_0008` удаляет auth tables/password fields и допустим только до реальных accounts либо после verified backup и explicit data decision.
 
-- clean upgrade to `0008`;
-- `0008 -> 0007 -> 0008`;
-- Alembic check;
-- PostgreSQL auth persistence/reconnect;
-- backup/restore inventory includes auth tables;
-- Render readiness `0008`.
+## 7. Verification
+
+- clean upgrade through `0009`;
+- `0009 -> 0008 -> 0009` round-trip;
+- fail-closed duplicate-owned-row precheck;
+- Alembic check with no pending operations;
+- PostgreSQL uniqueness for `(provider, external_user_id)` and `(user_id, provider)`;
+- nullable legacy row compatibility;
+- owner-bound OAuth persistence after reconnect/restart;
+- backup/restore inventory preserves `oauth_connections`, `auth_sessions` and `auth_tokens`;
+- Render readiness `current=expected=20260811_0009`.

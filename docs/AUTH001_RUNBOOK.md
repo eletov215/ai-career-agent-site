@@ -4,9 +4,9 @@
 |---|---|
 | Документ | AUTH001_RUNBOOK |
 | Пакет | AUTH-001 |
-| Версия | 1.2 |
+| Версия | 1.3 |
 | Дата | 11 августа 2026 |
-| Статус | НУЖНА ПРОВЕРКА |
+| Статус | ВЫПОЛНЕНО |
 
 ## 1. Подготовка branch
 
@@ -128,7 +128,7 @@ python scripts/manage_db.py upgrade && python scripts/start_runtime.py
 
 ## 10. Закрытие пакета
 
-Зафиксировать screenshots/JSON/log evidence без секретов, обновить canonical docs, присвоить AUTH-001 `ВЫПОЛНЕНО` и перевести AUTH-002 в `ГОТОВО К СТАРТУ`.
+Production evidence зафиксирован без секретов; AUTH-001 присвоен статус `ВЫПОЛНЕНО`, AUTH-002 переведён в `ГОТОВО К СТАРТУ`. Этот runbook остаётся regression/incident reference.
 
 ## 11. Журнал версий
 
@@ -137,3 +137,4 @@ python scripts/manage_db.py upgrade && python scripts/start_runtime.py
 | 1.0 | 10.08.2026 | Создан deployment/config/E2E/security/rollback runbook AUTH-001. |
 | 1.1 | 11.08.2026 | Добавлена настройка mutually-exclusive STARTTLS/implicit SSL и Mail.ru `smtp.mail.ru:465` staging recipe. |
 | 1.2 | 11.08.2026 | Current Render Free recipe переведён на Gmail API HTTPS; добавлен обязательный pre-release переход на доменный sender с SPF/DKIM/DMARC. |
+| 1.3 | 11.08.2026 | Runbook closure: Gmail API delivery и полный AUTH production E2E подтверждены; AUTH-001 complete, AUTH-002 ready. |

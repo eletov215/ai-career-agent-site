@@ -1,61 +1,61 @@
-AI Career Agent - AUTH-001 Gmail API HTTPS staging candidate manifest
+AI Career Agent - AUTH-002 first-party OAuth identity ownership candidate manifest
 
 Baseline:
-  ai-career-agent-site-main (11).zip from current GitHub main
+  ai-career-agent-site-main (12).zip from current GitHub main and Render.
 
-Verified evidence before this candidate:
-  - v1.4.15 GitHub Actions: green, including AUTH-001 and prior gates.
-  - Render /health/ready: status ok, PostgreSQL persistent, revision 20260810_0008.
-  - Safari registration passes strict CSRF and reaches email delivery.
-  - Yandex sender was blocked by provider anti-spam policy.
-  - Mail.ru SSL/TLS adapter reached Render runtime but real delivery failed with OSError before provider delivery because the current Render Free web service does not provide SMTP egress.
+Canonical status before candidate:
+  AUTH-001 COMPLETE.
+  AUTH-002 READY TO START.
+  Production revision 20260810_0008.
 
 Reason for change:
-  Complete AUTH-001 E2E on the current free staging infrastructure without paying for SMTP-capable Render compute. Gmail API uses HTTPS instead of SMTP and keeps the auth business logic provider-neutral.
+  Existing HeadHunter/SuperJob OAuth rows and browser keys were not explicit identities of a first-party User. AUTH-002 makes the verified AI Career Agent account the only browser authentication root and treats providers as encrypted, owner-scoped connections.
 
 Implementation:
-  - add AUTH_EMAIL_BACKEND=gmail_api;
-  - refresh OAuth access tokens over HTTPS from AUTH_GMAIL_REFRESH_TOKEN;
-  - send RFC 2822 MIME messages as base64url through Gmail users.messages.send;
-  - never persist a permanent access token;
-  - keep SMTP STARTTLS and implicit SSL/TLS adapters unchanged for VPS/paid infrastructure;
-  - add safe Gmail failure telemetry: stage + HTTP status + exception type only;
-  - add mocked positive/negative Gmail API tests and include email-delivery tests in the dedicated AUTH-001 CI gate.
-
-New environment values:
-  AUTH_EMAIL_FROM
-  AUTH_GMAIL_CLIENT_ID
-  AUTH_GMAIL_CLIENT_SECRET
-  AUTH_GMAIL_REFRESH_TOKEN
-  AUTH_GMAIL_TIMEOUT_SECONDS
+  - require first-party login for HH/SuperJob connect;
+  - bind OAuth state to random state + TTL + user_id + auth_session_id;
+  - atomically create, claim an unbound legacy row, or refresh same-owner connection;
+  - forbid email auto-link;
+  - reject external identity owned by another User;
+  - allow at most one connection per User/provider;
+  - add migration 20260811_0009 unique (user_id, provider);
+  - keep unique (provider, external_user_id);
+  - keep tokens Fernet-encrypted;
+  - make dashboard/read/refresh/disconnect owner-scoped;
+  - remove legacy provider browser identity authorization;
+  - disconnect local unified + rollback mirror credentials by POST + CSRF;
+  - add dedicated tests and GitHub gate.
+  - synchronize architecture, migration and backup/restore references to candidate revision 20260811_0009.
 
 Security invariants:
-  - Client Secret, Refresh Token and access tokens are never committed or logged;
-  - provider response bodies are not logged;
-  - external Google calls are mocked in CI;
-  - production test-memory backend remains forbidden;
-  - existing SMTP plaintext/conflicting-mode protections remain unchanged;
-  - CSRF/session/password/token controls remain unchanged;
-  - no migration.
+  - OAuth code/state are not copied into login next URLs or logs;
+  - provider tokens/secrets/profile payloads/external IDs are absent from public logs;
+  - state cannot complete under another first-party session;
+  - foreign owner rows cannot be read, replaced or deleted;
+  - database unique constraints are the final concurrency barrier;
+  - no app_fixed.py; WSGI remains app:app.
 
-Mandatory pre-release architecture decision:
-  Gmail API is staging-only. Before beta/commercial release switch to a project-owned domain sender (target example noreply@ai-career-agent.ru) through production-grade transactional delivery with SPF/DKIM/DMARC. The email transport swap must not rewrite registration/verification/reset business logic.
+Explicit exclusions:
+  - phone/OTP and social login;
+  - admin identity merge/transfer;
+  - career profile import;
+  - automatic email-based migration;
+  - unified remote provider token revocation.
 
-Local verification for this candidate:
-  focused config/email/infra tests: 77 passed
-  focused AUTH-001 gate: 95 passed, 2 skipped (local environment lacks Flask/PostgreSQL service)
-  full available pytest: 229 passed, 7 skipped
+Local verification:
+  full available pytest: 236 passed, 8 skipped
+  focused AUTH-002 migration/service tests: 7 passed
   compileall: passed
-  document structure: passed
-  infra manifest check: passed
-  repository hygiene: passed after cache cleanup
-  Alembic head: 20260810_0008
-  Alembic check: no new upgrade operations detected
+  Jinja parse: passed
+  document structure: passed after documentation sync
 
-Required gate after GitHub upload:
-  full GitHub Actions including AUTH-001/config/infra/PostgreSQL gates,
-  then Render Gmail API deploy and real delivery,
-  then full AUTH-001 registration/verification/login/session/reset E2E.
+Required external gate:
+  full GitHub Actions including AUTH-002/PostgreSQL/AUTH-001 regressions,
+  Render upgrade to 20260811_0009,
+  real HeadHunter bind/reconnect/disconnect,
+  real SuperJob bind/reconnect/disconnect,
+  cross-user ownership conflict negative smoke,
+  secret-free logs and persistence after relogin/restart.
 
-Expected database revision:
-  20260810_0008
+Expected status after upload:
+  AUTH-002 remains NEEDS VERIFICATION until external gate is complete.

@@ -3,15 +3,15 @@
 | Поле | Значение |
 |---|---|
 | Документ | PLAN_CURRENT |
-| Версия | 1.4.16 |
+| Версия | 1.4.18 |
 | Дата | 11 августа 2026 |
 | Статус | ДЕЙСТВУЮЩИЙ |
-| Основа кода | `ai-career-agent-site-main (11).zip` из актуального GitHub `main`; v1.4.15 прошёл green GitHub Actions и Render readiness, Mail.ru SMTP на Render Free упёрся в SMTP egress restriction; candidate v1.4.16 добавляет Gmail API HTTPS staging backend без migration |
-| Следующий gate | `AUTH-001` — green GitHub Actions для Gmail API candidate, Render Gmail API HTTPS delivery и полный account E2E |
+| Основа кода | `ai-career-agent-site-main (12).zip` из актуального GitHub `main`, развернутый на Render; AUTH-001 завершён; AUTH-002 candidate добавляет owner-bound HeadHunter/SuperJob identities и migration `20260811_0009` |
+| Следующий gate | `AUTH-002` — green GitHub Actions, Render `20260811_0009` и реальный HeadHunter/SuperJob ownership E2E |
 
 > ОБЯЗАТЕЛЬНО ДЛЯ КАЖДОГО НОВОГО ЧАТА: прочитать этот план, новый паспорт и актуальный архив. После завершения любого пункта вернуть обновлённые DOCX/PDF/Markdown, новый ZIP, доказательства проверки и запись в журнале версий.
 
-> КОНТРОЛЬНЫЕ СТАТУСЫ ЭТОЙ ВЕРСИИ: `FND-001`, `FND-002`, `DATA-001`, `DATA-002`, `SEC-001`, `OPS-001`, `INFRA-PREP-001`, `SYNC-001`, `SYNC-002`, `SEARCH-001`, `SEARCH-002` и `SEARCH-003` — **ВЫПОЛНЕНО**; `SEARCH-004` — **ВЫПОЛНЕНО**; `AUTH-001` — **НУЖНА ПРОВЕРКА**; `SEARCH-005` — **ЗАПЛАНИРОВАНО**; `DOC-001` — **В РАБОТЕ как постоянный процесс**; `INFRA-001` — **ОТЛОЖЕНО ДО ПРЕДРЕЛИЗНОГО ЭТАПА**. Документы с версией ниже `1.4.16` считаются устаревшими для определения очереди разработки.
+> КОНТРОЛЬНЫЕ СТАТУСЫ ЭТОЙ ВЕРСИИ: `FND-001`, `FND-002`, `DATA-001`, `DATA-002`, `SEC-001`, `OPS-001`, `INFRA-PREP-001`, `SYNC-001`, `SYNC-002`, `SEARCH-001`, `SEARCH-002` и `SEARCH-003` — **ВЫПОЛНЕНО**; `SEARCH-004` — **ВЫПОЛНЕНО**; `AUTH-001` — **ВЫПОЛНЕНО**; `AUTH-002` — **НУЖНА ПРОВЕРКА**; `SEARCH-005` — **ЗАПЛАНИРОВАНО**; `DOC-001` — **В РАБОТЕ как постоянный процесс**; `INFRA-001` — **ОТЛОЖЕНО ДО ПРЕДРЕЛИЗНОГО ЭТАПА**. Документы с версией ниже `1.4.18` считаются устаревшими для определения очереди разработки.
 
 ## 1. Источник истины и аудит источников
 
@@ -29,6 +29,10 @@
 - Версия 1.4.14 фиксирует production Safari CSRF regression, обнаруженный после успешных Render `0008` и SMTP readiness checks: auth responses использовали `Referrer-Policy: no-referrer`, а production `WTF_CSRF_SSL_STRICT=true` требовал same-origin Referer. Hotfix заменяет policy на `strict-origin`, сохраняя CSRF strict mode и скрывая path/query token data. Новой migration нет; требуется green CI и полный Render Safari E2E.
 - Версия 1.4.15 подтверждает Safari CSRF hotfix реальным production register POST: запрос дошёл до auth business logic и попытки email delivery. Yandex sender вернул `SMTPDataError`; ручная отправка из того же ящика показала внешнюю anti-spam блокировку на сутки. Для быстрого staging fallback добавлена backward-compatible поддержка implicit SMTP SSL/TLS (`AUTH_SMTP_USE_SSL`) поверх существующего STARTTLS. Mail.ru официально использует `smtp.mail.ru:465` с SSL/TLS и password for external app. Новой migration нет; AUTH-001 остаётся НУЖНА ПРОВЕРКА до green CI, Render Mail.ru delivery и полного E2E.
 - Версия 1.4.16 фиксирует следующий blocker: v1.4.15 прошёл green GitHub Actions и Render `/health/ready`, но реальная Mail.ru delivery на Render Free завершилась `OSError` до SMTP provider из-за ограничения SMTP egress free web service. Для staging добавлен provider-neutral `gmail_api` backend: OAuth refresh token обменивается на short-lived access token по HTTPS, письмо отправляется через Gmail `users.messages.send`; CI использует mocks и не обращается к Google. Gmail API является только временным staging transport. До beta/commercial release обязателен переход на sender собственного домена (целевой пример `noreply@ai-career-agent.ru`) через production-grade transactional delivery с SPF/DKIM/DMARC; registration/verification/reset business logic при этом не переписывается. Новой migration нет; AUTH-001 остаётся НУЖНА ПРОВЕРКА до green CI, Render Gmail API delivery и полного E2E.
+- Версия 1.4.17 закрывает AUTH-001 как ВЫПОЛНЕНО. GitHub Actions полностью зелёный, включая dedicated `Verify AUTH-001 first-party account controls` и все PostgreSQL/SEC/OPS/SYNC/SEARCH/Docker gates. Render `/health/ready` подтвердил `auth.email_backend=gmail_api`, `auth.email_delivery_configured=true`, PostgreSQL `persistent=true`, `current_revision=expected_revision=20260810_0008`, `migrations.ok=true`, `status=ok`. Реальная Gmail API delivery получена на внешний test mailbox. Production E2E подтвердил registration, supersede/одноразовость verification link, email verification, login, две независимые server-side sessions, отзыв отдельной сессии, `revoke others` с сохранением текущей, logout с защитой `/dashboard`, forgot/reset, смену пароля, отказ старого пароля, отзыв pre-reset sessions, успешный вход новым паролем и одноразовость reset link. Gmail API остаётся только staging transport; до beta/commercial release обязателен sender собственного домена с SPF/DKIM/DMARC. Следующий пакет — AUTH-002.
+
+- Версия 1.4.18 реализует AUTH-002 candidate. OAuth HeadHunter/SuperJob больше не является browser identity: connect routes требуют first-party session, state привязан к `user_id` и `auth_session_id`, callback атомарно создаёт/claim/refresh owner-bound `OAuthConnection`. Migration `20260811_0009` сохраняет unique external identity и добавляет unique `(user_id, provider)` без email auto-link; legacy unbound rows остаются nullable и claim-ятся только после свежего OAuth proof. Dashboard и disconnect owner-scoped, tokens продолжают храниться зашифрованно, legacy browser keys не авторизуют. Local tests green; пакет остаётся НУЖНА ПРОВЕРКА до GitHub/Render/real HH/SJ E2E.
+
 
 ## 2. Обязательный протокол работы
 
@@ -72,18 +76,18 @@
 | Запуск | Flask + Gunicorn, WSGI `app:app`. |
 | Конфигурация | `config.py`, `APP_ENV=production/development/test`, ранняя валидация. |
 | База | Production работает на PostgreSQL 17 через SQLAlchemy/Alembic; SQLite оставлен только как local/test fallback. |
-| OAuth | HeadHunter и SuperJob, Fernet encryption, пока не привязаны к собственному User. |
+| OAuth | AUTH-002 candidate: HeadHunter/SuperJob owner-bound к first-party `User`, Fernet encryption, state bound to first-party session; требуется external E2E. |
 | Вакансии | Trudvsem cache, HH, Reed и public SuperJob search; SEARCH-001/002 подтверждены; SEARCH-003 persistent snapshot pagination подтверждена GitHub CI и production Render, включая latency hotfix, stable page boundaries и restart persistence. |
 | Резюме | PDF extraction на pypdf и browser resume builder; LLM пока нет. |
 | Тесты | GitHub Actions, unit/provider/route/config/database/migration/security/observability/backup tests. |
 | Hosting | Render временно используется как staging/резервная площадка. Для production требуется проверенный VPS с доступностью из РФ/РБ, собственный домен и план миграции. |
-| Текущая схема | Production `20260809_0007`: SEARCH-003 persistent snapshots поверх canonical vacancy contract, reversible cross-source dedup и SYNC-002 lifecycle/checkpoints. |
+| Текущая схема | Production до deploy `20260810_0008`; candidate head `20260811_0009` добавляет unique ownership `(user_id, provider)` для OAuth connections без удаления legacy rows. |
 
 ### 5.1 Выполнено/частично
 
 - BASE-001: Flask/Gunicorn/Render и публичные страницы - реализовано.
 - BASE-002: единый поиск по текущим providers - реализован в текущем объёме.
-- BASE-003: HH/SJ OAuth и encryption - частично, нужен User binding/E2E.
+- BASE-003: AUTH-002 owner binding/encryption candidate реализован; требуется GitHub/Render/real provider E2E.
 - BASE-004: Trudvsem cache, внешний worker и SYNC-002 incremental checkpoint/retry/lifecycle policy реализованы и подтверждены; внешний success-smoke Trudvsem повторяется на российском VPS без блокировки текущей разработки.
 - BASE-005: SEARCH-001 typed contract/canonical filtering и SEARCH-002 conservative cross-source dedup подтверждены в CI/Render; public SuperJob search включён без обязательного OAuth; stable pagination/total подтверждена SEARCH-003 в CI и production.
 - BASE-006: PDF parse - частично, это не AI.
@@ -147,8 +151,8 @@ MVP не готов, если работает только отдельная �
 
 | ID | Приоритет | Статус | Пункт |
 |---|---|---|---|
-| AUTH-001 | P0 | НУЖНА ПРОВЕРКА | First-party account, verification/reset, revocable sessions и provider-neutral email adapters реализованы; Gmail API candidate требует CI/Render E2E |
-| AUTH-002 | P0 | ЗАПЛАНИРОВАНО | Привязка OAuth HeadHunter и SuperJob к пользователю сервиса |
+| AUTH-001 | P0 | ВЫПОЛНЕНО | First-party account, verification/reset, revocable sessions и provider-neutral email delivery подтверждены green CI, Render Gmail API delivery и полным production E2E |
+| AUTH-002 | P0 | НУЖНА ПРОВЕРКА | Owner-bound HeadHunter/SuperJob OAuth identities, migration 0009, dashboard/disconnect/tests; требуется external E2E |
 | PROF-001 | P1 | ЗАПЛАНИРОВАНО | Структурированный карьерный профиль |
 | PROF-002 | P1 | ЗАПЛАНИРОВАНО | Импорт резюме в профиль с проверкой пользователем |
 | PROF-003 | P1 | ЗАПЛАНИРОВАНО | Серверные черновики и версии резюме |
@@ -332,7 +336,7 @@ MVP не готов, если работает только отдельная �
 
 **Реализация:** Канонические PLAN_CURRENT и паспорт обновляются после каждого архитектурного решения; README/ROADMAP/CHANGELOG и package-specific docs синхронизируются вместе с ближайшим кодовым пакетом, чтобы документация и код проходили один CI/merge cycle.
 
-**Текущее состояние:** PLAN_CURRENT 1.4.13 и паспорт 2.27 фиксируют SEARCH-001/002/003/004 как ВЫПОЛНЕНО и AUTH-001 как НУЖНА ПРОВЕРКА. Repository/package docs синхронизированы с candidate code, migration 0008 и локальными доказательствами.
+**Текущее состояние:** PLAN_CURRENT 1.4.18 и паспорт 2.32 фиксируют SEARCH-001/002/003/004 и AUTH-001 как ВЫПОЛНЕНО; AUTH-002 — НУЖНА ПРОВЕРКА. Repository/package docs синхронизированы с AUTH-001 production evidence и AUTH-002 candidate migration `20260811_0009`; Gmail API staging contract сохраняется.
 
 **Влияние на сайт:** Нет.
 
@@ -627,19 +631,23 @@ MVP не готов, если работает только отдельная �
 #### AUTH-002 - Привязка OAuth HeadHunter и SuperJob к пользователю сервиса
 
 **Приоритет:** P0
-**Статус:** ЗАПЛАНИРОВАНО
+**Статус:** НУЖНА ПРОВЕРКА
 
-**Цель:** Хранить внешние подключения как сущности конкретного пользователя.
+**Цель:** Хранить внешние HeadHunter/SuperJob identities как owner-bound подключения конкретного first-party `User`, а не как самостоятельную browser authentication.
 
-**Реализация:** OAuthConnection, uniqueness, encryption, refresh/revoke, connections page, migration current rows.
+**Реализация:** Connect routes требуют first-party login; OAuth state одноразовый, TTL-bound и связан с `user_id`/`auth_session_id`; callback атомарно создаёт, claim-ит legacy unbound row или refresh-ит same-owner connection. Сохраняются unique `(provider, external_user_id)` и новый unique `(user_id, provider)` в migration `20260811_0009`. Email auto-link запрещён. Dashboard/read/refresh/disconnect owner-scoped; legacy provider session keys больше не дают авторизацию; disconnect удаляет unified и rollback-mirror credentials.
 
-**Влияние на код:** OAuth routes, repositories, dashboard, migrations/tests.
+**Влияние на код:** `app.py`, `routes/auth.py`, OAuth model/repository/service, migration `0009`, dashboard/navigation/styles, CI и positive/negative tests.
 
-**Влияние на сайт:** Пользователь управляет всеми подключениями в одном месте.
+**Влияние на сайт:** Verified пользователь управляет HH и SuperJob из единого кабинета. Подключение другого User не видно и не может быть изменено. Для смены account того же provider сначала требуется disconnect.
 
-**Критерии готовности:** Чужое подключение недоступно; токены зашифрованы; disconnect очищает данные.
+**Критерии готовности:** Dedicated GitHub gate green; Render revision `20260811_0009`; реальный HH и SuperJob bind/reconnect/disconnect E2E; cross-user claim отклоняется; token plaintext отсутствует; logs secret-free; restart/relogin сохраняет owner connection.
 
-**Зависимости:** AUTH-001, DATA-002, SEC-001.
+**Ограничения:** External APIs mocked в CI. Remote provider revoke не унифицирован и не входит в candidate; local encrypted credentials удаляются. Admin merge/transfer, phone/social identities и profile import исключены.
+
+**Rollback:** Application revert; additive `0009` можно оставить. Downgrade удаляет только unique `(user_id, provider)` constraint и не удаляет OAuth rows. Legacy provider browser login не восстанавливать.
+
+**Зависимости:** AUTH-001, DATA-002, SEC-001 выполнены.
 
 #### PROF-001 - Структурированный карьерный профиль
 
@@ -1183,7 +1191,7 @@ pytest: 47 passed, 3 skipped
 ### 10.1 Схема
 
 - `users` - first-party identity skeleton для AUTH-001;
-- `oauth_connections` - unified HH/SuperJob connections, `user_id` nullable до AUTH-002;
+- `oauth_connections` - unified HH/SuperJob connections; `user_id` owner-bound для новых/claimed rows, nullable только для legacy unbound compatibility;
 - `vacancies` - canonical vacancy;
 - `vacancy_source_records` - source payload/URL/raw JSON;
 - `sync_runs` - persistent lifecycle provider sync;
@@ -1233,7 +1241,7 @@ repository hygiene: успешно
 ### 10.6 Ограничения
 
 - User account UI/passwords не входят в DATA-002.
-- Legacy account tables удаляются только отдельной cleanup migration после AUTH-002.
+- Legacy provider mirror tables сохраняются для rollback candidate и удаляются только отдельной cleanup migration после production acceptance AUTH-002.
 - Исторически DATA-002 создавал one-to-one canonical/source связь; после SEARCH-002 доказанные cross-source duplicates могут иметь несколько source records под одной canonical vacancy.
 - Историческое состояние DATA-002: Trudvsem thread оставался в Gunicorn до SYNC-001. В текущей архитектуре thread удалён и заменён внешним worker-процессом.
 
@@ -1435,7 +1443,6 @@ Render остаётся staging/резервной площадкой на пе�
 DOC-001 (постоянная синхронизация, не блокирует код)
 -> SEARCH-003
 -> SEARCH-004
--> AUTH-001
 -> AUTH-002
 -> PROF-001
 -> PROF-002
@@ -1475,22 +1482,23 @@ INFRA-001 real VPS test
 
 ## 16. Следующий пакет
 
-`AUTH-001` — **НУЖНА ПРОВЕРКА**. Production работает на migration `20260810_0008`; `/health/ready` подтвердил PostgreSQL/migrations. Safari CSRF hotfix подтверждён реальным register POST. v1.4.15 прошёл green GitHub Actions, однако Mail.ru delivery на Render Free завершилась `OSError` из-за SMTP egress restriction до провайдера. Candidate v1.4.16 добавляет Gmail API HTTPS backend с OAuth refresh token и минимальным `gmail.send` scope; внешние HTTP вызовы mocked в CI. Gmail API — только staging transport; до beta/commercial release обязателен доменный sender с SPF/DKIM/DMARC. Требуется green CI, Render Gmail API delivery и полный account E2E.
+`AUTH-002` — **НУЖНА ПРОВЕРКА**. Candidate реализует first-party ownership HeadHunter/SuperJob, migration `20260811_0009`, unique external identity and one-provider-slot invariants, state binding to server-side auth session, owner-scoped refresh/disconnect and safe conflict responses. Local available suite: `236 passed, 8 skipped`.
 
-Verification gate:
+Обязательный verification gate:
 
 ```text
-Verify AUTH-001 first-party account controls — green
--> PostgreSQL migration/integration + all regressions green
--> Render current/expected revision 20260810_0008
--> auth.email_backend=smtp; email_delivery_configured=true
--> register -> verify -> login -> two sessions -> revoke/logout
--> forgot/reset -> token single-use -> old sessions invalid
--> no secrets/email/password/raw tokens in logs
--> AUTH-001 COMPLETE
+GitHub Actions green
+-> Render upgrade 0008 -> 0009
+-> /health/ready current=expected=20260811_0009
+-> real HeadHunter bind/reconnect/disconnect
+-> real SuperJob bind/reconnect/disconnect
+-> second first-party User cannot claim same external identity
+-> logs/token storage secret-free
+-> AUTH-002 COMPLETE
+-> PROF-001 START
 ```
 
-После подтверждения следующий обязательный кодовый пакет — `AUTH-002`: привязка OAuth HeadHunter/SuperJob к first-party User. `SEARCH-005` остаётся после account/profile/privacy foundation. `DOC-001` остаётся постоянным процессом.
+Телефон/OTP, social login, admin merge и profile import не входят. Gmail API остаётся staging-only; domain sender + SPF/DKIM/DMARC сохраняются как pre-release gate.
 
 
 ## 17. Обязательный отчёт после каждого пакета
@@ -1550,3 +1558,5 @@ GitHub/production/API: <подтверждено или требуется>
 | 1.4.14 | 10.08.2026 | AUTH-001-SAFARI-CSRF-HOTFIX | Render `0008` и SMTP readiness подтверждены; Safari register POST выявил missing Referer из-за auth `no-referrer`; policy изменена на `strict-origin`, strict CSRF сохранён; требуется CI/Render E2E. |
 | 1.4.15 | 11.08.2026 | AUTH-001-MAILRU-SMTP-SSL | Safari hotfix production-pass подтверждён; Yandex external anti-spam blocker локализован; добавлен Mail.ru-compatible implicit SSL/TLS; GitHub Actions green, Render readiness green. |
 | 1.4.16 | 11.08.2026 | AUTH-001-GMAIL-API-STAGING | Render Free SMTP egress blocker подтверждён `OSError`; добавлен Gmail API HTTPS backend с OAuth refresh-token flow, mocked tests и обязательным future domain sender gate. |
+| 1.4.17 | 11.08.2026 | AUTH-001-COMPLETE / AUTH-002-PREP | Green CI, Gmail API delivery и полный production E2E подтверждены; AUTH-001 ВЫПОЛНЕНО, AUTH-002 ГОТОВО К СТАРТУ. Gmail API staging-only; domain sender + SPF/DKIM/DMARC — pre-release gate. |
+| 1.4.18 | 11.08.2026 | AUTH-002-CANDIDATE | Owner-bound HH/SuperJob identities, state tied to first-party session, migration `20260811_0009`, owner-scoped refresh/disconnect, safe conflicts and dedicated tests/CI gate; требуется GitHub/Render/real provider E2E. |

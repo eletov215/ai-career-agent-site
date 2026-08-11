@@ -9,7 +9,7 @@ from urllib.parse import urlencode
 
 import requests
 from cryptography.fernet import Fernet, InvalidToken
-from flask import Flask, g, jsonify, redirect, render_template, request, session, url_for
+from flask import Flask, flash, g, jsonify, redirect, render_template, request, session, url_for
 from werkzeug.utils import secure_filename
 
 
@@ -28,7 +28,8 @@ from database import CURRENT_REVISION, create_database, database_health
 from services.storage import StorageServices
 from services.auth import AuthService
 from services.email_delivery import build_auth_email_sender
-from routes.auth import AUTH_SESSION_KEY, create_auth_blueprint
+from routes.auth import AUTH_SESSION_KEY, create_auth_blueprint, login_required
+from services.oauth_identity import OAuthIdentityError, OAuthIdentityService
 from services.trudvsem_sync import TrudvsemSyncService
 from security import csrf, diagnostics_access_allowed, init_security, limiter
 from observability import (
@@ -96,6 +97,7 @@ AUTH_EMAIL_SENDER = build_auth_email_sender(SETTINGS)
 AUTH_SERVICE = AuthService(STORAGE.auth, AUTH_EMAIL_SENDER, SETTINGS)
 app.register_blueprint(create_auth_blueprint(AUTH_SERVICE, SETTINGS))
 OAUTH_CONNECTIONS = STORAGE.oauth_connections
+OAUTH_IDENTITIES = OAuthIdentityService(OAUTH_CONNECTIONS)
 SYNC_RUNS = STORAGE.sync_runs
 USERS = STORAGE.users
 VACANCY_STORE = STORAGE.vacancies
@@ -155,17 +157,55 @@ def request_trudvsem_sync(*, trigger: str = "web"):
     return run
 
 
-def _remember_oauth_state(prefix: str) -> str:
+def _remember_oauth_state(
+    prefix: str,
+    *,
+    user_id: str,
+    auth_session_id: str,
+) -> str:
+    """Bind OAuth state to one authenticated first-party user/session."""
+
     state = secrets.token_urlsafe(32)
     session[f"{prefix}_oauth_state"] = state
     session[f"{prefix}_oauth_state_issued_at"] = int(time.time())
+    session[f"{prefix}_oauth_user_id"] = str(user_id)
+    session[f"{prefix}_oauth_auth_session_id"] = str(auth_session_id)
     return state
 
 
-def _consume_oauth_state(prefix: str, received_state: str | None) -> bool:
+def _discard_oauth_state(prefix: str) -> None:
+    session.pop(f"{prefix}_oauth_state", None)
+    session.pop(f"{prefix}_oauth_state_issued_at", None)
+    session.pop(f"{prefix}_oauth_user_id", None)
+    session.pop(f"{prefix}_oauth_auth_session_id", None)
+
+
+def _consume_oauth_state(
+    prefix: str,
+    received_state: str | None,
+    *,
+    user_id: str,
+    auth_session_id: str,
+) -> bool:
     expected_state = session.pop(f"{prefix}_oauth_state", None)
     issued_at = session.pop(f"{prefix}_oauth_state_issued_at", None)
-    if not expected_state or not received_state or issued_at is None:
+    expected_user_id = session.pop(f"{prefix}_oauth_user_id", None)
+    expected_auth_session_id = session.pop(
+        f"{prefix}_oauth_auth_session_id",
+        None,
+    )
+    if (
+        not expected_state
+        or not received_state
+        or issued_at is None
+        or not expected_user_id
+        or not expected_auth_session_id
+        or not secrets.compare_digest(str(expected_user_id), str(user_id))
+        or not secrets.compare_digest(
+            str(expected_auth_session_id),
+            str(auth_session_id),
+        )
+    ):
         return False
     try:
         age = int(time.time()) - int(issued_at)
@@ -176,20 +216,43 @@ def _consume_oauth_state(prefix: str, received_state: str | None) -> bool:
     return secrets.compare_digest(str(expected_state), str(received_state))
 
 
-def _establish_authenticated_session(**identities):
-    """Clear transient session data while preserving connected providers."""
+def _rotate_after_oauth_callback() -> None:
+    """Clear transient OAuth state while keeping the first-party session."""
 
-    connected = {
-        "superjob_user_id": session.get("superjob_user_id"),
-        "hh_user_id": session.get("hh_user_id"),
-        AUTH_SESSION_KEY: session.get(AUTH_SESSION_KEY),
-    }
-    connected.update({key: value for key, value in identities.items() if value is not None})
+    auth_session_token = session.get(AUTH_SESSION_KEY)
     session.clear()
-    for key, value in connected.items():
-        if value is not None:
-            session[key] = value
+    if auth_session_token:
+        session[AUTH_SESSION_KEY] = auth_session_token
     session.permanent = True
+
+
+def _oauth_callback_login_failure(prefix: str, provider_name: str):
+    """Return a query-safe response when first-party auth was lost mid-flow.
+
+    OAuth authorization codes and state values must not be copied into the
+    generic login ``next`` parameter. A lost/changed first-party session means
+    the user must start the provider connection again from the dashboard.
+    """
+
+    if getattr(g, "current_user", None) is not None and getattr(
+        g, "current_auth", None
+    ) is not None:
+        return None
+    _discard_oauth_state(prefix)
+    return (
+        render_template(
+            "message.html",
+            success=False,
+            title="Сессия подключения завершена",
+            message=(
+                f"Войдите в AI Career Agent и начните подключение {provider_name} "
+                "заново из личного кабинета."
+            ),
+            action_url=url_for("auth.login"),
+            action_label="Перейти ко входу",
+        ),
+        401,
+    )
 
 
 def _public_trudvsem_status_payload() -> dict:
@@ -242,19 +305,24 @@ def headers(token=None):
     return result
 
 
-def account():
-    user_id = session.get("superjob_user_id")
-    if not user_id:
+def _current_user_id() -> str | None:
+    current_user = getattr(g, "current_user", None)
+    return current_user.id if current_user is not None else None
+
+
+def account(user_id: str | None = None):
+    owner_id = user_id or _current_user_id()
+    if not owner_id:
         return None
-    connection = OAUTH_CONNECTIONS.get("superjob", str(user_id))
-    return connection.as_legacy_mapping() if connection else None
+    return OAUTH_IDENTITIES.get(user_id=owner_id, provider="superjob")
 
 
-def save_account(profile, token_data):
+def save_account(profile, token_data, *, user_id: str):
     now = int(time.time())
     expires_in = token_data.get("expires_in")
     expires_at = now + int(expires_in) if expires_in else None
-    OAUTH_CONNECTIONS.upsert(
+    return OAUTH_IDENTITIES.connect(
+        user_id=user_id,
         provider="superjob",
         external_user_id=str(profile["id"]),
         display_name=profile.get("name") or "Пользователь SuperJob",
@@ -268,8 +336,8 @@ def save_account(profile, token_data):
 
 
 def valid_token(row):
-    if row["expires_at"] and int(row["expires_at"]) <= int(time.time()) + 120:
-        refresh_token = dec(row["refresh_token"])
+    if row.expires_at and int(row.expires_at) <= int(time.time()) + 120:
+        refresh_token = dec(row.refresh_token)
         if not refresh_token:
             raise RuntimeError("Refresh token отсутствует. Подключите SuperJob заново.")
         try:
@@ -311,17 +379,22 @@ def valid_token(row):
                 "SuperJob не вернул новый токен. Подключите площадку заново."
             )
         token_data.setdefault("refresh_token", refresh_token)
-        save_account(json.loads(row["profile_json"]), token_data)
+        if not row.user_id:
+            raise RuntimeError("Подключение SuperJob не привязано к пользователю.")
+        save_account(
+            json.loads(row.profile_json),
+            token_data,
+            user_id=row.user_id,
+        )
         return access_token
-    return dec(row["access_token"])
+    return dec(row.access_token)
 
 
-def hh_account():
-    user_id = session.get("hh_user_id")
-    if not user_id:
+def hh_account(user_id: str | None = None):
+    owner_id = user_id or _current_user_id()
+    if not owner_id:
         return None
-    connection = OAUTH_CONNECTIONS.get("headhunter", str(user_id))
-    return connection.as_legacy_mapping() if connection else None
+    return OAUTH_IDENTITIES.get(user_id=owner_id, provider="headhunter")
 
 
 def hh_headers(token=None):
@@ -380,14 +453,15 @@ def _hh_response_report(response):
     }
 
 
-def save_hh_account(profile, token_data):
+def save_hh_account(profile, token_data, *, user_id: str):
     now = int(time.time())
     expires_in = token_data.get("expires_in")
     expires_at = now + int(expires_in) if expires_in else None
     display_name = " ".join(
         part for part in (profile.get("first_name"), profile.get("last_name")) if part
     ) or None
-    OAUTH_CONNECTIONS.upsert(
+    return OAUTH_IDENTITIES.connect(
+        user_id=user_id,
         provider="headhunter",
         external_user_id=str(profile["id"]),
         display_name=display_name,
@@ -404,11 +478,11 @@ def save_hh_account(profile, token_data):
 
 def valid_hh_token(row):
     """Return a valid HH access token, refreshing it shortly before expiry."""
-    expires_at = row["expires_at"]
+    expires_at = row.expires_at
     if not expires_at or int(expires_at) > int(time.time()) + 120:
-        return dec(row["access_token"])
+        return dec(row.access_token)
 
-    refresh_token = dec(row["refresh_token"])
+    refresh_token = dec(row.refresh_token)
     if not refresh_token:
         raise RuntimeError("Refresh token HH отсутствует. Подключите HeadHunter заново.")
 
@@ -450,18 +524,16 @@ def valid_hh_token(row):
         )
     token_data.setdefault("refresh_token", refresh_token)
 
-    profile = json.loads(row["profile_json"])
-    save_hh_account(profile, token_data)
+    if not row.user_id:
+        raise RuntimeError("Подключение HeadHunter не привязано к пользователю.")
+    profile = json.loads(row.profile_json)
+    save_hh_account(profile, token_data, user_id=row.user_id)
     return access_token
 
 
 @app.get("/")
 def home():
-    return render_template(
-        "index.html",
-        account=account(),
-        hh_account=hh_account(),
-    )
+    return render_template("index.html")
 
 
 @app.get("/privacy")
@@ -471,8 +543,13 @@ def privacy():
 
 @app.get("/oauth/superjob/login")
 @limiter.limit("20 per 10 minutes")
-def login():
-    state = _remember_oauth_state("superjob")
+@login_required
+def superjob_login():
+    state = _remember_oauth_state(
+        "superjob",
+        user_id=g.current_user.id,
+        auth_session_id=g.current_auth.session.id,
+    )
     params = {
         "client_id": CLIENT_ID,
         "redirect_uri": REDIRECT_URI,
@@ -483,16 +560,25 @@ def login():
 
 @app.get("/oauth/superjob/callback")
 @limiter.limit("60 per 10 minutes")
-def callback():
-    # Validate and consume state before processing any provider-controlled
-    # response fields, including cancellation/error callbacks.
+def superjob_callback():
+    login_failure = _oauth_callback_login_failure("superjob", "SuperJob")
+    if login_failure is not None:
+        return login_failure
+    # State is one-time, TTL-bounded, and tied to the first-party user that
+    # initiated the connection. Provider-controlled error fields are processed
+    # only after this ownership check succeeds.
     received_state = request.args.get("state")
-    if not _consume_oauth_state("superjob", received_state):
+    if not _consume_oauth_state(
+        "superjob",
+        received_state,
+        user_id=g.current_user.id,
+        auth_session_id=g.current_auth.session.id,
+    ):
         return render_template(
             "message.html",
             success=False,
             title="Ошибка безопасности",
-            message="Начните подключение заново.",
+            message="Начните подключение SuperJob заново из личного кабинета.",
         ), 400
 
     if request.args.get("error"):
@@ -504,7 +590,6 @@ def callback():
         ), 400
 
     code = request.args.get("code")
-
     if not code:
         return render_template(
             "message.html",
@@ -536,6 +621,28 @@ def callback():
         profile_response.raise_for_status()
         profile = profile_response.json()
 
+        result = save_account(
+            profile,
+            token_data,
+            user_id=g.current_user.id,
+        )
+    except OAuthIdentityError as exc:
+        logger.warning(
+            "SuperJob OAuth ownership conflict",
+            extra={
+                "event": "oauth_connection_conflict",
+                "provider": "superjob",
+                "conflict_code": exc.code,
+            },
+        )
+        return render_template(
+            "message.html",
+            success=False,
+            title="Подключение не изменено",
+            message=exc.public_message,
+            action_url=url_for("dashboard", _anchor="connections"),
+            action_label="Вернуться в кабинет",
+        ), 409
     except (requests.RequestException, ValueError, KeyError):
         logger.exception("SuperJob OAuth callback failed")
         return render_template(
@@ -545,37 +652,86 @@ def callback():
             message="Не удалось завершить подключение SuperJob. Повторите попытку позже.",
         ), 502
 
-    save_account(profile, token_data)
-    _establish_authenticated_session(superjob_user_id=int(profile["id"]))
+    _rotate_after_oauth_callback()
+    flash(
+        "SuperJob подключён к вашему аккаунту."
+        if result.outcome in {"created", "claimed"}
+        else "Доступ SuperJob обновлён.",
+        "success",
+    )
+    logger.info(
+        "SuperJob OAuth connection stored",
+        extra={
+            "event": "oauth_connection_bound",
+            "provider": "superjob",
+            "binding_outcome": result.outcome,
+        },
+    )
+    return redirect(url_for("dashboard", _anchor="connections"))
 
-    return redirect(url_for("dashboard"))
+
+@app.post("/oauth/superjob/disconnect")
+@limiter.limit("20 per hour")
+@login_required
+def superjob_disconnect():
+    removed = OAUTH_IDENTITIES.disconnect(
+        user_id=g.current_user.id,
+        provider="superjob",
+    )
+    _discard_oauth_state("superjob")
+    flash(
+        "SuperJob отключён, сохранённые OAuth-токены и профиль площадки удалены."
+        if removed
+        else "Подключение SuperJob уже отсутствует.",
+        "success",
+    )
+    logger.info(
+        "SuperJob OAuth connection disconnected",
+        extra={
+            "event": "oauth_connection_disconnected",
+            "provider": "superjob",
+            "connection_existed": bool(removed),
+        },
+    )
+    return redirect(url_for("dashboard", _anchor="connections"))
+
 
 @app.get("/oauth/hh/login")
 @limiter.limit("20 per 10 minutes")
+@login_required
 def hh_login():
-    state = _remember_oauth_state("hh")
-
+    state = _remember_oauth_state(
+        "hh",
+        user_id=g.current_user.id,
+        auth_session_id=g.current_auth.session.id,
+    )
     params = {
         "response_type": "code",
         "client_id": HH_CLIENT_ID,
         "redirect_uri": HH_REDIRECT_URI,
         "state": state,
     }
-
     return redirect(f"{HH_AUTHORIZE_URL}?{urlencode(params)}")
 
 
 @app.get("/oauth/hh/callback")
 @limiter.limit("60 per 10 minutes")
 def hh_callback():
-    # Validate and consume state for success and error responses alike.
+    login_failure = _oauth_callback_login_failure("hh", "HeadHunter")
+    if login_failure is not None:
+        return login_failure
     received_state = request.args.get("state")
-    if not _consume_oauth_state("hh", received_state):
+    if not _consume_oauth_state(
+        "hh",
+        received_state,
+        user_id=g.current_user.id,
+        auth_session_id=g.current_auth.session.id,
+    ):
         return render_template(
             "message.html",
             success=False,
             title="Ошибка безопасности",
-            message="Некорректный OAuth state. Начните подключение HH заново.",
+            message="Начните подключение HeadHunter заново из личного кабинета.",
         ), 400
 
     if request.args.get("error"):
@@ -587,7 +743,6 @@ def hh_callback():
         ), 400
 
     code = request.args.get("code")
-
     if not code:
         return render_template(
             "message.html",
@@ -612,10 +767,8 @@ def hh_callback():
             },
             timeout=30,
         )
-
         token_response.raise_for_status()
         token_data = token_response.json()
-
         access_token = token_data["access_token"]
 
         profile_response = requests.get(
@@ -623,10 +776,31 @@ def hh_callback():
             headers=hh_headers(access_token),
             timeout=30,
         )
-
         profile_response.raise_for_status()
         profile = profile_response.json()
 
+        result = save_hh_account(
+            profile,
+            token_data,
+            user_id=g.current_user.id,
+        )
+    except OAuthIdentityError as exc:
+        logger.warning(
+            "HeadHunter OAuth ownership conflict",
+            extra={
+                "event": "oauth_connection_conflict",
+                "provider": "headhunter",
+                "conflict_code": exc.code,
+            },
+        )
+        return render_template(
+            "message.html",
+            success=False,
+            title="Подключение не изменено",
+            message=exc.public_message,
+            action_url=url_for("dashboard", _anchor="connections"),
+            action_label="Вернуться в кабинет",
+        ), 409
     except requests.RequestException:
         logger.exception("HeadHunter OAuth callback request failed")
         return render_template(
@@ -635,7 +809,6 @@ def hh_callback():
             title="Ошибка подключения HH",
             message="Не удалось завершить подключение HeadHunter. Повторите попытку позже.",
         ), 502
-
     except (ValueError, KeyError):
         logger.exception("HeadHunter OAuth callback returned an invalid payload")
         return render_template(
@@ -645,11 +818,48 @@ def hh_callback():
             message="HeadHunter вернул неожиданный ответ. Повторите подключение позже.",
         ), 502
 
-    save_hh_account(profile, token_data)
+    _rotate_after_oauth_callback()
+    flash(
+        "HeadHunter подключён к вашему аккаунту."
+        if result.outcome in {"created", "claimed"}
+        else "Доступ HeadHunter обновлён.",
+        "success",
+    )
+    logger.info(
+        "HeadHunter OAuth connection stored",
+        extra={
+            "event": "oauth_connection_bound",
+            "provider": "headhunter",
+            "binding_outcome": result.outcome,
+        },
+    )
+    return redirect(url_for("dashboard", _anchor="connections"))
 
-    _establish_authenticated_session(hh_user_id=str(profile["id"]))
 
-    return redirect(url_for("dashboard"))
+@app.post("/oauth/hh/disconnect")
+@limiter.limit("20 per hour")
+@login_required
+def hh_disconnect():
+    removed = OAUTH_IDENTITIES.disconnect(
+        user_id=g.current_user.id,
+        provider="headhunter",
+    )
+    _discard_oauth_state("hh")
+    flash(
+        "HeadHunter отключён, сохранённые OAuth-токены и профиль площадки удалены."
+        if removed
+        else "Подключение HeadHunter уже отсутствует.",
+        "success",
+    )
+    logger.info(
+        "HeadHunter OAuth connection disconnected",
+        extra={
+            "event": "oauth_connection_disconnected",
+            "provider": "headhunter",
+            "connection_existed": bool(removed),
+        },
+    )
+    return redirect(url_for("dashboard", _anchor="connections"))
 
 
 @app.post("/logout")
@@ -664,27 +874,24 @@ def logout():
 
 @app.get("/dashboard")
 @limiter.limit("120 per 5 minutes")
+@login_required
 def dashboard():
-    superjob_row = account()
-    hh_row = hh_account()
-    first_party_user = getattr(g, "current_user", None)
-    current_auth = getattr(g, "current_auth", None)
-
-    if not first_party_user and not superjob_row and not hh_row:
-        return redirect(url_for("auth.login", next=url_for("dashboard")))
+    first_party_user = g.current_user
+    current_auth = g.current_auth
+    superjob_row = account(first_party_user.id)
+    hh_row = hh_account(first_party_user.id)
 
     auth_sessions = []
-    if first_party_user and current_auth:
-        for auth_session in AUTH_SERVICE.list_sessions(first_party_user.id):
-            auth_sessions.append(
-                {
-                    "id": auth_session.id,
-                    "is_current": auth_session.id == current_auth.session.id,
-                    "created_at": time.strftime("%d.%m.%Y %H:%M UTC", time.gmtime(auth_session.created_at)),
-                    "last_seen_at": time.strftime("%d.%m.%Y %H:%M UTC", time.gmtime(auth_session.last_seen_at)),
-                    "expires_at": time.strftime("%d.%m.%Y %H:%M UTC", time.gmtime(auth_session.expires_at)),
-                }
-            )
+    for auth_session in AUTH_SERVICE.list_sessions(first_party_user.id):
+        auth_sessions.append(
+            {
+                "id": auth_session.id,
+                "is_current": auth_session.id == current_auth.session.id,
+                "created_at": time.strftime("%d.%m.%Y %H:%M UTC", time.gmtime(auth_session.created_at)),
+                "last_seen_at": time.strftime("%d.%m.%Y %H:%M UTC", time.gmtime(auth_session.last_seen_at)),
+                "expires_at": time.strftime("%d.%m.%Y %H:%M UTC", time.gmtime(auth_session.expires_at)),
+            }
+        )
 
     resumes = []
     error = None
@@ -1350,7 +1557,10 @@ def debug_hh():
     if not DEBUG_HH or not diagnostics_access_allowed(SETTINGS):
         return {"ok": False, "error": "not found"}, 404
 
-    row = hh_account()
+    # Diagnostics use a user OAuth token only when the caller already has a
+    # valid first-party browser session. Provider identity is never restored
+    # from legacy browser keys.
+    row = hh_account() if getattr(g, "current_user", None) else None
     params = {
         "text": request.args.get("keyword", "инженер-конструктор").strip() or "инженер-конструктор",
         "period": 7,
