@@ -172,6 +172,7 @@ def test_numeric_and_boolean_values_are_validated_centrally(tmp_path):
             AUTH_SMTP_USERNAME="mailer",
             AUTH_SMTP_PASSWORD="mail-secret",
             AUTH_SMTP_USE_TLS="yes",
+            AUTH_SMTP_USE_SSL="no",
             AUTH_SMTP_TIMEOUT_SECONDS="6.5",
             CSRF_TIME_LIMIT_SECONDS="1800",
             MAX_FORM_MEMORY_SIZE="131072",
@@ -220,6 +221,7 @@ def test_numeric_and_boolean_values_are_validated_centrally(tmp_path):
     assert settings.auth_smtp_host == "smtp.example.test"
     assert settings.auth_smtp_port == 2525
     assert settings.auth_smtp_use_tls is True
+    assert settings.auth_smtp_use_ssl is False
     assert settings.auth_smtp_timeout_seconds == 6.5
     assert settings.csrf_time_limit_seconds == 1800
     assert settings.max_form_memory_size == 131_072
@@ -438,14 +440,44 @@ def test_production_rejects_memory_auth_email_backend():
         load_settings(production_environment(AUTH_EMAIL_BACKEND="memory"))
 
 
-def test_production_smtp_requires_tls():
-    with pytest.raises(ConfigurationError, match="AUTH_SMTP_USE_TLS=1"):
+def test_production_smtp_requires_encrypted_transport():
+    with pytest.raises(ConfigurationError, match="защищённый режим"):
         load_settings(
             production_environment(
                 AUTH_EMAIL_BACKEND="smtp",
                 AUTH_EMAIL_FROM="accounts@example.test",
                 AUTH_SMTP_HOST="smtp.example.test",
                 AUTH_SMTP_USE_TLS="no",
+                AUTH_SMTP_USE_SSL="no",
+            )
+        )
+
+
+def test_production_smtp_accepts_implicit_ssl():
+    settings = load_settings(
+        production_environment(
+            AUTH_EMAIL_BACKEND="smtp",
+            AUTH_EMAIL_FROM="accounts@example.test",
+            AUTH_SMTP_HOST="smtp.example.test",
+            AUTH_SMTP_PORT="465",
+            AUTH_SMTP_USE_TLS="no",
+            AUTH_SMTP_USE_SSL="yes",
+        )
+    )
+    assert settings.auth_smtp_use_tls is False
+    assert settings.auth_smtp_use_ssl is True
+    assert settings.auth_smtp_port == 465
+
+
+def test_smtp_rejects_starttls_and_implicit_ssl_together():
+    with pytest.raises(ConfigurationError, match="нельзя включать одновременно"):
+        load_settings(
+            production_environment(
+                AUTH_EMAIL_BACKEND="smtp",
+                AUTH_EMAIL_FROM="accounts@example.test",
+                AUTH_SMTP_HOST="smtp.example.test",
+                AUTH_SMTP_USE_TLS="yes",
+                AUTH_SMTP_USE_SSL="yes",
             )
         )
 

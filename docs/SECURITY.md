@@ -272,5 +272,5 @@ limit: 5 per minute
 - production forbids `AUTH_EMAIL_BACKEND=memory`; safe default is `disabled`;
 - first-party auth does not claim or delete pre-AUTH-002 OAuth identities.
 
-Remaining gate: green GitHub/PostgreSQL CI and Render SMTP E2E on revision `20260810_0008`.
+Remaining gate: green GitHub/PostgreSQL CI and Render Mail.ru implicit SSL/TLS SMTP E2E on revision `20260810_0008`.
 

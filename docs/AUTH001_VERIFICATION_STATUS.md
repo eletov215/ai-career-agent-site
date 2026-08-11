@@ -4,14 +4,14 @@
 |---|---|
 | Документ | AUTH001_VERIFICATION_STATUS |
 | Пакет | AUTH-001 |
-| Версия | 1.0 |
-| Дата | 10 августа 2026 |
+| Версия | 1.1 |
+| Дата | 11 августа 2026 |
 | Статус | НУЖНА ПРОВЕРКА |
 | Candidate revision | `20260810_0008` |
 
 ## 1. Контрольный статус
 
-Код и локальные проверки готовы. Пакет остаётся НУЖНА ПРОВЕРКА до green GitHub Actions и real Render email/account E2E.
+Safari CSRF hotfix подтверждён production register POST. Yandex delivery blocked externally by anti-spam; Mail.ru SSL/TLS fallback candidate локально проверен. Пакет остаётся НУЖНА ПРОВЕРКА до green GitHub Actions и real Render Mail.ru email/account E2E.
 
 ## 2. Матрица критериев
 
@@ -28,7 +28,7 @@
 | Migration `0008 -> 0007 -> 0008` | ПРОЙДЕНО SQLITE; POSTGRESQL CI ОЖИДАЕТСЯ |
 | Dedicated AUTH-001 CI gate | ОЖИДАЕТСЯ GITHUB |
 | Render current/expected revision `0008` | ОЖИДАЕТСЯ |
-| SMTP configured without secret leakage | ОЖИДАЕТСЯ OPERATOR/RENDER |
+| SMTP configured without secret leakage | ПРОЙДЕНО ДЛЯ READINESS; YANDEX DELIVERY BLOCKED EXTERNALLY; MAIL.RU RETEST ОЖИДАЕТСЯ |
 | Register/verify/login/logout/revoke E2E | ОЖИДАЕТСЯ RENDER |
 | Forgot/reset + old sessions invalid E2E | ОЖИДАЕТСЯ RENDER |
 
@@ -44,6 +44,18 @@ Jinja parse: passed
 ```
 
 Skipped locally: Flask runtime routes, Psycopg and real PostgreSQL service. Они не объявляются пройденными до CI.
+
+## 3.1 Local evidence — SMTP SSL/TLS fallback v1.4.15
+
+```text
+python -m compileall config.py services tests scripts     passed
+focused config/email/infra/auth tests                     79 passed, 1 skipped
+infra_manifest_check.py                                   passed
+repository hygiene after cache cleanup                    passed
+full pytest in this isolated runtime                      not completed (runtime timeout)
+```
+
+The single focused skip is the existing Flask runtime skip in the current isolated environment; the full GitHub workflow remains the authoritative gate. No external SMTP network call is made in CI tests.
 
 ## 4. GitHub gate
 
@@ -84,7 +96,7 @@ Application revert безопасен. Schema `0008` рекомендуется 
 ```text
 GitHub green
 -> Render 0008
--> SMTP green
+-> Mail.ru SMTP SSL delivery green
 -> full account E2E
 -> AUTH-001 COMPLETE
 ```
@@ -94,3 +106,4 @@ GitHub green
 | Версия | Дата | Изменение |
 |---|---|---|
 | 1.0 | 10.08.2026 | Создана candidate verification matrix AUTH-001. |
+| 1.1 | 11.08.2026 | Safari CSRF pass подтверждён; Yandex anti-spam blocker зафиксирован; Mail.ru implicit SSL/TLS candidate ожидает CI/Render E2E. |

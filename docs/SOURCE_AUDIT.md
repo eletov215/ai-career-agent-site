@@ -1,19 +1,19 @@
-# AI Career Agent — аудит источников v1.4.14
+# AI Career Agent — аудит источников v1.4.15
 
 | Поле | Значение |
 |---|---|
 | Документ | SOURCE_AUDIT |
-| Версия | 1.4.14 |
-| Дата | 10 августа 2026 |
-| Проверяемый пакет | AUTH-001 production verification + Safari CSRF hotfix |
-| Рабочий источник кода | `ai-career-agent-site-main (9).zip` из актуального GitHub `main` |
-| Канонический план до обновления | PLAN_CURRENT 1.4.12 |
-| Канонический паспорт до обновления | PROJECT_PASSPORT 2.26 |
-| Результат | Render revision `20260810_0008` и SMTP readiness подтверждены; реальный Safari E2E выявил conflict `no-referrer` vs `WTF_CSRF_SSL_STRICT`; hotfix подготовлен, требуется CI/Render retest |
+| Версия | 1.4.15 |
+| Дата | 11 августа 2026 |
+| Проверяемый пакет | AUTH-001 production verification + Mail.ru SMTP SSL fallback |
+| Рабочий источник кода | `ai-career-agent-site-main (10).zip` из актуального GitHub `main` |
+| Канонический план до обновления | PLAN_CURRENT 1.4.14 |
+| Канонический паспорт до обновления | PROJECT_PASSPORT 2.28 |
+| Результат | Safari CSRF hotfix подтверждён реальным register; Yandex `SMTPDataError` локализован как внешняя anti-spam блокировка; Mail.ru implicit SSL/TLS SMTP candidate подготовлен, требуется CI/Render delivery retest |
 
 ## 1. Контрольный статус
 
-SEARCH-004 остаётся ВЫПОЛНЕНО. AUTH-001 остаётся НУЖНА ПРОВЕРКА. Production уже применил schema `20260810_0008`; `/health/ready` подтвердил PostgreSQL persistent=true, migrations.ok=true, `auth.email_backend=smtp` и `auth.email_delivery_configured=true`. Реальный Safari registration smoke выявил CSRF rejection `reason=The referrer header is missing.`: auth blueprint выставлял `Referrer-Policy: no-referrer`, тогда как production сохранял `WTF_CSRF_SSL_STRICT=true`. Hotfix меняет только auth response policy на `strict-origin`, не отключая CSRF strict mode. DOC-STD-001 v1.1 обязателен.
+SEARCH-004 остаётся ВЫПОЛНЕНО. AUTH-001 остаётся НУЖНА ПРОВЕРКА. Production использует schema `20260810_0008`; `/health/ready` подтвердил PostgreSQL persistent=true, migrations.ok=true, `auth.email_backend=smtp` и `auth.email_delivery_configured=true`. Safari CSRF regression исправлен и подтверждён реальным register POST. Последующая email delivery вернула `SMTPDataError`; ручная отправка из Yandex показала внешнюю anti-spam блокировку на сутки. Candidate добавляет implicit SSL/TLS SMTP для Mail.ru, сохраняя strict CSRF и STARTTLS compatibility. DOC-STD-001 v1.1 обязателен.
 
 ## 2. Проверка актуального источника кода
 
@@ -25,7 +25,7 @@ SEARCH-004 остаётся ВЫПОЛНЕНО. AUTH-001 остаётся НУЖ
 | Password | versioned bounded scrypt, no plaintext/dependency addition |
 | Sessions | server-side revocable `auth_sessions`, hash-only bearer storage |
 | Action tokens | hash-only, TTL, purpose, supersede/single-use |
-| Email | disabled/memory/SMTP STARTTLS adapter; production memory forbidden |
+| Email | disabled/memory/SMTP adapter с STARTTLS или implicit SSL/TLS; production memory/plain transport forbidden |
 | HTTP security | CSRF strict mode сохранён; rate limits; no-store; auth `Referrer-Policy: strict-origin`; local redirect validation |
 | OAuth compatibility | HH/SJ browser identities remain independent until AUTH-002 |
 | Backups | inventory includes `auth_sessions` and `auth_tokens` |
@@ -88,7 +88,7 @@ Application revert without touching search/OAuth/sync data. Keep additive `0008`
 AUTH-001 SAFARI CSRF HOTFIX
 -> GitHub green
 -> Render redeploy (revision remains 0008)
--> Safari register/verify/login/session/reset E2E
+-> Mail.ru SMTP SSL delivery -> Safari register/verify/login/session/reset E2E
 -> AUTH-001 COMPLETE
 -> AUTH-002 START
 ```
@@ -96,9 +96,9 @@ AUTH-001 SAFARI CSRF HOTFIX
 ## 9. Новые канонические версии
 
 ```text
-PLAN_CURRENT 1.4.14
-PROJECT_PASSPORT 2.28
-SOURCE_AUDIT 1.4.14
+PLAN_CURRENT 1.4.15
+PROJECT_PASSPORT 2.29
+SOURCE_AUDIT 1.4.15
 AUTH001_IMPLEMENTATION 1.0
 AUTH001_VERIFICATION_STATUS 1.0
 AUTH001_RUNBOOK 1.0

@@ -45,8 +45,8 @@ GitHub Actions должен выполнить dedicated AUTH-001, PostgreSQL mi
 
 ## 5. AUTH-001 production verification
 
-1. Configure SMTP secrets outside GitHub/chat.
-2. `/health/ready` revision `20260810_0008`, auth SMTP configured true.
+1. Configure SMTP secrets outside GitHub/chat; production must use exactly one secure mode (STARTTLS or implicit SSL/TLS).
+2. `/health/ready` revision `20260810_0008`, auth SMTP configured true; for Mail.ru staging use `smtp.mail.ru:465`, `AUTH_SMTP_USE_TLS=0`, `AUTH_SMTP_USE_SSL=1`.
 3. Register unique user and verify email.
 4. Login, create second session, revoke it, logout current.
 5. Forgot/reset; old token/password/sessions invalid.

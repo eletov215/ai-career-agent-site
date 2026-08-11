@@ -3,15 +3,15 @@
 | Поле | Значение |
 |---|---|
 | Документ | PLAN_CURRENT |
-| Версия | 1.4.14 |
-| Дата | 10 августа 2026 |
+| Версия | 1.4.15 |
+| Дата | 11 августа 2026 |
 | Статус | ДЕЙСТВУЮЩИЙ |
-| Основа кода | `ai-career-agent-site-main (9).zip` из актуального GitHub `main`; production AUTH-001 уже на revision `20260810_0008`, SMTP readiness подтверждена; Safari E2E выявил CSRF/referrer regression, hotfix подготовлен |
-| Следующий gate | `AUTH-001` — merge Safari CSRF hotfix, green GitHub Actions и полный Render account E2E |
+| Основа кода | `ai-career-agent-site-main (10).zip` из актуального GitHub `main`; Safari CSRF hotfix подтверждён реальной registration POST; Yandex SMTP отклонён внешним anti-spam policy; candidate добавляет implicit SSL/TLS SMTP для Mail.ru без migration |
+| Следующий gate | `AUTH-001` — green GitHub Actions, Render deploy Mail.ru SMTP SSL/TLS и полный account E2E |
 
 > ОБЯЗАТЕЛЬНО ДЛЯ КАЖДОГО НОВОГО ЧАТА: прочитать этот план, новый паспорт и актуальный архив. После завершения любого пункта вернуть обновлённые DOCX/PDF/Markdown, новый ZIP, доказательства проверки и запись в журнале версий.
 
-> КОНТРОЛЬНЫЕ СТАТУСЫ ЭТОЙ ВЕРСИИ: `FND-001`, `FND-002`, `DATA-001`, `DATA-002`, `SEC-001`, `OPS-001`, `INFRA-PREP-001`, `SYNC-001`, `SYNC-002`, `SEARCH-001`, `SEARCH-002` и `SEARCH-003` — **ВЫПОЛНЕНО**; `SEARCH-004` — **ВЫПОЛНЕНО**; `AUTH-001` — **НУЖНА ПРОВЕРКА**; `SEARCH-005` — **ЗАПЛАНИРОВАНО**; `DOC-001` — **В РАБОТЕ как постоянный процесс**; `INFRA-001` — **ОТЛОЖЕНО ДО ПРЕДРЕЛИЗНОГО ЭТАПА**. Документы с версией ниже `1.4.14` считаются устаревшими для определения очереди разработки.
+> КОНТРОЛЬНЫЕ СТАТУСЫ ЭТОЙ ВЕРСИИ: `FND-001`, `FND-002`, `DATA-001`, `DATA-002`, `SEC-001`, `OPS-001`, `INFRA-PREP-001`, `SYNC-001`, `SYNC-002`, `SEARCH-001`, `SEARCH-002` и `SEARCH-003` — **ВЫПОЛНЕНО**; `SEARCH-004` — **ВЫПОЛНЕНО**; `AUTH-001` — **НУЖНА ПРОВЕРКА**; `SEARCH-005` — **ЗАПЛАНИРОВАНО**; `DOC-001` — **В РАБОТЕ как постоянный процесс**; `INFRA-001` — **ОТЛОЖЕНО ДО ПРЕДРЕЛИЗНОГО ЭТАПА**. Документы с версией ниже `1.4.15` считаются устаревшими для определения очереди разработки.
 
 ## 1. Источник истины и аудит источников
 
@@ -27,6 +27,7 @@
 - Версия 1.4.12 закрывает SEARCH-004 как ВЫПОЛНЕНО. GitHub Actions полностью зелёный, включая отдельный `Verify SEARCH-004 canonical route and source-state controls` и все regression/infrastructure gates. Production `/health/ready` на Render подтвердил PostgreSQL `persistent=true`, `current_revision=expected_revision=20260809_0007`, `migrations.ok=true`, `status=ok`. Мобильный production-smoke подтвердил штатный поиск на canonical `/vacancies` с SEARCH-003 snapshot и page=0. Старый `/vacancies/internal?search=1&keyword=Бухгалтер&source=hh&source=superjob` корректно перенаправился на `/vacancies` с сохранением `keyword` и обоих repeated `source`; новый snapshot/page были сформированы уже canonical route. Database migration не добавлялась. SEARCH-004 закрыт как ВЫПОЛНЕНО.
 - Версия 1.4.13 реализует AUTH-001 candidate: существующий `users` становится first-party identity root; migration `20260810_0008` добавляет password fields, revocable `auth_sessions` и single-use `auth_tokens`; добавлены versioned scrypt, enumeration-safe register/login/reset, session rotation/revoke, provider-neutral email adapter, auth blueprint/UI и dedicated CI gate. Production email default `disabled`; пакет остаётся НУЖНА ПРОВЕРКА до green CI, Render `0008`, SMTP и полного account E2E.
 - Версия 1.4.14 фиксирует production Safari CSRF regression, обнаруженный после успешных Render `0008` и SMTP readiness checks: auth responses использовали `Referrer-Policy: no-referrer`, а production `WTF_CSRF_SSL_STRICT=true` требовал same-origin Referer. Hotfix заменяет policy на `strict-origin`, сохраняя CSRF strict mode и скрывая path/query token data. Новой migration нет; требуется green CI и полный Render Safari E2E.
+- Версия 1.4.15 подтверждает Safari CSRF hotfix реальным production register POST: запрос дошёл до auth business logic и попытки email delivery. Yandex sender вернул `SMTPDataError`; ручная отправка из того же ящика показала внешнюю anti-spam блокировку на сутки. Для быстрого staging fallback добавлена backward-compatible поддержка implicit SMTP SSL/TLS (`AUTH_SMTP_USE_SSL`) поверх существующего STARTTLS. Mail.ru официально использует `smtp.mail.ru:465` с SSL/TLS и password for external app. Новой migration нет; AUTH-001 остаётся НУЖНА ПРОВЕРКА до green CI, Render Mail.ru delivery и полного E2E.
 
 ## 2. Обязательный протокол работы
 
@@ -608,7 +609,7 @@ MVP не готов, если работает только отдельная �
 
 **Цель:** Создать собственную first-party identity; HH/SuperJob становятся независимыми дополнительными подключениями и не привязываются автоматически.
 
-**Реализация:** Существующий `users`; versioned scrypt; additive migration `20260810_0008`; hashed TTL/single-use verification/reset tokens; revocable PostgreSQL sessions; register/verify/login/logout/reset/revoke blueprint; disabled/memory/SMTP email adapters; enumeration-safe responses и route limits.
+**Реализация:** Существующий `users`; versioned scrypt; additive migration `20260810_0008`; hashed TTL/single-use verification/reset tokens; revocable PostgreSQL sessions; register/verify/login/logout/reset/revoke blueprint; disabled/memory/SMTP STARTTLS or implicit SSL/TLS email adapters; enumeration-safe responses и route limits.
 
 **Влияние на код:** `domain/auth.py`, `models/auth.py`, `repositories/auth.py`, `services/auth.py`, `services/passwords.py`, `services/email_delivery.py`, `routes/auth.py`, auth templates, dashboard/navigation, config/backup/CI/tests/docs.
 
@@ -616,7 +617,7 @@ MVP не готов, если работает только отдельная �
 
 **Критерии готовности:** Green dedicated CI/PostgreSQL migration; Render revision `0008`; production SMTP configured; E2E registration/verification/login/logout/revoke/reset; no plaintext/secret leakage; sessions отзываются и reset закрывает старые sessions.
 
-**Ограничения:** AUTH-002 OAuth binding, profile, account deletion/export, MFA и admin roles не входят. До SMTP configuration пакет не может быть закрыт.
+**Ограничения:** AUTH-002 OAuth binding, profile, account deletion/export, MFA и admin roles не входят. До подтверждённой реальной transactional email delivery пакет не может быть закрыт.
 
 **Rollback:** Application revert; additive `0008` оставить после появления real users. Downgrade до `0007` — только до account creation либо после verified backup/explicit decision.
 
@@ -1473,7 +1474,7 @@ INFRA-001 real VPS test
 
 ## 16. Следующий пакет
 
-`AUTH-001` — **НУЖНА ПРОВЕРКА**. Production уже работает на migration `20260810_0008`; `/health/ready` подтвердил PostgreSQL/migrations и `auth.email_backend=smtp`, `email_delivery_configured=true`. Первый реальный Safari registration smoke был остановлен CSRF до auth business logic из-за conflict `Referrer-Policy: no-referrer` с `WTF_CSRF_SSL_STRICT=true`. Candidate v1.4.14 меняет auth policy на `strict-origin`, не отключая strict CSRF. Требуется green CI, redeploy и полный account E2E.
+`AUTH-001` — **НУЖНА ПРОВЕРКА**. Production работает на migration `20260810_0008`; `/health/ready` подтвердил PostgreSQL/migrations и SMTP configuration. Safari CSRF hotfix уже подтверждён: реальный register POST дошёл до auth logic и email delivery. Yandex вернул `SMTPDataError`, а ручная отправка из того же ящика показала внешнюю anti-spam блокировку. Candidate v1.4.15 добавляет implicit SMTP SSL/TLS для Mail.ru (`smtp.mail.ru:465`) при сохранении STARTTLS compatibility. Требуется green CI, Render Mail.ru delivery и полный account E2E.
 
 Verification gate:
 

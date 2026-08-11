@@ -1,30 +1,36 @@
-AI Career Agent - AUTH-001 Safari CSRF hotfix manifest
+AI Career Agent - AUTH-001 Mail.ru SMTP SSL/TLS fallback manifest
 
 Baseline:
-  ai-career-agent-site-main (9).zip from current GitHub main
+  ai-career-agent-site-main (10).zip from current GitHub main
 
-Problem confirmed in Render logs:
-  CSRF validation rejected method=POST path=/auth/register
-  reason=The referrer header is missing.
+Production evidence before this candidate:
+  - /health/ready: revision 20260810_0008, smtp configured, status ok.
+  - Safari register POST passes the previous strict-CSRF/referrer blocker and reaches email delivery.
+  - Render log: auth_email_delivery_failed, error_type=SMTPDataError for Yandex sender.
+  - Manual send from the same Yandex mailbox is blocked by Yandex anti-spam policy for about one day.
 
-Root cause:
-  routes/auth.py forced Referrer-Policy: no-referrer on all /auth responses,
-  while production config.py keeps WTF_CSRF_SSL_STRICT=true. Browser POSTs
-  therefore omitted Referer and Flask-WTF rejected them before auth/SMTP logic.
+Reason for change:
+  Mail.ru is used as a temporary staging transactional sender. Mail.ru documents smtp.mail.ru:465 with SSL/TLS, while the existing adapter supported STARTTLS only.
 
 Fix:
-  Referrer-Policy: strict-origin for /auth responses. This preserves origin-only
-  Referer for strict same-origin CSRF checks while stripping path/query token data.
+  - add AUTH_SMTP_USE_SSL (default 0);
+  - implicit SSL path uses smtplib.SMTP_SSL + default certificate validation;
+  - existing STARTTLS path remains backward compatible;
+  - production requires at least one secure mode;
+  - enabling both STARTTLS and implicit SSL simultaneously is rejected.
 
 Security invariants:
-  WTF_CSRF_ENABLED remains enabled.
-  WTF_CSRF_SSL_STRICT remains enabled in production.
-  No CSRF exemption added.
-  No migration. No environment variable changes. No secrets.
+  - no plaintext SMTP in production;
+  - no certificate validation bypass;
+  - no SMTP password or app password in Git/ZIP/logs;
+  - SMTP response/body/recipient remain excluded from failure logs;
+  - CSRF strict mode remains unchanged;
+  - no migration.
 
 Required gate after GitHub upload:
-  full GitHub Actions including Verify AUTH-001 first-party account controls
-  then Render redeploy and real Safari registration/verification/reset E2E.
+  full GitHub Actions including AUTH-001/config/infra gates,
+  then Render Mail.ru 465 SSL/TLS deploy and real delivery,
+  then full AUTH-001 registration/verification/login/session/reset E2E.
 
 Expected database revision:
   20260810_0008

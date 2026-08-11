@@ -87,6 +87,7 @@ class SMTPAuthEmailSender(AuthEmailSender):
         self.username = settings.auth_smtp_username
         self.password = settings.auth_smtp_password
         self.use_tls = settings.auth_smtp_use_tls
+        self.use_ssl = settings.auth_smtp_use_ssl
         self.timeout = settings.auth_smtp_timeout_seconds
         self.from_email = settings.auth_email_from or ""
         self.from_name = settings.auth_email_from_name
@@ -98,10 +99,21 @@ class SMTPAuthEmailSender(AuthEmailSender):
         email["To"] = message.recipient
         email.set_content(message.text)
         try:
-            with smtplib.SMTP(self.host, self.port, timeout=self.timeout) as client:
+            tls_context = ssl.create_default_context()
+            if self.use_ssl:
+                smtp_client = smtplib.SMTP_SSL(
+                    self.host,
+                    self.port,
+                    timeout=self.timeout,
+                    context=tls_context,
+                )
+            else:
+                smtp_client = smtplib.SMTP(self.host, self.port, timeout=self.timeout)
+
+            with smtp_client as client:
                 client.ehlo()
                 if self.use_tls:
-                    client.starttls(context=ssl.create_default_context())
+                    client.starttls(context=tls_context)
                     client.ehlo()
                 if self.username:
                     client.login(self.username, self.password or "")

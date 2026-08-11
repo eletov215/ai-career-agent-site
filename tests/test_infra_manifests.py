@@ -32,6 +32,8 @@ def test_compose_has_isolated_postgresql_and_profiles():
     assert app_environment["AUTH_EMAIL_BACKEND"] == "${AUTH_EMAIL_BACKEND:-disabled}"
     assert app_environment["AUTH_SESSION_TTL_SECONDS"] == "${AUTH_SESSION_TTL_SECONDS:-43200}"
     assert app_environment["SEARCH_PAGE_SIZE"] == "${SEARCH_PAGE_SIZE:-20}"
+    assert app_environment["AUTH_SMTP_USE_TLS"] == "${AUTH_SMTP_USE_TLS:-1}"
+    assert app_environment["AUTH_SMTP_USE_SSL"] == "${AUTH_SMTP_USE_SSL:-0}"
     assert app_environment["SEARCH_SNAPSHOT_MAX_ROUNDS_PER_REQUEST"] == "${SEARCH_SNAPSHOT_MAX_ROUNDS_PER_REQUEST:-1}"
 
 
@@ -49,6 +51,8 @@ def test_env_template_contains_placeholders_not_real_secrets():
     assert "CHANGE_ME_STRONG_DATABASE_PASSWORD" in text
     assert "AUTH_EMAIL_BACKEND=smtp" in text
     assert "AUTH_SMTP_PASSWORD=CHANGE_ME_SMTP_PASSWORD" in text
+    assert "AUTH_SMTP_USE_TLS=1" in text
+    assert "AUTH_SMTP_USE_SSL=0" in text
     assert "AUTH_SESSION_TTL_SECONDS=43200" in text
     assert "AUTH_VERIFICATION_TTL_SECONDS=86400" in text
     assert "AUTH_RESET_TTL_SECONDS=3600" in text
@@ -83,6 +87,8 @@ def test_render_uses_external_worker_runtime_supervisor():
     env = {item["key"]: item for item in service["envVars"]}
     assert env["AUTH_EMAIL_BACKEND"]["value"] == "disabled"
     assert env["AUTH_SMTP_PASSWORD"]["sync"] is False
+    assert env["AUTH_SMTP_USE_TLS"]["value"] == "1"
+    assert env["AUTH_SMTP_USE_SSL"]["value"] == "0"
     assert env["SEARCH_SNAPSHOT_MAX_ROUNDS_PER_REQUEST"]["value"] == "1"
 
     app_text = (ROOT / "app.py").read_text(encoding="utf-8")

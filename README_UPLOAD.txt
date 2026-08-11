@@ -1,17 +1,27 @@
-AUTH-001 SAFARI CSRF HOTFIX v1.4.14
+AUTH-001 MAIL.RU SMTP SSL/TLS FALLBACK v1.4.15
 
-Baseline: current GitHub archive ai-career-agent-site-main (9).zip.
+Baseline: current GitHub archive ai-career-agent-site-main (10).zip.
 
-Primary production change:
-  routes/auth.py
-  Referrer-Policy: no-referrer -> strict-origin
+Production code change:
+  config.py
+  services/email_delivery.py
 
-Reason:
-  Render Safari logs proved valid auth POSTs were rejected by Flask-WTF strict
-  HTTPS CSRF before auth logic because no-referrer suppressed the Referer header.
+New environment switch:
+  AUTH_SMTP_USE_SSL=0|1
 
-Security:
-  CSRF remains enabled and WTF_CSRF_SSL_STRICT remains true in production.
-  strict-origin sends only scheme/host/port, not verification/reset token path/query.
+Transport contract:
+  STARTTLS: AUTH_SMTP_USE_TLS=1, AUTH_SMTP_USE_SSL=0
+  implicit SSL/TLS: AUTH_SMTP_USE_TLS=0, AUTH_SMTP_USE_SSL=1
+  production plaintext: rejected
+  both secure flags enabled: rejected
 
-No migration. No new environment variables. SMTP settings remain unchanged.
+Mail.ru staging profile:
+  AUTH_SMTP_HOST=smtp.mail.ru
+  AUTH_SMTP_PORT=465
+  AUTH_SMTP_USE_TLS=0
+  AUTH_SMTP_USE_SSL=1
+  AUTH_SMTP_USERNAME=<full Mail.ru address>
+  AUTH_EMAIL_FROM=<same full Mail.ru address>
+  AUTH_SMTP_PASSWORD=<external app password in Render only>
+
+No migration. Expected database revision remains 20260810_0008.

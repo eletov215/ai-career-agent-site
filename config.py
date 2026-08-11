@@ -425,6 +425,7 @@ class AppSettings:
     auth_smtp_username: str | None
     auth_smtp_password: str | None
     auth_smtp_use_tls: bool
+    auth_smtp_use_ssl: bool
     auth_smtp_timeout_seconds: float
     csrf_enabled: bool
     csrf_time_limit_seconds: int
@@ -602,6 +603,7 @@ def load_settings(environ: Mapping[str, str] | None = None) -> AppSettings:
     auth_smtp_username = _optional(source, "AUTH_SMTP_USERNAME")
     auth_smtp_password = _optional(source, "AUTH_SMTP_PASSWORD")
     auth_smtp_use_tls = _bool(source, "AUTH_SMTP_USE_TLS", True)
+    auth_smtp_use_ssl = _bool(source, "AUTH_SMTP_USE_SSL", False)
     if auth_email_backend == "smtp":
         missing_auth_email = []
         if not auth_email_from:
@@ -616,9 +618,14 @@ def load_settings(environ: Mapping[str, str] | None = None) -> AppSettings:
             raise ConfigurationError(
                 "AUTH_EMAIL_BACKEND=smtp требует: " + ", ".join(missing_auth_email) + "."
             )
-        if environment == "production" and not auth_smtp_use_tls:
+        if auth_smtp_use_tls and auth_smtp_use_ssl:
             raise ConfigurationError(
-                "AUTH_SMTP_USE_TLS=1 обязателен для SMTP в production."
+                "AUTH_SMTP_USE_TLS и AUTH_SMTP_USE_SSL нельзя включать одновременно."
+            )
+        if environment == "production" and not (auth_smtp_use_tls or auth_smtp_use_ssl):
+            raise ConfigurationError(
+                "Для SMTP в production требуется защищённый режим: "
+                "AUTH_SMTP_USE_TLS=1 или AUTH_SMTP_USE_SSL=1."
             )
 
     superjob_redirect_uri = _validated_redirect_uri(
@@ -863,6 +870,7 @@ def load_settings(environ: Mapping[str, str] | None = None) -> AppSettings:
         auth_smtp_username=auth_smtp_username,
         auth_smtp_password=auth_smtp_password,
         auth_smtp_use_tls=auth_smtp_use_tls,
+        auth_smtp_use_ssl=auth_smtp_use_ssl,
         auth_smtp_timeout_seconds=_float(
             source,
             "AUTH_SMTP_TIMEOUT_SECONDS",

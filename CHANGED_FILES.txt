@@ -1,17 +1,26 @@
-AI Career Agent - AUTH-001 Safari CSRF hotfix changed files
+AI Career Agent - AUTH-001 Mail.ru SMTP SSL/TLS fallback changed files
 
 Package: AUTH-001 production verification hotfix
-Candidate version: 1.4.14
+Candidate version: 1.4.15
 Database revision: unchanged 20260810_0008
-Baseline: ai-career-agent-site-main (9).zip from current GitHub main
+Baseline: ai-career-agent-site-main (10).zip from current GitHub main
 
-Production code:
-- routes/auth.py
+Production/config:
+- config.py
+- services/email_delivery.py
+- render.yaml
+- compose.yaml
+- infra/vps/.env.example
 
-Tests:
-- tests/test_auth_routes.py
+Tests/tooling:
+- tests/test_email_delivery.py (new)
+- tests/test_config.py
+- tests/test_infra_manifests.py
+- tests/conftest.py
+- scripts/infra_manifest_check.py
 
 Repository documentation:
+- README.md
 - docs/ARCHITECTURE.md
 - docs/AUTH001_IMPLEMENTATION.md
 - docs/AUTH001_RUNBOOK.md
@@ -19,9 +28,11 @@ Repository documentation:
 - docs/AUTH001_VERIFICATION_STATUS.md
 - docs/CHANGELOG.md
 - docs/PLAN_CURRENT.md
-- docs/PROJECT_GUIDE.md
 - docs/PROJECT_PASSPORT.md
-- docs/SECURITY.md
+- docs/ROADMAP.md
 - docs/SOURCE_AUDIT.md
+- README_FIRST.txt
+- README_UPLOAD.txt
+- PATCH_MANIFEST.txt
 
-No database migration. No environment variable changes. No secrets included.
+No database migration. No secrets included.

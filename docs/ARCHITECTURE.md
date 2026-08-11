@@ -55,7 +55,7 @@ Auth rows cascade only when User is intentionally deleted. Password/session/acti
 
 ## 6. Email/configuration
 
-Production default is `disabled`. `smtp` uses STARTTLS and environment secrets. `memory` is test-only and forbidden in production. Readiness exposes only backend/configured boolean.
+Production default is `disabled`. `smtp` supports either STARTTLS or implicit SSL/TLS with environment secrets; exactly one secure transport mode is required in production. `memory` is test-only and forbidden in production. Readiness exposes only backend/configured boolean.
 
 ## 7. Security/observability
 

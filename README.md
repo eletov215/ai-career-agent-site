@@ -40,7 +40,7 @@ provider-neutral disabled/memory/SMTP email
 
 ## 4. Email delivery
 
-Production default `AUTH_EMAIL_BACKEND=disabled` fail-closed. Для полного E2E настроить SMTP STARTTLS через Render/VPS secrets. `memory` используется только в test и запрещён в production.
+Production default `AUTH_EMAIL_BACKEND=disabled` fail-closed. Для полного E2E настроить защищённый SMTP через Render/VPS secrets: STARTTLS (`AUTH_SMTP_USE_TLS=1`) или implicit SSL/TLS (`AUTH_SMTP_USE_SSL=1`). `memory` используется только в test и запрещён в production.
 
 ## 5. Основной стек
 

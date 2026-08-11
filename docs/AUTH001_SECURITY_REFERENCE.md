@@ -4,8 +4,8 @@
 |---|---|
 | Документ | AUTH001_SECURITY_REFERENCE |
 | Пакет | AUTH-001 |
-| Версия | 1.0 |
-| Дата | 10 августа 2026 |
+| Версия | 1.1 |
+| Дата | 11 августа 2026 |
 | Статус | НУЖНА ПРОВЕРКА |
 
 ## 1. Identity boundary
@@ -55,7 +55,7 @@ Register and forgot/reset return generic copy regardless of account existence. L
 
 ## 7. Email contract
 
-SMTP adapter uses STARTTLS with default certificate validation. Production refuses `memory` and refuses SMTP without TLS. Delivery logs include only safe event/purpose/backend/error type; recipient, subject body, action URL and SMTP response are excluded.
+SMTP adapter supports STARTTLS and implicit SSL/TLS with default certificate validation. Production refuses `memory`, refuses plaintext SMTP, and rejects configuration that enables STARTTLS and implicit SSL simultaneously. Delivery logs include only safe event/purpose/backend/error type; recipient, subject body, action URL and SMTP response are excluded.
 
 ## 8. HTTP controls
 
@@ -78,3 +78,4 @@ Revoke sessions and disable email delivery first. Preserve auth tables for foren
 | Версия | Дата | Изменение |
 |---|---|---|
 | 1.0 | 10.08.2026 | Зафиксированы password/token/session/email/enumeration/redirect security contracts AUTH-001. |
+| 1.1 | 11.08.2026 | Email transport contract расширен STARTTLS + implicit SSL/TLS с запретом plaintext/conflicting modes в production. |

@@ -1,3 +1,14 @@
+## Unreleased — AUTH-001 Mail.ru SMTP SSL/TLS fallback (11 августа 2026)
+
+- Real Safari registration now passes strict CSRF and reaches AUTH email delivery.
+- Yandex SMTP returned `SMTPDataError`; independent manual send from the same mailbox confirmed an external anti-spam sending block, so application code does not bypass that provider policy.
+- Added `AUTH_SMTP_USE_SSL` for implicit SSL/TLS providers while preserving existing `AUTH_SMTP_USE_TLS` STARTTLS behavior.
+- Production requires one secure SMTP mode and rejects STARTTLS + implicit SSL enabled together.
+- `SMTPAuthEmailSender` uses `smtplib.SMTP_SSL` with the default certificate-validating TLS context when implicit SSL is selected.
+- Render/Compose/VPS env templates include the new flag; no database migration.
+- Added positive tests for STARTTLS and implicit SSL plus negative config tests for plaintext production and conflicting modes.
+- AUTH-001 remains НУЖНА ПРОВЕРКА until GitHub CI, Mail.ru real delivery and the complete account E2E are confirmed.
+
 ## Unreleased — AUTH-001 Safari CSRF hotfix (10 августа 2026)
 
 - Production Render already reports revision `20260810_0008`, migrations ok, SMTP backend configured and delivery configured.
@@ -17,7 +28,7 @@
 - Versioned bounded scrypt password hashing without new runtime dependency.
 - Revocable `auth_sessions` and single-use `auth_tokens` via Alembic `20260810_0008`.
 - Registration, email verification/resend, login/logout, forgot/reset and session revoke routes/templates.
-- Provider-neutral disabled/memory/SMTP STARTTLS email delivery.
+- Provider-neutral disabled/memory/SMTP secure email delivery (STARTTLS or implicit SSL/TLS).
 - Account/session dashboard and safe `/health/ready` email backend status.
 - Focused AUTH-001 tests and dedicated GitHub Actions gate.
 

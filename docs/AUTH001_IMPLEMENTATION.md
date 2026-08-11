@@ -4,8 +4,8 @@
 |---|---|
 | Документ | AUTH001_IMPLEMENTATION |
 | Пакет | AUTH-001 |
-| Версия | 1.0 |
-| Дата | 10 августа 2026 |
+| Версия | 1.1 |
+| Дата | 11 августа 2026 |
 | Статус | НУЖНА ПРОВЕРКА |
 | Основа кода | `ai-career-agent-site-main (6).zip` из актуального GitHub `main` после SEARCH-004 |
 | Candidate revision | `20260810_0008` |
@@ -72,7 +72,7 @@ Password policy: минимум 12 символов по умолчанию, м�
 ```text
 disabled  production-safe default; UI блокирует registration/reset
 memory    deterministic no-network backend только test
-auth SMTP STARTTLS adapter
+auth SMTP adapter: STARTTLS or implicit SSL/TLS
 ```
 
 Production `smtp` требует sender, host и TLS. Username/password являются Render/VPS secrets и не попадают в GitHub, ZIP или logs. Public `/health/ready` показывает только backend и boolean configured.
@@ -140,7 +140,7 @@ Jinja template parsing                                    passed
 
 ## 8. Ограничения и риски
 
-- SMTP provider/domain/DKIM/SPF ещё не выбран; production email E2E заблокирован до operator configuration.
+- Staging Yandex sender получил внешнюю anti-spam блокировку; Mail.ru выбран как временный fallback для E2E. Commercial sender/domain/DKIM/SPF остаются предрелизной задачей.
 - Email backend disabled по умолчанию; это fail-closed, а не готовая коммерческая delivery.
 - HH/SuperJob rows не привязаны к User до AUTH-002.
 - Pending users, expired tokens и revoked sessions требуют будущей retention policy/periodic cleanup в PRIV-001/OPS.
@@ -161,7 +161,7 @@ Jinja template parsing                                    passed
 push AUTH-001 candidate
 -> green Verify AUTH-001 first-party account controls
 -> Render migration 20260810_0008
--> configure SMTP secrets
+-> configure Mail.ru SMTP SSL secrets -> verify real delivery
 -> register -> verify -> login -> session revoke -> logout
 -> forgot/reset -> old sessions invalid
 -> secret-free logs/readiness
@@ -174,3 +174,4 @@ push AUTH-001 candidate
 | Версия | Дата | Изменение |
 |---|---|---|
 | 1.0 | 10.08.2026 | Реализован first-party account candidate: scrypt, tokens, revocable sessions, SMTP adapter, routes/UI, migration 0008 и dedicated CI gate. |
+| 1.1 | 11.08.2026 | Добавлен implicit SSL/TLS SMTP mode для Mail.ru; STARTTLS сохранён, plaintext production запрещён, migration отсутствует. |

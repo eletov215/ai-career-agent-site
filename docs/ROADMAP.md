@@ -2,10 +2,10 @@
 
 | Поле | Значение |
 |---|---|
-| Версия | 1.4.13 |
-| Дата | 2026-08-10 |
+| Версия | 1.4.15 |
+| Дата | 2026-08-11 |
 | Источник | `docs/PLAN_CURRENT.md` |
-| Текущий gate | AUTH-001 GitHub/PostgreSQL/SMTP/Render E2E verification |
+| Текущий gate | AUTH-001 Mail.ru SMTP SSL delivery + Render E2E verification |
 
 ## 1. Функциональная очередь без аренды VPS
 
@@ -47,7 +47,7 @@ hashed TTL/single-use tokens
 revocable PostgreSQL sessions
 CSRF/rate limits/enumeration-safe responses
 GitHub/PostgreSQL green
-Render 0008 + SMTP configured
+Render 0008 + SMTP configured; Safari CSRF pass confirmed; Mail.ru delivery pending
 registration/verification/login/logout/revoke/reset E2E
 ```
 

@@ -4,8 +4,8 @@
 |---|---|
 | Документ | AUTH001_RUNBOOK |
 | Пакет | AUTH-001 |
-| Версия | 1.0 |
-| Дата | 10 августа 2026 |
+| Версия | 1.1 |
+| Дата | 11 августа 2026 |
 | Статус | НУЖНА ПРОВЕРКА |
 
 ## 1. Подготовка branch
@@ -42,11 +42,22 @@ AUTH_EMAIL_BACKEND=smtp
 AUTH_EMAIL_FROM=<verified sender>
 AUTH_EMAIL_FROM_NAME=AI Career Agent
 AUTH_SMTP_HOST=<provider host>
-AUTH_SMTP_PORT=587
+AUTH_SMTP_PORT=<provider port>
 AUTH_SMTP_USERNAME=<secret if required>
 AUTH_SMTP_PASSWORD=<secret if required>
-AUTH_SMTP_USE_TLS=1
+AUTH_SMTP_USE_TLS=<1 for STARTTLS, otherwise 0>
+AUTH_SMTP_USE_SSL=<1 for implicit SSL/TLS, otherwise 0>
 AUTH_SMTP_TIMEOUT_SECONDS=8
+
+Production requires exactly one secure SMTP mode. For Mail.ru staging:
+
+AUTH_SMTP_HOST=smtp.mail.ru
+AUTH_SMTP_PORT=465
+AUTH_SMTP_USE_TLS=0
+AUTH_SMTP_USE_SSL=1
+AUTH_SMTP_USERNAME=<full Mail.ru email>
+AUTH_EMAIL_FROM=<same full Mail.ru email>
+AUTH_SMTP_PASSWORD=<external app password>
 ```
 
 Policy defaults можно не добавлять:
@@ -121,3 +132,4 @@ python scripts/manage_db.py upgrade && python scripts/start_runtime.py
 | Версия | Дата | Изменение |
 |---|---|---|
 | 1.0 | 10.08.2026 | Создан deployment/config/E2E/security/rollback runbook AUTH-001. |
+| 1.1 | 11.08.2026 | Добавлена настройка mutually-exclusive STARTTLS/implicit SSL и Mail.ru `smtp.mail.ru:465` staging recipe. |
