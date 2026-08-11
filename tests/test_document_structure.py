@@ -38,6 +38,14 @@ def test_canonical_documents_have_metadata_tables():
         "docs/SEARCH003_VERIFICATION_STATUS.md",
         "docs/SEARCH003_RUNBOOK.md",
         "docs/SEARCH003_PAGINATION_REFERENCE.md",
+        "docs/AUTH001_IMPLEMENTATION.md",
+        "docs/AUTH001_VERIFICATION_STATUS.md",
+        "docs/AUTH001_RUNBOOK.md",
+        "docs/AUTH001_SECURITY_REFERENCE.md",
+        "docs/AUTH002_IMPLEMENTATION.md",
+        "docs/AUTH002_VERIFICATION_STATUS.md",
+        "docs/AUTH002_RUNBOOK.md",
+        "docs/AUTH002_SECURITY_REFERENCE.md",
         "docs/SOURCE_AUDIT.md",
     ]:
         text = (ROOT / relative).read_text(encoding="utf-8")

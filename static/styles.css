@@ -6675,3 +6675,19 @@ body.resume-reader-open{overflow:hidden}
   font-size: 14px;
   font-weight: 700;
 }
+
+/* AUTH-002: first-party-owned provider connections */
+.account-connections-section{scroll-margin-top:96px;margin-top:28px}
+.account-ownership-note{display:flex;align-items:flex-start;gap:14px;margin:0 0 18px;padding:16px 18px;border:1px solid rgba(87,104,240,.18);border-radius:16px;background:linear-gradient(135deg,rgba(242,239,255,.92),rgba(243,248,255,.92));color:#606982}
+.account-ownership-note strong{flex:0 0 auto;color:#5746ca}
+.account-ownership-note span{line-height:1.55}
+.platform-connection-status{display:flex;flex-wrap:wrap;gap:8px;margin:18px 0}
+.platform-card-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:18px}
+.platform-card-actions form{margin:0}
+.btn-danger-outline{color:#a83e51;background:#fff;border-color:rgba(184,69,88,.32)}
+.btn-danger-outline:hover{background:#fff5f6;border-color:rgba(184,69,88,.52)}
+@media(max-width:620px){
+  .account-ownership-note{display:grid;gap:6px}
+  .platform-card-actions{display:grid;grid-template-columns:1fr}
+  .platform-card-actions .btn,.platform-card-actions form,.platform-card-actions button{width:100%}
+}

@@ -1,108 +1,108 @@
-# AI Career Agent — аудит источников v1.4.16
+# AI Career Agent — аудит источников v1.4.18
 
 | Поле | Значение |
 |---|---|
 | Документ | SOURCE_AUDIT |
-| Версия | 1.4.16 |
+| Версия | 1.4.18 |
 | Дата | 11 августа 2026 |
-| Проверяемый пакет | AUTH-001 production verification + Gmail API HTTPS staging fallback |
-| Рабочий источник кода | `ai-career-agent-site-main (11).zip` из актуального GitHub `main` |
-| Канонический план до обновления | PLAN_CURRENT 1.4.15 |
-| Канонический паспорт до обновления | PROJECT_PASSPORT 2.29 |
-| Результат | v1.4.15 GitHub Actions и Render readiness green; Mail.ru реальная отправка на Render Free завершилась `OSError` из-за SMTP egress restriction; Gmail API HTTPS candidate подготовлен, требуется CI/Render delivery retest |
+| Проверяемый пакет | AUTH-002 first-party OAuth identity ownership candidate |
+| Рабочий источник кода | `ai-career-agent-site-main (12).zip` из актуального GitHub `main`, развернутый на Render |
+| Канонический план до обновления | PLAN_CURRENT 1.4.17 |
+| Канонический паспорт до обновления | PROJECT_PASSPORT 2.31 |
+| Результат | AUTH-002 candidate реализован; local tests green; migration `20260811_0009`; GitHub/Render/real provider E2E pending |
 
 ## 1. Контрольный статус
 
-SEARCH-004 остаётся ВЫПОЛНЕНО. AUTH-001 остаётся НУЖНА ПРОВЕРКА. Production использует schema `20260810_0008`; `/health/ready` подтвердил PostgreSQL persistent=true и migrations.ok=true. Safari CSRF regression исправлен и подтверждён real register POST. v1.4.15 CI/readiness green; Mail.ru delivery на Render Free вернула `OSError` до SMTP provider, что соответствует platform SMTP egress restriction. Candidate v1.4.16 добавляет `gmail_api` HTTPS transport: refresh token используется только для short-lived access token, а RFC 2822 MIME отправляется через Gmail API; CI mock-only. Gmail API является staging-only и должен быть заменён доменным transactional sender до beta/commercial release. DOC-STD-001 v1.1 обязателен.
+AUTH-001 остаётся ВЫПОЛНЕНО. AUTH-002 получает статус НУЖНА ПРОВЕРКА. GitHub ZIP является фактической кодовой основой, а canonical v1.4.17 — основой статусов. Candidate не расширяет scope телефоном/social login и не объявляется complete до external evidence. DOC-STD-001 v1.1 обязателен.
 
 ## 2. Проверка актуального источника кода
 
 | Область | Результат |
 |---|---|
-| WSGI | `app.py`, `app:app` сохранены |
-| Database | `0007` baseline подтверждён; additive `0008` создан |
-| Identity | existing `users`, parallel user table не создаётся |
-| Password | versioned bounded scrypt, no plaintext/dependency addition |
-| Sessions | server-side revocable `auth_sessions`, hash-only bearer storage |
-| Action tokens | hash-only, TTL, purpose, supersede/single-use |
-| Email | disabled/memory/SMTP STARTTLS/implicit SSL/Gmail API HTTPS adapters; production memory/plain SMTP forbidden; Gmail API staging-only |
-| HTTP security | CSRF strict mode сохранён; rate limits; no-store; auth `Referrer-Policy: strict-origin`; local redirect validation |
-| OAuth compatibility | HH/SJ browser identities remain independent until AUTH-002 |
-| Backups | inventory includes `auth_sessions` and `auth_tokens` |
-| Prohibited artifacts | `.env`, secrets, DB/dump/backup/venv/cache/bytecode excluded from release |
+| WSGI | `app.py`, `app:app` сохранены; `app_fixed.py` отсутствует |
+| Database | production baseline `20260810_0008`; candidate `20260811_0009` |
+| Identity root | existing first-party `users`; parallel user table не создаётся |
+| OAuth ownership | unique external identity + one provider slot per User |
+| Legacy rows | nullable/unbound сохраняются; auto-link по email запрещён |
+| OAuth state | one-time/TTL; bound to `user_id` and server-side `auth_session_id` |
+| Tokens | Fernet-encrypted persistence; plaintext absent from DB/logs |
+| Dashboard | first-party login required; owner-scoped HH/SJ status/actions |
+| Disconnect | POST + CSRF; owner-scoped local credential deletion + legacy mirror cleanup |
+| Browser compatibility | legacy `hh_user_id`/`superjob_user_id` keys не авторизуют |
+| External APIs | mocked in CI candidate; real HH/SJ verification pending |
+| Prohibited artifacts | `.env`, secrets, DB/dump/backup/venv/cache/bytecode excluded |
 
-## 3. Реализованный scope AUTH-001
+## 3. Реализованный scope AUTH-002
 
-- register/verification/resend/login/logout;
-- forgot/reset password;
-- active sessions list and revoke controls;
-- atomic token use/password reset/session revocation;
-- generic register/reset/login failure copy;
-- disabled email fail-closed UI;
-- auth dashboard/navigation/templates;
-- migration/config/Compose/Render/VPS/backup updates;
-- focused tests and dedicated CI gate.
+- authenticated HeadHunter/SuperJob connect flows;
+- state bound to first-party user and auth session;
+- atomic create/claim/refresh ownership service;
+- cross-user and same-provider-slot conflicts;
+- migration `0009` with fail-closed duplicate precheck;
+- owner-scoped read/refresh/reconnect/disconnect;
+- legacy provider browser identity removal;
+- dashboard/navigation/CSS updates;
+- dedicated migration/service/route/PostgreSQL tests and CI step.
 
-AUTH-002 binding, profile, PRIV-001 retention/deletion, MFA/admin/AI/billing не входят.
+Phone/OTP, Google/Yandex social identities, admin merge/transfer, profile import and remote revoke contract are excluded.
 
 ## 4. Локальные доказательства
 
 ```text
-compileall passed
-full available pytest: 229 passed, 7 skipped
-focused AUTH-001 gate: 95 passed, 2 skipped
-SQLite migration 0008 -> 0007 -> 0008 passed
-Alembic check passed
-Jinja parsing passed
+full available pytest: 236 passed, 8 skipped
+focused AUTH-002 migration/service tests: 7 passed
+compileall: passed
+Jinja parsing: passed
+migration round-trip: covered by focused tests
 ```
 
-Flask/Psycopg/PostgreSQL scenarios подтверждаются только GitHub Actions. Checksums фиксируются в release package.
+Flask route runtime, Psycopg and PostgreSQL service scenarios execute in GitHub Actions and are not claimed locally.
 
 ## 5. Ожидаемые внешние доказательства
 
-1. Green `Verify AUTH-001 first-party account controls` и весь workflow.
-2. Render `/health/ready`: current/expected `20260810_0008`.
-3. `AUTH_EMAIL_BACKEND=smtp`, configured boolean true, secrets absent from logs.
-4. Register/verify/login/logout and two-session revoke E2E.
-5. Forgot/reset single-use and old-session invalidation E2E.
-6. CSRF/rate limit/open-redirect/no-store negative smoke.
+1. Green `Verify AUTH-002 first-party OAuth identity ownership controls` and full workflow.
+2. Render `/health/ready`: current/expected `20260811_0009`, migrations ok, persistent PostgreSQL.
+3. Real HH bind/reconnect/disconnect persists across first-party relogin/restart.
+4. Real SuperJob bind/reconnect/disconnect persists across first-party relogin/restart.
+5. Second first-party User cannot claim an already-owned external identity.
+6. Different provider identity for occupied User/provider slot is rejected.
+7. Logs/public responses contain no OAuth code/state/token/provider secret/profile body.
 
 ## 6. Ограничения и риски
 
-- Safari production registration до hotfix блокировался до auth business logic из-за отсутствующего Referer; SMTP при этом не вызывался.
-- Hotfix не меняет migration/schema и не отключает `WTF_CSRF_SSL_STRICT`; после merge обязателен реальный Safari/iPhone retest register/verify/reset.
-
-
-- Production readiness previously confirmed SMTP config; after v1.4.16 deploy expected staging state is `gmail_api` / `email_delivery_configured=true`; actual delivery still requires register/reset E2E.
-- Existing OAuth rows are not auto-bound.
-- Pending/session/token cleanup and identity erasure policy remain future PRIV/OPS work.
-- Shared rate-limit storage is required before multiple replicas.
+- External OAuth availability and application callback configuration remain external dependencies.
+- Existing unbound rows are not migrated to owners automatically.
+- Remote provider token revoke is not unified; candidate guarantees local encrypted credential deletion.
+- Legacy encrypted mirror tables remain temporarily for rollback.
+- Provider profile snapshots are not first-party career profile facts.
 
 ## 7. Rollback
 
-Application revert without touching search/OAuth/sync data. Keep additive `0008` after any real user exists. Downgrade only before account creation or after verified backup and explicit data decision.
+Application revert without touching first-party/search/sync data. Revision `0009` is additive and may remain. Controlled downgrade removes only the new unique `(user_id, provider)` constraint; OAuth rows remain. Never restore legacy provider IDs as browser authentication.
 
 ## 8. Следующее действие
 
 ```text
-AUTH-001 SAFARI CSRF HOTFIX
+AUTH-002 candidate
 -> GitHub green
--> Render redeploy (revision remains 0008)
--> Gmail API HTTPS delivery -> Safari register/verify/login/session/reset E2E
--> AUTH-001 COMPLETE
--> AUTH-002 START
+-> Render 0009
+-> real HH E2E
+-> real SuperJob E2E
+-> ownership negative smoke
+-> AUTH-002 COMPLETE
+-> PROF-001 START
 ```
 
 ## 9. Новые канонические версии
 
 ```text
-PLAN_CURRENT 1.4.16
-PROJECT_PASSPORT 2.30
-SOURCE_AUDIT 1.4.16
-AUTH001_IMPLEMENTATION 1.2
-AUTH001_VERIFICATION_STATUS 1.2
-AUTH001_RUNBOOK 1.2
-AUTH001_SECURITY_REFERENCE 1.2
+PLAN_CURRENT 1.4.18
+PROJECT_PASSPORT 2.32
+SOURCE_AUDIT 1.4.18
+AUTH002_IMPLEMENTATION 1.0
+AUTH002_VERIFICATION_STATUS 1.0
+AUTH002_RUNBOOK 1.0
+AUTH002_SECURITY_REFERENCE 1.0
 DOCUMENT_STANDARD 1.1 (без изменений)
 ```
 
@@ -110,8 +110,5 @@ DOCUMENT_STANDARD 1.1 (без изменений)
 
 | Версия | Дата | Изменение |
 |---|---|---|
-| 1.4.12 | 10.08.2026 | SEARCH-004 final; AUTH-001 prepared. |
-| 1.4.13 | 10.08.2026 | AUTH-001 candidate implemented with migration 0008; external verification pending. |
-| 1.4.14 | 10.08.2026 | Render 0008 + SMTP readiness confirmed; Safari missing-Referer CSRF conflict localized; strict-origin hotfix prepared without weakening CSRF. |
-| 1.4.15 | 11.08.2026 | Safari hotfix production-pass and Mail.ru implicit SSL fallback; GitHub Actions/readiness green. |
-| 1.4.16 | 11.08.2026 | Render Free SMTP egress blocker confirmed; Gmail API HTTPS staging candidate prepared with domain-sender pre-release gate. |
+| 1.4.17 | 11.08.2026 | AUTH-001 final; AUTH-002 ready. |
+| 1.4.18 | 11.08.2026 | AUTH-002 candidate: owner-bound HH/SJ identities, migration 0009, state/session binding, owner-scoped disconnect and dedicated tests; external verification pending. |

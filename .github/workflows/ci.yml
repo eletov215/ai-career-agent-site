@@ -179,6 +179,18 @@ jobs:
           tests/test_template_security.py
           tests/test_postgresql_integration.py
 
+      - name: Verify AUTH-002 first-party OAuth identity ownership controls
+        run: >-
+          python -m pytest -q
+          tests/test_auth002_migration.py
+          tests/test_oauth_identity_service.py
+          tests/test_auth002_routes.py
+          tests/test_auth_routes.py
+          tests/test_routes.py
+          tests/test_repositories.py
+          tests/test_template_security.py
+          tests/test_postgresql_integration.py
+
       - name: Verify PostgreSQL encrypted backup and restore
         env:
           DATABASE_URL: ${{ env.POSTGRES_TEST_URL }}

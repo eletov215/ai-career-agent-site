@@ -220,9 +220,9 @@ def test_auth_token_pages_are_no_store_and_origin_only_referrer(client):
     assert response.headers["Referrer-Policy"] == "strict-origin"
 
 
-def test_first_party_logout_preserves_independent_provider_identities(app_module, client):
-    email = f"preserve-{uuid.uuid4().hex}@example.test"
-    password = "Preserve unique password 42!"
+def test_first_party_requests_discard_legacy_provider_browser_identities(app_module, client):
+    email = f"discard-legacy-{uuid.uuid4().hex}@example.test"
+    password = "Discard legacy provider ids 42!"
     _register_and_verify(app_module, client, email=email, password=password)
     login_page = client.get("/auth/login")
     client.post(
@@ -235,10 +235,16 @@ def test_first_party_logout_preserves_independent_provider_identities(app_module
         },
     )
     with client.session_transaction() as browser_session:
-        browser_session["hh_user_id"] = "hh-preserved"
+        browser_session["hh_user_id"] = "legacy-hh"
         browser_session["superjob_user_id"] = 919
 
     dashboard = client.get("/dashboard")
+    assert dashboard.status_code == 200
+    with client.session_transaction() as browser_session:
+        assert browser_session.get("auth_session_token")
+        assert "hh_user_id" not in browser_session
+        assert "superjob_user_id" not in browser_session
+
     response = client.post(
         "/auth/logout",
         data={"csrf_token": _csrf(dashboard)},
@@ -247,9 +253,8 @@ def test_first_party_logout_preserves_independent_provider_identities(app_module
     assert response.status_code == 302
     with client.session_transaction() as browser_session:
         assert "auth_session_token" not in browser_session
-        assert browser_session["hh_user_id"] == "hh-preserved"
-        assert browser_session["superjob_user_id"] == 919
-
+        assert "hh_user_id" not in browser_session
+        assert "superjob_user_id" not in browser_session
 
 def test_disabled_email_backend_blocks_account_creation_without_writing_user(app_module, client, monkeypatch):
     sender = app_module.AUTH_EMAIL_SENDER
@@ -345,15 +350,13 @@ def test_registration_is_unavailable_when_transactional_email_is_disabled(
     assert "сервис отправки писем" in body
 
 
-def test_first_party_login_and_logout_preserve_independent_provider_identity(
-    app_module,
-    client,
-):
-    email = f"provider-preserve-{uuid.uuid4().hex}@example.test"
-    password = "Provider preserve password 42!"
+def test_first_party_login_rotation_clears_legacy_provider_ids(app_module, client):
+    email = f"provider-clear-{uuid.uuid4().hex}@example.test"
+    password = "Provider ids cleared on login 42!"
     _register_and_verify(app_module, client, email=email, password=password)
     with client.session_transaction() as browser_session:
         browser_session["superjob_user_id"] = 123456
+        browser_session["hh_user_id"] = "legacy-hh"
 
     login_page = client.get("/auth/login")
     logged_in = client.post(
@@ -368,20 +371,9 @@ def test_first_party_login_and_logout_preserve_independent_provider_identity(
     )
     assert logged_in.status_code == 302
     with client.session_transaction() as browser_session:
-        assert browser_session.get("superjob_user_id") == 123456
         assert browser_session.get("auth_session_token")
-
-    dashboard = client.get("/dashboard")
-    response = client.post(
-        "/auth/logout",
-        data={"csrf_token": _csrf(dashboard)},
-        follow_redirects=False,
-    )
-    assert response.status_code == 302
-    with client.session_transaction() as browser_session:
-        assert browser_session.get("superjob_user_id") == 123456
-        assert "auth_session_token" not in browser_session
-
+        assert "superjob_user_id" not in browser_session
+        assert "hh_user_id" not in browser_session
 
 def test_login_rejects_backslash_based_external_next_url(app_module, client):
     email = f"next-backslash-{uuid.uuid4().hex}@example.test"

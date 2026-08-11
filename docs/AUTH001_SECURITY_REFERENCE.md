@@ -4,9 +4,9 @@
 |---|---|
 | Документ | AUTH001_SECURITY_REFERENCE |
 | Пакет | AUTH-001 |
-| Версия | 1.2 |
+| Версия | 1.3 |
 | Дата | 11 августа 2026 |
-| Статус | НУЖНА ПРОВЕРКА |
+| Статус | ВЫПОЛНЕНО |
 
 ## 1. Identity boundary
 
@@ -83,3 +83,4 @@ Revoke sessions and disable email delivery first. Preserve auth tables for foren
 | 1.0 | 10.08.2026 | Зафиксированы password/token/session/email/enumeration/redirect security contracts AUTH-001. |
 | 1.1 | 11.08.2026 | Email transport contract расширен STARTTLS + implicit SSL/TLS с запретом plaintext/conflicting modes в production. |
 | 1.2 | 11.08.2026 | Добавлен Gmail API HTTPS staging contract, OAuth-token secrecy и обязательный domain-sender migration gate до beta/commercial release. |
+| 1.3 | 11.08.2026 | Security controls production-verified: one-time verification/reset, revocable sessions, reset invalidation and Gmail API secret boundaries confirmed; AUTH-001 complete. |

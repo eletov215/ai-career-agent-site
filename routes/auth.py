@@ -1,4 +1,4 @@
-"""AUTH-001 first-party account routes."""
+"""First-party account routes with AUTH-002 provider-session isolation."""
 
 from __future__ import annotations
 
@@ -23,28 +23,17 @@ from services.auth import AuthService, AuthValidationError, safe_next_path
 logger = logging.getLogger(__name__)
 
 AUTH_SESSION_KEY = "auth_session_token"
-_PROVIDER_SESSION_KEYS = ("superjob_user_id", "hh_user_id")
+_LEGACY_PROVIDER_SESSION_KEYS = ("superjob_user_id", "hh_user_id")
 _DELIVERY_UNAVAILABLE = (
     "Регистрация и восстановление временно недоступны: сервис отправки писем ещё не настроен."
 )
 
 
-def _preserved_provider_identities() -> dict[str, object]:
-    return {
-        key: session.get(key)
-        for key in _PROVIDER_SESSION_KEYS
-        if session.get(key) is not None
-    }
-
-
 def _rotate_browser_session(raw_token: str) -> None:
-    """Rotate Flask session state while retaining independent provider identities."""
+    """Rotate the browser session around the first-party bearer token."""
 
-    provider_identities = _preserved_provider_identities()
     session.clear()
     session[AUTH_SESSION_KEY] = raw_token
-    for key, value in provider_identities.items():
-        session[key] = value
     session.permanent = True
 
 
@@ -68,6 +57,11 @@ def create_auth_blueprint(auth_service: AuthService, settings: AppSettings) -> B
 
     @bp.before_app_request
     def load_current_user() -> None:
+        # AUTH-002 removes provider identities from browser-session auth. Clear
+        # stale keys left by pre-AUTH-002 deployments so they cannot grant or
+        # appear to grant access after rollout.
+        for key in _LEGACY_PROVIDER_SESSION_KEYS:
+            session.pop(key, None)
         g.current_auth = None
         g.current_user = None
         raw_token = session.get(AUTH_SESSION_KEY)
@@ -281,10 +275,7 @@ def create_auth_blueprint(auth_service: AuthService, settings: AppSettings) -> B
     @limiter.limit("30 per 10 minutes")
     def logout():
         auth_service.logout(session.get(AUTH_SESSION_KEY))
-        # AUTH-001 owns only the first-party identity. Existing HeadHunter and
-        # SuperJob browser identities remain independent until AUTH-002 binds
-        # their encrypted database connections to a User explicitly.
-        _clear_first_party_session()
+        session.clear()
         return redirect(url_for("home"))
 
     @bp.route("/forgot-password", methods=["GET", "POST"])
@@ -358,7 +349,7 @@ def create_auth_blueprint(auth_service: AuthService, settings: AppSettings) -> B
                 else:
                     if result.ok:
                         auth_service.logout(session.get(AUTH_SESSION_KEY))
-                        _clear_first_party_session()
+                        session.clear()
                         return render_template(
                             "auth/notice.html",
                             title="Пароль обновлён",

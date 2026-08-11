@@ -1,8 +1,8 @@
 # AI Career Agent — архитектура проекта
 
-> Последнее обновление: 10 августа 2026 года  
-> Текущий пакет: `AUTH-001` — first-party account  
-> Статус: **НУЖНА ПРОВЕРКА**; candidate revision `20260810_0008`
+> Последнее обновление: 11 августа 2026 года  
+> Текущий пакет: `AUTH-002` — first-party-owned HeadHunter/SuperJob identities  
+> Статус: **НУЖНА ПРОВЕРКА**; candidate revision `20260811_0009`
 
 ## 1. Архитектурная цель
 
@@ -13,7 +13,7 @@ Flask routes / blueprints
 → SQLAlchemy models/session
 ```
 
-SEARCH-001..004 остаются завершённым vacancy contour. AUTH-001 добавляет first-party identity contour без связывания внешних OAuth connections.
+SEARCH-001..004 и AUTH-001 остаются завершёнными contours. AUTH-002 добавляет owner-bound external identity contour поверх first-party `User`.
 
 ## 2. Identity/auth layers
 
@@ -31,16 +31,16 @@ services/email_delivery.py  disabled/memory/SMTP/Gmail API provider-neutral adap
 
 ## 3. Identity boundary
 
-`users` — единственный root. Legacy users/OAuth rows могут иметь null password fields. AUTH-001 не присваивает HH/SJ connections. AUTH-002 выполнит explicit binding later.
+`users` — единственный root. AUTH-002 explicit-binding выполняется только после свежего provider OAuth proof; legacy unbound rows сохраняют nullable `user_id` и не связываются по email.
 
 ## 4. Persistence schema
 
-Candidate revision `20260810_0008`:
+Candidate revision `20260811_0009`:
 
 ```text
 users 1 ── * auth_sessions
 users 1 ── * auth_tokens
-users 1 ── * oauth_connections  (binding remains AUTH-002)
+users 1 ── 0..2 oauth_connections  (one slot per supported provider)
 ```
 
 Auth rows cascade only when User is intentionally deleted. Password/session/action raw secrets are not stored.
@@ -63,4 +63,16 @@ CSRF, secure cookie, trusted hosts, ProxyFix and security headers come from SEC-
 
 ## 8. Compatibility and rollback
 
-Search snapshot/dedup, sync state and OAuth tables are unchanged. Application revert may retain 0008. Downgrade removes auth data and is not allowed after real account creation without backup/explicit policy.
+Search snapshot/dedup and sync state are unchanged. AUTH-002 adds only revision `0009` ownership constraint. Application revert may retain `0009`; downgrade removes only the new constraint and keeps OAuth/auth/search data.
+
+
+## 9. AUTH-002 ownership contour
+
+- Browser authentication is first-party `AuthSession` only; legacy provider IDs are ignored and removed from session.
+- OAuth start requires current User/AuthSession. State stores random value, TTL, `user_id` and `auth_session_id`.
+- `OAuthIdentityService` mediates create/claim/refresh/disconnect and maps repository conflicts to safe public errors.
+- Database constraints enforce unique external identity and one provider slot per User.
+- Provider access/refresh tokens remain Fernet-encrypted; owner-scoped repository methods prevent cross-user reads/deletes.
+- Dashboard is first-party-only. Search continues to use provider/public application credentials independently of user OAuth.
+
+Remote provider revoke and account transfer/merge are explicit exclusions of the candidate.

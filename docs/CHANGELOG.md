@@ -1,3 +1,30 @@
+## Unreleased — AUTH-002 first-party OAuth identity ownership candidate (11 августа 2026)
+
+### Added
+
+- `OAuthIdentityService` with safe ownership/slot conflict contract for HeadHunter and SuperJob.
+- Alembic `20260811_0009` unique `(user_id, provider)` constraint with fail-closed duplicate precheck.
+- Authenticated provider connect, state bound to first-party User/AuthSession, owner-scoped reconnect and POST+CSRF disconnect.
+- Dashboard ownership/status/actions and dedicated AUTH-002 migration/service/route/PostgreSQL CI gate.
+- AUTH002 implementation, verification, runbook and security-reference documents.
+
+### Changed
+
+- First-party `User` is now the only browser identity; legacy `hh_user_id`/`superjob_user_id` keys cannot authorize and are cleared.
+- Existing unbound OAuth rows may be claimed only after a fresh provider callback; email auto-link is forbidden.
+- Provider refresh writes only to the current owner connection.
+- Disconnect removes unified and provider mirror credentials without touching another User or the first-party account.
+
+### Security
+
+- OAuth callback code/state are never copied into generic login `next`.
+- Cross-user claim and occupied provider slot fail closed with neutral public copy.
+- Provider tokens remain encrypted; safe events exclude external IDs, profiles and credentials.
+
+### Verification status
+
+Local available suite: `236 passed, 8 skipped`; focused migration/service suite: `7 passed`; compile/Jinja passed. GitHub/Render/real HH/SJ E2E pending, therefore AUTH-002 remains НУЖНА ПРОВЕРКА.
+
 ## Unreleased — AUTH-001 Gmail API HTTPS staging fallback (11 августа 2026)
 
 - v1.4.15 GitHub Actions and Render readiness are green; schema remains `20260810_0008`.

@@ -1,7 +1,11 @@
 """Repository layer hiding SQLAlchemy from routes and services."""
 
 from .auth import AuthRepository
-from .oauth_connections import OAuthConnectionRepository
+from .oauth_connections import (
+    OAuthConnectionOwnershipError,
+    OAuthConnectionRepository,
+    OAuthProviderAlreadyConnectedError,
+)
 from .search_snapshots import SearchSnapshotRepository
 from .sync_checkpoints import SyncCheckpointRepository
 from .sync_runs import SyncRunRepository
@@ -11,7 +15,9 @@ from .vacancies import VacancyRepository
 
 __all__ = [
     "AuthRepository",
+    "OAuthConnectionOwnershipError",
     "OAuthConnectionRepository",
+    "OAuthProviderAlreadyConnectedError",
     "SearchSnapshotRepository",
     "SyncCheckpointRepository",
     "SyncRunRepository",

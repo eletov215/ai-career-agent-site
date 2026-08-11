@@ -18,6 +18,11 @@ class OAuthConnection(Base):
             "external_user_id",
             name="uq_oauth_connections_provider_external_user",
         ),
+        UniqueConstraint(
+            "user_id",
+            "provider",
+            name="uq_oauth_connections_user_provider",
+        ),
         Index("idx_oauth_connections_user", "user_id"),
         Index("idx_oauth_connections_provider", "provider"),
     )

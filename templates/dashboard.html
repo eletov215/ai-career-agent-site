@@ -18,118 +18,135 @@
       {% endfor %}
     {% endwith %}
 
-    {% if first_party_user %}
-      <section class="account-identity-card">
-        <div class="account-identity-card__mark" aria-hidden="true">{{ (first_party_user.display_name or first_party_user.email)[0]|upper }}</div>
-        <div class="account-identity-card__copy">
-          <div class="muted">Собственный аккаунт AI Career Agent</div>
-          <h2>{{ first_party_user.display_name or 'Пользователь' }}</h2>
-          <p>{{ first_party_user.email }}</p>
-          <div class="account-status-row">
-            <span class="account-status account-status--verified">Email подтверждён</span>
-            <span class="account-status">Серверные сессии: {{ auth_sessions|length }}</span>
-          </div>
+    <section class="account-identity-card">
+      <div class="account-identity-card__mark" aria-hidden="true">{{ (first_party_user.display_name or first_party_user.email)[0]|upper }}</div>
+      <div class="account-identity-card__copy">
+        <div class="muted">Собственный аккаунт AI Career Agent</div>
+        <h2>{{ first_party_user.display_name or 'Пользователь' }}</h2>
+        <p>{{ first_party_user.email }}</p>
+        <div class="account-status-row">
+          <span class="account-status account-status--verified">Email подтверждён</span>
+          <span class="account-status">Серверные сессии: {{ auth_sessions|length }}</span>
         </div>
-        <form method="post" action="{{ url_for('auth.logout') }}">
-          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-          <button class="btn btn-secondary" type="submit">Выйти</button>
-        </form>
-      </section>
+      </div>
+      <form method="post" action="{{ url_for('auth.logout') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button class="btn btn-secondary" type="submit">Выйти</button>
+      </form>
+    </section>
 
-      <section class="card spaced account-sessions">
-        <div class="account-section-heading">
-          <div>
-            <div class="muted">Безопасность</div>
-            <h2>Активные устройства</h2>
-            <p>Каждая запись хранится на сервере и может быть отозвана.</p>
-          </div>
-          {% if auth_sessions|length > 1 %}
-            <form method="post" action="{{ url_for('auth.revoke_other_sessions') }}">
-              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-              <button class="btn btn-secondary" type="submit">Завершить другие</button>
-            </form>
-          {% endif %}
-        </div>
-        <div class="account-session-list">
-          {% for item in auth_sessions %}
-            <article class="account-session-item {{ 'is-current' if item.is_current else '' }}">
-              <span class="account-session-item__icon" aria-hidden="true">{{ '●' if item.is_current else '○' }}</span>
-              <div>
-                <strong>{{ 'Текущее устройство' if item.is_current else 'Активное устройство' }}</strong>
-                <span>Последняя активность: {{ item.last_seen_at }}</span>
-                <small>Создано {{ item.created_at }} · истекает {{ item.expires_at }}</small>
-              </div>
-              {% if not item.is_current %}
-                <form method="post" action="{{ url_for('auth.revoke_session', session_id=item.id) }}">
-                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                  <button class="account-session-item__revoke" type="submit">Завершить</button>
-                </form>
-              {% else %}
-                <span class="account-session-item__badge">Текущая</span>
-              {% endif %}
-            </article>
-          {% endfor %}
-        </div>
-      </section>
-    {% else %}
-      <section class="account-upgrade-card">
+    <section class="card spaced account-sessions">
+      <div class="account-section-heading">
         <div>
-          <div class="muted">Новый first-party аккаунт</div>
-          <h2>Сохраните карьерные данные между устройствами</h2>
-          <p>Текущие подключения площадок продолжат работать отдельно и не будут автоматически привязаны.</p>
+          <div class="muted">Безопасность</div>
+          <h2>Активные устройства</h2>
+          <p>Каждая запись хранится на сервере и может быть отозвана.</p>
         </div>
-        <a class="btn btn-primary" href="{{ url_for('auth.register') }}">Создать аккаунт</a>
-      </section>
-    {% endif %}
-
-    <div class="account-section-heading account-section-heading--providers">
-      <div><div class="muted">Внешние площадки</div><h2>Подключения</h2><p>AUTH-001 не привязывает их к собственному аккаунту — это будет сделано отдельно в AUTH-002.</p></div>
-    </div>
-    <div class="grid-2">
-      <section class="card platform-card">
-        <div class="platform-card-head">
-          <div>
-            <div class="muted">HeadHunter</div>
-            {% if hh_account %}
-              <h2>{{ hh_account['first_name'] or '' }} {{ hh_account['last_name'] or '' }}</h2>
-              <p>{{ hh_account['email'] or 'Email не передан' }}</p>
-            {% else %}
-              <h2>Аккаунт не подключён</h2>
-              <p>Подключите HH для персональных функций площадки.</p>
-            {% endif %}
-          </div>
-          <span class="platform-logo hh-logo">hh</span>
-        </div>
-        {% if hh_account %}
-          <p class="success-text">HeadHunter подключён</p>
-          <a class="btn btn-secondary" href="{{ url_for('ai_career') }}">Перейти в AI Карьеру</a>
-        {% else %}
-          <a class="btn btn-hh" href="{{ url_for('hh_login') }}">Подключить HeadHunter</a>
+        {% if auth_sessions|length > 1 %}
+          <form method="post" action="{{ url_for('auth.revoke_other_sessions') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button class="btn btn-secondary" type="submit">Завершить другие</button>
+          </form>
         {% endif %}
-      </section>
-
-      <section class="card platform-card">
-        <div class="platform-card-head">
-          <div>
-            <div class="muted">SuperJob</div>
-            {% if account %}
-              <h2>{{ account['name'] }}</h2>
-              <p>{{ account['email'] or 'Email не передан' }}</p>
+      </div>
+      <div class="account-session-list">
+        {% for item in auth_sessions %}
+          <article class="account-session-item {{ 'is-current' if item.is_current else '' }}">
+            <span class="account-session-item__icon" aria-hidden="true">{{ '●' if item.is_current else '○' }}</span>
+            <div>
+              <strong>{{ 'Текущее устройство' if item.is_current else 'Активное устройство' }}</strong>
+              <span>Последняя активность: {{ item.last_seen_at }}</span>
+              <small>Создано {{ item.created_at }} · истекает {{ item.expires_at }}</small>
+            </div>
+            {% if not item.is_current %}
+              <form method="post" action="{{ url_for('auth.revoke_session', session_id=item.id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button class="account-session-item__revoke" type="submit">Завершить</button>
+              </form>
             {% else %}
-              <h2>Аккаунт не подключён</h2>
-              <p>Подключите SuperJob для резюме и персональных функций.</p>
+              <span class="account-session-item__badge">Текущая</span>
             {% endif %}
-          </div>
-          <span class="platform-logo sj-logo">SJ</span>
+          </article>
+        {% endfor %}
+      </div>
+    </section>
+
+    <section id="connections" class="account-connections-section" aria-labelledby="connections-title">
+      <div class="account-section-heading account-section-heading--providers">
+        <div>
+          <div class="muted">Внешние площадки</div>
+          <h2 id="connections-title">Подключения</h2>
+          <p>Каждое подключение принадлежит вашему аккаунту AI Career Agent. Одна площадка может быть привязана только к одному пользователю сервиса.</p>
         </div>
-        {% if account %}
-          <p class="success-text">SuperJob подключён</p>
-          <a class="btn btn-primary" href="{{ url_for('ai_career') }}">Перейти в AI Карьеру</a>
-        {% else %}
-          <a class="btn btn-secondary" href="{{ url_for('login') }}">Подключить SuperJob</a>
-        {% endif %}
-      </section>
-    </div>
+      </div>
+
+      <div class="account-ownership-note">
+        <strong>Под вашим контролем</strong>
+        <span>Мы храним OAuth-токены только в зашифрованном виде. При отключении локальные токены и сохранённый профиль площадки удаляются.</span>
+      </div>
+
+      <div class="grid-2">
+        <section class="card platform-card">
+          <div class="platform-card-head">
+            <div>
+              <div class="muted">HeadHunter</div>
+              {% if hh_account %}
+                <h2>{{ ((hh_account.first_name or '') ~ ' ' ~ (hh_account.last_name or ''))|trim or hh_account.display_name or 'Аккаунт HeadHunter' }}</h2>
+                <p>{{ hh_account.email or 'Email не передан площадкой' }}</p>
+              {% else %}
+                <h2>Аккаунт не подключён</h2>
+                <p>Подключите HeadHunter для персональных функций площадки.</p>
+              {% endif %}
+            </div>
+            <span class="platform-logo hh-logo" aria-hidden="true">hh</span>
+          </div>
+          {% if hh_account %}
+            <div class="platform-connection-status">
+              <span class="account-status account-status--verified">Подключено к вашему аккаунту</span>
+            </div>
+            <div class="platform-card-actions">
+              <a class="btn btn-secondary" href="{{ url_for('hh_login') }}">Обновить доступ</a>
+              <form method="post" action="{{ url_for('hh_disconnect') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button class="btn btn-danger-outline" type="submit">Отключить</button>
+              </form>
+            </div>
+          {% else %}
+            <a class="btn btn-hh" href="{{ url_for('hh_login') }}">Подключить HeadHunter</a>
+          {% endif %}
+        </section>
+
+        <section class="card platform-card">
+          <div class="platform-card-head">
+            <div>
+              <div class="muted">SuperJob</div>
+              {% if account %}
+                <h2>{{ account.display_name or 'Пользователь SuperJob' }}</h2>
+                <p>{{ account.email or 'Email не передан площадкой' }}</p>
+              {% else %}
+                <h2>Аккаунт не подключён</h2>
+                <p>Подключите SuperJob для резюме и персональных функций.</p>
+              {% endif %}
+            </div>
+            <span class="platform-logo sj-logo" aria-hidden="true">SJ</span>
+          </div>
+          {% if account %}
+            <div class="platform-connection-status">
+              <span class="account-status account-status--verified">Подключено к вашему аккаунту</span>
+            </div>
+            <div class="platform-card-actions">
+              <a class="btn btn-secondary" href="{{ url_for('superjob_login') }}">Обновить доступ</a>
+              <form method="post" action="{{ url_for('superjob_disconnect') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button class="btn btn-danger-outline" type="submit">Отключить</button>
+              </form>
+            </div>
+          {% else %}
+            <a class="btn btn-secondary" href="{{ url_for('superjob_login') }}">Подключить SuperJob</a>
+          {% endif %}
+        </section>
+      </div>
+    </section>
 
     {% if account %}
       <section class="card spaced">
@@ -142,7 +159,11 @@
     {% endif %}
 
     <section class="card spaced next-step">
-      <div><div class="muted">Следующий шаг</div><h2>Карьерный профиль</h2><p>После AUTH-002 собственный аккаунт станет владельцем внешних подключений, а PROF-001 добавит структурированный карьерный профиль.</p></div>
+      <div>
+        <div class="muted">Следующий шаг</div>
+        <h2>Карьерный профиль</h2>
+        <p>После проверки подключений PROF-001 добавит структурированный карьерный профиль, принадлежащий тому же аккаунту.</p>
+      </div>
       <a class="btn btn-primary" href="{{ url_for('ai_career') }}">Открыть AI Карьеру</a>
     </section>
   </div>

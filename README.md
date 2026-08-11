@@ -2,18 +2,18 @@
 
 | Поле | Значение |
 |---|---|
-| Канонический план | `docs/PLAN_CURRENT.md` — 1.4.16 |
-| Паспорт | `docs/PROJECT_PASSPORT.md` — 2.30 |
-| Текущий пакет | `AUTH-001 — НУЖНА ПРОВЕРКА` |
-| Следующий пакет | `AUTH-002` после подтверждения AUTH-001 |
-| Candidate database revision | `20260810_0008` |
+| Канонический план | `docs/PLAN_CURRENT.md` — 1.4.18 |
+| Паспорт | `docs/PROJECT_PASSPORT.md` — 2.32 |
+| Текущий пакет | `AUTH-002 — НУЖНА ПРОВЕРКА` |
+| Следующий после завершения | `PROF-001` |
+| Candidate database revision | `20260811_0009` |
 | Production до deploy | Render revision `20260810_0008` |
 
 > GitHub является главным источником кода. Более новый ZIP текущего чата становится рабочей основой. Секреты, `.env`, базы, dumps, backups, virtualenv, caches и bytecode не входят в репозиторий.
 
 ## 1. Назначение проекта
 
-AI Career Agent — Flask-сервис карьерного сопровождения. WSGI entrypoint: `app:app`. SEARCH-001..004 подтверждены; AUTH-001 добавляет собственный email/password account поверх существующего `User`.
+AI Career Agent — Flask-сервис карьерного сопровождения. WSGI entrypoint: `app:app`. SEARCH-001..004 и AUTH-001 выполнены. AUTH-002 связывает HeadHunter/SuperJob с подтверждённым first-party `User`.
 
 ## 2. Статусы пакетов
 
@@ -21,26 +21,31 @@ AI Career Agent — Flask-сервис карьерного сопровожде
 |---|---|
 | FND/DATA/SEC/OPS/INFRA-PREP | ВЫПОЛНЕНО |
 | SYNC-001/002, SEARCH-001..004 | ВЫПОЛНЕНО |
+| AUTH-001 | ВЫПОЛНЕНО |
+| AUTH-002 | НУЖНА ПРОВЕРКА |
 | DOC-001 | В РАБОТЕ как постоянный процесс |
-| AUTH-001 | НУЖНА ПРОВЕРКА |
-| AUTH-002 / PROF / PRIV / SEARCH-005 | ЗАПЛАНИРОВАНО |
+| PROF/PRIV/SEARCH-005 | ЗАПЛАНИРОВАНО |
 | INFRA-001 | ОТЛОЖЕНО ДО ПРЕДРЕЛИЗНОГО ЭТАПА |
 
-## 3. AUTH-001 candidate
+## 3. AUTH-002 candidate
 
 ```text
-existing users + password fields
-auth_sessions + auth_tokens
-versioned scrypt
-/auth registration, verification, login, logout, reset, session revoke
-provider-neutral disabled/memory/SMTP email
+first-party User is the only browser identity
+HH/SuperJob connect requires first-party session
+OAuth state bound to user_id + auth_session_id
+one external identity -> one User
+one provider slot -> one User
+encrypted owner-scoped refresh/reconnect/disconnect
+migration 20260811_0009
 ```
 
-Ключевые свойства: password/token plaintext не сохраняется; sessions server-side revocable; reset отзывает все sessions; public account-recovery/login copy enumeration-safe; HH/SJ остаются independent до AUTH-002.
+Legacy unbound OAuth rows are not linked by email. They may be claimed only after a fresh successful provider OAuth callback. Legacy `hh_user_id`/`superjob_user_id` browser keys no longer authorize dashboard access.
 
-## 4. Email delivery
+## 4. Security and data
 
-Production default `AUTH_EMAIL_BACKEND=disabled` fail-closed. Текущий Render Free staging использует `AUTH_EMAIL_BACKEND=gmail_api` через HTTPS и OAuth refresh token; SMTP adapters сохраняются для VPS/paid infrastructure. `memory` используется только в test и запрещён в production. Gmail API — временный staging transport: до beta/commercial release обязателен sender собственного домена с SPF/DKIM/DMARC.
+Provider access/refresh tokens remain Fernet-encrypted. Callback code/state, tokens, provider secrets and raw profile payloads are excluded from public copy and logs. Disconnect is POST + CSRF and deletes only the current User connection plus its rollback mirror.
+
+Remote provider token revoke is not a unified candidate contract; AUTH-002 guarantees local encrypted credential deletion.
 
 ## 5. Основной стек
 
@@ -58,8 +63,6 @@ python scripts/manage_db.py upgrade
 python scripts/start_runtime.py
 ```
 
-Для no-network local mail sink можно использовать `AUTH_EMAIL_BACKEND=memory` только не в production.
-
 ## 7. Проверки качества
 
 ```bash
@@ -71,23 +74,18 @@ python -m pytest -q
 python -m alembic check
 ```
 
-Локально подтверждено: `229 passed, 7 skipped`; focused AUTH-001 gate: `95 passed, 2 skipped`; migration `0008 -> 0007 -> 0008` и `alembic check` пройдены. GitHub Actions дополнительно выполняет dedicated AUTH-001 gate, PostgreSQL migration/integration, SEC/OPS/SYNC/SEARCH regressions, backup/restore и container smoke.
+Local available suite: `236 passed, 8 skipped`; focused AUTH-002 migration/service suite: `7 passed`. GitHub Actions additionally executes Flask routes, PostgreSQL integration, migration, SEC/OPS/SYNC/SEARCH/AUTH regressions and container smoke.
 
-## 8. Render staging
+## 8. Deploy gate
 
-Start Command не меняется:
+Start Command remains:
 
 ```text
 python scripts/manage_db.py upgrade && python scripts/start_runtime.py
 ```
 
-Ожидаемая revision после candidate deploy: `20260810_0008`. Полная verification требует SMTP и account E2E по `docs/AUTH001_RUNBOOK.md`.
+Candidate completion requires GitHub green, Render current/expected revision `20260811_0009`, real HH and SuperJob bind/reconnect/disconnect, and a negative cross-user ownership smoke. See `docs/AUTH002_RUNBOOK.md`.
 
-## 9. Ближайшие действия
+## 9. Pre-release email gate
 
-1. Branch `auth-001-first-party-account`.
-2. Green GitHub Actions.
-3. Configure SMTP secrets вне GitHub/chat.
-4. Merge/deploy; readiness `0008`.
-5. Register/verify/login/session revoke/logout/reset E2E.
-6. Закрыть AUTH-001 и начать AUTH-002.
+Gmail API remains staging-only. Before beta/commercial release move to a project-owned domain sender such as `noreply@ai-career-agent.ru` with production-grade transactional delivery, SPF, DKIM and DMARC.

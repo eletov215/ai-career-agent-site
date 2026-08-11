@@ -7,7 +7,7 @@ from database import CURRENT_REVISION, create_database, current_revision, downgr
 
 def test_auth_0008_migration_round_trip(tmp_path):
     database_url = f"sqlite:///{(tmp_path / 'auth-migration.db').resolve().as_posix()}"
-    upgrade_database(database_url)
+    upgrade_database(database_url, "20260810_0008")
     runtime = create_database(database_url)
     try:
         inspector = inspect(runtime.engine)

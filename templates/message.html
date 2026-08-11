@@ -1,1 +1,11 @@
-{% extends "base.html" %}{% block content %}<main class="container"><section class="status {{ 'success' if success else 'error' }}"><h1>{{ title }}</h1><p>{{ message }}</p><a class="btn btn-primary" href="/">На главную</a></section></main>{% endblock %}
+{% extends "base.html" %}
+{% block title %}{{ title }} — AI Career Agent{% endblock %}
+{% block content %}
+<main class="container">
+  <section class="status {{ 'success' if success else 'error' }}">
+    <h1>{{ title }}</h1>
+    <p>{{ message }}</p>
+    <a class="btn btn-primary" href="{{ action_url or url_for('home') }}">{{ action_label or 'На главную' }}</a>
+  </section>
+</main>
+{% endblock %}

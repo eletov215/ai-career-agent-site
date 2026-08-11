@@ -48,9 +48,9 @@ class OAuthConnectionRecord:
     def as_legacy_mapping(self) -> dict[str, Any]:
         """Return the mapping expected by the current OAuth/dashboard code.
 
-        DATA-002 changes persistence without changing the established session,
-        token-refresh, or template contracts.  AUTH-002 will replace this compatibility mapping after external
-        provider connections are explicitly bound to first-party accounts.
+        This remains only for legacy import/rollback tooling and historical tests.
+        AUTH-002 application routes use the typed record directly and never treat
+        provider identifiers as browser authentication state.
         """
 
         common: dict[str, Any] = {
