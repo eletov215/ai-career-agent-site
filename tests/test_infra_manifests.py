@@ -34,6 +34,10 @@ def test_compose_has_isolated_postgresql_and_profiles():
     assert app_environment["SEARCH_PAGE_SIZE"] == "${SEARCH_PAGE_SIZE:-20}"
     assert app_environment["AUTH_SMTP_USE_TLS"] == "${AUTH_SMTP_USE_TLS:-1}"
     assert app_environment["AUTH_SMTP_USE_SSL"] == "${AUTH_SMTP_USE_SSL:-0}"
+    assert app_environment["AUTH_GMAIL_CLIENT_ID"] == "${AUTH_GMAIL_CLIENT_ID:-}"
+    assert app_environment["AUTH_GMAIL_CLIENT_SECRET"] == "${AUTH_GMAIL_CLIENT_SECRET:-}"
+    assert app_environment["AUTH_GMAIL_REFRESH_TOKEN"] == "${AUTH_GMAIL_REFRESH_TOKEN:-}"
+    assert app_environment["AUTH_GMAIL_TIMEOUT_SECONDS"] == "${AUTH_GMAIL_TIMEOUT_SECONDS:-8}"
     assert app_environment["SEARCH_SNAPSHOT_MAX_ROUNDS_PER_REQUEST"] == "${SEARCH_SNAPSHOT_MAX_ROUNDS_PER_REQUEST:-1}"
 
 
@@ -53,6 +57,10 @@ def test_env_template_contains_placeholders_not_real_secrets():
     assert "AUTH_SMTP_PASSWORD=CHANGE_ME_SMTP_PASSWORD" in text
     assert "AUTH_SMTP_USE_TLS=1" in text
     assert "AUTH_SMTP_USE_SSL=0" in text
+    assert "AUTH_GMAIL_CLIENT_ID=CHANGE_ME_GMAIL_OAUTH_CLIENT_ID" in text
+    assert "AUTH_GMAIL_CLIENT_SECRET=CHANGE_ME_GMAIL_OAUTH_CLIENT_SECRET" in text
+    assert "AUTH_GMAIL_REFRESH_TOKEN=CHANGE_ME_GMAIL_REFRESH_TOKEN" in text
+    assert "AUTH_GMAIL_TIMEOUT_SECONDS=8" in text
     assert "AUTH_SESSION_TTL_SECONDS=43200" in text
     assert "AUTH_VERIFICATION_TTL_SECONDS=86400" in text
     assert "AUTH_RESET_TTL_SECONDS=3600" in text
@@ -89,6 +97,10 @@ def test_render_uses_external_worker_runtime_supervisor():
     assert env["AUTH_SMTP_PASSWORD"]["sync"] is False
     assert env["AUTH_SMTP_USE_TLS"]["value"] == "1"
     assert env["AUTH_SMTP_USE_SSL"]["value"] == "0"
+    assert env["AUTH_GMAIL_CLIENT_ID"]["sync"] is False
+    assert env["AUTH_GMAIL_CLIENT_SECRET"]["sync"] is False
+    assert env["AUTH_GMAIL_REFRESH_TOKEN"]["sync"] is False
+    assert env["AUTH_GMAIL_TIMEOUT_SECONDS"]["value"] == "8"
     assert env["SEARCH_SNAPSHOT_MAX_ROUNDS_PER_REQUEST"]["value"] == "1"
 
     app_text = (ROOT / "app.py").read_text(encoding="utf-8")

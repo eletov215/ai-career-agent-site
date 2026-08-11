@@ -268,9 +268,11 @@ limit: 5 per minute
 - auth pages set `Cache-Control: no-store`, `Pragma: no-cache`, `Referrer-Policy: strict-origin`; path/query (including one-time tokens) are not forwarded, while the HTTPS origin remains available for Flask-WTF strict CSRF validation;
 - registration/login/resend/forgot/reset/revoke endpoints have dedicated rate limits;
 - public registration/forgot/login failures do not reveal account existence;
-- SMTP logs exclude recipient, token, SMTP response text and credentials;
+- email-delivery logs exclude recipient, action token, provider response text, SMTP credentials and Gmail OAuth tokens;
+- Gmail API staging backend uses HTTPS and keeps client secret/refresh token only in environment; short-lived access tokens are not persisted;
 - production forbids `AUTH_EMAIL_BACKEND=memory`; safe default is `disabled`;
+- personal Gmail API is staging-only; beta/commercial release requires a project-domain sender with SPF/DKIM/DMARC;
 - first-party auth does not claim or delete pre-AUTH-002 OAuth identities.
 
-Remaining gate: green GitHub/PostgreSQL CI and Render Mail.ru implicit SSL/TLS SMTP E2E on revision `20260810_0008`.
+Remaining gate: green GitHub/PostgreSQL CI and Render Gmail API HTTPS E2E on revision `20260810_0008`; domain sender migration remains mandatory before beta/commercial release.
 

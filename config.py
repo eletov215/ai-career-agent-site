@@ -427,6 +427,10 @@ class AppSettings:
     auth_smtp_use_tls: bool
     auth_smtp_use_ssl: bool
     auth_smtp_timeout_seconds: float
+    auth_gmail_client_id: str | None
+    auth_gmail_client_secret: str | None
+    auth_gmail_refresh_token: str | None
+    auth_gmail_timeout_seconds: float
     csrf_enabled: bool
     csrf_time_limit_seconds: int
     rate_limit_enabled: bool
@@ -594,7 +598,7 @@ def load_settings(environ: Mapping[str, str] | None = None) -> AppSettings:
         {**source, "AUTH_EMAIL_BACKEND": _clean(source.get("AUTH_EMAIL_BACKEND", "memory" if environment == "test" else "disabled")).lower()},
         "AUTH_EMAIL_BACKEND",
         "memory" if environment == "test" else "disabled",
-        choices={"disabled", "memory", "smtp"},
+        choices={"disabled", "gmail_api", "memory", "smtp"},
     )
     if environment == "production" and auth_email_backend == "memory":
         raise ConfigurationError("AUTH_EMAIL_BACKEND=memory запрещён в production.")
@@ -604,6 +608,9 @@ def load_settings(environ: Mapping[str, str] | None = None) -> AppSettings:
     auth_smtp_password = _optional(source, "AUTH_SMTP_PASSWORD")
     auth_smtp_use_tls = _bool(source, "AUTH_SMTP_USE_TLS", True)
     auth_smtp_use_ssl = _bool(source, "AUTH_SMTP_USE_SSL", False)
+    auth_gmail_client_id = _optional(source, "AUTH_GMAIL_CLIENT_ID")
+    auth_gmail_client_secret = _optional(source, "AUTH_GMAIL_CLIENT_SECRET")
+    auth_gmail_refresh_token = _optional(source, "AUTH_GMAIL_REFRESH_TOKEN")
     if auth_email_backend == "smtp":
         missing_auth_email = []
         if not auth_email_from:
@@ -626,6 +633,22 @@ def load_settings(environ: Mapping[str, str] | None = None) -> AppSettings:
             raise ConfigurationError(
                 "Для SMTP в production требуется защищённый режим: "
                 "AUTH_SMTP_USE_TLS=1 или AUTH_SMTP_USE_SSL=1."
+            )
+    if auth_email_backend == "gmail_api":
+        missing_auth_email = []
+        if not auth_email_from:
+            missing_auth_email.append("AUTH_EMAIL_FROM")
+        if not auth_gmail_client_id:
+            missing_auth_email.append("AUTH_GMAIL_CLIENT_ID")
+        if not auth_gmail_client_secret:
+            missing_auth_email.append("AUTH_GMAIL_CLIENT_SECRET")
+        if not auth_gmail_refresh_token:
+            missing_auth_email.append("AUTH_GMAIL_REFRESH_TOKEN")
+        if missing_auth_email:
+            raise ConfigurationError(
+                "AUTH_EMAIL_BACKEND=gmail_api требует: "
+                + ", ".join(missing_auth_email)
+                + "."
             )
 
     superjob_redirect_uri = _validated_redirect_uri(
@@ -874,6 +897,16 @@ def load_settings(environ: Mapping[str, str] | None = None) -> AppSettings:
         auth_smtp_timeout_seconds=_float(
             source,
             "AUTH_SMTP_TIMEOUT_SECONDS",
+            8.0,
+            minimum=1.0,
+            maximum=30.0,
+        ),
+        auth_gmail_client_id=auth_gmail_client_id,
+        auth_gmail_client_secret=auth_gmail_client_secret,
+        auth_gmail_refresh_token=auth_gmail_refresh_token,
+        auth_gmail_timeout_seconds=_float(
+            source,
+            "AUTH_GMAIL_TIMEOUT_SECONDS",
             8.0,
             minimum=1.0,
             maximum=30.0,

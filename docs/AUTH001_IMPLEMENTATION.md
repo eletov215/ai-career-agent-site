@@ -4,10 +4,10 @@
 |---|---|
 | Документ | AUTH001_IMPLEMENTATION |
 | Пакет | AUTH-001 |
-| Версия | 1.1 |
+| Версия | 1.2 |
 | Дата | 11 августа 2026 |
 | Статус | НУЖНА ПРОВЕРКА |
-| Основа кода | `ai-career-agent-site-main (6).zip` из актуального GitHub `main` после SEARCH-004 |
+| Основа кода | `ai-career-agent-site-main (11).zip` из актуального GitHub `main` |
 | Candidate revision | `20260810_0008` |
 
 ## 1. Контрольный статус
@@ -129,8 +129,8 @@ Downgrade до `20260809_0007` удаляет auth tables/columns и допус�
 
 ```text
 python -m compileall -q .                                passed
-pytest -q                                                217 passed, 7 skipped
-focused AUTH-001 gate                                   83 passed, 2 skipped
+pytest -q                                                229 passed, 7 skipped
+focused AUTH-001 gate                                   95 passed, 2 skipped
 SQLite 0008 upgrade -> 0007 downgrade -> 0008 upgrade   passed
 alembic check                                             passed
 Jinja template parsing                                    passed
@@ -138,9 +138,15 @@ Jinja template parsing                                    passed
 
 Локальные skips относятся к Flask route runtime, Psycopg и реальному PostgreSQL service; они выполняются GitHub Actions и не объявляются пройденными локально.
 
+## 7.1 Gmail API staging transport
+
+`services/email_delivery.py` сохраняет provider-neutral contract и добавляет `GmailApiAuthEmailSender`. Backend `gmail_api` не использует SMTP: он по HTTPS обменивает refresh token на short-lived access token и отправляет RFC 2822 MIME как base64url через Gmail API `users.messages.send`. Постоянный access token не хранится. Configuration требует `AUTH_EMAIL_FROM`, `AUTH_GMAIL_CLIENT_ID`, `AUTH_GMAIL_CLIENT_SECRET`, `AUTH_GMAIL_REFRESH_TOKEN`; secrets остаются только в environment. CI mock-ит token/send HTTP calls. Safe failure telemetry records only `delivery_stage`, HTTP status code and exception type; provider response body and OAuth tokens are never logged.
+
+Это временный staging transport для Render Free. Он не меняет auth business logic и не является целевым коммерческим delivery provider.
+
 ## 8. Ограничения и риски
 
-- Staging Yandex sender получил внешнюю anti-spam блокировку; Mail.ru выбран как временный fallback для E2E. Commercial sender/domain/DKIM/SPF остаются предрелизной задачей.
+- Yandex staging sender получил внешнюю anti-spam блокировку; Mail.ru adapter работает в коде, но Render Free блокирует SMTP egress. Gmail API HTTPS выбран как временный staging fallback для E2E. До beta/commercial release обязателен доменный sender (целевой пример `noreply@ai-career-agent.ru`) и production-grade transactional delivery с SPF/DKIM/DMARC.
 - Email backend disabled по умолчанию; это fail-closed, а не готовая коммерческая delivery.
 - HH/SuperJob rows не привязаны к User до AUTH-002.
 - Pending users, expired tokens и revoked sessions требуют будущей retention policy/periodic cleanup в PRIV-001/OPS.
@@ -161,7 +167,7 @@ Jinja template parsing                                    passed
 push AUTH-001 candidate
 -> green Verify AUTH-001 first-party account controls
 -> Render migration 20260810_0008
--> configure Mail.ru SMTP SSL secrets -> verify real delivery
+-> configure Gmail API OAuth secrets -> verify real HTTPS delivery
 -> register -> verify -> login -> session revoke -> logout
 -> forgot/reset -> old sessions invalid
 -> secret-free logs/readiness
@@ -175,3 +181,4 @@ push AUTH-001 candidate
 |---|---|---|
 | 1.0 | 10.08.2026 | Реализован first-party account candidate: scrypt, tokens, revocable sessions, SMTP adapter, routes/UI, migration 0008 и dedicated CI gate. |
 | 1.1 | 11.08.2026 | Добавлен implicit SSL/TLS SMTP mode для Mail.ru; STARTTLS сохранён, plaintext production запрещён, migration отсутствует. |
+| 1.2 | 11.08.2026 | Добавлен Gmail API HTTPS staging backend с OAuth refresh-token flow и mocked CI; обязательный переход на доменный sender зафиксирован до beta/commercial release. |

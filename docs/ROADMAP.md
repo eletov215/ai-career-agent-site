@@ -2,10 +2,10 @@
 
 | Поле | Значение |
 |---|---|
-| Версия | 1.4.15 |
+| Версия | 1.4.16 |
 | Дата | 2026-08-11 |
 | Источник | `docs/PLAN_CURRENT.md` |
-| Текущий gate | AUTH-001 Mail.ru SMTP SSL delivery + Render E2E verification |
+| Текущий gate | AUTH-001 Gmail API HTTPS delivery + Render E2E verification |
 
 ## 1. Функциональная очередь без аренды VPS
 
@@ -57,3 +57,7 @@ registration/verification/login/logout/revoke/reset E2E
 - Production email provider не поставляется кодом; operator config обязателен.
 - Revision 0008 additive; downgrade после real accounts запрещён без backup/decision.
 - MFA/account deletion/export/admin roles не входят.
+
+## 5. Pre-release email infrastructure gate
+
+Gmail API используется только для staging на Render Free. До beta/commercial release обязателен переход на sender собственного домена (целевой пример `noreply@ai-career-agent.ru`) с production-grade transactional delivery и SPF/DKIM/DMARC.

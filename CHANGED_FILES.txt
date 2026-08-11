@@ -1,9 +1,9 @@
-AI Career Agent - AUTH-001 Mail.ru SMTP SSL/TLS fallback changed files
+AI Career Agent - AUTH-001 Gmail API HTTPS staging candidate changed files
 
-Package: AUTH-001 production verification hotfix
-Candidate version: 1.4.15
+Package: AUTH-001 production verification transport fallback
+Candidate version: 1.4.16
 Database revision: unchanged 20260810_0008
-Baseline: ai-career-agent-site-main (10).zip from current GitHub main
+Baseline: ai-career-agent-site-main (11).zip from current GitHub main
 
 Production/config:
 - config.py
@@ -12,15 +12,18 @@ Production/config:
 - compose.yaml
 - infra/vps/.env.example
 
-Tests/tooling:
-- tests/test_email_delivery.py (new)
+CI/tests/tooling:
+- .github/workflows/ci.yml
+- tests/test_email_delivery.py
 - tests/test_config.py
 - tests/test_infra_manifests.py
 - tests/conftest.py
 - scripts/infra_manifest_check.py
 
-Repository documentation:
+Repository/canonical documentation:
 - README.md
+- README_FIRST.txt
+- README_UPLOAD.txt
 - docs/ARCHITECTURE.md
 - docs/AUTH001_IMPLEMENTATION.md
 - docs/AUTH001_RUNBOOK.md
@@ -28,11 +31,12 @@ Repository documentation:
 - docs/AUTH001_VERIFICATION_STATUS.md
 - docs/CHANGELOG.md
 - docs/PLAN_CURRENT.md
+- docs/PROJECT_GUIDE.md
 - docs/PROJECT_PASSPORT.md
 - docs/ROADMAP.md
+- docs/SECURITY.md
 - docs/SOURCE_AUDIT.md
-- README_FIRST.txt
-- README_UPLOAD.txt
+- CHANGED_FILES.txt
 - PATCH_MANIFEST.txt
 
-No database migration. No secrets included.
+No database migration. No OAuth/Gmail secrets included.

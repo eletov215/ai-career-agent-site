@@ -42,6 +42,14 @@ services:
         value: "0"
       - key: AUTH_SMTP_TIMEOUT_SECONDS
         value: "8"
+      - key: AUTH_GMAIL_CLIENT_ID
+        sync: false
+      - key: AUTH_GMAIL_CLIENT_SECRET
+        sync: false
+      - key: AUTH_GMAIL_REFRESH_TOKEN
+        sync: false
+      - key: AUTH_GMAIL_TIMEOUT_SECONDS
+        value: "8"
       - key: AUTH_SESSION_TTL_SECONDS
         value: "43200"
       - key: AUTH_VERIFICATION_TTL_SECONDS

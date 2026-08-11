@@ -1,27 +1,31 @@
-AUTH-001 MAIL.RU SMTP SSL/TLS FALLBACK v1.4.15
+AUTH-001 GMAIL API HTTPS STAGING CANDIDATE v1.4.16
 
-Baseline: current GitHub archive ai-career-agent-site-main (10).zip.
+Baseline: current GitHub archive ai-career-agent-site-main (11).zip.
 
-Production code change:
+Primary code changes:
   config.py
   services/email_delivery.py
 
-New environment switch:
-  AUTH_SMTP_USE_SSL=0|1
+New backend:
+  AUTH_EMAIL_BACKEND=gmail_api
 
-Transport contract:
-  STARTTLS: AUTH_SMTP_USE_TLS=1, AUTH_SMTP_USE_SSL=0
-  implicit SSL/TLS: AUTH_SMTP_USE_TLS=0, AUTH_SMTP_USE_SSL=1
-  production plaintext: rejected
-  both secure flags enabled: rejected
+Required Render secrets for Gmail API:
+  AUTH_EMAIL_FROM=<authorized Gmail sender>
+  AUTH_GMAIL_CLIENT_ID=<secret/config value>
+  AUTH_GMAIL_CLIENT_SECRET=<secret>
+  AUTH_GMAIL_REFRESH_TOKEN=<secret>
+  AUTH_GMAIL_TIMEOUT_SECONDS=8
 
-Mail.ru staging profile:
-  AUTH_SMTP_HOST=smtp.mail.ru
-  AUTH_SMTP_PORT=465
-  AUTH_SMTP_USE_TLS=0
-  AUTH_SMTP_USE_SSL=1
-  AUTH_SMTP_USERNAME=<full Mail.ru address>
-  AUTH_EMAIL_FROM=<same full Mail.ru address>
-  AUTH_SMTP_PASSWORD=<external app password in Render only>
+Transport:
+  HTTPS OAuth token exchange
+  HTTPS Gmail users.messages.send
+  no SMTP port required
+  no permanent access token stored
 
-No migration. Expected database revision remains 20260810_0008.
+Existing SMTP STARTTLS/implicit SSL backends remain compatible.
+No migration: expected schema revision remains 20260810_0008.
+
+Release policy:
+  Gmail API is only a staging transport for Render Free.
+  Before beta/commercial release move to project-owned domain sender
+  (target example noreply@ai-career-agent.ru) with SPF/DKIM/DMARC.

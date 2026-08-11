@@ -4,7 +4,7 @@
 |---|---|
 | Документ | AUTH001_RUNBOOK |
 | Пакет | AUTH-001 |
-| Версия | 1.1 |
+| Версия | 1.2 |
 | Дата | 11 августа 2026 |
 | Статус | НУЖНА ПРОВЕРКА |
 
@@ -35,7 +35,25 @@ PR не merge-ить при любом красном auth/security/migration st
 
 ## 3. Production email configuration
 
-В Render Environment задать реальные значения вне GitHub/chat:
+### 3.1 Current Render Free staging profile — Gmail API over HTTPS
+
+Render Environment values are secrets and must remain outside GitHub/chat:
+
+```text
+AUTH_EMAIL_BACKEND=gmail_api
+AUTH_EMAIL_FROM=<authorized Gmail sender>
+AUTH_EMAIL_FROM_NAME=AI Career Agent
+AUTH_GMAIL_CLIENT_ID=<OAuth client id>
+AUTH_GMAIL_CLIENT_SECRET=<OAuth client secret>
+AUTH_GMAIL_REFRESH_TOKEN=<OAuth refresh token>
+AUTH_GMAIL_TIMEOUT_SECONDS=8
+```
+
+Do not configure a permanent access token: the adapter obtains a short-lived access token from the refresh token for each delivery attempt. The OAuth grant must use only the `gmail.send` scope. While Google Auth Platform remains in Testing, the staging refresh token can expire and may require re-authorization; `invalid_grant`/HTTP 400 is handled as fail-closed delivery failure. `/health/ready` validates presence of config, while real delivery is proven only by `auth_email_delivered` plus receipt of the message.
+
+### 3.2 SMTP compatibility
+
+The SMTP backend remains supported for VPS/paid infrastructure:
 
 ```text
 AUTH_EMAIL_BACKEND=smtp
@@ -48,28 +66,13 @@ AUTH_SMTP_PASSWORD=<secret if required>
 AUTH_SMTP_USE_TLS=<1 for STARTTLS, otherwise 0>
 AUTH_SMTP_USE_SSL=<1 for implicit SSL/TLS, otherwise 0>
 AUTH_SMTP_TIMEOUT_SECONDS=8
-
-Production requires exactly one secure SMTP mode. For Mail.ru staging:
-
-AUTH_SMTP_HOST=smtp.mail.ru
-AUTH_SMTP_PORT=465
-AUTH_SMTP_USE_TLS=0
-AUTH_SMTP_USE_SSL=1
-AUTH_SMTP_USERNAME=<full Mail.ru email>
-AUTH_EMAIL_FROM=<same full Mail.ru email>
-AUTH_SMTP_PASSWORD=<external app password>
 ```
 
-Policy defaults можно не добавлять:
+`memory` is forbidden in production; `disabled` is fail-closed.
 
-```text
-AUTH_SESSION_TTL_SECONDS=43200
-AUTH_VERIFICATION_TTL_SECONDS=86400
-AUTH_RESET_TTL_SECONDS=3600
-AUTH_PASSWORD_MIN_LENGTH=12
-```
+### 3.3 Mandatory pre-release domain migration
 
-`AUTH_EMAIL_BACKEND=memory` запрещён в production. При `disabled` deploy остаётся healthy, но registration/reset UI fail-closed и AUTH-001 не закрывается.
+Gmail API is staging-only. Before beta/commercial release switch email delivery to a project-owned domain sender, target example `noreply@ai-career-agent.ru`, through a production-grade transactional provider or owned mail infrastructure. Configure SPF, DKIM and DMARC, verify sender/domain reputation and keep the provider-neutral AUTH business logic unchanged. This gate is mandatory and is not satisfied by personal Gmail.
 
 ## 4. Deploy
 
@@ -116,12 +119,12 @@ python scripts/manage_db.py upgrade && python scripts/start_runtime.py
 - POST без CSRF: neutral 400;
 - repeated login/register/reset достигают controlled 429;
 - external/backslash `next` не выполняет open redirect;
-- logs не содержат email, password, raw action/session token, SMTP credentials/response;
+- logs не содержат email, password, raw action/session token, SMTP credentials/response or Gmail OAuth tokens; Gmail failures may expose only safe `delivery_stage`, HTTP status code and exception type;
 - `/health/ready` содержит только backend/configured boolean.
 
 ## 9. Rollback
 
-При application regression revert commit и redeploy. Не downgrade-ить `0008` после real account creation. При SMTP outage переключить `AUTH_EMAIL_BACKEND=disabled`: existing verified users смогут login, но new registration/reset будет честно недоступен.
+При application regression revert commit и redeploy. Не downgrade-ить `0008` после real account creation. При email-provider outage переключить `AUTH_EMAIL_BACKEND=disabled`: existing verified users смогут login, но new registration/reset будет честно недоступен.
 
 ## 10. Закрытие пакета
 
@@ -133,3 +136,4 @@ python scripts/manage_db.py upgrade && python scripts/start_runtime.py
 |---|---|---|
 | 1.0 | 10.08.2026 | Создан deployment/config/E2E/security/rollback runbook AUTH-001. |
 | 1.1 | 11.08.2026 | Добавлена настройка mutually-exclusive STARTTLS/implicit SSL и Mail.ru `smtp.mail.ru:465` staging recipe. |
+| 1.2 | 11.08.2026 | Current Render Free recipe переведён на Gmail API HTTPS; добавлен обязательный pre-release переход на доменный sender с SPF/DKIM/DMARC. |

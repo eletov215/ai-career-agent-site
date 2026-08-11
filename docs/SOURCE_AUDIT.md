@@ -1,19 +1,19 @@
-# AI Career Agent — аудит источников v1.4.15
+# AI Career Agent — аудит источников v1.4.16
 
 | Поле | Значение |
 |---|---|
 | Документ | SOURCE_AUDIT |
-| Версия | 1.4.15 |
+| Версия | 1.4.16 |
 | Дата | 11 августа 2026 |
-| Проверяемый пакет | AUTH-001 production verification + Mail.ru SMTP SSL fallback |
-| Рабочий источник кода | `ai-career-agent-site-main (10).zip` из актуального GitHub `main` |
-| Канонический план до обновления | PLAN_CURRENT 1.4.14 |
-| Канонический паспорт до обновления | PROJECT_PASSPORT 2.28 |
-| Результат | Safari CSRF hotfix подтверждён реальным register; Yandex `SMTPDataError` локализован как внешняя anti-spam блокировка; Mail.ru implicit SSL/TLS SMTP candidate подготовлен, требуется CI/Render delivery retest |
+| Проверяемый пакет | AUTH-001 production verification + Gmail API HTTPS staging fallback |
+| Рабочий источник кода | `ai-career-agent-site-main (11).zip` из актуального GitHub `main` |
+| Канонический план до обновления | PLAN_CURRENT 1.4.15 |
+| Канонический паспорт до обновления | PROJECT_PASSPORT 2.29 |
+| Результат | v1.4.15 GitHub Actions и Render readiness green; Mail.ru реальная отправка на Render Free завершилась `OSError` из-за SMTP egress restriction; Gmail API HTTPS candidate подготовлен, требуется CI/Render delivery retest |
 
 ## 1. Контрольный статус
 
-SEARCH-004 остаётся ВЫПОЛНЕНО. AUTH-001 остаётся НУЖНА ПРОВЕРКА. Production использует schema `20260810_0008`; `/health/ready` подтвердил PostgreSQL persistent=true, migrations.ok=true, `auth.email_backend=smtp` и `auth.email_delivery_configured=true`. Safari CSRF regression исправлен и подтверждён реальным register POST. Последующая email delivery вернула `SMTPDataError`; ручная отправка из Yandex показала внешнюю anti-spam блокировку на сутки. Candidate добавляет implicit SSL/TLS SMTP для Mail.ru, сохраняя strict CSRF и STARTTLS compatibility. DOC-STD-001 v1.1 обязателен.
+SEARCH-004 остаётся ВЫПОЛНЕНО. AUTH-001 остаётся НУЖНА ПРОВЕРКА. Production использует schema `20260810_0008`; `/health/ready` подтвердил PostgreSQL persistent=true и migrations.ok=true. Safari CSRF regression исправлен и подтверждён real register POST. v1.4.15 CI/readiness green; Mail.ru delivery на Render Free вернула `OSError` до SMTP provider, что соответствует platform SMTP egress restriction. Candidate v1.4.16 добавляет `gmail_api` HTTPS transport: refresh token используется только для short-lived access token, а RFC 2822 MIME отправляется через Gmail API; CI mock-only. Gmail API является staging-only и должен быть заменён доменным transactional sender до beta/commercial release. DOC-STD-001 v1.1 обязателен.
 
 ## 2. Проверка актуального источника кода
 
@@ -25,7 +25,7 @@ SEARCH-004 остаётся ВЫПОЛНЕНО. AUTH-001 остаётся НУЖ
 | Password | versioned bounded scrypt, no plaintext/dependency addition |
 | Sessions | server-side revocable `auth_sessions`, hash-only bearer storage |
 | Action tokens | hash-only, TTL, purpose, supersede/single-use |
-| Email | disabled/memory/SMTP adapter с STARTTLS или implicit SSL/TLS; production memory/plain transport forbidden |
+| Email | disabled/memory/SMTP STARTTLS/implicit SSL/Gmail API HTTPS adapters; production memory/plain SMTP forbidden; Gmail API staging-only |
 | HTTP security | CSRF strict mode сохранён; rate limits; no-store; auth `Referrer-Policy: strict-origin`; local redirect validation |
 | OAuth compatibility | HH/SJ browser identities remain independent until AUTH-002 |
 | Backups | inventory includes `auth_sessions` and `auth_tokens` |
@@ -49,8 +49,8 @@ AUTH-002 binding, profile, PRIV-001 retention/deletion, MFA/admin/AI/billing н�
 
 ```text
 compileall passed
-full available pytest: 217 passed, 7 skipped
-focused AUTH-001 gate: 83 passed, 2 skipped
+full available pytest: 229 passed, 7 skipped
+focused AUTH-001 gate: 95 passed, 2 skipped
 SQLite migration 0008 -> 0007 -> 0008 passed
 Alembic check passed
 Jinja parsing passed
@@ -73,7 +73,7 @@ Flask/Psycopg/PostgreSQL scenarios подтверждаются только Git
 - Hotfix не меняет migration/schema и не отключает `WTF_CSRF_SSL_STRICT`; после merge обязателен реальный Safari/iPhone retest register/verify/reset.
 
 
-- Production SMTP configuration is now present and readiness reports `smtp` / `email_delivery_configured=true`; actual delivery still requires register/reset E2E.
+- Production readiness previously confirmed SMTP config; after v1.4.16 deploy expected staging state is `gmail_api` / `email_delivery_configured=true`; actual delivery still requires register/reset E2E.
 - Existing OAuth rows are not auto-bound.
 - Pending/session/token cleanup and identity erasure policy remain future PRIV/OPS work.
 - Shared rate-limit storage is required before multiple replicas.
@@ -88,7 +88,7 @@ Application revert without touching search/OAuth/sync data. Keep additive `0008`
 AUTH-001 SAFARI CSRF HOTFIX
 -> GitHub green
 -> Render redeploy (revision remains 0008)
--> Mail.ru SMTP SSL delivery -> Safari register/verify/login/session/reset E2E
+-> Gmail API HTTPS delivery -> Safari register/verify/login/session/reset E2E
 -> AUTH-001 COMPLETE
 -> AUTH-002 START
 ```
@@ -96,13 +96,13 @@ AUTH-001 SAFARI CSRF HOTFIX
 ## 9. Новые канонические версии
 
 ```text
-PLAN_CURRENT 1.4.15
-PROJECT_PASSPORT 2.29
-SOURCE_AUDIT 1.4.15
-AUTH001_IMPLEMENTATION 1.0
-AUTH001_VERIFICATION_STATUS 1.0
-AUTH001_RUNBOOK 1.0
-AUTH001_SECURITY_REFERENCE 1.0
+PLAN_CURRENT 1.4.16
+PROJECT_PASSPORT 2.30
+SOURCE_AUDIT 1.4.16
+AUTH001_IMPLEMENTATION 1.2
+AUTH001_VERIFICATION_STATUS 1.2
+AUTH001_RUNBOOK 1.2
+AUTH001_SECURITY_REFERENCE 1.2
 DOCUMENT_STANDARD 1.1 (без изменений)
 ```
 
@@ -113,3 +113,5 @@ DOCUMENT_STANDARD 1.1 (без изменений)
 | 1.4.12 | 10.08.2026 | SEARCH-004 final; AUTH-001 prepared. |
 | 1.4.13 | 10.08.2026 | AUTH-001 candidate implemented with migration 0008; external verification pending. |
 | 1.4.14 | 10.08.2026 | Render 0008 + SMTP readiness confirmed; Safari missing-Referer CSRF conflict localized; strict-origin hotfix prepared without weakening CSRF. |
+| 1.4.15 | 11.08.2026 | Safari hotfix production-pass and Mail.ru implicit SSL fallback; GitHub Actions/readiness green. |
+| 1.4.16 | 11.08.2026 | Render Free SMTP egress blocker confirmed; Gmail API HTTPS staging candidate prepared with domain-sender pre-release gate. |

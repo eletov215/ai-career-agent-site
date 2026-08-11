@@ -4,7 +4,7 @@
 |---|---|
 | Документ | AUTH001_SECURITY_REFERENCE |
 | Пакет | AUTH-001 |
-| Версия | 1.1 |
+| Версия | 1.2 |
 | Дата | 11 августа 2026 |
 | Статус | НУЖНА ПРОВЕРКА |
 
@@ -19,7 +19,7 @@
 | User | email, normalized email, display name, status, verification/password/login timestamps, password hash | plaintext password |
 | AuthSession | user id, token hash, created/last-seen/expiry/revoke timestamps, safe reason, user-agent hash | raw token, IP, full user-agent |
 | AuthToken | user id, purpose, token hash, TTL, consumed state/reason | raw verification/reset token |
-| SMTP config | environment only | Git/ZIP/database/log output |
+| Email transport config | SMTP/Gmail OAuth secrets in environment only | Git/ZIP/database/log output |
 
 ## 3. Password contract
 
@@ -55,7 +55,9 @@ Register and forgot/reset return generic copy regardless of account existence. L
 
 ## 7. Email contract
 
-SMTP adapter supports STARTTLS and implicit SSL/TLS with default certificate validation. Production refuses `memory`, refuses plaintext SMTP, and rejects configuration that enables STARTTLS and implicit SSL simultaneously. Delivery logs include only safe event/purpose/backend/error type; recipient, subject body, action URL and SMTP response are excluded.
+Email delivery remains provider-neutral. SMTP adapter supports STARTTLS and implicit SSL/TLS with default certificate validation. Gmail API staging adapter uses HTTPS only, exchanges the environment-stored refresh token for a short-lived access token and sends RFC 2822/base64url messages through `users.messages.send`; permanent access tokens are not stored. Production refuses `memory`; SMTP plaintext/conflicting secure modes remain rejected. Delivery logs include only safe event/purpose/backend/error type and, for Gmail API failures, safe stage/status code; recipient, subject/body, action URL, SMTP responses, OAuth client secret, refresh token and access token are excluded.
+
+Gmail API is explicitly staging-only. Before beta/commercial release, email delivery must move to a project-owned domain sender (target example `noreply@ai-career-agent.ru`) with SPF/DKIM/DMARC and production-grade transactional operations. The transport swap must not change registration/verification/reset business logic.
 
 ## 8. HTTP controls
 
@@ -64,14 +66,15 @@ All state changes are POST + CSRF. Route-specific rate limits supplement SEC-001
 ## 9. Known residual risks
 
 - In-memory rate limits are not shared across future replicas.
-- Email deliverability, sender reputation, DKIM/SPF/DMARC and bounce handling are provider/operations concerns not implemented here.
+- Google Auth Platform Testing may expire/revoke the staging refresh token and require re-authorization; this is acceptable only for current staging.
+- Gmail API sender is temporary staging infrastructure; production domain sender, SPF/DKIM/DMARC, bounce/complaint handling and reputation operations remain a mandatory pre-release gate.
 - User-agent hash does not create a human-readable device label.
 - MFA, breached-password API, WebAuthn and security notifications are future work.
 - Data retention/account deletion belong to PRIV-001.
 
 ## 10. Rollback and incident response
 
-Revoke sessions and disable email delivery first. Preserve auth tables for forensic/rollback unless explicit data erasure is required. Rotate SMTP credentials if exposed. Token/password plaintext is not expected in logs; any evidence of leakage blocks release and triggers SEC/OPS incident handling.
+Revoke sessions and disable email delivery first. Preserve auth tables for forensic/rollback unless explicit data erasure is required. Rotate/revoke the active provider credentials (SMTP password or Gmail OAuth client/refresh token) if exposed. Token/password plaintext is not expected in logs; any evidence of leakage blocks release and triggers SEC/OPS incident handling.
 
 ## 11. Журнал версий
 
@@ -79,3 +82,4 @@ Revoke sessions and disable email delivery first. Preserve auth tables for foren
 |---|---|---|
 | 1.0 | 10.08.2026 | Зафиксированы password/token/session/email/enumeration/redirect security contracts AUTH-001. |
 | 1.1 | 11.08.2026 | Email transport contract расширен STARTTLS + implicit SSL/TLS с запретом plaintext/conflicting modes в production. |
+| 1.2 | 11.08.2026 | Добавлен Gmail API HTTPS staging contract, OAuth-token secrecy и обязательный domain-sender migration gate до beta/commercial release. |

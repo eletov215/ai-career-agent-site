@@ -2,12 +2,12 @@
 
 | Поле | Значение |
 |---|---|
-| Канонический план | `docs/PLAN_CURRENT.md` — 1.4.13 |
-| Паспорт | `docs/PROJECT_PASSPORT.md` — 2.27 |
+| Канонический план | `docs/PLAN_CURRENT.md` — 1.4.16 |
+| Паспорт | `docs/PROJECT_PASSPORT.md` — 2.30 |
 | Текущий пакет | `AUTH-001 — НУЖНА ПРОВЕРКА` |
 | Следующий пакет | `AUTH-002` после подтверждения AUTH-001 |
 | Candidate database revision | `20260810_0008` |
-| Production до deploy | Render revision `20260809_0007` |
+| Production до deploy | Render revision `20260810_0008` |
 
 > GitHub является главным источником кода. Более новый ZIP текущего чата становится рабочей основой. Секреты, `.env`, базы, dumps, backups, virtualenv, caches и bytecode не входят в репозиторий.
 
@@ -40,7 +40,7 @@ provider-neutral disabled/memory/SMTP email
 
 ## 4. Email delivery
 
-Production default `AUTH_EMAIL_BACKEND=disabled` fail-closed. Для полного E2E настроить защищённый SMTP через Render/VPS secrets: STARTTLS (`AUTH_SMTP_USE_TLS=1`) или implicit SSL/TLS (`AUTH_SMTP_USE_SSL=1`). `memory` используется только в test и запрещён в production.
+Production default `AUTH_EMAIL_BACKEND=disabled` fail-closed. Текущий Render Free staging использует `AUTH_EMAIL_BACKEND=gmail_api` через HTTPS и OAuth refresh token; SMTP adapters сохраняются для VPS/paid infrastructure. `memory` используется только в test и запрещён в production. Gmail API — временный staging transport: до beta/commercial release обязателен sender собственного домена с SPF/DKIM/DMARC.
 
 ## 5. Основной стек
 
@@ -71,7 +71,7 @@ python -m pytest -q
 python -m alembic check
 ```
 
-Локально подтверждено: `217 passed, 7 skipped`; focused AUTH-001 gate: `83 passed, 2 skipped`; migration `0008 -> 0007 -> 0008` и `alembic check` пройдены. GitHub Actions дополнительно выполняет dedicated AUTH-001 gate, PostgreSQL migration/integration, SEC/OPS/SYNC/SEARCH regressions, backup/restore и container smoke.
+Локально подтверждено: `229 passed, 7 skipped`; focused AUTH-001 gate: `95 passed, 2 skipped`; migration `0008 -> 0007 -> 0008` и `alembic check` пройдены. GitHub Actions дополнительно выполняет dedicated AUTH-001 gate, PostgreSQL migration/integration, SEC/OPS/SYNC/SEARCH regressions, backup/restore и container smoke.
 
 ## 8. Render staging
 

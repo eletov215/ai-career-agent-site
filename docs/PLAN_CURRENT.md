@@ -3,15 +3,15 @@
 | Поле | Значение |
 |---|---|
 | Документ | PLAN_CURRENT |
-| Версия | 1.4.15 |
+| Версия | 1.4.16 |
 | Дата | 11 августа 2026 |
 | Статус | ДЕЙСТВУЮЩИЙ |
-| Основа кода | `ai-career-agent-site-main (10).zip` из актуального GitHub `main`; Safari CSRF hotfix подтверждён реальной registration POST; Yandex SMTP отклонён внешним anti-spam policy; candidate добавляет implicit SSL/TLS SMTP для Mail.ru без migration |
-| Следующий gate | `AUTH-001` — green GitHub Actions, Render deploy Mail.ru SMTP SSL/TLS и полный account E2E |
+| Основа кода | `ai-career-agent-site-main (11).zip` из актуального GitHub `main`; v1.4.15 прошёл green GitHub Actions и Render readiness, Mail.ru SMTP на Render Free упёрся в SMTP egress restriction; candidate v1.4.16 добавляет Gmail API HTTPS staging backend без migration |
+| Следующий gate | `AUTH-001` — green GitHub Actions для Gmail API candidate, Render Gmail API HTTPS delivery и полный account E2E |
 
 > ОБЯЗАТЕЛЬНО ДЛЯ КАЖДОГО НОВОГО ЧАТА: прочитать этот план, новый паспорт и актуальный архив. После завершения любого пункта вернуть обновлённые DOCX/PDF/Markdown, новый ZIP, доказательства проверки и запись в журнале версий.
 
-> КОНТРОЛЬНЫЕ СТАТУСЫ ЭТОЙ ВЕРСИИ: `FND-001`, `FND-002`, `DATA-001`, `DATA-002`, `SEC-001`, `OPS-001`, `INFRA-PREP-001`, `SYNC-001`, `SYNC-002`, `SEARCH-001`, `SEARCH-002` и `SEARCH-003` — **ВЫПОЛНЕНО**; `SEARCH-004` — **ВЫПОЛНЕНО**; `AUTH-001` — **НУЖНА ПРОВЕРКА**; `SEARCH-005` — **ЗАПЛАНИРОВАНО**; `DOC-001` — **В РАБОТЕ как постоянный процесс**; `INFRA-001` — **ОТЛОЖЕНО ДО ПРЕДРЕЛИЗНОГО ЭТАПА**. Документы с версией ниже `1.4.15` считаются устаревшими для определения очереди разработки.
+> КОНТРОЛЬНЫЕ СТАТУСЫ ЭТОЙ ВЕРСИИ: `FND-001`, `FND-002`, `DATA-001`, `DATA-002`, `SEC-001`, `OPS-001`, `INFRA-PREP-001`, `SYNC-001`, `SYNC-002`, `SEARCH-001`, `SEARCH-002` и `SEARCH-003` — **ВЫПОЛНЕНО**; `SEARCH-004` — **ВЫПОЛНЕНО**; `AUTH-001` — **НУЖНА ПРОВЕРКА**; `SEARCH-005` — **ЗАПЛАНИРОВАНО**; `DOC-001` — **В РАБОТЕ как постоянный процесс**; `INFRA-001` — **ОТЛОЖЕНО ДО ПРЕДРЕЛИЗНОГО ЭТАПА**. Документы с версией ниже `1.4.16` считаются устаревшими для определения очереди разработки.
 
 ## 1. Источник истины и аудит источников
 
@@ -28,6 +28,7 @@
 - Версия 1.4.13 реализует AUTH-001 candidate: существующий `users` становится first-party identity root; migration `20260810_0008` добавляет password fields, revocable `auth_sessions` и single-use `auth_tokens`; добавлены versioned scrypt, enumeration-safe register/login/reset, session rotation/revoke, provider-neutral email adapter, auth blueprint/UI и dedicated CI gate. Production email default `disabled`; пакет остаётся НУЖНА ПРОВЕРКА до green CI, Render `0008`, SMTP и полного account E2E.
 - Версия 1.4.14 фиксирует production Safari CSRF regression, обнаруженный после успешных Render `0008` и SMTP readiness checks: auth responses использовали `Referrer-Policy: no-referrer`, а production `WTF_CSRF_SSL_STRICT=true` требовал same-origin Referer. Hotfix заменяет policy на `strict-origin`, сохраняя CSRF strict mode и скрывая path/query token data. Новой migration нет; требуется green CI и полный Render Safari E2E.
 - Версия 1.4.15 подтверждает Safari CSRF hotfix реальным production register POST: запрос дошёл до auth business logic и попытки email delivery. Yandex sender вернул `SMTPDataError`; ручная отправка из того же ящика показала внешнюю anti-spam блокировку на сутки. Для быстрого staging fallback добавлена backward-compatible поддержка implicit SMTP SSL/TLS (`AUTH_SMTP_USE_SSL`) поверх существующего STARTTLS. Mail.ru официально использует `smtp.mail.ru:465` с SSL/TLS и password for external app. Новой migration нет; AUTH-001 остаётся НУЖНА ПРОВЕРКА до green CI, Render Mail.ru delivery и полного E2E.
+- Версия 1.4.16 фиксирует следующий blocker: v1.4.15 прошёл green GitHub Actions и Render `/health/ready`, но реальная Mail.ru delivery на Render Free завершилась `OSError` до SMTP provider из-за ограничения SMTP egress free web service. Для staging добавлен provider-neutral `gmail_api` backend: OAuth refresh token обменивается на short-lived access token по HTTPS, письмо отправляется через Gmail `users.messages.send`; CI использует mocks и не обращается к Google. Gmail API является только временным staging transport. До beta/commercial release обязателен переход на sender собственного домена (целевой пример `noreply@ai-career-agent.ru`) через production-grade transactional delivery с SPF/DKIM/DMARC; registration/verification/reset business logic при этом не переписывается. Новой migration нет; AUTH-001 остаётся НУЖНА ПРОВЕРКА до green CI, Render Gmail API delivery и полного E2E.
 
 ## 2. Обязательный протокол работы
 
@@ -146,7 +147,7 @@ MVP не готов, если работает только отдельная �
 
 | ID | Приоритет | Статус | Пункт |
 |---|---|---|---|
-| AUTH-001 | P0 | НУЖНА ПРОВЕРКА | First-party account, verification/reset, revocable sessions и SMTP adapter реализованы; требуются CI/Render E2E |
+| AUTH-001 | P0 | НУЖНА ПРОВЕРКА | First-party account, verification/reset, revocable sessions и provider-neutral email adapters реализованы; Gmail API candidate требует CI/Render E2E |
 | AUTH-002 | P0 | ЗАПЛАНИРОВАНО | Привязка OAuth HeadHunter и SuperJob к пользователю сервиса |
 | PROF-001 | P1 | ЗАПЛАНИРОВАНО | Структурированный карьерный профиль |
 | PROF-002 | P1 | ЗАПЛАНИРОВАНО | Импорт резюме в профиль с проверкой пользователем |
@@ -609,13 +610,13 @@ MVP не готов, если работает только отдельная �
 
 **Цель:** Создать собственную first-party identity; HH/SuperJob становятся независимыми дополнительными подключениями и не привязываются автоматически.
 
-**Реализация:** Существующий `users`; versioned scrypt; additive migration `20260810_0008`; hashed TTL/single-use verification/reset tokens; revocable PostgreSQL sessions; register/verify/login/logout/reset/revoke blueprint; disabled/memory/SMTP STARTTLS or implicit SSL/TLS email adapters; enumeration-safe responses и route limits.
+**Реализация:** Существующий `users`; versioned scrypt; additive migration `20260810_0008`; hashed TTL/single-use verification/reset tokens; revocable PostgreSQL sessions; register/verify/login/logout/reset/revoke blueprint; disabled/memory/SMTP STARTTLS or implicit SSL/TLS/Gmail API HTTPS email adapters; enumeration-safe responses и route limits.
 
 **Влияние на код:** `domain/auth.py`, `models/auth.py`, `repositories/auth.py`, `services/auth.py`, `services/passwords.py`, `services/email_delivery.py`, `routes/auth.py`, auth templates, dashboard/navigation, config/backup/CI/tests/docs.
 
 **Влияние на сайт:** Появляются регистрация, подтверждение email, вход, recovery и управление активными устройствами. При не настроенной почте registration/reset fail-closed с честным сообщением.
 
-**Критерии готовности:** Green dedicated CI/PostgreSQL migration; Render revision `0008`; production SMTP configured; E2E registration/verification/login/logout/revoke/reset; no plaintext/secret leakage; sessions отзываются и reset закрывает старые sessions.
+**Критерии готовности:** Green dedicated CI/PostgreSQL migration; Render revision `0008`; production email backend configured; E2E registration/verification/login/logout/revoke/reset; no plaintext/secret leakage; sessions отзываются и reset закрывает старые sessions.
 
 **Ограничения:** AUTH-002 OAuth binding, profile, account deletion/export, MFA и admin roles не входят. До подтверждённой реальной transactional email delivery пакет не может быть закрыт.
 
@@ -1474,7 +1475,7 @@ INFRA-001 real VPS test
 
 ## 16. Следующий пакет
 
-`AUTH-001` — **НУЖНА ПРОВЕРКА**. Production работает на migration `20260810_0008`; `/health/ready` подтвердил PostgreSQL/migrations и SMTP configuration. Safari CSRF hotfix уже подтверждён: реальный register POST дошёл до auth logic и email delivery. Yandex вернул `SMTPDataError`, а ручная отправка из того же ящика показала внешнюю anti-spam блокировку. Candidate v1.4.15 добавляет implicit SMTP SSL/TLS для Mail.ru (`smtp.mail.ru:465`) при сохранении STARTTLS compatibility. Требуется green CI, Render Mail.ru delivery и полный account E2E.
+`AUTH-001` — **НУЖНА ПРОВЕРКА**. Production работает на migration `20260810_0008`; `/health/ready` подтвердил PostgreSQL/migrations. Safari CSRF hotfix подтверждён реальным register POST. v1.4.15 прошёл green GitHub Actions, однако Mail.ru delivery на Render Free завершилась `OSError` из-за SMTP egress restriction до провайдера. Candidate v1.4.16 добавляет Gmail API HTTPS backend с OAuth refresh token и минимальным `gmail.send` scope; внешние HTTP вызовы mocked в CI. Gmail API — только staging transport; до beta/commercial release обязателен доменный sender с SPF/DKIM/DMARC. Требуется green CI, Render Gmail API delivery и полный account E2E.
 
 Verification gate:
 
@@ -1547,3 +1548,5 @@ GitHub/production/API: <подтверждено или требуется>
 | 1.4.12 | 10.08.2026 | SEARCH-004-COMPLETE / AUTH-001-PREP | Green CI, Render revision 0007, canonical `/vacancies` mobile search and legacy redirect confirmed; SEARCH-004 closed, AUTH-001 ready. |
 | 1.4.13 | 10.08.2026 | AUTH-001-CANDIDATE | First-party account, migration `20260810_0008`, scrypt, verification/reset tokens, revocable sessions, SMTP adapter, UI/tests/CI готовы; требуется GitHub/Render/SMTP E2E. |
 | 1.4.14 | 10.08.2026 | AUTH-001-SAFARI-CSRF-HOTFIX | Render `0008` и SMTP readiness подтверждены; Safari register POST выявил missing Referer из-за auth `no-referrer`; policy изменена на `strict-origin`, strict CSRF сохранён; требуется CI/Render E2E. |
+| 1.4.15 | 11.08.2026 | AUTH-001-MAILRU-SMTP-SSL | Safari hotfix production-pass подтверждён; Yandex external anti-spam blocker локализован; добавлен Mail.ru-compatible implicit SSL/TLS; GitHub Actions green, Render readiness green. |
+| 1.4.16 | 11.08.2026 | AUTH-001-GMAIL-API-STAGING | Render Free SMTP egress blocker подтверждён `OSError`; добавлен Gmail API HTTPS backend с OAuth refresh-token flow, mocked tests и обязательным future domain sender gate. |

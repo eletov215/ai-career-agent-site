@@ -1,3 +1,14 @@
+## Unreleased — AUTH-001 Gmail API HTTPS staging fallback (11 августа 2026)
+
+- v1.4.15 GitHub Actions and Render readiness are green; schema remains `20260810_0008`.
+- Real Mail.ru delivery on Render Free fails with `OSError` before provider delivery because SMTP egress is unavailable on the current free web service.
+- Added `AUTH_EMAIL_BACKEND=gmail_api` using HTTPS only: OAuth refresh token -> short-lived access token -> Gmail `users.messages.send`.
+- Added config validation for sender/client ID/client secret/refresh token and `AUTH_GMAIL_TIMEOUT_SECONDS`; secrets stay in environment only.
+- Added mocked positive/negative Gmail API tests; CI never calls Google. Existing SMTP STARTTLS/implicit SSL support remains available.
+- No database migration; expected revision stays `20260810_0008`.
+- Gmail API is staging-only. Before beta/commercial release, switch to a project-owned domain sender (target example `noreply@ai-career-agent.ru`) with production transactional delivery and SPF/DKIM/DMARC without rewriting AUTH business logic.
+- AUTH-001 remains НУЖНА ПРОВЕРКА until the new candidate passes GitHub CI, Render real Gmail delivery and the complete account E2E.
+
 ## Unreleased — AUTH-001 Mail.ru SMTP SSL/TLS fallback (11 августа 2026)
 
 - Real Safari registration now passes strict CSRF and reaches AUTH email delivery.

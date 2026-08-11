@@ -24,7 +24,7 @@ routes/auth.py
       → users + auth_sessions + auth_tokens
 
 services/passwords.py       versioned scrypt
-services/email_delivery.py  disabled/memory/SMTP adapter
+services/email_delivery.py  disabled/memory/SMTP/Gmail API provider-neutral adapters
 ```
 
 `app.py` только wire-ит AuthService через `StorageServices`; routes не импортируют ORM.

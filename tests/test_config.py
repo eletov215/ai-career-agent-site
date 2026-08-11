@@ -174,6 +174,7 @@ def test_numeric_and_boolean_values_are_validated_centrally(tmp_path):
             AUTH_SMTP_USE_TLS="yes",
             AUTH_SMTP_USE_SSL="no",
             AUTH_SMTP_TIMEOUT_SECONDS="6.5",
+            AUTH_GMAIL_TIMEOUT_SECONDS="7.5",
             CSRF_TIME_LIMIT_SECONDS="1800",
             MAX_FORM_MEMORY_SIZE="131072",
             MAX_FORM_PARTS="20",
@@ -223,6 +224,7 @@ def test_numeric_and_boolean_values_are_validated_centrally(tmp_path):
     assert settings.auth_smtp_use_tls is True
     assert settings.auth_smtp_use_ssl is False
     assert settings.auth_smtp_timeout_seconds == 6.5
+    assert settings.auth_gmail_timeout_seconds == 7.5
     assert settings.csrf_time_limit_seconds == 1800
     assert settings.max_form_memory_size == 131_072
     assert settings.max_form_parts == 20
@@ -274,6 +276,7 @@ def test_numeric_and_boolean_values_are_validated_centrally(tmp_path):
         ("AUTH_PASSWORD_MIN_LENGTH", "9", "не может быть меньше 10"),
         ("AUTH_EMAIL_BACKEND", "provider", "Разрешены"),
         ("AUTH_SMTP_TIMEOUT_SECONDS", "0.5", "не может быть меньше 1.0"),
+        ("AUTH_GMAIL_TIMEOUT_SECONDS", "0.5", "не может быть меньше 1.0"),
         ("LOG_LEVEL", "verbose", "Разрешены"),
         ("LOG_FORMAT", "xml", "Разрешены"),
         ("SERVICE_NAME", "bad service", "SERVICE_NAME"),
@@ -493,3 +496,35 @@ def test_development_smtp_can_disable_tls_for_local_mail_sink():
         )
     )
     assert settings.auth_smtp_use_tls is False
+
+
+
+def test_gmail_api_backend_requires_sender_and_oauth_credentials():
+    with pytest.raises(ConfigurationError, match="AUTH_EMAIL_BACKEND=gmail_api") as error:
+        load_settings(production_environment(AUTH_EMAIL_BACKEND="gmail_api"))
+
+    message = str(error.value)
+    assert "AUTH_EMAIL_FROM" in message
+    assert "AUTH_GMAIL_CLIENT_ID" in message
+    assert "AUTH_GMAIL_CLIENT_SECRET" in message
+    assert "AUTH_GMAIL_REFRESH_TOKEN" in message
+
+
+def test_gmail_api_backend_accepts_complete_https_delivery_config():
+    settings = load_settings(
+        production_environment(
+            AUTH_EMAIL_BACKEND="gmail_api",
+            AUTH_EMAIL_FROM="staging.sender@gmail.com",
+            AUTH_GMAIL_CLIENT_ID="client-id.apps.googleusercontent.com",
+            AUTH_GMAIL_CLIENT_SECRET="client-secret",
+            AUTH_GMAIL_REFRESH_TOKEN="refresh-token",
+            AUTH_GMAIL_TIMEOUT_SECONDS="9",
+        )
+    )
+
+    assert settings.auth_email_backend == "gmail_api"
+    assert settings.auth_email_from == "staging.sender@gmail.com"
+    assert settings.auth_gmail_client_id == "client-id.apps.googleusercontent.com"
+    assert settings.auth_gmail_client_secret == "client-secret"
+    assert settings.auth_gmail_refresh_token == "refresh-token"
+    assert settings.auth_gmail_timeout_seconds == 9.0

@@ -4,14 +4,14 @@
 |---|---|
 | Документ | AUTH001_VERIFICATION_STATUS |
 | Пакет | AUTH-001 |
-| Версия | 1.1 |
+| Версия | 1.2 |
 | Дата | 11 августа 2026 |
 | Статус | НУЖНА ПРОВЕРКА |
 | Candidate revision | `20260810_0008` |
 
 ## 1. Контрольный статус
 
-Safari CSRF hotfix подтверждён production register POST. Yandex delivery blocked externally by anti-spam; Mail.ru SSL/TLS fallback candidate локально проверен. Пакет остаётся НУЖНА ПРОВЕРКА до green GitHub Actions и real Render Mail.ru email/account E2E.
+Safari CSRF hotfix подтверждён production register POST. v1.4.15 GitHub Actions и Render readiness green; Mail.ru реальная отправка на Render Free остановилась `OSError` из-за SMTP egress restriction. v1.4.16 Gmail API HTTPS candidate локально проверяется. Пакет остаётся НУЖНА ПРОВЕРКА до green GitHub Actions и real Render Gmail API email/account E2E.
 
 ## 2. Матрица критериев
 
@@ -26,18 +26,18 @@ Safari CSRF hotfix подтверждён production register POST. Yandex deliv
 | Enumeration-safe register/reset/login copy | ПРОЙДЕНО ЛОКАЛЬНО |
 | CSRF/rate-limit/no-store/strict-origin templates | SAFARI HOTFIX ПОДГОТОВЛЕН; CI/RENDER RETEST ОЖИДАЕТСЯ |
 | Migration `0008 -> 0007 -> 0008` | ПРОЙДЕНО SQLITE; POSTGRESQL CI ОЖИДАЕТСЯ |
-| Dedicated AUTH-001 CI gate | ОЖИДАЕТСЯ GITHUB |
-| Render current/expected revision `0008` | ОЖИДАЕТСЯ |
-| SMTP configured without secret leakage | ПРОЙДЕНО ДЛЯ READINESS; YANDEX DELIVERY BLOCKED EXTERNALLY; MAIL.RU RETEST ОЖИДАЕТСЯ |
+| Dedicated AUTH-001 CI gate | v1.4.15 GREEN; v1.4.16 GMAIL CANDIDATE ОЖИДАЕТСЯ |
+| Render current/expected revision `0008` | ПРОЙДЕНО |
+| Email transport configured without secret leakage | SMTP readiness ПРОЙДЕНО; MAIL.RU BLOCKED BY RENDER FREE EGRESS; GMAIL API RETEST ОЖИДАЕТСЯ |
 | Register/verify/login/logout/revoke E2E | ОЖИДАЕТСЯ RENDER |
 | Forgot/reset + old sessions invalid E2E | ОЖИДАЕТСЯ RENDER |
 
 ## 3. Локальные доказательства
 
 ```text
-Full available pytest: 217 passed, 7 skipped
+Full available pytest: 229 passed, 7 skipped
 Compileall: passed
-Focused AUTH-001 gate: 83 passed, 2 skipped
+Focused AUTH-001 gate: 95 passed, 2 skipped
 Config validation: passed
 Migration round-trip + Alembic check: passed
 Jinja parse: passed
@@ -56,6 +56,15 @@ full pytest in this isolated runtime                      not completed (runtime
 ```
 
 The single focused skip is the existing Flask runtime skip in the current isolated environment; the full GitHub workflow remains the authoritative gate. No external SMTP network call is made in CI tests.
+
+## 3.2 Local evidence — Gmail API HTTPS candidate v1.4.16
+
+```text
+focused config/email/infra tests                            77 passed
+compileall config/services/tests/scripts                   passed
+external Google calls in tests                             mocked
+database migration                                         none; expected revision 20260810_0008
+```
 
 ## 4. GitHub gate
 
@@ -77,11 +86,11 @@ current_revision  = 20260810_0008
 expected_revision = 20260810_0008
 database.ok       = true
 persistent        = true
-auth.email_backend = smtp
+auth.email_backend = gmail_api
 auth.email_delivery_configured = true
 ```
 
-Затем пройти runbook с новым test email. В application logs допустимы только `event`, `purpose`, backend и безопасный result code; raw email/password/token/SMTP response отсутствуют.
+Затем пройти runbook с новым test email. В application logs допустимы только `event`, `purpose`, backend, safe `delivery_stage`, provider HTTP status code и exception type; raw email/password/token/provider response отсутствуют.
 
 ## 6. Ограничения
 
@@ -96,7 +105,7 @@ Application revert безопасен. Schema `0008` рекомендуется 
 ```text
 GitHub green
 -> Render 0008
--> Mail.ru SMTP SSL delivery green
+-> Gmail API HTTPS delivery green
 -> full account E2E
 -> AUTH-001 COMPLETE
 ```
@@ -107,3 +116,4 @@ GitHub green
 |---|---|---|
 | 1.0 | 10.08.2026 | Создана candidate verification matrix AUTH-001. |
 | 1.1 | 11.08.2026 | Safari CSRF pass подтверждён; Yandex anti-spam blocker зафиксирован; Mail.ru implicit SSL/TLS candidate ожидает CI/Render E2E. |
+| 1.2 | 11.08.2026 | v1.4.15 CI/readiness green; Render Free SMTP egress blocker зафиксирован; Gmail API HTTPS candidate добавлен и ожидает CI/Render E2E. |

@@ -14,7 +14,7 @@ AUTH-001 — НУЖНА ПРОВЕРКА
 branch: auth-001-first-party-account
 commit: auth: add first-party account and revocable sessions
 candidate revision: 20260810_0008
-production before deploy: 20260809_0007
+production current revision: 20260810_0008
 ```
 
 ## 3. Обязательный цикл
@@ -45,12 +45,13 @@ GitHub Actions должен выполнить dedicated AUTH-001, PostgreSQL mi
 
 ## 5. AUTH-001 production verification
 
-1. Configure SMTP secrets outside GitHub/chat; production must use exactly one secure mode (STARTTLS or implicit SSL/TLS).
-2. `/health/ready` revision `20260810_0008`, auth SMTP configured true; for Mail.ru staging use `smtp.mail.ru:465`, `AUTH_SMTP_USE_TLS=0`, `AUTH_SMTP_USE_SSL=1`.
+1. Current Render Free staging uses `AUTH_EMAIL_BACKEND=gmail_api`; Gmail OAuth Client ID/Secret/Refresh Token remain only in environment and tests mock Google HTTP calls.
+2. `/health/ready` revision `20260810_0008`, `auth.email_backend=gmail_api`, configured true; real success still requires `auth_email_delivered` and message receipt.
 3. Register unique user and verify email.
 4. Login, create second session, revoke it, logout current.
 5. Forgot/reset; old token/password/sessions invalid.
 6. CSRF/rate limits/no-store/strict-origin/open-redirect and secret-free logs; production Safari form POST must pass without weakening `WTF_CSRF_SSL_STRICT`.
+7. Before beta/commercial release replace personal Gmail API with a project-owned domain sender and SPF/DKIM/DMARC; AUTH business logic remains provider-neutral.
 
 ## 6. Неприкосновенные правила
 
