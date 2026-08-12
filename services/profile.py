@@ -362,19 +362,44 @@ def _rows(value: Any, *, label: str, maximum_items: int) -> list[Mapping[str, An
     return rows
 
 
-def _row_has_values(row: Mapping[str, Any]) -> bool:
-    return any(
-        (isinstance(value, bool) and value)
-        or (value is not None and str(value).strip())
-        for value in row.values()
-    )
+def _row_has_values(
+    row: Mapping[str, Any],
+    *,
+    ignored_defaults: Mapping[str, set[str]] | None = None,
+) -> bool:
+    """Return whether a repeatable UI row contains user-entered meaning.
+
+    Empty editor rows still submit default ``select`` values (for example
+    ``employment_current=0`` or ``skill_level=unspecified``).  Those UI
+    defaults must not turn an otherwise blank optional row into a partially
+    completed record, because PROF-001 explicitly allows partial profiles.
+    """
+
+    ignored_defaults = ignored_defaults or {}
+    for key, value in row.items():
+        if isinstance(value, bool):
+            if value:
+                return True
+            continue
+        if value is None:
+            continue
+        text = str(value).strip()
+        if not text:
+            continue
+        ignored = ignored_defaults.get(key, set())
+        if text.casefold() in {item.casefold() for item in ignored}:
+            continue
+        return True
+    return False
 
 
 def _normalise_skills(value: Any) -> list[dict[str, Any]]:
     result: list[dict[str, Any]] = []
     seen: set[str] = set()
     for row in _rows(value, label="Навыки", maximum_items=50):
-        if not _row_has_values(row):
+        if not _row_has_values(
+            row, ignored_defaults={"level": {"unspecified"}}
+        ):
             continue
         name = _clean_text(row.get("name"), label="Название навыка", maximum=80)
         if not name:
@@ -397,7 +422,9 @@ def _normalise_languages(value: Any) -> list[dict[str, Any]]:
     result: list[dict[str, Any]] = []
     seen: set[str] = set()
     for row in _rows(value, label="Языки", maximum_items=15):
-        if not _row_has_values(row):
+        if not _row_has_values(
+            row, ignored_defaults={"level": {"unspecified"}}
+        ):
             continue
         name = _clean_text(row.get("name"), label="Название языка", maximum=80)
         if not name:
@@ -419,7 +446,9 @@ def _normalise_languages(value: Any) -> list[dict[str, Any]]:
 def _normalise_employment(value: Any) -> list[dict[str, Any]]:
     result: list[dict[str, Any]] = []
     for row in _rows(value, label="Опыт работы", maximum_items=20):
-        if not _row_has_values(row):
+        if not _row_has_values(
+            row, ignored_defaults={"current": {"0", "false", "no", "off"}}
+        ):
             continue
         company = _clean_text(row.get("company"), label="Компания", maximum=160)
         position = _clean_text(row.get("position"), label="Должность", maximum=160)

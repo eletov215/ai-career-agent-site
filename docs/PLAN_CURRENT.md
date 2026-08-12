@@ -3,15 +3,15 @@
 | Поле | Значение |
 |---|---|
 | Документ | PLAN_CURRENT |
-| Версия | 1.4.20 |
-| Дата | 11 августа 2026 |
+| Версия | 1.4.21 |
+| Дата | 12 августа 2026 |
 | Статус | ДЕЙСТВУЮЩИЙ |
-| Основа кода | `ai-career-agent-site-main (14).zip` из актуального GitHub `main`, развернутого на Render; AUTH-001/AUTH-002 завершены; PROF-001 candidate добавляет owner-scoped профиль и migration `20260811_0010` |
-| Следующий gate | `PROF-001` — green Pull Request CI, Render `20260811_0010` и owner/versioning production E2E |
+| Основа кода | GitHub `main` после merge PROF-001 candidate и Render migration `20260811_0010`; production E2E выявил validation defect пустых repeatable rows; hotfix v1.4.21 подготовлен без новой migration |
+| Следующий gate | `PROF-001` hotfix — green Pull Request CI, Render redeploy на той же revision `20260811_0010`, повтор partial-profile save и продолжение owner/versioning E2E |
 
 > ОБЯЗАТЕЛЬНО ДЛЯ КАЖДОГО НОВОГО ЧАТА: прочитать этот план, новый паспорт и актуальный архив. После завершения любого пункта вернуть обновлённые DOCX/PDF/Markdown, новый ZIP, доказательства проверки и запись в журнале версий.
 
-> КОНТРОЛЬНЫЕ СТАТУСЫ ЭТОЙ ВЕРСИИ: `FND-001`, `FND-002`, `DATA-001`, `DATA-002`, `SEC-001`, `OPS-001`, `INFRA-PREP-001`, `SYNC-001`, `SYNC-002`, `SEARCH-001`, `SEARCH-002`, `SEARCH-003`, `SEARCH-004`, `AUTH-001` и `AUTH-002` — **ВЫПОЛНЕНО**; `PROF-001` — **НУЖНА ПРОВЕРКА**; `SEARCH-005` — **ЗАПЛАНИРОВАНО**; `DOC-001` — **В РАБОТЕ как постоянный процесс**; `INFRA-001` — **ОТЛОЖЕНО ДО ПРЕДРЕЛИЗНОГО ЭТАПА**. Документы с версией ниже `1.4.20` считаются устаревшими для определения очереди разработки.
+> КОНТРОЛЬНЫЕ СТАТУСЫ ЭТОЙ ВЕРСИИ: `FND-001`, `FND-002`, `DATA-001`, `DATA-002`, `SEC-001`, `OPS-001`, `INFRA-PREP-001`, `SYNC-001`, `SYNC-002`, `SEARCH-001`, `SEARCH-002`, `SEARCH-003`, `SEARCH-004`, `AUTH-001` и `AUTH-002` — **ВЫПОЛНЕНО**; `PROF-001` — **НУЖНА ПРОВЕРКА**; `SEARCH-005` — **ЗАПЛАНИРОВАНО**; `DOC-001` — **В РАБОТЕ как постоянный процесс**; `INFRA-001` — **ОТЛОЖЕНО ДО ПРЕДРЕЛИЗНОГО ЭТАПА**. Документы с версией ниже `1.4.21` считаются устаревшими для определения очереди разработки.
 
 ## 1. Источник истины и аудит источников
 
@@ -34,6 +34,7 @@
 - Версия 1.4.18 реализует AUTH-002 candidate. OAuth HeadHunter/SuperJob больше не является browser identity: connect routes требуют first-party session, state привязан к `user_id` и `auth_session_id`, callback атомарно создаёт/claim/refresh owner-bound `OAuthConnection`. Migration `20260811_0009` сохраняет unique external identity и добавляет unique `(user_id, provider)` без email auto-link; legacy unbound rows остаются nullable и claim-ятся только после свежего OAuth proof. Dashboard и disconnect owner-scoped, tokens продолжают храниться зашифрованно, legacy browser keys не авторизуют. Local tests green; пакет остаётся НУЖНА ПРОВЕРКА до GitHub/Render/real HH/SJ E2E.
 - Версия 1.4.19 закрывает AUTH-002 как ВЫПОЛНЕНО. GitHub Actions полностью зелёный, включая dedicated `Verify AUTH-002 first-party OAuth identity ownership controls`; Render `/health/ready` подтвердил PostgreSQL `persistent=true`, `current_revision=expected_revision=20260811_0009`, `migrations.ok=true`, `status=ok`, `oauth_configured=true`. Production E2E подтвердил для HeadHunter и SuperJob: первичную привязку, сохранение после logout/login, reconnect/`Обновить доступ` без дублей, запрет cross-user claim той же external identity, сохранение ownership первого User после конфликтной попытки, disconnect и устойчивое отключённое состояние после refresh/relogin. Итоговый regression smoke `/dashboard`, `/vacancies`, first-party login/logout и Render logs подтверждён пользователем как штатный. AUTH-002 закрыт; следующий пакет — PROF-001.
 - Версия 1.4.20 реализует PROF-001 candidate. Добавлены owner-scoped `career_profiles`, immutable `career_profile_versions`, optimistic version conflict protection и migration `20260811_0010`. Профиль хранит вручную подтверждённые contacts, goals, geography, salary, skills, employment, achievements, education и languages; неполные данные допустимы. Добавлены `/profile`, editor, history/read-only version views, dashboard/navigation integration, backup inventory и dedicated `Verify PROF-001 structured career profile controls`. Импорт резюме, AI enrichment, restore historical version, export/delete и autosave исключены. Пакет остаётся НУЖНА ПРОВЕРКА до green Pull Request CI, Render `0010`, owner isolation/version/persistence E2E и regression smoke.
+- Версия 1.4.21 фиксирует production E2E defect PROF-001 после green Pull Request CI и успешного Render upgrade `20260811_0010`: пустые repeatable rows формы отправляли UI default values (`employment_current=0`, `skill_level=unspecified`, `language_level=unspecified`) и ошибочно считались заполненными, из-за чего частичный профиль требовал компанию/должность или другие необязательные данные. Hotfix игнорирует только эти default-only rows, сохраняет строгую validation при реальном частичном вводе и добавляет regression tests service/route. Новой migration нет; PROF-001 остаётся НУЖНА ПРОВЕРКА до green hotfix CI, redeploy и повторного production E2E.
 
 
 ## 2. Обязательный протокол работы
@@ -83,7 +84,7 @@
 | Резюме | PDF extraction на pypdf и browser resume builder; LLM пока нет. |
 | Тесты | GitHub Actions, unit/provider/route/config/database/migration/security/observability/backup tests. |
 | Hosting | Render временно используется как staging/резервная площадка. Для production требуется проверенный VPS с доступностью из РФ/РБ, собственный домен и план миграции. |
-| Текущая схема | Production `20260811_0009`; candidate head `20260811_0010` добавляет `career_profiles` и immutable `career_profile_versions` без изменения AUTH/OAuth/Search/Sync rows. |
+| Текущая схема | Production `20260811_0010`; hotfix v1.4.21 не меняет schema и исправляет только optional repeatable-row validation в PROF-001. |
 
 ### 5.1 Выполнено/частично
 
@@ -338,7 +339,7 @@ MVP не готов, если работает только отдельная �
 
 **Реализация:** Канонические PLAN_CURRENT и паспорт обновляются после каждого архитектурного решения; README/ROADMAP/CHANGELOG и package-specific docs синхронизируются вместе с ближайшим кодовым пакетом, чтобы документация и код проходили один CI/merge cycle.
 
-**Текущее состояние:** PLAN_CURRENT 1.4.20 и паспорт 2.34 фиксируют SEARCH-001/002/003/004, AUTH-001 и AUTH-002 как ВЫПОЛНЕНО; PROF-001 — НУЖНА ПРОВЕРКА. Production PostgreSQL остаётся на `20260811_0009`, candidate revision — `20260811_0010`. Gmail API staging contract сохраняется.
+**Текущее состояние:** PLAN_CURRENT 1.4.21 и паспорт 2.35 фиксируют SEARCH-001/002/003/004, AUTH-001 и AUTH-002 как ВЫПОЛНЕНО; PROF-001 — НУЖНА ПРОВЕРКА. Production PostgreSQL уже на `20260811_0010`; hotfix не добавляет migration. Gmail API staging contract сохраняется.
 
 **Влияние на сайт:** Нет.
 
@@ -1566,3 +1567,4 @@ GitHub/production/API: <подтверждено или требуется>
 | 1.4.18 | 11.08.2026 | AUTH-002-CANDIDATE | Owner-bound HH/SuperJob identities, state tied to first-party session, migration `20260811_0009`, owner-scoped refresh/disconnect, safe conflicts and dedicated tests/CI gate; требуется GitHub/Render/real provider E2E. |
 | 1.4.19 | 11.08.2026 | AUTH-002-COMPLETE / PROF-001-PREP | Green GitHub Actions, Render `0009`, полный HH/SuperJob production ownership E2E и regression smoke подтверждены; AUTH-002 ВЫПОЛНЕНО, следующий пакет — PROF-001. |
 | 1.4.20 | 11.08.2026 | PROF-001-CANDIDATE | Owner-scoped structured profile, immutable versions, migration `20260811_0010`, edit/view/history UI, validation, backup inventory and dedicated CI gate; требуется Pull Request/Render/production E2E. |
+| 1.4.21 | 12.08.2026 | PROF-001-PARTIAL-PROFILE-HOTFIX | После green CI и Render `0010` production E2E выявил false-required validation из-за default values пустых repeatable rows. Исправлено игнорирование default-only rows, добавлены regression tests; schema без изменений, требуется hotfix CI/redeploy/E2E. |

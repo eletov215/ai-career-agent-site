@@ -1,26 +1,26 @@
-# AI Career Agent — аудит источников v1.4.20
+# AI Career Agent — аудит источников v1.4.21
 
 | Поле | Значение |
 |---|---|
 | Документ | SOURCE_AUDIT |
-| Версия | 1.4.20 |
-| Дата | 11 августа 2026 |
-| Проверяемый пакет | PROF-001 structured owner-scoped career profile candidate |
-| Рабочий источник кода | `ai-career-agent-site-main (14).zip` из актуального GitHub `main`, развернутого на Render |
-| Канонический план до обновления | PLAN_CURRENT 1.4.19 |
-| Канонический паспорт до обновления | PROJECT_PASSPORT 2.33 |
-| Результат | PROF-001 candidate реализован; migration `20260811_0010`; local focused evidence green; GitHub/Render/production E2E pending |
+| Версия | 1.4.21 |
+| Дата | 12 августа 2026 |
+| Проверяемый пакет | PROF-001 partial-profile validation hotfix |
+| Рабочий источник кода | GitHub `main` после merge PROF-001 candidate; Render/PostgreSQL revision `20260811_0010`; hotfix built from same merged candidate |
+| Канонический план до обновления | PLAN_CURRENT 1.4.20 |
+| Канонический паспорт до обновления | PROJECT_PASSPORT 2.34 |
+| Результат | Initial PROF-001 Pull Request CI green and Render `0010` ready; production E2E found false-required validation for blank repeatable rows; hotfix prepared, no migration; re-verification pending |
 
 ## 1. Контрольный статус
 
-AUTH-001 и AUTH-002 остаются ВЫПОЛНЕНО. PROF-001 переводится из ГОТОВО К СТАРТУ в НУЖНА ПРОВЕРКА. Статус ВЫПОЛНЕНО запрещён до green Pull Request CI, Render migration/readiness и owner/versioning production E2E. DOC-STD-001 v1.1 обязателен.
+AUTH-001 и AUTH-002 остаются ВЫПОЛНЕНО. PROF-001 остаётся НУЖНА ПРОВЕРКА. Initial PR CI и Render migration/readiness `0010` подтверждены, но production E2E выявил дефект partial-save validation. Статус ВЫПОЛНЕНО запрещён до green hotfix CI, redeploy и полного owner/versioning production E2E. DOC-STD-001 v1.1 обязателен.
 
 ## 2. Проверка актуального источника кода
 
 | Область | Результат |
 |---|---|
 | WSGI | `app.py`, `app:app` сохранены; `app_fixed.py` отсутствует |
-| Database baseline | production `20260811_0009`; candidate head `20260811_0010` |
+| Database baseline | production `20260811_0010`; hotfix schema unchanged |
 | Identity root | existing first-party `users`; profile ownership — strict `user_id` FK + unique one-per-User |
 | Current state | `career_profiles` stores validated current structured snapshot |
 | Version history | `career_profile_versions` stores immutable full snapshot per material save |
@@ -31,6 +31,18 @@ AUTH-001 и AUTH-002 остаются ВЫПОЛНЕНО. PROF-001 перево�
 | UI | `/profile`, `/profile/edit`, `/profile/history`, read-only version view, dashboard/nav integration |
 | Backups | inventory includes current and version tables |
 | Prohibited artifacts | `.env`, secrets, DB/dump/backup/venv/cache/bytecode excluded |
+
+## 2.1 Production defect и hotfix v1.4.21
+
+Production partial-profile smoke 12.08.2026 показал сообщение «Для опыта работы укажите компанию и должность» при заполнении только необязательного минимума. Root cause: initial blank repeatable rows формы отправляют default select values (`employment_current=0`, `skill_level=unspecified`, `language_level=unspecified`), а generic row detector считал любое непустое значение признаком введённой записи.
+
+Hotfix:
+- default-only row теперь считается пустым и игнорируется;
+- если пользователь реально вводит часть записи или меняет default на meaningful value, строгая field validation сохраняется;
+- добавлены service regression и route regression, имитирующий фактический browser POST пустых rows;
+- migration не меняется, production revision остаётся `20260811_0010`.
+
+Local hotfix evidence: `tests/test_profile_service.py + tests/test_prof001_migration.py = 5 passed`; `compileall` passed. Route regression добавлен, но локальная среда без Flask его skip-ает; authoritative proof — GitHub CI.
 
 ## 3. Подтверждённый candidate scope
 
@@ -108,9 +120,9 @@ PROF-001 CANDIDATE
 ## 9. Новые канонические версии
 
 ```text
-PLAN_CURRENT 1.4.20
-PROJECT_PASSPORT 2.34
-SOURCE_AUDIT 1.4.20
+PLAN_CURRENT 1.4.21
+PROJECT_PASSPORT 2.35
+SOURCE_AUDIT 1.4.21
 PROF001_IMPLEMENTATION 1.0
 PROF001_VERIFICATION_STATUS 1.0
 PROF001_RUNBOOK 1.0
@@ -124,3 +136,4 @@ DOCUMENT_STANDARD 1.1 (без изменений)
 |---|---|---|
 | 1.4.19 | 11.08.2026 | AUTH-002 complete after green CI, Render 0009, full HH/SJ ownership E2E and regression smoke; PROF-001 next. |
 | 1.4.20 | 11.08.2026 | PROF-001 candidate: structured owner profile, immutable versions, migration 0010, UI/validation/tests/backup updates; external verification pending. |
+| 1.4.21 | 12.08.2026 | Initial CI/Render `0010` passed; production partial-save exposed default-only repeatable-row validation defect. Hotfix fixes row detection and adds regression tests; CI/redeploy/E2E pending. |

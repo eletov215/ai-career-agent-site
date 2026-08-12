@@ -4,8 +4,8 @@
 |---|---|
 | Документ | PROF001_RUNBOOK |
 | Пакет | PROF-001 |
-| Версия | 1.0 |
-| Дата | 11 августа 2026 |
+| Версия | 1.1 |
+| Дата | 12 августа 2026 |
 | Статус | НУЖНА ПРОВЕРКА |
 
 ## 1. Назначение
@@ -18,7 +18,7 @@ Runbook описывает безопасный branch/PR deploy и production v
 2. Проверить WSGI `app:app`; `app_fixed.py` отсутствует.
 3. Проверить `database.CURRENT_REVISION=20260811_0010`.
 4. Убедиться, что ZIP не содержит `.env`, DB/dumps/backups, caches, bytecode, virtualenv or secrets.
-5. Использовать отдельную branch, например `prof-001-candidate-v1.4.20`.
+5. Для hotfix использовать отдельную branch, например `prof-001-partial-profile-hotfix-v1.4.21`.
 
 ## 3. Pull Request gate
 
@@ -35,6 +35,10 @@ Docker/Compose runtime smoke
 ```
 
 Не merge при любом red step.
+
+## 3.1 Hotfix gate after production partial-save defect
+
+Перед продолжением E2E обязательно подтвердить новый regression: форма с headline/target role и визуально пустыми repeatable rows (`employment_current=0`, `skill/language level=unspecified`) сохраняется как version 1 без требования company/position/skill/language. Новой migration нет; `/health/ready` остаётся на `20260811_0010`.
 
 ## 4. Deploy
 

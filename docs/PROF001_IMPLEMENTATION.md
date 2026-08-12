@@ -4,15 +4,19 @@
 |---|---|
 | Документ | PROF001_IMPLEMENTATION |
 | Пакет | PROF-001 |
-| Версия | 1.0 |
-| Дата | 11 августа 2026 |
+| Версия | 1.1 |
+| Дата | 12 августа 2026 |
 | Статус | НУЖНА ПРОВЕРКА |
-| Основа кода | `ai-career-agent-site-main (14).zip` из актуального GitHub `main`/Render |
+| Основа кода | GitHub `main` после merge PROF-001 candidate; production revision `20260811_0010`; hotfix v1.4.21 |
 | Candidate revision | `20260811_0010` |
 
 ## 1. Контрольный статус
 
 PROF-001 реализован как candidate. Пакет создаёт структурированный карьерный профиль, принадлежащий first-party `User`, и неизменяемую историю подтверждённых пользователем версий. Статус ВЫПОЛНЕНО запрещён до green Pull Request CI, Render migration/readiness и production owner/versioning E2E.
+
+## 1.1 Hotfix partial-profile validation
+
+Первый production E2E после successful CI/Render `0010` выявил расхождение между contract «неполный профиль допустим» и browser form payload. Пустые repeatable rows всё равно отправляли default values `employment_current=0`, `skill_level=unspecified`, `language_level=unspecified`, поэтому generic `_row_has_values` ошибочно запускал обязательную validation вложенной записи. Hotfix делает detection default-aware: такие строки игнорируются как пустые, но любой реальный ввод по-прежнему валидируется строго. Добавлены regression tests service и browser-shaped route payload. Schema/revision не меняется.
 
 ## 2. Цель и границы
 
@@ -214,3 +218,4 @@ branch / Pull Request
 | Версия | Дата | Изменение |
 |---|---|---|
 | 1.0 | 11.08.2026 | PROF-001 candidate реализован; external verification pending. |
+| 1.1 | 12.08.2026 | Исправлен production partial-profile false-required bug для default-only repeatable rows; добавлены regression tests, migration остаётся `0010`. |

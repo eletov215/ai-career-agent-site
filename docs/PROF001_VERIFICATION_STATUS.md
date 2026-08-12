@@ -4,14 +4,14 @@
 |---|---|
 | Документ | PROF001_VERIFICATION_STATUS |
 | Пакет | PROF-001 |
-| Версия | 1.0 |
-| Дата | 11 августа 2026 |
+| Версия | 1.1 |
+| Дата | 12 августа 2026 |
 | Статус | НУЖНА ПРОВЕРКА |
 | Candidate revision | `20260811_0010` |
 
 ## 1. Контрольный статус
 
-Код, migration, UI, validation and local focused evidence подготовлены. Статус ВЫПОЛНЕНО запрещён до green Pull Request CI, Render `0010` и production E2E.
+Initial Pull Request CI green и Render `0010` readiness подтверждены. Production E2E остановлен на partial-profile save из-за false-required validation пустой repeatable row. Hotfix v1.4.21 подготовлен; статус ВЫПОЛНЕНО запрещён до green hotfix CI, redeploy и продолжения production E2E.
 
 ## 2. Local evidence
 
@@ -27,6 +27,18 @@
 | architecture/template/document/infra/hygiene checks | passed |
 | Flask routes | prepared; Flask unavailable locally, authoritative in CI |
 | PostgreSQL integration | prepared; Psycopg/service required in CI |
+
+
+## 2.1 Hotfix evidence
+
+| Проверка | Результат |
+|---|---|
+| production defect reproduction | passed: blank employment row caused company/position error |
+| root cause | default select values marked blank repeatable rows as non-empty |
+| service regression + migration | 5 passed |
+| compileall | passed |
+| browser-shaped route regression | added; authoritative execution required in GitHub CI |
+| schema change | none; stays `20260811_0010` |
 
 ## 3. CI gate
 

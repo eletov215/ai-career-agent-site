@@ -3,11 +3,11 @@
 | Поле | Значение |
 |---|---|
 | Документ        | PROJECT_PASSPORT                                                                              |
-| Версия паспорта | 2.34 |
+| Версия паспорта | 2.35 |
 | Дата            | 11 августа 2026                                                                               |
 | Статус          | ДЕЙСТВУЮЩИЙ                                                                                   |
-| Связанный план | `AI_Career_Agent_PLAN_CURRENT v1.4.20` |
-| Основа кода | `ai-career-agent-site-main (14).zip` из актуального GitHub `main`/Render; AUTH-001/AUTH-002 complete; PROF-001 candidate с migration `20260811_0010` |
+| Связанный план | `AI_Career_Agent_PLAN_CURRENT v1.4.21` |
+| Основа кода | GitHub `main` после merge PROF-001 candidate; Render/PostgreSQL уже на `20260811_0010`; production partial-profile E2E выявил validation defect, hotfix v1.4.21 подготовлен без новой migration |
 
 > Контрольные статусы: FND-001/FND-002/DATA-001/DATA-002/SEC-001/OPS-001/INFRA-PREP-001/SYNC-001/SYNC-002/SEARCH-001/SEARCH-002/SEARCH-003/SEARCH-004/AUTH-001/AUTH-002 — ВЫПОЛНЕНО; PROF-001 — НУЖНА ПРОВЕРКА; DOC-001 — В РАБОТЕ как постоянный процесс; INFRA-001 — ОТЛОЖЕНО ДО ПРЕДРЕЛИЗНОГО ЭТАПА.
 
@@ -342,7 +342,7 @@ Structured career profile candidate реализован поверх first-part
 - owner-only `/profile`, edit and read-only history/version views;
 - migration `20260811_0010`, backup inventory and dedicated CI gate.
 
-Local evidence: full available pytest `240 passed, 9 skipped`; extended focused PROF-001 checks `26 passed, 3 skipped`; migration round-trip/Alembic check/compile/Jinja/document/infra/hygiene passed. Flask/PostgreSQL route/integration proof remains GitHub CI gate. External completion requires PR CI, Render `0010`, relogin/restart persistence, owner isolation, stale conflict/versioning and AUTH/OAuth/search regression smoke.
+Local evidence: full available pytest `240 passed, 9 skipped`; extended focused PROF-001 checks `26 passed, 3 skipped`; migration round-trip/Alembic check/compile/Jinja/document/infra/hygiene passed. Flask/PostgreSQL route/integration proof remains GitHub CI gate. External completion requires PR CI, Render `0010`, relogin/restart persistence, owner isolation, stale conflict/versioning and AUTH/OAuth/search regression smoke. Initial Pull Request CI and Render migration/readiness `0010` subsequently passed. First production E2E exposed a form-validation defect: blank repeatable rows carried default select values and were treated as real records. Hotfix v1.4.21 ignores only default-only rows and adds regression coverage; PROF-001 remains НУЖНА ПРОВЕРКА pending hotfix CI/redeploy and resumed E2E.
 
 Excluded: resume import/review (PROF-002), drafts/autosave (PROF-003), restore historical snapshot, export/delete/retention (PRIV-001), AI-generated facts and public profile.
 
@@ -459,3 +459,4 @@ PROF-001 — НУЖНА ПРОВЕРКА. Candidate создаёт owner-scoped 
 | 2.32 | 11.08.2026 | AUTH-002 candidate: owner-bound HH/SJ identities, migration 0009, state/session binding, encrypted owner-scoped reconnect/disconnect and dedicated tests; external verification pending. |
 | 2.33 | 11.08.2026 | AUTH-002 complete: green GitHub Actions, Render `0009`, полный HH/SJ ownership E2E и regression smoke подтверждены; PROF-001 становится следующим пакетом. |
 | 2.34 | 11.08.2026 | PROF-001 candidate: owner-scoped structured facts, immutable version history, migration `0010`, UI/service/repository/tests and dedicated CI gate; external verification pending. |
+| 2.35 | 12.08.2026 | PROF-001 hotfix candidate: initial CI/Render `0010` passed; production partial-save uncovered default-only repeatable-row validation bug. Hotfix keeps schema `0010`, fixes optional-row detection and adds regression tests; verification resumes after redeploy. |

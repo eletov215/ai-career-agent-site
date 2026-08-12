@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.4.21 — PROF-001 partial-profile hotfix — 12.08.2026
+
+- Initial PROF-001 Pull Request CI passed and Render successfully migrated production PostgreSQL to `20260811_0010`.
+- Production E2E found a false-required validation defect: blank repeatable form rows still submitted default select values and were treated as entered records.
+- Updated repeatable-row detection to ignore only default-only `employment_current=0`, `skill_level=unspecified`, and `language_level=unspecified` rows.
+- Preserved strict validation when a user actually starts entering a repeatable record.
+- Added service and browser-shaped route regression tests for partial profile save.
+- No database migration or environment variable changes. PROF-001 remains НУЖНА ПРОВЕРКА pending hotfix CI/redeploy and resumed production E2E.
+
 ## 1.4.20 — PROF-001 candidate — 11.08.2026
 
 - Added owner-scoped `career_profiles` and immutable `career_profile_versions`.

@@ -155,6 +155,54 @@ def test_profile_create_view_history_and_dashboard_summary(app_module, client):
     assert "Версия 1" in dashboard_body
 
 
+def test_profile_route_allows_partial_profile_with_rendered_blank_default_rows(app_module, client):
+    email = f"profile-partial-ui-{uuid.uuid4().hex}@example.test"
+    _register_verify_login(app_module, client, email=email)
+
+    page = client.get("/profile/edit")
+    saved = client.post(
+        "/profile/edit",
+        data={
+            "csrf_token": _csrf(page),
+            "expected_version": "0",
+            "headline": "Инженер-конструктор",
+            "target_roles": "Инженер-конструктор",
+            "relocation": "consider",
+            "salary_period": "month",
+            "salary_tax_mode": "unspecified",
+            # These values are submitted by the initial blank repeatable rows
+            # rendered by the editor and must not make the rows mandatory.
+            "skill_name": "",
+            "skill_level": "unspecified",
+            "employment_company": "",
+            "employment_position": "",
+            "employment_start": "",
+            "employment_current": "0",
+            "employment_end": "",
+            "employment_description": "",
+            "achievement_title": "",
+            "achievement_year": "",
+            "achievement_description": "",
+            "education_institution": "",
+            "education_degree": "",
+            "education_field": "",
+            "education_start_year": "",
+            "education_end_year": "",
+            "education_description": "",
+            "language_name": "",
+            "language_level": "unspecified",
+        },
+        follow_redirects=False,
+    )
+
+    assert saved.status_code == 302
+    assert saved.headers["Location"].endswith("/profile")
+    profile = client.get("/profile")
+    body = profile.get_data(as_text=True)
+    assert "Инженер-конструктор" in body
+    assert "Версия 1" in body
+
+
 def test_profile_routes_allow_incomplete_profile_and_reject_stale_or_invalid_posts(app_module, client):
     email = f"profile-validation-{uuid.uuid4().hex}@example.test"
     _register_verify_login(app_module, client, email=email)

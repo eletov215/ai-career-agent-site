@@ -169,6 +169,40 @@ def test_profile_service_allows_partial_profiles_and_versions_material_changes(p
         assert session.scalar(select(func.count()).select_from(CareerProfileVersion)) == 2
 
 
+def test_profile_service_ignores_blank_repeatable_rows_with_ui_defaults(profile_runtime):
+    runtime, (first_user_id, _second_user_id) = profile_runtime
+    service = CareerProfileService(CareerProfileRepository(runtime))
+
+    saved = service.save(
+        user_id=first_user_id,
+        payload={
+            "headline": "Инженер-конструктор",
+            "goals": {"target_roles": ["Инженер-конструктор"]},
+            "skills": [{"name": "", "level": "unspecified"}],
+            "employment": [
+                {
+                    "company": "",
+                    "position": "",
+                    "start": "",
+                    "end": "",
+                    "current": "0",
+                    "description": "",
+                }
+            ],
+            "languages": [{"name": "", "level": "unspecified"}],
+        },
+        expected_version=0,
+    )
+
+    assert saved.changed is True
+    assert saved.profile.version == 1
+    assert saved.profile.headline == "Инженер-конструктор"
+    assert saved.profile.goals["target_roles"] == ["Инженер-конструктор"]
+    assert saved.profile.skills == ()
+    assert saved.profile.employment == ()
+    assert saved.profile.languages == ()
+
+
 def test_profile_service_is_owner_scoped_and_rejects_stale_editor(profile_runtime):
     runtime, (first_user_id, second_user_id) = profile_runtime
     service = CareerProfileService(CareerProfileRepository(runtime))
