@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Импорт резюме — AI Career Agent{% endblock %}
+{% block content %}
+<main class="section profile-page profile-import-page">
+  <div class="container profile-shell profile-shell--narrow">
+    <header class="profile-page-heading">
+      <div>
+        <div class="profile-kicker"><span aria-hidden="true">✦</span> PROF-002 · проверка перед сохранением</div>
+        <h1>Импортировать резюме</h1>
+        <p>Загрузите текстовый PDF. Мы подготовим предложения для карьерного профиля, но ничего не сохраним, пока вы не проверите форму и не подтвердите её.</p>
+      </div>
+      <div class="profile-page-heading__actions">
+        <a class="btn btn-secondary" href="{{ url_for('profile.view_profile') }}">К профилю</a>
+      </div>
+    </header>
+
+    {% if error %}<div class="auth-alert auth-alert--error" role="alert">{{ error }}</div>{% endif %}
+
+    <section class="profile-import-card" aria-labelledby="resume-import-title">
+      <div class="profile-import-card__icon" aria-hidden="true">PDF</div>
+      <div class="profile-import-card__copy">
+        <h2 id="resume-import-title">Загрузите существующее резюме</h2>
+        <p>Поддерживается PDF с извлекаемым текстом. Скан без текстового слоя пока не распознаётся. Максимальный размер — {{ max_resume_upload_mb }} МБ.</p>
+        <ul class="profile-import-rules">
+          <li>Файл и полный текст обрабатываются только в рамках запроса и не сохраняются.</li>
+          <li>Распознанные данные появятся в обычной редактируемой форме.</li>
+          <li>Текущие подтверждённые значения не заменяются молча: конфликт нужно решить вручную.</li>
+          <li>Новая версия профиля создаётся только после явного подтверждения.</li>
+        </ul>
+      </div>
+      <form class="profile-import-form" method="post" enctype="multipart/form-data" action="{{ url_for('profile.import_resume') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <label class="profile-file-picker">
+          <span>PDF-резюме</span>
+          <input type="file" name="resume" accept="application/pdf,.pdf" required>
+          <small>Выберите один файл. После разбора откроется экран проверки.</small>
+        </label>
+        <button class="btn btn-primary" type="submit">Извлечь данные для проверки</button>
+      </form>
+    </section>
+
+    <section class="profile-import-privacy">
+      <strong>Важно</strong>
+      <p>Это не AI-анализ и не автоматическое подтверждение фактов. Детерминированный parser может ошибаться в структуре документа, поэтому все предложения необходимо проверить.</p>
+    </section>
+  </div>
+</main>
+{% endblock %}

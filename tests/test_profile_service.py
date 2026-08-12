@@ -267,3 +267,46 @@ def test_profile_service_rejects_invalid_structured_facts(profile_runtime):
                 payload=payload,
                 expected_version=0,
             )
+
+
+def test_profile_service_records_import_source_and_bounded_provenance(profile_runtime):
+    runtime, (first_user_id, _second_user_id) = profile_runtime
+    service = CareerProfileService(CareerProfileRepository(runtime))
+
+    saved = service.save(
+        user_id=first_user_id,
+        payload={"headline": "Imported and confirmed"},
+        expected_version=0,
+        source_kind="resume_import",
+        provenance={
+            "schema_version": 1,
+            "extractor_version": "deterministic-text-v1",
+            "page_count": 2,
+            "character_count": 2400,
+            "reviewed_at": 200,
+            "detected_sections": ["core", "employment"],
+            "section_confidence": {"core": "medium", "employment": "high"},
+        },
+        now=200,
+    )
+    assert saved.changed is True
+    version = service.get_version(user_id=first_user_id, version=1)
+    assert version is not None
+    assert version.source_kind == "resume_import"
+    assert version.provenance["extractor_version"] == "deterministic-text-v1"
+    assert version.provenance["page_count"] == 2
+
+    with pytest.raises(ProfileValidationError, match="Неизвестный источник"):
+        service.save(
+            user_id=first_user_id,
+            payload={"headline": "Bad source"},
+            expected_version=1,
+            source_kind="provider_magic",
+        )
+    with pytest.raises(ProfileValidationError, match="provenance"):
+        service.save(
+            user_id=first_user_id,
+            payload={"headline": "Bad provenance"},
+            expected_version=1,
+            provenance={"too_large": "x" * 9000},
+        )

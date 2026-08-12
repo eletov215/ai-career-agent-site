@@ -1,66 +1,55 @@
-AI Career Agent - PROF-001 structured career profile candidate
+AI CAREER AGENT — PROF-002 CANDIDATE v1.4.23
 
-Package: PROF-001
-Candidate version: 1.4.20
-Candidate database revision: 20260811_0010
-Baseline: ai-career-agent-site-main (14).zip from current GitHub main/Render
+Changed/new files relative to verified GitHub main commit f5e513f0f992b20305fbef36851ef97576013c86.
 
-Application/domain/persistence:
-- app.py
-- database.py
-- domain/__init__.py
-- domain/profile.py (new)
-- models/__init__.py
-- models/profile.py (new)
-- models/user.py
-- repositories/__init__.py
-- repositories/profiles.py (new)
-- routes/profile.py (new)
-- services/profile.py (new)
-- services/storage.py
-- operations/backup.py
-- migrations/versions/20260811_0010_structured_career_profile.py (new)
+MODIFY  .github/workflows/ci.yml
+MODIFY  CHANGED_FILES.txt
+MODIFY  PATCH_MANIFEST.txt
+MODIFY  README.md
+MODIFY  README_FIRST.txt
+MODIFY  README_UPLOAD.txt
+MODIFY  app.py
+MODIFY  database.py
+MODIFY  docs/ARCHITECTURE.md
+MODIFY  docs/BACKUP_RESTORE.md
+MODIFY  docs/CHANGELOG.md
+MODIFY  docs/DATABASE_MIGRATION.md
+MODIFY  docs/DOMAIN_MODEL.md
+MODIFY  docs/PLAN_CURRENT.md
+ADD     docs/PROF002_EXTRACTION_REFERENCE.md
+ADD     docs/PROF002_IMPLEMENTATION.md
+ADD     docs/PROF002_RUNBOOK.md
+ADD     docs/PROF002_SECURITY_REFERENCE.md
+ADD     docs/PROF002_VERIFICATION_STATUS.md
+MODIFY  docs/PROJECT_GUIDE.md
+MODIFY  docs/PROJECT_PASSPORT.md
+MODIFY  docs/ROADMAP.md
+MODIFY  docs/SECURITY.md
+MODIFY  docs/SOURCE_AUDIT.md
+MODIFY  domain/__init__.py
+MODIFY  domain/profile.py
+ADD     domain/resume_import.py
+ADD     migrations/versions/20260812_0011_profile_import_provenance.py
+MODIFY  models/profile.py
+MODIFY  repositories/profiles.py
+MODIFY  routes/profile.py
+MODIFY  scripts/check_document_structure.py
+MODIFY  services/profile.py
+ADD     services/resume_import.py
+MODIFY  services/resume_parser.py
+MODIFY  static/styles.css
+MODIFY  templates/dashboard.html
+MODIFY  templates/profile/edit.html
+MODIFY  templates/profile/history.html
+ADD     templates/profile/import_upload.html
+MODIFY  templates/profile/version.html
+MODIFY  templates/profile/view.html
+MODIFY  tests/test_document_structure.py
+MODIFY  tests/test_postgresql_integration.py
+MODIFY  tests/test_prof001_migration.py
+ADD     tests/test_prof002_migration.py
+MODIFY  tests/test_profile_service.py
+ADD     tests/test_resume_import_routes.py
+ADD     tests/test_resume_import_service.py
 
-UI:
-- templates/base.html
-- templates/dashboard.html
-- templates/profile/_profile_sections.html (new)
-- templates/profile/view.html (new)
-- templates/profile/edit.html (new)
-- templates/profile/history.html (new)
-- templates/profile/version.html (new)
-- static/styles.css
-
-CI/tests/tooling:
-- .github/workflows/ci.yml
-- scripts/check_document_structure.py
-- tests/test_auth002_migration.py
-- tests/test_document_structure.py
-- tests/test_postgresql_integration.py
-- tests/test_prof001_migration.py (new)
-- tests/test_profile_routes.py (new)
-- tests/test_profile_service.py (new)
-
-Repository/canonical documentation:
-- README.md
-- README_FIRST.txt
-- README_UPLOAD.txt
-- docs/ARCHITECTURE.md
-- docs/BACKUP_RESTORE.md
-- docs/CHANGELOG.md
-- docs/DATABASE_MIGRATION.md
-- docs/DOMAIN_MODEL.md
-- docs/PLAN_CURRENT.md
-- docs/PROF001_IMPLEMENTATION.md (new)
-- docs/PROF001_PROFILE_REFERENCE.md (new)
-- docs/PROF001_RUNBOOK.md (new)
-- docs/PROF001_VERIFICATION_STATUS.md (new)
-- docs/PROJECT_GUIDE.md
-- docs/PROJECT_PASSPORT.md
-- docs/ROADMAP.md
-- docs/SECURITY.md
-- docs/SOURCE_AUDIT.md
-- CHANGED_FILES.txt
-- PATCH_MANIFEST.txt
-
-No secrets, personal profile values, databases, dumps, backups, virtualenv, caches or bytecode are included.
+TOTAL: 49 files

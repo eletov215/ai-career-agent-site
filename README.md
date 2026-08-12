@@ -2,107 +2,109 @@
 
 | Поле | Значение |
 |---|---|
-| Канонический план | `docs/PLAN_CURRENT.md` — 1.4.20 |
-| Паспорт | `docs/PROJECT_PASSPORT.md` — 2.34 |
-| Текущий пакет | `PROF-001 — НУЖНА ПРОВЕРКА` |
-| Следующий после завершения | `PROF-002` |
-| Candidate database revision | `20260811_0010` |
-| Production до deploy | Render revision `20260811_0009` |
+| Канонический план | `docs/PLAN_CURRENT.md` — 1.4.23 |
+| Паспорт | `docs/PROJECT_PASSPORT.md` — 2.37 |
+| Текущий пакет | `PROF-002 — НУЖНА ПРОВЕРКА` |
+| Следующий после завершения | `PROF-003` |
+| Production revision | `20260811_0010` |
+| Candidate database revision | `20260812_0011` |
+| Проверенная основа | GitHub `main` commit `f5e513f0f992b20305fbef36851ef97576013c86` |
 
-> GitHub является главным источником кода. Более новый ZIP текущего чата становится рабочей основой. Секреты, `.env`, базы, dumps, backups, virtualenv, caches и bytecode не входят в репозиторий.
+> GitHub является главным источником кода. Загруженный `ai-career-agent-site-main (16).zip` проверен и полностью совпадает с текущим `main`. Секреты, `.env`, базы, dumps, backups, virtualenv, caches и bytecode не входят в репозиторий или release ZIP.
 
 ## 1. Назначение
 
-AI Career Agent — Flask-сервис карьерного сопровождения. WSGI entrypoint: `app:app`. SEARCH-001..004, AUTH-001 и AUTH-002 выполнены. PROF-001 добавляет структурированный owner-scoped карьерный профиль с неизменяемой историей подтверждённых версий.
+AI Career Agent — Flask/Gunicorn-сервис карьерного сопровождения. WSGI entrypoint остаётся `app:app`. SEARCH-001..004, AUTH-001/002 и PROF-001 завершены. PROF-002 добавляет import существующего текстового PDF-резюме в подтверждённый PROF-001 через обязательный editable review.
 
-## 2. PROF-001 candidate
-
-```text
-first-party User is the owner
-one current CareerProfile per User
-material save -> immutable CareerProfileVersion
-incomplete profile allowed
-unchanged save -> no duplicate version
-stale editor -> safe conflict
-provider/PDF/AI data -> no automatic confirmed facts
-migration 20260811_0010
-```
-
-UI:
+## 2. PROF-002 candidate
 
 ```text
-/profile
-/profile/edit
-/profile/history
-/profile/history/<version>
+first-party authenticated owner
+-> upload one bounded text PDF
+-> request-local pypdf extraction
+-> deterministic proposal + confidence/warnings/conflicts/evidence
+-> full editable PROF-001 review
+-> explicit confirm POST
+-> validation + expected version + row lock
+-> immutable confirmed version with aggregate provenance
 ```
 
-Sections: contacts, goals, geography, salary, skills, employment, achievements, education, languages and professional positioning.
+Ключевые инварианты:
 
-## 3. Основной стек
+- до confirm профиль и история не меняются;
+- upload bytes, raw text и unconfirmed proposal не сохраняются;
+- existing confirmed scalar values не заменяются молча;
+- signed review token действует 30 минут, owner/version-bound и не содержит filename/text/facts;
+- user может исправить или удалить любое предложение;
+- OCR, DOC/DOCX, LLM/AI parsing, provider import и persisted drafts исключены;
+- canonical profile schema остаётся `1`.
 
-Python 3.11, Flask/Gunicorn, SQLAlchemy/Alembic, PostgreSQL 17/Psycopg 3, GitHub Actions, Docker/Compose, server-rendered HTML/CSS/JS.
-
-## 4. Локальный запуск
-
-```bash
-python -m venv .venv
-. .venv/bin/activate
-python -m pip install -r requirements.txt
-python -m pip install -r requirements-dev.txt
-export APP_ENV=development
-python scripts/manage_db.py upgrade
-python scripts/start_runtime.py
-```
-
-## 5. Проверки качества
-
-```bash
-python scripts/check_repository_hygiene.py
-python scripts/check_document_structure.py
-python scripts/infra_manifest_check.py
-python -m compileall -q .
-python -m pytest -q
-python -m alembic check
-```
-
-Dedicated CI step:
+Новые/расширенные маршруты:
 
 ```text
-Verify PROF-001 structured career profile controls
+GET/POST /profile/import
+POST     /profile/import/confirm
+GET      /profile/history/<version>
 ```
 
-Flask/PostgreSQL route integration is authoritative in GitHub Actions because the isolated local environment may not contain Flask/Psycopg services.
+## 3. Persistence
 
-## 6. Branch/merge/deploy gate
+Alembic `20260812_0011` добавляет к `career_profile_versions`:
 
 ```text
-branch prof-001-candidate-v1.4.20
--> Pull Request
+source_kind      manual | resume_import
+provenance_json  bounded aggregate extraction/review metadata
+```
+
+Filename, text, contacts, excerpts и profile payload не входят в provenance. Existing versions получают `manual` и `{}`.
+
+## 4. Локальные проверки
+
+```text
+full available pytest:                    246 passed, 10 skipped
+focused PROF-002/PROF-001/parser:         15 passed
+architecture/template/document subset:    23 passed
+compileall:                                passed
+Jinja parse:                               22 templates passed
+SQLite 0011 -> 0010 -> 0011:               passed
+Alembic check:                             passed
+```
+
+Flask/Psycopg/PostgreSQL skips подтверждаются Pull Request CI. В workflow добавлен dedicated `Verify PROF-002 resume import review controls`.
+
+## 5. Правильный workflow
+
+```text
+branch prof-002-candidate-v1.4.23
+-> Pull Request to main
 -> all CI green
--> merge main
--> Render upgrade 0009 -> 0010
--> /health/ready current=expected=20260811_0010
--> profile owner/version/concurrency/restart E2E
--> regression smoke
--> PROF-001 COMPLETE
+-> merge
+-> Render current_revision=expected_revision=20260812_0011
+-> positive/negative/privacy/owner/stale/restart/mobile E2E
+-> PROF-002 COMPLETE
 ```
 
-Не загружать candidate напрямую в `main` до Pull Request CI.
+До полного внешнего gate статус остаётся `НУЖНА ПРОВЕРКА`.
 
-## 7. Документация
+## 6. Документация
 
-- `docs/PROF001_IMPLEMENTATION.md`
-- `docs/PROF001_VERIFICATION_STATUS.md`
-- `docs/PROF001_RUNBOOK.md`
-- `docs/PROF001_PROFILE_REFERENCE.md`
+- `docs/PROF002_IMPLEMENTATION.md`
+- `docs/PROF002_VERIFICATION_STATUS.md`
+- `docs/PROF002_RUNBOOK.md`
+- `docs/PROF002_EXTRACTION_REFERENCE.md`
+- `docs/PROF002_SECURITY_REFERENCE.md`
 - `docs/PLAN_CURRENT.md`
 - `docs/PROJECT_PASSPORT.md`
 - `docs/SOURCE_AUDIT.md`
 
-Документы следуют DOC-STD-001 v1.1. Gmail API остаётся staging-only; domain sender + SPF/DKIM/DMARC до beta/commercial release не отменяется.
+## 7. Rollback
 
+Application revert может оставить additive revision `0011`; предыдущий код игнорирует новые audit columns. Controlled downgrade `0011 -> 0010` удаляет source/provenance metadata, но не current profile и confirmed snapshots. Raw resume content нельзя добавлять в rollback artifacts.
 
-## 8. Инфраструктурная граница
+## 8. Ограничения
 
-`INFRA-001` остаётся отложенным до предрелизного окна. Render используется как staging/резервная площадка; PROF-001 не меняет hosting strategy, WSGI `app:app` или Start Command.
+Deterministic parser не является AI. Image-only PDF fail closed без OCR. Review не является persisted draft и теряется при refresh/expiry. Render остаётся staging/резервной площадкой; собственный VPS/domain и domain email sender остаются pre-release scope.
+
+## 9. Hosting
+
+Render остаётся staging/резервной площадкой. Реальный VPS test `INFRA-001`, production host/domain migration и domain email sender выполняются в предрелизном окне.

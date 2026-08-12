@@ -58,4 +58,13 @@ __all__ = [
     "SyncWorkerRecord",
     "UserRecord",
     "VacancyRecord",
+    "ResumeImportConflict",
+    "ResumeImportProposal",
+    "ResumeImportSignal",
 ]
+
+from .resume_import import (
+    ResumeImportConflict,
+    ResumeImportProposal,
+    ResumeImportSignal,
+)

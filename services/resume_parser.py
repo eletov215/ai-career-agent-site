@@ -17,6 +17,7 @@ class ParsedResume:
     filename: str
     page_count: int
     text: str
+    pages: tuple[str, ...] = ()
 
     @property
     def character_count(self) -> int:
@@ -83,6 +84,7 @@ def parse_resume_pdf(
         filename=filename,
         page_count=page_count,
         text=text,
+        pages=tuple(page_texts),
     )
 
 

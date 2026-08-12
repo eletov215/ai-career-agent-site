@@ -13,7 +13,7 @@
         {% for item in versions %}
           <a class="profile-history-item" href="{{ url_for('profile.profile_version', version=item.version) }}">
             <span class="profile-history-item__number">v{{ item.version }}</span>
-            <div><h2>Версия {{ item.version }}</h2><p>{{ item.changed_sections|join(', ') }}</p><small>{{ item.created_at }}</small></div>
+            <div><h2>Версия {{ item.version }}</h2><p>{{ item.changed_sections|join(', ') }}</p><small>{{ item.created_at }} · {{ item.source_label }}</small></div>
             <span class="profile-history-item__arrow" aria-hidden="true">→</span>
           </a>
         {% endfor %}

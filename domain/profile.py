@@ -42,4 +42,6 @@ class CareerProfileVersionRecord:
     snapshot_json: str
     content_hash: str
     changed_sections_json: str
+    source_kind: str
+    provenance_json: str
     created_at: int

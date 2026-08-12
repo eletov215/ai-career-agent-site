@@ -1,22 +1,42 @@
 {% extends "base.html" %}
-{% block title %}Редактирование профиля — AI Career Agent{% endblock %}
+{% block title %}{{ 'Проверка импорта резюме' if import_review else 'Редактирование профиля' }} — AI Career Agent{% endblock %}
 {% block content %}
 <main class="section profile-page profile-edit-page">
   <div class="container profile-shell">
     <header class="profile-page-heading">
       <div>
-        <div class="profile-kicker"><span aria-hidden="true">✦</span> Данные подтверждает пользователь</div>
-        <h1>{{ 'Редактировать профиль' if profile.exists else 'Создать карьерный профиль' }}</h1>
-        <p>Заполняйте только актуальные факты. Неполный профиль допустим: каждое содержательное сохранение создаёт новую неизменяемую версию.</p>
+        <div class="profile-kicker"><span aria-hidden="true">✦</span> {{ 'Проверьте каждое предложение' if import_review else 'Данные подтверждает пользователь' }}</div>
+        <h1>{% if import_review %}Проверка импорта резюме{% else %}{{ 'Редактировать профиль' if profile.exists else 'Создать карьерный профиль' }}{% endif %}</h1>
+        <p>{% if import_review %}Извлечённые данные ещё не являются подтверждёнными фактами. Исправьте ошибки, удалите лишнее и только затем сохраните профиль.{% else %}Заполняйте только актуальные факты. Неполный профиль допустим: каждое содержательное сохранение создаёт новую неизменяемую версию.{% endif %}</p>
       </div>
-      <div class="profile-page-heading__actions"><a class="btn btn-secondary" href="{{ url_for('profile.view_profile') }}">Отмена</a>{% if profile.exists %}<a class="btn btn-secondary" href="{{ url_for('profile.profile_history') }}">История</a>{% endif %}</div>
+      <div class="profile-page-heading__actions"><a class="btn btn-secondary" href="{{ cancel_url|default(url_for('profile.view_profile')) }}">{{ 'Загрузить другой PDF' if import_review else 'Отмена' }}</a>{% if profile.exists and not import_review %}<a class="btn btn-secondary" href="{{ url_for('profile.profile_history') }}">История</a>{% endif %}</div>
     </header>
 
     {% if error %}<div class="auth-alert auth-alert--error" role="alert">{{ error }}</div>{% endif %}
 
-    <form class="profile-editor" method="post" action="{{ url_for('profile.edit_profile') }}">
+    {% if import_review %}
+      <section class="profile-import-review" aria-labelledby="import-review-title">
+        <div class="profile-import-review__head">
+          <div>
+            <div class="muted">{{ import_review.filename or 'PDF-резюме' }}</div>
+            <h2 id="import-review-title">Предложения готовы к проверке</h2>
+            <p>{{ import_review.page_count }} стр. · {{ import_review.character_count }} символов · общий уровень: <strong>{{ confidence_labels.get(import_review.overall_confidence, import_review.overall_confidence) if confidence_labels is defined else import_review.overall_confidence }}</strong></p>
+          </div>
+          <span class="profile-import-confidence profile-import-confidence--{{ import_review.overall_confidence }}">{{ import_review.overall_confidence|upper }}</span>
+        </div>
+        <div class="profile-import-section-list">
+          {% for item in import_review.sections %}<span class="profile-import-section profile-import-section--{{ item.confidence }}"><b>{{ item.label }}</b><small>{{ item.confidence_label }}</small></span>{% endfor %}
+        </div>
+        {% if import_review.warnings %}<div class="profile-import-warning-list"><strong>Что проверить особенно внимательно</strong><ul>{% for item in import_review.warnings %}<li>{{ item }}</li>{% endfor %}</ul></div>{% endif %}
+        {% if import_review.conflicts %}<div class="profile-import-conflicts"><strong>Конфликты с уже подтверждённым профилем</strong><p>Текущие значения оставлены в форме. Сравните их с предложениями и измените вручную, если импорт точнее.</p>{% for item in import_review.conflicts %}<article><h3>{{ item.label }}</h3><div><span>Подтверждено сейчас</span><p>{{ item.current_value }}</p></div><div><span>Предложено из PDF</span><p>{{ item.suggested_value }}</p></div></article>{% endfor %}</div>{% endif %}
+        {% if import_review.signals %}<details class="profile-import-evidence"><summary>Показать основания распознавания</summary><div>{% for item in import_review.signals %}<article><span>{{ item.label }} · {{ item.confidence_label }}</span><p>{{ item.source_excerpt }}</p></article>{% endfor %}</div></details>{% endif %}
+      </section>
+    {% endif %}
+
+    <form class="profile-editor" method="post" action="{{ form_action|default(url_for('profile.edit_profile')) }}">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <input type="hidden" name="expected_version" value="{{ expected_version }}">
+      {% if import_token %}<input type="hidden" name="import_token" value="{{ import_token }}">{% endif %}
 
       <section class="profile-editor-section" id="profile-core">
         <div class="profile-editor-section__heading"><span>01</span><div><h2>Позиционирование</h2><p>Коротко опишите профессиональную роль и сильные стороны.</p></div></div>
@@ -104,8 +124,8 @@
       </section>
 
       <div class="profile-save-bar">
-        <div><strong>Сохранение — это подтверждение</strong><span>Будет создана новая версия только при содержательных изменениях.</span></div>
-        <div><a class="btn btn-secondary" href="{{ url_for('profile.view_profile') }}">Отмена</a><button class="btn btn-primary" type="submit">Сохранить профиль</button></div>
+        <div><strong>{{ 'Подтверждение импорта' if import_review else 'Сохранение — это подтверждение' }}</strong><span>{% if import_review %}Только значения этой формы станут подтверждёнными фактами; исходный PDF не сохраняется.{% else %}Будет создана новая версия только при содержательных изменениях.{% endif %}</span></div>
+        <div><a class="btn btn-secondary" href="{{ cancel_url|default(url_for('profile.view_profile')) }}">Отмена</a><button class="btn btn-primary" type="submit">{{ submit_label|default('Сохранить профиль') }}</button></div>
       </div>
     </form>
   </div>

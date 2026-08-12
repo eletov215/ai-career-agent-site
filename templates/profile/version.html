@@ -9,7 +9,7 @@
       <div class="profile-page-heading__actions"><a class="btn btn-secondary" href="{{ url_for('profile.profile_history') }}">К истории</a><a class="btn btn-primary" href="{{ url_for('profile.view_profile') }}">Текущий профиль</a></div>
     </header>
 
-    <section class="profile-version-banner"><strong>Изменённые секции</strong><div class="profile-chip-row">{% for section in changed_sections %}<span class="profile-chip">{{ section }}</span>{% endfor %}</div></section>
+    <section class="profile-version-banner"><div><strong>Источник версии</strong><span class="profile-version-source">{{ source_label }}</span>{% if provenance and provenance.get('extractor_version') %}<small>PDF: {{ provenance.get('page_count', 0) }} стр. · {{ provenance.get('character_count', 0) }} символов · {{ provenance.get('extractor_version') }}</small>{% endif %}</div><div><strong>Изменённые секции</strong><div class="profile-chip-row">{% for section in changed_sections %}<span class="profile-chip">{{ section }}</span>{% endfor %}</div></div></section>
     <section class="profile-summary-card"><div><div class="muted">Позиционирование</div><h2>{{ profile.headline or 'Профессиональный заголовок не указан' }}</h2><p class="profile-preline">{{ profile.summary or 'Описание не указано.' }}</p></div><dl class="profile-summary-meta"><div><dt>Версия</dt><dd>{{ version.version }}</dd></div><div><dt>Схема</dt><dd>{{ version.schema_version }}</dd></div><div><dt>Дата</dt><dd>{{ created_at }}</dd></div></dl></section>
     {{ profile_sections(profile, employment_type_options, work_format_options, relocation_options, salary_period_options, salary_tax_options, skill_level_options, language_level_options) }}
   </div>

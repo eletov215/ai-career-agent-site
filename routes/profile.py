@@ -1,16 +1,25 @@
-"""Owner-scoped structured career-profile routes for PROF-001."""
+"""Owner-scoped career profile and resume-import review routes."""
 
 from __future__ import annotations
 
 import logging
 import time
 from collections.abc import Iterable
+from pathlib import Path
 from typing import Any
 
 from flask import Blueprint, abort, flash, g, redirect, render_template, request, url_for
+from werkzeug.utils import secure_filename
 
 from routes.auth import login_required
 from security import limiter
+from services.resume_import import (
+    ResumeImportError,
+    ResumeImportReviewMetadata,
+    ResumeImportReviewSigner,
+    ResumeImportReviewTokenError,
+    ResumeImportService,
+)
 from services.profile import (
     EMPLOYMENT_TYPES,
     LANGUAGE_LEVELS,
@@ -28,6 +37,33 @@ from services.profile import (
 
 logger = logging.getLogger(__name__)
 
+_CONFIDENCE_LABELS = {
+    "high": "Высокая уверенность",
+    "medium": "Нужна проверка",
+    "low": "Низкая уверенность",
+}
+
+_IMPORT_PATH_LABELS = {
+    "core.headline": "Профессиональный заголовок",
+    "core.summary": "О себе",
+    "contacts.contact_email": "Контактный email",
+    "contacts.phone": "Телефон",
+    "contacts.telegram": "Telegram",
+    "contacts.portfolio_url": "Портфолио",
+    "contacts.linkedin_url": "Профессиональный профиль",
+    "geography.current_location": "Текущее местоположение",
+    "skills": "Навыки",
+    "employment": "Опыт работы",
+    "achievements": "Достижения",
+    "education": "Образование",
+    "languages": "Языки",
+}
+
+_SOURCE_LABELS = {
+    "manual": "Ручное подтверждение",
+    "resume_import": "Импорт резюме",
+}
+
 _SECTION_LABELS = {
     "profile": "Создание профиля",
     "core": "О себе",
@@ -41,6 +77,95 @@ _SECTION_LABELS = {
     "education": "Образование",
     "languages": "Языки",
 }
+
+
+def _safe_upload_filename(filename: str) -> str:
+    candidate = secure_filename(Path(filename or "").name)
+    return candidate or "resume.pdf"
+
+
+def _list_text(value: Any) -> str:
+    if isinstance(value, str):
+        return value
+    if isinstance(value, Iterable):
+        return "\n".join(str(item) for item in value if str(item).strip())
+    return ""
+
+
+def _review_context_from_metadata(metadata: ResumeImportReviewMetadata) -> dict[str, Any]:
+    confidence_values = set(metadata.section_confidence.values())
+    overall = (
+        "low"
+        if "low" in confidence_values
+        else "medium"
+        if "medium" in confidence_values
+        else "high"
+    )
+    return {
+        "page_count": metadata.page_count,
+        "character_count": metadata.character_count,
+        "overall_confidence": overall,
+        "sections": [
+            {
+                "code": section,
+                "label": _SECTION_LABELS.get(section, section),
+                "confidence": metadata.section_confidence.get(section, "low"),
+                "confidence_label": _CONFIDENCE_LABELS.get(
+                    metadata.section_confidence.get(section, "low"),
+                    "Нужна проверка",
+                ),
+            }
+            for section in metadata.detected_sections
+        ],
+        "warnings": list(metadata.warnings),
+        "conflicts": [],
+        "signals": [],
+    }
+
+
+def _review_context_from_proposal(proposal) -> dict[str, Any]:  # noqa: ANN001
+    metadata = ResumeImportReviewMetadata(
+        schema_version=1,
+        extractor_version="deterministic-text-v1",
+        page_count=proposal.page_count,
+        character_count=proposal.character_count,
+        detected_sections=proposal.detected_sections,
+        section_confidence=dict(proposal.section_confidence),
+        warnings=proposal.warnings,
+        owner_fingerprint="",
+        base_profile_version=0,
+        issued_at=0,
+    )
+    context = _review_context_from_metadata(metadata)
+    context.update(
+        {
+            "filename": proposal.filename,
+            "overall_confidence": proposal.overall_confidence,
+            "conflicts": [
+                {
+                    "path": item.path,
+                    "label": _IMPORT_PATH_LABELS.get(item.path, item.path),
+                    "current_value": item.current_value,
+                    "suggested_value": item.suggested_value,
+                }
+                for item in proposal.conflicts
+            ],
+            "signals": [
+                {
+                    "path": item.path,
+                    "label": _IMPORT_PATH_LABELS.get(item.path, item.path),
+                    "confidence": item.confidence,
+                    "confidence_label": _CONFIDENCE_LABELS.get(
+                        item.confidence,
+                        "Нужна проверка",
+                    ),
+                    "source_excerpt": item.source_excerpt,
+                }
+                for item in proposal.signals[:30]
+            ],
+        }
+    )
+    return context
 
 
 def _format_timestamp(value: int | None) -> str | None:
@@ -170,12 +295,12 @@ def _values_from_payload(payload: dict[str, Any]) -> dict[str, Any]:
         "telegram": contacts.get("telegram") or "",
         "portfolio_url": contacts.get("portfolio_url") or "",
         "linkedin_url": contacts.get("linkedin_url") or "",
-        "target_roles": goals.get("target_roles") or "",
-        "industries": goals.get("industries") or "",
+        "target_roles": _list_text(goals.get("target_roles")),
+        "industries": _list_text(goals.get("industries")),
         "employment_types": list(goals.get("employment_types") or []),
         "work_formats": list(goals.get("work_formats") or []),
         "current_location": geography.get("current_location") or "",
-        "preferred_locations": geography.get("preferred_locations") or "",
+        "preferred_locations": _list_text(geography.get("preferred_locations")),
         "relocation": geography.get("relocation") or "consider",
         "salary_minimum": ""
         if salary.get("minimum") is None
@@ -207,7 +332,13 @@ def _template_options() -> dict[str, Any]:
     }
 
 
-def create_profile_blueprint(profile_service: CareerProfileService) -> Blueprint:
+def create_profile_blueprint(
+    profile_service: CareerProfileService,
+    resume_import_service: ResumeImportService,
+    review_signer: ResumeImportReviewSigner,
+    *,
+    max_resume_upload_mb: int,
+) -> Blueprint:
     bp = Blueprint("profile", __name__, url_prefix="/profile")
 
     @bp.after_request
@@ -233,12 +364,169 @@ def create_profile_blueprint(profile_service: CareerProfileService) -> Blueprint
                         _SECTION_LABELS.get(section, section)
                         for section in item.changed_sections
                     ],
+                    "source_kind": item.source_kind,
+                    "source_label": _SOURCE_LABELS.get(item.source_kind, item.source_kind),
                 }
                 for item in versions
             ],
             updated_at=_format_timestamp(profile.updated_at),
             confirmed_at=_format_timestamp(profile.confirmed_at),
             **_template_options(),
+        )
+
+    @bp.route("/import", methods=["GET", "POST"])
+    @limiter.limit("8 per 10 minutes", methods=["POST"])
+    @login_required
+    def import_resume():
+        current = profile_service.get(g.current_user.id)
+        error = None
+        status_code = 200
+        if request.method == "POST":
+            uploaded = request.files.get("resume")
+            if not uploaded or not uploaded.filename:
+                error = "Выберите PDF-файл с резюме."
+                status_code = 400
+            else:
+                safe_name = _safe_upload_filename(uploaded.filename)
+                if not safe_name.lower().endswith(".pdf"):
+                    error = "Поддерживаются только файлы PDF."
+                    status_code = 400
+                else:
+                    max_bytes = max(1, int(max_resume_upload_mb)) * 1024 * 1024
+                    file_bytes = uploaded.stream.read(max_bytes + 1)
+                    if len(file_bytes) > max_bytes:
+                        error = f"Размер PDF не должен превышать {max_resume_upload_mb} МБ."
+                        status_code = 413
+                    else:
+                        try:
+                            proposal = resume_import_service.extract(
+                                file_bytes=file_bytes,
+                                filename=safe_name,
+                                current_profile=current,
+                            )
+                        except ResumeImportError as exc:
+                            error = str(exc)
+                            status_code = 400
+                        else:
+                            review_token = review_signer.dumps(
+                                proposal,
+                                owner_user_id=g.current_user.id,
+                                base_profile_version=current.version,
+                            )
+                            logger.info(
+                                "Resume import review prepared",
+                                extra={
+                                    "event": "resume_import_review_prepared",
+                                    "page_count": proposal.page_count,
+                                    "character_count": proposal.character_count,
+                                    "detected_section_count": len(proposal.detected_sections),
+                                    "conflict_count": len(proposal.conflicts),
+                                },
+                            )
+                            return render_template(
+                                "profile/edit.html",
+                                profile=current,
+                                values=_values_from_payload(proposal.payload),
+                                expected_version=current.version,
+                                error=None,
+                                import_review=_review_context_from_proposal(proposal),
+                                confidence_labels=_CONFIDENCE_LABELS,
+                                import_token=review_token,
+                                form_action=url_for("profile.confirm_resume_import"),
+                                cancel_url=url_for("profile.import_resume"),
+                                submit_label="Подтвердить и сохранить",
+                                **_template_options(),
+                            )
+        return (
+            render_template(
+                "profile/import_upload.html",
+                profile=current,
+                error=error,
+                max_resume_upload_mb=max_resume_upload_mb,
+            ),
+            status_code,
+        )
+
+    @bp.post("/import/confirm")
+    @limiter.limit("20 per hour")
+    @login_required
+    def confirm_resume_import():
+        token = str(request.form.get("import_token") or "")
+        try:
+            metadata = review_signer.loads(
+                token,
+                owner_user_id=g.current_user.id,
+            )
+        except ResumeImportReviewTokenError as exc:
+            return (
+                render_template(
+                    "profile/import_upload.html",
+                    profile=profile_service.get(g.current_user.id),
+                    error=str(exc),
+                    max_resume_upload_mb=max_resume_upload_mb,
+                ),
+                400,
+            )
+
+        payload = _payload_from_form()
+        values = _values_from_payload(payload)
+        try:
+            submitted_version = int(request.form.get("expected_version", "-1"))
+        except ValueError:
+            submitted_version = -1
+        if submitted_version != metadata.base_profile_version:
+            error = "Профиль был изменён в другой сессии. Загрузите резюме заново."
+            status_code = 409
+        else:
+            try:
+                result = profile_service.save(
+                    user_id=g.current_user.id,
+                    payload=payload,
+                    expected_version=metadata.base_profile_version,
+                    source_kind="resume_import",
+                    provenance=metadata.provenance(),
+                )
+            except ProfileValidationError as exc:
+                error = str(exc)
+                status_code = 400
+            except ProfileConflictError as exc:
+                error = str(exc)
+                status_code = 409
+            else:
+                logger.info(
+                    "Resume import confirmed",
+                    extra={
+                        "event": "resume_import_confirmed",
+                        "changed": result.changed,
+                        "profile_version": result.profile.version,
+                        "completion_percent": result.profile.completion_percent,
+                        "detected_section_count": len(metadata.detected_sections),
+                    },
+                )
+                flash(
+                    "Данные резюме проверены и сохранены как новая версия профиля."
+                    if result.changed
+                    else "После проверки новых изменений в профиле не обнаружено.",
+                    "success",
+                )
+                return redirect(url_for("profile.view_profile"))
+
+        return (
+            render_template(
+                "profile/edit.html",
+                profile=profile_service.get(g.current_user.id),
+                values=values,
+                expected_version=metadata.base_profile_version,
+                error=error,
+                import_review=_review_context_from_metadata(metadata),
+                confidence_labels=_CONFIDENCE_LABELS,
+                import_token=token,
+                form_action=url_for("profile.confirm_resume_import"),
+                cancel_url=url_for("profile.import_resume"),
+                submit_label="Подтвердить и сохранить",
+                **_template_options(),
+            ),
+            status_code,
         )
 
     @bp.route("/edit", methods=["GET", "POST"])
@@ -317,6 +605,8 @@ def create_profile_blueprint(profile_service: CareerProfileService) -> Blueprint
                         _SECTION_LABELS.get(section, section)
                         for section in item.changed_sections
                     ],
+                    "source_kind": item.source_kind,
+                    "source_label": _SOURCE_LABELS.get(item.source_kind, item.source_kind),
                 }
                 for item in versions
             ],
@@ -342,6 +632,8 @@ def create_profile_blueprint(profile_service: CareerProfileService) -> Blueprint
                 _SECTION_LABELS.get(section, section)
                 for section in item.changed_sections
             ],
+            source_label=_SOURCE_LABELS.get(item.source_kind, item.source_kind),
+            provenance=item.provenance,
             **_template_options(),
         )
 

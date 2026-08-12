@@ -3,13 +3,13 @@
 | Поле | Значение |
 |---|---|
 | Документ        | PROJECT_PASSPORT                                                                              |
-| Версия паспорта | 2.35 |
-| Дата            | 11 августа 2026                                                                               |
+| Версия паспорта | 2.37 |
+| Дата            | 12 августа 2026                                                                               |
 | Статус          | ДЕЙСТВУЮЩИЙ                                                                                   |
-| Связанный план | `AI_Career_Agent_PLAN_CURRENT v1.4.21` |
-| Основа кода | GitHub `main` после merge PROF-001 candidate; Render/PostgreSQL уже на `20260811_0010`; production partial-profile E2E выявил validation defect, hotfix v1.4.21 подготовлен без новой migration |
+| Связанный план | `AI_Career_Agent_PLAN_CURRENT v1.4.23` |
+| Основа кода | Загруженный GitHub ZIP проверен как commit `f5e513f0f992b20305fbef36851ef97576013c86`; PROF-002 candidate реализован поверх production `20260811_0010`; candidate head `20260812_0011` |
 
-> Контрольные статусы: FND-001/FND-002/DATA-001/DATA-002/SEC-001/OPS-001/INFRA-PREP-001/SYNC-001/SYNC-002/SEARCH-001/SEARCH-002/SEARCH-003/SEARCH-004/AUTH-001/AUTH-002 — ВЫПОЛНЕНО; PROF-001 — НУЖНА ПРОВЕРКА; DOC-001 — В РАБОТЕ как постоянный процесс; INFRA-001 — ОТЛОЖЕНО ДО ПРЕДРЕЛИЗНОГО ЭТАПА.
+> Контрольные статусы: FND-001/FND-002/DATA-001/DATA-002/SEC-001/OPS-001/INFRA-PREP-001/SYNC-001/SYNC-002/SEARCH-001/SEARCH-002/SEARCH-003/SEARCH-004/AUTH-001/AUTH-002 — ВЫПОЛНЕНО; PROF-001 — ВЫПОЛНЕНО; PROF-002 — НУЖНА ПРОВЕРКА; PROF-003 — СЛЕДУЮЩИЙ ПОСЛЕ ЗАКРЫТИЯ; DOC-001 — В РАБОТЕ как постоянный процесс; INFRA-001 — ОТЛОЖЕНО ДО ПРЕДРЕЛИЗНОГО ЭТАПА.
 
 ## 1. Назначение
 
@@ -54,7 +54,7 @@ AI Career Agent — коммерческий веб-сервис карьерн�
 >     scripts/                   migrations, backup, restore, alert, infra probes, sync CLI/worker/supervisor
 >     domain/ models/ repositories/ services/
 >     services/source_status.py    safe public source-state contract
->     migrations/                Alembic 0001..0009 production + 0010 PROF-001 candidate
+>     migrations/                Alembic 0001..0010 production; 0011 PROF-002 candidate
 >     tests/                     unit/integration/security/ops/infra/sync/search/auth tests
 >     docs/                      architecture, security and runbooks
 >     render.yaml
@@ -329,7 +329,7 @@ Evidence: GitHub Actions `Success`, включая dedicated AUTH-002 gate; Rend
 
 Remote provider revoke, admin identity transfer, phone/social identities и profile import не входят.
 
-## 15. PROF-001 — НУЖНА ПРОВЕРКА
+## 15. PROF-001 — ВЫПОЛНЕНО
 
 Structured career profile candidate реализован поверх first-party `User`:
 
@@ -342,11 +342,32 @@ Structured career profile candidate реализован поверх first-part
 - owner-only `/profile`, edit and read-only history/version views;
 - migration `20260811_0010`, backup inventory and dedicated CI gate.
 
-Local evidence: full available pytest `240 passed, 9 skipped`; extended focused PROF-001 checks `26 passed, 3 skipped`; migration round-trip/Alembic check/compile/Jinja/document/infra/hygiene passed. Flask/PostgreSQL route/integration proof remains GitHub CI gate. External completion requires PR CI, Render `0010`, relogin/restart persistence, owner isolation, stale conflict/versioning and AUTH/OAuth/search regression smoke. Initial Pull Request CI and Render migration/readiness `0010` subsequently passed. First production E2E exposed a form-validation defect: blank repeatable rows carried default select values and were treated as real records. Hotfix v1.4.21 ignores only default-only rows and adds regression coverage; PROF-001 remains НУЖНА ПРОВЕРКА pending hotfix CI/redeploy and resumed E2E.
+Local evidence: full available pytest `240 passed, 9 skipped`; extended focused PROF-001 checks `26 passed, 3 skipped`; migration round-trip/Alembic check/compile/Jinja/document/infra/hygiene passed. Flask/PostgreSQL route/integration proof remains GitHub CI gate. External completion requires PR CI, Render `0010`, relogin/restart persistence, owner isolation, stale conflict/versioning and AUTH/OAuth/search regression smoke. Initial Pull Request CI and Render migration/readiness `0010` passed. First production E2E exposed a form-validation defect: blank repeatable rows carried default select values and were treated as real records. Hotfix v1.4.21 ignored only default-only rows and added regression coverage; hotfix CI was green and Render redeploy remained on `0010`. Final production E2E confirmed partial save with 25% completion, relogin persistence, material versioning, immutable history, no-op save, owner isolation, stale-editor conflict, restart persistence, mobile operation and AUTH/OAuth/search regression. PROF-001 is ВЫПОЛНЕНО.
 
 Excluded: resume import/review (PROF-002), drafts/autosave (PROF-003), restore historical snapshot, export/delete/retention (PRIV-001), AI-generated facts and public profile.
 
-## 16. INFRA-001 — ОТЛОЖЕНО ДО ПРЕДРЕЛИЗНОГО ЭТАПА
+## 16. PROF-002 — НУЖНА ПРОВЕРКА
+
+Resume import candidate реализован как confirmation-first extension PROF-001:
+
+- authenticated owner uploads one bounded text PDF;
+- existing `pypdf` parser keeps bytes/text in request memory only;
+- deterministic extractor creates suggestions, confidence, warnings, conflicts and bounded evidence;
+- full editable review is rendered before any persistence;
+- current confirmed scalar facts are preserved by default when suggestions differ;
+- explicit confirm POST uses PROF-001 validation/content hash/expected version/row lock;
+- immutable history records `source_kind=resume_import` and aggregate provenance;
+- review token is timed, owner/version-bound and excludes filename, raw text and facts;
+- migration `20260812_0011` adds only version source/provenance audit fields;
+- dedicated migration/service/route/parser/PostgreSQL tests and CI gate prepared.
+
+Local evidence: full available pytest `246 passed, 10 skipped`; focused `15 passed`; architecture/template subset `23 passed`; compileall/Jinja/SQLite `0011 -> 0010 -> 0011`/Alembic check passed. Local Flask/Psycopg/PostgreSQL skips are delegated to GitHub Actions.
+
+External acceptance remains: green Pull Request CI, Render revision `0011`, real text-PDF review/edit/delete/confirm, no save before confirm, scalar conflict behavior, owner/token/expiry/stale/CSRF/file-limit negative tests, restart/mobile/regression and secret-free log review.
+
+Excluded: OCR, DOC/DOCX, LLM/AI extraction, provider resume import, background jobs, persisted review drafts/autosave, auto-confirm and historical restore.
+
+## 17. INFRA-001 — ОТЛОЖЕНО ДО ПРЕДРЕЛИЗНОГО ЭТАПА
 
 `INFRA-001` теперь означает только реальную аренду и полевой тест VPS:
 
@@ -360,7 +381,7 @@ Excluded: resume import/review (PROF-002), drafts/autosave (PROF-003), restore h
 До начала этого пакета Render остаётся staging/резервной площадкой,
 DNS/OAuth callback URL не переключаются.
 
-## 17. Текущее функциональное состояние
+## 18. Текущее функциональное состояние
 
 - Главная/AI Career/resume builder работают.
 - Search: canonical `/vacancies`; Trudvsem, HH, Reed и public SuperJob; SEARCH-001/002/003/004 подтверждены GitHub CI и production smoke.
@@ -369,13 +390,13 @@ DNS/OAuth callback URL не переключаются.
 - SEARCH-001 canonical contract и SEARCH-002 conservative dedup подтверждены; multi-source grouping сохраняет все исходные публикации.
 - PDF parser эвристический, не LLM.
 - Saved jobs пока localStorage.
-- First-party account AUTH-001 и OAuth ownership AUTH-002 подтверждены production E2E. PROF-001 candidate добавляет редактируемый owner-scoped профиль и immutable versions; real AI/match/letters/tracker впереди.
+- First-party account AUTH-001, OAuth ownership AUTH-002 и structured profile PROF-001 подтверждены production E2E. PROF-002 candidate добавляет ephemeral text-PDF extraction и editable confirmation review; external CI/Render/E2E ещё требуется. Real AI/match/letters/tracker впереди.
 
-## 18. Новая обязательная очередь разработки
+## 19. Новая обязательная очередь разработки
 
 ### Сейчас — функциональный MVP без аренды VPS
 
->     PROF-001 verification -> PROF-002 -> PROF-003 -> PRIV-001
+>     PROF-002 verification -> PROF-003 -> PRIV-001
 >     -> SEARCH-005
 >     -> AI-BENCH-001 -> AI-PROVIDER-001 -> LEGAL-001
 >     -> AI-001 -> AI-002 -> AI-003 -> AI-004 -> AI-005 -> AI-006
@@ -392,7 +413,7 @@ DNS/OAuth callback URL не переключаются.
 >     -> DOMAIN-001 -> MIG-001
 >     -> final SEC/OPS smoke -> REL-001 -> commercial release
 
-## 19. Зафиксированная hosting-independent стратегия
+## 20. Зафиксированная hosting-independent стратегия
 
 До предрелизного окна новый код не должен зависеть от конкретного
 hosting provider:
@@ -409,7 +430,7 @@ Render не считается гарантированным production для 
 подтверждённой сетевой недоступности из части сетей РФ, но остаётся
 пригодным staging/резервным контуром до `MIG-001`.
 
-## 20. AI и Reed
+## 21. AI и Reed
 
 - `AI-BENCH-001` можно выполнять без реального VPS: качество Yandex AI
   Studio/Alice AI проверяется на golden dataset, а transport с будущего
@@ -421,13 +442,15 @@ Render не считается гарантированным production для 
   сразу после `INFRA-001`.
 - Reed должен иметь feature flag и graceful degradation.
 
-## 21. Следующий пакет
+## 22. Текущий gate
 
-PROF-001 — НУЖНА ПРОВЕРКА. Candidate создаёт owner-scoped current profile + immutable versions и migration `20260811_0010`. До статуса ВЫПОЛНЕНО требуются green dedicated/full Pull Request CI, Render current/expected `0010`, profile create/update/relogin/restart persistence, owner isolation, stale-editor conflict, unchanged-save/no-duplicate-version and regression smoke.
+PROF-002 — НУЖНА ПРОВЕРКА. Candidate реализован поверх подтверждённого PROF-001 и загруженного GitHub main commit `f5e513f0f992b20305fbef36851ef97576013c86`.
 
-После закрытия PROF-001 следующий пакет — PROF-002: import/review с запретом сохранения неподтверждённых resume facts. Телефон/OTP и Gmail/domain sender gates не меняются.
+Поток: text PDF -> ephemeral extraction proposal -> editable review -> explicit owner confirmation -> immutable confirmed PROF-001 version. Unconfirmed bytes/text/proposal не сохраняются. Candidate revision `20260812_0011` добавляет только source/provenance audit metadata к version history.
 
-## 22. Правила рабочего чата
+До перевода в ВЫПОЛНЕНО требуются green dedicated/full Pull Request CI, Render current/expected `0011`, production positive/negative/privacy/owner/stale/restart/mobile E2E и regression/log review. После закрытия следующим пакетом становится PROF-003. OCR/AI parser и persisted drafts остаются отдельным scope.
+
+## 23. Правила рабочего чата
 
 - Перед изменениями читать паспорт, PLAN_CURRENT и актуальный ZIP;
   работать по одному package ID.
@@ -440,7 +463,7 @@ PROF-001 — НУЖНА ПРОВЕРКА. Candidate создаёт owner-scoped 
   package.
 - Для новых документов применять единый документный стандарт проекта.
 
-## 23. Журнал версий
+## 24. Журнал версий
 
 | Версия | Дата | Изменение |
 |---|---|---|
@@ -460,3 +483,5 @@ PROF-001 — НУЖНА ПРОВЕРКА. Candidate создаёт owner-scoped 
 | 2.33 | 11.08.2026 | AUTH-002 complete: green GitHub Actions, Render `0009`, полный HH/SJ ownership E2E и regression smoke подтверждены; PROF-001 становится следующим пакетом. |
 | 2.34 | 11.08.2026 | PROF-001 candidate: owner-scoped structured facts, immutable version history, migration `0010`, UI/service/repository/tests and dedicated CI gate; external verification pending. |
 | 2.35 | 12.08.2026 | PROF-001 hotfix candidate: initial CI/Render `0010` passed; production partial-save uncovered default-only repeatable-row validation bug. Hotfix keeps schema `0010`, fixes optional-row detection and adds regression tests; verification resumes after redeploy. |
+| 2.36 | 12.08.2026 | PROF-001 complete after green hotfix CI, Render `0010`, full owner/version/concurrency/restart/mobile/regression E2E; PROF-002 becomes next. |
+| 2.37 | 12.08.2026 | PROF-002 candidate: bounded text-PDF extraction proposal, editable review, explicit confirmation, metadata-only owner/version-bound review token, migration `0011` provenance audit fields and dedicated tests; external verification pending. |
