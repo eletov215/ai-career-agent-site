@@ -41,7 +41,8 @@
         <h2 id="career-profile-title">Карьерный профиль</h2>
         <p>{% if profile_summary.exists %}Подтверждённые факты сохранены как версия {{ profile_summary.version }}. Профиль заполнен на {{ profile_summary.completion_percent }}%.{% else %}Создайте подтверждённый набор фактов для будущего поиска, AI-анализа и карьерных документов.{% endif %}</p>
         <div class="account-profile-card__actions">
-          <a class="btn btn-primary" href="{{ url_for('profile.view_profile') }}">{{ 'Открыть профиль' if profile_summary.exists else 'Создать профиль' }}</a>
+          <a class="btn btn-primary" href="{{ url_for('profile.import_resume') }}">Импортировать резюме</a>
+          <a class="btn btn-secondary" href="{{ url_for('profile.view_profile') }}">{{ 'Открыть профиль' if profile_summary.exists else 'О профиле' }}</a>
           {% if profile_summary.exists %}<a class="btn btn-secondary" href="{{ url_for('profile.edit_profile') }}">Редактировать</a>{% endif %}
         </div>
       </div>

@@ -16,7 +16,8 @@
         <h1>Карьерный профиль</h1>
         <p>Единый структурированный источник данных для будущего поиска, AI-анализа и карьерных документов. Здесь сохраняется только то, что вы ввели и подтвердили сами.</p>
         <div class="profile-hero__actions">
-          <a class="btn btn-primary" href="{{ url_for('profile.edit_profile') }}">{{ 'Редактировать профиль' if profile.exists else 'Создать профиль' }}</a>
+          <a class="btn btn-primary" href="{{ url_for('profile.import_resume') }}">Импортировать резюме</a>
+          <a class="btn btn-secondary" href="{{ url_for('profile.edit_profile') }}">{{ 'Редактировать вручную' if profile.exists else 'Заполнить вручную' }}</a>
           {% if profile.exists %}<a class="btn btn-secondary" href="{{ url_for('profile.profile_history') }}">История версий</a>{% endif %}
         </div>
       </div>
@@ -31,8 +32,8 @@
     {% if not profile.exists %}
       <section class="profile-empty-state">
         <span class="profile-empty-state__mark" aria-hidden="true">✦</span>
-        <div><h2>Начните с любой секции</h2><p>Профиль можно сохранять постепенно. Обязательных полей нет: каждое сохранение создаёт подтверждённую версию.</p></div>
-        <a class="btn btn-primary" href="{{ url_for('profile.edit_profile') }}">Заполнить профиль</a>
+        <div><h2>Загрузите резюме или начните вручную</h2><p>Импорт подготовит редактируемые предложения и ничего не сохранит без вашего подтверждения. Ручное заполнение остаётся доступным.</p></div>
+        <div class="profile-empty-state__actions"><a class="btn btn-primary" href="{{ url_for('profile.import_resume') }}">Импортировать PDF</a><a class="btn btn-secondary" href="{{ url_for('profile.edit_profile') }}">Заполнить вручную</a></div>
       </section>
     {% else %}
       <section class="profile-summary-card">
@@ -58,7 +59,7 @@
         {% if versions %}
           <div class="profile-version-list">
             {% for item in versions %}
-              <a href="{{ url_for('profile.profile_version', version=item.version) }}"><strong>Версия {{ item.version }}</strong><span>{{ item.created_at }}</span><small>{{ item.changed_sections|join(', ') }}</small></a>
+              <a href="{{ url_for('profile.profile_version', version=item.version) }}"><strong>Версия {{ item.version }}</strong><span>{{ item.created_at }} · {{ item.source_label }}</span><small>{{ item.changed_sections|join(', ') }}</small></a>
             {% endfor %}
           </div>
         {% else %}<p class="profile-empty-copy">История появится после первого сохранения.</p>{% endif %}

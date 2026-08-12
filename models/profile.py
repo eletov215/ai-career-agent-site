@@ -81,6 +81,10 @@ class CareerProfileVersion(Base):
             name="ck_career_profile_versions_schema_version",
         ),
         CheckConstraint("version >= 1", name="ck_career_profile_versions_version"),
+        CheckConstraint(
+            "source_kind IN ('manual', 'resume_import')",
+            name="ck_career_profile_versions_source_kind",
+        ),
         Index(
             "idx_career_profile_versions_profile_created",
             "profile_id",
@@ -99,6 +103,8 @@ class CareerProfileVersion(Base):
     snapshot_json: Mapped[str] = mapped_column(Text, nullable=False)
     content_hash: Mapped[str] = mapped_column(String(64), nullable=False)
     changed_sections_json: Mapped[str] = mapped_column(Text, nullable=False)
+    source_kind: Mapped[str] = mapped_column(String(32), nullable=False, default="manual")
+    provenance_json: Mapped[str] = mapped_column(Text, nullable=False, default="{}")
     created_at: Mapped[int] = mapped_column(BigInteger, nullable=False)
 
     profile = relationship("CareerProfile", back_populates="versions")

@@ -7,20 +7,14 @@ User
   1 -> many AuthSession
   1 -> many AuthToken
   1 -> 0..1 OAuthConnection per provider
+  1 -> 0..1 CareerProfile
 ```
 
-AUTH-001/002 remain completed.
+AUTH-001/002 and PROF-001 remain completed.
 
-## PROF-001
+## CareerProfile
 
-```text
-User 1 -> 0..1 CareerProfile
-CareerProfile 1 -> many CareerProfileVersion
-```
-
-### CareerProfile
-
-Current owner-confirmed state:
+Current owner-confirmed structured facts:
 
 ```text
 id, user_id
@@ -35,25 +29,60 @@ confirmed_at, created_at, updated_at
 
 Constraints: unique `user_id`, version/schema >= 1, completion 0..100, FK cascade from User.
 
-### CareerProfileVersion
+## CareerProfileVersion
 
-Immutable evidence:
+Immutable evidence of each material confirmed change:
 
 ```text
 id, profile_id
 schema_version, version
-snapshot_json
-content_hash
+snapshot_json, content_hash
 changed_sections_json
+source_kind             manual | resume_import
+provenance_json         bounded aggregate metadata
 created_at
 ```
 
-Constraint: unique `(profile_id, version)`, FK cascade from current profile.
+Constraints: unique `(profile_id, version)`, version/schema >= 1, controlled source kind. Snapshot remains full canonical PROF-001 schema version 1.
 
-## Ownership semantics
+## PROF-002 proposal model
 
-All repository operations resolve through `user_id`. Version lookup joins current profile owner. No provider email/external ID or profile content is used as an ownership key.
+`ResumeImportProposal` is a request-scoped domain value, not a persistence entity:
 
-## Confirmation semantics
+```text
+filename (display only)
+page_count / character_count
+payload / extracted_payload
+signals(path, confidence, bounded excerpt)
+conflicts(path, current, suggested)
+section_confidence / warnings / detected_sections
+```
 
-A saved profile means the authenticated owner submitted the canonical form. Missing values remain null/empty. Provider snapshots, PDF extraction and AI output are not confirmed facts.
+The proposal and raw resume text are never stored. It becomes canonical only after owner-confirmed form submission.
+
+## Resume import provenance
+
+A confirmed `resume_import` version may store only:
+
+```json
+{
+  "schema_version": 1,
+  "extractor_version": "deterministic-text-v1",
+  "page_count": 2,
+  "character_count": 6400,
+  "detected_sections": ["core", "skills"],
+  "section_confidence": {"core": "medium", "skills": "high"},
+  "reviewed_at": 1786530000
+}
+```
+
+Filename, raw text, contacts, excerpts and profile payload are forbidden.
+
+## Ownership and version semantics
+
+- owner is authenticated first-party `User.id`;
+- review token is owner/version-bound but not a database record;
+- confirm uses current owner profile row lock;
+- stale base version fails with controlled conflict;
+- version numbers remain owner-relative;
+- no-op confirmation creates no duplicate version.

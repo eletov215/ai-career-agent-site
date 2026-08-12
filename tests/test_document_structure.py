@@ -50,6 +50,11 @@ def test_canonical_documents_have_metadata_tables():
         "docs/PROF001_VERIFICATION_STATUS.md",
         "docs/PROF001_RUNBOOK.md",
         "docs/PROF001_PROFILE_REFERENCE.md",
+        "docs/PROF002_IMPLEMENTATION.md",
+        "docs/PROF002_VERIFICATION_STATUS.md",
+        "docs/PROF002_RUNBOOK.md",
+        "docs/PROF002_EXTRACTION_REFERENCE.md",
+        "docs/PROF002_SECURITY_REFERENCE.md",
         "docs/SOURCE_AUDIT.md",
     ]:
         text = (ROOT / relative).read_text(encoding="utf-8")

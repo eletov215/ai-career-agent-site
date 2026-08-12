@@ -70,6 +70,8 @@ class CareerProfileRepository(RepositoryBase):
             snapshot_json=row.snapshot_json,
             content_hash=row.content_hash,
             changed_sections_json=row.changed_sections_json,
+            source_kind=row.source_kind,
+            provenance_json=row.provenance_json,
             created_at=row.created_at,
         )
 
@@ -133,6 +135,8 @@ class CareerProfileRepository(RepositoryBase):
         content_hash: str,
         completion_percent: int,
         changed_sections: Sequence[str],
+        source_kind: str,
+        provenance_json: str,
         now: int | None = None,
     ) -> tuple[CareerProfileRecord, bool]:
         timestamp = int(time.time() if now is None else now)
@@ -205,6 +209,8 @@ class CareerProfileRepository(RepositoryBase):
                         ensure_ascii=False,
                         separators=(",", ":"),
                     ),
+                    source_kind=str(source_kind),
+                    provenance_json=str(provenance_json),
                     created_at=timestamp,
                 )
             )

@@ -1,12 +1,13 @@
 # AI Career Agent — architecture reference
 
-> Current candidate: PROF-001, status НУЖНА ПРОВЕРКА, Alembic head `20260811_0010`.
+> Current candidate: PROF-002, status НУЖНА ПРОВЕРКА. Production Alembic `20260811_0010`; candidate head `20260812_0011`.
 
 ## Runtime boundaries
 
 ```text
 app.py / Flask routes / app:app
   -> AuthService / OAuthIdentityService / CareerProfileService
+  -> ResumeImportService (request-local suggestions only)
   -> repository contracts
   -> SQLAlchemy models
   -> PostgreSQL via DATABASE_URL / Alembic
@@ -14,41 +15,61 @@ app.py / Flask routes / app:app
 
 Routes do not instantiate ORM repositories. `StorageServices` provides auth, users, OAuth, profile, search and sync persistence boundaries.
 
-## Identity and profile
+## Identity and confirmed profile
 
 ```text
 User
   -> AuthSession (browser authentication)
   -> OAuthConnection (HH/SuperJob external identity)
   -> CareerProfile (current confirmed structured facts)
-       -> CareerProfileVersion[] (immutable full snapshots)
+       -> CareerProfileVersion[] (immutable full snapshots + source/provenance)
 ```
 
-OAuth provider profile JSON is credential metadata and does not automatically become CareerProfile facts. Resume extraction/AI suggestions remain unconfirmed until a future explicit review flow.
+PROF-001 remains the only canonical confirmed-facts store. Provider metadata, uploaded resume text, extraction proposals and future AI suggestions are not facts until an authenticated owner explicitly confirms the ordinary profile form.
 
-## PROF-001 transaction
+## PROF-002 request lifecycle
 
 ```text
-owner POST + CSRF
--> validate/canonicalize
--> owner row lock + expected_version check
--> compare SHA-256 content hash
--> unchanged: return current version
--> changed: update current + insert immutable version
--> commit transaction
+owner session + CSRF
+-> bounded PDF bytes
+-> pypdf text extraction
+-> deterministic ResumeImportProposal
+-> merge with current confirmed profile
+-> HTML editable review in browser
+-> metadata-only signed token
+-> explicit confirm POST
+-> PROF-001 validation + expected version + row lock
+-> no-op or immutable confirmed version
 ```
 
-## Data evolution
+Upload bytes, raw text and unconfirmed proposal are never repository/model objects. Browser review is intentionally ephemeral.
 
-- Alembic only; current production `0009`, candidate `0010`.
-- Profile `schema_version=1` is independent of Alembic revision.
-- Future child-table normalization must be additive and preserve immutable snapshots.
-- Application rollback may keep `0010`; downgrade is profile-data destructive.
+## Merge and confirmation
 
-## Security
+```text
+empty scalar + suggestion          -> suggestion shown
+confirmed scalar == suggestion     -> current retained
+confirmed scalar != suggestion     -> current retained + conflict shown
+lists/rows                         -> stable case-insensitive union
+user edit/delete                   -> submitted value wins
+```
 
-Profile routes require first-party session, are owner-scoped, POST+CSRF protected, rate-limited and `no-store`. Structured logs exclude profile facts and owner IDs. Backup inventory includes profile tables.
+Confirmation still passes PROF-001 canonical JSON/hash, completion indicator and stale-editor protection. An import with no material changes creates no duplicate version.
 
-## Exclusions
+## Review token
 
-PROF-002 import/review, PROF-003 autosave/drafts, PRIV-001 lifecycle, AI population, public profile and version restore are not part of this architecture candidate.
+The timed `itsdangerous` token carries schema/extractor/counts/section confidence/static warnings, HMAC owner fingerprint, base profile version and issued time only. It carries no filename, bytes, raw text, excerpts, contacts or proposed payload.
+
+## Persistence
+
+Revision `20260812_0011` adds `source_kind` and aggregate `provenance_json` to immutable version rows. Current profile schema remains version 1. Existing rows default to `manual`; confirmed imports use `resume_import`.
+
+## Security/operational boundaries
+
+- first-party session is mandatory;
+- CSRF and route rate limits remain active;
+- stale or foreign review cannot confirm;
+- upload/page/text bounds fail closed;
+- logs contain aggregate counts/outcomes only;
+- OCR/AI/background/persisted drafts are separate packages;
+- WSGI remains `app:app`; no `app_fixed.py`.

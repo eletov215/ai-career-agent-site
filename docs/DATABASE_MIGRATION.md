@@ -12,21 +12,23 @@
 -> 20260809_0007 search snapshots
 -> 20260810_0008 first-party auth
 -> 20260811_0009 OAuth identity ownership
--> 20260811_0010 structured career profile candidate
+-> 20260811_0010 structured career profile
+-> 20260812_0011 profile import provenance candidate
 ```
 
-Production before PROF-001 deploy: `20260811_0009`. Candidate expected: `20260811_0010`.
+Production before PROF-002 deploy: `20260811_0010`. Candidate expected: `20260812_0011`.
 
-## Revision 0010
+## Revision 0011
 
-Creates:
+Adds to `career_profile_versions`:
 
 ```text
-career_profiles
-career_profile_versions
+source_kind      VARCHAR(32) NOT NULL DEFAULT 'manual'
+provenance_json  TEXT NOT NULL DEFAULT '{}'
+CHECK source_kind IN ('manual', 'resume_import')
 ```
 
-No backfill and no provider/resume auto-import. Existing User/Auth/OAuth/Search/Sync rows are unchanged.
+Existing rows become `manual` with empty provenance. No profile snapshot/current row/User/AuthSession/OAuth/Search/Sync data is rewritten. Canonical profile schema version stays 1.
 
 ## Upgrade verification
 
@@ -39,11 +41,24 @@ python -m alembic check
 Render readiness must show:
 
 ```text
-current_revision  = 20260811_0010
-expected_revision = 20260811_0010
-migrations.ok     = true
+database.revision=20260812_0011
+migrations.current_revision=20260812_0011
+migrations.expected_revision=20260812_0011
+migrations.ok=true
 ```
+
+## Data compatibility
+
+Previous application code ignores the new columns, so application rollback may keep `0011`. New code strictly validates bounded provenance before persistence.
 
 ## Downgrade
 
-`0010 -> 0009` drops both profile tables. It is safe only before real profile use or after verified backup and explicit data-loss/retention decision. Application rollback should normally keep `0010`.
+`0011 -> 0010` drops the source-kind check and both audit columns. Current confirmed profile and immutable snapshot contents remain, but source attribution/import provenance is lost. Downgrade therefore requires an explicit audit-data decision, though it is not destructive to canonical profile facts.
+
+## Tests
+
+- legacy version defaults after upgrade;
+- `resume_import` row insert;
+- SQLite upgrade/downgrade/re-upgrade;
+- PostgreSQL integration and backup/restore in CI;
+- Alembic no-drift check.

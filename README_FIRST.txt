@@ -1,11 +1,31 @@
-AI Career Agent — PROF-001 candidate v1.4.20
+AI CAREER AGENT — PROF-002 CANDIDATE v1.4.23-r1
 
-1. Baseline: ai-career-agent-site-main (14).zip from current GitHub main/Render.
-2. WSGI remains app:app; app_fixed.py is not used.
-3. Candidate migration: 20260811_0010.
-4. PROF-001 adds one owner-scoped structured career profile per first-party User.
-5. Incomplete profiles are allowed; explicit manual save is the confirmation boundary.
-6. Every material save creates an immutable full snapshot; unchanged save creates no duplicate version.
-7. Stale editors fail closed through expected_version, row locking and database constraints.
-8. Upload the PATCH to a separate branch and open a Pull Request; do not push the candidate directly to main.
-9. PROF-001 remains NEEDS VERIFICATION until Pull Request CI, Render 0010 and owner/version/restart E2E are green.
+STATUS
+- PROF-001: COMPLETE
+- PROF-002: NEEDS VERIFICATION
+- Production revision before deploy: 20260811_0010
+- Candidate revision: 20260812_0011
+- WSGI: app:app
+
+VERIFIED BASE
+- Uploaded source: ai-career-agent-site-main (16).zip
+- GitHub main commit in ZIP comment: f5e513f0f992b20305fbef36851ef97576013c86
+- Source ZIP SHA-256: 5e411f3dabc024a4adbf6be05d9fa49ce11e5e36407ac2b068aada0dd3109d0d
+- Exact match with the last full PROF-001 hotfix snapshot before edits.
+
+WHAT THIS CANDIDATE ADDS
+Text PDF -> bounded deterministic proposal -> editable review -> explicit owner confirmation -> immutable PROF-001 version with aggregate provenance.
+
+No upload bytes, raw resume text, filename or unconfirmed proposal are persisted. OCR, DOC/DOCX, AI parsing, provider resume import and persisted drafts are excluded.
+
+CORRECT DEPLOY FLOW
+1. Create branch: prof-002-candidate-v1.4.23
+2. Upload/extract the PATCH ZIP contents preserving paths. Confirm infra/vps/.env.example is present.
+3. Open Pull Request to main.
+4. Wait for all CI, including Verify PROF-002 resume import review controls.
+5. Merge only when green.
+6. Verify Render /health/ready current_revision=expected_revision=20260812_0011.
+7. Run PROF-002 positive/negative/privacy/owner/stale/restart/mobile E2E.
+
+The secret-free infra/vps/.env.example template is required and must remain committed.
+Do not commit a real .env, tokens, resume samples with personal data, databases, dumps, backups, virtualenv, caches or bytecode.

@@ -1,25 +1,40 @@
-PROF-001 STRUCTURED CAREER PROFILE CANDIDATE v1.4.20
+PROF-002 PATCH UPLOAD INSTRUCTIONS — packaging repair r1
 
-Baseline: ai-career-agent-site-main (14).zip from current GitHub main/Render.
-Candidate revision: 20260811_0010.
-Suggested branch: prof-001-candidate-v1.4.20.
+Use a separate GitHub branch. Do not upload the ZIP file itself into the repository.
 
-Primary behavior:
-  - owner-only current profile and immutable version history;
-  - contacts, goals, geography, salary, skills, employment,
-    achievements, education and languages;
-  - incomplete profile support and deterministic completion indicator;
-  - explicit manual confirmation/save boundary;
-  - no-op save does not create a version;
-  - stale editor returns a safe conflict instead of overwriting data;
-  - profile responses are no-store; POST is protected by login, CSRF and rate limits.
+1. Create branch from current main:
+   prof-002-candidate-v1.4.23
 
-Required after branch upload:
-  1. Green Pull Request workflow including the dedicated PROF-001 gate.
-  2. Merge only after every CI step is green.
-  3. Render deploy and /health/ready current=expected=20260811_0010.
-  4. Real owner create/update/history/no-op/stale-editor E2E.
-  5. Second-user isolation and restart persistence smoke.
-  6. AUTH-001/AUTH-002/dashboard/vacancy-search regression smoke and clean logs.
+2. Extract:
+   ai-career-agent-site-main-patch-prof-002-candidate-v1.4.23-r1.zip
 
-No secrets or personal profile fixtures are included. Do not publish profile facts, cookies or database credentials in screenshots/log excerpts.
+3. Upload the extracted files/folders into the repository root with paths preserved.
+   The patch MUST include infra/vps/.env.example. This is a placeholder template, not a real secret file.
+   Examples:
+   services/resume_import.py
+   routes/profile.py
+   migrations/versions/20260812_0011_profile_import_provenance.py
+   templates/profile/import_upload.html
+
+4. Confirm GitHub shows modified/new source files, not one nested project folder and not the ZIP itself.
+
+5. Commit and open Pull Request to main.
+
+6. Required green checks include:
+   - Verify PROF-002 resume import review controls
+   - Verify PROF-001 structured career profile controls
+   - Verify PostgreSQL migrations
+   - Run PostgreSQL integration test
+   - Verify AUTH-001 / AUTH-002 regressions
+   - Verify PostgreSQL encrypted backup and restore
+   - Run tests
+   - Docker/Compose runtime smoke
+
+7. After merge, Render must report revision 20260812_0011 and status ok before production E2E.
+
+No new environment variables are required.
+
+PACKAGING REPAIR r1
+The first v1.4.23 archive accidentally filtered infra/vps/.env.example together with real .env files.
+That was a packaging defect. This r1 archive restores the unchanged template from verified main.
+Real .env files remain forbidden.

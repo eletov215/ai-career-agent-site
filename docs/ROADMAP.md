@@ -5,9 +5,10 @@
 | FND/DATA/SEC/OPS/INFRA-PREP | ВЫПОЛНЕНО | regression only |
 | SYNC-001/002, SEARCH-001..004 | ВЫПОЛНЕНО | regression only |
 | AUTH-001/002 | ВЫПОЛНЕНО | regression only |
-| PROF-001 | НУЖНА ПРОВЕРКА | hotfix PR CI, redeploy on existing 0010, partial-save retest, then owner/version/restart E2E |
-| PROF-002 | ЗАПЛАНИРОВАНО | starts after PROF-001 complete |
-| PROF-003 / PRIV-001 | ЗАПЛАНИРОВАНО | profile foundation required |
+| PROF-001 | ВЫПОЛНЕНО | regression only |
+| PROF-002 | НУЖНА ПРОВЕРКА | Pull Request CI, Render `0011`, import/review/privacy/owner/stale/restart/mobile E2E |
+| PROF-003 | ЗАПЛАНИРОВАНО | starts after PROF-002 complete |
+| PRIV-001 | ЗАПЛАНИРОВАНО | profile/import foundation required |
 | SEARCH-005 | ЗАПЛАНИРОВАНО | after account/profile/privacy foundation |
 | AI-BENCH/AI-PROVIDER/LEGAL/AI-* | ЗАПЛАНИРОВАНО | later MVP stages |
 | INFRA-001 | ОТЛОЖЕНО | pre-release window |
@@ -15,28 +16,31 @@
 ## Current flow
 
 ```text
-PROF-001 candidate
--> initial PR CI green
--> Render 20260811_0010 green
--> production partial-save defect found
--> hotfix v1.4.21 PR CI
--> redeploy (schema remains 0010)
--> partial-save retest
--> owner/version/concurrency/restart E2E
--> PROF-001 complete
--> PROF-002 import + editable review
+PROF-001 complete
+-> PROF-002 candidate
+-> branch / Pull Request
+-> full + dedicated PROF-002 CI
+-> Render migration 20260812_0011
+-> text PDF upload
+-> editable review
+-> explicit confirmation
+-> owner/token/stale/privacy/restart/mobile regression
+-> PROF-002 complete
 -> PROF-003 drafts/versions
 -> PRIV-001 export/delete/retention
 ```
 
-## PROF-001 scope
+## PROF-002 scope
 
-- owner-scoped current profile;
-- immutable material-change versions;
-- partial profile allowed;
-- manual confirmation only;
-- bounded validation and optimistic conflict;
-- `/profile` view/edit/history;
-- backup/migration/tests/CI.
+- authenticated bounded text-PDF upload;
+- deterministic structured suggestions;
+- confidence, warnings, conflicts and evidence;
+- preserve existing confirmed scalar values by default;
+- editable full-profile review;
+- no persistence before explicit confirm;
+- owner/version-bound timed metadata token;
+- immutable history source + aggregate provenance;
+- invalid/image-only/oversized/foreign/expired/stale/CSRF negative controls;
+- migration/tests/CI/docs.
 
-Excluded: resume import, AI facts, autosave, version restore, public profile and privacy lifecycle controls.
+Excluded: OCR, DOC/DOCX, LLM/AI parser, provider resume import, background jobs, persisted review drafts/autosave, auto-confirm and historical restore.

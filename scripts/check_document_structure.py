@@ -57,6 +57,11 @@ DOCUMENTS = {
     "docs/PROF001_VERIFICATION_STATUS.md": ["| Поле | Значение |", "## 1.", "## 2."],
     "docs/PROF001_RUNBOOK.md": ["| Поле | Значение |", "## 1.", "## 2."],
     "docs/PROF001_PROFILE_REFERENCE.md": ["| Поле | Значение |", "## 1.", "## 2."],
+    "docs/PROF002_IMPLEMENTATION.md": ["| Поле | Значение |", "## 1.", "## 2."],
+    "docs/PROF002_VERIFICATION_STATUS.md": ["| Поле | Значение |", "## 1.", "## 2."],
+    "docs/PROF002_RUNBOOK.md": ["| Поле | Значение |", "## 1.", "## 2."],
+    "docs/PROF002_EXTRACTION_REFERENCE.md": ["| Поле | Значение |", "## 1.", "## 2."],
+    "docs/PROF002_SECURITY_REFERENCE.md": ["| Поле | Значение |", "## 1.", "## 2."],
     "docs/SOURCE_AUDIT.md": ["| Поле | Значение |", "## 1."],
 }
 

@@ -1,70 +1,61 @@
-AI Career Agent - PROF-001 structured career profile candidate manifest
+PROF-002 PATCH MANIFEST v1.4.23-r1
 
-Baseline:
-  ai-career-agent-site-main (14).zip from current GitHub main and Render.
+Apply all files below at repository root with paths preserved.
+Base commit: f5e513f0f992b20305fbef36851ef97576013c86
+Candidate revision: 20260812_0011
 
-Canonical status before candidate:
-  AUTH-001 COMPLETE.
-  AUTH-002 COMPLETE.
-  PROF-001 READY TO START.
-  Production revision 20260811_0009.
+[RESTORE] infra/vps/.env.example
+[MODIFY] .github/workflows/ci.yml
+[MODIFY] CHANGED_FILES.txt
+[MODIFY] PATCH_MANIFEST.txt
+[MODIFY] README.md
+[MODIFY] README_FIRST.txt
+[MODIFY] README_UPLOAD.txt
+[MODIFY] app.py
+[MODIFY] database.py
+[MODIFY] docs/ARCHITECTURE.md
+[MODIFY] docs/BACKUP_RESTORE.md
+[MODIFY] docs/CHANGELOG.md
+[MODIFY] docs/DATABASE_MIGRATION.md
+[MODIFY] docs/DOMAIN_MODEL.md
+[MODIFY] docs/PLAN_CURRENT.md
+[ADD] docs/PROF002_EXTRACTION_REFERENCE.md
+[ADD] docs/PROF002_IMPLEMENTATION.md
+[ADD] docs/PROF002_RUNBOOK.md
+[ADD] docs/PROF002_SECURITY_REFERENCE.md
+[ADD] docs/PROF002_VERIFICATION_STATUS.md
+[MODIFY] docs/PROJECT_GUIDE.md
+[MODIFY] docs/PROJECT_PASSPORT.md
+[MODIFY] docs/ROADMAP.md
+[MODIFY] docs/SECURITY.md
+[MODIFY] docs/SOURCE_AUDIT.md
+[MODIFY] domain/__init__.py
+[MODIFY] domain/profile.py
+[ADD] domain/resume_import.py
+[ADD] migrations/versions/20260812_0011_profile_import_provenance.py
+[MODIFY] models/profile.py
+[MODIFY] repositories/profiles.py
+[MODIFY] routes/profile.py
+[MODIFY] scripts/check_document_structure.py
+[MODIFY] services/profile.py
+[ADD] services/resume_import.py
+[MODIFY] services/resume_parser.py
+[MODIFY] static/styles.css
+[MODIFY] templates/dashboard.html
+[MODIFY] templates/profile/edit.html
+[MODIFY] templates/profile/history.html
+[ADD] templates/profile/import_upload.html
+[MODIFY] templates/profile/version.html
+[MODIFY] templates/profile/view.html
+[MODIFY] tests/test_document_structure.py
+[MODIFY] tests/test_postgresql_integration.py
+[MODIFY] tests/test_prof001_migration.py
+[ADD] tests/test_prof002_migration.py
+[MODIFY] tests/test_profile_service.py
+[ADD] tests/test_resume_import_routes.py
+[ADD] tests/test_resume_import_service.py
 
-Reason for change:
-  Search, future AI and documents require one owner-scoped, user-confirmed set of structured career facts. Existing OAuth profile snapshots and browser resume-builder data are not a safe first-party profile contract.
+No deletions are required. No environment variables are added.
 
-Implementation:
-  - add one current CareerProfile per first-party User;
-  - add immutable CareerProfileVersion full snapshots;
-  - add migration 20260811_0010 and backup inventory coverage;
-  - support positioning, contacts, goals, geography, salary, skills,
-    employment, achievements, education and languages;
-  - allow incomplete profiles and expose a non-blocking completion indicator;
-  - validate lengths, controlled codes, dates, salary ranges, URLs and duplicates;
-  - use deterministic canonical JSON + content hash;
-  - create a new version only for material changes;
-  - use expected_version, PostgreSQL row lock and unique constraints for concurrency;
-  - expose owner-only /profile, /profile/edit, /profile/history and read-only version routes;
-  - add dashboard/navigation integration, scoped responsive UI and no-store responses;
-  - add migration/service/route/PostgreSQL tests and dedicated GitHub CI gate;
-  - synchronize architecture, migration, security, backup and canonical documentation.
-
-Security and privacy invariants:
-  - first-party AuthSession is required for every profile route;
-  - repository reads/writes/history are owner-scoped by user_id;
-  - POST uses CSRF and rate limiting;
-  - logs contain only safe changed/version/completion metadata;
-  - user facts, contacts and snapshots are not logged;
-  - templates escape facts; stored links allow only http/https without credentials;
-  - no provider, PDF or AI data is auto-confirmed.
-
-Explicit exclusions:
-  - resume import/review (PROF-002);
-  - server drafts/autosave/version restore (PROF-003 or later);
-  - public profile;
-  - AI enrichment/inference;
-  - export/delete/retention (PRIV-001);
-  - phone/OTP/social identity changes.
-
-Local verification:
-  full available pytest: 240 passed, 9 skipped
-  focused PROF-001 checks: 26 passed, 3 skipped
-  focused migration/service core: 4 passed
-  SQLite 0010 -> 0009 -> 0010: passed
-  Alembic check: no new upgrade operations
-  compileall: passed
-  Jinja parse: 21 templates passed
-  document structure: passed
-  infrastructure manifest: passed
-  repository hygiene: passed after cleanup
-
-Required external gate:
-  separate branch + Pull Request,
-  full GitHub Actions including PROF-001/PostgreSQL/AUTH regressions,
-  Render upgrade to 20260811_0010,
-  owner create/relogin/update/history/no-op/stale-editor checks,
-  second-user isolation,
-  restart persistence,
-  clean logs and dashboard/vacancy/OAuth regressions.
-
-Expected status after upload:
-  PROF-001 remains NEEDS VERIFICATION until the external gate is complete.
+IMPORTANT: infra/vps/.env.example is a secret-free required template from the verified base.
+It is intentionally included in this repair patch. Never commit a real .env file.

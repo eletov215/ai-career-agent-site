@@ -1,139 +1,148 @@
-# AI Career Agent — аудит источников v1.4.21
+# AI Career Agent — аудит источников v1.4.23
 
 | Поле | Значение |
 |---|---|
 | Документ | SOURCE_AUDIT |
-| Версия | 1.4.21 |
+| Версия | 1.4.23 |
 | Дата | 12 августа 2026 |
-| Проверяемый пакет | PROF-001 partial-profile validation hotfix |
-| Рабочий источник кода | GitHub `main` после merge PROF-001 candidate; Render/PostgreSQL revision `20260811_0010`; hotfix built from same merged candidate |
-| Канонический план до обновления | PLAN_CURRENT 1.4.20 |
-| Канонический паспорт до обновления | PROJECT_PASSPORT 2.34 |
-| Результат | Initial PROF-001 Pull Request CI green and Render `0010` ready; production E2E found false-required validation for blank repeatable rows; hotfix prepared, no migration; re-verification pending |
+| Проверяемый пакет | PROF-002 resume import editable review candidate |
+| Рабочий источник кода | `ai-career-agent-site-main (16).zip`; ZIP comment `f5e513f0f992b20305fbef36851ef97576013c86`; exact diff match с PROF-001 hotfix full snapshot |
+| Канонический план до обновления | PLAN_CURRENT 1.4.22 |
+| Канонический паспорт до обновления | PROJECT_PASSPORT 2.36 |
+| Production revision | `20260811_0010` |
+| Candidate revision | `20260812_0011` |
+| Результат | PROF-002 НУЖНА ПРОВЕРКА; local implementation/tests ready; GitHub/Render/production gate pending |
 
 ## 1. Контрольный статус
 
-AUTH-001 и AUTH-002 остаются ВЫПОЛНЕНО. PROF-001 остаётся НУЖНА ПРОВЕРКА. Initial PR CI и Render migration/readiness `0010` подтверждены, но production E2E выявил дефект partial-save validation. Статус ВЫПОЛНЕНО запрещён до green hotfix CI, redeploy и полного owner/versioning production E2E. DOC-STD-001 v1.1 обязателен.
+PROF-001 остаётся ВЫПОЛНЕНО. PROF-002 переводится из ГОТОВО К СТАРТУ в НУЖНА ПРОВЕРКА: код, migration, UI, tests и candidate docs готовы, но Pull Request CI, Render `0011` и реальный import/review E2E ещё не выполнены. DOC-STD-001 v1.1 обязателен.
 
-## 2. Проверка актуального источника кода
+## 2. Аудит рабочей основы
 
-| Область | Результат |
-|---|---|
-| WSGI | `app.py`, `app:app` сохранены; `app_fixed.py` отсутствует |
-| Database baseline | production `20260811_0010`; hotfix schema unchanged |
-| Identity root | existing first-party `users`; profile ownership — strict `user_id` FK + unique one-per-User |
-| Current state | `career_profiles` stores validated current structured snapshot |
-| Version history | `career_profile_versions` stores immutable full snapshot per material save |
-| Confirmation boundary | only explicit owner POST save persists facts; provider/PDF/AI data is not auto-copied |
-| Incomplete data | permitted; completion is informational, not a save gate |
-| Concurrency | optimistic `expected_version`, PostgreSQL row lock, unique constraints and safe conflict |
-| HTTP security | first-party login, owner-scoped queries, POST + CSRF, rate limit, no-store |
-| UI | `/profile`, `/profile/edit`, `/profile/history`, read-only version view, dashboard/nav integration |
-| Backups | inventory includes current and version tables |
-| Prohibited artifacts | `.env`, secrets, DB/dump/backup/venv/cache/bytecode excluded |
+| Проверка | Доказательство | Результат |
+|---|---|---|
+| Загруженный ZIP | ZIP comment `f5e513f0f992b20305fbef36851ef97576013c86` | ПОДТВЕРЖДЕНО |
+| Сравнение с предыдущим full snapshot | `diff -qr` до PROF-002 edits не выявил различий | ПОДТВЕРЖДЕНО |
+| Каноническая очередь | PLAN_CURRENT 1.4.22 / PASSPORT 2.36: PROF-002 следующий | ПОДТВЕРЖДЕНО |
+| Production baseline | PROF-001 complete; PostgreSQL revision `20260811_0010` | ПОДТВЕРЖДЕНО источниками |
 
-## 2.1 Production defect и hotfix v1.4.21
-
-Production partial-profile smoke 12.08.2026 показал сообщение «Для опыта работы укажите компанию и должность» при заполнении только необязательного минимума. Root cause: initial blank repeatable rows формы отправляют default select values (`employment_current=0`, `skill_level=unspecified`, `language_level=unspecified`), а generic row detector считал любое непустое значение признаком введённой записи.
-
-Hotfix:
-- default-only row теперь считается пустым и игнорируется;
-- если пользователь реально вводит часть записи или меняет default на meaningful value, строгая field validation сохраняется;
-- добавлены service regression и route regression, имитирующий фактический browser POST пустых rows;
-- migration не меняется, production revision остаётся `20260811_0010`.
-
-Local hotfix evidence: `tests/test_profile_service.py + tests/test_prof001_migration.py = 5 passed`; `compileall` passed. Route regression добавлен, но локальная среда без Flask его skip-ает; authoritative proof — GitHub CI.
+SHA-256 исходного ZIP: `5e411f3dabc024a4adbf6be05d9fa49ce11e5e36407ac2b068aada0dd3109d0d`.
 
 ## 3. Подтверждённый candidate scope
 
-- positioning/headline and summary;
-- contacts with bounded email/phone/Telegram/http(s) URLs;
-- target roles, industries, employment types and work formats;
-- current/preferred geography and relocation intent;
-- salary range/currency/period/tax mode;
-- deduplicated skills and languages with controlled levels;
-- employment, achievements and education with bounded dates/years/text;
-- deterministic completion percent;
-- current profile + immutable material-change versions;
-- owner-only view/edit/history/version routes;
-- stale-editor and unchanged-save semantics;
-- migration `0010`, backup inventory, tests and dedicated CI gate.
+- authenticated upload одного bounded text PDF;
+- existing PDF signature/page/text/encryption limits;
+- request-local bytes/raw text and ephemeral proposal;
+- deterministic `deterministic-text-v1` suggestions for core facts, contacts, geography, skills, employment, education, languages and achievements;
+- confidence, static warnings, conflicts and bounded evidence excerpts;
+- merge that preserves current confirmed scalar values by default and never deletes confirmed lists/rows;
+- full editable PROF-001 review form;
+- explicit owner confirm as the only persistence boundary;
+- owner/version-bound 30-minute signed metadata token without filename/text/facts;
+- ordinary PROF-001 validation/content hash/optimistic version/row lock;
+- immutable version source + aggregate provenance through migration `20260812_0011`;
+- owner-only history source/provenance UI;
+- dedicated migration/service/route/parser/PostgreSQL tests and CI gate.
 
-PROF-002 import/review, PROF-003 drafts/autosave, version restore, public sharing, export/delete/retention and AI-generated facts are excluded.
+OCR, image-only recognition, DOC/DOCX, LLM/AI parsing, provider resume import, background jobs, persisted review drafts, autosave, auto-confirm and historical restore are excluded.
 
-## 4. Локальные доказательства
+## 4. Data lifecycle and privacy evidence
 
 ```text
-full available pytest: 240 passed, 9 skipped
-extended focused PROF-001 checks: 26 passed, 3 skipped
-profile migration/service core: 4 passed
-SQLite 0010 -> 0009 -> 0010 round-trip: passed
-Alembic check: passed
-compileall: passed
-Jinja parse: 21 templates passed
-architecture/template/document/infra/hygiene: passed
-Flask route tests: prepared; Flask runtime unavailable in isolated local environment
-PostgreSQL integration: prepared; POSTGRES_TEST_URL/Psycopg required in GitHub Actions
+request PDF bytes
+-> bounded pypdf text extraction
+-> in-memory ResumeImportProposal
+-> browser editable review
+-> explicit confirm
+-> canonical profile snapshot + aggregate provenance
 ```
 
-Skipped scenarios are Flask/Psycopg/PostgreSQL runtime checks unavailable in the isolated local environment; they remain mandatory in GitHub Actions. External provider HTTP remains mocked by existing CI policy; PROF-001 itself performs no provider HTTP.
+Before confirm no profile/version write occurs. Review token contains only schema/extractor/counts/section confidence/static warnings/HMAC owner fingerprint/base version/timestamp. Filename, PDF bytes, raw text, contacts, excerpts and proposal payload are forbidden in token, provenance, logs and canonical docs.
 
-## 5. Обязательные внешние доказательства
+Allowed telemetry: page/character/detected-section/conflict counts, changed, resulting version and completion. Full user facts are not logged.
 
-1. Branch/Pull Request workflow green, включая `Verify PROF-001 structured career profile controls` и full regressions.
-2. Render `/health/ready`: `current_revision=expected_revision=20260811_0010`, `migrations.ok=true`, persistent PostgreSQL, `status=ok`.
-3. Owner creates an incomplete profile, relogs and sees the same facts/version.
-4. Material update creates version 2; history/version 1 remains read-only and unchanged.
-5. Unchanged save creates no extra version.
-6. Second User cannot read/edit/history/version facts of the first User.
-7. Stale editor returns safe conflict without overwriting the newer version.
-8. Render restart preserves current profile and history.
-9. AUTH-001/002, `/dashboard`, `/vacancies`, ordinary search and logs remain healthy.
+## 5. Migration evidence
 
-## 6. Ограничения и риски
-
-- Profile sections are validated canonical JSON within owner/version tables; future normalization may use additive migrations when query requirements become concrete.
-- Completion percent is product guidance, not a quality score or AI confidence.
-- Historical restore is intentionally absent; versions are read-only evidence in PROF-001.
-- Contact/profile facts are personal data; export/delete/retention remains PRIV-001 and must not be claimed here.
-- Provider snapshots and resume extraction remain separate until explicit PROF-002 review/consent.
-- Shared rate-limit storage remains required before multiple replicas.
-
-## 7. Rollback
-
-Application revert may leave additive revision `0010`; previous code ignores profile tables. Controlled downgrade `0010 -> 0009` drops `career_profile_versions` and `career_profiles`, so it is permitted only before real profile data or after verified backup and explicit data-retention decision. AUTH/OAuth/Search/Sync rows are not modified.
-
-## 8. Следующее действие
+Revision `20260812_0011_profile_import_provenance` adds to `career_profile_versions`:
 
 ```text
-PROF-001 CANDIDATE
+source_kind      VARCHAR(32) NOT NULL DEFAULT 'manual'
+provenance_json  TEXT NOT NULL DEFAULT '{}'
+CHECK source_kind IN ('manual', 'resume_import')
+```
+
+Existing rows remain `manual`. Canonical profile schema stays version 1. Downgrade removes only source/provenance audit columns and constraint; confirmed snapshots/current profile remain.
+
+## 6. Automated evidence
+
+```text
+full available pytest:                    246 passed, 10 skipped
+focused PROF-002/PROF-001/parser:         15 passed
+architecture/template/document subset:    23 passed
+compileall:                                passed
+Jinja parse:                               22 templates passed
+SQLite clean upgrade to 0011:              passed
+SQLite 0011 -> 0010 -> 0011:               passed
+Alembic check:                             no new upgrade operations
+```
+
+Expected local skips are Flask runtime and Psycopg/PostgreSQL integration; GitHub Actions installs these dependencies and provides PostgreSQL 17. No external provider HTTP is needed by PROF-002.
+
+## 7. Required external verification
+
+1. Separate branch and Pull Request.
+2. Full CI plus `Verify PROF-002 resume import review controls` green.
+3. Render deploy with `current_revision=expected_revision=20260812_0011`, PostgreSQL persistent and status ok.
+4. Upload text PDF; editable review appears; profile/history unchanged before confirm.
+5. Edit and delete suggestions; confirm; history marks `Импорт резюме` and aggregate provenance only.
+6. Existing confirmed scalar conflict is not silently overwritten.
+7. Non-PDF, corrupt/image-only/over-limit inputs fail without profile changes.
+8. Foreign/expired/tampered token, missing CSRF and stale base version fail safely.
+9. Logout/login and restart preserve confirmed facts/history/provenance.
+10. Mobile import/review/confirm, secret-free logs and AUTH/OAuth/search regression pass.
+
+## 8. Ограничения и риски
+
+- Deterministic parser is not AI and can mis-suggest non-standard/multi-column resumes.
+- Image-only PDF requires future OCR package.
+- Browser refresh loses review because unconfirmed draft persistence is intentionally absent.
+- Review token TTL is 30 minutes; stale/expired review requires re-upload.
+- Salary/work preferences are not invented from weak evidence.
+- Shared rate-limit storage remains required before multi-replica production.
+
+## 9. Rollback
+
+Application revert may keep additive `0011`; previous code ignores new audit columns. Controlled downgrade `0011 -> 0010` removes provenance metadata only. Do not auto-import, delete confirmed snapshots, or persist raw resume content during rollback.
+
+## 10. Следующее действие
+
+```text
+PROF-002 candidate
 -> branch / Pull Request
--> GitHub CI green
--> merge main
--> Render 0010 readiness
--> owner/version/concurrency/restart E2E
--> regression smoke
--> PROF-001 COMPLETE
--> PROF-002 START
+-> green CI
+-> Render 0011
+-> production import/review/privacy/owner/stale/restart/mobile E2E
+-> PROF-002 COMPLETE
+-> PROF-003 next
 ```
 
-## 9. Новые канонические версии
+## 11. Новые канонические версии
 
 ```text
-PLAN_CURRENT 1.4.21
-PROJECT_PASSPORT 2.35
-SOURCE_AUDIT 1.4.21
-PROF001_IMPLEMENTATION 1.0
-PROF001_VERIFICATION_STATUS 1.0
-PROF001_RUNBOOK 1.0
-PROF001_PROFILE_REFERENCE 1.0
+PLAN_CURRENT 1.4.23
+PROJECT_PASSPORT 2.37
+SOURCE_AUDIT 1.4.23
+PROF002_IMPLEMENTATION 1.0
+PROF002_VERIFICATION_STATUS 1.0
+PROF002_RUNBOOK 1.0
+PROF002_EXTRACTION_REFERENCE 1.0
+PROF002_SECURITY_REFERENCE 1.0
 DOCUMENT_STANDARD 1.1 (без изменений)
 ```
 
-## 10. Журнал версий
+## 12. Журнал версий
 
 | Версия | Дата | Изменение |
 |---|---|---|
-| 1.4.19 | 11.08.2026 | AUTH-002 complete after green CI, Render 0009, full HH/SJ ownership E2E and regression smoke; PROF-001 next. |
-| 1.4.20 | 11.08.2026 | PROF-001 candidate: structured owner profile, immutable versions, migration 0010, UI/validation/tests/backup updates; external verification pending. |
-| 1.4.21 | 12.08.2026 | Initial CI/Render `0010` passed; production partial-save exposed default-only repeatable-row validation defect. Hotfix fixes row detection and adds regression tests; CI/redeploy/E2E pending. |
+| 1.4.22 | 12.08.2026 | PROF-001 complete; PROF-002 next. |
+| 1.4.23 | 12.08.2026 | PROF-002 candidate: exact GitHub baseline verified; text-PDF proposal/review/confirmation, migration `0011`, provenance/privacy/token controls and dedicated tests implemented; external verification pending. |

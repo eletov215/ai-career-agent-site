@@ -303,3 +303,22 @@ Remote provider revoke is not claimed by this candidate. Local credential erasur
 - Allowed logs: event, changed boolean, version, completion percent. Forbidden: headline, summary, contacts, employment, snapshot JSON and owner ID.
 - Completion is not an AI confidence, employability score or eligibility decision.
 - Export/delete/retention remains PRIV-001; no such claim is made by PROF-001.
+
+
+## PROF-002 — resume import security boundary
+
+PROF-002 does not weaken SEC-001/AUTH/PROF-001 boundaries:
+
+```text
+active first-party AuthSession
++ POST CSRF
++ upload/page/text limits
++ request-local extraction
++ owner/version-bound timed token
++ explicit confirmation
++ PROF-001 validation/row lock
+```
+
+Upload bytes, raw text and unconfirmed proposal are not persisted. The token uses a dedicated salt and HMAC owner fingerprint and excludes filename, content, facts and excerpts. Existing confirmed scalars are not silently overwritten. Foreign, expired, tampered or stale reviews fail closed; non-PDF, corrupt, encrypted/image-only and over-limit documents do not alter the profile.
+
+Allowed logs are aggregate counts/outcomes/version/completion only. Filename, text, excerpts, contacts, payload, signed token, owner ID and cookies are forbidden. OCR/AI/background draft handling requires a future threat model.

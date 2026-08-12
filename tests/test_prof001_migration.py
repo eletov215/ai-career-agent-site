@@ -4,7 +4,7 @@ import json
 import time
 import uuid
 
-from sqlalchemy import inspect, select
+from sqlalchemy import inspect, select, text
 
 from database import (
     CURRENT_REVISION,
@@ -35,7 +35,7 @@ def _active_user(email: str) -> User:
 
 def test_prof001_0010_migration_creates_owner_profile_and_version_tables(tmp_path):
     database_url = f"sqlite:///{(tmp_path / 'prof001-migration.db').resolve().as_posix()}"
-    upgrade_database(database_url)
+    upgrade_database(database_url, "20260811_0010")
     runtime = create_database(database_url)
     try:
         inspector = inspect(runtime.engine)
@@ -79,19 +79,34 @@ def test_prof001_0010_migration_creates_owner_profile_and_version_tables(tmp_pat
                 created_at=now,
                 updated_at=now,
             )
-            version = CareerProfileVersion(
-                id=str(uuid.uuid4()),
-                profile_id=profile.id,
-                schema_version=1,
-                version=1,
-                snapshot_json=json.dumps({"headline": "Data analyst"}),
-                content_hash="a" * 64,
-                changed_sections_json='["core"]',
-                created_at=now,
-            )
-            session.add_all([user, profile, version])
+            session.add_all([user, profile])
             session.commit()
             user_id = user.id
+            profile_id = profile.id
+
+        # Use the revision-0010 table contract directly. The current ORM model
+        # already knows about PROF-002 columns added only by revision 0011.
+        with runtime.engine.begin() as connection:
+            connection.execute(
+                text(
+                    """
+                    INSERT INTO career_profile_versions (
+                        id, profile_id, schema_version, version, snapshot_json,
+                        content_hash, changed_sections_json, created_at
+                    ) VALUES (
+                        :id, :profile_id, 1, 1, :snapshot, :content_hash,
+                        '["core"]', :created_at
+                    )
+                    """
+                ),
+                {
+                    "id": str(uuid.uuid4()),
+                    "profile_id": profile_id,
+                    "snapshot": json.dumps({"headline": "Data analyst"}),
+                    "content_hash": "a" * 64,
+                    "created_at": now,
+                },
+            )
 
         with runtime.session() as session:
             assert session.scalar(
@@ -103,7 +118,8 @@ def test_prof001_0010_migration_creates_owner_profile_and_version_tables(tmp_pat
 
         with runtime.session() as session:
             assert session.scalar(select(CareerProfile)) is None
-            assert session.scalar(select(CareerProfileVersion)) is None
+        with runtime.engine.connect() as connection:
+            assert connection.scalar(text("SELECT COUNT(*) FROM career_profile_versions")) == 0
     finally:
         runtime.dispose()
 

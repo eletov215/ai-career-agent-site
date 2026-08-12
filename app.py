@@ -32,6 +32,7 @@ from routes.auth import AUTH_SESSION_KEY, create_auth_blueprint, login_required
 from routes.profile import create_profile_blueprint
 from services.oauth_identity import OAuthIdentityError, OAuthIdentityService
 from services.profile import CareerProfileService
+from services.resume_import import ResumeImportReviewSigner, ResumeImportService
 from services.trudvsem_sync import TrudvsemSyncService
 from security import csrf, diagnostics_access_allowed, init_security, limiter
 from observability import (
@@ -99,7 +100,19 @@ AUTH_EMAIL_SENDER = build_auth_email_sender(SETTINGS)
 AUTH_SERVICE = AuthService(STORAGE.auth, AUTH_EMAIL_SENDER, SETTINGS)
 app.register_blueprint(create_auth_blueprint(AUTH_SERVICE, SETTINGS))
 PROFILE_SERVICE = CareerProfileService(STORAGE.profiles)
-app.register_blueprint(create_profile_blueprint(PROFILE_SERVICE))
+RESUME_IMPORT_SERVICE = ResumeImportService(
+    max_pages=SETTINGS.max_resume_pages,
+    max_text_characters=SETTINGS.max_resume_text_characters,
+)
+RESUME_IMPORT_REVIEW_SIGNER = ResumeImportReviewSigner(SETTINGS.flask_secret_key)
+app.register_blueprint(
+    create_profile_blueprint(
+        PROFILE_SERVICE,
+        RESUME_IMPORT_SERVICE,
+        RESUME_IMPORT_REVIEW_SIGNER,
+        max_resume_upload_mb=SETTINGS.max_resume_upload_mb,
+    )
+)
 OAUTH_CONNECTIONS = STORAGE.oauth_connections
 OAUTH_IDENTITIES = OAuthIdentityService(OAUTH_CONNECTIONS)
 SYNC_RUNS = STORAGE.sync_runs

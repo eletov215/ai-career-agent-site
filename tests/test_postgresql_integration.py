@@ -288,6 +288,25 @@ def test_postgresql_migration_and_persistence_round_trip():
             now=10_010,
         )
         assert profile_result.profile.version == 1
+        imported_profile_result = profiles.save(
+            user_id=user.id,
+            expected_version=1,
+            payload={
+                "headline": "PostgreSQL imported profile owner",
+                "goals": {"target_roles": ["Platform lead"]},
+                "skills": [{"name": "PostgreSQL", "level": "advanced"}],
+            },
+            source_kind="resume_import",
+            provenance={
+                "schema_version": 1,
+                "extractor_version": "deterministic-text-v1",
+                "page_count": 1,
+                "character_count": 1200,
+                "reviewed_at": 10_011,
+            },
+            now=10_011,
+        )
+        assert imported_profile_result.profile.version == 2
         assert profiles.get(second_user.id).exists is False
         assert profiles.get_version(user_id=second_user.id, version=1) is None
 
@@ -383,9 +402,12 @@ def test_postgresql_migration_and_persistence_round_trip():
         persisted_profiles = CareerProfileService(CareerProfileRepository(runtime))
         persisted_profile = persisted_profiles.get(user.id)
         assert persisted_profile.exists is True
-        assert persisted_profile.headline == "PostgreSQL profile owner"
+        assert persisted_profile.headline == "PostgreSQL imported profile owner"
         assert persisted_profile.skills[0]["name"] == "PostgreSQL"
-        assert len(persisted_profiles.list_versions(user_id=user.id)) == 1
+        persisted_versions = persisted_profiles.list_versions(user_id=user.id)
+        assert len(persisted_versions) == 2
+        assert persisted_versions[0].source_kind == "resume_import"
+        assert persisted_versions[0].provenance["extractor_version"] == "deterministic-text-v1"
         latest_run = SyncRunRepository(runtime).latest("ci-postgresql")
         assert latest_run is not None
         assert latest_run.status == "succeeded"

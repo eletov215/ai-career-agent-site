@@ -19,6 +19,7 @@ from repositories.profiles import (
 from services.auth import AuthValidationError, normalize_email
 
 PROFILE_SCHEMA_VERSION = 1
+PROFILE_SOURCE_KINDS = {"manual", "resume_import"}
 PROFILE_SECTION_NAMES = (
     "core",
     "contacts",
@@ -129,6 +130,8 @@ class CareerProfileVersionView:
     schema_version: int
     snapshot: dict[str, Any]
     changed_sections: tuple[str, ...]
+    source_kind: str
+    provenance: dict[str, Any]
     created_at: int
 
 
@@ -185,6 +188,85 @@ def _decode_json(raw: str, default: Any) -> Any:
         return json.loads(raw)
     except (TypeError, ValueError):
         return default
+
+
+def _normalise_provenance(
+    value: Mapping[str, Any] | None,
+    *,
+    source_kind: str,
+) -> str:
+    if source_kind == "manual":
+        if value not in (None, {}):
+            raise ProfileValidationError(
+                "Ручная версия профиля не должна содержать import provenance."
+            )
+        return "{}"
+    if source_kind != "resume_import":
+        raise ProfileValidationError("Неизвестный источник версии профиля.")
+    if not isinstance(value, Mapping) or not value:
+        raise ProfileValidationError(
+            "Для импорта резюме требуется подтверждённый provenance."
+        )
+
+    allowed_keys = {
+        "schema_version",
+        "extractor_version",
+        "page_count",
+        "character_count",
+        "detected_sections",
+        "section_confidence",
+        "reviewed_at",
+    }
+    if set(value) - allowed_keys:
+        raise ProfileValidationError("Import provenance содержит неизвестные поля.")
+    try:
+        schema_version = int(value.get("schema_version") or 0)
+        page_count = int(value.get("page_count") or 0)
+        character_count = int(value.get("character_count") or 0)
+        reviewed_at = int(value.get("reviewed_at") or 0)
+    except (TypeError, ValueError) as exc:
+        raise ProfileValidationError("Import provenance имеет неверный формат.") from exc
+    extractor_version = str(value.get("extractor_version") or "").strip()
+    detected_sections = value.get("detected_sections") or []
+    section_confidence = value.get("section_confidence") or {}
+    if schema_version != 1:
+        raise ProfileValidationError("Import provenance имеет неподдерживаемую схему.")
+    if not extractor_version or len(extractor_version) > 80:
+        raise ProfileValidationError("Import provenance содержит неверную версию extractor.")
+    if not (1 <= page_count <= 100):
+        raise ProfileValidationError("Import provenance содержит неверное число страниц.")
+    if not (1 <= character_count <= 2_000_000):
+        raise ProfileValidationError("Import provenance содержит неверный объём текста.")
+    if reviewed_at <= 0:
+        raise ProfileValidationError("Import provenance не содержит время подтверждения.")
+    if not isinstance(detected_sections, (list, tuple)) or len(detected_sections) > 16:
+        raise ProfileValidationError("Import provenance содержит неверный список секций.")
+    safe_sections = [str(item) for item in detected_sections]
+    if any(len(item) > 40 for item in safe_sections):
+        raise ProfileValidationError("Import provenance содержит неверную секцию.")
+    if not isinstance(section_confidence, Mapping) or len(section_confidence) > 16:
+        raise ProfileValidationError("Import provenance содержит неверные confidence-данные.")
+    safe_confidence = {str(key): str(item) for key, item in section_confidence.items()}
+    if any(
+        len(key) > 40 or item not in {"high", "medium", "low"}
+        for key, item in safe_confidence.items()
+    ):
+        raise ProfileValidationError("Import provenance содержит неверные confidence-данные.")
+
+    encoded = _canonical_json(
+        {
+            "schema_version": schema_version,
+            "extractor_version": extractor_version,
+            "page_count": page_count,
+            "character_count": character_count,
+            "detected_sections": safe_sections,
+            "section_confidence": safe_confidence,
+            "reviewed_at": reviewed_at,
+        }
+    )
+    if len(encoded) > 8000:
+        raise ProfileValidationError("Import provenance превышает допустимый размер.")
+    return encoded
 
 
 def _clean_text(
@@ -830,6 +912,8 @@ class CareerProfileService:
         user_id: str,
         payload: Mapping[str, Any],
         expected_version: int,
+        source_kind: str = "manual",
+        provenance: Mapping[str, Any] | None = None,
         now: int | None = None,
     ) -> ProfileSaveResult:
         try:
@@ -838,6 +922,10 @@ class CareerProfileService:
             raise ProfileValidationError("Версия профиля имеет неверный формат.") from exc
         if expected < 0:
             raise ProfileValidationError("Версия профиля имеет неверный формат.")
+        source = str(source_kind or "manual").strip().casefold()
+        if source not in PROFILE_SOURCE_KINDS:
+            raise ProfileValidationError("Неизвестный источник версии профиля.")
+        provenance_json = _normalise_provenance(provenance, source_kind=source)
 
         current = self.get(str(user_id))
         normalised = normalise_profile_payload(payload)
@@ -872,6 +960,8 @@ class CareerProfileService:
                 content_hash=content_hash,
                 completion_percent=profile_completion(normalised),
                 changed_sections=changed_sections,
+                source_kind=source,
+                provenance_json=provenance_json,
                 now=now,
             )
         except CareerProfileVersionConflictError as exc:
@@ -937,10 +1027,13 @@ class CareerProfileService:
     def _version_view(record: CareerProfileVersionRecord) -> CareerProfileVersionView:
         snapshot = _decode_json(record.snapshot_json, _default_snapshot())
         changed = _decode_json(record.changed_sections_json, [])
+        provenance = _decode_json(record.provenance_json, {})
         return CareerProfileVersionView(
             version=record.version,
             schema_version=record.schema_version,
             snapshot=dict(snapshot),
             changed_sections=tuple(str(item) for item in changed),
+            source_kind=record.source_kind,
+            provenance=dict(provenance) if isinstance(provenance, Mapping) else {},
             created_at=record.created_at,
         )
