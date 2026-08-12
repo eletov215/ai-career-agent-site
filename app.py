@@ -29,7 +29,9 @@ from services.storage import StorageServices
 from services.auth import AuthService
 from services.email_delivery import build_auth_email_sender
 from routes.auth import AUTH_SESSION_KEY, create_auth_blueprint, login_required
+from routes.profile import create_profile_blueprint
 from services.oauth_identity import OAuthIdentityError, OAuthIdentityService
+from services.profile import CareerProfileService
 from services.trudvsem_sync import TrudvsemSyncService
 from security import csrf, diagnostics_access_allowed, init_security, limiter
 from observability import (
@@ -96,6 +98,8 @@ STORAGE = StorageServices.from_database(DATABASE)
 AUTH_EMAIL_SENDER = build_auth_email_sender(SETTINGS)
 AUTH_SERVICE = AuthService(STORAGE.auth, AUTH_EMAIL_SENDER, SETTINGS)
 app.register_blueprint(create_auth_blueprint(AUTH_SERVICE, SETTINGS))
+PROFILE_SERVICE = CareerProfileService(STORAGE.profiles)
+app.register_blueprint(create_profile_blueprint(PROFILE_SERVICE))
 OAUTH_CONNECTIONS = STORAGE.oauth_connections
 OAUTH_IDENTITIES = OAuthIdentityService(OAUTH_CONNECTIONS)
 SYNC_RUNS = STORAGE.sync_runs
@@ -878,6 +882,7 @@ def logout():
 def dashboard():
     first_party_user = g.current_user
     current_auth = g.current_auth
+    profile_summary = PROFILE_SERVICE.get(first_party_user.id)
     superjob_row = account(first_party_user.id)
     hh_row = hh_account(first_party_user.id)
 
@@ -914,6 +919,7 @@ def dashboard():
         account=superjob_row,
         hh_account=hh_row,
         first_party_user=first_party_user,
+        profile_summary=profile_summary,
         auth_sessions=auth_sessions,
         resumes=resumes,
         error=error,

@@ -15,6 +15,8 @@ from database import (
     upgrade_database,
 )
 from models import (
+    CareerProfile,
+    CareerProfileVersion,
     HeadHunterAccount,
     OAuthConnection,
     SuperJobAccount,
@@ -26,6 +28,7 @@ from models import (
 )
 from repositories import (
     AuthRepository,
+    CareerProfileRepository,
     OAuthConnectionRepository,
     SearchSnapshotRepository,
     SyncCheckpointRepository,
@@ -38,6 +41,7 @@ from services.oauth_identity import (
     OAuthProviderSlotOccupied,
 )
 from services.passwords import hash_password
+from services.profile import CareerProfileService
 from services.vacancy_store import VacancyStore
 
 
@@ -272,6 +276,21 @@ def test_postgresql_migration_and_persistence_round_trip():
                 user_id=user.id,
             )
 
+        profiles = CareerProfileService(CareerProfileRepository(runtime))
+        profile_result = profiles.save(
+            user_id=user.id,
+            expected_version=0,
+            payload={
+                "headline": "PostgreSQL profile owner",
+                "goals": {"target_roles": ["Platform lead"]},
+                "skills": [{"name": "PostgreSQL", "level": "advanced"}],
+            },
+            now=10_010,
+        )
+        assert profile_result.profile.version == 1
+        assert profiles.get(second_user.id).exists is False
+        assert profiles.get_version(user_id=second_user.id, version=1) is None
+
         sync_run = sync_runs.start(
             source="ci-postgresql",
             trigger="integration-test",
@@ -361,6 +380,12 @@ def test_postgresql_migration_and_persistence_round_trip():
         assert persisted_connection is not None
         assert persisted_connection.external_user_id == numeric_external_id
         assert persisted_connection.user_id == user.id
+        persisted_profiles = CareerProfileService(CareerProfileRepository(runtime))
+        persisted_profile = persisted_profiles.get(user.id)
+        assert persisted_profile.exists is True
+        assert persisted_profile.headline == "PostgreSQL profile owner"
+        assert persisted_profile.skills[0]["name"] == "PostgreSQL"
+        assert len(persisted_profiles.list_versions(user_id=user.id)) == 1
         latest_run = SyncRunRepository(runtime).latest("ci-postgresql")
         assert latest_run is not None
         assert latest_run.status == "succeeded"
@@ -387,6 +412,10 @@ def test_postgresql_migration_and_persistence_round_trip():
             assert session.get(SyncRun, sync_run.id) is not None
             assert session.get(SyncCheckpoint, "ci-postgresql") is not None
             assert session.get(HeadHunterAccount, legacy_hh_id) is not None
+            assert session.scalar(
+                select(CareerProfile).where(CareerProfile.user_id == user.id)
+            ) is not None
+            assert session.scalar(select(CareerProfileVersion)) is not None
 
         removed = persisted_identities.disconnect(
             user_id=user.id,

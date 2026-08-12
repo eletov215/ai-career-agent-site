@@ -291,3 +291,15 @@ AUTH-001 production security gate is complete on revision `20260810_0008`. The c
 - Logs may contain only provider, safe outcome/conflict code and existence boolean; authorization code, raw state, external ID, email/profile and tokens are forbidden.
 
 Remote provider revoke is not claimed by this candidate. Local credential erasure is the verified contract; provider-side revocation remains an explicit limitation/runbook item.
+
+## PROF-001 structured profile boundary
+
+- First-party `User` + active `AuthSession` is the only access boundary.
+- Current and historical reads join/filter by owner `user_id`.
+- Save requires POST, CSRF, rate limit and expected version.
+- PostgreSQL row lock, content hash and unique constraints block stale/concurrent overwrite.
+- Only validated `http`/`https` profile links are persisted; URLs are not fetched.
+- Profile responses are `no-store`.
+- Allowed logs: event, changed boolean, version, completion percent. Forbidden: headline, summary, contacts, employment, snapshot JSON and owner ID.
+- Completion is not an AI confidence, employability score or eligibility decision.
+- Export/delete/retention remains PRIV-001; no such claim is made by PROF-001.

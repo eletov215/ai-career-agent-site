@@ -1,61 +1,70 @@
-AI Career Agent - AUTH-002 first-party OAuth identity ownership candidate manifest
+AI Career Agent - PROF-001 structured career profile candidate manifest
 
 Baseline:
-  ai-career-agent-site-main (12).zip from current GitHub main and Render.
+  ai-career-agent-site-main (14).zip from current GitHub main and Render.
 
 Canonical status before candidate:
   AUTH-001 COMPLETE.
-  AUTH-002 READY TO START.
-  Production revision 20260810_0008.
+  AUTH-002 COMPLETE.
+  PROF-001 READY TO START.
+  Production revision 20260811_0009.
 
 Reason for change:
-  Existing HeadHunter/SuperJob OAuth rows and browser keys were not explicit identities of a first-party User. AUTH-002 makes the verified AI Career Agent account the only browser authentication root and treats providers as encrypted, owner-scoped connections.
+  Search, future AI and documents require one owner-scoped, user-confirmed set of structured career facts. Existing OAuth profile snapshots and browser resume-builder data are not a safe first-party profile contract.
 
 Implementation:
-  - require first-party login for HH/SuperJob connect;
-  - bind OAuth state to random state + TTL + user_id + auth_session_id;
-  - atomically create, claim an unbound legacy row, or refresh same-owner connection;
-  - forbid email auto-link;
-  - reject external identity owned by another User;
-  - allow at most one connection per User/provider;
-  - add migration 20260811_0009 unique (user_id, provider);
-  - keep unique (provider, external_user_id);
-  - keep tokens Fernet-encrypted;
-  - make dashboard/read/refresh/disconnect owner-scoped;
-  - remove legacy provider browser identity authorization;
-  - disconnect local unified + rollback mirror credentials by POST + CSRF;
-  - add dedicated tests and GitHub gate.
-  - synchronize architecture, migration and backup/restore references to candidate revision 20260811_0009.
+  - add one current CareerProfile per first-party User;
+  - add immutable CareerProfileVersion full snapshots;
+  - add migration 20260811_0010 and backup inventory coverage;
+  - support positioning, contacts, goals, geography, salary, skills,
+    employment, achievements, education and languages;
+  - allow incomplete profiles and expose a non-blocking completion indicator;
+  - validate lengths, controlled codes, dates, salary ranges, URLs and duplicates;
+  - use deterministic canonical JSON + content hash;
+  - create a new version only for material changes;
+  - use expected_version, PostgreSQL row lock and unique constraints for concurrency;
+  - expose owner-only /profile, /profile/edit, /profile/history and read-only version routes;
+  - add dashboard/navigation integration, scoped responsive UI and no-store responses;
+  - add migration/service/route/PostgreSQL tests and dedicated GitHub CI gate;
+  - synchronize architecture, migration, security, backup and canonical documentation.
 
-Security invariants:
-  - OAuth code/state are not copied into login next URLs or logs;
-  - provider tokens/secrets/profile payloads/external IDs are absent from public logs;
-  - state cannot complete under another first-party session;
-  - foreign owner rows cannot be read, replaced or deleted;
-  - database unique constraints are the final concurrency barrier;
-  - no app_fixed.py; WSGI remains app:app.
+Security and privacy invariants:
+  - first-party AuthSession is required for every profile route;
+  - repository reads/writes/history are owner-scoped by user_id;
+  - POST uses CSRF and rate limiting;
+  - logs contain only safe changed/version/completion metadata;
+  - user facts, contacts and snapshots are not logged;
+  - templates escape facts; stored links allow only http/https without credentials;
+  - no provider, PDF or AI data is auto-confirmed.
 
 Explicit exclusions:
-  - phone/OTP and social login;
-  - admin identity merge/transfer;
-  - career profile import;
-  - automatic email-based migration;
-  - unified remote provider token revocation.
+  - resume import/review (PROF-002);
+  - server drafts/autosave/version restore (PROF-003 or later);
+  - public profile;
+  - AI enrichment/inference;
+  - export/delete/retention (PRIV-001);
+  - phone/OTP/social identity changes.
 
 Local verification:
-  full available pytest: 236 passed, 8 skipped
-  focused AUTH-002 migration/service tests: 7 passed
+  full available pytest: 240 passed, 9 skipped
+  focused PROF-001 checks: 26 passed, 3 skipped
+  focused migration/service core: 4 passed
+  SQLite 0010 -> 0009 -> 0010: passed
+  Alembic check: no new upgrade operations
   compileall: passed
-  Jinja parse: passed
-  document structure: passed after documentation sync
+  Jinja parse: 21 templates passed
+  document structure: passed
+  infrastructure manifest: passed
+  repository hygiene: passed after cleanup
 
 Required external gate:
-  full GitHub Actions including AUTH-002/PostgreSQL/AUTH-001 regressions,
-  Render upgrade to 20260811_0009,
-  real HeadHunter bind/reconnect/disconnect,
-  real SuperJob bind/reconnect/disconnect,
-  cross-user ownership conflict negative smoke,
-  secret-free logs and persistence after relogin/restart.
+  separate branch + Pull Request,
+  full GitHub Actions including PROF-001/PostgreSQL/AUTH regressions,
+  Render upgrade to 20260811_0010,
+  owner create/relogin/update/history/no-op/stale-editor checks,
+  second-user isolation,
+  restart persistence,
+  clean logs and dashboard/vacancy/OAuth regressions.
 
 Expected status after upload:
-  AUTH-002 remains NEEDS VERIFICATION until external gate is complete.
+  PROF-001 remains NEEDS VERIFICATION until the external gate is complete.

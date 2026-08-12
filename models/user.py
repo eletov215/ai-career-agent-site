@@ -44,3 +44,9 @@ class User(Base):
         back_populates="user",
         passive_deletes=True,
     )
+    career_profile = relationship(
+        "CareerProfile",
+        back_populates="user",
+        passive_deletes=True,
+        uselist=False,
+    )

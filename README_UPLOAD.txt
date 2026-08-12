@@ -1,22 +1,25 @@
-AUTH-002 FIRST-PARTY OAUTH OWNERSHIP CANDIDATE v1.4.18
+PROF-001 STRUCTURED CAREER PROFILE CANDIDATE v1.4.20
 
-Baseline: ai-career-agent-site-main (12).zip from current GitHub main/Render.
-Candidate revision: 20260811_0009.
+Baseline: ai-career-agent-site-main (14).zip from current GitHub main/Render.
+Candidate revision: 20260811_0010.
+Suggested branch: prof-001-candidate-v1.4.20.
 
 Primary behavior:
-  - first-party login required for provider connect;
-  - OAuth state bound to User and AuthSession;
-  - one external identity owner;
-  - one provider slot per User;
-  - encrypted owner-scoped reconnect/refresh/disconnect;
-  - no email auto-link;
-  - legacy provider browser keys cannot authorize.
+  - owner-only current profile and immutable version history;
+  - contacts, goals, geography, salary, skills, employment,
+    achievements, education and languages;
+  - incomplete profile support and deterministic completion indicator;
+  - explicit manual confirmation/save boundary;
+  - no-op save does not create a version;
+  - stale editor returns a safe conflict instead of overwriting data;
+  - profile responses are no-store; POST is protected by login, CSRF and rate limits.
 
-Required after upload:
-  1. Green full GitHub Actions including AUTH-002 dedicated gate.
-  2. Render deploy and /health/ready current=expected=20260811_0009.
-  3. Real HH bind/reconnect/disconnect.
-  4. Real SuperJob bind/reconnect/disconnect.
-  5. Cross-user ownership conflict negative smoke.
+Required after branch upload:
+  1. Green Pull Request workflow including the dedicated PROF-001 gate.
+  2. Merge only after every CI step is green.
+  3. Render deploy and /health/ready current=expected=20260811_0010.
+  4. Real owner create/update/history/no-op/stale-editor E2E.
+  5. Second-user isolation and restart persistence smoke.
+  6. AUTH-001/AUTH-002/dashboard/vacancy-search regression smoke and clean logs.
 
-No secrets are included. External provider codes/tokens/client secrets stay only in environment/browser flow.
+No secrets or personal profile fixtures are included. Do not publish profile facts, cookies or database credentials in screenshots/log excerpts.

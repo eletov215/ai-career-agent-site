@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}История профиля — AI Career Agent{% endblock %}
+{% block content %}
+<main class="section profile-page">
+  <div class="container profile-shell profile-shell--narrow">
+    <header class="profile-page-heading">
+      <div><div class="profile-kicker"><span aria-hidden="true">✦</span> Неизменяемые снимки</div><h1>История профиля</h1><p>Каждое содержательное сохранение фиксируется отдельной версией. История доступна только владельцу аккаунта.</p></div>
+      <div class="profile-page-heading__actions"><a class="btn btn-secondary" href="{{ url_for('profile.view_profile') }}">К профилю</a><a class="btn btn-primary" href="{{ url_for('profile.edit_profile') }}">Редактировать</a></div>
+    </header>
+
+    {% if versions %}
+      <div class="profile-history-list">
+        {% for item in versions %}
+          <a class="profile-history-item" href="{{ url_for('profile.profile_version', version=item.version) }}">
+            <span class="profile-history-item__number">v{{ item.version }}</span>
+            <div><h2>Версия {{ item.version }}</h2><p>{{ item.changed_sections|join(', ') }}</p><small>{{ item.created_at }}</small></div>
+            <span class="profile-history-item__arrow" aria-hidden="true">→</span>
+          </a>
+        {% endfor %}
+      </div>
+    {% else %}
+      <section class="profile-empty-state"><span class="profile-empty-state__mark" aria-hidden="true">✦</span><div><h2>Версий пока нет</h2><p>Сохраните карьерный профиль, чтобы создать первый подтверждённый снимок.</p></div><a class="btn btn-primary" href="{{ url_for('profile.edit_profile') }}">Создать профиль</a></section>
+    {% endif %}
+  </div>
+</main>
+{% endblock %}

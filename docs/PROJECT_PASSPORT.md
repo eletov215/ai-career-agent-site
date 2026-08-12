@@ -3,13 +3,13 @@
 | Поле | Значение |
 |---|---|
 | Документ        | PROJECT_PASSPORT                                                                              |
-| Версия паспорта | 2.32 |
+| Версия паспорта | 2.34 |
 | Дата            | 11 августа 2026                                                                               |
 | Статус          | ДЕЙСТВУЮЩИЙ                                                                                   |
-| Связанный план | `AI_Career_Agent_PLAN_CURRENT v1.4.18` |
-| Основа кода | `ai-career-agent-site-main (12).zip` из GitHub main/Render; AUTH-001 complete; AUTH-002 candidate с migration `20260811_0009` локально проверен и ожидает CI/Render/real provider E2E |
+| Связанный план | `AI_Career_Agent_PLAN_CURRENT v1.4.20` |
+| Основа кода | `ai-career-agent-site-main (14).zip` из актуального GitHub `main`/Render; AUTH-001/AUTH-002 complete; PROF-001 candidate с migration `20260811_0010` |
 
-> Контрольные статусы: FND-001/FND-002/DATA-001/DATA-002/SEC-001/OPS-001/INFRA-PREP-001/SYNC-001/SYNC-002/SEARCH-001/SEARCH-002/SEARCH-003 — ВЫПОЛНЕНО; SEARCH-004 — ВЫПОЛНЕНО; AUTH-001 — ВЫПОЛНЕНО; AUTH-002 — НУЖНА ПРОВЕРКА; DOC-001 — В РАБОТЕ как постоянный процесс; INFRA-001 — ОТЛОЖЕНО ДО ПРЕДРЕЛИЗНОГО ЭТАПА.
+> Контрольные статусы: FND-001/FND-002/DATA-001/DATA-002/SEC-001/OPS-001/INFRA-PREP-001/SYNC-001/SYNC-002/SEARCH-001/SEARCH-002/SEARCH-003/SEARCH-004/AUTH-001/AUTH-002 — ВЫПОЛНЕНО; PROF-001 — НУЖНА ПРОВЕРКА; DOC-001 — В РАБОТЕ как постоянный процесс; INFRA-001 — ОТЛОЖЕНО ДО ПРЕДРЕЛИЗНОГО ЭТАПА.
 
 ## 1. Назначение
 
@@ -54,7 +54,7 @@ AI Career Agent — коммерческий веб-сервис карьерн�
 >     scripts/                   migrations, backup, restore, alert, infra probes, sync CLI/worker/supervisor
 >     domain/ models/ repositories/ services/
 >     services/source_status.py    safe public source-state contract
->     migrations/                Alembic 0001..0008 production + 0009 AUTH-002 candidate
+>     migrations/                Alembic 0001..0009 production + 0010 PROF-001 candidate
 >     tests/                     unit/integration/security/ops/infra/sync/search/auth tests
 >     docs/                      architecture, security and runbooks
 >     render.yaml
@@ -312,9 +312,9 @@ AUTH-001 полностью подтверждён в production staging. GitHub
 
 Ограничение: при `AUTH_EMAIL_BACKEND=disabled` deploy healthy, но new registration/reset fail-closed; AUTH-001 не закрывается.
 
-## 14. AUTH-002 — НУЖНА ПРОВЕРКА
+## 14. AUTH-002 — ВЫПОЛНЕНО
 
-Реализован first-party OAuth ownership candidate:
+First-party OAuth ownership завершён и подтверждён production verification:
 
 - connect routes HeadHunter/SuperJob требуют verified first-party session;
 - OAuth state связан с first-party `user_id` и `auth_session_id`;
@@ -323,11 +323,30 @@ AUTH-001 полностью подтверждён в production staging. GitHub
 - migration `20260811_0009` добавляет unique `(user_id, provider)`, сохраняя unique external identity и nullable legacy rows;
 - owner-scoped dashboard, token refresh/reconnect and disconnect;
 - disconnect удаляет unified и provider mirror credentials;
-- dedicated CI gate и ownership/state/migration/route tests.
+- dedicated CI gate и ownership/state/migration/route tests полностью green.
 
-Local evidence: `236 passed, 8 skipped`; focused migration/service suite `7 passed`; compile/Jinja passed. Пакет требует GitHub green, Render `0009` и реального HH/SuperJob E2E. Remote provider revoke, admin identity transfer, phone/social identities и profile import не входят.
+Evidence: GitHub Actions `Success`, включая dedicated AUTH-002 gate; Render `/health/ready` — PostgreSQL `persistent=true`, `current_revision=expected_revision=20260811_0009`, `migrations.ok=true`, `status=ok`, `oauth_configured=true`. Реальный E2E HeadHunter и SuperJob подтвердил connect, persistence после first-party relogin, reconnect без дубля, запрет cross-user claim, сохранение ownership первого User и disconnect с устойчивым отключённым состоянием после refresh/relogin. Итоговая regression-проверка и Render logs подтверждены пользователем как штатные.
 
-## 15. INFRA-001 — ОТЛОЖЕНО ДО ПРЕДРЕЛИЗНОГО ЭТАПА
+Remote provider revoke, admin identity transfer, phone/social identities и profile import не входят.
+
+## 15. PROF-001 — НУЖНА ПРОВЕРКА
+
+Structured career profile candidate реализован поверх first-party `User`:
+
+- одна current `career_profiles` row на User;
+- immutable `career_profile_versions` для каждого material save;
+- manual confirmation boundary: неподтверждённый import/AI/provider snapshot не записывается;
+- sections: positioning, contacts, goals, geography, salary, skills, employment, achievements, education, languages;
+- incomplete profile allowed; deterministic completion indicator;
+- bounded validation, canonical JSON/hash, optimistic version conflict and PostgreSQL row lock;
+- owner-only `/profile`, edit and read-only history/version views;
+- migration `20260811_0010`, backup inventory and dedicated CI gate.
+
+Local evidence: full available pytest `240 passed, 9 skipped`; extended focused PROF-001 checks `26 passed, 3 skipped`; migration round-trip/Alembic check/compile/Jinja/document/infra/hygiene passed. Flask/PostgreSQL route/integration proof remains GitHub CI gate. External completion requires PR CI, Render `0010`, relogin/restart persistence, owner isolation, stale conflict/versioning and AUTH/OAuth/search regression smoke.
+
+Excluded: resume import/review (PROF-002), drafts/autosave (PROF-003), restore historical snapshot, export/delete/retention (PRIV-001), AI-generated facts and public profile.
+
+## 16. INFRA-001 — ОТЛОЖЕНО ДО ПРЕДРЕЛИЗНОГО ЭТАПА
 
 `INFRA-001` теперь означает только реальную аренду и полевой тест VPS:
 
@@ -341,23 +360,22 @@ Local evidence: `236 passed, 8 skipped`; focused migration/service suite `7 pass
 До начала этого пакета Render остаётся staging/резервной площадкой,
 DNS/OAuth callback URL не переключаются.
 
-## 16. Текущее функциональное состояние
+## 17. Текущее функциональное состояние
 
 - Главная/AI Career/resume builder работают.
 - Search: canonical `/vacancies`; Trudvsem, HH, Reed и public SuperJob; SEARCH-001/002/003/004 подтверждены GitHub CI и production smoke.
-- OAuth HH/SJ: AUTH-002 owner-bound candidate, tokens encrypted; external E2E pending.
+- OAuth HH/SJ: AUTH-002 owner-bound и подтверждён production E2E; tokens encrypted, cross-user claim блокируется.
 - Trudvsem cache остаётся PostgreSQL-backed; внешний worker и SYNC-002 checkpoint/retry/lifecycle подтверждены.
 - SEARCH-001 canonical contract и SEARCH-002 conservative dedup подтверждены; multi-source grouping сохраняет все исходные публикации.
 - PDF parser эвристический, не LLM.
 - Saved jobs пока localStorage.
-- First-party account AUTH-001 подтверждён production E2E. Profile/real AI/match/letters/tracker впереди.
+- First-party account AUTH-001 и OAuth ownership AUTH-002 подтверждены production E2E. PROF-001 candidate добавляет редактируемый owner-scoped профиль и immutable versions; real AI/match/letters/tracker впереди.
 
-## 17. Новая обязательная очередь разработки
+## 18. Новая обязательная очередь разработки
 
 ### Сейчас — функциональный MVP без аренды VPS
 
->     AUTH-002
->     -> PROF-001 -> PROF-002 -> PROF-003 -> PRIV-001
+>     PROF-001 verification -> PROF-002 -> PROF-003 -> PRIV-001
 >     -> SEARCH-005
 >     -> AI-BENCH-001 -> AI-PROVIDER-001 -> LEGAL-001
 >     -> AI-001 -> AI-002 -> AI-003 -> AI-004 -> AI-005 -> AI-006
@@ -374,7 +392,7 @@ DNS/OAuth callback URL не переключаются.
 >     -> DOMAIN-001 -> MIG-001
 >     -> final SEC/OPS smoke -> REL-001 -> commercial release
 
-## 18. Зафиксированная hosting-independent стратегия
+## 19. Зафиксированная hosting-independent стратегия
 
 До предрелизного окна новый код не должен зависеть от конкретного
 hosting provider:
@@ -391,7 +409,7 @@ Render не считается гарантированным production для 
 подтверждённой сетевой недоступности из части сетей РФ, но остаётся
 пригодным staging/резервным контуром до `MIG-001`.
 
-## 19. AI и Reed
+## 20. AI и Reed
 
 - `AI-BENCH-001` можно выполнять без реального VPS: качество Yandex AI
   Studio/Alice AI проверяется на golden dataset, а transport с будущего
@@ -403,13 +421,13 @@ Render не считается гарантированным production для 
   сразу после `INFRA-001`.
 - Reed должен иметь feature flag и graceful degradation.
 
-## 20. Следующий пакет
+## 21. Следующий пакет
 
-AUTH-002 — НУЖНА ПРОВЕРКА. Candidate связывает HeadHunter/SuperJob identities с first-party `User`, запрещает email auto-link и legacy provider browser authentication, добавляет migration `20260811_0009`, state/session binding, ownership uniqueness и owner-scoped refresh/disconnect. Local suite: `236 passed, 8 skipped`.
+PROF-001 — НУЖНА ПРОВЕРКА. Candidate создаёт owner-scoped current profile + immutable versions и migration `20260811_0010`. До статуса ВЫПОЛНЕНО требуются green dedicated/full Pull Request CI, Render current/expected `0010`, profile create/update/relogin/restart persistence, owner isolation, stale-editor conflict, unchanged-save/no-duplicate-version and regression smoke.
 
-До статуса ВЫПОЛНЕНО требуются green dedicated CI, Render current/expected `0009`, реальный HH/SJ bind/reconnect/disconnect и negative cross-user ownership smoke. После AUTH-002 — PROF-001. Телефон/OTP остаётся отдельным future identity package. Gmail API staging-only; domain sender pre-release gate не меняется.
+После закрытия PROF-001 следующий пакет — PROF-002: import/review с запретом сохранения неподтверждённых resume facts. Телефон/OTP и Gmail/domain sender gates не меняются.
 
-## 21. Правила рабочего чата
+## 22. Правила рабочего чата
 
 - Перед изменениями читать паспорт, PLAN_CURRENT и актуальный ZIP;
   работать по одному package ID.
@@ -422,7 +440,7 @@ AUTH-002 — НУЖНА ПРОВЕРКА. Candidate связывает HeadHunte
   package.
 - Для новых документов применять единый документный стандарт проекта.
 
-## 22. Журнал версий
+## 23. Журнал версий
 
 | Версия | Дата | Изменение |
 |---|---|---|
@@ -439,3 +457,5 @@ AUTH-002 — НУЖНА ПРОВЕРКА. Candidate связывает HeadHunte
 | 2.30 | 11.08.2026 | Render Free SMTP egress blocker documented; Gmail API HTTPS staging backend added with mandatory domain sender migration before beta/commercial release. |
 | 2.31 | 11.08.2026 | AUTH-001 закрыт после green GitHub Actions, Render Gmail API readiness/delivery и полного production E2E; AUTH-002 становится следующим пакетом. Domain sender + SPF/DKIM/DMARC остаются обязательным pre-release gate. |
 | 2.32 | 11.08.2026 | AUTH-002 candidate: owner-bound HH/SJ identities, migration 0009, state/session binding, encrypted owner-scoped reconnect/disconnect and dedicated tests; external verification pending. |
+| 2.33 | 11.08.2026 | AUTH-002 complete: green GitHub Actions, Render `0009`, полный HH/SJ ownership E2E и regression smoke подтверждены; PROF-001 становится следующим пакетом. |
+| 2.34 | 11.08.2026 | PROF-001 candidate: owner-scoped structured facts, immutable version history, migration `0010`, UI/service/repository/tests and dedicated CI gate; external verification pending. |

@@ -35,6 +35,23 @@
       </form>
     </section>
 
+    <section class="account-profile-card" aria-labelledby="career-profile-title">
+      <div class="account-profile-card__copy">
+        <div class="muted">Структурированный профиль</div>
+        <h2 id="career-profile-title">Карьерный профиль</h2>
+        <p>{% if profile_summary.exists %}Подтверждённые факты сохранены как версия {{ profile_summary.version }}. Профиль заполнен на {{ profile_summary.completion_percent }}%.{% else %}Создайте подтверждённый набор фактов для будущего поиска, AI-анализа и карьерных документов.{% endif %}</p>
+        <div class="account-profile-card__actions">
+          <a class="btn btn-primary" href="{{ url_for('profile.view_profile') }}">{{ 'Открыть профиль' if profile_summary.exists else 'Создать профиль' }}</a>
+          {% if profile_summary.exists %}<a class="btn btn-secondary" href="{{ url_for('profile.edit_profile') }}">Редактировать</a>{% endif %}
+        </div>
+      </div>
+      <div class="account-profile-card__progress" aria-label="Заполнение профиля {{ profile_summary.completion_percent }} процентов">
+        <strong>{{ profile_summary.completion_percent }}%</strong>
+        <progress max="100" value="{{ profile_summary.completion_percent }}">{{ profile_summary.completion_percent }}%</progress>
+        <span>{{ 'Версия ' ~ profile_summary.version if profile_summary.exists else 'Можно заполнять постепенно' }}</span>
+      </div>
+    </section>
+
     <section class="card spaced account-sessions">
       <div class="account-section-heading">
         <div>
@@ -161,10 +178,10 @@
     <section class="card spaced next-step">
       <div>
         <div class="muted">Следующий шаг</div>
-        <h2>Карьерный профиль</h2>
-        <p>После проверки подключений PROF-001 добавит структурированный карьерный профиль, принадлежащий тому же аккаунту.</p>
+        <h2>Импорт резюме с проверкой</h2>
+        <p>После подтверждения PROF-001 следующий пакет PROF-002 свяжет загрузку резюме с редактируемым review-процессом. Неподтверждённые факты не будут попадать в профиль автоматически.</p>
       </div>
-      <a class="btn btn-primary" href="{{ url_for('ai_career') }}">Открыть AI Карьеру</a>
+      <a class="btn btn-primary" href="{{ url_for('profile.view_profile') }}">Открыть профиль</a>
     </section>
   </div>
 </main>

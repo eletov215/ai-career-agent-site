@@ -3,15 +3,15 @@
 | Поле | Значение |
 |---|---|
 | Документ | PLAN_CURRENT |
-| Версия | 1.4.18 |
+| Версия | 1.4.20 |
 | Дата | 11 августа 2026 |
 | Статус | ДЕЙСТВУЮЩИЙ |
-| Основа кода | `ai-career-agent-site-main (12).zip` из актуального GitHub `main`, развернутый на Render; AUTH-001 завершён; AUTH-002 candidate добавляет owner-bound HeadHunter/SuperJob identities и migration `20260811_0009` |
-| Следующий gate | `AUTH-002` — green GitHub Actions, Render `20260811_0009` и реальный HeadHunter/SuperJob ownership E2E |
+| Основа кода | `ai-career-agent-site-main (14).zip` из актуального GitHub `main`, развернутого на Render; AUTH-001/AUTH-002 завершены; PROF-001 candidate добавляет owner-scoped профиль и migration `20260811_0010` |
+| Следующий gate | `PROF-001` — green Pull Request CI, Render `20260811_0010` и owner/versioning production E2E |
 
 > ОБЯЗАТЕЛЬНО ДЛЯ КАЖДОГО НОВОГО ЧАТА: прочитать этот план, новый паспорт и актуальный архив. После завершения любого пункта вернуть обновлённые DOCX/PDF/Markdown, новый ZIP, доказательства проверки и запись в журнале версий.
 
-> КОНТРОЛЬНЫЕ СТАТУСЫ ЭТОЙ ВЕРСИИ: `FND-001`, `FND-002`, `DATA-001`, `DATA-002`, `SEC-001`, `OPS-001`, `INFRA-PREP-001`, `SYNC-001`, `SYNC-002`, `SEARCH-001`, `SEARCH-002` и `SEARCH-003` — **ВЫПОЛНЕНО**; `SEARCH-004` — **ВЫПОЛНЕНО**; `AUTH-001` — **ВЫПОЛНЕНО**; `AUTH-002` — **НУЖНА ПРОВЕРКА**; `SEARCH-005` — **ЗАПЛАНИРОВАНО**; `DOC-001` — **В РАБОТЕ как постоянный процесс**; `INFRA-001` — **ОТЛОЖЕНО ДО ПРЕДРЕЛИЗНОГО ЭТАПА**. Документы с версией ниже `1.4.18` считаются устаревшими для определения очереди разработки.
+> КОНТРОЛЬНЫЕ СТАТУСЫ ЭТОЙ ВЕРСИИ: `FND-001`, `FND-002`, `DATA-001`, `DATA-002`, `SEC-001`, `OPS-001`, `INFRA-PREP-001`, `SYNC-001`, `SYNC-002`, `SEARCH-001`, `SEARCH-002`, `SEARCH-003`, `SEARCH-004`, `AUTH-001` и `AUTH-002` — **ВЫПОЛНЕНО**; `PROF-001` — **НУЖНА ПРОВЕРКА**; `SEARCH-005` — **ЗАПЛАНИРОВАНО**; `DOC-001` — **В РАБОТЕ как постоянный процесс**; `INFRA-001` — **ОТЛОЖЕНО ДО ПРЕДРЕЛИЗНОГО ЭТАПА**. Документы с версией ниже `1.4.20` считаются устаревшими для определения очереди разработки.
 
 ## 1. Источник истины и аудит источников
 
@@ -32,6 +32,8 @@
 - Версия 1.4.17 закрывает AUTH-001 как ВЫПОЛНЕНО. GitHub Actions полностью зелёный, включая dedicated `Verify AUTH-001 first-party account controls` и все PostgreSQL/SEC/OPS/SYNC/SEARCH/Docker gates. Render `/health/ready` подтвердил `auth.email_backend=gmail_api`, `auth.email_delivery_configured=true`, PostgreSQL `persistent=true`, `current_revision=expected_revision=20260810_0008`, `migrations.ok=true`, `status=ok`. Реальная Gmail API delivery получена на внешний test mailbox. Production E2E подтвердил registration, supersede/одноразовость verification link, email verification, login, две независимые server-side sessions, отзыв отдельной сессии, `revoke others` с сохранением текущей, logout с защитой `/dashboard`, forgot/reset, смену пароля, отказ старого пароля, отзыв pre-reset sessions, успешный вход новым паролем и одноразовость reset link. Gmail API остаётся только staging transport; до beta/commercial release обязателен sender собственного домена с SPF/DKIM/DMARC. Следующий пакет — AUTH-002.
 
 - Версия 1.4.18 реализует AUTH-002 candidate. OAuth HeadHunter/SuperJob больше не является browser identity: connect routes требуют first-party session, state привязан к `user_id` и `auth_session_id`, callback атомарно создаёт/claim/refresh owner-bound `OAuthConnection`. Migration `20260811_0009` сохраняет unique external identity и добавляет unique `(user_id, provider)` без email auto-link; legacy unbound rows остаются nullable и claim-ятся только после свежего OAuth proof. Dashboard и disconnect owner-scoped, tokens продолжают храниться зашифрованно, legacy browser keys не авторизуют. Local tests green; пакет остаётся НУЖНА ПРОВЕРКА до GitHub/Render/real HH/SJ E2E.
+- Версия 1.4.19 закрывает AUTH-002 как ВЫПОЛНЕНО. GitHub Actions полностью зелёный, включая dedicated `Verify AUTH-002 first-party OAuth identity ownership controls`; Render `/health/ready` подтвердил PostgreSQL `persistent=true`, `current_revision=expected_revision=20260811_0009`, `migrations.ok=true`, `status=ok`, `oauth_configured=true`. Production E2E подтвердил для HeadHunter и SuperJob: первичную привязку, сохранение после logout/login, reconnect/`Обновить доступ` без дублей, запрет cross-user claim той же external identity, сохранение ownership первого User после конфликтной попытки, disconnect и устойчивое отключённое состояние после refresh/relogin. Итоговый regression smoke `/dashboard`, `/vacancies`, first-party login/logout и Render logs подтверждён пользователем как штатный. AUTH-002 закрыт; следующий пакет — PROF-001.
+- Версия 1.4.20 реализует PROF-001 candidate. Добавлены owner-scoped `career_profiles`, immutable `career_profile_versions`, optimistic version conflict protection и migration `20260811_0010`. Профиль хранит вручную подтверждённые contacts, goals, geography, salary, skills, employment, achievements, education и languages; неполные данные допустимы. Добавлены `/profile`, editor, history/read-only version views, dashboard/navigation integration, backup inventory и dedicated `Verify PROF-001 structured career profile controls`. Импорт резюме, AI enrichment, restore historical version, export/delete и autosave исключены. Пакет остаётся НУЖНА ПРОВЕРКА до green Pull Request CI, Render `0010`, owner isolation/version/persistence E2E и regression smoke.
 
 
 ## 2. Обязательный протокол работы
@@ -76,24 +78,24 @@
 | Запуск | Flask + Gunicorn, WSGI `app:app`. |
 | Конфигурация | `config.py`, `APP_ENV=production/development/test`, ранняя валидация. |
 | База | Production работает на PostgreSQL 17 через SQLAlchemy/Alembic; SQLite оставлен только как local/test fallback. |
-| OAuth | AUTH-002 candidate: HeadHunter/SuperJob owner-bound к first-party `User`, Fernet encryption, state bound to first-party session; требуется external E2E. |
+| OAuth | AUTH-002 complete: HeadHunter/SuperJob owner-bound к first-party `User`, Fernet encryption, state bound to first-party session; production ownership E2E подтверждён. |
 | Вакансии | Trudvsem cache, HH, Reed и public SuperJob search; SEARCH-001/002 подтверждены; SEARCH-003 persistent snapshot pagination подтверждена GitHub CI и production Render, включая latency hotfix, stable page boundaries и restart persistence. |
 | Резюме | PDF extraction на pypdf и browser resume builder; LLM пока нет. |
 | Тесты | GitHub Actions, unit/provider/route/config/database/migration/security/observability/backup tests. |
 | Hosting | Render временно используется как staging/резервная площадка. Для production требуется проверенный VPS с доступностью из РФ/РБ, собственный домен и план миграции. |
-| Текущая схема | Production до deploy `20260810_0008`; candidate head `20260811_0009` добавляет unique ownership `(user_id, provider)` для OAuth connections без удаления legacy rows. |
+| Текущая схема | Production `20260811_0009`; candidate head `20260811_0010` добавляет `career_profiles` и immutable `career_profile_versions` без изменения AUTH/OAuth/Search/Sync rows. |
 
 ### 5.1 Выполнено/частично
 
 - BASE-001: Flask/Gunicorn/Render и публичные страницы - реализовано.
 - BASE-002: единый поиск по текущим providers - реализован в текущем объёме.
-- BASE-003: AUTH-002 owner binding/encryption candidate реализован; требуется GitHub/Render/real provider E2E.
+- BASE-003: AUTH-002 owner binding/encryption завершён и подтверждён GitHub/Render/real provider E2E.
 - BASE-004: Trudvsem cache, внешний worker и SYNC-002 incremental checkpoint/retry/lifecycle policy реализованы и подтверждены; внешний success-smoke Trudvsem повторяется на российском VPS без блокировки текущей разработки.
 - BASE-005: SEARCH-001 typed contract/canonical filtering и SEARCH-002 conservative cross-source dedup подтверждены в CI/Render; public SuperJob search включён без обязательного OAuth; stable pagination/total подтверждена SEARCH-003 в CI и production.
 - BASE-006: PDF parse - частично, это не AI.
 - BASE-007: resume builder/live preview/PDF/mobile - реализовано.
 - BASE-008: спокойные homepage transitions/reduced motion - реализовано.
-- BASE-009..012: own account, real AI, server saved jobs, tracker/legal/commercial core - впереди.
+- BASE-009: first-party account и OAuth ownership выполнены; structured profile PROF-001 реализован как candidate. Real AI, server saved jobs, tracker/legal/commercial core остаются впереди.
 
 ### 5.2 Ключевые риски
 
@@ -152,8 +154,8 @@ MVP не готов, если работает только отдельная �
 | ID | Приоритет | Статус | Пункт |
 |---|---|---|---|
 | AUTH-001 | P0 | ВЫПОЛНЕНО | First-party account, verification/reset, revocable sessions и provider-neutral email delivery подтверждены green CI, Render Gmail API delivery и полным production E2E |
-| AUTH-002 | P0 | НУЖНА ПРОВЕРКА | Owner-bound HeadHunter/SuperJob OAuth identities, migration 0009, dashboard/disconnect/tests; требуется external E2E |
-| PROF-001 | P1 | ЗАПЛАНИРОВАНО | Структурированный карьерный профиль |
+| AUTH-002 | P0 | ВЫПОЛНЕНО | Owner-bound HeadHunter/SuperJob OAuth identities, migration 0009, dashboard/reconnect/disconnect и cross-user ownership подтверждены CI/Render/production E2E |
+| PROF-001 | P1 | НУЖНА ПРОВЕРКА | Owner-scoped structured facts, immutable versions, migration `0010`, UI/tests; требуется CI/Render/E2E |
 | PROF-002 | P1 | ЗАПЛАНИРОВАНО | Импорт резюме в профиль с проверкой пользователем |
 | PROF-003 | P1 | ЗАПЛАНИРОВАНО | Серверные черновики и версии резюме |
 | PRIV-001 | P1 | ЗАПЛАНИРОВАНО | Экспорт, удаление и сроки хранения персональных данных |
@@ -336,7 +338,7 @@ MVP не готов, если работает только отдельная �
 
 **Реализация:** Канонические PLAN_CURRENT и паспорт обновляются после каждого архитектурного решения; README/ROADMAP/CHANGELOG и package-specific docs синхронизируются вместе с ближайшим кодовым пакетом, чтобы документация и код проходили один CI/merge cycle.
 
-**Текущее состояние:** PLAN_CURRENT 1.4.18 и паспорт 2.32 фиксируют SEARCH-001/002/003/004 и AUTH-001 как ВЫПОЛНЕНО; AUTH-002 — НУЖНА ПРОВЕРКА. Repository/package docs синхронизированы с AUTH-001 production evidence и AUTH-002 candidate migration `20260811_0009`; Gmail API staging contract сохраняется.
+**Текущее состояние:** PLAN_CURRENT 1.4.20 и паспорт 2.34 фиксируют SEARCH-001/002/003/004, AUTH-001 и AUTH-002 как ВЫПОЛНЕНО; PROF-001 — НУЖНА ПРОВЕРКА. Production PostgreSQL остаётся на `20260811_0009`, candidate revision — `20260811_0010`. Gmail API staging contract сохраняется.
 
 **Влияние на сайт:** Нет.
 
@@ -610,7 +612,7 @@ MVP не готов, если работает только отдельная �
 #### AUTH-001 - Аккаунт AI Career Agent
 
 **Приоритет:** P0
-**Статус:** НУЖНА ПРОВЕРКА
+**Статус:** ВЫПОЛНЕНО
 
 **Цель:** Создать собственную first-party identity; HH/SuperJob становятся независимыми дополнительными подключениями и не привязываются автоматически.
 
@@ -622,7 +624,7 @@ MVP не готов, если работает только отдельная �
 
 **Критерии готовности:** Green dedicated CI/PostgreSQL migration; Render revision `0008`; production email backend configured; E2E registration/verification/login/logout/revoke/reset; no plaintext/secret leakage; sessions отзываются и reset закрывает старые sessions.
 
-**Ограничения:** AUTH-002 OAuth binding, profile, account deletion/export, MFA и admin roles не входят. До подтверждённой реальной transactional email delivery пакет не может быть закрыт.
+**Ограничения:** Profile, account deletion/export, MFA и admin roles не входят. AUTH-002 OAuth binding выполнен отдельным следующим пакетом. Gmail API остаётся staging-only; production sender собственного домена обязателен до beta/commercial release.
 
 **Rollback:** Application revert; additive `0008` оставить после появления real users. Downgrade до `0007` — только до account creation либо после verified backup/explicit decision.
 
@@ -631,7 +633,7 @@ MVP не готов, если работает только отдельная �
 #### AUTH-002 - Привязка OAuth HeadHunter и SuperJob к пользователю сервиса
 
 **Приоритет:** P0
-**Статус:** НУЖНА ПРОВЕРКА
+**Статус:** ВЫПОЛНЕНО
 
 **Цель:** Хранить внешние HeadHunter/SuperJob identities как owner-bound подключения конкретного first-party `User`, а не как самостоятельную browser authentication.
 
@@ -641,9 +643,9 @@ MVP не готов, если работает только отдельная �
 
 **Влияние на сайт:** Verified пользователь управляет HH и SuperJob из единого кабинета. Подключение другого User не видно и не может быть изменено. Для смены account того же provider сначала требуется disconnect.
 
-**Критерии готовности:** Dedicated GitHub gate green; Render revision `20260811_0009`; реальный HH и SuperJob bind/reconnect/disconnect E2E; cross-user claim отклоняется; token plaintext отсутствует; logs secret-free; restart/relogin сохраняет owner connection.
+**Критерии готовности:** ВЫПОЛНЕНО. Dedicated GitHub gate green; Render revision `20260811_0009`; реальный HH и SuperJob bind/reconnect/disconnect E2E; cross-user claim отклонён для обеих площадок; relogin сохраняет owner connection, а disconnect сохраняется после refresh/relogin; regression smoke и Render logs подтверждены штатными.
 
-**Ограничения:** External APIs mocked в CI. Remote provider revoke не унифицирован и не входит в candidate; local encrypted credentials удаляются. Admin merge/transfer, phone/social identities и profile import исключены.
+**Ограничения:** External APIs по-прежнему mocked в CI, а реальная provider-проверка выполняется production E2E. Remote provider revoke не унифицирован и не входит в AUTH-002; local encrypted credentials удаляются. Admin merge/transfer, phone/social identities и profile import исключены.
 
 **Rollback:** Application revert; additive `0009` можно оставить. Downgrade удаляет только unique `(user_id, provider)` constraint и не удаляет OAuth rows. Legacy provider browser login не восстанавливать.
 
@@ -651,20 +653,24 @@ MVP не готов, если работает только отдельная �
 
 #### PROF-001 - Структурированный карьерный профиль
 
-**Приоритет:** P1
-**Статус:** ЗАПЛАНИРОВАНО
+**Приоритет:** P1  
+**Статус:** НУЖНА ПРОВЕРКА
 
-**Цель:** Создать подтверждённый набор фактов для search, AI и документов.
+**Цель:** Создать подтверждённый owner-scoped набор фактов для search, AI и документов, не смешивая его с provider profile snapshots или неподтверждённым импортом резюме.
 
-**Реализация:** Contacts, employment, achievements, skills, education, languages, goals, geography, salary.
+**Реализация:** `CareerProfile` хранит current structured snapshot по одному на first-party `User`; `CareerProfileVersion` сохраняет immutable full snapshot каждого содержательного ручного сохранения. Секции: positioning, contacts, goals, geography, salary, skills, employment, achievements, education, languages. Validation ограничивает размеры, enum/date/salary semantics, URL schemes и дубли. Optimistic `expected_version` + PostgreSQL row lock + unique constraints блокируют stale overwrite. Migration `20260811_0010` additive и создаёт только profile tables/indexes/constraints.
 
-**Влияние на код:** profile models/service/routes/templates/migrations/tests.
+**Влияние на код:** `domain/profile.py`, `models/profile.py`, `repositories/profiles.py`, `services/profile.py`, `routes/profile.py`, `templates/profile/`, dashboard/navigation/CSS, migration `0010`, backup inventory, CI, tests и package docs.
 
-**Влияние на сайт:** В кабинете появляется редактируемый профиль.
+**Влияние на сайт:** В кабинете появляется карточка заполнения и отдельный раздел `/profile` с просмотром, редактированием, completion indicator и read-only историей версий. Пустые/частичные профили допустимы; сохранение является явным пользовательским подтверждением.
 
-**Критерии готовности:** Доступ только владельцу; неполные данные допустимы; ключевые изменения versioned.
+**Критерии готовности:** Dedicated CI и PostgreSQL migration green; Render current/expected `20260811_0010`; profile сохраняется после relogin/restart; второй User не читает/редактирует/просматривает версии первого; stale editor получает conflict без потери новой версии; unchanged save не создаёт дубль; incomplete profile сохраняется; history отражает material changes; AUTH/OAuth/search regressions green.
 
-**Зависимости:** AUTH-001, DATA-002.
+**Exclusions:** PROF-002 import/review, PROF-003 drafts/autosave, historical restore, PRIV-001 export/delete/retention, AI-generated facts, public profile, provider snapshot auto-copy и обязательность заполнения.
+
+**Rollback:** Application revert может оставить additive `0010`; старый код игнорирует profile tables. Controlled downgrade `0010 -> 0009` удаляет только profile current/version tables и допустим только до реальных profile data либо после verified backup/explicit data decision.
+
+**Зависимости:** AUTH-001, AUTH-002 и DATA-002 выполнены.
 
 #### PROF-002 - Импорт резюме в профиль с проверкой пользователем
 
@@ -1441,9 +1447,6 @@ Render остаётся staging/резервной площадкой на пе�
 
 ```text
 DOC-001 (постоянная синхронизация, не блокирует код)
--> SEARCH-003
--> SEARCH-004
--> AUTH-002
 -> PROF-001
 -> PROF-002
 -> PROF-003
@@ -1482,24 +1485,25 @@ INFRA-001 real VPS test
 
 ## 16. Следующий пакет
 
-`AUTH-002` — **НУЖНА ПРОВЕРКА**. Candidate реализует first-party ownership HeadHunter/SuperJob, migration `20260811_0009`, unique external identity and one-provider-slot invariants, state binding to server-side auth session, owner-scoped refresh/disconnect and safe conflict responses. Local available suite: `236 passed, 8 skipped`.
-
-Обязательный verification gate:
+`PROF-001` — **НУЖНА ПРОВЕРКА**. Candidate построен поверх актуального GitHub `main` после завершённого AUTH-002:
 
 ```text
-GitHub Actions green
--> Render upgrade 0008 -> 0009
--> /health/ready current=expected=20260811_0009
--> real HeadHunter bind/reconnect/disconnect
--> real SuperJob bind/reconnect/disconnect
--> second first-party User cannot claim same external identity
--> logs/token storage secret-free
--> AUTH-002 COMPLETE
--> PROF-001 START
+new branch / Pull Request
+-> Verify PROF-001 structured career profile controls
+-> full CI green
+-> merge to main
+-> Render upgrade 0009 -> 0010
+-> /health/ready current=expected=20260811_0010
+-> create partial profile and relogin persistence
+-> update -> immutable version 2
+-> unchanged save -> no extra version
+-> stale/cross-user owner isolation negative smoke
+-> restart persistence and AUTH/OAuth/search regression
+-> PROF-001 COMPLETE
+-> PROF-002 START
 ```
 
-Телефон/OTP, social login, admin merge и profile import не входят. Gmail API остаётся staging-only; domain sender + SPF/DKIM/DMARC сохраняются как pre-release gate.
-
+PROF-001 сохраняет только вручную подтверждённые facts. HH/SuperJob profile snapshots не копируются автоматически; PDF/resume extraction не записывает facts до отдельного PROF-002 review flow. Телефон/OTP, Gmail staging sender и pre-release domain sender gate не меняются.
 
 ## 17. Обязательный отчёт после каждого пакета
 
@@ -1560,3 +1564,5 @@ GitHub/production/API: <подтверждено или требуется>
 | 1.4.16 | 11.08.2026 | AUTH-001-GMAIL-API-STAGING | Render Free SMTP egress blocker подтверждён `OSError`; добавлен Gmail API HTTPS backend с OAuth refresh-token flow, mocked tests и обязательным future domain sender gate. |
 | 1.4.17 | 11.08.2026 | AUTH-001-COMPLETE / AUTH-002-PREP | Green CI, Gmail API delivery и полный production E2E подтверждены; AUTH-001 ВЫПОЛНЕНО, AUTH-002 ГОТОВО К СТАРТУ. Gmail API staging-only; domain sender + SPF/DKIM/DMARC — pre-release gate. |
 | 1.4.18 | 11.08.2026 | AUTH-002-CANDIDATE | Owner-bound HH/SuperJob identities, state tied to first-party session, migration `20260811_0009`, owner-scoped refresh/disconnect, safe conflicts and dedicated tests/CI gate; требуется GitHub/Render/real provider E2E. |
+| 1.4.19 | 11.08.2026 | AUTH-002-COMPLETE / PROF-001-PREP | Green GitHub Actions, Render `0009`, полный HH/SuperJob production ownership E2E и regression smoke подтверждены; AUTH-002 ВЫПОЛНЕНО, следующий пакет — PROF-001. |
+| 1.4.20 | 11.08.2026 | PROF-001-CANDIDATE | Owner-scoped structured profile, immutable versions, migration `20260811_0010`, edit/view/history UI, validation, backup inventory and dedicated CI gate; требуется Pull Request/Render/production E2E. |

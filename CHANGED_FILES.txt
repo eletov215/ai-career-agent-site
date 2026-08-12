@@ -1,40 +1,45 @@
-AI Career Agent - AUTH-002 first-party OAuth identity ownership candidate
+AI Career Agent - PROF-001 structured career profile candidate
 
-Package: AUTH-002
-Candidate version: 1.4.18
-Candidate database revision: 20260811_0009
-Baseline: ai-career-agent-site-main (12).zip from current GitHub main/Render
+Package: PROF-001
+Candidate version: 1.4.20
+Candidate database revision: 20260811_0010
+Baseline: ai-career-agent-site-main (14).zip from current GitHub main/Render
 
 Application/domain/persistence:
 - app.py
 - database.py
-- domain/entities.py
-- models/oauth_connection.py
+- domain/__init__.py
+- domain/profile.py (new)
+- models/__init__.py
+- models/profile.py (new)
+- models/user.py
 - repositories/__init__.py
-- repositories/oauth_connections.py
-- routes/auth.py
-- services/__init__.py
-- services/oauth_identity.py (new)
-- migrations/versions/20260811_0009_oauth_identity_ownership.py (new)
+- repositories/profiles.py (new)
+- routes/profile.py (new)
+- services/profile.py (new)
+- services/storage.py
+- operations/backup.py
+- migrations/versions/20260811_0010_structured_career_profile.py (new)
 
 UI:
 - templates/base.html
 - templates/dashboard.html
-- templates/message.html
-- templates/privacy.html
+- templates/profile/_profile_sections.html (new)
+- templates/profile/view.html (new)
+- templates/profile/edit.html (new)
+- templates/profile/history.html (new)
+- templates/profile/version.html (new)
 - static/styles.css
 
 CI/tests/tooling:
 - .github/workflows/ci.yml
 - scripts/check_document_structure.py
-- tests/test_auth002_migration.py (new)
-- tests/test_auth002_routes.py (new)
-- tests/test_oauth_identity_service.py (new)
-- tests/test_auth_migration.py
-- tests/test_auth_routes.py
+- tests/test_auth002_migration.py
 - tests/test_document_structure.py
 - tests/test_postgresql_integration.py
-- tests/test_routes.py
+- tests/test_prof001_migration.py (new)
+- tests/test_profile_routes.py (new)
+- tests/test_profile_service.py (new)
 
 Repository/canonical documentation:
 - README.md
@@ -42,18 +47,14 @@ Repository/canonical documentation:
 - README_UPLOAD.txt
 - docs/ARCHITECTURE.md
 - docs/BACKUP_RESTORE.md
-- docs/DATABASE_MIGRATION.md
-- docs/AUTH001_IMPLEMENTATION.md
-- docs/AUTH001_RUNBOOK.md
-- docs/AUTH001_SECURITY_REFERENCE.md
-- docs/AUTH001_VERIFICATION_STATUS.md
-- docs/AUTH002_IMPLEMENTATION.md (new)
-- docs/AUTH002_RUNBOOK.md (new)
-- docs/AUTH002_SECURITY_REFERENCE.md (new)
-- docs/AUTH002_VERIFICATION_STATUS.md (new)
 - docs/CHANGELOG.md
+- docs/DATABASE_MIGRATION.md
 - docs/DOMAIN_MODEL.md
 - docs/PLAN_CURRENT.md
+- docs/PROF001_IMPLEMENTATION.md (new)
+- docs/PROF001_PROFILE_REFERENCE.md (new)
+- docs/PROF001_RUNBOOK.md (new)
+- docs/PROF001_VERIFICATION_STATUS.md (new)
 - docs/PROJECT_GUIDE.md
 - docs/PROJECT_PASSPORT.md
 - docs/ROADMAP.md
@@ -62,4 +63,4 @@ Repository/canonical documentation:
 - CHANGED_FILES.txt
 - PATCH_MANIFEST.txt
 
-No secrets, provider codes/tokens, databases, dumps, backups, virtualenv, caches or bytecode are included.
+No secrets, personal profile values, databases, dumps, backups, virtualenv, caches or bytecode are included.

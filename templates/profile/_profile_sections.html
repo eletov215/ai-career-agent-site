@@ -1,0 +1,119 @@
+{% macro value_or_dash(value) -%}
+  {{ value if value not in (none, '', []) else 'Не указано' }}
+{%- endmacro %}
+
+{% macro profile_sections(profile, employment_type_options, work_format_options, relocation_options, salary_period_options, salary_tax_options, skill_level_options, language_level_options) %}
+  <div class="profile-fact-grid">
+    <section class="profile-fact-card">
+      <div class="profile-fact-card__eyebrow">Контакты</div>
+      <dl class="profile-definition-list">
+        <div><dt>Email</dt><dd>{{ value_or_dash(profile.contacts.get('contact_email')) }}</dd></div>
+        <div><dt>Телефон</dt><dd>{{ value_or_dash(profile.contacts.get('phone')) }}</dd></div>
+        <div><dt>Telegram</dt><dd>{{ value_or_dash(profile.contacts.get('telegram')) }}</dd></div>
+        <div><dt>Портфолио</dt><dd>{% if profile.contacts.get('portfolio_url') %}<a href="{{ profile.contacts.get('portfolio_url') }}" rel="noopener noreferrer nofollow" target="_blank">Открыть ссылку</a>{% else %}Не указано{% endif %}</dd></div>
+        <div><dt>Профиль</dt><dd>{% if profile.contacts.get('linkedin_url') %}<a href="{{ profile.contacts.get('linkedin_url') }}" rel="noopener noreferrer nofollow" target="_blank">Открыть ссылку</a>{% else %}Не указано{% endif %}</dd></div>
+      </dl>
+    </section>
+
+    <section class="profile-fact-card">
+      <div class="profile-fact-card__eyebrow">Карьерные цели</div>
+      <dl class="profile-definition-list">
+        <div><dt>Целевые роли</dt><dd>{{ profile.goals.get('target_roles')|join(', ') if profile.goals.get('target_roles') else 'Не указано' }}</dd></div>
+        <div><dt>Отрасли</dt><dd>{{ profile.goals.get('industries')|join(', ') if profile.goals.get('industries') else 'Не указано' }}</dd></div>
+        <div><dt>Занятость</dt><dd>{% if profile.goals.get('employment_types') %}{% for code in profile.goals.get('employment_types') %}{{ employment_type_options.get(code, code) }}{{ ', ' if not loop.last else '' }}{% endfor %}{% else %}Не указано{% endif %}</dd></div>
+        <div><dt>Формат</dt><dd>{% if profile.goals.get('work_formats') %}{% for code in profile.goals.get('work_formats') %}{{ work_format_options.get(code, code) }}{{ ', ' if not loop.last else '' }}{% endfor %}{% else %}Не указано{% endif %}</dd></div>
+      </dl>
+      {% if profile.goals.get('employment_types') or profile.goals.get('work_formats') %}
+        <div class="profile-chip-row">
+          {% for code in profile.goals.get('employment_types') or [] %}<span class="profile-chip">{{ employment_type_options.get(code, code) }}</span>{% endfor %}
+          {% for code in profile.goals.get('work_formats') or [] %}<span class="profile-chip">{{ work_format_options.get(code, code) }}</span>{% endfor %}
+        </div>
+      {% endif %}
+    </section>
+
+    <section class="profile-fact-card">
+      <div class="profile-fact-card__eyebrow">География</div>
+      <dl class="profile-definition-list">
+        <div><dt>Сейчас</dt><dd>{{ value_or_dash(profile.geography.get('current_location')) }}</dd></div>
+        <div><dt>Рассматриваю</dt><dd>{{ profile.geography.get('preferred_locations')|join(', ') if profile.geography.get('preferred_locations') else 'Не указано' }}</dd></div>
+        <div><dt>Переезд</dt><dd>{{ relocation_options.get(profile.geography.get('relocation'), 'Не указано') }}</dd></div>
+      </dl>
+    </section>
+
+    <section class="profile-fact-card">
+      <div class="profile-fact-card__eyebrow">Зарплатные ожидания</div>
+      {% set salary_minimum = profile.salary.get('minimum') %}
+      {% set salary_maximum = profile.salary.get('maximum') %}
+      {% if salary_minimum is not none or salary_maximum is not none %}
+        <p class="profile-salary-value">
+          {% if salary_minimum is not none and salary_maximum is not none %}{{ salary_minimum }}–{{ salary_maximum }}
+          {% elif salary_minimum is not none %}от {{ salary_minimum }}
+          {% else %}до {{ salary_maximum }}{% endif %}
+          {{ profile.salary.get('currency') }}
+        </p>
+        <p class="profile-salary-meta">{{ salary_period_options.get(profile.salary.get('period'), '') }} · {{ salary_tax_options.get(profile.salary.get('tax_mode'), '') }}</p>
+      {% else %}
+        <p class="profile-empty-copy">Не указано</p>
+      {% endif %}
+    </section>
+  </div>
+
+  <section class="profile-section-card">
+    <div class="profile-section-card__heading"><div><span>Компетенции</span><h2>Навыки</h2></div><strong>{{ profile.skills|length }}</strong></div>
+    {% if profile.skills %}
+      <div class="profile-skill-list">
+        {% for item in profile.skills %}<span class="profile-skill"><b>{{ item.get('name') }}</b><small>{{ skill_level_options.get(item.get('level'), item.get('level')) }}</small></span>{% endfor %}
+      </div>
+    {% else %}<p class="profile-empty-copy">Навыки пока не добавлены.</p>{% endif %}
+  </section>
+
+  <section class="profile-section-card">
+    <div class="profile-section-card__heading"><div><span>Карьера</span><h2>Опыт работы</h2></div><strong>{{ profile.employment|length }}</strong></div>
+    {% if profile.employment %}
+      <div class="profile-timeline">
+        {% for item in profile.employment %}
+          <article class="profile-timeline-item">
+            <div class="profile-timeline-item__dot" aria-hidden="true"></div>
+            <div>
+              <div class="profile-timeline-item__meta">{{ item.get('start') or 'Дата не указана' }} — {{ 'по настоящее время' if item.get('current') else (item.get('end') or 'дата не указана') }}</div>
+              <h3>{{ item.get('position') }}</h3>
+              <p class="profile-timeline-item__company">{{ item.get('company') }}</p>
+              {% if item.get('description') %}<p class="profile-preline">{{ item.get('description') }}</p>{% endif %}
+            </div>
+          </article>
+        {% endfor %}
+      </div>
+    {% else %}<p class="profile-empty-copy">Опыт работы пока не добавлен.</p>{% endif %}
+  </section>
+
+  <section class="profile-section-card">
+    <div class="profile-section-card__heading"><div><span>Результаты</span><h2>Достижения</h2></div><strong>{{ profile.achievements|length }}</strong></div>
+    {% if profile.achievements %}
+      <div class="profile-compact-list">
+        {% for item in profile.achievements %}<article><div><h3>{{ item.get('title') }}</h3>{% if item.get('description') %}<p class="profile-preline">{{ item.get('description') }}</p>{% endif %}</div><span>{{ item.get('year') or '—' }}</span></article>{% endfor %}
+      </div>
+    {% else %}<p class="profile-empty-copy">Достижения пока не добавлены.</p>{% endif %}
+  </section>
+
+  <div class="profile-two-column-sections">
+    <section class="profile-section-card">
+      <div class="profile-section-card__heading"><div><span>Подготовка</span><h2>Образование</h2></div><strong>{{ profile.education|length }}</strong></div>
+      {% if profile.education %}
+        <div class="profile-compact-list">
+          {% for item in profile.education %}
+            <article><div><h3>{{ item.get('institution') }}</h3><p>{{ [item.get('degree'), item.get('field')]|select|join(' · ') or 'Направление не указано' }}</p>{% if item.get('description') %}<p class="profile-preline">{{ item.get('description') }}</p>{% endif %}</div><span>{% if item.get('start_year') or item.get('end_year') %}{{ item.get('start_year') or '…' }}–{{ item.get('end_year') or '…' }}{% else %}—{% endif %}</span></article>
+          {% endfor %}
+        </div>
+      {% else %}<p class="profile-empty-copy">Образование пока не добавлено.</p>{% endif %}
+    </section>
+
+    <section class="profile-section-card">
+      <div class="profile-section-card__heading"><div><span>Коммуникация</span><h2>Языки</h2></div><strong>{{ profile.languages|length }}</strong></div>
+      {% if profile.languages %}
+        <div class="profile-language-list">
+          {% for item in profile.languages %}<div><strong>{{ item.get('name') }}</strong><span>{{ language_level_options.get(item.get('level'), item.get('level')) }}</span></div>{% endfor %}
+        </div>
+      {% else %}<p class="profile-empty-copy">Языки пока не добавлены.</p>{% endif %}
+    </section>
+  </div>
+{% endmacro %}

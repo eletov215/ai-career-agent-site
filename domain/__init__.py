@@ -7,6 +7,7 @@ from .auth import (
     AuthTokenRecord,
     AuthUserRecord,
 )
+from .profile import CareerProfileRecord, CareerProfileVersionRecord
 from .vacancy_contract import (
     CONTRACT_VERSION,
     EMPLOYMENT_VALUES,
@@ -36,6 +37,8 @@ __all__ = [
     "AuthSessionRecord",
     "AuthTokenRecord",
     "AuthUserRecord",
+    "CareerProfileRecord",
+    "CareerProfileVersionRecord",
     "CONTRACT_VERSION",
     "EMPLOYMENT_VALUES",
     "EXPERIENCE_VALUES",

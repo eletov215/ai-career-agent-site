@@ -38,6 +38,8 @@ _INVENTORY_TABLES = (
     "oauth_connections",
     "auth_sessions",
     "auth_tokens",
+    "career_profiles",
+    "career_profile_versions",
     "vacancies",
     "vacancy_source_records",
     "sync_runs",

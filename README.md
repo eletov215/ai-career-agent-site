@@ -2,56 +2,48 @@
 
 | Поле | Значение |
 |---|---|
-| Канонический план | `docs/PLAN_CURRENT.md` — 1.4.18 |
-| Паспорт | `docs/PROJECT_PASSPORT.md` — 2.32 |
-| Текущий пакет | `AUTH-002 — НУЖНА ПРОВЕРКА` |
-| Следующий после завершения | `PROF-001` |
-| Candidate database revision | `20260811_0009` |
-| Production до deploy | Render revision `20260810_0008` |
+| Канонический план | `docs/PLAN_CURRENT.md` — 1.4.20 |
+| Паспорт | `docs/PROJECT_PASSPORT.md` — 2.34 |
+| Текущий пакет | `PROF-001 — НУЖНА ПРОВЕРКА` |
+| Следующий после завершения | `PROF-002` |
+| Candidate database revision | `20260811_0010` |
+| Production до deploy | Render revision `20260811_0009` |
 
 > GitHub является главным источником кода. Более новый ZIP текущего чата становится рабочей основой. Секреты, `.env`, базы, dumps, backups, virtualenv, caches и bytecode не входят в репозиторий.
 
-## 1. Назначение проекта
+## 1. Назначение
 
-AI Career Agent — Flask-сервис карьерного сопровождения. WSGI entrypoint: `app:app`. SEARCH-001..004 и AUTH-001 выполнены. AUTH-002 связывает HeadHunter/SuperJob с подтверждённым first-party `User`.
+AI Career Agent — Flask-сервис карьерного сопровождения. WSGI entrypoint: `app:app`. SEARCH-001..004, AUTH-001 и AUTH-002 выполнены. PROF-001 добавляет структурированный owner-scoped карьерный профиль с неизменяемой историей подтверждённых версий.
 
-## 2. Статусы пакетов
-
-| Пакет | Статус |
-|---|---|
-| FND/DATA/SEC/OPS/INFRA-PREP | ВЫПОЛНЕНО |
-| SYNC-001/002, SEARCH-001..004 | ВЫПОЛНЕНО |
-| AUTH-001 | ВЫПОЛНЕНО |
-| AUTH-002 | НУЖНА ПРОВЕРКА |
-| DOC-001 | В РАБОТЕ как постоянный процесс |
-| PROF/PRIV/SEARCH-005 | ЗАПЛАНИРОВАНО |
-| INFRA-001 | ОТЛОЖЕНО ДО ПРЕДРЕЛИЗНОГО ЭТАПА |
-
-## 3. AUTH-002 candidate
+## 2. PROF-001 candidate
 
 ```text
-first-party User is the only browser identity
-HH/SuperJob connect requires first-party session
-OAuth state bound to user_id + auth_session_id
-one external identity -> one User
-one provider slot -> one User
-encrypted owner-scoped refresh/reconnect/disconnect
-migration 20260811_0009
+first-party User is the owner
+one current CareerProfile per User
+material save -> immutable CareerProfileVersion
+incomplete profile allowed
+unchanged save -> no duplicate version
+stale editor -> safe conflict
+provider/PDF/AI data -> no automatic confirmed facts
+migration 20260811_0010
 ```
 
-Legacy unbound OAuth rows are not linked by email. They may be claimed only after a fresh successful provider OAuth callback. Legacy `hh_user_id`/`superjob_user_id` browser keys no longer authorize dashboard access.
+UI:
 
-## 4. Security and data
+```text
+/profile
+/profile/edit
+/profile/history
+/profile/history/<version>
+```
 
-Provider access/refresh tokens remain Fernet-encrypted. Callback code/state, tokens, provider secrets and raw profile payloads are excluded from public copy and logs. Disconnect is POST + CSRF and deletes only the current User connection plus its rollback mirror.
+Sections: contacts, goals, geography, salary, skills, employment, achievements, education, languages and professional positioning.
 
-Remote provider token revoke is not a unified candidate contract; AUTH-002 guarantees local encrypted credential deletion.
-
-## 5. Основной стек
+## 3. Основной стек
 
 Python 3.11, Flask/Gunicorn, SQLAlchemy/Alembic, PostgreSQL 17/Psycopg 3, GitHub Actions, Docker/Compose, server-rendered HTML/CSS/JS.
 
-## 6. Локальный запуск
+## 4. Локальный запуск
 
 ```bash
 python -m venv .venv
@@ -63,7 +55,7 @@ python scripts/manage_db.py upgrade
 python scripts/start_runtime.py
 ```
 
-## 7. Проверки качества
+## 5. Проверки качества
 
 ```bash
 python scripts/check_repository_hygiene.py
@@ -74,18 +66,43 @@ python -m pytest -q
 python -m alembic check
 ```
 
-Local available suite: `236 passed, 8 skipped`; focused AUTH-002 migration/service suite: `7 passed`. GitHub Actions additionally executes Flask routes, PostgreSQL integration, migration, SEC/OPS/SYNC/SEARCH/AUTH regressions and container smoke.
-
-## 8. Deploy gate
-
-Start Command remains:
+Dedicated CI step:
 
 ```text
-python scripts/manage_db.py upgrade && python scripts/start_runtime.py
+Verify PROF-001 structured career profile controls
 ```
 
-Candidate completion requires GitHub green, Render current/expected revision `20260811_0009`, real HH and SuperJob bind/reconnect/disconnect, and a negative cross-user ownership smoke. See `docs/AUTH002_RUNBOOK.md`.
+Flask/PostgreSQL route integration is authoritative in GitHub Actions because the isolated local environment may not contain Flask/Psycopg services.
 
-## 9. Pre-release email gate
+## 6. Branch/merge/deploy gate
 
-Gmail API remains staging-only. Before beta/commercial release move to a project-owned domain sender such as `noreply@ai-career-agent.ru` with production-grade transactional delivery, SPF, DKIM and DMARC.
+```text
+branch prof-001-candidate-v1.4.20
+-> Pull Request
+-> all CI green
+-> merge main
+-> Render upgrade 0009 -> 0010
+-> /health/ready current=expected=20260811_0010
+-> profile owner/version/concurrency/restart E2E
+-> regression smoke
+-> PROF-001 COMPLETE
+```
+
+Не загружать candidate напрямую в `main` до Pull Request CI.
+
+## 7. Документация
+
+- `docs/PROF001_IMPLEMENTATION.md`
+- `docs/PROF001_VERIFICATION_STATUS.md`
+- `docs/PROF001_RUNBOOK.md`
+- `docs/PROF001_PROFILE_REFERENCE.md`
+- `docs/PLAN_CURRENT.md`
+- `docs/PROJECT_PASSPORT.md`
+- `docs/SOURCE_AUDIT.md`
+
+Документы следуют DOC-STD-001 v1.1. Gmail API остаётся staging-only; domain sender + SPF/DKIM/DMARC до beta/commercial release не отменяется.
+
+
+## 8. Инфраструктурная граница
+
+`INFRA-001` остаётся отложенным до предрелизного окна. Render используется как staging/резервная площадка; PROF-001 не меняет hosting strategy, WSGI `app:app` или Start Command.
