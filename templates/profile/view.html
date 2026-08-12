@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% from "profile/_profile_sections.html" import profile_sections %}
+{% block title %}Карьерный профиль — AI Career Agent{% endblock %}
+{% block content %}
+<main class="section profile-page">
+  <div class="container profile-shell">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for category, message in messages %}
+        <div class="auth-alert {{ 'auth-alert--error' if category == 'error' else 'auth-alert--success' }}" role="status">{{ message }}</div>
+      {% endfor %}
+    {% endwith %}
+
+    <header class="profile-hero">
+      <div class="profile-hero__copy">
+        <div class="profile-kicker"><span aria-hidden="true">✦</span> Подтверждённые факты</div>
+        <h1>Карьерный профиль</h1>
+        <p>Единый структурированный источник данных для будущего поиска, AI-анализа и карьерных документов. Здесь сохраняется только то, что вы ввели и подтвердили сами.</p>
+        <div class="profile-hero__actions">
+          <a class="btn btn-primary" href="{{ url_for('profile.edit_profile') }}">{{ 'Редактировать профиль' if profile.exists else 'Создать профиль' }}</a>
+          {% if profile.exists %}<a class="btn btn-secondary" href="{{ url_for('profile.profile_history') }}">История версий</a>{% endif %}
+        </div>
+      </div>
+      <aside class="profile-completion-card" aria-label="Заполнение профиля">
+        <div class="profile-completion-card__value">{{ profile.completion_percent }}%</div>
+        <strong>{{ 'Профиль начат' if profile.exists else 'Профиль ещё не создан' }}</strong>
+        <progress max="100" value="{{ profile.completion_percent }}">{{ profile.completion_percent }}%</progress>
+        <span>{% if profile.exists %}Версия {{ profile.version }}{% else %}Неполные данные допустимы{% endif %}</span>
+      </aside>
+    </header>
+
+    {% if not profile.exists %}
+      <section class="profile-empty-state">
+        <span class="profile-empty-state__mark" aria-hidden="true">✦</span>
+        <div><h2>Начните с любой секции</h2><p>Профиль можно сохранять постепенно. Обязательных полей нет: каждое сохранение создаёт подтверждённую версию.</p></div>
+        <a class="btn btn-primary" href="{{ url_for('profile.edit_profile') }}">Заполнить профиль</a>
+      </section>
+    {% else %}
+      <section class="profile-summary-card">
+        <div>
+          <div class="muted">Позиционирование</div>
+          <h2>{{ profile.headline or 'Профессиональный заголовок не указан' }}</h2>
+          <p class="profile-preline">{{ profile.summary or 'Добавьте короткое описание опыта, сильных сторон и карьерного направления.' }}</p>
+        </div>
+        <dl class="profile-summary-meta">
+          <div><dt>Версия</dt><dd>{{ profile.version }}</dd></div>
+          <div><dt>Подтверждено</dt><dd>{{ confirmed_at or '—' }}</dd></div>
+          <div><dt>Обновлено</dt><dd>{{ updated_at or '—' }}</dd></div>
+        </dl>
+      </section>
+
+      {{ profile_sections(profile, employment_type_options, work_format_options, relocation_options, salary_period_options, salary_tax_options, skill_level_options, language_level_options) }}
+
+      <section class="profile-version-preview">
+        <div class="profile-section-card__heading">
+          <div><span>Изменения под контролем</span><h2>Последние версии</h2></div>
+          <a href="{{ url_for('profile.profile_history') }}">Открыть всю историю</a>
+        </div>
+        {% if versions %}
+          <div class="profile-version-list">
+            {% for item in versions %}
+              <a href="{{ url_for('profile.profile_version', version=item.version) }}"><strong>Версия {{ item.version }}</strong><span>{{ item.created_at }}</span><small>{{ item.changed_sections|join(', ') }}</small></a>
+            {% endfor %}
+          </div>
+        {% else %}<p class="profile-empty-copy">История появится после первого сохранения.</p>{% endif %}
+      </section>
+    {% endif %}
+  </div>
+</main>
+{% endblock %}

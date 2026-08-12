@@ -1,70 +1,25 @@
-# AI Career Agent — руководство по работе с проектом
-
-## 1. Источник истины
-
-1. GitHub — основной источник актуального кода.
-2. Более новый ZIP текущего чата становится рабочей основой.
-3. Канонический PLAN_CURRENT определяется наибольшей версией и датой.
-4. Главный entrypoint — `app.py`, WSGI — `app:app`; `app_fixed.py` не используется.
-
-## 2. Текущий пакет
+# AI Career Agent — project guide
 
 ```text
-AUTH-002 — НУЖНА ПРОВЕРКА
-baseline: ai-career-agent-site-main (12).zip
-candidate revision: 20260811_0009
-production before deploy: 20260810_0008
+canonical plan: docs/PLAN_CURRENT.md v1.4.20
+passport: docs/PROJECT_PASSPORT.md v2.34
+current package: PROF-001 / НУЖНА ПРОВЕРКА
+production revision: 20260811_0009
+candidate revision: 20260811_0010
+WSGI: app:app
 ```
 
-## 3. Обязательный цикл
+## Required workflow
 
-```text
-актуальный ZIP + canonical docs
-→ один package ID
-→ inventory/risks/rollback
-→ code + positive/negative tests
-→ full ZIP + patch ZIP
-→ green GitHub Actions
-→ Render migration/API/E2E
-→ final status/docs
-```
+1. Use current GitHub ZIP/main only.
+2. Change one package in a separate branch.
+3. Open Pull Request; wait for all CI including dedicated package gate.
+4. Merge only when green.
+5. Verify Render revision/readiness.
+6. Run package E2E/regression.
+7. Mark complete only with measured evidence.
+8. Return full ZIP, patch ZIP and canonical docs.
 
-## 4. Проверки перед push
+## PROF-001 E2E
 
-```bash
-python scripts/check_repository_hygiene.py
-python scripts/check_document_structure.py
-python scripts/infra_manifest_check.py
-python -m compileall -q .
-python -m pytest -q
-python -m alembic check
-```
-
-## 5. AUTH-002 rules
-
-- First-party `User` is the only browser identity.
-- Connect routes require an active server-side auth session.
-- OAuth state is one-time, TTL-bound and tied to `user_id` + `auth_session_id`.
-- Never auto-link by email.
-- Never overwrite another User connection.
-- Tokens remain encrypted and secret-free in logs/public copy.
-- Disconnect is owner-scoped POST + CSRF.
-- Existing app-level SuperJob public-search credential is independent of user OAuth.
-
-## 6. External verification
-
-Use `docs/AUTH002_RUNBOOK.md`. Real provider codes/tokens/client secrets must never be pasted into chat, logs, screenshots or GitHub.
-
-## 7. Artifacts
-
-Every code candidate returns:
-
-```text
-full project ZIP
-patch ZIP with changed/new files only
-PLAN_CURRENT MD/DOCX/PDF
-PROJECT_PASSPORT MD/DOCX/PDF
-SOURCE_AUDIT MD/DOCX/PDF
-package-specific MD/DOCX/PDF
-canonical ZIP + checksums
-```
+Follow `docs/PROF001_RUNBOOK.md`: partial save, relogin, material version, unchanged no-op, historical read, owner isolation, stale conflict, restart persistence and AUTH/OAuth/search regression.

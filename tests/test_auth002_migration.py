@@ -71,7 +71,7 @@ def _owned_provider_constraint_names(engine) -> set[str]:
 
 def test_auth002_0009_migration_enforces_one_provider_slot_per_user(tmp_path):
     database_url = f"sqlite:///{(tmp_path / 'auth002-migration.db').resolve().as_posix()}"
-    upgrade_database(database_url)
+    upgrade_database(database_url, "20260811_0009")
     runtime = create_database(database_url)
     try:
         assert "uq_oauth_connections_user_provider" in _owned_provider_constraint_names(

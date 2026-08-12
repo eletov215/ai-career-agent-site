@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+{% block title %}Редактирование профиля — AI Career Agent{% endblock %}
+{% block content %}
+<main class="section profile-page profile-edit-page">
+  <div class="container profile-shell">
+    <header class="profile-page-heading">
+      <div>
+        <div class="profile-kicker"><span aria-hidden="true">✦</span> Данные подтверждает пользователь</div>
+        <h1>{{ 'Редактировать профиль' if profile.exists else 'Создать карьерный профиль' }}</h1>
+        <p>Заполняйте только актуальные факты. Неполный профиль допустим: каждое содержательное сохранение создаёт новую неизменяемую версию.</p>
+      </div>
+      <div class="profile-page-heading__actions"><a class="btn btn-secondary" href="{{ url_for('profile.view_profile') }}">Отмена</a>{% if profile.exists %}<a class="btn btn-secondary" href="{{ url_for('profile.profile_history') }}">История</a>{% endif %}</div>
+    </header>
+
+    {% if error %}<div class="auth-alert auth-alert--error" role="alert">{{ error }}</div>{% endif %}
+
+    <form class="profile-editor" method="post" action="{{ url_for('profile.edit_profile') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="expected_version" value="{{ expected_version }}">
+
+      <section class="profile-editor-section" id="profile-core">
+        <div class="profile-editor-section__heading"><span>01</span><div><h2>Позиционирование</h2><p>Коротко опишите профессиональную роль и сильные стороны.</p></div></div>
+        <div class="profile-form-grid">
+          <label class="profile-field profile-field--full"><span>Профессиональный заголовок</span><input name="headline" maxlength="160" value="{{ values.headline }}" placeholder="Например: Product manager в B2B SaaS"><small>До 160 символов.</small></label>
+          <label class="profile-field profile-field--full"><span>О себе</span><textarea name="summary" maxlength="4000" rows="6" placeholder="Опыт, сильные стороны, тип задач и желаемое направление">{{ values.summary }}</textarea><small>До 4000 символов. Поле можно оставить пустым.</small></label>
+        </div>
+      </section>
+
+      <section class="profile-editor-section" id="profile-contacts">
+        <div class="profile-editor-section__heading"><span>02</span><div><h2>Контакты</h2><p>Контактные данные профиля могут отличаться от email для входа.</p></div></div>
+        <div class="profile-form-grid">
+          <label class="profile-field"><span>Контактный email</span><input type="email" name="contact_email" maxlength="320" value="{{ values.contact_email }}" autocomplete="email" placeholder="name@example.com"></label>
+          <label class="profile-field"><span>Телефон</span><input type="tel" name="phone" maxlength="40" value="{{ values.phone }}" autocomplete="tel" placeholder="+7 900 000-00-00"></label>
+          <label class="profile-field"><span>Telegram</span><input name="telegram" maxlength="64" value="{{ values.telegram }}" placeholder="@username"></label>
+          <label class="profile-field"><span>Портфолио</span><input type="url" name="portfolio_url" maxlength="500" value="{{ values.portfolio_url }}" placeholder="https://..."></label>
+          <label class="profile-field profile-field--full"><span>Профессиональный профиль</span><input type="url" name="linkedin_url" maxlength="500" value="{{ values.linkedin_url }}" placeholder="https://..."><small>Например, публичный профессиональный профиль или персональный сайт.</small></label>
+        </div>
+      </section>
+
+      <section class="profile-editor-section" id="profile-goals">
+        <div class="profile-editor-section__heading"><span>03</span><div><h2>Карьерные цели</h2><p>Эти данные станут основой будущих персональных фильтров и AI-рекомендаций.</p></div></div>
+        <div class="profile-form-grid">
+          <label class="profile-field"><span>Целевые роли</span><textarea name="target_roles" rows="4" placeholder="Product manager&#10;Руководитель продукта">{{ values.target_roles }}</textarea><small>До 10 значений, по одному на строку или через запятую.</small></label>
+          <label class="profile-field"><span>Интересующие отрасли</span><textarea name="industries" rows="4" placeholder="IT&#10;FinTech">{{ values.industries }}</textarea><small>До 10 значений.</small></label>
+          <fieldset class="profile-choice-group"><legend>Тип занятости</legend><div>{% for code, label in employment_type_options.items() %}<label><input type="checkbox" name="employment_types" value="{{ code }}" {{ 'checked' if code in values.employment_types else '' }}><span>{{ label }}</span></label>{% endfor %}</div></fieldset>
+          <fieldset class="profile-choice-group"><legend>Формат работы</legend><div>{% for code, label in work_format_options.items() %}<label><input type="checkbox" name="work_formats" value="{{ code }}" {{ 'checked' if code in values.work_formats else '' }}><span>{{ label }}</span></label>{% endfor %}</div></fieldset>
+        </div>
+      </section>
+
+      <section class="profile-editor-section" id="profile-geography">
+        <div class="profile-editor-section__heading"><span>04</span><div><h2>География и зарплата</h2><p>Укажите ориентиры, а не обязательные ограничения.</p></div></div>
+        <div class="profile-form-grid">
+          <label class="profile-field"><span>Текущее местоположение</span><input name="current_location" maxlength="160" value="{{ values.current_location }}" placeholder="Минск, Беларусь"></label>
+          <label class="profile-field"><span>Предпочтительные локации</span><textarea name="preferred_locations" rows="3" placeholder="Минск&#10;Москва&#10;Удалённо">{{ values.preferred_locations }}</textarea><small>До 10 значений.</small></label>
+          <label class="profile-field"><span>Готовность к переезду</span><select name="relocation">{% for code, label in relocation_options.items() %}<option value="{{ code }}" {{ 'selected' if values.relocation == code else '' }}>{{ label }}</option>{% endfor %}</select></label>
+          <div class="profile-field profile-field--salary"><span>Зарплатный диапазон</span><div><input inputmode="numeric" name="salary_minimum" value="{{ values.salary_minimum }}" placeholder="От" aria-label="Минимальная зарплата"><input inputmode="numeric" name="salary_maximum" value="{{ values.salary_maximum }}" placeholder="До" aria-label="Максимальная зарплата"><select name="salary_currency" aria-label="Валюта"><option value="">Валюта</option>{% for code, label in salary_currency_options.items() %}<option value="{{ code }}" {{ 'selected' if values.salary_currency == code else '' }}>{{ label }}</option>{% endfor %}</select></div></div>
+          <label class="profile-field"><span>Период</span><select name="salary_period">{% for code, label in salary_period_options.items() %}<option value="{{ code }}" {{ 'selected' if values.salary_period == code else '' }}>{{ label }}</option>{% endfor %}</select></label>
+          <label class="profile-field"><span>Налоги</span><select name="salary_tax_mode">{% for code, label in salary_tax_options.items() %}<option value="{{ code }}" {{ 'selected' if values.salary_tax_mode == code else '' }}>{{ label }}</option>{% endfor %}</select></label>
+        </div>
+      </section>
+
+      <section class="profile-editor-section" id="profile-skills">
+        <div class="profile-editor-section__heading"><span>05</span><div><h2>Навыки</h2><p>Добавьте до 50 навыков. Одинаковые названия нельзя сохранять дважды.</p></div></div>
+        <div class="profile-repeatable" data-profile-collection="skills">
+          <div class="profile-repeatable__list" data-profile-list>
+            {% for row in values.skills %}
+              <div class="profile-repeatable-row profile-repeatable-row--skill" data-profile-row><label class="profile-field"><span>Навык</span><input name="skill_name" maxlength="80" value="{{ row.get('name', '') }}" placeholder="Python"></label><label class="profile-field"><span>Уровень</span><select name="skill_level">{% for code, label in skill_level_options.items() %}<option value="{{ code }}" {{ 'selected' if row.get('level', 'unspecified') == code else '' }}>{{ label }}</option>{% endfor %}</select></label><button class="profile-row-remove" type="button" data-profile-remove aria-label="Удалить навык">Удалить</button></div>
+            {% endfor %}
+          </div>
+          <button class="profile-add-row" type="button" data-profile-add>+ Добавить навык</button>
+          <template data-profile-template><div class="profile-repeatable-row profile-repeatable-row--skill" data-profile-row><label class="profile-field"><span>Навык</span><input name="skill_name" maxlength="80" placeholder="Python"></label><label class="profile-field"><span>Уровень</span><select name="skill_level">{% for code, label in skill_level_options.items() %}<option value="{{ code }}">{{ label }}</option>{% endfor %}</select></label><button class="profile-row-remove" type="button" data-profile-remove aria-label="Удалить навык">Удалить</button></div></template>
+        </div>
+      </section>
+
+      <section class="profile-editor-section" id="profile-employment">
+        <div class="profile-editor-section__heading"><span>06</span><div><h2>Опыт работы</h2><p>Добавьте до 20 позиций. Для каждой записи нужны компания и должность.</p></div></div>
+        <div class="profile-repeatable" data-profile-collection="employment">
+          <div class="profile-repeatable__list" data-profile-list>
+            {% for row in values.employment %}
+              <div class="profile-repeatable-row profile-repeatable-row--wide" data-profile-row>
+                <div class="profile-repeatable-row__header"><strong>Место работы</strong><button class="profile-row-remove" type="button" data-profile-remove>Удалить</button></div>
+                <div class="profile-form-grid"><label class="profile-field"><span>Компания</span><input name="employment_company" maxlength="160" value="{{ row.get('company', '') }}"></label><label class="profile-field"><span>Должность</span><input name="employment_position" maxlength="160" value="{{ row.get('position', '') }}"></label><label class="profile-field"><span>Начало</span><input type="month" name="employment_start" value="{{ row.get('start', '') or '' }}"></label><label class="profile-field"><span>Статус</span><select name="employment_current"><option value="0" {{ 'selected' if row.get('current') not in [true, '1', 1, 'true', 'on'] else '' }}>Работа завершена</option><option value="1" {{ 'selected' if row.get('current') in [true, '1', 1, 'true', 'on'] else '' }}>Работаю сейчас</option></select></label><label class="profile-field"><span>Окончание</span><input type="month" name="employment_end" value="{{ row.get('end', '') or '' }}"></label><label class="profile-field profile-field--full"><span>Задачи и результаты</span><textarea name="employment_description" maxlength="2500" rows="4">{{ row.get('description', '') or '' }}</textarea></label></div>
+              </div>
+            {% endfor %}
+          </div>
+          <button class="profile-add-row" type="button" data-profile-add>+ Добавить место работы</button>
+          <template data-profile-template><div class="profile-repeatable-row profile-repeatable-row--wide" data-profile-row><div class="profile-repeatable-row__header"><strong>Место работы</strong><button class="profile-row-remove" type="button" data-profile-remove>Удалить</button></div><div class="profile-form-grid"><label class="profile-field"><span>Компания</span><input name="employment_company" maxlength="160"></label><label class="profile-field"><span>Должность</span><input name="employment_position" maxlength="160"></label><label class="profile-field"><span>Начало</span><input type="month" name="employment_start"></label><label class="profile-field"><span>Статус</span><select name="employment_current"><option value="0">Работа завершена</option><option value="1">Работаю сейчас</option></select></label><label class="profile-field"><span>Окончание</span><input type="month" name="employment_end"></label><label class="profile-field profile-field--full"><span>Задачи и результаты</span><textarea name="employment_description" maxlength="2500" rows="4"></textarea></label></div></div></template>
+        </div>
+      </section>
+
+      <section class="profile-editor-section" id="profile-achievements">
+        <div class="profile-editor-section__heading"><span>07</span><div><h2>Достижения</h2><p>Зафиксируйте измеримые результаты, награды, запуски и значимые проекты.</p></div></div>
+        <div class="profile-repeatable" data-profile-collection="achievements"><div class="profile-repeatable__list" data-profile-list>{% for row in values.achievements %}<div class="profile-repeatable-row profile-repeatable-row--wide" data-profile-row><div class="profile-repeatable-row__header"><strong>Достижение</strong><button class="profile-row-remove" type="button" data-profile-remove>Удалить</button></div><div class="profile-form-grid"><label class="profile-field"><span>Название</span><input name="achievement_title" maxlength="180" value="{{ row.get('title', '') }}"></label><label class="profile-field"><span>Год</span><input type="number" name="achievement_year" min="1900" max="2100" value="{{ row.get('year', '') or '' }}"></label><label class="profile-field profile-field--full"><span>Описание</span><textarea name="achievement_description" maxlength="2000" rows="3">{{ row.get('description', '') or '' }}</textarea></label></div></div>{% endfor %}</div><button class="profile-add-row" type="button" data-profile-add>+ Добавить достижение</button><template data-profile-template><div class="profile-repeatable-row profile-repeatable-row--wide" data-profile-row><div class="profile-repeatable-row__header"><strong>Достижение</strong><button class="profile-row-remove" type="button" data-profile-remove>Удалить</button></div><div class="profile-form-grid"><label class="profile-field"><span>Название</span><input name="achievement_title" maxlength="180"></label><label class="profile-field"><span>Год</span><input type="number" name="achievement_year" min="1900" max="2100"></label><label class="profile-field profile-field--full"><span>Описание</span><textarea name="achievement_description" maxlength="2000" rows="3"></textarea></label></div></div></template></div>
+      </section>
+
+      <section class="profile-editor-section" id="profile-education">
+        <div class="profile-editor-section__heading"><span>08</span><div><h2>Образование</h2><p>Добавьте основное и дополнительное образование.</p></div></div>
+        <div class="profile-repeatable" data-profile-collection="education"><div class="profile-repeatable__list" data-profile-list>{% for row in values.education %}<div class="profile-repeatable-row profile-repeatable-row--wide" data-profile-row><div class="profile-repeatable-row__header"><strong>Образование</strong><button class="profile-row-remove" type="button" data-profile-remove>Удалить</button></div><div class="profile-form-grid"><label class="profile-field profile-field--full"><span>Учебное заведение</span><input name="education_institution" maxlength="200" value="{{ row.get('institution', '') }}"></label><label class="profile-field"><span>Степень</span><input name="education_degree" maxlength="120" value="{{ row.get('degree', '') or '' }}"></label><label class="profile-field"><span>Специальность</span><input name="education_field" maxlength="160" value="{{ row.get('field', '') or '' }}"></label><label class="profile-field"><span>Год начала</span><input type="number" name="education_start_year" min="1900" max="2100" value="{{ row.get('start_year', '') or '' }}"></label><label class="profile-field"><span>Год окончания</span><input type="number" name="education_end_year" min="1900" max="2100" value="{{ row.get('end_year', '') or '' }}"></label><label class="profile-field profile-field--full"><span>Описание</span><textarea name="education_description" maxlength="1500" rows="3">{{ row.get('description', '') or '' }}</textarea></label></div></div>{% endfor %}</div><button class="profile-add-row" type="button" data-profile-add>+ Добавить образование</button><template data-profile-template><div class="profile-repeatable-row profile-repeatable-row--wide" data-profile-row><div class="profile-repeatable-row__header"><strong>Образование</strong><button class="profile-row-remove" type="button" data-profile-remove>Удалить</button></div><div class="profile-form-grid"><label class="profile-field profile-field--full"><span>Учебное заведение</span><input name="education_institution" maxlength="200"></label><label class="profile-field"><span>Степень</span><input name="education_degree" maxlength="120"></label><label class="profile-field"><span>Специальность</span><input name="education_field" maxlength="160"></label><label class="profile-field"><span>Год начала</span><input type="number" name="education_start_year" min="1900" max="2100"></label><label class="profile-field"><span>Год окончания</span><input type="number" name="education_end_year" min="1900" max="2100"></label><label class="profile-field profile-field--full"><span>Описание</span><textarea name="education_description" maxlength="1500" rows="3"></textarea></label></div></div></template></div>
+      </section>
+
+      <section class="profile-editor-section" id="profile-languages">
+        <div class="profile-editor-section__heading"><span>09</span><div><h2>Языки</h2><p>Добавьте до 15 языков и уровень владения.</p></div></div>
+        <div class="profile-repeatable" data-profile-collection="languages"><div class="profile-repeatable__list" data-profile-list>{% for row in values.languages %}<div class="profile-repeatable-row profile-repeatable-row--skill" data-profile-row><label class="profile-field"><span>Язык</span><input name="language_name" maxlength="80" value="{{ row.get('name', '') }}"></label><label class="profile-field"><span>Уровень</span><select name="language_level">{% for code, label in language_level_options.items() %}<option value="{{ code }}" {{ 'selected' if row.get('level', 'unspecified') == code else '' }}>{{ label }}</option>{% endfor %}</select></label><button class="profile-row-remove" type="button" data-profile-remove>Удалить</button></div>{% endfor %}</div><button class="profile-add-row" type="button" data-profile-add>+ Добавить язык</button><template data-profile-template><div class="profile-repeatable-row profile-repeatable-row--skill" data-profile-row><label class="profile-field"><span>Язык</span><input name="language_name" maxlength="80"></label><label class="profile-field"><span>Уровень</span><select name="language_level">{% for code, label in language_level_options.items() %}<option value="{{ code }}">{{ label }}</option>{% endfor %}</select></label><button class="profile-row-remove" type="button" data-profile-remove>Удалить</button></div></template></div>
+      </section>
+
+      <div class="profile-save-bar">
+        <div><strong>Сохранение — это подтверждение</strong><span>Будет создана новая версия только при содержательных изменениях.</span></div>
+        <div><a class="btn btn-secondary" href="{{ url_for('profile.view_profile') }}">Отмена</a><button class="btn btn-primary" type="submit">Сохранить профиль</button></div>
+      </div>
+    </form>
+  </div>
+</main>
+{% endblock %}
+{% block scripts %}
+<script nonce="{{ csp_nonce }}">
+(() => {
+  const bindCollection = (collection) => {
+    const list = collection.querySelector('[data-profile-list]');
+    const template = collection.querySelector('template[data-profile-template]');
+    const addButton = collection.querySelector('[data-profile-add]');
+    if (!list || !template || !addButton) return;
+
+    const bindRemove = (root) => {
+      root.querySelectorAll('[data-profile-remove]').forEach((button) => {
+        if (button.dataset.bound === '1') return;
+        button.dataset.bound = '1';
+        button.addEventListener('click', () => button.closest('[data-profile-row]')?.remove());
+      });
+    };
+
+    bindRemove(list);
+    addButton.addEventListener('click', () => {
+      const fragment = template.content.cloneNode(true);
+      bindRemove(fragment);
+      list.appendChild(fragment);
+      list.lastElementChild?.querySelector('input, textarea, select')?.focus();
+    });
+  };
+
+  document.querySelectorAll('[data-profile-collection]').forEach(bindCollection);
+})();
+</script>
+{% endblock %}

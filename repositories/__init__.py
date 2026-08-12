@@ -6,6 +6,7 @@ from .oauth_connections import (
     OAuthConnectionRepository,
     OAuthProviderAlreadyConnectedError,
 )
+from .profiles import CareerProfileRepository, CareerProfileVersionConflictError
 from .search_snapshots import SearchSnapshotRepository
 from .sync_checkpoints import SyncCheckpointRepository
 from .sync_runs import SyncRunRepository
@@ -18,6 +19,8 @@ __all__ = [
     "OAuthConnectionOwnershipError",
     "OAuthConnectionRepository",
     "OAuthProviderAlreadyConnectedError",
+    "CareerProfileRepository",
+    "CareerProfileVersionConflictError",
     "SearchSnapshotRepository",
     "SyncCheckpointRepository",
     "SyncRunRepository",

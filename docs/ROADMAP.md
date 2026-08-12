@@ -1,60 +1,39 @@
-# AI Career Agent — дорожная карта
+# AI Career Agent — ROADMAP
 
-| Поле | Значение |
-|---|---|
-| Версия | 1.4.18 |
-| Дата | 2026-08-11 |
-| Источник | `docs/PLAN_CURRENT.md` |
-| Текущий gate | AUTH-002 GitHub/Render/real HH+SuperJob ownership E2E |
-
-## 1. Функциональная очередь без аренды VPS
-
-```text
-AUTH-002 verification
-→ PROF-001 → PROF-002 → PROF-003 → PRIV-001
-→ SEARCH-005
-→ AI-BENCH-001 → AI-PROVIDER-001 → LEGAL-001
-→ AI-001 → AI-002 → AI-003 → AI-004 → AI-005 → AI-006
-→ JOB-001 → JOB-002 → JOB-003/JOB-004
-```
-
-## 2. Предрелизный инфраструктурный блок
-
-```text
-INFRA-001 → REED-COMPAT-001 → HOST-001
-→ OPS-002 + production backup/restore
-→ DOMAIN-001 → MIG-001 → REL-001
-```
-
-## 3. Пакеты
-
-| ID | Статус | Следующее действие |
+| Пакет | Статус | Следующий gate |
 |---|---|---|
-| FND/DATA/SEC/OPS/INFRA-PREP | ВЫПОЛНЕНО | Базовая платформа |
-| SYNC-001/002, SEARCH-001..004 | ВЫПОЛНЕНО | Search/data foundation |
-| AUTH-001 | ВЫПОЛНЕНО | First-party email/password foundation |
-| AUTH-002 | НУЖНА ПРОВЕРКА | CI, Render 0009, real HH/SJ ownership E2E |
-| PROF/PRIV/SEARCH-005 | ЗАПЛАНИРОВАНО | Account-owned product data/admin |
-| DOC-001 | В РАБОТЕ | DOC-STD-001 with every package |
-| INFRA-001 | ОТЛОЖЕНО | Real VPS before beta |
+| FND/DATA/SEC/OPS/INFRA-PREP | ВЫПОЛНЕНО | regression only |
+| SYNC-001/002, SEARCH-001..004 | ВЫПОЛНЕНО | regression only |
+| AUTH-001/002 | ВЫПОЛНЕНО | regression only |
+| PROF-001 | НУЖНА ПРОВЕРКА | PR CI, Render 0010, owner/version/restart E2E |
+| PROF-002 | ЗАПЛАНИРОВАНО | starts after PROF-001 complete |
+| PROF-003 / PRIV-001 | ЗАПЛАНИРОВАНО | profile foundation required |
+| SEARCH-005 | ЗАПЛАНИРОВАНО | after account/profile/privacy foundation |
+| AI-BENCH/AI-PROVIDER/LEGAL/AI-* | ЗАПЛАНИРОВАНО | later MVP stages |
+| INFRA-001 | ОТЛОЖЕНО | pre-release window |
 
-## 4. AUTH-002 gate
+## Current flow
 
 ```text
-owner-bound OAuthConnection
-state bound to User/AuthSession
-no email auto-link
-unique external identity + one provider slot per User
-encrypted owner-scoped refresh/disconnect
-GitHub/PostgreSQL green
-Render 0009
-real HH and SuperJob bind/reconnect/disconnect
-cross-user conflict negative smoke
+PROF-001 candidate
+-> branch / PR
+-> CI green
+-> Render 20260811_0010
+-> owner/version/concurrency/restart E2E
+-> PROF-001 complete
+-> PROF-002 import + editable review
+-> PROF-003 drafts/versions
+-> PRIV-001 export/delete/retention
 ```
 
-## 5. Ограничения
+## PROF-001 scope
 
-- External APIs are mocked in CI.
-- Remote token revoke is excluded from candidate; local credentials are deleted.
-- Phone/social identities, admin merge and profile import are separate packages.
-- Gmail API remains staging-only; domain sender/SPF/DKIM/DMARC is a pre-release gate.
+- owner-scoped current profile;
+- immutable material-change versions;
+- partial profile allowed;
+- manual confirmation only;
+- bounded validation and optimistic conflict;
+- `/profile` view/edit/history;
+- backup/migration/tests/CI.
+
+Excluded: resume import, AI facts, autosave, version restore, public profile and privacy lifecycle controls.

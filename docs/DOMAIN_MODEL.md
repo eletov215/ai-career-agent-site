@@ -1,50 +1,59 @@
-# AI Career Agent — доменная модель
+# AI Career Agent — domain model
 
-## 1. Основные агрегаты
+## Identity foundation
 
 ```text
-User 1 ── * AuthSession
-User 1 ── * AuthToken
-User 1 ── 0..1 OAuthConnection/provider (AUTH-002 owner-bound)
-Vacancy 1 ── * VacancySourceRecord
-SyncRun / SyncWorker / SyncCheckpoint
-SearchSnapshot 1 ── * SourceState / Candidate / Item
+User
+  1 -> many AuthSession
+  1 -> many AuthToken
+  1 -> 0..1 OAuthConnection per provider
 ```
 
-## 2. AuthUserRecord
+AUTH-001/002 remain completed.
 
-Immutable service-facing projection: identity/contact/status/verification/password/login timestamps and hash. Flask routes never receive ORM entities.
+## PROF-001
 
-## 3. AuthSessionRecord
+```text
+User 1 -> 0..1 CareerProfile
+CareerProfile 1 -> many CareerProfileVersion
+```
 
-Opaque hashed bearer session with absolute expiry, last-seen, revoke state/reason and hashed user-agent. It is server-revocable and independent of provider OAuth identities.
+### CareerProfile
 
-## 4. AuthTokenRecord
+Current owner-confirmed state:
 
-Purpose-bound verification/reset token hash with created/expiry/consumed state. New same-purpose token supersedes previous. Consumption and user mutation occur atomically.
+```text
+id, user_id
+schema_version, version
+headline, summary
+contacts_json, goals_json, geography_json, salary_json
+skills_json, employment_json, achievements_json
+education_json, languages_json
+content_hash, completion_percent
+confirmed_at, created_at, updated_at
+```
 
-## 5. Invariants
+Constraints: unique `user_id`, version/schema >= 1, completion 0..100, FK cascade from User.
 
-- normalized email is unique;
-- pending User cannot login;
-- verification activates only pending User;
-- password reset revokes all first-party sessions;
-- raw password/session/action tokens never persist;
-- HH/SJ connections are owner-bound by AUTH-002 candidate; legacy nullable rows remain unbound until fresh OAuth proof.
+### CareerProfileVersion
 
-## 6. Existing search/sync aggregates
+Immutable evidence:
 
-SEARCH-001..004 vacancy/snapshot semantics and SYNC checkpoints remain unchanged by AUTH-001/AUTH-002.
+```text
+id, profile_id
+schema_version, version
+snapshot_json
+content_hash
+changed_sections_json
+created_at
+```
 
+Constraint: unique `(profile_id, version)`, FK cascade from current profile.
 
-## 6. AUTH-002 ownership invariants
+## Ownership semantics
 
-| Field/constraint | Contract |
-|---|---|
-| `oauth_connections.user_id` | owner User; nullable only for legacy unbound compatibility |
-| unique `(provider, external_user_id)` | one external identity across all Users |
-| unique `(user_id, provider)` | one connection per provider for each User |
-| `access_token` / `refresh_token` | Fernet-encrypted ciphertext |
-| `profile_json` | provider snapshot, not verified career-profile truth |
+All repository operations resolve through `user_id`. Version lookup joins current profile owner. No provider email/external ID or profile content is used as an ownership key.
 
-Create/claim/refresh occurs transactionally after provider callback. Email matching is never an ownership proof. Disconnect deletes the owner row and provider mirror; first-party User remains.
+## Confirmation semantics
+
+A saved profile means the authenticated owner submitted the canonical form. Missing values remain null/empty. Provider snapshots, PDF extraction and AI output are not confirmed facts.

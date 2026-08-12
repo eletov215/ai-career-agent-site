@@ -4,6 +4,7 @@ from .accounts import HeadHunterAccount, SuperJobAccount
 from .auth import AuthSession, AuthToken
 from .base import Base
 from .oauth_connection import OAuthConnection
+from .profile import CareerProfile, CareerProfileVersion
 from .search_snapshot import (
     SearchSnapshot,
     SearchSnapshotCandidate,
@@ -22,6 +23,8 @@ __all__ = [
     "AuthToken",
     "HeadHunterAccount",
     "OAuthConnection",
+    "CareerProfile",
+    "CareerProfileVersion",
     "SuperJobAccount",
     "SyncCheckpoint",
     "SyncRun",

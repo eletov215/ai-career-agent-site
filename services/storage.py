@@ -12,6 +12,7 @@ from dataclasses import dataclass
 from database import DatabaseRuntime
 from repositories import (
     AuthRepository,
+    CareerProfileRepository,
     OAuthConnectionRepository,
     SearchSnapshotRepository,
     SyncCheckpointRepository,
@@ -27,6 +28,7 @@ class StorageServices:
     """Repository-backed persistence entry points for application services."""
 
     auth: AuthRepository
+    profiles: CareerProfileRepository
     users: UserRepository
     oauth_connections: OAuthConnectionRepository
     search_snapshots: SearchSnapshotRepository
@@ -39,6 +41,7 @@ class StorageServices:
     def from_database(cls, database: DatabaseRuntime) -> "StorageServices":
         return cls(
             auth=AuthRepository(database),
+            profiles=CareerProfileRepository(database),
             users=UserRepository(database),
             oauth_connections=OAuthConnectionRepository(database),
             search_snapshots=SearchSnapshotRepository(database),

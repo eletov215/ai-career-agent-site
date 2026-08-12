@@ -1,108 +1,120 @@
-# AI Career Agent — аудит источников v1.4.18
+# AI Career Agent — аудит источников v1.4.20
 
 | Поле | Значение |
 |---|---|
 | Документ | SOURCE_AUDIT |
-| Версия | 1.4.18 |
+| Версия | 1.4.20 |
 | Дата | 11 августа 2026 |
-| Проверяемый пакет | AUTH-002 first-party OAuth identity ownership candidate |
-| Рабочий источник кода | `ai-career-agent-site-main (12).zip` из актуального GitHub `main`, развернутый на Render |
-| Канонический план до обновления | PLAN_CURRENT 1.4.17 |
-| Канонический паспорт до обновления | PROJECT_PASSPORT 2.31 |
-| Результат | AUTH-002 candidate реализован; local tests green; migration `20260811_0009`; GitHub/Render/real provider E2E pending |
+| Проверяемый пакет | PROF-001 structured owner-scoped career profile candidate |
+| Рабочий источник кода | `ai-career-agent-site-main (14).zip` из актуального GitHub `main`, развернутого на Render |
+| Канонический план до обновления | PLAN_CURRENT 1.4.19 |
+| Канонический паспорт до обновления | PROJECT_PASSPORT 2.33 |
+| Результат | PROF-001 candidate реализован; migration `20260811_0010`; local focused evidence green; GitHub/Render/production E2E pending |
 
 ## 1. Контрольный статус
 
-AUTH-001 остаётся ВЫПОЛНЕНО. AUTH-002 получает статус НУЖНА ПРОВЕРКА. GitHub ZIP является фактической кодовой основой, а canonical v1.4.17 — основой статусов. Candidate не расширяет scope телефоном/social login и не объявляется complete до external evidence. DOC-STD-001 v1.1 обязателен.
+AUTH-001 и AUTH-002 остаются ВЫПОЛНЕНО. PROF-001 переводится из ГОТОВО К СТАРТУ в НУЖНА ПРОВЕРКА. Статус ВЫПОЛНЕНО запрещён до green Pull Request CI, Render migration/readiness и owner/versioning production E2E. DOC-STD-001 v1.1 обязателен.
 
 ## 2. Проверка актуального источника кода
 
 | Область | Результат |
 |---|---|
 | WSGI | `app.py`, `app:app` сохранены; `app_fixed.py` отсутствует |
-| Database | production baseline `20260810_0008`; candidate `20260811_0009` |
-| Identity root | existing first-party `users`; parallel user table не создаётся |
-| OAuth ownership | unique external identity + one provider slot per User |
-| Legacy rows | nullable/unbound сохраняются; auto-link по email запрещён |
-| OAuth state | one-time/TTL; bound to `user_id` and server-side `auth_session_id` |
-| Tokens | Fernet-encrypted persistence; plaintext absent from DB/logs |
-| Dashboard | first-party login required; owner-scoped HH/SJ status/actions |
-| Disconnect | POST + CSRF; owner-scoped local credential deletion + legacy mirror cleanup |
-| Browser compatibility | legacy `hh_user_id`/`superjob_user_id` keys не авторизуют |
-| External APIs | mocked in CI candidate; real HH/SJ verification pending |
+| Database baseline | production `20260811_0009`; candidate head `20260811_0010` |
+| Identity root | existing first-party `users`; profile ownership — strict `user_id` FK + unique one-per-User |
+| Current state | `career_profiles` stores validated current structured snapshot |
+| Version history | `career_profile_versions` stores immutable full snapshot per material save |
+| Confirmation boundary | only explicit owner POST save persists facts; provider/PDF/AI data is not auto-copied |
+| Incomplete data | permitted; completion is informational, not a save gate |
+| Concurrency | optimistic `expected_version`, PostgreSQL row lock, unique constraints and safe conflict |
+| HTTP security | first-party login, owner-scoped queries, POST + CSRF, rate limit, no-store |
+| UI | `/profile`, `/profile/edit`, `/profile/history`, read-only version view, dashboard/nav integration |
+| Backups | inventory includes current and version tables |
 | Prohibited artifacts | `.env`, secrets, DB/dump/backup/venv/cache/bytecode excluded |
 
-## 3. Реализованный scope AUTH-002
+## 3. Подтверждённый candidate scope
 
-- authenticated HeadHunter/SuperJob connect flows;
-- state bound to first-party user and auth session;
-- atomic create/claim/refresh ownership service;
-- cross-user and same-provider-slot conflicts;
-- migration `0009` with fail-closed duplicate precheck;
-- owner-scoped read/refresh/reconnect/disconnect;
-- legacy provider browser identity removal;
-- dashboard/navigation/CSS updates;
-- dedicated migration/service/route/PostgreSQL tests and CI step.
+- positioning/headline and summary;
+- contacts with bounded email/phone/Telegram/http(s) URLs;
+- target roles, industries, employment types and work formats;
+- current/preferred geography and relocation intent;
+- salary range/currency/period/tax mode;
+- deduplicated skills and languages with controlled levels;
+- employment, achievements and education with bounded dates/years/text;
+- deterministic completion percent;
+- current profile + immutable material-change versions;
+- owner-only view/edit/history/version routes;
+- stale-editor and unchanged-save semantics;
+- migration `0010`, backup inventory, tests and dedicated CI gate.
 
-Phone/OTP, Google/Yandex social identities, admin merge/transfer, profile import and remote revoke contract are excluded.
+PROF-002 import/review, PROF-003 drafts/autosave, version restore, public sharing, export/delete/retention and AI-generated facts are excluded.
 
 ## 4. Локальные доказательства
 
 ```text
-full available pytest: 236 passed, 8 skipped
-focused AUTH-002 migration/service tests: 7 passed
+full available pytest: 240 passed, 9 skipped
+extended focused PROF-001 checks: 26 passed, 3 skipped
+profile migration/service core: 4 passed
+SQLite 0010 -> 0009 -> 0010 round-trip: passed
+Alembic check: passed
 compileall: passed
-Jinja parsing: passed
-migration round-trip: covered by focused tests
+Jinja parse: 21 templates passed
+architecture/template/document/infra/hygiene: passed
+Flask route tests: prepared; Flask runtime unavailable in isolated local environment
+PostgreSQL integration: prepared; POSTGRES_TEST_URL/Psycopg required in GitHub Actions
 ```
 
-Flask route runtime, Psycopg and PostgreSQL service scenarios execute in GitHub Actions and are not claimed locally.
+Skipped scenarios are Flask/Psycopg/PostgreSQL runtime checks unavailable in the isolated local environment; they remain mandatory in GitHub Actions. External provider HTTP remains mocked by existing CI policy; PROF-001 itself performs no provider HTTP.
 
-## 5. Ожидаемые внешние доказательства
+## 5. Обязательные внешние доказательства
 
-1. Green `Verify AUTH-002 first-party OAuth identity ownership controls` and full workflow.
-2. Render `/health/ready`: current/expected `20260811_0009`, migrations ok, persistent PostgreSQL.
-3. Real HH bind/reconnect/disconnect persists across first-party relogin/restart.
-4. Real SuperJob bind/reconnect/disconnect persists across first-party relogin/restart.
-5. Second first-party User cannot claim an already-owned external identity.
-6. Different provider identity for occupied User/provider slot is rejected.
-7. Logs/public responses contain no OAuth code/state/token/provider secret/profile body.
+1. Branch/Pull Request workflow green, включая `Verify PROF-001 structured career profile controls` и full regressions.
+2. Render `/health/ready`: `current_revision=expected_revision=20260811_0010`, `migrations.ok=true`, persistent PostgreSQL, `status=ok`.
+3. Owner creates an incomplete profile, relogs and sees the same facts/version.
+4. Material update creates version 2; history/version 1 remains read-only and unchanged.
+5. Unchanged save creates no extra version.
+6. Second User cannot read/edit/history/version facts of the first User.
+7. Stale editor returns safe conflict without overwriting the newer version.
+8. Render restart preserves current profile and history.
+9. AUTH-001/002, `/dashboard`, `/vacancies`, ordinary search and logs remain healthy.
 
 ## 6. Ограничения и риски
 
-- External OAuth availability and application callback configuration remain external dependencies.
-- Existing unbound rows are not migrated to owners automatically.
-- Remote provider token revoke is not unified; candidate guarantees local encrypted credential deletion.
-- Legacy encrypted mirror tables remain temporarily for rollback.
-- Provider profile snapshots are not first-party career profile facts.
+- Profile sections are validated canonical JSON within owner/version tables; future normalization may use additive migrations when query requirements become concrete.
+- Completion percent is product guidance, not a quality score or AI confidence.
+- Historical restore is intentionally absent; versions are read-only evidence in PROF-001.
+- Contact/profile facts are personal data; export/delete/retention remains PRIV-001 and must not be claimed here.
+- Provider snapshots and resume extraction remain separate until explicit PROF-002 review/consent.
+- Shared rate-limit storage remains required before multiple replicas.
 
 ## 7. Rollback
 
-Application revert without touching first-party/search/sync data. Revision `0009` is additive and may remain. Controlled downgrade removes only the new unique `(user_id, provider)` constraint; OAuth rows remain. Never restore legacy provider IDs as browser authentication.
+Application revert may leave additive revision `0010`; previous code ignores profile tables. Controlled downgrade `0010 -> 0009` drops `career_profile_versions` and `career_profiles`, so it is permitted only before real profile data or after verified backup and explicit data-retention decision. AUTH/OAuth/Search/Sync rows are not modified.
 
 ## 8. Следующее действие
 
 ```text
-AUTH-002 candidate
--> GitHub green
--> Render 0009
--> real HH E2E
--> real SuperJob E2E
--> ownership negative smoke
--> AUTH-002 COMPLETE
--> PROF-001 START
+PROF-001 CANDIDATE
+-> branch / Pull Request
+-> GitHub CI green
+-> merge main
+-> Render 0010 readiness
+-> owner/version/concurrency/restart E2E
+-> regression smoke
+-> PROF-001 COMPLETE
+-> PROF-002 START
 ```
 
 ## 9. Новые канонические версии
 
 ```text
-PLAN_CURRENT 1.4.18
-PROJECT_PASSPORT 2.32
-SOURCE_AUDIT 1.4.18
-AUTH002_IMPLEMENTATION 1.0
-AUTH002_VERIFICATION_STATUS 1.0
-AUTH002_RUNBOOK 1.0
-AUTH002_SECURITY_REFERENCE 1.0
+PLAN_CURRENT 1.4.20
+PROJECT_PASSPORT 2.34
+SOURCE_AUDIT 1.4.20
+PROF001_IMPLEMENTATION 1.0
+PROF001_VERIFICATION_STATUS 1.0
+PROF001_RUNBOOK 1.0
+PROF001_PROFILE_REFERENCE 1.0
 DOCUMENT_STANDARD 1.1 (без изменений)
 ```
 
@@ -110,5 +122,5 @@ DOCUMENT_STANDARD 1.1 (без изменений)
 
 | Версия | Дата | Изменение |
 |---|---|---|
-| 1.4.17 | 11.08.2026 | AUTH-001 final; AUTH-002 ready. |
-| 1.4.18 | 11.08.2026 | AUTH-002 candidate: owner-bound HH/SJ identities, migration 0009, state/session binding, owner-scoped disconnect and dedicated tests; external verification pending. |
+| 1.4.19 | 11.08.2026 | AUTH-002 complete after green CI, Render 0009, full HH/SJ ownership E2E and regression smoke; PROF-001 next. |
+| 1.4.20 | 11.08.2026 | PROF-001 candidate: structured owner profile, immutable versions, migration 0010, UI/validation/tests/backup updates; external verification pending. |
