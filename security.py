@@ -111,7 +111,7 @@ def rate_limit_key() -> str:
 limiter = Limiter(key_func=rate_limit_key, default_limits=[])
 
 _UNSAFE_METHODS = {"POST", "PUT", "PATCH", "DELETE"}
-_UPLOAD_ENDPOINTS = {"resume_preview_api", "ai_career"}
+_UPLOAD_ENDPOINTS = {"resume_preview_api", "ai_career", "profile.import_resume"}
 _JSON_LIMIT_ENDPOINTS = {"university_logo_api"}
 
 
