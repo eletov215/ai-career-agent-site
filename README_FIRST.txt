@@ -1,4 +1,4 @@
-AI CAREER AGENT — PROF-002 CANDIDATE v1.4.23
+AI CAREER AGENT — PROF-002 CANDIDATE v1.4.23-r1
 
 STATUS
 - PROF-001: COMPLETE
@@ -20,11 +20,12 @@ No upload bytes, raw resume text, filename or unconfirmed proposal are persisted
 
 CORRECT DEPLOY FLOW
 1. Create branch: prof-002-candidate-v1.4.23
-2. Upload/extract the PATCH ZIP contents preserving paths.
+2. Upload/extract the PATCH ZIP contents preserving paths. Confirm infra/vps/.env.example is present.
 3. Open Pull Request to main.
 4. Wait for all CI, including Verify PROF-002 resume import review controls.
 5. Merge only when green.
 6. Verify Render /health/ready current_revision=expected_revision=20260812_0011.
 7. Run PROF-002 positive/negative/privacy/owner/stale/restart/mobile E2E.
 
-Do not commit .env, tokens, resume samples with personal data, databases, dumps, backups, virtualenv, caches or bytecode.
+The secret-free infra/vps/.env.example template is required and must remain committed.
+Do not commit a real .env, tokens, resume samples with personal data, databases, dumps, backups, virtualenv, caches or bytecode.

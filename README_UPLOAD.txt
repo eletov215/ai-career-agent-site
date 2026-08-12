@@ -1,4 +1,4 @@
-PROF-002 PATCH UPLOAD INSTRUCTIONS
+PROF-002 PATCH UPLOAD INSTRUCTIONS — packaging repair r1
 
 Use a separate GitHub branch. Do not upload the ZIP file itself into the repository.
 
@@ -6,9 +6,10 @@ Use a separate GitHub branch. Do not upload the ZIP file itself into the reposit
    prof-002-candidate-v1.4.23
 
 2. Extract:
-   ai-career-agent-site-main-patch-prof-002-candidate-v1.4.23.zip
+   ai-career-agent-site-main-patch-prof-002-candidate-v1.4.23-r1.zip
 
 3. Upload the extracted files/folders into the repository root with paths preserved.
+   The patch MUST include infra/vps/.env.example. This is a placeholder template, not a real secret file.
    Examples:
    services/resume_import.py
    routes/profile.py
@@ -32,3 +33,8 @@ Use a separate GitHub branch. Do not upload the ZIP file itself into the reposit
 7. After merge, Render must report revision 20260812_0011 and status ok before production E2E.
 
 No new environment variables are required.
+
+PACKAGING REPAIR r1
+The first v1.4.23 archive accidentally filtered infra/vps/.env.example together with real .env files.
+That was a packaging defect. This r1 archive restores the unchanged template from verified main.
+Real .env files remain forbidden.

@@ -1,9 +1,10 @@
-PROF-002 PATCH MANIFEST v1.4.23
+PROF-002 PATCH MANIFEST v1.4.23-r1
 
 Apply all files below at repository root with paths preserved.
 Base commit: f5e513f0f992b20305fbef36851ef97576013c86
 Candidate revision: 20260812_0011
 
+[RESTORE] infra/vps/.env.example
 [MODIFY] .github/workflows/ci.yml
 [MODIFY] CHANGED_FILES.txt
 [MODIFY] PATCH_MANIFEST.txt
@@ -55,3 +56,6 @@ Candidate revision: 20260812_0011
 [ADD] tests/test_resume_import_service.py
 
 No deletions are required. No environment variables are added.
+
+IMPORTANT: infra/vps/.env.example is a secret-free required template from the verified base.
+It is intentionally included in this repair patch. Never commit a real .env file.
