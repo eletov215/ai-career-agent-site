@@ -7,7 +7,7 @@ import uuid
 from urllib.parse import parse_qs, urlparse
 
 import pytest
-from pypdf import PdfWriter
+from pypdf import PdfReader, PdfWriter
 from pypdf.generic import DictionaryObject, NameObject, StreamObject
 
 pytest.importorskip("flask")
@@ -140,7 +140,26 @@ def _resume_pdf() -> bytes:
     )
 
 
-def _confirmation_payload(review_response, *, headline: str = "Backend Engineer") -> dict[str, str]:
+def _resume_pdf_over_generic_request_limit() -> bytes:
+    """Return a valid text PDF larger than the generic 256 KiB POST cap."""
+
+    writer = PdfWriter()
+    source = PdfReader(BytesIO(_resume_pdf()))
+    for page in source.pages:
+        writer.add_page(page)
+    padding = StreamObject()
+    padding._data = b"x" * (320 * 1024)
+    writer._add_object(padding)
+    buffer = BytesIO()
+    writer.write(buffer)
+    payload = buffer.getvalue()
+    assert len(payload) > 256 * 1024
+    return payload
+
+
+def _confirmation_payload(
+    review_response, *, headline: str = "Backend Engineer"
+) -> dict[str, str]:
     return {
         "csrf_token": _csrf(review_response),
         "import_token": _hidden(review_response, "import_token"),
@@ -181,6 +200,29 @@ def test_resume_import_routes_require_first_party_session(client):
         assert response.status_code in {302, 400}
         if response.status_code == 302:
             assert "/auth/login" in response.headers["Location"]
+
+
+def test_import_upload_uses_resume_limit_instead_of_generic_post_limit(
+    app_module, client
+):
+    email = f"prof002-medium-upload-{uuid.uuid4().hex}@example.test"
+    _register_verify_login(app_module, client, email=email)
+    page = client.get("/profile/import")
+    response = client.post(
+        "/profile/import",
+        data={
+            "csrf_token": _csrf(page),
+            "resume": (
+                BytesIO(_resume_pdf_over_generic_request_limit()),
+                "resume.pdf",
+            ),
+        },
+        content_type="multipart/form-data",
+    )
+    body = response.get_data(as_text=True)
+    assert response.status_code == 200
+    assert "Проверка импорта резюме" in body
+    assert "Файл или запрос слишком большой" not in body
 
 
 def test_upload_prepares_editable_review_without_persisting_and_confirm_creates_import_version(app_module, client):
