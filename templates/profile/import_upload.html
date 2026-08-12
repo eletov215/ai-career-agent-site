@@ -28,14 +28,15 @@
           <li>Новая версия профиля создаётся только после явного подтверждения.</li>
         </ul>
       </div>
-      <form class="profile-import-form" method="post" enctype="multipart/form-data" action="{{ url_for('profile.import_resume') }}">
+      <form class="profile-import-form" method="post" enctype="multipart/form-data" action="{{ url_for('profile.import_resume') }}" data-profile-import-form data-max-bytes="{{ max_resume_upload_mb * 1024 * 1024 }}">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <label class="profile-file-picker">
           <span>PDF-резюме</span>
-          <input type="file" name="resume" accept="application/pdf,.pdf" required>
+          <input type="file" name="resume" accept="application/pdf,.pdf" required data-profile-import-file>
           <small>Выберите один файл. После разбора откроется экран проверки.</small>
         </label>
-        <button class="btn btn-primary" type="submit">Извлечь данные для проверки</button>
+        <button class="btn btn-primary" type="submit" data-profile-import-submit>Извлечь данные для проверки</button>
+        <p class="profile-import-upload-status" data-profile-import-status hidden role="status" aria-live="polite">Загружаем и разбираем PDF…</p>
       </form>
     </section>
 
@@ -45,4 +46,34 @@
     </section>
   </div>
 </main>
+
+<script nonce="{{ csp_nonce }}">
+(() => {
+  const form = document.querySelector('[data-profile-import-form]');
+  if (!form) return;
+  const submit = form.querySelector('[data-profile-import-submit]');
+  const status = form.querySelector('[data-profile-import-status]');
+  const fileInput = form.querySelector('[data-profile-import-file]');
+  const maxBytes = Number(form.dataset.maxBytes || 0);
+  form.addEventListener('submit', (event) => {
+    const file = fileInput && fileInput.files ? fileInput.files[0] : null;
+    if (file && maxBytes > 0 && file.size > maxBytes) {
+      event.preventDefault();
+      if (status) {
+        status.hidden = false;
+        status.textContent = `Файл слишком большой. Максимум — ${Math.round(maxBytes / 1024 / 1024)} МБ.`;
+      }
+      return;
+    }
+    if (submit) {
+      submit.disabled = true;
+      submit.textContent = 'Загрузка и разбор…';
+    }
+    if (status) {
+      status.hidden = false;
+      status.textContent = 'Загружаем и разбираем PDF…';
+    }
+  });
+})();
+</script>
 {% endblock %}
