@@ -73,3 +73,7 @@ Revision `20260812_0011` adds `source_kind` and aggregate `provenance_json` to i
 - logs contain aggregate counts/outcomes only;
 - OCR/AI/background/persisted drafts are separate packages;
 - WSGI remains `app:app`; no `app_fixed.py`.
+
+## PROF-003 server resume document boundary
+
+`ResumeDraft`/`ResumeVersion` are owner-scoped document data, not canonical PROF-001 facts. A profile may seed a new draft one-way; document edits never auto-update the profile. Mutable autosave uses expected revision + row lock. Explicit checkpoint/export/restore produce immutable snapshots. Image assets are durable objects referenced by UUID; PDF binary remains client-side and only bounded export metadata is stored.

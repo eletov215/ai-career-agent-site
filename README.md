@@ -2,108 +2,78 @@
 
 | Поле | Значение |
 |---|---|
-| Канонический план | `docs/PLAN_CURRENT.md` — 1.4.23 |
-| Паспорт | `docs/PROJECT_PASSPORT.md` — 2.37 |
-| Текущий пакет | `PROF-002 — НУЖНА ПРОВЕРКА` |
-| Следующий после завершения | `PROF-003` |
-| Production revision | `20260811_0010` |
-| Candidate database revision | `20260812_0011` |
-| Проверенная основа | GitHub `main` commit `f5e513f0f992b20305fbef36851ef97576013c86` |
+| Канонический план | `docs/PLAN_CURRENT.md` — 1.4.25 |
+| Паспорт | `docs/PROJECT_PASSPORT.md` — 2.39 |
+| Текущий пакет | `PROF-003 — НУЖНА ПРОВЕРКА` |
+| Следующий пакет | `PRIV-001 — следующий после закрытия PROF-003` |
+| Production revision | baseline `20260812_0011`; candidate `20260812_0012` |
+| Проверенная основа | GitHub `main` ZIP comment `427b2726edd078993a3c26985e17713cf2e76c9e` |
 
-> GitHub является главным источником кода. Загруженный `ai-career-agent-site-main (16).zip` проверен и полностью совпадает с текущим `main`. Секреты, `.env`, базы, dumps, backups, virtualenv, caches и bytecode не входят в репозиторий или release ZIP.
+> GitHub является главным источником кода. Загруженный `ai-career-agent-site-main (16).zip` проверен: functional code соответствует PROF-002 COMPLETE; 11 repository docs синхронизированы с canonical v1.4.24 перед PROF-003. Секреты, `.env`, базы, dumps, backups, virtualenv, caches и bytecode не входят в репозиторий или release ZIP.
 
 ## 1. Назначение
 
-AI Career Agent — Flask/Gunicorn-сервис карьерного сопровождения. WSGI entrypoint остаётся `app:app`. SEARCH-001..004, AUTH-001/002 и PROF-001 завершены. PROF-002 добавляет import существующего текстового PDF-резюме в подтверждённый PROF-001 через обязательный editable review.
+AI Career Agent — Flask/Gunicorn-сервис карьерного сопровождения. WSGI entrypoint `app:app`. PROF-001/002 завершены; PROF-003 candidate переводит resume builder с localStorage на server-side owner-scoped drafts.
 
-## 2. PROF-002 candidate
-
-```text
-first-party authenticated owner
--> upload one bounded text PDF
--> request-local pypdf extraction
--> deterministic proposal + confidence/warnings/conflicts/evidence
--> full editable PROF-001 review
--> explicit confirm POST
--> validation + expected version + row lock
--> immutable confirmed version with aggregate provenance
-```
-
-Ключевые инварианты:
-
-- до confirm профиль и история не меняются;
-- upload bytes, raw text и unconfirmed proposal не сохраняются;
-- existing confirmed scalar values не заменяются молча;
-- signed review token действует 30 минут, owner/version-bound и не содержит filename/text/facts;
-- user может исправить или удалить любое предложение;
-- OCR, DOC/DOCX, LLM/AI parsing, provider import и persisted drafts исключены;
-- canonical profile schema остаётся `1`.
-
-Новые/расширенные маршруты:
+## 2. PROF-003 — НУЖНА ПРОВЕРКА
 
 ```text
-GET/POST /profile/import
-POST     /profile/import/confirm
-GET      /profile/history/<version>
+first-party owner
+-> /resumes library
+-> current server draft + optimistic revision autosave
+-> durable photo/logo assets
+-> explicit checkpoint/export/restore
+-> immutable version history
 ```
+
+Draft text остаётся document content, а не canonical PROF-001 facts. Draft можно один раз seed-ить из подтверждённого profile; обратного auto-sync нет.
 
 ## 3. Persistence
 
-Alembic `20260812_0011` добавляет к `career_profile_versions`:
+Migration `20260812_0012` создаёт `resume_drafts`, `resume_versions`, `resume_assets`, `resume_exports`. PDF binary остаётся в браузере; server хранит только export metadata tied to immutable version.
+
+## 4. Проверки
 
 ```text
-source_kind      manual | resume_import
-provenance_json  bounded aggregate extraction/review metadata
+split full available pytest                 252 passed, 11 skipped
+focused PROF-003 checks                     15 passed, 1 skipped
+compileall / Jinja / JavaScript syntax      passed
+SQLite migration round-trip to 0012         passed
+Alembic / architecture / hygiene / infra     passed
+Flask/PostgreSQL route gate                  GitHub CI required
+Render current/expected 0012 + E2E           required
 ```
 
-Filename, text, contacts, excerpts и profile payload не входят в provenance. Existing versions получают `manual` и `{}`.
-
-## 4. Локальные проверки
+## 5. Workflow
 
 ```text
-full available pytest:                    246 passed, 10 skipped
-focused PROF-002/PROF-001/parser:         15 passed
-architecture/template/document subset:    23 passed
-compileall:                                passed
-Jinja parse:                               22 templates passed
-SQLite 0011 -> 0010 -> 0011:               passed
-Alembic check:                             passed
+PROF-003 CANDIDATE
+-> branch + Pull Request
+-> green CI
+-> Render migration 0012
+-> autosave/history/restore/assets/export/restart/mobile E2E
+-> PROF-003 COMPLETE
+-> PRIV-001
 ```
-
-Flask/Psycopg/PostgreSQL skips подтверждаются Pull Request CI. В workflow добавлен dedicated `Verify PROF-002 resume import review controls`.
-
-## 5. Правильный workflow
-
-```text
-branch prof-002-candidate-v1.4.23
--> Pull Request to main
--> all CI green
--> merge
--> Render current_revision=expected_revision=20260812_0011
--> positive/negative/privacy/owner/stale/restart/mobile E2E
--> PROF-002 COMPLETE
-```
-
-До полного внешнего gate статус остаётся `НУЖНА ПРОВЕРКА`.
 
 ## 6. Документация
 
-- `docs/PROF002_IMPLEMENTATION.md`
-- `docs/PROF002_VERIFICATION_STATUS.md`
-- `docs/PROF002_RUNBOOK.md`
-- `docs/PROF002_EXTRACTION_REFERENCE.md`
-- `docs/PROF002_SECURITY_REFERENCE.md`
+- `docs/PROF003_IMPLEMENTATION.md`
+- `docs/PROF003_VERIFICATION_STATUS.md`
+- `docs/PROF003_RUNBOOK.md`
+- `docs/PROF003_RESUME_REFERENCE.md`
+- `docs/PROF003_SECURITY_REFERENCE.md`
 - `docs/PLAN_CURRENT.md`
 - `docs/PROJECT_PASSPORT.md`
 - `docs/SOURCE_AUDIT.md`
 
 ## 7. Rollback
 
-Application revert может оставить additive revision `0011`; предыдущий код игнорирует новые audit columns. Controlled downgrade `0011 -> 0010` удаляет source/provenance metadata, но не current profile и confirmed snapshots. Raw resume content нельзя добавлять в rollback artifacts.
+Application revert может оставить additive `0012`. Downgrade `0012 -> 0011` удаляет PROF-003 tables и является data-destructive после реального использования.
 
 ## 8. Ограничения
 
-Deterministic parser не является AI. Image-only PDF fail closed без OCR. Review не является persisted draft и теряется при refresh/expiry. Render остаётся staging/резервной площадкой; собственный VPS/domain и domain email sender остаются pre-release scope.
+Нет AI interview/rewrite, public sharing, collaborative merge, stored PDF binary и external object provider. PostgreSQL asset storage — staging baseline; privacy export/delete/retention остаётся PRIV-001.
 
 ## 9. Hosting
 

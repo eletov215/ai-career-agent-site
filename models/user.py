@@ -50,3 +50,8 @@ class User(Base):
         passive_deletes=True,
         uselist=False,
     )
+    resume_drafts = relationship(
+        "ResumeDraft",
+        back_populates="user",
+        passive_deletes=True,
+    )

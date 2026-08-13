@@ -12,7 +12,12 @@
         <span id="builderProgressText">Шаг 1 из 8</span>
         <div aria-hidden="true"><i id="builderProgressBar"></i></div>
       </div>
-      <span class="resume-builder-save" id="builderSaveStatus">Черновик сохраняется</span>
+      <div class="resume-builder-save-tools">
+        <a class="resume-builder-tool-link" href="{{ url_for('resume_drafts.library') }}">Мои резюме</a>
+        <button type="button" class="resume-builder-tool-button" id="builderCheckpoint">Сохранить версию</button>
+        <a class="resume-builder-tool-link" id="builderHistoryLink" href="{{ url_for('resume_drafts.history', draft_id=draft.id) }}">Версии <span id="builderVersionCount">{{ version_count }}</span></a>
+        <span class="resume-builder-save" id="builderSaveStatus">Черновик синхронизирован</span>
+      </div>
     </div>
 
     <div class="resume-builder-mobile-tabs" role="tablist" aria-label="Режим создания резюме">
@@ -204,10 +209,20 @@
 </div>
 {% endblock %}
 {% block scripts %}
+<script nonce="{{ csp_nonce }}" type="application/json" id="resumeBuilderConfig">{{ {
+  "draftId": draft.id,
+  "revision": draft.revision,
+  "saveUrl": url_for('resume_drafts.save_draft', draft_id=draft.id),
+  "checkpointUrl": url_for('resume_drafts.checkpoint', draft_id=draft.id),
+  "assetUrl": url_for('resume_drafts.upload_asset', draft_id=draft.id),
+  "exportUrl": url_for('resume_drafts.record_export', draft_id=draft.id),
+  "historyUrl": url_for('resume_drafts.history', draft_id=draft.id)
+}|tojson }}</script>
+<script nonce="{{ csp_nonce }}" type="application/json" id="resumeBuilderInitialState">{{ initial_state|tojson }}</script>
 <script nonce="{{ csp_nonce }}" src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script nonce="{{ csp_nonce }}" src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script nonce="{{ csp_nonce }}">
-(() => {
+(async () => {
   const questions = [
     {key:'name', text:'Привет! Я помогу создать профессиональное резюме. Для начала, как вас зовут?', placeholder:'Например: Иван Петров'},
     {key:'role', text:'На какую должность вы хотите устроиться?', placeholder:'Например: Python-разработчик'},
@@ -218,20 +233,40 @@
     {key:'contacts', text:'Какие контакты добавить в резюме? Укажите телефон, email и при желании ссылку на портфолио.', placeholder:'Телефон, email, GitHub или портфолио'},
     {key:'goal', text:'Что для вас важно в новой работе: формат, график, зарплата, город или другие условия?', placeholder:'Например: удалённо, полная занятость'}
   ];
-  const storageKey = 'aiCareerResumeDraftV1';
+  const legacyStorageKey = 'aiCareerResumeDraftV1';
+  const config = JSON.parse(document.getElementById('resumeBuilderConfig').textContent || '{}');
+  const serverInitialState = JSON.parse(document.getElementById('resumeBuilderInitialState').textContent || '{}');
   const chat = document.getElementById('resumeChat');
   const form = document.getElementById('resumeChatForm');
   const input = document.getElementById('resumeChatInput');
   const progressText = document.getElementById('builderProgressText');
   const progressBar = document.getElementById('builderProgressBar');
   const saveStatus = document.getElementById('builderSaveStatus');
+  const checkpointButton = document.getElementById('builderCheckpoint');
+  const versionCountNode = document.getElementById('builderVersionCount');
   const skip = document.getElementById('builderSkip');
   const reset = document.getElementById('builderReset');
   const layout = document.getElementById('resumeBuilderLayout');
   const pages = [...document.querySelectorAll('[data-resume-page]')];
   let currentPage = 0;
-  let state = {index:0, answers:{}, messages:[], photo:'', universityLogo:''};
-  try { const saved = JSON.parse(localStorage.getItem(storageKey) || 'null'); if (saved && saved.answers) state = {...state, ...saved, photo:saved.photo || '', universityLogo:saved.universityLogo || ''}; } catch (_) {}
+  let draftRevision = Number(config.revision || 1);
+  let state = {
+    index: 0,
+    answers: {},
+    messages: [],
+    photo: '',
+    photoAssetId: null,
+    universityLogo: '',
+    universityLogoAssetId: null,
+    universityLogoFor: '',
+    universityResolvedName: '',
+    ...serverInitialState
+  };
+  let legacyDraft = null;
+  try {
+    const saved = JSON.parse(localStorage.getItem(legacyStorageKey) || 'null');
+    if (saved && saved.answers) legacyDraft = saved;
+  } catch (_) {}
   const photoInput = document.getElementById('resumePhotoInput');
   const photoThumb = document.getElementById('resumePhotoThumb');
   const photoInitials = document.getElementById('resumePhotoInitials');
@@ -243,6 +278,7 @@
   const previewUniversityLogoWrap = document.getElementById('previewUniversityLogoWrap');
   const universityLogoStatus = document.getElementById('universityLogoStatus');
   let universityLogoRequestId = 0;
+  let universityLogoTask = Promise.resolve();
   const previewStage = document.getElementById('resumePaperStage');
   const previewPagination = document.getElementById('resumePreviewPagination');
   const previewPrevButton = document.getElementById('resumePreviewPrev');
@@ -261,7 +297,115 @@
 
   const setText = (id, value, fallback) => { document.getElementById(id).textContent = value || fallback; };
   const addMessage = (type, text) => { const item = document.createElement('div'); item.className = `resume-message ${type}`; item.innerHTML = type === 'ai' ? `<span class="resume-ai-mini">✦</span><p></p>` : '<p></p>'; item.querySelector('p').textContent = text; chat.appendChild(item); chat.scrollTop = chat.scrollHeight; };
-  const save = () => { localStorage.setItem(storageKey, JSON.stringify(state)); saveStatus.textContent = 'Черновик сохранён'; window.setTimeout(() => saveStatus.textContent = 'Черновик сохраняется', 1400); };
+  const csrfToken = () => document.querySelector('meta[name="csrf-token"]').content;
+  const serializableState = () => ({
+    schemaVersion: 1,
+    index: Number(state.index || 0),
+    answers: {...(state.answers || {})},
+    messages: [...(state.messages || [])],
+    photoAssetId: state.photoAssetId || null,
+    universityLogoAssetId: state.universityLogoAssetId || null,
+    universityLogoFor: state.universityLogoFor || '',
+    universityResolvedName: state.universityResolvedName || ''
+  });
+
+  let saveTimer = 0;
+  let savePromise = Promise.resolve(true);
+  let saveDirty = false;
+  let saveConflict = false;
+
+  const setSaveStatus = (text, type = '') => {
+    saveStatus.textContent = text;
+    saveStatus.dataset.type = type;
+  };
+
+  const persistDirtyState = async () => {
+    if (saveConflict) return false;
+    while (saveDirty) {
+      saveDirty = false;
+      setSaveStatus('Сохраняем…', 'loading');
+      let response;
+      try {
+        response = await fetch(config.saveUrl, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-Token': csrfToken()
+          },
+          body: JSON.stringify({
+            expected_revision: draftRevision,
+            state: serializableState()
+          })
+        });
+      } catch (_) {
+        saveDirty = true;
+        setSaveStatus('Нет связи — изменения не сохранены', 'error');
+        return false;
+      }
+      const result = await response.json().catch(() => ({}));
+      if (response.status === 409) {
+        saveConflict = true;
+        setSaveStatus('Черновик изменён в другой сессии', 'error');
+        alert(result.error || 'Черновик изменён на другом устройстве. Обновите страницу.');
+        return false;
+      }
+      if (!response.ok || !result.ok) {
+        saveDirty = true;
+        setSaveStatus(result.error || 'Не удалось сохранить черновик', 'error');
+        return false;
+      }
+      draftRevision = Number(result.revision || draftRevision);
+      localStorage.removeItem(legacyStorageKey);
+      setSaveStatus(result.changed ? 'Черновик сохранён на сервере' : 'Изменений нет', 'success');
+    }
+    return true;
+  };
+
+  const queueSave = () => {
+    saveDirty = true;
+    window.clearTimeout(saveTimer);
+    setSaveStatus('Черновик изменён…', 'loading');
+    saveTimer = window.setTimeout(() => {
+      savePromise = savePromise.then(persistDirtyState);
+    }, 550);
+    return savePromise;
+  };
+
+  const flushSave = async () => {
+    window.clearTimeout(saveTimer);
+    if (saveDirty) savePromise = savePromise.then(persistDirtyState);
+    return savePromise;
+  };
+
+  const save = queueSave;
+
+  const dataUrlToBlob = async (dataUrl) => {
+    const response = await fetch(dataUrl);
+    return response.blob();
+  };
+
+  const sha256Hex = async (buffer) => {
+    if (!window.crypto || !window.crypto.subtle) {
+      throw new Error('Браузер не поддерживает безопасную контрольную сумму PDF.');
+    }
+    const digest = await window.crypto.subtle.digest('SHA-256', buffer);
+    return [...new Uint8Array(digest)].map(byte => byte.toString(16).padStart(2, '0')).join('');
+  };
+
+  const uploadAsset = async (kind, dataUrl) => {
+    const blob = await dataUrlToBlob(dataUrl);
+    const formData = new FormData();
+    formData.append('kind', kind);
+    formData.append('asset', blob, kind === 'photo' ? 'photo.jpg' : 'university-logo.png');
+    const response = await fetch(config.assetUrl, {
+      method: 'POST',
+      headers: {'X-CSRF-Token': csrfToken()},
+      body: formData
+    });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok || !result.ok) throw new Error(result.error || 'Не удалось сохранить изображение.');
+    return result;
+  };
 
   const updatePhotoPreview = () => {
     const hasPhoto = Boolean(state.photo);
@@ -300,6 +444,7 @@
     const query = String(educationText || '').trim();
     if (!query) {
       state.universityLogo = '';
+      state.universityLogoAssetId = null;
       state.universityLogoFor = '';
       setUniversityLogoStatus('');
       updateUniversityLogoPreview();
@@ -321,12 +466,15 @@
       if (requestId !== universityLogoRequestId) return;
       if (!response.ok || !result.ok) throw new Error(result.error || 'Не удалось выполнить поиск.');
       if (result.found && result.image_data) {
-        state.universityLogo = result.image_data;
+        const stored = await uploadAsset('university_logo', result.image_data);
+        state.universityLogo = stored.url;
+        state.universityLogoAssetId = stored.asset_id;
         state.universityLogoFor = query;
         state.universityResolvedName = result.university_name || '';
-        setUniversityLogoStatus('Официальная эмблема найдена', 'success');
+        setUniversityLogoStatus('Официальная эмблема найдена и сохранена', 'success');
       } else {
         state.universityLogo = '';
+        state.universityLogoAssetId = null;
         state.universityLogoFor = query;
         state.universityResolvedName = result.university_name || '';
         setUniversityLogoStatus('Эмблема не найдена — резюме останется без неё', 'muted');
@@ -337,6 +485,7 @@
     } catch (error) {
       if (requestId !== universityLogoRequestId) return;
       state.universityLogo = '';
+      state.universityLogoAssetId = null;
       state.universityLogoFor = query;
       save();
       updateUniversityLogoPreview();
@@ -775,7 +924,18 @@
     if (isDownloadingPdf) return;
     const labelNode = button && button.querySelector('span');
     const originalLabel = labelNode ? labelNode.textContent : '';
+    const exportControls = [
+      input,
+      form.querySelector('button[type="submit"]'),
+      skip,
+      reset,
+      photoInput,
+      photoRemove,
+      checkpointButton
+    ].filter(Boolean);
+    const previousDisabled = exportControls.map(control => control.disabled);
     isDownloadingPdf = true;
+    exportControls.forEach(control => { control.disabled = true; });
     if (button) {
       button.disabled = true;
       if (labelNode) labelNode.textContent = 'Подготовка…';
@@ -784,6 +944,11 @@
     try {
       if (!window.html2canvas || !window.jspdf || !window.jspdf.jsPDF) {
         throw new Error('Модуль PDF ещё не загрузился. Проверьте подключение к интернету и повторите попытку.');
+      }
+      await universityLogoTask.catch(() => false);
+      const saved = await flushSave();
+      if (!saved) {
+        throw new Error('Сначала восстановите соединение и сохраните черновик.');
       }
       if (document.fonts && document.fonts.ready) await document.fonts.ready;
 
@@ -862,7 +1027,47 @@
 
         const rawName = (state.answers.name || 'resume').trim();
         const safeName = rawName.replace(/[^a-zA-Zа-яА-ЯёЁ0-9_-]+/g, '_').replace(/^_+|_+$/g, '') || 'resume';
-        pdf.save(`${safeName}_resume.pdf`);
+        const fileName = `${safeName}_resume.pdf`;
+        const pdfBuffer = pdf.output('arraybuffer');
+        const pdfBlob = new Blob([pdfBuffer], {type: 'application/pdf'});
+        const pdfSha256 = await sha256Hex(pdfBuffer);
+        const exportResponse = await fetch(config.exportUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-Token': csrfToken()
+          },
+          body: JSON.stringify({
+            expected_revision: draftRevision,
+            page_count: renderedPages.length,
+            byte_size: pdfBlob.size,
+            pdf_sha256: pdfSha256,
+            file_name: fileName
+          })
+        });
+        const exportResult = await exportResponse.json().catch(() => ({}));
+        if (exportResponse.status === 409) {
+          saveConflict = true;
+          throw new Error(exportResult.error || 'Черновик изменён на другом устройстве. Обновите страницу.');
+        }
+        if (!exportResponse.ok || !exportResult.ok) {
+          throw new Error(exportResult.error || 'Не удалось зафиксировать версию перед экспортом PDF.');
+        }
+        if (exportResult.version_created) {
+          versionCountNode.textContent = String(Math.max(
+            Number(versionCountNode.textContent || 0),
+            Number(exportResult.version || 0)
+          ));
+        }
+        const downloadUrl = URL.createObjectURL(pdfBlob);
+        const downloadLink = document.createElement('a');
+        downloadLink.href = downloadUrl;
+        downloadLink.download = fileName;
+        document.body.appendChild(downloadLink);
+        downloadLink.click();
+        downloadLink.remove();
+        window.setTimeout(() => URL.revokeObjectURL(downloadUrl), 1500);
+        setSaveStatus('PDF сформирован и версия зафиксирована', 'success');
       } finally {
         printHost.remove();
       }
@@ -871,6 +1076,9 @@
       alert(error.message || 'Не удалось сформировать PDF.');
     } finally {
       isDownloadingPdf = false;
+      exportControls.forEach((control, index) => {
+        control.disabled = previousDisabled[index];
+      });
       if (button) {
         button.disabled = false;
         if (labelNode) labelNode.textContent = originalLabel || 'Скачать PDF';
@@ -886,6 +1094,96 @@
       button.setAttribute('aria-selected', String(active));
     });
     if (view === 'chat') window.setTimeout(() => input.focus(), 100);
+  };
+
+  const serverDraftHasMaterial = () => {
+    const answers = state.answers || {};
+    const meaningfulAnswers = Object.entries(answers).some(([key, value]) =>
+      key !== 'name' && String(value || '').trim()
+    );
+    return Boolean(
+      meaningfulAnswers ||
+      (state.messages && state.messages.length) ||
+      state.photoAssetId ||
+      state.universityLogoAssetId
+    );
+  };
+
+  const migrateLegacyDraft = async () => {
+    if (!legacyDraft || serverDraftHasMaterial()) return;
+    const accepted = window.confirm(
+      'На этом устройстве найден старый локальный черновик. Перенести его в серверный черновик?'
+    );
+    if (!accepted) return;
+
+    const legacyAnswers = legacyDraft.answers && typeof legacyDraft.answers === 'object'
+      ? legacyDraft.answers
+      : {};
+    const legacyMessages = Array.isArray(legacyDraft.messages) ? legacyDraft.messages : [];
+    state.index = Number.isFinite(Number(legacyDraft.index)) ? Number(legacyDraft.index) : 0;
+    state.answers = {...legacyAnswers};
+    state.messages = legacyMessages.filter(item => item && (item.type === 'ai' || item.type === 'user'));
+    state.universityLogoFor = String(legacyDraft.universityLogoFor || '');
+    state.universityResolvedName = String(legacyDraft.universityResolvedName || '');
+
+    if (String(legacyDraft.photo || '').startsWith('data:image/')) {
+      const storedPhoto = await uploadAsset('photo', legacyDraft.photo);
+      state.photo = storedPhoto.url;
+      state.photoAssetId = storedPhoto.asset_id;
+    }
+    if (String(legacyDraft.universityLogo || '').startsWith('data:image/')) {
+      const storedLogo = await uploadAsset('university_logo', legacyDraft.universityLogo);
+      state.universityLogo = storedLogo.url;
+      state.universityLogoAssetId = storedLogo.asset_id;
+    }
+
+    save();
+    const migrated = await flushSave();
+    if (!migrated) throw new Error('Не удалось перенести локальный черновик на сервер.');
+    localStorage.removeItem(legacyStorageKey);
+    legacyDraft = null;
+    setSaveStatus('Локальный черновик перенесён на сервер', 'success');
+  };
+
+  const createCheckpoint = async () => {
+    if (checkpointButton.disabled) return;
+    checkpointButton.disabled = true;
+    const originalLabel = checkpointButton.textContent;
+    checkpointButton.textContent = 'Сохраняем…';
+    try {
+      const saved = await flushSave();
+      if (!saved) throw new Error('Сначала сохраните текущие изменения.');
+      const response = await fetch(config.checkpointUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': csrfToken()
+        },
+        body: JSON.stringify({expected_revision: draftRevision})
+      });
+      const result = await response.json().catch(() => ({}));
+      if (response.status === 409) {
+        saveConflict = true;
+        throw new Error(result.error || 'Черновик изменён на другом устройстве.');
+      }
+      if (!response.ok || !result.ok) {
+        throw new Error(result.error || 'Не удалось сохранить версию.');
+      }
+      versionCountNode.textContent = String(Math.max(
+        Number(versionCountNode.textContent || 0),
+        Number(result.version || 0)
+      ));
+      setSaveStatus(
+        result.created ? `Версия ${result.version} сохранена` : `Изменений после версии ${result.version} нет`,
+        'success'
+      );
+    } catch (error) {
+      setSaveStatus(error.message || 'Не удалось сохранить версию', 'error');
+      alert(error.message || 'Не удалось сохранить версию.');
+    } finally {
+      checkpointButton.disabled = false;
+      checkpointButton.textContent = originalLabel;
+    }
   };
 
   input.addEventListener('keydown', (event) => {
@@ -908,7 +1206,7 @@
     state.index += 1;
     save();
     updatePreview();
-    if (q.key === 'education' && state.universityLogoFor !== value) findUniversityLogo(value);
+    if (q.key === 'education' && state.universityLogoFor !== value) universityLogoTask = findUniversityLogo(value);
     window.setTimeout(askCurrent, 250);
   });
   skip.addEventListener('click', () => { if (state.index >= questions.length) return; state.index += 1; save(); askCurrent(); });
@@ -929,7 +1227,12 @@
       return;
     }
     try {
-      state.photo = await resizeProfilePhoto(file);
+      const resizedPhoto = await resizeProfilePhoto(file);
+      state.photo = resizedPhoto;
+      updatePreview();
+      const stored = await uploadAsset('photo', resizedPhoto);
+      state.photo = stored.url;
+      state.photoAssetId = stored.asset_id;
       save();
       updatePreview();
       fitResumePreview();
@@ -942,11 +1245,43 @@
   });
   photoRemove.addEventListener('click', () => {
     state.photo = '';
+    state.photoAssetId = null;
     save();
     updatePreview();
     fitResumePreview();
   });
-  reset.addEventListener('click', () => { if (!confirm('Удалить сохранённый черновик и начать заново?')) return; localStorage.removeItem(storageKey); state={index:0,answers:{},messages:[],photo:'',universityLogo:'',universityLogoFor:'',universityResolvedName:''}; input.disabled=false; form.querySelector('button').disabled=false; skip.hidden=false; renderHistory(); updatePreview(); askCurrent(); showPreviewPage(0); });
+  reset.addEventListener('click', async () => {
+    if (!confirm('Очистить текущий черновик? Сохранённые версии останутся в истории.')) return;
+    state = {
+      index: 0,
+      answers: {},
+      messages: [],
+      photo: '',
+      photoAssetId: null,
+      universityLogo: '',
+      universityLogoAssetId: null,
+      universityLogoFor: '',
+      universityResolvedName: ''
+    };
+    input.disabled = false;
+    form.querySelector('button').disabled = false;
+    skip.hidden = false;
+    renderHistory();
+    updatePreview();
+    askCurrent();
+    showPreviewPage(0);
+    save();
+    await flushSave();
+  });
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden' && saveDirty && !saveConflict) {
+      void flushSave();
+    }
+  });
+  window.addEventListener('pagehide', () => {
+    if (saveDirty && !saveConflict) void flushSave();
+  });
+  checkpointButton.addEventListener('click', createCheckpoint);
   document.querySelectorAll('[data-builder-tab]').forEach(button => button.addEventListener('click', () => switchMobileView(button.dataset.builderTab)));
   document.querySelectorAll('[data-builder-tab-target]').forEach(button => button.addEventListener('click', () => switchMobileView(button.dataset.builderTabTarget)));
 
@@ -962,8 +1297,14 @@
   reader.querySelectorAll('[data-resume-reader-close]').forEach(element => element.addEventListener('click', closeResumeReader));
   document.addEventListener('keydown', event => { if (event.key === 'Escape' && !reader.hidden) closeResumeReader(); });
 
+  try {
+    await migrateLegacyDraft();
+  } catch (error) {
+    console.error('Legacy resume draft migration failed:', error);
+    setSaveStatus(error.message || 'Не удалось перенести локальный черновик', 'error');
+  }
   renderHistory(); updatePreview();
-  if (state.answers.education && !state.universityLogo && state.universityLogoFor !== state.answers.education) findUniversityLogo(state.answers.education);
+  if (state.answers.education && !state.universityLogo && state.universityLogoFor !== state.answers.education) universityLogoTask = findUniversityLogo(state.answers.education);
   else if (state.universityLogo) setUniversityLogoStatus('Официальная эмблема найдена', 'success');
   askCurrent(); showPreviewPage(0); window.requestAnimationFrame(fitResumePreview);
 })();

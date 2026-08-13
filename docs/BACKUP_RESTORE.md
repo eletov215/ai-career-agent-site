@@ -26,3 +26,7 @@ Upload bytes and unconfirmed proposals are intentionally absent from DB and ther
 ## Rollback note
 
 Application rollback keeps `0011`. Downgrade removes source/provenance audit metadata but retains canonical profile snapshots. Production restore drill remains OPS-002/REL-001.
+
+## PROF-003 inventory
+
+Encrypted backup inventory includes `resume_drafts`, `resume_versions`, `resume_assets`, `resume_exports`. A restore drill for PROF-003 must verify current state, version history, asset bytes and export metadata counts; PDF binaries are not expected because they are not stored.

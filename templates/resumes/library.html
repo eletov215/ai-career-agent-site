@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block title %}Мои резюме — AI Career Agent{% endblock %}
+{% block content %}
+<main class="section resume-library-page">
+  <div class="container resume-library-shell">
+    <header class="resume-library-heading">
+      <div>
+        <div class="badge">PROF-003 · серверные черновики</div>
+        <h1 class="page-title">Мои резюме</h1>
+        <p class="lead">Черновики и версии хранятся в вашем аккаунте и доступны на другом устройстве.</p>
+      </div>
+      <div class="resume-library-create-actions">
+        <form method="post" action="{{ url_for('resume_drafts.create_draft') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="source" value="profile">
+          <button class="btn btn-primary" type="submit">Создать из профиля</button>
+        </form>
+        <form method="post" action="{{ url_for('resume_drafts.create_draft') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="source" value="blank">
+          <button class="btn btn-secondary" type="submit">Новый пустой черновик</button>
+        </form>
+      </div>
+    </header>
+
+    {% if summaries %}
+      <div class="resume-library-grid">
+        {% for item in summaries %}
+          {% set draft = item.draft %}
+          <article class="card resume-draft-card">
+            <div class="resume-draft-card-head">
+              <div class="resume-draft-icon" aria-hidden="true">CV</div>
+              <div>
+                <span>Обновлено {{ format_timestamp(draft.updated_at) }}</span>
+                <h2>{{ draft.title }}</h2>
+              </div>
+            </div>
+            <div class="resume-draft-progress" aria-label="Заполнено {{ draft.completion_percent }} процентов">
+              <i style="width: {{ draft.completion_percent }}%"></i>
+            </div>
+            <div class="resume-draft-stats">
+              <span><strong>{{ draft.completion_percent }}%</strong> заполнено</span>
+              <span><strong>{{ item.version_count }}</strong> версий</span>
+              <span><strong>{{ item.export_count }}</strong> PDF</span>
+            </div>
+            <div class="resume-draft-actions">
+              <a class="btn btn-primary" href="{{ url_for('resume_drafts.builder', draft_id=draft.id) }}">Продолжить</a>
+              <a class="btn btn-secondary" href="{{ url_for('resume_drafts.history', draft_id=draft.id) }}">История</a>
+            </div>
+            <details class="resume-draft-manage">
+              <summary>Управление</summary>
+              <form method="post" action="{{ url_for('resume_drafts.rename_draft', draft_id=draft.id) }}" class="resume-draft-rename-form">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <label>
+                  <span>Название</span>
+                  <input name="title" value="{{ draft.title }}" maxlength="160" required>
+                </label>
+                <button class="btn btn-secondary" type="submit">Переименовать</button>
+              </form>
+              <form method="post" action="{{ url_for('resume_drafts.delete_draft', draft_id=draft.id) }}" data-confirm="Удалить этот черновик, все версии, изображения и метаданные PDF?">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button class="resume-danger-button" type="submit">Удалить резюме</button>
+              </form>
+            </details>
+          </article>
+        {% endfor %}
+      </div>
+    {% else %}
+      <section class="card resume-library-empty">
+        <div class="resume-draft-icon" aria-hidden="true">CV</div>
+        <h2>Серверных черновиков пока нет</h2>
+        <p>Создайте резюме из подтверждённого карьерного профиля или начните с пустого интервью.</p>
+      </section>
+    {% endif %}
+  </div>
+</main>
+{% endblock %}

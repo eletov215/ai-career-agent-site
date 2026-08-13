@@ -30,6 +30,7 @@ from repositories import (
     AuthRepository,
     CareerProfileRepository,
     OAuthConnectionRepository,
+    ResumeDraftRepository,
     SearchSnapshotRepository,
     SyncCheckpointRepository,
     SyncRunRepository,
@@ -42,6 +43,7 @@ from services.oauth_identity import (
 )
 from services.passwords import hash_password
 from services.profile import CareerProfileService
+from services.resume_drafts import ResumeDraftService
 from services.vacancy_store import VacancyStore
 
 
@@ -310,6 +312,45 @@ def test_postgresql_migration_and_persistence_round_trip():
         assert profiles.get(second_user.id).exists is False
         assert profiles.get_version(user_id=second_user.id, version=1) is None
 
+        resume_drafts = ResumeDraftService(ResumeDraftRepository(runtime))
+        resume_draft = resume_drafts.create(
+            user_id=user.id,
+            title="PostgreSQL server resume",
+            profile=imported_profile_result.profile,
+            display_name="CI User",
+            now=10_012,
+        )
+        resume_save = resume_drafts.save(
+            user_id=user.id,
+            draft_id=resume_draft.id,
+            expected_revision=resume_draft.revision,
+            state={
+                **resume_draft.state,
+                "answers": {
+                    **resume_draft.state["answers"],
+                    "role": "PostgreSQL Resume Engineer",
+                },
+            },
+            now=10_013,
+        )
+        resume_checkpoint = resume_drafts.checkpoint(
+            user_id=user.id,
+            draft_id=resume_draft.id,
+            expected_revision=resume_save.draft.revision,
+        )
+        assert resume_checkpoint.version.version == 1
+        resume_export = resume_drafts.record_export(
+            user_id=user.id,
+            draft_id=resume_draft.id,
+            expected_revision=resume_save.draft.revision,
+            page_count=2,
+            byte_size=48_000,
+            pdf_sha256="e" * 64,
+            file_name="postgresql-resume.pdf",
+        )
+        assert resume_export.export.version == 1
+        assert resume_drafts.get(user_id=second_user.id, draft_id=resume_draft.id) is None
+
         sync_run = sync_runs.start(
             source="ci-postgresql",
             trigger="integration-test",
@@ -408,6 +449,19 @@ def test_postgresql_migration_and_persistence_round_trip():
         assert len(persisted_versions) == 2
         assert persisted_versions[0].source_kind == "resume_import"
         assert persisted_versions[0].provenance["extractor_version"] == "deterministic-text-v1"
+        persisted_resume_drafts = ResumeDraftService(ResumeDraftRepository(runtime))
+        persisted_resume = persisted_resume_drafts.get(
+            user_id=user.id,
+            draft_id=resume_draft.id,
+        )
+        assert persisted_resume is not None
+        assert persisted_resume.state["answers"]["role"] == "PostgreSQL Resume Engineer"
+        assert len(
+            persisted_resume_drafts.list_versions(
+                user_id=user.id,
+                draft_id=resume_draft.id,
+            )
+        ) == 1
         latest_run = SyncRunRepository(runtime).latest("ci-postgresql")
         assert latest_run is not None
         assert latest_run.status == "succeeded"

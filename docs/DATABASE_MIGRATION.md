@@ -62,3 +62,7 @@ Previous application code ignores the new columns, so application rollback may k
 - SQLite upgrade/downgrade/re-upgrade;
 - PostgreSQL integration and backup/restore in CI;
 - Alembic no-drift check.
+
+## Revision `20260812_0012`
+
+Creates `resume_drafts`, `resume_versions`, `resume_assets`, `resume_exports`. Upgrade is additive. Downgrade to `20260812_0011` drops all four tables and is data-destructive after users create drafts; it requires verified backup and explicit approval.
