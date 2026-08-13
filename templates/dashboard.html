@@ -53,6 +53,28 @@
       </div>
     </section>
 
+    <section class="account-profile-card account-resume-card" aria-labelledby="resume-drafts-title">
+      <div class="account-profile-card__copy">
+        <div class="muted">Серверные документы</div>
+        <h2 id="resume-drafts-title">Мои резюме</h2>
+        {% if resume_draft_summaries %}
+          {% set latest_resume = resume_draft_summaries[0] %}
+          <p>Сохранено {{ resume_draft_summaries|length }} {{ 'черновик' if resume_draft_summaries|length == 1 else 'черновика' if resume_draft_summaries|length in [2, 3, 4] else 'черновиков' }}. Последний — «{{ latest_resume.draft.title }}», заполнен на {{ latest_resume.draft.completion_percent }}%.</p>
+        {% else %}
+          <p>Создайте серверный черновик из подтверждённого профиля или начните с пустого интервью. Работа продолжится на другом устройстве.</p>
+        {% endif %}
+        <div class="account-profile-card__actions">
+          <a class="btn btn-primary" href="{{ url_for('resume_drafts.resume_builder') }}">{{ 'Продолжить последний' if resume_draft_summaries else 'Создать резюме' }}</a>
+          <a class="btn btn-secondary" href="{{ url_for('resume_drafts.library') }}">Все резюме и версии</a>
+        </div>
+      </div>
+      <div class="account-profile-card__progress account-resume-card__status">
+        <strong>{{ resume_draft_summaries|length }}</strong>
+        <span>серверных черновиков</span>
+        {% if resume_draft_summaries %}<small>Версии, изображения и PDF-метаданные принадлежат только вашему аккаунту.</small>{% else %}<small>Локальное хранилище браузера больше не является основным источником.</small>{% endif %}
+      </div>
+    </section>
+
     <section class="card spaced account-sessions">
       <div class="account-section-heading">
         <div>
@@ -178,11 +200,11 @@
 
     <section class="card spaced next-step">
       <div>
-        <div class="muted">Следующий шаг</div>
-        <h2>Импорт резюме с проверкой</h2>
-        <p>После подтверждения PROF-001 следующий пакет PROF-002 свяжет загрузку резюме с редактируемым review-процессом. Неподтверждённые факты не будут попадать в профиль автоматически.</p>
+        <div class="muted">Следующий этап продукта</div>
+        <h2>Контроль персональных данных</h2>
+        <p>После серверных черновиков пакет PRIV-001 добавит экспорт данных, подтверждаемое удаление аккаунта и правила хранения. До этого удаление отдельного резюме уже доступно в разделе «Мои резюме».</p>
       </div>
-      <a class="btn btn-primary" href="{{ url_for('profile.view_profile') }}">Открыть профиль</a>
+      <a class="btn btn-primary" href="{{ url_for('resume_drafts.library') }}">Открыть мои резюме</a>
     </section>
   </div>
 </main>

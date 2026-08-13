@@ -1,10 +1,10 @@
-PROF-002 PATCH MANIFEST v1.4.23-r1
+PROF-003 PATCH MANIFEST v1.4.25
 
 Apply all files below at repository root with paths preserved.
-Base commit: f5e513f0f992b20305fbef36851ef97576013c86
-Candidate revision: 20260812_0011
+Verified source ZIP comment: 427b2726edd078993a3c26985e17713cf2e76c9e
+Production baseline: 20260812_0011
+Candidate revision: 20260812_0012
 
-[RESTORE] infra/vps/.env.example
 [MODIFY] .github/workflows/ci.yml
 [MODIFY] CHANGED_FILES.txt
 [MODIFY] PATCH_MANIFEST.txt
@@ -19,43 +19,47 @@ Candidate revision: 20260812_0011
 [MODIFY] docs/DATABASE_MIGRATION.md
 [MODIFY] docs/DOMAIN_MODEL.md
 [MODIFY] docs/PLAN_CURRENT.md
-[ADD] docs/PROF002_EXTRACTION_REFERENCE.md
-[ADD] docs/PROF002_IMPLEMENTATION.md
-[ADD] docs/PROF002_RUNBOOK.md
-[ADD] docs/PROF002_SECURITY_REFERENCE.md
-[ADD] docs/PROF002_VERIFICATION_STATUS.md
+[ADD] docs/PROF003_IMPLEMENTATION.md
+[ADD] docs/PROF003_RESUME_REFERENCE.md
+[ADD] docs/PROF003_RUNBOOK.md
+[ADD] docs/PROF003_SECURITY_REFERENCE.md
+[ADD] docs/PROF003_VERIFICATION_STATUS.md
 [MODIFY] docs/PROJECT_GUIDE.md
 [MODIFY] docs/PROJECT_PASSPORT.md
 [MODIFY] docs/ROADMAP.md
 [MODIFY] docs/SECURITY.md
 [MODIFY] docs/SOURCE_AUDIT.md
+[MODIFY] docs/VERSIONING.md
 [MODIFY] domain/__init__.py
-[MODIFY] domain/profile.py
-[ADD] domain/resume_import.py
-[ADD] migrations/versions/20260812_0011_profile_import_provenance.py
-[MODIFY] models/profile.py
-[MODIFY] repositories/profiles.py
-[MODIFY] routes/profile.py
+[ADD] domain/resume_draft.py
+[ADD] migrations/versions/20260812_0012_resume_drafts_versions.py
+[MODIFY] models/__init__.py
+[ADD] models/resume.py
+[MODIFY] models/user.py
+[MODIFY] operations/backup.py
+[MODIFY] repositories/__init__.py
+[ADD] repositories/resume_drafts.py
+[ADD] routes/resume_drafts.py
 [MODIFY] scripts/check_document_structure.py
-[MODIFY] services/profile.py
-[ADD] services/resume_import.py
-[MODIFY] services/resume_parser.py
+[MODIFY] security.py
+[ADD] services/resume_drafts.py
+[MODIFY] services/storage.py
 [MODIFY] static/styles.css
+[MODIFY] templates/ai_career.html
+[MODIFY] templates/base.html
 [MODIFY] templates/dashboard.html
-[MODIFY] templates/profile/edit.html
-[MODIFY] templates/profile/history.html
-[ADD] templates/profile/import_upload.html
-[MODIFY] templates/profile/version.html
-[MODIFY] templates/profile/view.html
+[MODIFY] templates/resume_builder.html
+[ADD] templates/resumes/history.html
+[ADD] templates/resumes/library.html
+[ADD] templates/resumes/version.html
+[MODIFY] tests/test_architecture_boundaries.py
 [MODIFY] tests/test_document_structure.py
 [MODIFY] tests/test_postgresql_integration.py
-[MODIFY] tests/test_prof001_migration.py
-[ADD] tests/test_prof002_migration.py
-[MODIFY] tests/test_profile_service.py
-[ADD] tests/test_resume_import_routes.py
-[ADD] tests/test_resume_import_service.py
+[MODIFY] tests/test_prof002_migration.py
+[ADD] tests/test_prof003_migration.py
+[ADD] tests/test_resume_draft_routes.py
+[ADD] tests/test_resume_draft_service.py
+[MODIFY] tests/test_routes.py
 
-No deletions are required. No environment variables are added.
-
-IMPORTANT: infra/vps/.env.example is a secret-free required template from the verified base.
-It is intentionally included in this repair patch. Never commit a real .env file.
+No new environment variables are required.
+infra/vps/.env.example must remain committed; real .env files remain forbidden.

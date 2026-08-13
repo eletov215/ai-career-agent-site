@@ -87,3 +87,7 @@ ai-career-agent-v0.3.0.zip
 6. обновить номер версии;
 7. создать Git tag;
 8. при необходимости создать GitHub Release.
+
+## Resume document versions
+
+Draft `revision` is an optimistic concurrency counter and may change frequently. `ResumeVersion.version` is an immutable user-visible checkpoint/export/restore sequence. A no-op autosave or checkpoint must not create duplicate content versions.

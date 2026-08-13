@@ -30,9 +30,11 @@ from services.auth import AuthService
 from services.email_delivery import build_auth_email_sender
 from routes.auth import AUTH_SESSION_KEY, create_auth_blueprint, login_required
 from routes.profile import create_profile_blueprint
+from routes.resume_drafts import create_resume_drafts_blueprint
 from services.oauth_identity import OAuthIdentityError, OAuthIdentityService
 from services.profile import CareerProfileService
 from services.resume_import import ResumeImportReviewSigner, ResumeImportService
+from services.resume_drafts import ResumeDraftService
 from services.trudvsem_sync import TrudvsemSyncService
 from security import csrf, diagnostics_access_allowed, init_security, limiter
 from observability import (
@@ -111,6 +113,13 @@ app.register_blueprint(
         RESUME_IMPORT_SERVICE,
         RESUME_IMPORT_REVIEW_SIGNER,
         max_resume_upload_mb=SETTINGS.max_resume_upload_mb,
+    )
+)
+RESUME_DRAFT_SERVICE = ResumeDraftService(STORAGE.resume_drafts)
+app.register_blueprint(
+    create_resume_drafts_blueprint(
+        RESUME_DRAFT_SERVICE,
+        PROFILE_SERVICE,
     )
 )
 OAUTH_CONNECTIONS = STORAGE.oauth_connections
@@ -896,6 +905,9 @@ def dashboard():
     first_party_user = g.current_user
     current_auth = g.current_auth
     profile_summary = PROFILE_SERVICE.get(first_party_user.id)
+    resume_draft_summaries = RESUME_DRAFT_SERVICE.list_drafts(
+        user_id=first_party_user.id
+    )
     superjob_row = account(first_party_user.id)
     hh_row = hh_account(first_party_user.id)
 
@@ -933,6 +945,7 @@ def dashboard():
         hh_account=hh_row,
         first_party_user=first_party_user,
         profile_summary=profile_summary,
+        resume_draft_summaries=resume_draft_summaries,
         auth_sessions=auth_sessions,
         resumes=resumes,
         error=error,
@@ -1026,11 +1039,6 @@ def university_logo_api():
         logger.exception("University logo lookup failed")
         return jsonify({"ok": False, "error": "Не удалось найти эмблему университета."}), 500
     return jsonify({"ok": True, **result})
-
-
-@app.get("/resume-builder")
-def resume_builder():
-    return render_template("resume_builder.html")
 
 
 @app.get("/vacancies")

@@ -38,3 +38,7 @@ Follow `docs/PROF002_RUNBOOK.md`:
 ## Security reminders
 
 Never commit or share resume content, review token, cookies, OAuth secrets, `.env`, `DATABASE_URL`, backups or dumps. External API/network calls remain mocked in CI unless a package explicitly requires real E2E after deploy.
+
+## PROF-003 development rule
+
+Do not reintroduce authoritative localStorage writes. Draft document data is server-owned and owner-scoped. PROF-001 profile facts may seed a draft but draft edits must not become confirmed facts without a separate confirmation contract.

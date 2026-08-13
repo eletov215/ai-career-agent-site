@@ -322,3 +322,7 @@ active first-party AuthSession
 Upload bytes, raw text and unconfirmed proposal are not persisted. The token uses a dedicated salt and HMAC owner fingerprint and excludes filename, content, facts and excerpts. Existing confirmed scalars are not silently overwritten. Foreign, expired, tampered or stale reviews fail closed; non-PDF, corrupt, encrypted/image-only and over-limit documents do not alter the profile.
 
 Allowed logs are aggregate counts/outcomes/version/completion only. Filename, text, excerpts, contacts, payload, signed token, owner ID and cookies are forbidden. OCR/AI/background draft handling requires a future threat model.
+
+## PROF-003 controls
+
+Resume draft routes require first-party session, CSRF and owner-scoped repository access. Autosave/checkpoint/export/restore use expected revision and PostgreSQL row locks. State/images/export metadata are bounded; image MIME is checked against signature. Logs exclude resume answers/messages, snapshots, image bytes, asset IDs, PDF filename/hash and session identifiers.

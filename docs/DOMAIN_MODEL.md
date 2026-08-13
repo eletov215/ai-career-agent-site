@@ -86,3 +86,12 @@ Filename, raw text, contacts, excerpts and profile payload are forbidden.
 - stale base version fails with controlled conflict;
 - version numbers remain owner-relative;
 - no-op confirmation creates no duplicate version.
+
+## PROF-003 entities
+
+- `ResumeDraft`: mutable current owner-scoped document, revision/hash/completion.
+- `ResumeVersion`: immutable snapshot; reason `checkpoint|export|restore`.
+- `ResumeAsset`: owner/draft-scoped photo or university logo bytes with MIME/size/SHA-256.
+- `ResumeExport`: metadata linking a client-generated PDF to an immutable version.
+
+Deleting a draft cascades its versions/assets/export metadata. PROF-001 remains the confirmed-facts root.

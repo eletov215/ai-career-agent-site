@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}Версии резюме — AI Career Agent{% endblock %}
+{% block content %}
+<main class="section resume-history-page">
+  <div class="container resume-history-shell">
+    <header class="resume-history-heading">
+      <div>
+        <div class="badge">История резюме</div>
+        <h1 class="page-title">{{ draft.title }}</h1>
+        <p class="lead">Автосохранение обновляет текущий черновик. Версии создаются вручную, при экспорте PDF и при восстановлении.</p>
+      </div>
+      <div class="resume-history-actions">
+        <a class="btn btn-primary" href="{{ url_for('resume_drafts.builder', draft_id=draft.id) }}">Открыть редактор</a>
+        <a class="btn btn-secondary" href="{{ url_for('resume_drafts.library') }}">Все резюме</a>
+      </div>
+    </header>
+
+    {% if versions %}
+      <div class="resume-version-list">
+        {% for item in versions %}
+          <article class="card resume-version-row">
+            <div>
+              <span class="resume-version-number">Версия {{ item.version }}</span>
+              <h2>{{ reason_labels.get(item.reason, item.reason) }}</h2>
+              <p>{{ format_timestamp(item.created_at) }} · ревизия черновика {{ item.draft_revision }}</p>
+              {% if item.restored_from_version %}<p>Восстановлена из версии {{ item.restored_from_version }}</p>{% endif %}
+            </div>
+            <div class="resume-version-actions">
+              <a class="btn btn-secondary" href="{{ url_for('resume_drafts.version', draft_id=draft.id, version=item.version) }}">Посмотреть</a>
+              <form method="post" action="{{ url_for('resume_drafts.restore_version', draft_id=draft.id, version=item.version) }}" data-confirm="Восстановить эту версию как новое текущее состояние?">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="expected_revision" value="{{ draft.revision }}">
+                <button class="btn btn-primary" type="submit">Восстановить</button>
+              </form>
+            </div>
+          </article>
+        {% endfor %}
+      </div>
+    {% else %}
+      <section class="card resume-history-empty">
+        <h2>Сохранённых версий пока нет</h2>
+        <p>Откройте редактор и нажмите «Сохранить версию» либо скачайте PDF.</p>
+      </section>
+    {% endif %}
+  </div>
+</main>
+{% endblock %}

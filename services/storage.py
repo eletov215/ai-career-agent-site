@@ -14,6 +14,7 @@ from repositories import (
     AuthRepository,
     CareerProfileRepository,
     OAuthConnectionRepository,
+    ResumeDraftRepository,
     SearchSnapshotRepository,
     SyncCheckpointRepository,
     SyncRunRepository,
@@ -29,6 +30,7 @@ class StorageServices:
 
     auth: AuthRepository
     profiles: CareerProfileRepository
+    resume_drafts: ResumeDraftRepository
     users: UserRepository
     oauth_connections: OAuthConnectionRepository
     search_snapshots: SearchSnapshotRepository
@@ -42,6 +44,7 @@ class StorageServices:
         return cls(
             auth=AuthRepository(database),
             profiles=CareerProfileRepository(database),
+            resume_drafts=ResumeDraftRepository(database),
             users=UserRepository(database),
             oauth_connections=OAuthConnectionRepository(database),
             search_snapshots=SearchSnapshotRepository(database),

@@ -1,26 +1,29 @@
-PROF-002 PATCH UPLOAD INSTRUCTIONS — packaging repair r1
+PROF-003 PATCH UPLOAD INSTRUCTIONS — v1.4.25
 
 Use a separate GitHub branch. Do not upload the ZIP file itself into the repository.
 
 1. Create branch from current main:
-   prof-002-candidate-v1.4.23
+   prof-003-candidate-v1.4.25
 
 2. Extract:
-   ai-career-agent-site-main-patch-prof-002-candidate-v1.4.23-r1.zip
+   ai-career-agent-site-main-patch-prof-003-candidate-v1.4.25.zip
 
 3. Upload the extracted files/folders into the repository root with paths preserved.
-   The patch MUST include infra/vps/.env.example. This is a placeholder template, not a real secret file.
    Examples:
-   services/resume_import.py
-   routes/profile.py
-   migrations/versions/20260812_0011_profile_import_provenance.py
-   templates/profile/import_upload.html
+   services/resume_drafts.py
+   routes/resume_drafts.py
+   migrations/versions/20260812_0012_resume_drafts_versions.py
+   templates/resumes/library.html
+   tests/test_prof003_migration.py
 
-4. Confirm GitHub shows modified/new source files, not one nested project folder and not the ZIP itself.
+4. Confirm GitHub shows source files at repository root, not one nested project folder and not the ZIP itself.
 
-5. Commit and open Pull Request to main.
+5. Confirm infra/vps/.env.example is still present. It is a required secret-free placeholder. Never commit a real .env.
 
-6. Required green checks include:
+6. Commit and open Pull Request to main.
+
+7. Required green checks include:
+   - Verify PROF-003 server resume draft and version controls
    - Verify PROF-002 resume import review controls
    - Verify PROF-001 structured career profile controls
    - Verify PostgreSQL migrations
@@ -30,11 +33,6 @@ Use a separate GitHub branch. Do not upload the ZIP file itself into the reposit
    - Run tests
    - Docker/Compose runtime smoke
 
-7. After merge, Render must report revision 20260812_0011 and status ok before production E2E.
+8. After merge, Render must report revision 20260812_0012 and status ok before production E2E.
 
 No new environment variables are required.
-
-PACKAGING REPAIR r1
-The first v1.4.23 archive accidentally filtered infra/vps/.env.example together with real .env files.
-That was a packaging defect. This r1 archive restores the unchanged template from verified main.
-Real .env files remain forbidden.

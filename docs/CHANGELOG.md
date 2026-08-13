@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.4.24 — PROF-002 complete — 12.08.2026
+
+- Initial Pull Request CI passed, including `Verify PROF-002 resume import review controls`; Render applied PostgreSQL revision `20260812_0011` and readiness reported `status=ok`, persistent PostgreSQL and current/expected `0011`.
+- Production verification found an upload-routing defect: `/profile/import` inherited the generic 256 KiB POST limit. Hotfix r2 added the route to upload endpoints, kept the 8 MiB PROF-002 limit, added visible upload/progress/oversize UX and regression coverage; no migration change.
+- Production E2E confirmed text-PDF upload, editable review, zero persistence before explicit confirmation, preservation of existing confirmed scalar values, user correction/removal, one `resume_import` version with aggregate provenance, and stale-review rejection without lost updates.
+- Cross-account URL smoke confirmed User B receives a clean upload form and cannot recover User A's PDF/review from the copied `/profile/import` URL; token owner-binding remains covered by dedicated CI.
+- Non-PDF and image-only PDF failures were safe and did not change profile history. A corrupt-PDF manual fixture was unavailable; parser failure paths remain automated-test coverage.
+- Render restart preserved confirmed profile/import history; mobile review and final dashboard/auth/OAuth/vacancy-search/log/readiness regression were reported working normally.
+- English CV quality observation: deterministic extraction can produce low-confidence or incorrect structural suggestions on nonstandard layouts; mandatory review prevented automatic corruption. OCR/AI extraction remains future scope.
+- PROF-002 is ВЫПОЛНЕНО. Next package: PROF-003.
+
 ## 1.4.23 — PROF-002 candidate — 12.08.2026
 
 - Verified uploaded `ai-career-agent-site-main (16).zip` as exact GitHub `main` commit `f5e513f0f992b20305fbef36851ef97576013c86`.
@@ -39,3 +50,14 @@
 - AUTH-002 marked ВЫПОЛНЕНО; PROF-001 became next.
 
 Earlier history is preserved in `docs/PLAN_CURRENT.md` and previous canonical packages.
+
+## 2026-08-13 — PROF-003 candidate v1.4.25
+
+- Added owner-scoped server resume drafts and multiple-resume library.
+- Added optimistic revision autosave with safe `409` stale conflict.
+- Added immutable checkpoint/export/restore versions, history and read-only version views.
+- Added durable photo/university-logo assets and export metadata tied to exact version.
+- Added migration `20260812_0012`, backup inventory, owner/resource/rollback tests and dedicated CI gate.
+- Removed authoritative localStorage writes; retained one-time legacy migration only.
+- Synchronized repository docs that lagged canonical PROF-002 COMPLETE.
+- Status: **НУЖНА ПРОВЕРКА** until CI/Render/E2E.

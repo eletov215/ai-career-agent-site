@@ -19,7 +19,7 @@ from services.base_provider import SearchResult
         ("/", 200),
         ("/privacy", 200),
         ("/ai-career", 200),
-        ("/resume-builder", 200),
+        ("/resume-builder", 302),
         ("/vacancies", 200),
         ("/vacancies/internal", 308),
         ("/health", 200),

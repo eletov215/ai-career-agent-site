@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Версия {{ version.version }} — AI Career Agent{% endblock %}
+{% block content %}
+<main class="section resume-version-page">
+  <div class="container resume-version-shell">
+    <header class="resume-history-heading">
+      <div>
+        <div class="badge">Исторический снимок</div>
+        <h1 class="page-title">{{ draft.title }} · версия {{ version.version }}</h1>
+        <p class="lead">{{ reason_label }} · {{ created_at }}. Снимок доступен только владельцу и не редактируется.</p>
+      </div>
+      <a class="btn btn-secondary" href="{{ url_for('resume_drafts.history', draft_id=draft.id) }}">К истории</a>
+    </header>
+
+    <section class="card resume-version-summary">
+      <div class="resume-version-meta-grid">
+        <div><span>Версия</span><strong>{{ version.version }}</strong></div>
+        <div><span>Ревизия черновика</span><strong>{{ version.draft_revision }}</strong></div>
+        <div><span>Причина</span><strong>{{ reason_label }}</strong></div>
+        <div><span>Шаг интервью</span><strong>{{ state.index }} / 8</strong></div>
+      </div>
+      <div class="resume-version-answer-grid">
+        {% set labels = {
+          'name':'Имя', 'role':'Желаемая должность', 'experience':'Опыт работы',
+          'achievements':'Достижения', 'skills':'Навыки', 'education':'Образование',
+          'contacts':'Контакты', 'goal':'Предпочтения'
+        } %}
+        {% for key, label in labels.items() %}
+          <article>
+            <span>{{ label }}</span>
+            <p>{{ state.answers.get(key) or 'Не указано' }}</p>
+          </article>
+        {% endfor %}
+      </div>
+    </section>
+
+    <form method="post" action="{{ url_for('resume_drafts.restore_version', draft_id=draft.id, version=version.version) }}" class="resume-version-restore" data-confirm="Восстановить эту версию как новое текущее состояние?">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="expected_revision" value="{{ draft.revision }}">
+      <button class="btn btn-primary" type="submit">Восстановить эту версию</button>
+    </form>
+  </div>
+</main>
+{% endblock %}

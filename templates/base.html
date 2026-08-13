@@ -12,7 +12,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <script nonce="{{ csp_nonce }}">document.documentElement.classList.add("js");</script>
-  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}?v=43">
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}?v=44">
   <link rel="stylesheet" href="{{ url_for('static', filename='theme.css') }}?v=3">
   <link rel="stylesheet" href="{{ url_for('static', filename='mobile-menu-190.css') }}?v=3">
   <link rel="stylesheet" href="{{ url_for('static', filename='mobile-orbit-showcase.css') }}?v=4">
@@ -43,6 +43,7 @@
         {% if current_user %}
           <a class="{{ 'is-active' if request.path.startswith('/dashboard') else '' }}" href="{{ url_for('dashboard') }}">Кабинет</a>
           <a class="{{ 'is-active' if request.path.startswith('/profile') else '' }}" href="{{ url_for('profile.view_profile') }}">Профиль</a>
+          <a class="{{ 'is-active' if request.path.startswith('/resumes') or request.path.startswith('/resume-builder') else '' }}" href="{{ url_for('resume_drafts.library') }}">Мои резюме</a>
         {% endif %}
         <a class="{{ 'is-active' if request.path.startswith('/ai-career') or request.path.startswith('/resume-builder') else '' }}" href="{{ url_for('ai_career') }}">
           <span class="nav-item-icon nav-item-icon--career" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M8 7V5.8A2.8 2.8 0 0 1 10.8 3h2.4A2.8 2.8 0 0 1 16 5.8V7"/><path d="M4.5 7h15A1.5 1.5 0 0 1 21 8.5v9A2.5 2.5 0 0 1 18.5 20h-13A2.5 2.5 0 0 1 3 17.5v-9A1.5 1.5 0 0 1 4.5 7Z"/><path d="M3 12.5c2.8 1.4 5.8 2.1 9 2.1s6.2-.7 9-2.1"/><path d="M10.3 13.4h3.4v2.4h-3.4z"/></svg></span>
@@ -84,8 +85,8 @@
         <h2>Сервис</h2>
         <a href="{{ url_for('ai_career') }}">AI Карьера</a>
         <a href="{{ url_for('vacancies') }}">Вакансии</a>
-        <a href="{{ url_for('resume_builder') }}">Конструктор резюме</a>
-        {% if current_user %}<a href="{{ url_for('profile.view_profile') }}">Карьерный профиль</a>{% endif %}
+        <a href="{{ url_for('resume_drafts.resume_builder') }}">Конструктор резюме</a>
+        {% if current_user %}<a href="{{ url_for('profile.view_profile') }}">Карьерный профиль</a><a href="{{ url_for('resume_drafts.library') }}">Мои резюме</a>{% endif %}
       </nav>
 
       <nav class="site-footer__group" aria-label="Информация">
@@ -138,6 +139,16 @@
 
     window.addEventListener('resize', () => {
       if (window.innerWidth > 760) closeMenu();
+    });
+  })();
+  </script>
+  <script nonce="{{ csp_nonce }}">
+  (() => {
+    document.addEventListener('submit', event => {
+      const form = event.target.closest('form[data-confirm]');
+      if (!form) return;
+      const message = form.getAttribute('data-confirm') || 'Подтвердить действие?';
+      if (!window.confirm(message)) event.preventDefault();
     });
   })();
   </script>

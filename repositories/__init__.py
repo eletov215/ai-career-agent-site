@@ -7,6 +7,11 @@ from .oauth_connections import (
     OAuthProviderAlreadyConnectedError,
 )
 from .profiles import CareerProfileRepository, CareerProfileVersionConflictError
+from .resume_drafts import (
+    ResumeDraftConflictError,
+    ResumeDraftNotFoundError,
+    ResumeDraftRepository,
+)
 from .search_snapshots import SearchSnapshotRepository
 from .sync_checkpoints import SyncCheckpointRepository
 from .sync_runs import SyncRunRepository
@@ -21,6 +26,9 @@ __all__ = [
     "OAuthProviderAlreadyConnectedError",
     "CareerProfileRepository",
     "CareerProfileVersionConflictError",
+    "ResumeDraftConflictError",
+    "ResumeDraftNotFoundError",
+    "ResumeDraftRepository",
     "SearchSnapshotRepository",
     "SyncCheckpointRepository",
     "SyncRunRepository",

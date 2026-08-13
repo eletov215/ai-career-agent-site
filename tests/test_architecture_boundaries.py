@@ -46,7 +46,7 @@ def test_inline_scripts_are_nonce_protected_and_event_handlers_are_absent():
 
     violations: list[str] = []
     event_handler_pattern = re.compile(r"\son[a-z]+\s*=", re.IGNORECASE)
-    for path in sorted((ROOT / "templates").glob("*.html")):
+    for path in sorted((ROOT / "templates").rglob("*.html")):
         source = path.read_text(encoding="utf-8")
         for tag in re.findall(r"<script\b[^>]*>", source, flags=re.IGNORECASE):
             if 'nonce="{{ csp_nonce }}"' not in tag:

@@ -94,11 +94,11 @@ def test_prof002_0011_adds_confirmed_import_provenance_without_rewriting_history
     finally:
         runtime.dispose()
 
-    upgrade_database(database_url)
+    upgrade_database(database_url, "20260812_0011")
     runtime = create_database(database_url)
     try:
         inspector = inspect(runtime.engine)
-        assert current_revision(runtime.engine) == CURRENT_REVISION == "20260812_0011"
+        assert current_revision(runtime.engine) == "20260812_0011"
         columns = {item["name"] for item in inspector.get_columns("career_profile_versions")}
         assert {"source_kind", "provenance_json"}.issubset(columns)
         checks = {
