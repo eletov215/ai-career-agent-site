@@ -52,6 +52,8 @@ repository hygiene / infra manifest         passed
 
 ## 5. Positive production matrix
 
+Production E2E 13.08.2026 уже подтвердил: login gate, blank/profile-seeded drafts, autosave/relogin/cross-device persistence, независимость drafts, checkpoint versions/no-op/read-only history, restore-as-new-version и stale-tab conflict protection. Затем iPhone Safari выявил frontend-only photo upload defect: local preview отображался, но `fetch(dataUrl)` завершался generic `Load failed` до persistence. Hotfix r3 заменяет local data-URL fetch на in-memory base64 -> Blob conversion; schema остаётся `20260812_0012`. Asset block нужно повторить после green CI/redeploy.
+
 1. Создать blank draft и draft из PROF-001.
 2. Ввести данные, дождаться server autosave.
 3. Войти с другого устройства/приватной сессии — увидеть тот же state.

@@ -51,6 +51,15 @@
 
 Earlier history is preserved in `docs/PLAN_CURRENT.md` and previous canonical packages.
 
+## 2026-08-13 — PROF-003 iOS/Safari photo upload hotfix r3
+
+- Production E2E on iPhone Safari reached photo upload after server drafts, versions, restore and stale-tab protection had passed. Selecting a valid gallery image showed the local preview but then surfaced Safari's generic `Load failed` before the asset was persisted.
+- Root cause: the builder converted a generated `data:image/...;base64,...` URL to `Blob` through `fetch(dataUrl)`. Safari can reject this local `data:` fetch even though the same data URL renders in an `<img>`.
+- Replaced the `fetch(dataUrl)` conversion with an in-memory base64 decode (`atob` -> `Uint8Array` -> `Blob`) before the ordinary same-origin multipart upload. Backend MIME/signature/2 MiB processed-asset controls are unchanged.
+- Added a neutral Russian network error for the real server upload and restore of the previous photo/asset state when upload fails, so a failed local preview is not mistaken for a persisted photo.
+- Added static frontend regression coverage. No database migration or Render environment-variable change; schema remains `20260812_0012`.
+- PROF-003 remains **НУЖНА ПРОВЕРКА** pending green CI/redeploy and resumed asset/export/owner/restart regression E2E.
+
 ## 2026-08-13 — PROF-003 production E2E direct-edit hotfix r2
 
 - Production E2E confirmed authenticated server drafts, autosave persistence across logout/login/device, multiple independent drafts, and checkpoint version 1.

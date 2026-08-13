@@ -414,9 +414,31 @@
 
   const save = queueSave;
 
-  const dataUrlToBlob = async (dataUrl) => {
-    const response = await fetch(dataUrl);
-    return response.blob();
+  const dataUrlToBlob = (dataUrl) => {
+    const raw = String(dataUrl || '');
+    const commaIndex = raw.indexOf(',');
+    if (!raw.startsWith('data:') || commaIndex < 0) {
+      throw new Error('Не удалось подготовить изображение к загрузке.');
+    }
+    const metadata = raw.slice(5, commaIndex);
+    const payload = raw.slice(commaIndex + 1);
+    const metadataParts = metadata.split(';').filter(Boolean);
+    const contentType = metadataParts[0] && !metadataParts[0].includes('=')
+      ? metadataParts[0]
+      : 'application/octet-stream';
+    if (!metadataParts.includes('base64')) {
+      throw new Error('Не удалось подготовить изображение к загрузке.');
+    }
+    try {
+      const binary = window.atob(payload.replace(/\s/g, ''));
+      const bytes = new Uint8Array(binary.length);
+      for (let index = 0; index < binary.length; index += 1) {
+        bytes[index] = binary.charCodeAt(index);
+      }
+      return new Blob([bytes], {type: contentType});
+    } catch (error) {
+      throw new Error('Не удалось подготовить изображение к загрузке.');
+    }
   };
 
   const sha256Hex = async (buffer) => {
@@ -432,11 +454,16 @@
     const formData = new FormData();
     formData.append('kind', kind);
     formData.append('asset', blob, kind === 'photo' ? 'photo.jpg' : 'university-logo.png');
-    const response = await fetch(config.assetUrl, {
-      method: 'POST',
-      headers: {'X-CSRF-Token': csrfToken()},
-      body: formData
-    });
+    let response;
+    try {
+      response = await fetch(config.assetUrl, {
+        method: 'POST',
+        headers: {'X-CSRF-Token': csrfToken()},
+        body: formData
+      });
+    } catch (error) {
+      throw new Error('Не удалось загрузить изображение на сервер. Проверьте соединение и попробуйте ещё раз.');
+    }
     const result = await response.json().catch(() => ({}));
     if (!response.ok || !result.ok) throw new Error(result.error || 'Не удалось сохранить изображение.');
     return result;
@@ -1315,6 +1342,8 @@
   skip.addEventListener('click', () => { if (state.index >= questions.length) return; state.index += 1; save(); askCurrent(); });
   photoInput.addEventListener('change', async () => {
     const file = photoInput.files && photoInput.files[0];
+    const previousPhoto = state.photo;
+    const previousPhotoAssetId = state.photoAssetId;
     photoError.hidden = true;
     if (!file) return;
     if (!['image/jpeg','image/png','image/webp'].includes(file.type)) {
@@ -1340,6 +1369,10 @@
       updatePreview();
       fitResumePreview();
     } catch (error) {
+      state.photo = previousPhoto;
+      state.photoAssetId = previousPhotoAssetId;
+      updatePreview();
+      fitResumePreview();
       photoError.textContent = error.message || 'Не удалось обработать фотографию.';
       photoError.hidden = false;
     } finally {
