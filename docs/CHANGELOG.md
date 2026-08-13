@@ -51,6 +51,14 @@
 
 Earlier history is preserved in `docs/PLAN_CURRENT.md` and previous canonical packages.
 
+## 2026-08-13 — PROF-003 production E2E direct-edit hotfix r2
+
+- Production E2E confirmed authenticated server drafts, autosave persistence across logout/login/device, multiple independent drafts, and checkpoint version 1.
+- E2E exposed a usability defect in the legacy interview-only builder: after completing the interview, changing one field required replaying the whole questionnaire.
+- Added a responsive `Редактировать поля` editor inside the existing resume builder. It pre-fills all eight document fields, allows changing or clearing only the needed values, updates live preview, reuses server autosave/optimistic revision protection, and does not rewrite the interview transcript.
+- Education changes continue through the existing university-logo refresh path. No database migration or Render environment variable change.
+- PROF-003 remains **НУЖНА ПРОВЕРКА** until hotfix CI/redeploy and resumed version/restore/conflict/asset/export/owner/restart regression E2E.
+
 ## 2026-08-13 — PROF-003 candidate v1.4.25
 
 - Added owner-scoped server resume drafts and multiple-resume library.

@@ -14,6 +14,7 @@
       </div>
       <div class="resume-builder-save-tools">
         <a class="resume-builder-tool-link" href="{{ url_for('resume_drafts.library') }}">Мои резюме</a>
+        <button type="button" class="resume-builder-tool-button" id="builderEditFields">Редактировать поля</button>
         <button type="button" class="resume-builder-tool-button" id="builderCheckpoint">Сохранить версию</button>
         <a class="resume-builder-tool-link" id="builderHistoryLink" href="{{ url_for('resume_drafts.history', draft_id=draft.id) }}">Версии <span id="builderVersionCount">{{ version_count }}</span></a>
         <span class="resume-builder-save" id="builderSaveStatus">Черновик синхронизирован</span>
@@ -180,6 +181,35 @@
   </div>
 </main>
 
+<div class="resume-field-editor" id="resumeFieldEditor" hidden aria-hidden="true">
+  <div class="resume-field-editor-backdrop" data-resume-field-editor-close></div>
+  <section class="resume-field-editor-dialog" role="dialog" aria-modal="true" aria-labelledby="resumeFieldEditorTitle">
+    <header class="resume-field-editor-head">
+      <div>
+        <span>Точечное редактирование</span>
+        <h2 id="resumeFieldEditorTitle">Редактировать данные резюме</h2>
+        <p>Измените только нужные поля. Повторно проходить интервью не требуется.</p>
+      </div>
+      <button type="button" class="resume-field-editor-close" data-resume-field-editor-close aria-label="Закрыть редактор">×</button>
+    </header>
+    <form class="resume-field-editor-form" id="resumeFieldEditorForm">
+      <label><span>Имя</span><input type="text" name="name" maxlength="180"></label>
+      <label><span>Желаемая должность</span><input type="text" name="role" maxlength="220"></label>
+      <label class="resume-field-editor-wide"><span>Опыт работы</span><textarea name="experience" rows="4" maxlength="4000"></textarea></label>
+      <label class="resume-field-editor-wide"><span>Ключевые результаты</span><textarea name="achievements" rows="4" maxlength="3000"></textarea></label>
+      <label class="resume-field-editor-wide"><span>Навыки</span><textarea name="skills" rows="3" maxlength="2500"></textarea></label>
+      <label class="resume-field-editor-wide"><span>Образование</span><textarea name="education" rows="3" maxlength="3000"></textarea></label>
+      <label class="resume-field-editor-wide"><span>Контакты</span><textarea name="contacts" rows="3" maxlength="1800"></textarea></label>
+      <label class="resume-field-editor-wide"><span>Предпочтения</span><textarea name="goal" rows="3" maxlength="2500"></textarea></label>
+      <p class="resume-field-editor-note">История интервью остаётся журналом разговора; итоговое резюме использует значения из этих полей.</p>
+      <div class="resume-field-editor-actions">
+        <button type="button" class="btn btn-secondary" data-resume-field-editor-close>Отмена</button>
+        <button type="submit" class="btn btn-primary" id="resumeFieldEditorSave">Сохранить изменения</button>
+      </div>
+    </form>
+  </section>
+</div>
+
 <div class="resume-reader" id="resumeReader" hidden aria-hidden="true">
   <div class="resume-reader-backdrop" data-resume-reader-close></div>
   <section class="resume-reader-dialog" role="dialog" aria-modal="true" aria-labelledby="resumeReaderTitle">
@@ -242,8 +272,13 @@
   const progressText = document.getElementById('builderProgressText');
   const progressBar = document.getElementById('builderProgressBar');
   const saveStatus = document.getElementById('builderSaveStatus');
+  const editFieldsButton = document.getElementById('builderEditFields');
   const checkpointButton = document.getElementById('builderCheckpoint');
   const versionCountNode = document.getElementById('builderVersionCount');
+  const fieldEditor = document.getElementById('resumeFieldEditor');
+  const fieldEditorForm = document.getElementById('resumeFieldEditorForm');
+  const fieldEditorSave = document.getElementById('resumeFieldEditorSave');
+  let fieldEditorLastFocus = null;
   const skip = document.getElementById('builderSkip');
   const reset = document.getElementById('builderReset');
   const layout = document.getElementById('resumeBuilderLayout');
@@ -1186,6 +1221,74 @@
     }
   };
 
+  const openFieldEditor = () => {
+    fieldEditorLastFocus = document.activeElement;
+    const answers = state.answers || {};
+    questions.forEach(question => {
+      const control = fieldEditorForm.elements.namedItem(question.key);
+      if (control) control.value = String(answers[question.key] || '');
+    });
+    fieldEditor.hidden = false;
+    fieldEditor.setAttribute('aria-hidden', 'false');
+    document.body.classList.add('resume-field-editor-open');
+    window.setTimeout(() => {
+      const first = fieldEditorForm.elements.namedItem('name');
+      if (first && typeof first.focus === 'function') first.focus();
+    }, 40);
+  };
+
+  const closeFieldEditor = () => {
+    if (fieldEditor.hidden) return;
+    fieldEditor.hidden = true;
+    fieldEditor.setAttribute('aria-hidden', 'true');
+    document.body.classList.remove('resume-field-editor-open');
+    if (fieldEditorLastFocus && typeof fieldEditorLastFocus.focus === 'function') fieldEditorLastFocus.focus();
+  };
+
+  fieldEditorForm.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    if (saveConflict || fieldEditorSave.disabled) return;
+    const nextAnswers = {...(state.answers || {})};
+    const changedKeys = [];
+    questions.forEach(question => {
+      const control = fieldEditorForm.elements.namedItem(question.key);
+      const nextValue = String(control ? control.value : '').trim();
+      const previousValue = String(nextAnswers[question.key] || '').trim();
+      if (nextValue !== previousValue) changedKeys.push(question.key);
+      if (nextValue) nextAnswers[question.key] = nextValue;
+      else delete nextAnswers[question.key];
+    });
+    if (!changedKeys.length) {
+      setSaveStatus('Изменений нет', 'success');
+      closeFieldEditor();
+      return;
+    }
+
+    fieldEditorSave.disabled = true;
+    const originalLabel = fieldEditorSave.textContent;
+    fieldEditorSave.textContent = 'Сохраняем…';
+    const educationChanged = changedKeys.includes('education');
+    try {
+      state.answers = nextAnswers;
+      updatePreview();
+      save();
+      const saved = await flushSave();
+      if (!saved) throw new Error('Не удалось сохранить изменения.');
+      closeFieldEditor();
+      setSaveStatus('Поля резюме обновлены', 'success');
+      if (educationChanged) void findUniversityLogo(state.answers.education || '');
+    } catch (error) {
+      setSaveStatus(error.message || 'Не удалось сохранить изменения', 'error');
+      alert(error.message || 'Не удалось сохранить изменения.');
+    } finally {
+      fieldEditorSave.disabled = false;
+      fieldEditorSave.textContent = originalLabel;
+    }
+  });
+
+  editFieldsButton.addEventListener('click', openFieldEditor);
+  fieldEditor.querySelectorAll('[data-resume-field-editor-close]').forEach(element => element.addEventListener('click', closeFieldEditor));
+
   input.addEventListener('keydown', (event) => {
     if (event.key !== 'Enter' || event.shiftKey || event.isComposing) return;
     event.preventDefault();
@@ -1295,7 +1398,11 @@
   previewDownloadButton.addEventListener('click', event => { event.stopPropagation(); downloadResumePdf(previewDownloadButton); });
   readerDownloadButton.addEventListener('click', () => downloadResumePdf(readerDownloadButton));
   reader.querySelectorAll('[data-resume-reader-close]').forEach(element => element.addEventListener('click', closeResumeReader));
-  document.addEventListener('keydown', event => { if (event.key === 'Escape' && !reader.hidden) closeResumeReader(); });
+  document.addEventListener('keydown', event => {
+    if (event.key !== 'Escape') return;
+    if (!fieldEditor.hidden) closeFieldEditor();
+    else if (!reader.hidden) closeResumeReader();
+  });
 
   try {
     await migrateLegacyDraft();

@@ -6924,3 +6924,17 @@ body.resume-reader-open{overflow:hidden}
 @media(prefers-reduced-motion:reduce){
   .resume-builder-tool-link,.resume-builder-tool-button{transition:none}
 }
+
+/* PROF-003 hotfix: direct field editing without replaying the interview */
+body.resume-field-editor-open{overflow:hidden}
+.resume-field-editor[hidden]{display:none!important}
+.resume-field-editor{position:fixed;z-index:10020;inset:0;display:grid;place-items:center;padding:22px}
+.resume-field-editor-backdrop{position:absolute;inset:0;background:rgba(17,21,39,.68);backdrop-filter:blur(10px)}
+.resume-field-editor-dialog{position:relative;z-index:1;width:min(820px,100%);max-height:min(92dvh,920px);overflow:auto;border:1px solid rgba(255,255,255,.28);border-radius:24px;background:#fff;box-shadow:0 30px 90px rgba(12,18,48,.32)}
+.resume-field-editor-head{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;padding:24px 24px 18px;border-bottom:1px solid #e8eaf2;background:linear-gradient(135deg,#fbfbff,#f2f4ff)}
+.resume-field-editor-head>div{min-width:0}.resume-field-editor-head span{display:block;margin-bottom:5px;color:#6553cf;font-size:11px;font-weight:900;letter-spacing:.08em;text-transform:uppercase}.resume-field-editor-head h2{margin:0;color:#18213d;font-size:25px}.resume-field-editor-head p{margin:7px 0 0;color:#69738b;line-height:1.5}
+.resume-field-editor-close{width:42px;height:42px;flex:0 0 42px;border:1px solid #dfe3ee;border-radius:14px;background:#fff;color:#606980;font-size:28px;line-height:1;cursor:pointer}
+.resume-field-editor-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px;padding:22px 24px 24px}.resume-field-editor-form label{display:grid;gap:7px}.resume-field-editor-form label>span{color:#3d4661;font-size:13px;font-weight:850}.resume-field-editor-form input,.resume-field-editor-form textarea{width:100%;padding:12px 13px;border:1px solid #d8ddeb;border-radius:13px;background:#fbfcff;color:#1f2947;font:inherit;line-height:1.45;resize:vertical;transition:border-color .16s ease,box-shadow .16s ease}.resume-field-editor-form input:focus,.resume-field-editor-form textarea:focus{outline:0;border-color:#7560e5;box-shadow:0 0 0 3px rgba(117,96,229,.12)}
+.resume-field-editor-wide{grid-column:1/-1}.resume-field-editor-note{grid-column:1/-1;margin:0;padding:12px 14px;border-radius:13px;background:#f5f3ff;color:#666f86;font-size:12px;line-height:1.5}.resume-field-editor-actions{grid-column:1/-1;display:flex;justify-content:flex-end;gap:10px;padding-top:2px}.resume-field-editor-actions .btn{min-width:170px;justify-content:center}.resume-field-editor-actions button:disabled{opacity:.65;cursor:wait}
+@media(max-width:680px){.resume-field-editor{padding:0}.resume-field-editor-dialog{width:100%;max-height:100dvh;height:100dvh;border:0;border-radius:0}.resume-field-editor-head{position:sticky;top:0;z-index:2;padding:18px 16px 14px}.resume-field-editor-head h2{font-size:21px}.resume-field-editor-head p{font-size:13px}.resume-field-editor-form{grid-template-columns:1fr;padding:16px;gap:13px}.resume-field-editor-wide,.resume-field-editor-note,.resume-field-editor-actions{grid-column:auto}.resume-field-editor-actions{position:sticky;bottom:0;display:grid;grid-template-columns:1fr 1fr;padding:12px 0 2px;background:linear-gradient(180deg,rgba(255,255,255,.55),#fff 30%)}.resume-field-editor-actions .btn{min-width:0;width:100%}}
+@media(prefers-reduced-motion:reduce){.resume-field-editor-form input,.resume-field-editor-form textarea{transition:none}}

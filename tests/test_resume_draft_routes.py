@@ -141,6 +141,10 @@ def test_server_draft_autosaves_versions_restores_and_is_visible_on_another_devi
     assert builder.status_code == 200
     assert "Черновик синхронизирован" in body
     assert "Сохранить версию" in body
+    assert "Редактировать поля" in body
+    assert 'id="resumeFieldEditor"' in body
+    assert 'id="resumeFieldEditorForm"' in body
+    assert "Повторно проходить интервью не требуется" in body
     assert "localStorage.setItem" not in body
     assert _builder_initial_state(builder)["answers"]["name"] == "Resume Draft Route"
 
