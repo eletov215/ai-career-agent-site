@@ -218,7 +218,7 @@ def create_resume_drafts_blueprint(
             "Resume version checkpointed",
             extra={
                 "event": "resume_version_checkpointed",
-                "created": result.created,
+                "version_created": result.created,
                 "resume_version": result.version.version,
             },
         )
