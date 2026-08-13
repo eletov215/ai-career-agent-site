@@ -1878,8 +1878,10 @@ body{font-family:"Manrope",Inter,system-ui,-apple-system,BlinkMacSystemFont,"Seg
   flex:none;
 }
 .resume-modern-university-logo img{
-  width:100%;
-  height:100%;
+  width:auto;
+  height:auto;
+  max-width:100%;
+  max-height:100%;
   object-fit:contain;
   display:block;
 }

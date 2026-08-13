@@ -51,6 +51,13 @@
 
 Earlier history is preserved in `docs/PLAN_CURRENT.md` and previous canonical packages.
 
+## 2026-08-13 — PROF-003 PDF education/logo parity hotfix r4
+
+- Production E2E confirmed PDF export, but iPhone comparison exposed two presentation defects: the university emblem kept its aspect ratio in the live preview yet was distorted by the html2canvas PDF capture, and the same university name was rendered twice because the single `education` answer populated both title and detail text.
+- University emblem CSS now relies on intrinsic `width/height:auto` plus bounded `max-width/max-height`, avoiding dependence on `object-fit` during html2canvas capture while preserving the same 42 px container in preview.
+- Education preview now uses the resolved university name as the heading when available and hides the detail line when the user's education text is the same normalized university name; materially different education details remain visible.
+- No database migration or Render environment change. Schema remains `20260812_0012`. PROF-003 remains **НУЖНА ПРОВЕРКА** pending green CI/redeploy and resumed PDF/owner/restart regression E2E.
+
 ## 2026-08-13 — PROF-003 iOS/Safari photo upload hotfix r3
 
 - Production E2E on iPhone Safari reached photo upload after server drafts, versions, restore and stale-tab protection had passed. Selecting a valid gallery image showed the local preview but then surfaced Safari's generic `Load failed` before the asset was persisted.

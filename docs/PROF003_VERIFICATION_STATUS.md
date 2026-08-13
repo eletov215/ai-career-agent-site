@@ -52,7 +52,7 @@ repository hygiene / infra manifest         passed
 
 ## 5. Positive production matrix
 
-Production E2E 13.08.2026 уже подтвердил: login gate, blank/profile-seeded drafts, autosave/relogin/cross-device persistence, независимость drafts, checkpoint versions/no-op/read-only history, restore-as-new-version и stale-tab conflict protection. Затем iPhone Safari выявил frontend-only photo upload defect: local preview отображался, но `fetch(dataUrl)` завершался generic `Load failed` до persistence. Hotfix r3 заменяет local data-URL fetch на in-memory base64 -> Blob conversion; schema остаётся `20260812_0012`. Asset block нужно повторить после green CI/redeploy.
+Production E2E 13.08.2026 уже подтвердил: login gate, blank/profile-seeded drafts, autosave/relogin/cross-device persistence, независимость drafts, checkpoint versions/no-op/read-only history, restore-as-new-version и stale-tab conflict protection. iPhone Safari photo upload defect (`fetch(dataUrl)` -> generic `Load failed`) исправлен hotfix r3 и повторный asset smoke прошёл: photo сохраняется после refresh/relogin/cross-device. Следующий PDF smoke подтвердил export, но выявил presentation-only drift: university emblem искажался при html2canvas capture, а одинаковый university name дублировался heading/detail строкой. Hotfix r4 сохраняет intrinsic aspect ratio и скрывает exact normalized duplicate; schema остаётся `20260812_0012`. PDF parity нужно повторить после green CI/redeploy.
 
 1. Создать blank draft и draft из PROF-001.
 2. Ввести данные, дождаться server autosave.

@@ -543,6 +543,7 @@
       }
       save();
       updateUniversityLogoPreview();
+      updatePreview();
       fitResumePreview();
     } catch (error) {
       if (requestId !== universityLogoRequestId) return;
@@ -595,8 +596,30 @@
     setText('previewContacts', a.contacts, 'Телефон · Email · Портфолио');
     setText('previewExperienceTitle', a.role, 'Опыт пока не указан');
     setText('previewExperience', a.experience, 'Расскажите, где вы работали, какую должность занимали и чем занимались.');
-    setText('previewEducationTitle', a.education, 'Образование пока не указано');
-    setText('previewEducation', a.education, 'Учебное заведение, специальность, курсы и годы обучения появятся здесь.');
+
+    const educationText = String(a.education || '').trim();
+    const resolvedUniversityName = String(state.universityResolvedName || '').trim();
+    const normalizeEducationText = value => String(value || '')
+      .toLocaleLowerCase('ru-RU')
+      .replace(/[«»"'`.,()\-]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+    const educationTitle = resolvedUniversityName || educationText;
+    setText('previewEducationTitle', educationTitle, 'Образование пока не указано');
+    const educationDetails = document.getElementById('previewEducation');
+    const normalizedEducationText = normalizeEducationText(educationText);
+    const normalizedResolvedUniversity = normalizeEducationText(resolvedUniversityName);
+    const duplicateEducation = Boolean(
+      normalizedEducationText && normalizedResolvedUniversity && (
+        normalizedEducationText === normalizedResolvedUniversity ||
+        normalizedEducationText.includes(normalizedResolvedUniversity) ||
+        normalizedResolvedUniversity.includes(normalizedEducationText)
+      )
+    );
+    const detailsText = duplicateEducation ? '' : educationText;
+    educationDetails.textContent = detailsText;
+    educationDetails.hidden = !detailsText;
+
     setText('previewGoal', a.goal, 'Формат работы, график, желаемая зарплата и другие условия.');
 
     const summaryParts = [a.role && `Специалист в направлении «${a.role}».`, a.experience, a.goal].filter(Boolean);
