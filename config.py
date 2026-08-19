@@ -417,6 +417,16 @@ class AppSettings:
     auth_verification_ttl_seconds: int
     auth_reset_ttl_seconds: int
     auth_password_min_length: int
+    privacy_cleanup_enabled: bool
+    privacy_cleanup_interval_seconds: int
+    privacy_pending_account_retention_days: int
+    privacy_auth_artifact_retention_days: int
+    privacy_audit_retention_days: int
+    privacy_orphan_asset_retention_days: int
+    privacy_cleanup_batch_size: int
+    privacy_export_max_raw_bytes: int
+    privacy_export_max_archive_bytes: int
+    privacy_export_spool_max_bytes: int
     auth_email_backend: str
     auth_email_from: str | None
     auth_email_from_name: str
@@ -884,6 +894,70 @@ def load_settings(environ: Mapping[str, str] | None = None) -> AppSettings:
             12,
             minimum=10,
             maximum=64,
+        ),
+        privacy_cleanup_enabled=_bool(source, "PRIVACY_CLEANUP_ENABLED", True),
+        privacy_cleanup_interval_seconds=_int(
+            source,
+            "PRIVACY_CLEANUP_INTERVAL_SECONDS",
+            86_400,
+            minimum=3_600,
+            maximum=604_800,
+        ),
+        privacy_pending_account_retention_days=_int(
+            source,
+            "PRIVACY_PENDING_ACCOUNT_RETENTION_DAYS",
+            30,
+            minimum=7,
+            maximum=365,
+        ),
+        privacy_auth_artifact_retention_days=_int(
+            source,
+            "PRIVACY_AUTH_ARTIFACT_RETENTION_DAYS",
+            30,
+            minimum=1,
+            maximum=365,
+        ),
+        privacy_audit_retention_days=_int(
+            source,
+            "PRIVACY_AUDIT_RETENTION_DAYS",
+            180,
+            minimum=30,
+            maximum=3_650,
+        ),
+        privacy_orphan_asset_retention_days=_int(
+            source,
+            "PRIVACY_ORPHAN_ASSET_RETENTION_DAYS",
+            7,
+            minimum=1,
+            maximum=365,
+        ),
+        privacy_cleanup_batch_size=_int(
+            source,
+            "PRIVACY_CLEANUP_BATCH_SIZE",
+            200,
+            minimum=10,
+            maximum=5_000,
+        ),
+        privacy_export_max_raw_bytes=_int(
+            source,
+            "PRIVACY_EXPORT_MAX_RAW_BYTES",
+            33_554_432,
+            minimum=1_048_576,
+            maximum=268_435_456,
+        ),
+        privacy_export_max_archive_bytes=_int(
+            source,
+            "PRIVACY_EXPORT_MAX_ARCHIVE_BYTES",
+            52_428_800,
+            minimum=1_048_576,
+            maximum=268_435_456,
+        ),
+        privacy_export_spool_max_bytes=_int(
+            source,
+            "PRIVACY_EXPORT_SPOOL_MAX_BYTES",
+            8_388_608,
+            minimum=262_144,
+            maximum=67_108_864,
         ),
         auth_email_backend=auth_email_backend,
         auth_email_from=auth_email_from,

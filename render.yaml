@@ -58,6 +58,16 @@ services:
         value: "3600"
       - key: AUTH_PASSWORD_MIN_LENGTH
         value: "12"
+      - key: PRIVACY_CLEANUP_ENABLED
+        value: "1"
+      - key: PRIVACY_CLEANUP_INTERVAL_SECONDS
+        value: "86400"
+      - key: PRIVACY_PENDING_ACCOUNT_RETENTION_DAYS
+        value: "30"
+      - key: PRIVACY_AUTH_ARTIFACT_RETENTION_DAYS
+        value: "30"
+      - key: PRIVACY_AUDIT_RETENTION_DAYS
+        value: "180"
       - key: SEARCH_SNAPSHOT_TTL_SECONDS
         value: "1800"
       - key: SEARCH_SNAPSHOT_MAX_CANDIDATES
@@ -95,6 +105,6 @@ services:
       - key: TRUDVSEM_RETRY_MAX_SECONDS
         value: "3600"
 
-# SYNC-001 runs the worker as a sibling OS process on the current free web
-# service. On a paid Render plan or VPS, deploy scripts/trudvsem_sync_worker.py
-# as an independent background worker/Compose service instead.
+# SYNC-001 and PRIV-001 run background workers as sibling OS processes on the
+# current free web service. On a paid Render plan or VPS, deploy both workers as
+# independent background workers/Compose services instead.

@@ -13,10 +13,12 @@
 -> 20260810_0008 first-party auth
 -> 20260811_0009 OAuth identity ownership
 -> 20260811_0010 structured career profile
--> 20260812_0011 profile import provenance candidate
+-> 20260812_0011 profile import provenance
+-> 20260812_0012 server resume drafts/versions/assets/exports
+-> 20260813_0013 privacy audit controls candidate
 ```
 
-Production before PROF-002 deploy: `20260811_0010`. Candidate expected: `20260812_0011`.
+Production before PRIV-001 deploy: `20260812_0012`. Candidate expected: `20260813_0013`.
 
 ## Revision 0011
 
@@ -66,3 +68,19 @@ Previous application code ignores the new columns, so application rollback may k
 ## Revision `20260812_0012`
 
 Creates `resume_drafts`, `resume_versions`, `resume_assets`, `resume_exports`. Upgrade is additive. Downgrade to `20260812_0011` drops all four tables and is data-destructive after users create drafts; it requires verified backup and explicit approval.
+
+
+## Revision `20260813_0013`
+
+Creates `privacy_audit_events` with only:
+
+```text
+id UUID/string primary key
+event_type data_exported | account_deleted | retention_cleanup
+counts_json bounded aggregate counters
+created_at epoch seconds
+```
+
+There is deliberately no FK to `users` and no user ID/email/content column, so deletion evidence does not retain a direct identifier after the account is removed. Upgrade is additive. Controlled downgrade `0013 -> 0012` removes only this audit table and leaves AUTH/PROF/resume/search/sync data unchanged.
+
+After deploy Render readiness must show `database.revision=current_revision=expected_revision=20260813_0013` and `migrations.ok=true`.

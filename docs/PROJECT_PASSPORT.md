@@ -3,13 +3,13 @@
 | Поле | Значение |
 |---|---|
 | Документ        | PROJECT_PASSPORT                                                                              |
-| Версия паспорта | 2.39 |
+| Версия паспорта | 2.41 |
 | Дата            | 13 августа 2026                                                                               |
 | Статус          | ДЕЙСТВУЮЩИЙ                                                                                   |
-| Связанный план | `AI_Career_Agent_PLAN_CURRENT v1.4.25` |
-| Основа кода | Актуальный GitHub ZIP после PROF-002 COMPLETE; PROF-003 candidate revision `20260812_0012`; внешний gate pending |
+| Связанный план | `AI_Career_Agent_PLAN_CURRENT v1.4.27` |
+| Основа кода | PROF-003 final regression/log review подтверждён; PRIV-001 candidate построен поверх GitHub main r4; production `0012`, candidate schema `20260813_0013` |
 
-> Контрольные статусы: FND-001/FND-002/DATA-001/DATA-002/SEC-001/OPS-001/INFRA-PREP-001/SYNC-001/SYNC-002/SEARCH-001/SEARCH-002/SEARCH-003/SEARCH-004/AUTH-001/AUTH-002 — ВЫПОЛНЕНО; PROF-001 — ВЫПОЛНЕНО; PROF-002 — ВЫПОЛНЕНО; PROF-003 — НУЖНА ПРОВЕРКА; DOC-001 — В РАБОТЕ как постоянный процесс; INFRA-001 — ОТЛОЖЕНО ДО ПРЕДРЕЛИЗНОГО ЭТАПА.
+> Контрольные статусы: FND-001/FND-002/DATA-001/DATA-002/SEC-001/OPS-001/INFRA-PREP-001/SYNC-001/SYNC-002/SEARCH-001/SEARCH-002/SEARCH-003/SEARCH-004/AUTH-001/AUTH-002 — ВЫПОЛНЕНО; PROF-001 — ВЫПОЛНЕНО; PROF-002 — ВЫПОЛНЕНО; PROF-003 — ВЫПОЛНЕНО; PRIV-001 — НУЖНА ПРОВЕРКА; DOC-001 — В РАБОТЕ как постоянный процесс; INFRA-001 — ОТЛОЖЕНО ДО ПРЕДРЕЛИЗНОГО ЭТАПА.
 
 ## 1. Назначение
 
@@ -54,7 +54,7 @@ AI Career Agent — коммерческий веб-сервис карьерн�
 >     scripts/                   migrations, backup, restore, alert, infra probes, sync CLI/worker/supervisor
 >     domain/ models/ repositories/ services/
 >     services/source_status.py    safe public source-state contract
->     migrations/                Alembic 0001..0011 production; PROF-002 complete
+>     migrations/                Alembic 0001..0013 candidate; production currently 0012
 >     tests/                     unit/integration/security/ops/infra/sync/search/auth tests
 >     docs/                      architecture, security and runbooks
 >     render.yaml
@@ -366,25 +366,26 @@ Production verification found a generic 256 KiB upload-route defect for `/profil
 
 Quality observation: `deterministic-text-v1` can make low-confidence/incorrect suggestions on English/nonstandard CVs; mandatory review prevented canonical corruption. OCR/AI parser remains excluded.
 
-## 17. PROF-003 — НУЖНА ПРОВЕРКА
+## 17. PROF-003 — ВЫПОЛНЕНО
 
-Server-side resume document layer реализован поверх first-party User:
+Server-side resume document layer подтверждён полностью: green CI, Render `20260812_0012`, owner-scoped drafts, autosave, immutable history/restore/no-op, stale `409`, cross-device/relogin/restart persistence, direct edit r2, iPhone asset r3, university logo, PDF parity r4, owner isolation, финальный `/profile`/PROF-002/`/dashboard`/AUTH/OAuth/`/vacancies` regression и Render log privacy/error review. Generated document state по-прежнему не становится PROF-001 confirmed facts автоматически.
 
-- несколько owner-scoped current drafts;
-- bounded canonical state, content hash и optimistic revision;
-- autosave без version spam;
-- immutable checkpoint/export/restore versions;
-- read-only history и restore-as-new-version;
-- durable photo/logo assets с MIME/signature/size/owner/draft validation;
-- browser PDF export из locked preview state и server metadata tied to immutable version;
-- one-time migration from legacy localStorage; server становится authoritative;
-- migration `20260812_0012`, backup inventory и dedicated CI gate.
+## 17.1 PRIV-001 — НУЖНА ПРОВЕРКА
 
-Generated document text не является PROF-001 confirmed facts. Seed из profile односторонний; обратная запись отсутствует. Candidate требует green CI, Render `0012` и production E2E: other-device/browser-cleanup/restart persistence, owner isolation, stale `409`, history/restore/no-op, assets, preview/export parity, delete cascade, mobile и regressions.
+Privacy controls candidate добавляет:
 
-Excluded: AI interview/rewrite, public sharing, collaborative merge, server PDF binary, external object provider, templates marketplace и PRIV-001.
+- `/privacy-center` с export/delete controls;
+- ZIP export с `manifest.json`, `data.json` и owned resume image assets;
+- отсутствие password/session/token/OAuth secrets в export;
+- delete guard: exact phrase + current password;
+- cascade delete User/Auth/OAuth/Profile/Resume data и локальных legacy HH/SuperJob credentials;
+- identifier-free `privacy_audit_events`;
+- technical retention cleanup: pending unverified 30d, expired/revoked auth artifacts 30d, audit 180d, worker interval 24h;
+- migration `20260813_0013`, backup inventory, Compose/Render/VPS knobs and dedicated CI gate.
 
-## 17. INFRA-001 — ОТЛОЖЕНО ДО ПРЕДРЕЛИЗНОГО ЭТАПА
+Technical retention defaults are not legal-policy claims; `LEGAL-001` can revise them. Remote provider-side OAuth grant revocation is not automated; local credentials are removed. Candidate requires Pull Request CI, Render `0013`, restart and destructive throwaway-account E2E.
+
+## 18. INFRA-001 — ОТЛОЖЕНО ДО ПРЕДРЕЛИЗНОГО ЭТАПА
 
 `INFRA-001` теперь означает только реальную аренду и полевой тест VPS:
 
@@ -413,7 +414,7 @@ DNS/OAuth callback URL не переключаются.
 
 ### Сейчас — функциональный MVP без аренды VPS
 
->     PROF-003 -> PRIV-001
+>     PRIV-001
 >     -> SEARCH-005
 >     -> AI-BENCH-001 -> AI-PROVIDER-001 -> LEGAL-001
 >     -> AI-001 -> AI-002 -> AI-003 -> AI-004 -> AI-005 -> AI-006
@@ -461,9 +462,7 @@ Render не считается гарантированным production для 
 
 ## 23. Текущий gate
 
-PROF-002 — ВЫПОЛНЕНО. Production revision `20260812_0011`; CI/Render/E2E complete.
-
-Текущий пакет — PROF-003 candidate: server-side resume drafts/versions реализованы с owner scope, autosave/history/restore/assets/export metadata и migration `0012`; требуется branch -> PR -> green CI -> Render -> production E2E gate.
+PROF-003 — ВЫПОЛНЕНО на production `20260812_0012`, включая final regression/log review. Текущий пакет — PRIV-001 candidate с head revision `20260813_0013`; production остаётся `0012` до зелёного CI/merge/deploy.
 
 ## 24. Правила рабочего чата
 
@@ -502,3 +501,5 @@ PROF-002 — ВЫПОЛНЕНО. Production revision `20260812_0011`; CI/Render/
 | 2.37 | 12.08.2026 | PROF-002 candidate: bounded text-PDF extraction proposal, editable review, explicit confirmation, metadata-only owner/version-bound review token, migration `0011` provenance audit fields and dedicated tests; external verification pending. |
 | 2.38 | 12.08.2026 | PROF-002 complete after green CI, Render `0011`, upload-limit hotfix and production confirmation/privacy/stale/restart/mobile/regression E2E; PROF-003 next. |
 | 2.39 | 13.08.2026 | PROF-003 candidate: server drafts, optimistic autosave, immutable versions/history/restore, durable assets, export metadata, migration `0012`, UI/tests/CI gate; external verification pending. |
+| 2.40 | 13.08.2026 | PROF-003 production evidence: CI/Render `0012`, drafts/autosave/cross-device, versions/restore/stale conflict, direct edit r2, iPhone photo r3, PDF/logo/education parity r4, owner isolation and restart persistence confirmed; final regression/log review remains. |
+| 2.41 | 13.08.2026 | PROF-003 closed after final regression/log review. PRIV-001 candidate adds readable export, confirmed deletion, local integration/token cleanup, technical retention worker, identifier-free audit and migration `0013`; external CI/Render/E2E pending. |

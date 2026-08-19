@@ -4,16 +4,16 @@
 |---|---|
 | Документ | PROF003_IMPLEMENTATION |
 | Пакет | PROF-003 |
-| Версия | 1.0 |
+| Версия | 1.2 |
 | Дата | 13 августа 2026 |
-| Статус | НУЖНА ПРОВЕРКА |
-| Рабочая основа | GitHub `main` после PROF-002 COMPLETE + upload-limit hotfix r2 |
-| Production baseline | `20260812_0011` |
-| Candidate schema | `20260812_0012` |
+| Статус | ВЫПОЛНЕНО |
+| Рабочая основа | GitHub `main` после PROF-003 hotfix r4 |
+| Production revision | `20260812_0012` |
+| Schema revision | `20260812_0012` |
 
 ## 1. Контрольный статус
 
-PROF-003 реализован как candidate. Он заменяет browser-only `localStorage` в конструкторе резюме owner-scoped серверными черновиками, optimistic autosave, immutable версиями, историей/восстановлением, durable image assets и audit metadata PDF-экспорта. Статус остаётся **НУЖНА ПРОВЕРКА** до green Pull Request CI, Render revision `0012` и production E2E.
+PROF-003 реализован и работает в production на revision `20260812_0012`. Green GitHub CI, основной owner/autosave/version/asset/export/mobile E2E и Render restart persistence подтверждены. В production были найдены и исправлены четыре hotfix-класса: structured logging r1, direct field edit r2, iOS/Safari photo upload r3, PDF university-logo/education parity r4. Финальный regression и Render log privacy/error review подтверждены пользователем; PROF-003 закрыт со статусом **ВЫПОЛНЕНО**.
 
 ## 2. Цель и границы
 
@@ -139,22 +139,27 @@ resume_exports
 
 ## 10. Проверки и доказательства
 
-Доступные локальные проверки candidate:
+Candidate/local evidence:
 
 ```text
 split full available pytest                 252 passed, 11 skipped
-focused PROF-003 migration/service/routes     15 passed, 1 skipped
+focused PROF-003 migration/service/routes   15 passed, 1 skipped
 Python compileall                            passed
 Jinja parse (25 templates)                  passed
-JavaScript syntax (node --check)            passed
-SQLite clean upgrade to 0012                passed
+JavaScript syntax                            passed
 SQLite 0011 -> 0012 -> 0011 -> 0012         passed
-Alembic check                               passed
-architecture/template checks                passed
+Alembic check                                passed
 repository hygiene / infra manifest          passed
 ```
 
-Flask route tests и PostgreSQL integration должны быть окончательно подтверждены GitHub Actions, где устанавливаются runtime dependencies и поднимается PostgreSQL 17.
+External evidence:
+
+- GitHub CI полностью green после r1, включая dedicated PROF-003, PostgreSQL migration/integration, PROF-001/002, AUTH-001/002, encrypted backup/restore и Docker/runtime gates.
+- Render `/health/ready`: PostgreSQL persistent, current/expected `20260812_0012`, migrations ok.
+- Production E2E: blank/profile-seeded/multiple drafts, autosave/relogin/cross-device, checkpoint/no-op/read-only/restore, stale conflict, direct edit, iPhone photo, university logo, PDF parity, owner isolation и restart persistence.
+- После restart текущий draft снова изменяется и autosave работает.
+
+Final functional regression + Render log review: ПОДТВЕРЖДЕНО. PROF-003 COMPLETE.
 
 ## 11. Ограничения и риски
 
@@ -173,13 +178,10 @@ Application revert may leave additive revision `0012`; previous code ignores the
 ## 13. Следующее действие
 
 ```text
-PROF-003 CANDIDATE
--> separate branch / Pull Request
--> green dedicated/full CI
--> Render migration 20260812_0012
--> owner/autosave/history/restore/assets/export/restart/mobile E2E
--> PROF-003 COMPLETE
+PROF-003 COMPLETE
 -> PRIV-001 START
+-> PRIV-001 candidate: export / account deletion / retention controls
+-> GitHub CI -> Render 0013 -> production privacy E2E
 ```
 
 ## 14. Журнал версий
@@ -187,3 +189,5 @@ PROF-003 CANDIDATE
 | Версия | Дата | Изменение |
 |---|---|---|
 | 1.0 | 13.08.2026 | Реализованы server-side drafts, optimistic autosave, immutable versions, history/restore, durable assets, export metadata, migration `0012`, UI и tests; требуется внешний gate. |
+| 1.1 | 13.08.2026 | Green CI/Render `0012`, production E2E и restart persistence записаны; hotfix r1-r4 подтверждены. Остаётся final regression/log review. |
+| 1.2 | 13.08.2026 | Final regression `/profile`/PROF-002/`/dashboard`/AUTH/OAuth/`/vacancies`, readiness `0012` and Render log privacy/error review confirmed; PROF-003 COMPLETE, PRIV-001 next. |

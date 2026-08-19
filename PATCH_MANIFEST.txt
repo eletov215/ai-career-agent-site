@@ -1,65 +1,66 @@
-PROF-003 PATCH MANIFEST v1.4.25
-
-Apply all files below at repository root with paths preserved.
-Verified source ZIP comment: 427b2726edd078993a3c26985e17713cf2e76c9e
-Production baseline: 20260812_0011
-Candidate revision: 20260812_0012
-
-[MODIFY] .github/workflows/ci.yml
-[MODIFY] CHANGED_FILES.txt
-[MODIFY] PATCH_MANIFEST.txt
-[MODIFY] README.md
-[MODIFY] README_FIRST.txt
-[MODIFY] README_UPLOAD.txt
-[MODIFY] app.py
-[MODIFY] database.py
-[MODIFY] docs/ARCHITECTURE.md
-[MODIFY] docs/BACKUP_RESTORE.md
-[MODIFY] docs/CHANGELOG.md
-[MODIFY] docs/DATABASE_MIGRATION.md
-[MODIFY] docs/DOMAIN_MODEL.md
-[MODIFY] docs/PLAN_CURRENT.md
-[ADD] docs/PROF003_IMPLEMENTATION.md
-[ADD] docs/PROF003_RESUME_REFERENCE.md
-[ADD] docs/PROF003_RUNBOOK.md
-[ADD] docs/PROF003_SECURITY_REFERENCE.md
-[ADD] docs/PROF003_VERIFICATION_STATUS.md
-[MODIFY] docs/PROJECT_GUIDE.md
-[MODIFY] docs/PROJECT_PASSPORT.md
-[MODIFY] docs/ROADMAP.md
-[MODIFY] docs/SECURITY.md
-[MODIFY] docs/SOURCE_AUDIT.md
-[MODIFY] docs/VERSIONING.md
-[MODIFY] domain/__init__.py
-[ADD] domain/resume_draft.py
-[ADD] migrations/versions/20260812_0012_resume_drafts_versions.py
-[MODIFY] models/__init__.py
-[ADD] models/resume.py
-[MODIFY] models/user.py
-[MODIFY] operations/backup.py
-[MODIFY] repositories/__init__.py
-[ADD] repositories/resume_drafts.py
-[ADD] routes/resume_drafts.py
-[MODIFY] scripts/check_document_structure.py
-[MODIFY] security.py
-[ADD] services/resume_drafts.py
-[MODIFY] services/storage.py
-[MODIFY] static/styles.css
-[MODIFY] templates/ai_career.html
-[MODIFY] templates/base.html
-[MODIFY] templates/dashboard.html
-[MODIFY] templates/resume_builder.html
-[ADD] templates/resumes/history.html
-[ADD] templates/resumes/library.html
-[ADD] templates/resumes/version.html
-[MODIFY] tests/test_architecture_boundaries.py
-[MODIFY] tests/test_document_structure.py
-[MODIFY] tests/test_postgresql_integration.py
-[MODIFY] tests/test_prof002_migration.py
-[ADD] tests/test_prof003_migration.py
-[ADD] tests/test_resume_draft_routes.py
-[ADD] tests/test_resume_draft_service.py
-[MODIFY] tests/test_routes.py
-
-No new environment variables are required.
-infra/vps/.env.example must remain committed; real .env files remain forbidden.
+.github/workflows/ci.yml
+CHANGED_FILES.txt
+PATCH_MANIFEST.txt
+README.md
+README_FIRST.txt
+README_UPLOAD.txt
+app.py
+compose.yaml
+config.py
+database.py
+docs/ARCHITECTURE.md
+docs/BACKUP_RESTORE.md
+docs/CHANGELOG.md
+docs/DATABASE_MIGRATION.md
+docs/DOMAIN_MODEL.md
+docs/PLAN_CURRENT.md
+docs/PRIV001_IMPLEMENTATION.md
+docs/PRIV001_PRIVACY_REFERENCE.md
+docs/PRIV001_RUNBOOK.md
+docs/PRIV001_SECURITY_REFERENCE.md
+docs/PRIV001_VERIFICATION_STATUS.md
+docs/PROF003_IMPLEMENTATION.md
+docs/PROF003_RESUME_REFERENCE.md
+docs/PROF003_RUNBOOK.md
+docs/PROF003_SECURITY_REFERENCE.md
+docs/PROF003_VERIFICATION_STATUS.md
+docs/PROJECT_GUIDE.md
+docs/PROJECT_PASSPORT.md
+docs/ROADMAP.md
+docs/SECURITY.md
+docs/SOURCE_AUDIT.md
+docs/VERSIONING.md
+infra/vps/.env.example
+infra/vps/compose.test.env
+migrations/versions/20260813_0013_privacy_controls.py
+models/__init__.py
+models/privacy.py
+models/resume.py
+operations/backup.py
+render.yaml
+repositories/__init__.py
+repositories/privacy.py
+routes/privacy_controls.py
+scripts/cleanup_privacy.py
+scripts/privacy_cleanup_worker.py
+scripts/start_runtime.py
+services/auth.py
+services/privacy.py
+services/search_filters.py
+services/storage.py
+static/styles.css
+templates/base.html
+templates/dashboard.html
+templates/privacy.html
+templates/privacy/center.html
+templates/privacy/deleted.html
+templates/privacy/not_found.html
+tests/test_config.py
+tests/test_document_structure.py
+tests/test_infra_manifests.py
+tests/test_priv001_migration.py
+tests/test_privacy_routes.py
+tests/test_privacy_service.py
+tests/test_prof003_migration.py
+tests/test_search_normalization.py
+tests/test_sync_worker.py

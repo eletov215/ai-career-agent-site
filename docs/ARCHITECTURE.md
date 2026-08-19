@@ -1,19 +1,19 @@
 # AI Career Agent — architecture reference
 
-> Current candidate: PROF-002, status НУЖНА ПРОВЕРКА. Production Alembic `20260811_0010`; candidate head `20260812_0011`.
+> Current candidate: PRIV-001, status НУЖНА ПРОВЕРКА. PROF-003 закрыт на production `20260812_0012`; candidate head `20260813_0013`.
 
 ## Runtime boundaries
 
 ```text
 app.py / Flask routes / app:app
   -> AuthService / OAuthIdentityService / CareerProfileService
-  -> ResumeImportService (request-local suggestions only)
+  -> ResumeImportService / ResumeDraftService / PrivacyService
   -> repository contracts
   -> SQLAlchemy models
   -> PostgreSQL via DATABASE_URL / Alembic
 ```
 
-Routes do not instantiate ORM repositories. `StorageServices` provides auth, users, OAuth, profile, search and sync persistence boundaries.
+Routes do not instantiate ORM repositories. `StorageServices` provides auth, users, OAuth, profile, resume, privacy, search and sync persistence boundaries.
 
 ## Identity and confirmed profile
 
@@ -77,3 +77,23 @@ Revision `20260812_0011` adds `source_kind` and aggregate `provenance_json` to i
 ## PROF-003 server resume document boundary
 
 `ResumeDraft`/`ResumeVersion` are owner-scoped document data, not canonical PROF-001 facts. A profile may seed a new draft one-way; document edits never auto-update the profile. Mutable autosave uses expected revision + row lock. Explicit checkpoint/export/restore produce immutable snapshots. Image assets are durable objects referenced by UUID; PDF binary remains client-side and only bounded export metadata is stored.
+
+
+## PRIV-001 privacy control boundary
+
+`PrivacyService` is the single application boundary for owner-readable export, confirmed account deletion and technical retention cleanup. `/privacy-center` requires an active first-party session; export/delete are POST + CSRF + rate-limited. Account deletion additionally requires the current password and the exact confirmation phrase.
+
+```text
+User owner data
+  -> sanitized ZIP export (manifest.json + data.json + owned resume assets)
+  -> no password/session/token/OAuth credentials
+
+confirmed account deletion
+  -> PostgreSQL owner row lock
+  -> delete local HH/SuperJob legacy credential mirrors
+  -> delete User
+  -> FK cascade profile/auth/OAuth/resume subtree
+  -> identifier-free aggregate audit row
+```
+
+Migration `20260813_0013` adds only `privacy_audit_events(event_type, counts_json, created_at)` and intentionally has no `user_id`, email, filename, asset ID or content column. The periodic cleanup worker removes stale pending accounts, expired/revoked auth artifacts and old identifier-free audit rows according to configurable technical defaults. Remote provider-side OAuth grant revocation is not claimed by PRIV-001; the guaranteed contract is local credential erasure.

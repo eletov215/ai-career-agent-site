@@ -182,5 +182,7 @@ def vacancy_matches_filters(
 def filter_vacancies(
     items: Iterable[dict[str, Any]],
     filters: VacancySearchFilters,
+    *,
+    now: datetime | None = None,
 ) -> list[dict[str, Any]]:
-    return [item for item in items if vacancy_matches_filters(item, filters)]
+    return [item for item in items if vacancy_matches_filters(item, filters, now=now)]

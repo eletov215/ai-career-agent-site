@@ -1,12 +1,12 @@
 # AI Career Agent — project guide
 
 ```text
-canonical plan: docs/PLAN_CURRENT.md v1.4.23
-passport: docs/PROJECT_PASSPORT.md v2.37
-current package: PROF-002 / НУЖНА ПРОВЕРКА
-production revision: 20260811_0010
-candidate revision: 20260812_0011
-verified base commit: f5e513f0f992b20305fbef36851ef97576013c86
+canonical plan: docs/PLAN_CURRENT.md v1.4.27
+passport: docs/PROJECT_PASSPORT.md v2.41
+PROF-003: ВЫПОЛНЕНО
+current package: PRIV-001 / НУЖНА ПРОВЕРКА
+production revision before deploy: 20260812_0012
+candidate revision: 20260813_0013
 WSGI: app:app
 ```
 
@@ -42,3 +42,10 @@ Never commit or share resume content, review token, cookies, OAuth secrets, `.en
 ## PROF-003 development rule
 
 Do not reintroduce authoritative localStorage writes. Draft document data is server-owned and owner-scoped. PROF-001 profile facts may seed a draft but draft edits must not become confirmed facts without a separate confirmation contract.
+
+
+## PRIV-001 E2E
+
+Use a throwaway verified account because account deletion is destructive. Verify owner-readable ZIP export (`manifest.json`, `data.json`, owned resume image assets) with no password/session/token/OAuth credentials; wrong confirmation phrase/password must not delete anything; exact phrase + current password must delete the account and local HH/SuperJob credentials; old login must fail; retention cleanup must leave active accounts intact; audit/logs must contain aggregate counts only. After deploy `/health/ready` must show revision `20260813_0013`.
+
+Do not claim remote provider-side OAuth grant revocation: current PRIV-001 scope guarantees local credential erasure only.

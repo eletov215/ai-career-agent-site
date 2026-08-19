@@ -109,6 +109,11 @@ def test_production_defaults_preserve_current_runtime_behavior():
     assert settings.auth_verification_ttl_seconds == 86_400
     assert settings.auth_reset_ttl_seconds == 3_600
     assert settings.auth_password_min_length == 12
+    assert settings.privacy_cleanup_enabled is True
+    assert settings.privacy_cleanup_interval_seconds == 86_400
+    assert settings.privacy_pending_account_retention_days == 30
+    assert settings.privacy_auth_artifact_retention_days == 30
+    assert settings.privacy_audit_retention_days == 180
     assert settings.csrf_enabled is True
     assert settings.rate_limit_enabled is True
     assert settings.security_headers_enabled is True
@@ -165,6 +170,11 @@ def test_numeric_and_boolean_values_are_validated_centrally(tmp_path):
             AUTH_VERIFICATION_TTL_SECONDS="172800",
             AUTH_RESET_TTL_SECONDS="1800",
             AUTH_PASSWORD_MIN_LENGTH="14",
+            PRIVACY_CLEANUP_ENABLED="no",
+            PRIVACY_CLEANUP_INTERVAL_SECONDS="7200",
+            PRIVACY_PENDING_ACCOUNT_RETENTION_DAYS="45",
+            PRIVACY_AUTH_ARTIFACT_RETENTION_DAYS="14",
+            PRIVACY_AUDIT_RETENTION_DAYS="365",
             AUTH_EMAIL_BACKEND="smtp",
             AUTH_EMAIL_FROM="accounts@example.test",
             AUTH_SMTP_HOST="smtp.example.test",
@@ -217,6 +227,11 @@ def test_numeric_and_boolean_values_are_validated_centrally(tmp_path):
     assert settings.auth_verification_ttl_seconds == 172800
     assert settings.auth_reset_ttl_seconds == 1800
     assert settings.auth_password_min_length == 14
+    assert settings.privacy_cleanup_enabled is False
+    assert settings.privacy_cleanup_interval_seconds == 7200
+    assert settings.privacy_pending_account_retention_days == 45
+    assert settings.privacy_auth_artifact_retention_days == 14
+    assert settings.privacy_audit_retention_days == 365
     assert settings.auth_email_backend == "smtp"
     assert settings.auth_email_from == "accounts@example.test"
     assert settings.auth_smtp_host == "smtp.example.test"
@@ -274,6 +289,11 @@ def test_numeric_and_boolean_values_are_validated_centrally(tmp_path):
         ("AUTH_VERIFICATION_TTL_SECONDS", "60", "не может быть меньше 900"),
         ("AUTH_RESET_TTL_SECONDS", "60", "не может быть меньше 300"),
         ("AUTH_PASSWORD_MIN_LENGTH", "9", "не может быть меньше 10"),
+        ("PRIVACY_CLEANUP_ENABLED", "sometimes", "true/false"),
+        ("PRIVACY_CLEANUP_INTERVAL_SECONDS", "3599", "не может быть меньше 3600"),
+        ("PRIVACY_PENDING_ACCOUNT_RETENTION_DAYS", "6", "не может быть меньше 7"),
+        ("PRIVACY_AUTH_ARTIFACT_RETENTION_DAYS", "0", "не может быть меньше 1"),
+        ("PRIVACY_AUDIT_RETENTION_DAYS", "29", "не может быть меньше 30"),
         ("AUTH_EMAIL_BACKEND", "provider", "Разрешены"),
         ("AUTH_SMTP_TIMEOUT_SECONDS", "0.5", "не может быть меньше 1.0"),
         ("AUTH_GMAIL_TIMEOUT_SECONDS", "0.5", "не может быть меньше 1.0"),

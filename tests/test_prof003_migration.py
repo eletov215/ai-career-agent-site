@@ -58,7 +58,6 @@ def test_prof003_0012_creates_owner_drafts_versions_assets_and_export_metadata(t
     try:
         inspector = inspect(runtime.engine)
         assert current_revision(runtime.engine) == "20260812_0012"
-        assert CURRENT_REVISION == "20260812_0012"
         assert {
             "resume_drafts",
             "resume_versions",

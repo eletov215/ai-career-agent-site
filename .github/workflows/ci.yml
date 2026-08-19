@@ -228,6 +228,23 @@ jobs:
           tests/test_architecture_boundaries.py
           tests/test_postgresql_integration.py
 
+      - name: Verify PRIV-001 privacy export deletion and retention controls
+        run: >-
+          python -m pytest -q
+          tests/test_priv001_migration.py
+          tests/test_privacy_service.py
+          tests/test_privacy_routes.py
+          tests/test_auth_service.py
+          tests/test_auth_routes.py
+          tests/test_auth002_routes.py
+          tests/test_profile_service.py
+          tests/test_resume_draft_service.py
+          tests/test_backup_restore.py
+          tests/test_config.py
+          tests/test_infra_manifests.py
+          tests/test_architecture_boundaries.py
+          tests/test_postgresql_integration.py
+
       - name: Verify PostgreSQL encrypted backup and restore
         env:
           DATABASE_URL: ${{ env.POSTGRES_TEST_URL }}

@@ -4,82 +4,34 @@
 |---|---|
 | Документ | PROF003_VERIFICATION_STATUS |
 | Пакет | PROF-003 |
-| Версия | 1.0 |
+| Версия | 1.2 |
 | Дата | 13 августа 2026 |
-| Статус | НУЖНА ПРОВЕРКА |
-| Production baseline | `20260812_0011` |
-| Candidate schema | `20260812_0012` |
+| Статус | ВЫПОЛНЕНО |
+| Production revision | `20260812_0012` |
+| Schema revision | `20260812_0012` |
+| Final gate | ПОДТВЕРЖДЕНО: final regression + Render log review |
 
 ## 1. Контрольный статус
 
-Код candidate готов локально, но PROF-003 нельзя переводить в ВЫПОЛНЕНО до green Pull Request CI, Render migration/readiness `0012` и production E2E.
+PROF-003 закрыт: green CI, Render `0012`, основной production E2E, owner isolation, mobile asset/PDF fixes и restart persistence подтверждены. После hotfix r4 отдельно подтверждены final regression и Render log privacy/error review; статус ВЫПОЛНЕНО выставлен.
 
-## 2. Подтверждённая рабочая основа
-
-Загруженный GitHub ZIP содержит функциональный код PROF-002 COMPLETE + upload-limit hotfix r2. Его ZIP comment — `427b2726edd078993a3c26985e17713cf2e76c9e`, SHA-256 — `ddd4d61f0afbf3351c0623506fc9e35aca757e0536716b4015349abc96e40864`. Функциональная часть совпала с контрольным PROF-002 complete snapshot; 11 repository docs были позади canonical v1.4.24 и синхронизированы до начала PROF-003.
-
-## 3. Локальные доказательства
+## 2. Автоматизированные доказательства
 
 ```text
-split full available pytest                 252 passed, 11 skipped
-focused PROF-003 migration/service/routes   15 passed, 1 skipped
-compileall                                  passed
-Jinja parse                                 25 templates passed
-JavaScript syntax                           passed
-SQLite clean upgrade                        0012 passed
-SQLite downgrade/re-upgrade                 0012 -> 0011 -> 0012 passed
-Alembic check                               passed
-repository hygiene / infra manifest         passed
+GitHub full workflow                              GREEN
+Verify PROF-003 server resume draft/version       GREEN
+PostgreSQL migrations/integration                 GREEN
+PROF-001 / PROF-002 regressions                    GREEN
+AUTH-001 / AUTH-002 regressions                    GREEN
+PostgreSQL encrypted backup/restore               GREEN
+Docker/Compose/runtime smoke                       GREEN
 ```
 
-Локальные skips относятся к отсутствующим Flask/Psycopg/PostgreSQL runtime-зависимостям; соответствующие route/PostgreSQL проверки входят в обязательный Pull Request CI.
+Initial CI defect `KeyError: Attempt to overwrite 'created' in LogRecord` исправлен hotfix r1: custom logging field переименован в `version_created`.
 
-## 4. Автоматизированная матрица
+## 3. Render gate
 
-| Проверка | Ожидаемый результат | Статус |
-|---|---|---|
-| migration 0011 -> 0012 | четыре таблицы/constraints/indexes | ЛОКАЛЬНО PASSED |
-| downgrade 0012 -> 0011 | удаляются только PROF-003 tables | ЛОКАЛЬНО PASSED |
-| draft validation/hash/no-op | bounded canonical state | ЛОКАЛЬНО PASSED |
-| owner-scoped repository | чужой draft/version/asset недоступен | CI REQUIRED |
-| stale revision | controlled `409`, no lost update | CI REQUIRED |
-| checkpoint no duplicate | same hash не создаёт version spam | CI REQUIRED |
-| restore | old snapshot -> new immutable version | CI REQUIRED |
-| asset upload | MIME/signature/size/owner/draft checked | CI REQUIRED |
-| export metadata | tied to exact immutable version | CI REQUIRED |
-| PostgreSQL restart | draft/history/assets persist | PRODUCTION REQUIRED |
-| preview/export parity | one locked state | PRODUCTION REQUIRED |
-
-## 5. Positive production matrix
-
-Production E2E 13.08.2026 уже подтвердил: login gate, blank/profile-seeded drafts, autosave/relogin/cross-device persistence, независимость drafts, checkpoint versions/no-op/read-only history, restore-as-new-version и stale-tab conflict protection. iPhone Safari photo upload defect (`fetch(dataUrl)` -> generic `Load failed`) исправлен hotfix r3 и повторный asset smoke прошёл: photo сохраняется после refresh/relogin/cross-device. Следующий PDF smoke подтвердил export, но выявил presentation-only drift: university emblem искажался при html2canvas capture, а одинаковый university name дублировался heading/detail строкой. Hotfix r4 сохраняет intrinsic aspect ratio и скрывает exact normalized duplicate; schema остаётся `20260812_0012`. PDF parity нужно повторить после green CI/redeploy.
-
-1. Создать blank draft и draft из PROF-001.
-2. Ввести данные, дождаться server autosave.
-3. Войти с другого устройства/приватной сессии — увидеть тот же state.
-4. Очистить localStorage/cookies в одном browser, снова войти — state сохранён.
-5. Загрузить photo/logo — они видны после relogin/restart.
-6. Создать version 1, изменить material state, создать version 2.
-7. Открыть version 1 read-only; restore создаёт следующую version.
-8. Повторный no-op checkpoint не создаёт duplicate version.
-9. Export создаёт/использует immutable version и metadata; PDF совпадает с preview.
-10. Несколько resume drafts одного User независимы.
-
-## 6. Negative production matrix
-
-- Без login `/resumes` и `/resume-builder` redirect на login.
-- User B получает `404` на draft/history/version/asset User A.
-- Stale editor получает `409`, newer state сохраняется.
-- Asset другого draft/User отклоняется.
-- Unsupported/oversized/mismatched image fail closed.
-- Oversized/unknown-state payload получает safe `400/413`.
-- POST/PUT без CSRF получает `400`.
-- Delete draft каскадно удаляет versions/assets/export metadata только владельца.
-- Logs не содержат answers/messages/photo bytes/full snapshot/session token.
-
-## 7. Render gate
-
-После merge ожидается:
+Подтверждено в production:
 
 ```text
 status=ok
@@ -89,33 +41,88 @@ database.revision=20260812_0012
 migrations.current_revision=20260812_0012
 migrations.expected_revision=20260812_0012
 migrations.ok=true
+auth.email_backend=gmail_api
+auth.email_delivery_configured=true
+oauth_configured=true
 ```
 
-## 8. Security gate
+## 4. Positive production matrix
 
-- First-party User + active server-side AuthSession — единственная browser identity boundary.
-- Все draft/version/asset/export reads owner-scoped.
-- Autosave/checkpoint/export/restore требуют CSRF и expected revision.
-- State и images bounded; PDF binary не принимается сервером.
-- Logs разрешают только counts/result/revision/version/bytes metadata.
+| Проверка | Статус |
+|---|---|
+| login gate `/resumes` / `/resume-builder` | ПОДТВЕРЖДЕНО |
+| blank draft | ПОДТВЕРЖДЕНО |
+| profile-seeded draft | ПОДТВЕРЖДЕНО |
+| multiple independent drafts | ПОДТВЕРЖДЕНО |
+| autosave -> server | ПОДТВЕРЖДЕНО |
+| logout/login persistence | ПОДТВЕРЖДЕНО |
+| cross-device persistence | ПОДТВЕРЖДЕНО |
+| direct single-field edit r2 | ПОДТВЕРЖДЕНО |
+| checkpoint version 1/2 | ПОДТВЕРЖДЕНО |
+| no-op checkpoint | ПОДТВЕРЖДЕНО |
+| historical version read-only | ПОДТВЕРЖДЕНО |
+| restore old -> new immutable version | ПОДТВЕРЖДЕНО |
+| stale parallel tab conflict | ПОДТВЕРЖДЕНО |
+| iPhone photo upload/persistence r3 | ПОДТВЕРЖДЕНО |
+| university logo load/persistence | ПОДТВЕРЖДЕНО |
+| PDF/preview parity after r4 | ПОДТВЕРЖДЕНО |
+| owner isolation A/B | ПОДТВЕРЖДЕНО |
+| Render restart persistence | ПОДТВЕРЖДЕНО |
+| post-restart edit/autosave | ПОДТВЕРЖДЕНО |
 
-## 9. Ограничения
+## 5. Hotfix evidence
 
-AI, public share, collaborative merge, server PDF binary storage, external object storage, account export/delete и retention не входят в acceptance criteria.
+- **r1:** reserved `LogRecord.created` collision -> `version_created`.
+- **r2:** responsive `Редактировать поля`; точечное изменение не требует replay интервью.
+- **r3:** Safari `fetch(dataUrl)` removed; in-memory base64 decode -> multipart upload; failed local preview no longer masquerades as persisted asset.
+- **r4:** university emblem keeps intrinsic aspect ratio in html2canvas PDF; exact duplicate university detail hidden.
 
-## 10. Rollback
+Все r1-r4 без новой migration; production schema остаётся `0012`.
 
-Application revert совместим с `0012`. Downgrade `0012 -> 0011` удаляет PROF-003 data и допустим только после backup/explicit decision.
+## 6. Security/negative evidence
 
-## 11. Решение о статусе
+| Проверка | Статус |
+|---|---|
+| User B не открывает draft/history/version A | ПОДТВЕРЖДЕНО |
+| stale save не затирает newer state | ПОДТВЕРЖДЕНО |
+| asset state переживает relogin/cross-device/restart | ПОДТВЕРЖДЕНО |
+| generated resume edits не изменяют PROF-001 автоматически | КОНТРАКТ + CI |
+| PDF binary не хранится server-side | КОНТРАКТ + CI |
+
+Unsupported MIME/signature/size, CSRF и cross-draft asset injection остаются automated CI controls; отдельный полный manual negative sweep после r4 не повторялся.
+
+## 7. Final gate — подтверждён
+
+Final regression, выполненный перед переводом в `ВЫПОЛНЕНО`, подтвердил:
+
+1. `/profile` открывается и PROF-001 history штатна;
+2. PROF-002 text-PDF import/review/confirm штатен;
+3. `/dashboard`, login/logout штатны;
+4. HH/SuperJob cards/connect state штатны;
+5. `/vacancies` и обычный поиск штатны;
+6. `/health/ready` остаётся `0012`;
+7. Render Logs: нет новых 500/Traceback/migration errors и нет answers/messages/full snapshots/image bytes/cookies/session tokens.
+
+## 8. Ограничения
+
+AI interview/rewrite, public share, collaborative merge, server PDF binary storage, external object storage и PRIV-001 export/delete/retention не входят в PROF-003.
+
+## 9. Rollback
+
+Application revert совместим с `0012`. Downgrade `0012 -> 0011` удаляет PROF-003 data и допустим только после verified backup/explicit decision.
+
+## 10. Решение о статусе
 
 ```text
-PROF-003 — НУЖНА ПРОВЕРКА
-Next after completion — PRIV-001
+PROF-003 — ВЫПОЛНЕНО
+Final regression/log review — ПОДТВЕРЖДЕНО
+Next — PRIV-001
 ```
 
-## 12. Журнал версий
+## 11. Журнал версий
 
 | Версия | Дата | Изменение |
 |---|---|---|
 | 1.0 | 13.08.2026 | Зафиксированы local evidence и обязательный CI/Render/E2E gate PROF-003. |
+| 1.1 | 13.08.2026 | Green CI, Render `0012`, production drafts/version/asset/PDF/owner/restart E2E и hotfix r1-r4 подтверждены; остаётся final regression/log review. |
+| 1.2 | 13.08.2026 | Final regression `/profile`/PROF-002/`/dashboard`/AUTH/OAuth/`/vacancies`, readiness `0012` and Render log privacy/error review confirmed; PROF-003 COMPLETE, PRIV-001 next. |

@@ -30,9 +30,11 @@ from services.auth import AuthService
 from services.email_delivery import build_auth_email_sender
 from routes.auth import AUTH_SESSION_KEY, create_auth_blueprint, login_required
 from routes.profile import create_profile_blueprint
+from routes.privacy_controls import create_privacy_blueprint
 from routes.resume_drafts import create_resume_drafts_blueprint
 from services.oauth_identity import OAuthIdentityError, OAuthIdentityService
 from services.profile import CareerProfileService
+from services.privacy import PrivacyService
 from services.resume_import import ResumeImportReviewSigner, ResumeImportService
 from services.resume_drafts import ResumeDraftService
 from services.trudvsem_sync import TrudvsemSyncService
@@ -122,6 +124,8 @@ app.register_blueprint(
         PROFILE_SERVICE,
     )
 )
+PRIVACY_SERVICE = PrivacyService(STORAGE.privacy, SETTINGS)
+app.register_blueprint(create_privacy_blueprint(PRIVACY_SERVICE, AUTH_SERVICE))
 OAUTH_CONNECTIONS = STORAGE.oauth_connections
 OAUTH_IDENTITIES = OAuthIdentityService(OAUTH_CONNECTIONS)
 SYNC_RUNS = STORAGE.sync_runs
@@ -1660,6 +1664,36 @@ def debug_hh():
     return report, 200
 
 
+def _privacy_cleanup_status() -> dict[str, object]:
+    path = SETTINGS.data_dir / "privacy_cleanup_heartbeat.json"
+    payload: dict[str, object] = {
+        "enabled": bool(SETTINGS.privacy_cleanup_enabled),
+        "gating": False,
+        "worker_alive": False,
+        "heartbeat_age_seconds": None,
+        "last_status": None,
+    }
+    if not SETTINGS.privacy_cleanup_enabled:
+        return payload
+    try:
+        raw = json.loads(path.read_text(encoding="utf-8"))
+        timestamp = int(raw.get("timestamp") or 0)
+        age = max(0, int(time.time()) - timestamp) if timestamp else None
+        payload.update(
+            {
+                "heartbeat_age_seconds": age,
+                "last_status": str(raw.get("status") or "unknown")[:32],
+                "worker_alive": bool(
+                    age is not None
+                    and age <= max(SETTINGS.privacy_cleanup_interval_seconds * 2, 7200)
+                ),
+            }
+        )
+    except (OSError, ValueError, TypeError, json.JSONDecodeError):
+        pass
+    return payload
+
+
 def _readiness_response():
     started = time.monotonic()
     database_status = database_health(DATABASE)
@@ -1681,6 +1715,7 @@ def _readiness_response():
             "email_backend": AUTH_SERVICE.email_backend_name,
             "email_delivery_configured": AUTH_SERVICE.email_delivery_available,
         },
+        "privacy_cleanup": _privacy_cleanup_status(),
         "database": {
             **database_status,
             "configured": SETTINGS.database_url_explicit,

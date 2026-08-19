@@ -23,6 +23,12 @@ def test_compose_has_isolated_postgresql_and_profiles():
     assert services["ops"]["profiles"] == ["ops"]
     assert services["gateway"]["profiles"] == ["tls"]
     assert services["sync-worker"]["profiles"] == ["sync"]
+    assert services["privacy-worker"]["profiles"] == ["privacy"]
+    assert services["privacy-worker"]["command"] == [
+        "python",
+        "scripts/privacy_cleanup_worker.py",
+    ]
+    assert "ports" not in services["privacy-worker"]
     assert services["sync-worker"]["command"] == [
         "python",
         "scripts/trudvsem_sync_worker.py",
@@ -39,6 +45,11 @@ def test_compose_has_isolated_postgresql_and_profiles():
     assert app_environment["AUTH_GMAIL_REFRESH_TOKEN"] == "${AUTH_GMAIL_REFRESH_TOKEN:-}"
     assert app_environment["AUTH_GMAIL_TIMEOUT_SECONDS"] == "${AUTH_GMAIL_TIMEOUT_SECONDS:-8}"
     assert app_environment["SEARCH_SNAPSHOT_MAX_ROUNDS_PER_REQUEST"] == "${SEARCH_SNAPSHOT_MAX_ROUNDS_PER_REQUEST:-1}"
+    assert app_environment["PRIVACY_CLEANUP_ENABLED"] == "${PRIVACY_CLEANUP_ENABLED:-1}"
+    assert app_environment["PRIVACY_CLEANUP_INTERVAL_SECONDS"] == "${PRIVACY_CLEANUP_INTERVAL_SECONDS:-86400}"
+    assert app_environment["PRIVACY_PENDING_ACCOUNT_RETENTION_DAYS"] == "${PRIVACY_PENDING_ACCOUNT_RETENTION_DAYS:-30}"
+    assert app_environment["PRIVACY_AUTH_ARTIFACT_RETENTION_DAYS"] == "${PRIVACY_AUTH_ARTIFACT_RETENTION_DAYS:-30}"
+    assert app_environment["PRIVACY_AUDIT_RETENTION_DAYS"] == "${PRIVACY_AUDIT_RETENTION_DAYS:-180}"
 
 
 def test_dockerfile_has_non_root_runtime_and_ops_targets():
@@ -73,6 +84,11 @@ def test_env_template_contains_placeholders_not_real_secrets():
     assert "SEARCH_SNAPSHOT_BUFFER_ITEMS=1" in text
     assert "SEARCH_SNAPSHOT_EXTENSION_LEASE_SECONDS=90" in text
     assert "TRUDVSEM_SYNC_ENABLED=0" in text
+    assert "PRIVACY_CLEANUP_ENABLED=1" in text
+    assert "PRIVACY_CLEANUP_INTERVAL_SECONDS=86400" in text
+    assert "PRIVACY_PENDING_ACCOUNT_RETENTION_DAYS=30" in text
+    assert "PRIVACY_AUTH_ARTIFACT_RETENTION_DAYS=30" in text
+    assert "PRIVACY_AUDIT_RETENTION_DAYS=180" in text
     assert "TRUDVSEM_SYNC_INTERVAL=1800" in text
     assert "TRUDVSEM_SYNC_ITEMS=300" in text
     assert "TRUDVSEM_SYNC_BATCH=10" in text
@@ -102,6 +118,11 @@ def test_render_uses_external_worker_runtime_supervisor():
     assert env["AUTH_GMAIL_REFRESH_TOKEN"]["sync"] is False
     assert env["AUTH_GMAIL_TIMEOUT_SECONDS"]["value"] == "8"
     assert env["SEARCH_SNAPSHOT_MAX_ROUNDS_PER_REQUEST"]["value"] == "1"
+    assert env["PRIVACY_CLEANUP_ENABLED"]["value"] == "1"
+    assert env["PRIVACY_CLEANUP_INTERVAL_SECONDS"]["value"] == "86400"
+    assert env["PRIVACY_PENDING_ACCOUNT_RETENTION_DAYS"]["value"] == "30"
+    assert env["PRIVACY_AUTH_ARTIFACT_RETENTION_DAYS"]["value"] == "30"
+    assert env["PRIVACY_AUDIT_RETENTION_DAYS"]["value"] == "180"
 
     app_text = (ROOT / "app.py").read_text(encoding="utf-8")
     assert "TRUDVSEM_SYNC_THREAD" not in app_text

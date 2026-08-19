@@ -4,9 +4,9 @@
 |---|---|
 | Документ | PROF003_SECURITY_REFERENCE |
 | Пакет | PROF-003 |
-| Версия | 1.0 |
+| Версия | 1.2 |
 | Дата | 13 августа 2026 |
-| Статус | НУЖНА ПРОВЕРКА |
+| Статус | ВЫПОЛНЕНО |
 
 ## 1. Security boundary
 
@@ -103,7 +103,17 @@ cookies/session token
 | ephemeral filesystem loss | PostgreSQL persistence; no local file path |
 | PDF leakage | binary remains client-side; metadata only |
 
-## 8. Residual risks
+## 8. Production security evidence
+
+- owner isolation for draft/history/version was confirmed with User A/User B;
+- stale parallel-tab overwrite was rejected and newer state survived;
+- iPhone photo asset survived refresh/relogin/cross-device and Render restart;
+- hotfix r1 removed a logging-key runtime failure without adding resume content to logs;
+- r2-r4 did not change owner/revision/CSRF/database schema boundaries.
+
+Final Render log review after r4 confirmed absence of new 500/Traceback/migration errors and sensitive resume/session payload. PROF-003 COMPLETE.
+
+## 9. Residual risks
 
 - Browser displays personal resume data during editing.
 - PostgreSQL BLOB storage increases backup/database volume.
@@ -112,16 +122,18 @@ cookies/session token
 - Legacy localStorage remains readable until one-time migration/removal.
 - External object storage requires a future credentials/encryption/retention threat model.
 
-## 9. Incident response
+## 10. Incident response
 
 Stop affected routes, revoke sessions if browser identity is suspect, preserve encrypted backup, inspect secret-free events, verify owner scopes and follow SEC/OPS incident procedure. Resume content should not be present in logs.
 
-## 10. Rollback
+## 11. Rollback
 
 Application revert may retain `0012`. Controlled downgrade deletes PROF-003 data; never run automatically. Restore from verified backup if rollback must preserve drafts.
 
-## 11. Журнал версий
+## 12. Журнал версий
 
 | Версия | Дата | Изменение |
 |---|---|---|
 | 1.0 | 13.08.2026 | Defined owner/revision/CSRF/resource/asset/version/export/logging and rollback controls. |
+| 1.1 | 13.08.2026 | Added production owner/stale/asset/restart evidence and final log-review closure requirement; r1-r4 preserve security/schema boundaries. |
+| 1.2 | 13.08.2026 | Final regression `/profile`/PROF-002/`/dashboard`/AUTH/OAuth/`/vacancies`, readiness `0012` and Render log privacy/error review confirmed; PROF-003 COMPLETE, PRIV-001 next. |

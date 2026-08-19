@@ -130,6 +130,7 @@ class ResumeAsset(Base):
             name="ck_resume_assets_byte_size",
         ),
         Index("idx_resume_assets_user_draft", "user_id", "draft_id"),
+        Index("idx_resume_assets_created", "created_at", "id"),
     )
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True)

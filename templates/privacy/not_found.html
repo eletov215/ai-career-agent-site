@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}Аккаунт недоступен — AI Career Agent{% endblock %}
+{% block content %}
+<main class="section"><div class="container card privacy-card">
+  <h1 class="page-title">Аккаунт недоступен</h1>
+  <p>Не удалось выполнить действие. Войдите заново и повторите попытку.</p>
+  <a class="btn btn-primary" href="{{ url_for('auth.login') }}">Войти</a>
+</div></main>
+{% endblock %}

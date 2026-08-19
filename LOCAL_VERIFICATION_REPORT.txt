@@ -1,0 +1,36 @@
+AI Career Agent — PRIV-001 hardened candidate v1.4.28
+Date: 2026-08-19
+Status: NEEDS VERIFICATION (external GitHub/Render/E2E pending)
+Candidate revision: 20260813_0013
+Production baseline before merge: 20260812_0012
+
+Local split pytest:
+- chunk 1: 127 passed, 6 skipped
+- chunk 2: 81 passed, 6 skipped
+- chunk 3: 60 passed
+TOTAL: 268 passed, 12 skipped, 0 failed
+
+Local skips are environment-dependent Flask/Psycopg/PostgreSQL cases and remain mandatory in GitHub Actions.
+
+Additional checks:
+- Python compileall: PASS
+- Jinja parse: 28 templates PASS
+- Node syntax check: PASS
+- migration 0012 -> 0013 and downgrade/re-upgrade coverage: PASS
+- manage_db upgrade/check: PASS, revision 20260813_0013
+- repository hygiene: PASS
+- infra manifest: PASS
+- document structure: PASS
+- privacy password re-auth export tests: PASS
+- privacy password-hash conflict test: PASS
+- owner/draft asset integrity fail-closed test: PASS
+- orphan ResumeAsset retention test: PASS
+- time-sensitive SEARCH/SYNC fixture regressions corrected for deterministic CI dates
+
+External gates still required:
+- GitHub Actions full workflow, including PRIV-001 dedicated gate
+- PostgreSQL 17 integration/concurrency tests
+- Flask route tests in CI runtime
+- encrypted backup/restore and container runtime smoke
+- Render migration/readiness 20260813_0013
+- production E2E on throwaway account
