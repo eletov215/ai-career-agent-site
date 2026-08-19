@@ -1,12 +1,12 @@
 # AI Career Agent — project guide
 
 ```text
-canonical plan: docs/PLAN_CURRENT.md v1.4.27
-passport: docs/PROJECT_PASSPORT.md v2.41
+canonical plan: docs/PLAN_CURRENT.md v1.4.29
+passport: docs/PROJECT_PASSPORT.md v2.43
 PROF-003: ВЫПОЛНЕНО
-current package: PRIV-001 / НУЖНА ПРОВЕРКА
-production revision before deploy: 20260812_0012
-candidate revision: 20260813_0013
+PRIV-001: ВЫПОЛНЕНО
+current package: SEARCH-005 / ГОТОВО К СТАРТУ
+production revision: 20260813_0013
 WSGI: app:app
 ```
 
@@ -49,3 +49,7 @@ Do not reintroduce authoritative localStorage writes. Draft document data is ser
 Use a throwaway verified account because account deletion is destructive. Verify owner-readable ZIP export (`manifest.json`, `data.json`, owned resume image assets) with no password/session/token/OAuth credentials; wrong confirmation phrase/password must not delete anything; exact phrase + current password must delete the account and local HH/SuperJob credentials; old login must fail; retention cleanup must leave active accounts intact; audit/logs must contain aggregate counts only. After deploy `/health/ready` must show revision `20260813_0013`.
 
 Do not claim remote provider-side OAuth grant revocation: current PRIV-001 scope guarantees local credential erasure only.
+
+## SEARCH-005 start boundary
+
+Before implementation audit existing `services/source_status.py`, observability/provider metrics, SyncRun/checkpoint state, diagnostics/admin authorization options and templates. Detailed admin telemetry must be inaccessible without explicit admin authorization and must not expose credentials, token material, resume/profile PII or raw provider bodies. Production baseline revision is `20260813_0013`.

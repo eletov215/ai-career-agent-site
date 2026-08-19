@@ -1,3 +1,12 @@
+## 1.4.29 — PRIV-001 complete / SEARCH-005 prep — 19.08.2026
+
+- GitHub Actions полностью green после CI hotfix r1, включая dedicated `Verify PRIV-001 privacy export deletion and retention controls`, PostgreSQL migrations/integration, AUTH/PROF regressions, encrypted backup/restore, Docker/Compose/runtime smoke и full tests.
+- Render применил `20260813_0013`; `/health/ready` подтвердил persistent PostgreSQL, `migrations.ok=true`, `privacy_cleanup.enabled=true`, `worker_alive=true`, `last_status=ok`.
+- Production export E2E: re-authenticated ZIP readable; `manifest.json`/`data.json` корректны; secret fields/credentials отсутствуют; аккаунт без assets корректно не получает `assets/`, аккаунт с university logo получает owned asset.
+- Destructive throwaway-account E2E: wrong phrase/password безопасно отклоняются; correct delete clears owner subtree/session; old login/URLs fail; другой User не затронут.
+- Render restart + `/profile`/PROF-002/`/resumes`/AUTH/OAuth/`/vacancies` regression и log review прошли без новых 500/Traceback/IntegrityError/migration/privacy-cleanup errors или sensitive payload.
+- PRIV-001 переведён в ВЫПОЛНЕНО. SEARCH-005 — следующий пакет, ГОТОВО К СТАРТУ.
+
 # Changelog
 
 ## 1.4.27 — PROF-003 complete / PRIV-001 candidate — 13.08.2026

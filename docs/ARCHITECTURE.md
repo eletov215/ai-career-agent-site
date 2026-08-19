@@ -1,6 +1,6 @@
 # AI Career Agent — architecture reference
 
-> Current candidate: PRIV-001, status НУЖНА ПРОВЕРКА. PROF-003 закрыт на production `20260812_0012`; candidate head `20260813_0013`.
+> Current package: SEARCH-005, status ГОТОВО К СТАРТУ. PROF-003/PRIV-001 закрыты; production `20260813_0013`.
 
 ## Runtime boundaries
 

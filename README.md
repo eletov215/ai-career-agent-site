@@ -2,20 +2,19 @@
 
 | Поле | Значение |
 |---|---|
-| Канонический план | `docs/PLAN_CURRENT.md` — 1.4.27 |
-| Паспорт | `docs/PROJECT_PASSPORT.md` — 2.41 |
-| Завершённый пакет | `PROF-003 — ВЫПОЛНЕНО` |
-| Текущий пакет | `PRIV-001 — НУЖНА ПРОВЕРКА` |
-| Production revision | `20260812_0012` |
-| Candidate revision | `20260813_0013` |
+| Канонический план | `docs/PLAN_CURRENT.md` — 1.4.29 |
+| Паспорт | `docs/PROJECT_PASSPORT.md` — 2.43 |
+| Завершённый пакет | `PRIV-001 — ВЫПОЛНЕНО` |
+| Текущий пакет | `SEARCH-005 — ГОТОВО К СТАРТУ` |
+| Production revision | `20260813_0013` |
 
-> GitHub является главным источником кода. PRIV-001 candidate построен поверх подтверждённого PROF-003 baseline. Actual `.env`, secrets/tokens, DB/dumps/backups, virtualenv, caches и bytecode не входят в repository/release ZIP; `infra/vps/.env.example` остаётся обязательным secret-free template.
+> GitHub является главным источником кода. PRIV-001 завершён и подтверждён в production; следующий кодовый пакет SEARCH-005. Actual `.env`, secrets/tokens, DB/dumps/backups, virtualenv, caches и bytecode не входят в repository/release ZIP; `infra/vps/.env.example` остаётся обязательным secret-free template.
 
 ## 1. Назначение
 
-AI Career Agent — Flask/Gunicorn web-service карьерного сопровождения. WSGI entrypoint `app:app`. PROF-001/002/003 завершены; текущий PRIV-001 добавляет фактический пользовательский контроль над данными перед AI-контуром.
+AI Career Agent — Flask/Gunicorn web-service карьерного сопровождения. WSGI entrypoint `app:app`. PROF-001/002/003 и PRIV-001 завершены; следующий SEARCH-005 добавит защищённый admin center состояния источников перед AI-контуром.
 
-## 2. PRIV-001 candidate
+## 2. PRIV-001 complete
 
 ```text
 first-party User
@@ -34,6 +33,7 @@ Export содержит owner data и owned resume image assets, но не passw
 ```text
 pending unverified account       30 days
 expired/revoked auth artifacts   30 days
+orphan ResumeAsset                7 days
 identifier-free privacy audit   180 days
 cleanup interval                  24 hours
 active owner content              until explicit deletion
@@ -43,30 +43,27 @@ active owner content              until explicit deletion
 
 ## 4. Persistence
 
-Migration `20260813_0013` добавляет только `privacy_audit_events` без User FK/email/content. Existing AUTH/PROF/RESUME schema не меняется. Production остаётся `0012` до merge/deploy.
+Migration `20260813_0013` применена в production; `privacy_audit_events` не содержит User FK/email/content. Existing AUTH/PROF/RESUME schema не меняется.
 
 ## 5. Verification
 
 ```text
 local compile/migration/focused tests      passed
-SQLite 0012 -> 0013 -> 0012 -> 0013       passed
-Alembic check                              passed
-Jinja / hygiene / infra                    passed
-full Flask/PostgreSQL route gate           GitHub CI required
-Render 0013 + destructive throwaway E2E    required
+GitHub full workflow + dedicated PRIV gate green
+Render current=expected 0013               passed
+privacy cleanup worker healthy             passed
+export/secret/assets E2E                    passed
+throwaway delete/owner isolation E2E       passed
+restart/regression/log review               passed
 ```
 
 ## 6. Workflow
 
 ```text
-branch priv-001-candidate-v1.4.27
--> Pull Request
--> full green CI
--> merge main
--> Render migration 0013
--> export/delete/restart/log E2E on throwaway account
--> PRIV-001 COMPLETE
--> SEARCH-005
+PRIV-001 COMPLETE
+-> SEARCH-005 audit current source-state/OPS/SYNC/admin boundaries
+-> implement in feature branch
+-> Pull Request / CI / Render / E2E
 ```
 
 ## 7. Documentation
