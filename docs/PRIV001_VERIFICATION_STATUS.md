@@ -4,37 +4,31 @@
 |---|---|
 | Документ | PRIV001_VERIFICATION_STATUS |
 | Пакет | PRIV-001 |
-| Версия | 1.1 |
+| Версия | 1.2 |
 | Дата | 19 августа 2026 |
-| Статус | НУЖНА ПРОВЕРКА |
-| Production revision | `20260812_0012` |
-| Candidate revision | `20260813_0013` |
-| Остаточный gate | Pull Request CI + Render 0013 + destructive production E2E |
+| Статус | ВЫПОЛНЕНО |
+| Production revision | `20260813_0013` |
+| Остаточный gate | нет |
 
 ## 1. Контрольный статус
 
-Code candidate готов локально. Production ещё не содержит migration `0013`, поэтому PRIV-001 не может считаться выполненным.
+Все критерии PRIV-001 подтверждены. Package status: **ВЫПОЛНЕНО**.
 
-## 2. Local automated evidence
+## 2. GitHub gate
 
-| Проверка | Статус |
+| Проверка | Результат |
 |---|---|
-| Python compile | ПОДТВЕРЖДЕНО |
-| PRIV migration/service/config/infra/architecture focused tests | ПОДТВЕРЖДЕНО |
-| Route suite in isolated local runtime | expected skip: Flask package absent |
-| SQLite 0012 -> 0013 -> 0012 -> 0013 | ПОДТВЕРЖДЕНО |
-| Alembic check | ПОДТВЕРЖДЕНО |
-| Jinja parse 28 templates | ПОДТВЕРЖДЕНО |
-| repository hygiene | ПОДТВЕРЖДЕНО |
-| infra manifest | ПОДТВЕРЖДЕНО |
+| Dedicated PRIV-001 privacy export/delete/retention | GREEN |
+| PostgreSQL migrations/integration | GREEN |
+| PROF-001/002/003 regressions | GREEN |
+| AUTH-001/002 regressions | GREEN |
+| Encrypted backup/restore | GREEN |
+| Docker/Compose/runtime smoke | GREEN |
+| Full tests | GREEN |
 
-## 3. Required GitHub gate
+Initial CI failure was a stale route-test assertion after successful deletion (`401` correctly returned where test expected `200`). CI hotfix r1 changed only the test expectation/message contract; rerun was fully green.
 
-Dedicated step `Verify PRIV-001 privacy export deletion and retention controls` должен пройти вместе с PostgreSQL migrations/integration, AUTH-001/002, PROF-001/002/003, backup/restore, Docker/Compose/runtime smoke и full tests. При любом failure merge запрещён.
-
-## 4. Required Render gate
-
-После merge/deploy:
+## 3. Render gate
 
 ```text
 status=ok
@@ -44,53 +38,51 @@ database.revision=20260813_0013
 migrations.current_revision=20260813_0013
 migrations.expected_revision=20260813_0013
 migrations.ok=true
+privacy_cleanup.enabled=true
+privacy_cleanup.gating=false
+privacy_cleanup.worker_alive=true
+privacy_cleanup.last_status=ok
 ```
 
-Restart не должен менять revision или повреждать existing profile/resume/search state.
+## 4. Production E2E matrix
 
-## 5. Production E2E matrix
-
-Использовать отдельный throwaway account A для destructive проверки и независимый account B для isolation.
-
-| Проверка | Ожидание |
+| Проверка | Статус |
 |---|---|
-| unauth `/privacy-center` | login gate |
-| export A | ZIP downloads; manifest/data readable; owned photo/logo included |
-| secret scan export | нет password/session/token hashes и OAuth access/refresh |
-| wrong confirmation | 400; A остаётся активен |
-| wrong password | 400; A остаётся активен |
-| correct delete | success page; session cleared |
-| relogin A | невозможен |
-| old profile/resume URLs A | недоступны |
-| account B | данные/сессия B не затронуты |
-| local HH/SJ credentials A | удалены; remote provider grant не считается проверенным |
-| retention worker | aggregate-only completion event; no identifiers/content |
-| restart | `/health/ready` остаётся `0013`; B and system data persist |
-| regressions | registration/login, `/profile`, PROF-002, `/resumes`, `/vacancies` штатны |
-| Render Logs | no 500/Traceback/migration errors; no export payload/delete password/tokens |
+| `/privacy-center` authenticated flow | ПОДТВЕРЖДЕНО |
+| correct-password export | ПОДТВЕРЖДЕНО |
+| ZIP `manifest.json` + `data.json` readable | ПОДТВЕРЖДЕНО |
+| secret scan: password/OAuth/session/token fields absent | ПОДТВЕРЖДЕНО |
+| no-assets account -> no `assets/` | ПОДТВЕРЖДЕНО |
+| account with university logo -> asset exported | ПОДТВЕРЖДЕНО |
+| wrong deletion phrase/password | ПОДТВЕРЖДЕНО safe |
+| exact deletion on throwaway account | ПОДТВЕРЖДЕНО |
+| deleted account relogin | ПОДТВЕРЖДЕНО impossible |
+| old owner URLs after deletion | ПОДТВЕРЖДЕНО inaccessible |
+| independent/main account | ПОДТВЕРЖДЕНО unaffected |
+| Render restart | ПОДТВЕРЖДЕНО |
+| `/profile`, PROF-002, `/resumes`, dashboard/auth/OAuth, `/vacancies` regression | ПОДТВЕРЖДЕНО |
+| Render Logs error/privacy review | ПОДТВЕРЖДЕНО clean |
 
-## 6. Automated-only time retention checks
+## 5. Retention evidence
 
-Не ждать 30/180 дней вручную. Time-bound cleanup подтверждается CI fixtures с injected timestamps: stale pending/auth/audit удаляются, active User data сохраняется.
+7/30/180-day cleanup semantics are automated-time tests; production did not artificially age real user data. Production evidence confirms worker liveness/status, restart safety and no active-data regression.
 
-## 7. Security notes
+## 6. Security notes
 
-Destructive E2E не выполнять на основном production test account с нужной историей. Remote provider revoke вне current scope; проверяется только local credential deletion.
+Remote HH/SJ provider-side grant revoke remains outside the proven contract. Existing backup copies are not rewritten by account deletion. Final legal retention wording remains `LEGAL-001`.
 
-## 8. Решение о статусе
+## 7. Решение о статусе
 
 ```text
-PRIV-001 — НУЖНА ПРОВЕРКА
-Remaining — full CI + Render 0013 + production export/delete/restart/log E2E
-Next after completion — SEARCH-005
+PRIV-001 — ВЫПОЛНЕНО
+Production — 20260813_0013
+Next — SEARCH-005 / ГОТОВО К СТАРТУ
 ```
 
-## 9. Журнал версий
+## 8. Журнал версий
 
 | Версия | Дата | Изменение |
 |---|---|---|
-| 1.0 | 13.08.2026 | Local candidate evidence and mandatory external gate recorded. |
-
-## Hardened candidate v1.4.28
-
-Повторный privacy/security аудит перед внешней проверкой усилил candidate: экспорт требует повторного текущего пароля и формируется как согласованный PostgreSQL snapshot; добавлены raw/archive size bounds, SpooledTemporaryFile, safe ZIP entry paths, OAuth profile sanitization и fail-closed owner/draft asset integrity. Account deletion повторно сверяет password hash под User row lock и использует единый lock order для Auth/OAuth rows. Retention cleanup получил bounded batches, orphan ResumeAsset cleanup (7d, только без current/history references), cross-process worker lock/heartbeat и индекс `idx_resume_assets_created`. Backup copies не переписываются account deletion; remote provider-side OAuth revoke не заявляется. Candidate schema остаётся `20260813_0013`; production до merge остаётся `20260812_0012`.
+| 1.0 | 13.08.2026 | Local candidate evidence and external gate. |
+| 1.1 | 19.08.2026 | Hardened candidate evidence. |
+| 1.2 | 19.08.2026 | Full CI, Render `0013`, export/delete/restart/regression/log E2E confirmed; COMPLETE. |

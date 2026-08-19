@@ -4,108 +4,69 @@
 |---|---|
 | Документ | PRIV001_RUNBOOK |
 | Пакет | PRIV-001 |
-| Версия | 1.1 |
+| Версия | 1.2 |
 | Дата | 19 августа 2026 |
-| Статус | НУЖНА ПРОВЕРКА |
+| Статус | ВЫПОЛНЕНО |
 
 ## 1. Назначение
 
-Safe deploy/verification для export/delete/retention. Никогда не публиковать export ZIP, `data.json`, email, password, hashes, cookies, session/OAuth tokens или image bytes в screenshots/log reports.
+Safe operations/reference для completed export/delete/retention controls. Никогда не публиковать export ZIP/data.json, passwords, cookies, auth/OAuth tokens или image bytes.
 
-## 2. Pre-deploy
-
-1. Branch from current GitHub `main` after PROF-003 COMPLETE.
-2. Проверить `app.py`, WSGI `app:app`, `database.CURRENT_REVISION=20260813_0013`.
-3. `infra/vps/.env.example` должен присутствовать; actual `.env`, DB/dumps/backups/caches/bytecode отсутствуют.
-4. Проверить `0013 -> 0012 -> 0013`; backup inventory includes `privacy_audit_events`.
-5. New privacy env knobs contain no secrets.
-
-## 3. GitHub gate
-
-Обязательные steps:
+## 2. Current production baseline
 
 ```text
-Verify PRIV-001 privacy export deletion and retention controls
-Verify PROF-003 server resume draft and version controls
-Verify PROF-002 resume import review controls
-Verify PROF-001 structured career profile controls
-Verify AUTH-001 / AUTH-002
-Verify PostgreSQL migrations + integration
-Verify PostgreSQL encrypted backup and restore
-Docker/Compose/runtime smoke
-Run tests
+WSGI app:app
+PostgreSQL 20260813_0013
+privacy cleanup enabled
+worker healthy/non-gating
 ```
 
-При любом failure merge запрещён.
+`infra/vps/.env.example` обязателен; actual `.env`, DB/dumps/backups/caches/bytecode не входят в release archive.
 
-## 4. Deploy
+## 3. Verified deploy gate
 
-Start command не меняется:
+Full GitHub Actions green after CI hotfix r1. Render readiness current=expected `0013`; privacy worker alive/status ok. Start command unchanged:
 
 ```text
 python scripts/manage_db.py upgrade && python scripts/start_runtime.py
 ```
 
-После Live `/health/ready` должен показать current=expected `20260813_0013`, persistent PostgreSQL, status=ok. Privacy cleanup worker запускается sibling process на Render; Compose/VPS может использовать отдельный profile `privacy`.
+## 4. Export operational check
 
-## 5. Export E2E
+Use current password. Open ZIP locally; do not send personal export into support chat. `manifest.json` and `data.json` must be readable. `assets/` is conditional: absent when no referenced owner assets, present when referenced owned assets exist. Search must not reveal password/auth/OAuth/session secret fields.
 
-На throwaway account A создать минимум: verified account, profile version, resume draft/version/photo, при возможности HH/SJ local connection. Затем:
+## 5. Delete operational check
 
-1. `/privacy-center` -> `Скачать мои данные`.
-2. Открыть ZIP локально, не отправлять его в чат.
-3. `manifest.json` readable; `data.json` readable.
-4. Photo/logo files открываются.
-5. Поиск по archive: не должно быть известного password, OAuth access/refresh token, session/token hash.
-6. PDF binary не ожидается, потому что server его не хранит.
+Use throwaway account for destructive verification. Wrong phrase/password must preserve account. Correct exact phrase `УДАЛИТЬ АККАУНТ` + current password deletes owner subtree and terminates session. Old login/owner URLs must fail; other accounts remain unaffected.
 
-## 6. Delete negative/positive E2E
+## 6. Retention worker
 
-1. Wrong phrase -> 400, account remains.
-2. Correct phrase + wrong password -> 400, account remains.
-3. Убедиться, что account B работает.
-4. Correct phrase `УДАЛИТЬ АККАУНТ` + current password A -> success.
-5. Browser A session terminated; relogin A fails.
-6. Old A profile/resume/history/version URLs не раскрывают данные.
-7. B remains unaffected.
-8. Не утверждать remote HH/SJ grant revoked; подтверждается только local credential removal.
-
-## 7. Retention worker
-
-Production не требует ожидания 30/180 дней. CI time fixtures доказывают cleanup rules. В Render Logs достаточно увидеть штатный `privacy_retention_cleanup` event с aggregate counts. Не запускать ручную очистку с искусственно изменёнными production timestamps.
-
-One-shot command для controlled maintenance/test environment:
+Do not wait real 7/30/180 days or mutate production timestamps for verification. CI fixtures verify time predicates. Production check is worker health/restart/no-active-data-loss. Controlled one-shot maintenance/test command:
 
 ```text
 python scripts/cleanup_privacy.py
 ```
 
-## 8. Restart/regression
+## 7. Logs/privacy
 
-После E2E выполнить Render restart. Проверить `/health/ready=0013`, account B, `/profile`, PROF-002 import, `/resumes`, `/vacancies`, ordinary search и login/logout.
+Allowed: event/status/revision/bounded aggregate counts. Forbidden: export payload, email/User ID, resume/profile content, asset IDs/bytes, deletion password, cookies/session/OAuth tokens.
 
-## 9. Logs/privacy
+## 8. Incident response
 
-Allowed: event, aggregate counts, status/revision. Forbidden: exported data, User/email, resume/profile content, asset IDs/bytes, filename/hash, deletion password, cookies/session/OAuth tokens.
+Disable affected privacy route/worker, preserve evidence with secret-free request IDs/aggregates, take verified backup if appropriate, inspect owner predicates and deployment diff. Never request user credentials/export ZIP.
 
-## 10. Rollback
+## 9. Rollback
 
-1. Остановить new privacy operations при incident.
-2. Сделать verified backup если требуется rollback schema.
-3. Application revert может оставить `0013`.
-4. Downgrade `0013 -> 0012` removes only identifier-free audit table.
-5. Account deletion cannot be undone by application/schema rollback.
+Application revert can retain `0013`; downgrade does not restore deleted accounts. Recovery requires verified backup and explicit decision.
 
-## 11. Закрытие
+## 10. Next package handoff
 
-После full green CI + Render 0013 + destructive E2E + restart/log regression: PRIV-001 -> ВЫПОЛНЕНО, следующий SEARCH-005.
+SEARCH-005 begins from production `0013`. Audit current source-status/observability/SyncRun telemetry before adding admin authorization and detailed provider health UI.
 
-## 12. Журнал версий
+## 11. Журнал версий
 
 | Версия | Дата | Изменение |
 |---|---|---|
-| 1.0 | 13.08.2026 | Created deploy/export/delete/retention/restart/log verification runbook. |
-
-## Hardened candidate v1.4.28
-
-Повторный privacy/security аудит перед внешней проверкой усилил candidate: экспорт требует повторного текущего пароля и формируется как согласованный PostgreSQL snapshot; добавлены raw/archive size bounds, SpooledTemporaryFile, safe ZIP entry paths, OAuth profile sanitization и fail-closed owner/draft asset integrity. Account deletion повторно сверяет password hash под User row lock и использует единый lock order для Auth/OAuth rows. Retention cleanup получил bounded batches, orphan ResumeAsset cleanup (7d, только без current/history references), cross-process worker lock/heartbeat и индекс `idx_resume_assets_created`. Backup copies не переписываются account deletion; remote provider-side OAuth revoke не заявляется. Candidate schema остаётся `20260813_0013`; production до merge остаётся `20260812_0012`.
+| 1.0 | 13.08.2026 | Candidate deploy/E2E runbook. |
+| 1.1 | 19.08.2026 | Hardened privacy/security deployment controls. |
+| 1.2 | 19.08.2026 | Production gate completed; runbook converted to completed operational reference. |

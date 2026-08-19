@@ -1,16 +1,16 @@
-# AI Career Agent — privacy data contract reference PRIV-001
+# AI Career Agent — export/privacy data contract reference PRIV-001
 
 | Поле | Значение |
 |---|---|
-| Документ | PRIV001_PRIVACY_REFERENCE |
+| Документ | PRIV001_EXPORT_REFERENCE |
 | Пакет | PRIV-001 |
-| Версия | 1.1 |
+| Версия | 1.2 |
 | Дата | 19 августа 2026 |
-| Статус | НУЖНА ПРОВЕРКА |
+| Статус | ВЫПОЛНЕНО |
 
 ## 1. Purpose
 
-Reference фиксирует технический inventory и lifecycle текущих first-party personal data. Это не юридическая privacy policy; финальные legal bases/wording/retention утверждаются `LEGAL-001`.
+Reference фиксирует технический inventory/export/delete/retention contract текущих first-party data. Это не legal privacy policy.
 
 ## 2. Export inventory
 
@@ -18,34 +18,24 @@ Reference фиксирует технический inventory и lifecycle те�
 |---|---|---|---|
 | User account metadata | да | да | stale pending only |
 | Password hash | НЕТ | да | with User |
-| Auth session/token metadata | да, без hashes | да | expired/revoked/consumed |
-| Auth token/session hashes | НЕТ | да | expired/revoked/consumed |
-| HH/SJ external identity/profile metadata | да | да | нет для active User |
-| HH/SJ access/refresh token | НЕТ | да local | нет для active User |
-| CareerProfile current/version snapshots | да | да | нет для active User |
-| ResumeDraft current/version snapshots | да | да | нет для active User |
-| Resume image asset bytes | да | да | нет для active User |
-| Resume PDF export metadata | да | да | нет для active User |
+| Auth session/token metadata | да, без hashes/secrets | да | expired/revoked/consumed |
+| Auth hashes/secrets | НЕТ | да | bounded auth cleanup |
+| HH/SJ identity/profile metadata | sanitised | да | active User не age-out |
+| HH/SJ access/refresh/browser secrets | НЕТ | да local | active User не age-out |
+| CareerProfile current/versions | да | да | no inactivity cleanup |
+| ResumeDraft current/versions | да | да | no inactivity cleanup |
+| Referenced resume image bytes | да | да | orphan-only 7d |
+| Resume PDF export metadata | да | да | no inactivity cleanup |
 | Resume PDF binary | отсутствует server-side | n/a | n/a |
-| Privacy audit | не owner-linked; не экспортируется как personal record | aged by policy | 180d default |
+| Identifier-free privacy audit | не owner export | aged by policy | 180d default |
 
-## 3. Export structure
+## 3. Export structure and safety
 
-Manifest сообщает schema/version/time/categories/secret exclusions. `data.json` хранит JSON-safe values and timestamps. Assets сохраняются отдельными binary files; state JSON продолжает использовать UUID references.
+`manifest.json` declares schema/time/categories/exclusions; `data.json` stores JSON-safe owner data. Referenced owned assets are separate files. Missing asset references mean `assets/` may be absent. ZIP entry path components are sanitized; archive/raw size are bounded; PostgreSQL snapshot is consistent; response is no-store.
 
 ## 4. Secret exclusion rule
 
-Authentication credentials не являются portability payload. Никогда не экспортируются:
-
-```text
-password_hash
-auth session token/hash
-auth verification/reset token hash
-OAuth access_token
-OAuth refresh_token
-OAuth state/browser secret
-server environment secrets
-```
+Never export password/auth/session/token hashes, OAuth access/refresh/browser secrets, code verifier/device/user codes/SAML/token-like credentials or server environment secrets. Provider profile URLs/strings are sanitized.
 
 ## 5. Account deletion graph
 
@@ -57,33 +47,36 @@ User
 -> ResumeDraft -> ResumeVersion / ResumeAsset / ResumeExport
 ```
 
-Unified owner rows удаляются cascade. Legacy HH/SuperJob credential mirrors удаляются explicit repository cleanup до User delete. Shared Vacancy/Search/Sync data не является owner subtree и не удаляется вместе с одним User.
+Legacy HH/SJ local mirrors are explicitly cleaned. Shared Vacancy/Search/Sync rows are not one User's owner subtree.
 
 ## 6. Retention categories
 
 ```text
 pending unverified User      30d default
 expired/revoked auth data    30d default
-identifier-free audit       180d default
-active owner content         until explicit deletion
+orphan ResumeAsset             7d default
+identifier-free audit        180d default
+active owner content          until explicit deletion
 ```
 
-No cleanup rule guesses inactivity for an active verified User.
+No rule guesses inactivity for active verified User. Orphan asset delete requires no current/history reference after recheck.
 
-## 7. OAuth distinction
+## 7. Provider and backup distinction
 
-Local deletion != remote grant revocation. After account deletion AI Career Agent no longer retains local HH/SuperJob token material, but provider-side authorization state may require future provider revoke integration or user action on provider account.
+Local deletion != remote provider grant revocation. Existing backup copies are not rewritten by account deletion. Provider revoke and final backup/legal retention are separate future gates.
 
-## 8. Future compatibility
+## 8. Production evidence
 
-New AI usage/job-tracker/billing data must be explicitly added to this inventory before those packages can claim export/delete coverage. `LEGAL-001` may revise retention values; schema/config should remain versioned.
+Export with correct password worked. Account without image refs returned only manifest/data; forbidden credential fields absent. Account with university logo exported owned asset. Destructive throwaway deletion and restart/regression completed without affecting independent account.
 
-## 9. Журнал версий
+## 9. Future compatibility
+
+AI/JOB/BILL data must be explicitly added before future packages can claim export/delete coverage. Incompatible export shape requires explicit schema versioning.
+
+## 10. Журнал версий
 
 | Версия | Дата | Изменение |
 |---|---|---|
-| 1.0 | 13.08.2026 | Defined export/delete/retention inventory and secret exclusions for current AUTH/PROF data model. |
-
-## Hardened candidate v1.4.28
-
-Повторный privacy/security аудит перед внешней проверкой усилил candidate: экспорт требует повторного текущего пароля и формируется как согласованный PostgreSQL snapshot; добавлены raw/archive size bounds, SpooledTemporaryFile, safe ZIP entry paths, OAuth profile sanitization и fail-closed owner/draft asset integrity. Account deletion повторно сверяет password hash под User row lock и использует единый lock order для Auth/OAuth rows. Retention cleanup получил bounded batches, orphan ResumeAsset cleanup (7d, только без current/history references), cross-process worker lock/heartbeat и индекс `idx_resume_assets_created`. Backup copies не переписываются account deletion; remote provider-side OAuth revoke не заявляется. Candidate schema остаётся `20260813_0013`; production до merge остаётся `20260812_0012`.
+| 1.0 | 13.08.2026 | Initial inventory and exclusions. |
+| 1.1 | 19.08.2026 | Hardened snapshot/bounds/sanitizer/orphan asset rules. |
+| 1.2 | 19.08.2026 | Production export/assets/deletion evidence confirmed; COMPLETE. |
