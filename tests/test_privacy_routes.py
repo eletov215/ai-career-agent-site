@@ -163,5 +163,5 @@ def test_export_and_confirmed_account_deletion_remove_tokens_and_legacy_mirrors(
         },
         follow_redirects=False,
     )
-    assert relogin.status_code == 200
-    assert "Неверный email или пароль" in relogin.get_data(as_text=True)
+    assert relogin.status_code == 401
+    assert "Неверный email, пароль или email ещё не подтверждён" in relogin.get_data(as_text=True)
