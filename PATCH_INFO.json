@@ -1,0 +1,9 @@
+{
+  "package": "PRIV-001",
+  "version": "1.4.28",
+  "candidate_revision": "20260813_0013",
+  "baseline": "ai-career-agent-site-main (17).zip",
+  "changed_or_new_files": 66,
+  "deleted_files": 67,
+  "note": "Extract into a fresh branch created from current main; preserve paths. Do not upload the ZIP itself."
+}

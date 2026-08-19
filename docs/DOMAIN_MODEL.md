@@ -8,6 +8,7 @@ User
   1 -> many AuthToken
   1 -> 0..1 OAuthConnection per provider
   1 -> 0..1 CareerProfile
+  1 -> many ResumeDraft
 ```
 
 AUTH-001/002 and PROF-001 remain completed.
@@ -95,3 +96,18 @@ Filename, raw text, contacts, excerpts and profile payload are forbidden.
 - `ResumeExport`: metadata linking a client-generated PDF to an immutable version.
 
 Deleting a draft cascades its versions/assets/export metadata. PROF-001 remains the confirmed-facts root.
+
+
+## PRIV-001 privacy audit model
+
+`PrivacyAuditEvent` is intentionally **not** an owner-scoped child of `User`:
+
+```text
+PrivacyAuditEvent
+  id
+  event_type      data_exported | account_deleted | retention_cleanup
+  counts_json     bounded aggregate counts only
+  created_at
+```
+
+The absence of `user_id`, email, filename, asset ID and content is a data-minimization property: after account deletion the audit row proves an operation occurred without retaining a direct account identifier. Active owner data continues to live in the existing Auth/OAuth/Profile/Resume models and is exported/deleted through `PrivacyService`.

@@ -91,7 +91,7 @@ def _item(external_id: str, title: str = "Python developer") -> dict:
         "title": title,
         "company": "Example",
         "currency": "RUB",
-        "published_at": "2026-08-07T08:00:00Z",
+        "published_at": "2026-08-18T08:00:00Z",
         "url": f"https://example.test/{external_id}",
     }
 

@@ -14,6 +14,7 @@ from repositories import (
     AuthRepository,
     CareerProfileRepository,
     OAuthConnectionRepository,
+    PrivacyRepository,
     ResumeDraftRepository,
     SearchSnapshotRepository,
     SyncCheckpointRepository,
@@ -33,6 +34,7 @@ class StorageServices:
     resume_drafts: ResumeDraftRepository
     users: UserRepository
     oauth_connections: OAuthConnectionRepository
+    privacy: PrivacyRepository
     search_snapshots: SearchSnapshotRepository
     sync_checkpoints: SyncCheckpointRepository
     sync_runs: SyncRunRepository
@@ -47,6 +49,7 @@ class StorageServices:
             resume_drafts=ResumeDraftRepository(database),
             users=UserRepository(database),
             oauth_connections=OAuthConnectionRepository(database),
+            privacy=PrivacyRepository(database),
             search_snapshots=SearchSnapshotRepository(database),
             sync_checkpoints=SyncCheckpointRepository(database),
             sync_runs=SyncRunRepository(database),

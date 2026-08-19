@@ -198,13 +198,13 @@
       </section>
     {% endif %}
 
-    <section class="card spaced next-step">
+    <section class="card spaced next-step privacy-dashboard-card">
       <div>
-        <div class="muted">Следующий этап продукта</div>
-        <h2>Контроль персональных данных</h2>
-        <p>После серверных черновиков пакет PRIV-001 добавит экспорт данных, подтверждаемое удаление аккаунта и правила хранения. До этого удаление отдельного резюме уже доступно в разделе «Мои резюме».</p>
+        <div class="muted">Контроль данных</div>
+        <h2>Экспорт и удаление аккаунта</h2>
+        <p>Скачайте читаемый архив ваших данных, проверьте технические сроки хранения или удалите аккаунт вместе с профилем, резюме, изображениями и локально сохранёнными интеграциями.</p>
       </div>
-      <a class="btn btn-primary" href="{{ url_for('resume_drafts.library') }}">Открыть мои резюме</a>
+      <a class="btn btn-primary" href="{{ url_for('privacy_controls.center') }}">Управлять моими данными</a>
     </section>
   </div>
 </main>

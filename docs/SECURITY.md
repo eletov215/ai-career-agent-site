@@ -65,6 +65,8 @@ X-CSRF-Token: <token из meta csrf-token>
 | Public source status | 120 / 5 минут |
 | Detailed diagnostics | 20–60 / 5 минут |
 | Sync webhook | 10 / 5 минут |
+| Privacy export | 6 / час |
+| Account deletion | 3 / час |
 
 Текущий backend — `memory://`. Он приемлем для одного Gunicorn worker. Перед несколькими workers/instances нужно настроить общее Redis-compatible storage через `RATELIMIT_STORAGE_URI`.
 
@@ -302,7 +304,7 @@ Remote provider revoke is not claimed by this candidate. Local credential erasur
 - Profile responses are `no-store`.
 - Allowed logs: event, changed boolean, version, completion percent. Forbidden: headline, summary, contacts, employment, snapshot JSON and owner ID.
 - Completion is not an AI confidence, employability score or eligibility decision.
-- Export/delete/retention remains PRIV-001; no such claim is made by PROF-001.
+- Export/delete/retention are implemented by PRIV-001 candidate and remain outside PROF-001 semantics.
 
 
 ## PROF-002 — resume import security boundary
@@ -326,3 +328,14 @@ Allowed logs are aggregate counts/outcomes/version/completion only. Filename, te
 ## PROF-003 controls
 
 Resume draft routes require first-party session, CSRF and owner-scoped repository access. Autosave/checkpoint/export/restore use expected revision and PostgreSQL row locks. State/images/export metadata are bounded; image MIME is checked against signature. Logs exclude resume answers/messages, snapshots, image bytes, asset IDs, PDF filename/hash and session identifiers.
+
+
+## PRIV-001 controls
+
+- `/privacy-center` requires the same active first-party `User` + `AuthSession` boundary as other owner data.
+- Export and account deletion are POST-only, CSRF-protected and separately rate-limited.
+- Export omits password hash, auth session/token hashes, user-agent hash and OAuth access/refresh credentials/browser state. ZIP responses are `no-store`.
+- Account deletion requires the exact phrase `УДАЛИТЬ АККАУНТ` and verification of the current password; possession of a browser session alone is insufficient.
+- Deletion first removes local HH/SuperJob legacy credential mirrors, then deletes the first-party User so FK cascades remove AuthSession/AuthToken/OAuthConnection/CareerProfile/ResumeDraft subtrees. Remote provider-side OAuth grant revoke is not claimed.
+- `privacy_audit_events` is identifier-free by schema: no user ID, email, filename, asset ID, resume/profile content or credential fields. Logs contain aggregate counts only.
+- Retention worker removes stale pending accounts, expired/revoked auth artifacts and old identifier-free audit rows. Defaults are technical baseline values and are not a legal-compliance claim; LEGAL-001 owns final policy wording.

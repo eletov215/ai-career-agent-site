@@ -12,7 +12,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <script nonce="{{ csp_nonce }}">document.documentElement.classList.add("js");</script>
-  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}?v=44">
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}?v=45">
   <link rel="stylesheet" href="{{ url_for('static', filename='theme.css') }}?v=3">
   <link rel="stylesheet" href="{{ url_for('static', filename='mobile-menu-190.css') }}?v=3">
   <link rel="stylesheet" href="{{ url_for('static', filename='mobile-orbit-showcase.css') }}?v=4">
@@ -55,6 +55,7 @@
         </a>
         {% if current_user %}
           <a class="nav-muted-link" href="{{ url_for('dashboard') }}#connections">Подключения</a>
+          <a class="nav-muted-link" href="{{ url_for('privacy_controls.center') }}">Мои данные</a>
           <form class="nav-exit-form" method="post" action="{{ url_for('auth.logout') }}">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <button class="nav-exit" type="submit">Выйти из аккаунта</button>
@@ -92,7 +93,7 @@
       <nav class="site-footer__group" aria-label="Информация">
         <h2>Информация</h2>
         <a href="{{ url_for('privacy') }}">Конфиденциальность</a>
-        {% if current_user %}<a href="{{ url_for('dashboard') }}">Личный кабинет</a>{% else %}<a href="{{ url_for('auth.login') }}">Войти</a>{% endif %}
+        {% if current_user %}<a href="{{ url_for('dashboard') }}">Личный кабинет</a><a href="{{ url_for('privacy_controls.center') }}">Мои данные</a>{% else %}<a href="{{ url_for('auth.login') }}">Войти</a>{% endif %}
         <a href="/#sources">Источники вакансий</a>
         <a href="/#trust">Безопасность</a>
       </nav>

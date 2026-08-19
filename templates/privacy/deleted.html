@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}Аккаунт удалён — AI Career Agent{% endblock %}
+{% block content %}
+<main class="section"><div class="container card privacy-card privacy-delete-complete">
+  <div class="muted">PRIV-001</div>
+  <h1 class="page-title">Аккаунт удалён</h1>
+  <p>Аккаунт AI Career Agent и принадлежащие ему данные удалены. Текущая браузерная сессия завершена.</p>
+  <a class="btn btn-primary" href="{{ url_for('home') }}">На главную</a>
+</div></main>
+{% endblock %}

@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}Данные и конфиденциальность — AI Career Agent{% endblock %}
+{% block content %}
+<main class="section account-page">
+  <div class="container privacy-center">
+    <div class="page-heading account-page__heading">
+      <div>
+        <div class="muted">PRIV-001</div>
+        <h1 class="page-title">Данные и конфиденциальность</h1>
+        <p class="account-page__lead">Экспортируйте данные или удалите аккаунт вместе с принадлежащими ему профилем, резюме, версиями, изображениями и локально сохранёнными интеграциями.</p>
+      </div>
+      <a class="btn btn-secondary" href="{{ url_for('dashboard') }}">В кабинет</a>
+    </div>
+
+    <section class="card spaced privacy-control-card">
+      <div>
+        <div class="muted">Экспорт</div>
+        <h2>Скачать мои данные</h2>
+        <p>ZIP содержит читаемые JSON-файлы и оригинальные изображения резюме. Парольные хеши, session/token hashes и OAuth access/refresh tokens намеренно не включаются.</p>
+      </div>
+      <form method="post" action="{{ url_for('privacy_controls.export_data') }}" class="privacy-export-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        {% if export_error %}<div class="auth-alert auth-alert--error" role="alert">{{ export_error }}</div>{% endif %}
+        <label>
+          <span>Текущий пароль</span>
+          <input type="password" name="password" autocomplete="current-password" required>
+        </label>
+        <button class="btn btn-primary" type="submit">Скачать экспорт</button>
+      </form>
+    </section>
+
+    <section class="card spaced privacy-retention-card">
+      <div class="muted">Техническая политика хранения</div>
+      <h2>Когда данные очищаются автоматически</h2>
+      <ul class="privacy-retention-list">
+        <li><strong>Активный аккаунт:</strong> профиль и резюме хранятся до явного удаления пользователем.</li>
+        <li><strong>Неподтверждённая регистрация:</strong> удаляется после {{ retention.pending_account_days }} дней.</li>
+        <li><strong>Истёкшие/отозванные auth-сессии и одноразовые токены:</strong> очищаются спустя {{ retention.auth_artifact_days }} дней после истечения/использования.</li>
+        <li><strong>Неиспользуемые изображения резюме:</strong> очищаются спустя {{ retention.orphan_asset_days }} дней, если на них не ссылается текущий черновик или история версий.</li>
+        <li><strong>Identifier-free privacy audit:</strong> агрегированные события без user ID/email/контента хранятся {{ retention.audit_days }} дней.</li>
+      </ul>
+      <p class="muted">Это технический baseline текущего продукта, а не окончательная юридическая retention policy; юридические сроки фиксируются отдельно в LEGAL-001 до публичного запуска.</p>
+    </section>
+
+    <section class="card spaced privacy-danger-card" aria-labelledby="delete-account-title">
+      <div class="muted">Необратимое действие</div>
+      <h2 id="delete-account-title">Удалить аккаунт</h2>
+      <p>Будут удалены аккаунт, серверные сессии и одноразовые токены, OAuth-подключения и rollback-mirror credentials, карьерный профиль и его история, все черновики резюме, версии, фото/эмблемы и PDF-метаданные.</p>
+      <p><strong>Скачайте экспорт заранее, если данные могут понадобиться.</strong> ZIP не шифруется; после скачивания его защита и удаление локальной копии находятся под вашим контролем.</p>
+      <p class="muted">Удаление очищает данные из активной PostgreSQL и локальные OAuth credentials. Уже созданные резервные копии не переписываются автоматически; их срок хранения будет закреплён в OPS-002/LEGAL-001. Remote provider-side OAuth revoke не гарантируется текущим пакетом.</p>
+      {% if delete_error %}<div class="auth-alert auth-alert--error" role="alert">{{ delete_error }}</div>{% endif %}
+      <form method="post" action="{{ url_for('privacy_controls.delete_account') }}" class="privacy-delete-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <label>
+          <span>Текущий пароль</span>
+          <input type="password" name="password" autocomplete="current-password" required>
+        </label>
+        <label>
+          <span>Для подтверждения введите: <strong>{{ delete_confirmation }}</strong></span>
+          <input type="text" name="confirmation" autocomplete="off" required>
+        </label>
+        <button class="btn btn-danger-outline" type="submit">Удалить аккаунт и данные</button>
+      </form>
+    </section>
+  </div>
+</main>
+{% endblock %}

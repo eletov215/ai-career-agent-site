@@ -91,3 +91,8 @@ ai-career-agent-v0.3.0.zip
 ## Resume document versions
 
 Draft `revision` is an optimistic concurrency counter and may change frequently. `ResumeVersion.version` is an immutable user-visible checkpoint/export/restore sequence. A no-op autosave or checkpoint must not create duplicate content versions.
+
+
+## Privacy export/audit schema versions
+
+PRIV-001 owner export uses an explicit `export_schema_version` in `manifest.json`; future incompatible export shape changes require a new schema version rather than silent field reinterpretation. `privacy_audit_events` is an operational aggregate record and is not a substitute for owner data history.

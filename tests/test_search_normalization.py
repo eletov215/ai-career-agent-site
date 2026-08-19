@@ -223,7 +223,7 @@ def test_common_filter_uses_codes_and_excludes_unknown():
         salary_from=90000,
         period_days=7,
     )
-    assert [item["external_id"] for item in filter_vacancies(items, filters)] == ["remote"]
+    assert [item["external_id"] for item in filter_vacancies(items, filters, now=now)] == ["remote"]
 
 
 def test_store_persists_contract_and_uses_exact_codes(tmp_path):

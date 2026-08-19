@@ -7,6 +7,7 @@ from .oauth_connections import (
     OAuthProviderAlreadyConnectedError,
 )
 from .profiles import CareerProfileRepository, CareerProfileVersionConflictError
+from .privacy import PrivacyRepository
 from .resume_drafts import (
     ResumeDraftConflictError,
     ResumeDraftNotFoundError,
@@ -26,6 +27,7 @@ __all__ = [
     "OAuthProviderAlreadyConnectedError",
     "CareerProfileRepository",
     "CareerProfileVersionConflictError",
+    "PrivacyRepository",
     "ResumeDraftConflictError",
     "ResumeDraftNotFoundError",
     "ResumeDraftRepository",

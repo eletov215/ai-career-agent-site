@@ -4,9 +4,9 @@
 |---|---|
 | Документ | PROF003_RESUME_REFERENCE |
 | Пакет | PROF-003 |
-| Версия | 1.0 |
+| Версия | 1.2 |
 | Дата | 13 августа 2026 |
-| Статус | НУЖНА ПРОВЕРКА |
+| Статус | ВЫПОЛНЕНО |
 | Draft schema | 1 |
 
 ## 1. Contract purpose
@@ -88,16 +88,24 @@ State stores only asset UUID. Bytes live in ResumeAsset. Asset must belong to sa
 
 Browser export is generated from the same paginated preview after save flush. Server stores only immutable version link and metadata; no PDF binary. Export metadata does not prove visual correctness by itself, so preview/PDF parity remains a manual/automated E2E gate.
 
-## 10. Legacy localStorage
+## 10. Production UI/export compatibility
+
+- Direct editor r2 mutates the same eight canonical `answers` fields and uses ordinary autosave/revision semantics; it does not create a second state model.
+- iPhone photo hotfix r3 changes only browser dataURL-to-Blob conversion; server asset contract is unchanged.
+- PDF/logo hotfix r4 changes rendering only: `universityResolvedName` remains the heading source and exact normalized duplicate detail may be hidden; canonical draft state is unchanged.
+
+## 11. Legacy localStorage
 
 Legacy state may be read once and migrated through normal server validation. After successful server save the legacy key is removed. New authoritative writes never use localStorage.
 
-## 11. Future compatibility
+## 12. Future compatibility
 
 New document fields require schema versioning/defaults. External object storage may replace binary repository implementation without changing UUID references. AI interview, templates and public sharing require separate contracts.
 
-## 12. Журнал версий
+## 13. Журнал версий
 
 | Версия | Дата | Изменение |
 |---|---|---|
 | 1.0 | 13.08.2026 | Defined owner, current revision, immutable versions, assets, export metadata and profile-seed boundaries. |
+| 1.1 | 13.08.2026 | Added production compatibility note for direct edit r2, Safari asset r3 and PDF/logo rendering r4; canonical state/schema unchanged. |
+| 1.2 | 13.08.2026 | Final regression `/profile`/PROF-002/`/dashboard`/AUTH/OAuth/`/vacancies`, readiness `0012` and Render log privacy/error review confirmed; PROF-003 COMPLETE, PRIV-001 next. |

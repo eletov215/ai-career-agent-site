@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-"""Start Gunicorn and the external sync worker as sibling processes on Render.
+"""Start Gunicorn and durable background workers as sibling processes on Render.
 
-Render free web services cannot provision a free background worker. This small
-supervisor keeps the worker outside Gunicorn while sharing the same container.
-VPS/Docker deployments run the same worker as an independent Compose service.
+Render free web services cannot provision separate free background workers. This
+supervisor keeps Trudvsem sync and privacy retention outside Gunicorn while
+sharing the same container. VPS/Docker deployments can run both workers as
+independent Compose services.
 """
 
 from __future__ import annotations
@@ -60,6 +61,13 @@ def main() -> int:
             "trudvsem-worker",
         )
 
+    privacy_worker = None
+    if _enabled("PRIVACY_CLEANUP_ENABLED", default=True):
+        privacy_worker = _spawn(
+            [sys.executable, "scripts/privacy_cleanup_worker.py"],
+            "privacy-cleanup-worker",
+        )
+
     gunicorn = _spawn(
         [
             sys.executable,
@@ -90,6 +98,19 @@ def main() -> int:
                     worker = _spawn(
                         [sys.executable, "scripts/trudvsem_sync_worker.py"],
                         "trudvsem-worker",
+                    )
+
+            if privacy_worker is not None and privacy_worker.poll() is not None:
+                privacy_code = privacy_worker.returncode
+                logger.error(
+                    "Privacy cleanup worker exited with code %s; restarting in 5 seconds",
+                    privacy_code,
+                )
+                time.sleep(5)
+                if not _STOPPING:
+                    privacy_worker = _spawn(
+                        [sys.executable, "scripts/privacy_cleanup_worker.py"],
+                        "privacy-cleanup-worker",
                     )
             time.sleep(1)
     finally:

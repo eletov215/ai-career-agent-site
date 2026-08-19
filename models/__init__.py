@@ -5,6 +5,7 @@ from .auth import AuthSession, AuthToken
 from .base import Base
 from .oauth_connection import OAuthConnection
 from .profile import CareerProfile, CareerProfileVersion
+from .privacy import PrivacyAuditEvent
 from .resume import ResumeAsset, ResumeDraft, ResumeExport, ResumeVersion
 from .search_snapshot import (
     SearchSnapshot,
@@ -26,6 +27,7 @@ __all__ = [
     "OAuthConnection",
     "CareerProfile",
     "CareerProfileVersion",
+    "PrivacyAuditEvent",
     "ResumeAsset",
     "ResumeDraft",
     "ResumeExport",

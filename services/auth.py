@@ -465,6 +465,17 @@ class AuthService:
             user=updated,
         )
 
+    def verified_current_password_hash(self, user_id: str, password: str) -> str | None:
+        user = self.repository.get_user(str(user_id))
+        if user is None or user.status != "active" or not user.password_hash:
+            return None
+        if not verify_password(user.password_hash, password or ""):
+            return None
+        return user.password_hash
+
+    def verify_current_password(self, user_id: str, password: str) -> bool:
+        return self.verified_current_password_hash(user_id, password) is not None
+
     def list_sessions(self, user_id: str, *, now: int | None = None):
         return self.repository.list_active_sessions(user_id, now=now)
 

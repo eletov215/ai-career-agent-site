@@ -4,9 +4,9 @@
 |---|---|
 | Документ | PROF003_RUNBOOK |
 | Пакет | PROF-003 |
-| Версия | 1.0 |
+| Версия | 1.2 |
 | Дата | 13 августа 2026 |
-| Статус | НУЖНА ПРОВЕРКА |
+| Статус | ВЫПОЛНЕНО |
 
 ## 1. Назначение
 
@@ -116,12 +116,27 @@ page_count, pdf_bytes, version_created
 3. Application revert может оставить `0012`.
 4. Downgrade `0012 -> 0011` удаляет всю PROF-003 data; выполнять только в maintenance window после explicit decision.
 
-## 13. Закрытие
+## 13. Текущий production gate
 
-Только после green CI, Render `0012`, positive/negative E2E, restart, mobile, export parity и regression пакет переводится в ВЫПОЛНЕНО.
+Уже подтверждены green CI, Render `0012`, drafts/autosave/cross-device, versions/no-op/read-only/restore, stale conflict, direct-edit r2, iPhone photo r3, university logo, PDF parity r4, owner isolation и restart persistence.
+
+Финально подтверждено:
+
+```text
+/profile + PROF-002 import
+/dashboard + login/logout
+HH/SuperJob state
+/vacancies + ordinary search
+/health/ready = 0012
+Render Logs privacy/error review
+```
+
+PROF-003 переведён в ВЫПОЛНЕНО; начинается PRIV-001.
 
 ## 14. Журнал версий
 
 | Версия | Дата | Изменение |
 |---|---|---|
 | 1.0 | 13.08.2026 | Создан deploy/autosave/history/assets/export/rollback runbook PROF-003. |
+| 1.1 | 13.08.2026 | Recorded green CI/Render `0012`, production E2E/hotfix r1-r4/restart evidence; final regression/log review isolated as remaining gate. |
+| 1.2 | 13.08.2026 | Final regression `/profile`/PROF-002/`/dashboard`/AUTH/OAuth/`/vacancies`, readiness `0012` and Render log privacy/error review confirmed; PROF-003 COMPLETE, PRIV-001 next. |

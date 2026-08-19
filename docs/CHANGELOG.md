@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.4.27 — PROF-003 complete / PRIV-001 candidate — 13.08.2026
+
+- Final PROF-003 regression `/profile`/PROF-002/`/dashboard`/AUTH/OAuth/`/vacancies`, readiness `0012` and Render log privacy/error review were confirmed; PROF-003 is ВЫПОЛНЕНО.
+- Added owner-facing `/privacy-center` with readable ZIP export and destructive account deletion protected by current password plus exact confirmation phrase.
+- Export includes supported owner profile/resume/OAuth metadata and owned resume image assets while excluding password/auth token hashes and OAuth access/refresh credentials.
+- Added explicit local cleanup of unified and legacy HH/SuperJob credentials before User cascade deletion; remote provider-side grant revoke is not claimed.
+- Added technical retention service, one-shot CLI and periodic worker with defaults: stale pending accounts 30d, expired/revoked auth artifacts 30d, identifier-free privacy audit 180d, 24h cadence. These defaults are not final legal policy.
+- Added `privacy_audit_events` via migration `20260813_0013`; audit rows deliberately have no User FK/email/provider identity/content.
+- Added Render supervisor/Compose/VPS privacy-worker configuration, backup inventory, privacy UI/styles, focused tests and dedicated `Verify PRIV-001 privacy export deletion and retention controls` CI step.
+- Local compile, focused tests, migration round-trip, Alembic, Jinja, hygiene and infra checks passed. PRIV-001 remains НУЖНА ПРОВЕРКА pending Pull Request CI, Render `0013` and destructive production E2E on a throwaway account.
+
 ## 1.4.24 — PROF-002 complete — 12.08.2026
 
 - Initial Pull Request CI passed, including `Verify PROF-002 resume import review controls`; Render applied PostgreSQL revision `20260812_0011` and readiness reported `status=ok`, persistent PostgreSQL and current/expected `0011`.
