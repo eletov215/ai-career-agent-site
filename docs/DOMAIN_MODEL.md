@@ -111,3 +111,6 @@ PrivacyAuditEvent
 ```
 
 The absence of `user_id`, email, filename, asset ID and content is a data-minimization property: after account deletion the audit row proves an operation occurred without retaining a direct account identifier. Active owner data continues to live in the existing Auth/OAuth/Profile/Resume models and is exported/deleted through `PrivacyService`.
+
+## SourceHealthState
+Owner-independent current operational state for one canonical vacancy provider. No User/OAuth relation; no secret or PII columns.

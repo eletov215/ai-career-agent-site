@@ -273,3 +273,6 @@ Operational state хранится в `sync_checkpoints`:
 7. reactivated source row снова становится active.
 
 Подробности: `docs/SYNC002_RUNBOOK.md`.
+
+## SEARCH-005 operations
+Configure `SEARCH_ADMIN_EMAILS`; monitor persistent provider states through `/admin/sources`. The page performs no external probe. Telemetry persistence is non-gating. Application rollback may retain migration 0014.

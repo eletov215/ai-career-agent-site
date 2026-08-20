@@ -53,3 +53,6 @@ Do not claim remote provider-side OAuth grant revocation: current PRIV-001 scope
 ## SEARCH-005 start boundary
 
 Before implementation audit existing `services/source_status.py`, observability/provider metrics, SyncRun/checkpoint state, diagnostics/admin authorization options and templates. Detailed admin telemetry must be inaccessible without explicit admin authorization and must not expose credentials, token material, resume/profile PII or raw provider bodies. Production baseline revision is `20260813_0013`.
+
+## SEARCH-005 development rule
+Never add provider credentials, response bodies or user search queries to source health. Admin access requires explicit allowlist and first-party auth.

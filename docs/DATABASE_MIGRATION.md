@@ -84,3 +84,6 @@ created_at epoch seconds
 There is deliberately no FK to `users` and no user ID/email/content column, so deletion evidence does not retain a direct identifier after the account is removed. Upgrade is additive. Controlled downgrade `0013 -> 0012` removes only this audit table and leaves AUTH/PROF/resume/search/sync data unchanged.
 
 After deploy Render readiness must show `database.revision=current_revision=expected_revision=20260813_0013` and `migrations.ok=true`.
+
+## 20260819_0014_source_health_admin
+Adds `source_health_states` and indexes. Additive; downgrade drops only operational provider health state.

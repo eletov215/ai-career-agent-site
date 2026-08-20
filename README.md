@@ -85,3 +85,6 @@ Application revert может оставить additive `0013`. Downgrade `0013 
 ## 9. Hosting
 
 Render остаётся staging/резервной площадкой. Реальный VPS test `INFRA-001`, production host/domain migration и owned-domain transactional sender выполняются в предрелизном инфраструктурном окне.
+
+## Current package
+SEARCH-005 admin source status center is implemented as a candidate on revision `20260819_0014`. It requires `SEARCH_ADMIN_EMAILS` and remains NEEDS VERIFICATION until CI/Render/E2E.

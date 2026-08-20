@@ -45,6 +45,7 @@ _INVENTORY_TABLES = (
     "resume_assets",
     "resume_exports",
     "privacy_audit_events",
+    "source_health_states",
     "vacancies",
     "vacancy_source_records",
     "sync_runs",
