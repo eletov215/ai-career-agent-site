@@ -68,6 +68,12 @@ services:
         value: "30"
       - key: PRIVACY_AUDIT_RETENTION_DAYS
         value: "180"
+      - key: SEARCH_ADMIN_EMAILS
+        sync: false
+      - key: SOURCE_HEALTH_RECORDING_ENABLED
+        value: "1"
+      - key: SOURCE_HEALTH_STALE_SECONDS
+        value: "900"
       - key: SEARCH_SNAPSHOT_TTL_SECONDS
         value: "1800"
       - key: SEARCH_SNAPSHOT_MAX_CANDIDATES

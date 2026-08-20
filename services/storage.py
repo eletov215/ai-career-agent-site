@@ -17,6 +17,7 @@ from repositories import (
     PrivacyRepository,
     ResumeDraftRepository,
     SearchSnapshotRepository,
+    SourceHealthRepository,
     SyncCheckpointRepository,
     SyncRunRepository,
     SyncWorkerRepository,
@@ -36,6 +37,7 @@ class StorageServices:
     oauth_connections: OAuthConnectionRepository
     privacy: PrivacyRepository
     search_snapshots: SearchSnapshotRepository
+    source_health: SourceHealthRepository
     sync_checkpoints: SyncCheckpointRepository
     sync_runs: SyncRunRepository
     sync_workers: SyncWorkerRepository
@@ -51,6 +53,7 @@ class StorageServices:
             oauth_connections=OAuthConnectionRepository(database),
             privacy=PrivacyRepository(database),
             search_snapshots=SearchSnapshotRepository(database),
+            source_health=SourceHealthRepository(database),
             sync_checkpoints=SyncCheckpointRepository(database),
             sync_runs=SyncRunRepository(database),
             sync_workers=SyncWorkerRepository(database),

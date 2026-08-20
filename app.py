@@ -26,9 +26,12 @@ from services.university_logo import find_university_logo
 from config import AppSettings, load_settings
 from database import CURRENT_REVISION, create_database, database_health
 from services.storage import StorageServices
+from services.source_health import configure_source_health
+from services.source_health_instrumentation import install_source_health_instrumentation
 from services.auth import AuthService
 from services.email_delivery import build_auth_email_sender
 from routes.auth import AUTH_SESSION_KEY, create_auth_blueprint, login_required
+from routes.admin_sources import create_admin_sources_blueprint
 from routes.profile import create_profile_blueprint
 from routes.privacy_controls import create_privacy_blueprint
 from routes.resume_drafts import create_resume_drafts_blueprint
@@ -85,6 +88,8 @@ VACANCIES_URL = "https://api.superjob.ru/2.0/vacancies/"
 DATA_DIR = SETTINGS.data_dir
 DATA_DIR.mkdir(parents=True, exist_ok=True)
 DATABASE = create_database(SETTINGS.database_url)
+configure_source_health(DATABASE)
+install_source_health_instrumentation()
 VACANCY_CACHE_TTL = SETTINGS.vacancy_cache_ttl
 VACANCY_PAGE_SIZE = SETTINGS.vacancy_page_size
 TRUDVSEM_SYNC_ENABLED = SETTINGS.trudvsem_sync_enabled
@@ -140,6 +145,9 @@ SEARCH_AGGREGATION = SearchAggregationService(
     max_rounds_per_request=SETTINGS.search_snapshot_max_rounds_per_request,
     buffer_items=SETTINGS.search_snapshot_buffer_items,
     extension_lease_seconds=SETTINGS.search_snapshot_extension_lease_seconds,
+)
+app.register_blueprint(
+    create_admin_sources_blueprint(SETTINGS, STORAGE, VACANCY_STORE)
 )
 
 logger.info(

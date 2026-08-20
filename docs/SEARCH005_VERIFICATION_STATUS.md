@@ -27,6 +27,14 @@
 | Provider observation + restart persistence | ОЖИДАЕТСЯ |
 | Final regression/log privacy review | ОЖИДАЕТСЯ |
 
+## 1.1 Initial CI packaging defect and r1 correction
+
+The first uploaded SEARCH-005 candidate patch contained documentation/tests but omitted the new implementation modules and integration edits. GitHub correctly failed with four errors: missing `services.source_health_instrumentation`, `services.source_health`, `models.source_health`, and absent `/admin/sources` registration. This was a packaging/build defect, not an accepted product state.
+
+Hotfix r1 restores the complete SEARCH-005 implementation and adds a dedicated CI gate. The corrected local split suite after r1 is `276 passed, 14 skipped, 0 failed`; skips are only Flask/Psycopg/PostgreSQL environment-dependent paths that remain mandatory in GitHub Actions. Architecture boundaries, SQLite migration `0013 -> 0014 -> 0013 -> 0014`, Jinja parse, repository hygiene, infra manifest and document structure all pass.
+
+The source audit also found stale root-level packaging artifacts left from the earlier PRIV-001 upload (`PATCH_INFO.json`, `PATCH_MANIFEST.txt`, `README_FIRST.txt`, `README_UPLOAD.txt`, `LOCAL_VERIFICATION_REPORT.txt`, `CHANGED_FILES.txt`, `DELETE_FILES.txt`). They are not application source and are removed in the corrected full project; repository hygiene is hardened to reject them in future.
+
 ## 2. External acceptance
 
 1. Set `SEARCH_ADMIN_EMAILS` to a verified administrator email in Render.

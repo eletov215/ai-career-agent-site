@@ -172,6 +172,20 @@ def _validated_optional_email(source: Mapping[str, str], name: str) -> str | Non
     return value
 
 
+def _validated_email_allowlist(source: Mapping[str, str], name: str) -> tuple[str, ...]:
+    values: list[str] = []
+    for raw in _csv(source, name):
+        value = raw.strip().casefold()
+        if len(value) > 254 or value.count("@") != 1 or any(ch.isspace() for ch in value):
+            raise ConfigurationError(f"{name} содержит некорректный email-адрес.")
+        local, domain = value.rsplit("@", 1)
+        if not local or not domain or "." not in domain:
+            raise ConfigurationError(f"{name} содержит некорректный email-адрес.")
+        if value not in values:
+            values.append(value)
+    return tuple(values)
+
+
 def _service_name(source: Mapping[str, str]) -> str:
     value = _clean(source.get("SERVICE_NAME", "ai-career-agent")) or "ai-career-agent"
     if not re.fullmatch(r"[A-Za-z0-9._-]{3,80}", value):
@@ -391,6 +405,9 @@ class AppSettings:
     search_snapshot_max_rounds_per_request: int
     search_snapshot_buffer_items: int
     search_snapshot_extension_lease_seconds: int
+    search_admin_emails: tuple[str, ...]
+    source_health_recording_enabled: bool
+    source_health_stale_seconds: int
     trudvsem_sync_interval: int
     trudvsem_sync_items: int
     trudvsem_sync_batch: int
@@ -762,6 +779,17 @@ def load_settings(environ: Mapping[str, str] | None = None) -> AppSettings:
             90,
             minimum=15,
             maximum=600,
+        ),
+        search_admin_emails=_validated_email_allowlist(source, "SEARCH_ADMIN_EMAILS"),
+        source_health_recording_enabled=_bool(
+            source, "SOURCE_HEALTH_RECORDING_ENABLED", True
+        ),
+        source_health_stale_seconds=_int(
+            source,
+            "SOURCE_HEALTH_STALE_SECONDS",
+            900,
+            minimum=60,
+            maximum=86_400,
         ),
         trudvsem_sync_interval=_int(source, "TRUDVSEM_SYNC_INTERVAL", 1800, minimum=1),
         trudvsem_sync_items=_int(source, "TRUDVSEM_SYNC_ITEMS", 300, minimum=1, maximum=500),

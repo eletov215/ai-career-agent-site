@@ -56,6 +56,7 @@
         {% if current_user %}
           <a class="nav-muted-link" href="{{ url_for('dashboard') }}#connections">Подключения</a>
           <a class="nav-muted-link" href="{{ url_for('privacy_controls.center') }}">Мои данные</a>
+          {% if search_admin_access %}<a class="nav-muted-link" href="{{ url_for('admin_sources.source_center') }}">Источники</a>{% endif %}
           <form class="nav-exit-form" method="post" action="{{ url_for('auth.logout') }}">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <button class="nav-exit" type="submit">Выйти из аккаунта</button>

@@ -93,6 +93,9 @@ def test_production_defaults_preserve_current_runtime_behavior():
     assert settings.search_snapshot_max_rounds_per_request == 1
     assert settings.search_snapshot_buffer_items == 1
     assert settings.search_snapshot_extension_lease_seconds == 90
+    assert settings.search_admin_emails == ()
+    assert settings.source_health_recording_enabled is True
+    assert settings.source_health_stale_seconds == 900
     assert settings.trudvsem_sync_items == 300
     assert settings.trudvsem_sync_batch == 10
     assert settings.trudvsem_sync_poll_seconds == 15
@@ -151,6 +154,9 @@ def test_numeric_and_boolean_values_are_validated_centrally(tmp_path):
             SEARCH_SNAPSHOT_MAX_ROUNDS_PER_REQUEST="4",
             SEARCH_SNAPSHOT_BUFFER_ITEMS="6",
             SEARCH_SNAPSHOT_EXTENSION_LEASE_SECONDS="120",
+            SEARCH_ADMIN_EMAILS="Admin@Example.test, ops@example.test",
+            SOURCE_HEALTH_RECORDING_ENABLED="yes",
+            SOURCE_HEALTH_STALE_SECONDS="1200",
             TRUDVSEM_SYNC_ENABLED="no",
             TRUDVSEM_SYNC_POLL_SECONDS="20",
             TRUDVSEM_SYNC_STALE_SECONDS="900",
@@ -208,6 +214,9 @@ def test_numeric_and_boolean_values_are_validated_centrally(tmp_path):
     assert settings.search_snapshot_max_rounds_per_request == 4
     assert settings.search_snapshot_buffer_items == 6
     assert settings.search_snapshot_extension_lease_seconds == 120
+    assert settings.search_admin_emails == ("admin@example.test", "ops@example.test")
+    assert settings.source_health_recording_enabled is True
+    assert settings.source_health_stale_seconds == 1200
     assert settings.trudvsem_sync_enabled is False
     assert settings.trudvsem_sync_poll_seconds == 20
     assert settings.trudvsem_sync_stale_seconds == 900

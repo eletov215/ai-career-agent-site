@@ -8,6 +8,7 @@ from .auth import (
     AuthUserRecord,
 )
 from .profile import CareerProfileRecord, CareerProfileVersionRecord
+from .source_health import SourceHealthRecord, SourceHealthView
 from .resume_draft import (
     ResumeAssetRecord,
     ResumeDraftRecord,
@@ -45,6 +46,8 @@ __all__ = [
     "AuthUserRecord",
     "CareerProfileRecord",
     "CareerProfileVersionRecord",
+    "SourceHealthRecord",
+    "SourceHealthView",
     "ResumeAssetRecord",
     "ResumeDraftRecord",
     "ResumeExportRecord",

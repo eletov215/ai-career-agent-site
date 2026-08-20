@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Состояние источников — AI Career Agent{% endblock %}
+{% block content %}
+<main class="admin-source-page">
+  <section class="container admin-source-shell">
+    <div class="admin-source-heading">
+      <div>
+        <span class="admin-source-eyebrow">SEARCH-005 · только для администратора</span>
+        <h1>Состояние источников</h1>
+        <p>Безопасная операционная сводка. Страница не запускает внешние проверки и не показывает ключи, токены или поисковые запросы пользователей.</p>
+      </div>
+      <span class="admin-source-generated">Снимок: {{ source_payload.generated_at }}</span>
+    </div>
+
+    <div class="admin-source-grid">
+      {% for source in source_payload.sources %}
+      <article class="admin-source-card" data-state="{{ source.availability }}">
+        <header>
+          <div>
+            <span class="admin-source-key">{{ source.provider }}</span>
+            <h2>{{ source.title }}</h2>
+          </div>
+          <span class="admin-source-state">{{ source.availability }}</span>
+        </header>
+        <dl>
+          <div><dt>Конфигурация</dt><dd>{{ 'Настроено' if source.configured else source.configured_reason }}</dd></div>
+          <div><dt>Последняя попытка</dt><dd>{{ source.last_attempt_at if source.last_attempt_at is not none else '—' }}</dd></div>
+          <div><dt>Последний успех</dt><dd>{{ source.last_success_at if source.last_success_at is not none else '—' }}</dd></div>
+          <div><dt>Задержка</dt><dd>{{ (source.last_latency_ms ~ ' мс') if source.last_latency_ms is not none else '—' }}</dd></div>
+          <div><dt>Ошибок подряд</dt><dd>{{ source.consecutive_failures }}</dd></div>
+          <div><dt>Категория ошибки</dt><dd>{{ source.error_category or '—' }}{% if source.error_code %} · {{ source.error_code }}{% endif %}</dd></div>
+          <div><dt>Кэш</dt><dd>{{ source.cache_item_count }}{% if source.cache_age_seconds is not none %} · {{ source.cache_age_seconds }} сек.{% endif %}</dd></div>
+          {% if source.provider == 'trudvsem' %}
+          <div><dt>Sync</dt><dd>{{ source.sync_status or '—' }} · processed {{ source.sync_processed }} · saved {{ source.sync_saved }}</dd></div>
+          <div><dt>Worker</dt><dd>{{ 'жив' if source.worker_alive else 'нет свежего heartbeat' }}{% if source.worker_status %} · {{ source.worker_status }}{% endif %}</dd></div>
+          {% endif %}
+        </dl>
+        {% if source.stale %}<p class="admin-source-note">Последняя provider telemetry старше установленного порога.</p>{% endif %}
+      </article>
+      {% endfor %}
+    </div>
+  </section>
+</main>
+{% endblock %}
