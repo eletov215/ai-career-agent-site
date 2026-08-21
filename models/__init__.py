@@ -7,6 +7,7 @@ from .oauth_connection import OAuthConnection
 from .profile import CareerProfile, CareerProfileVersion
 from .privacy import PrivacyAuditEvent
 from .resume import ResumeAsset, ResumeDraft, ResumeExport, ResumeVersion
+from .source_health import SourceHealthState
 from .search_snapshot import (
     SearchSnapshot,
     SearchSnapshotCandidate,
@@ -36,6 +37,7 @@ __all__ = [
     "SyncCheckpoint",
     "SyncRun",
     "SyncWorker",
+    "SourceHealthState",
     "SearchSnapshot",
     "SearchSnapshotCandidate",
     "SearchSnapshotItem",

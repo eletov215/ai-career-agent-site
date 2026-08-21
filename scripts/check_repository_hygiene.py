@@ -24,6 +24,15 @@ FORBIDDEN_FILE_NAMES = {
     ".env.development",
     "app.db",
 }
+FORBIDDEN_ROOT_FILE_NAMES = {
+    "CHANGED_FILES.txt",
+    "DELETE_FILES.txt",
+    "LOCAL_VERIFICATION_REPORT.txt",
+    "PATCH_INFO.json",
+    "PATCH_MANIFEST.txt",
+    "README_FIRST.txt",
+    "README_UPLOAD.txt",
+}
 FORBIDDEN_SUFFIXES = {
     ".pyc",
     ".pyo",
@@ -76,6 +85,9 @@ def find_violations(root: Path) -> list[str]:
 
         name = relative.name
         lower_name = name.lower()
+        if len(parts) == 1 and name in FORBIDDEN_ROOT_FILE_NAMES:
+            violations.add(str(relative))
+            continue
         if name in FORBIDDEN_FILE_NAMES or lower_name.startswith(".env."):
             if name != ".env.example":
                 violations.add(str(relative))

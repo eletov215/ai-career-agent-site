@@ -1,3 +1,9 @@
+
+## 2026-08-20 — SEARCH-005 candidate CI hotfix r1
+- Corrected an incomplete candidate package that had shipped SEARCH-005 docs/tests without the new implementation modules/integration edits.
+- Added persistent `source_health_states`, admin authorization/page/API, observability instrumentation, migration `20260819_0014`, config/runtime env wiring, worker instrumentation and dedicated CI coverage.
+- Removed stale root packaging artifacts from the corrected full project and hardened repository hygiene against reintroducing them.
+- Local corrected split suite: 276 passed, 14 environment-dependent skips, 0 failed; external GitHub/Render/E2E remains required.
 ## 1.4.29 — PRIV-001 complete / SEARCH-005 prep — 19.08.2026
 
 - GitHub Actions полностью green после CI hotfix r1, включая dedicated `Verify PRIV-001 privacy export deletion and retention controls`, PostgreSQL migrations/integration, AUTH/PROF regressions, encrypted backup/restore, Docker/Compose/runtime smoke и full tests.

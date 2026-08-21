@@ -3,15 +3,15 @@
 | Поле | Значение |
 |---|---|
 | Документ | PLAN_CURRENT |
-| Версия | 1.4.29 |
+| Версия | 1.4.30 |
 | Дата | 19 августа 2026 |
 | Статус | ДЕЙСТВУЮЩИЙ |
 | Основа кода | GitHub `main` после PRIV-001 hardened v1.4.28 + CI hotfix r1; GitHub Actions green; Render/PostgreSQL `20260813_0013`; production export/delete/restart/log E2E подтверждены |
-| Текущий пакет | `SEARCH-005` — центр состояния источников для администратора; статус ГОТОВО К СТАРТУ — PRIV-001 закрыт, код SEARCH-005 ещё не изменён |
+| Текущий пакет | SEARCH-005 — центр состояния источников для администратора; кандидат 20260819_0014, внешний gate pending
 
 > ОБЯЗАТЕЛЬНО ДЛЯ КАЖДОГО НОВОГО ЧАТА: прочитать этот план, новый паспорт и актуальный архив. После завершения любого пункта вернуть обновлённые DOCX/PDF/Markdown, новый ZIP, доказательства проверки и запись в журнале версий.
 
-> КОНТРОЛЬНЫЕ СТАТУСЫ ЭТОЙ ВЕРСИИ: `FND-001`, `FND-002`, `DATA-001`, `DATA-002`, `SEC-001`, `OPS-001`, `INFRA-PREP-001`, `SYNC-001`, `SYNC-002`, `SEARCH-001`, `SEARCH-002`, `SEARCH-003`, `SEARCH-004`, `AUTH-001` и `AUTH-002` — **ВЫПОЛНЕНО**; `PROF-001` — **ВЫПОЛНЕНО**; `PROF-002` — **ВЫПОЛНЕНО**; `PROF-003` — **ВЫПОЛНЕНО**; `PRIV-001` — **ВЫПОЛНЕНО**; `SEARCH-005` — **ГОТОВО К СТАРТУ**; `DOC-001` — **В РАБОТЕ как постоянный процесс**; `INFRA-001` — **ОТЛОЖЕНО ДО ПРЕДРЕЛИЗНОГО ЭТАПА**. Документы с версией ниже `1.4.29` считаются устаревшими для определения очереди разработки.
+> КОНТРОЛЬНЫЕ СТАТУСЫ ЭТОЙ ВЕРСИИ: `FND-001`, `FND-002`, `DATA-001`, `DATA-002`, `SEC-001`, `OPS-001`, `INFRA-PREP-001`, `SYNC-001`, `SYNC-002`, `SEARCH-001`, `SEARCH-002`, `SEARCH-003`, `SEARCH-004`, `AUTH-001` и `AUTH-002` — **ВЫПОЛНЕНО**; `PROF-001` — **ВЫПОЛНЕНО**; `PROF-002` — **ВЫПОЛНЕНО**; `PROF-003` — **ВЫПОЛНЕНО**; `PRIV-001` — **ВЫПОЛНЕНО**; `SEARCH-005` — **НУЖНА ПРОВЕРКА**; `DOC-001` — **В РАБОТЕ как постоянный процесс**; `INFRA-001` — **ОТЛОЖЕНО ДО ПРЕДРЕЛИЗНОГО ЭТАПА**. Документы с версией ниже `1.4.29` считаются устаревшими для определения очереди разработки.
 
 ## 1. Источник истины и аудит источников
 
@@ -47,6 +47,9 @@
 - Версия 1.4.28 усиливает PRIV-001 после повторного privacy/security audit: re-authenticated export, consistent snapshot, bounded/spooled ZIP, provider-profile sanitization, fail-closed asset ownership, password-hash recheck under lock, orphan asset cleanup, worker lock/heartbeat и migration/index `20260813_0013`. Внешний gate остаётся Pull Request CI -> Render 0013 -> production E2E.
 
 - Версия 1.4.29 закрывает PRIV-001 как ВЫПОЛНЕНО. После CI hotfix r1 весь GitHub workflow green, включая dedicated PRIV-001 gate, PostgreSQL migration/integration, AUTH/PROF regressions, encrypted backup/restore и Docker/runtime smoke. Render `/health/ready` подтвердил persistent PostgreSQL, current/expected `20260813_0013`, `migrations.ok=true`, `privacy_cleanup.enabled=true`, `worker_alive=true`, `last_status=ok`. Production E2E подтвердил re-authenticated export, secret exclusions, корректное отсутствие `assets/` для аккаунта без изображений и inclusion logo asset для аккаунта с изображением, negative delete checks, destructive delete throwaway account, невозможность повторного входа, owner isolation, restart persistence, final `/profile`/PROF-002/`/resumes`/AUTH/OAuth/`/vacancies` regression и Render Logs без новых 500/Traceback/IntegrityError/migration/privacy cleanup errors или sensitive payload. Time-bound 7/30/180-day retention semantics остаются CI-controlled; реальные дни вручную не ожидались. Следующий пакет — SEARCH-005.
+
+
+- Версия 1.4.30 реализует SEARCH-005 candidate поверх завершённого PRIV-001. Добавлены explicit verified first-party administrator allowlist `SEARCH_ADMIN_EMAILS`, persistent `source_health_states`, migration `20260819_0014`, read-only `/admin/sources` и `/api/admin/sources`, безопасная provider telemetry instrumentation, cache/sync freshness aggregation, mobile UI и dedicated CI gate. Панель не выполняет внешние probes и не показывает credentials, response bodies, пользовательские поисковые запросы или PII. Пакет остаётся НУЖНА ПРОВЕРКА до green Pull Request CI, Render 0014, admin/non-admin/restart/telemetry E2E и log review.
 
 ## 2. Обязательный протокол работы
 
@@ -159,7 +162,7 @@ MVP не готов, если работает только отдельная �
 | SEARCH-002 | P0 | ВЫПОЛНЕНО | Консервативная cross-source deduplication, reversible grouping и multi-source карточки подтверждены CI/Render |
 | SEARCH-003 | P0 | ВЫПОЛНЕНО | Persistent bounded snapshots, stable committed pages, deterministic sort и honest totals подтверждены CI/Render |
 | SEARCH-004 | P1 | ВЫПОЛНЕНО | Canonical `/vacancies`, compatibility redirect и safe source states подтверждены GitHub CI и Render/mobile production smoke |
-| SEARCH-005 | P1 | ГОТОВО К СТАРТУ | Центр состояния источников для администратора |
+| SEARCH-005 | P1 | НУЖНА ПРОВЕРКА | Центр состояния источников для администратора |
 
 ### Этап 3. Собственный аккаунт и карьерный профиль
 
@@ -1512,7 +1515,7 @@ INFRA-001 real VPS test
 Следующий пакет:
 
 ```text
-SEARCH-005 — ГОТОВО К СТАРТУ
+SEARCH-005 — НУЖНА ПРОВЕРКА
 -> цель: защищённый центр состояния источников
 -> ProviderHealth/SyncRun-derived availability, latency, freshness/import age
 -> admin-only detailed page; public/user status остаётся sanitised
@@ -1592,5 +1595,28 @@ GitHub/production/API: <подтверждено или требуется>
 | 1.4.26 | 13.08.2026 | PROF-003-PRODUCTION-EVIDENCE | Green CI и Render `0012`; production E2E подтвердил drafts/autosave/cross-device, versions/no-op/read-only/restore, stale `409`, direct edit, iPhone photo, university logo, PDF parity, owner isolation и restart persistence. Hotfix r1-r4 зафиксированы; пакет остаётся НУЖНА ПРОВЕРКА только до final regression/log review. |
 | 1.4.27 | 13.08.2026 | PROF-003-COMPLETE / PRIV-001-CANDIDATE | Final regression и Render log privacy/error review подтверждены; PROF-003 ВЫПОЛНЕНО. Реализованы readable privacy export, confirmed account deletion, local integration/token cleanup, identifier-free audit, retention worker и migration `20260813_0013`; PRIV-001 ожидает CI/Render/E2E. |
 | 1.4.28 | 19.08.2026 | PRIV-001-HARDENED | Повторный privacy/security audit усилил re-auth export, consistent bounded/spooled ZIP, provider sanitizer, deletion concurrency locks, orphan asset retention и worker lock/heartbeat; external gate pending. |
-| 1.4.29 | 19.08.2026 | PRIV-001-COMPLETE / SEARCH-005-PREP | Green CI после test-contract hotfix r1, Render `0013`, privacy worker health, export/asset/secret scan, destructive delete/owner isolation, restart/regression/log review подтверждены. PRIV-001 ВЫПОЛНЕНО; SEARCH-005 ГОТОВО К СТАРТУ. |
+| 1.4.29 | 19.08.2026 | PRIV-001-COMPLETE / SEARCH-005-PREP | Green CI после test-contract hotfix r1, Render `0013`, privacy worker health, export/asset/secret scan, destructive delete/owner isolation, restart/regression/log review подтверждены. PRIV-001 ВЫПОЛНЕНО; SEARCH-005 НУЖНА ПРОВЕРКА. |
 
+
+
+### SEARCH-005 — Центр состояния источников для администратора
+
+**Приоритет:** P1  
+**Статус:** НУЖНА ПРОВЕРКА
+
+**Цель:** дать ограниченному администратору безопасный, устойчивый после restart обзор состояния HH, SuperJob, Reed и Trudvsem без раскрытия секретов или пользовательских данных.
+
+**Реализация:** verified first-party session + explicit `SEARCH_ADMIN_EMAILS`; persistent current state `source_health_states`; безопасная запись availability/attempt/success/failure/latency/failure streak; cache/sync/worker freshness; read-only HTML/JSON; no-store; rate limit; neutral 404 обычному пользователю; provider instrumentation через существующий observability boundary.
+
+**Влияние на код:** `domain/source_health.py`, `models/source_health.py`, `repositories/source_health.py`, `services/source_health.py`, `services/source_health_instrumentation.py`, `services/admin_access.py`, `routes/admin_sources.py`, migration `20260819_0014`, template/CSS, env examples, backup inventory, tests и CI.
+
+**Влияние на сайт:** обычные пользователи не видят административную панель. Разрешённый администратор получает read-only страницу `/admin/sources`; public source-state UI не расширяется внутренними деталями.
+
+**Критерии готовности:** green full CI + dedicated SEARCH-005 gate; Render `current=expected=20260819_0014`; `SEARCH_ADMIN_EMAILS` настроен; admin sees safe source states; ordinary/unauth users denied; provider observation persists after restart; Trudvsem sync/worker freshness visible; no tokens/provider bodies/search terms/PII in HTML, JSON or logs; existing search/profile/auth/privacy regressions green.
+
+**Rollback:** application revert may keep additive 0014. Controlled downgrade removes only `source_health_states`. Empty/removed `SEARCH_ADMIN_EMAILS` immediately disables access without schema rollback.
+
+**Зависимости:** SEARCH-001..004, SYNC-001/002, AUTH-001, OPS-001, PRIV-001 complete.
+
+
+**Следующий пакет после закрытия SEARCH-005:** AI-BENCH-001 — НУЖНА ПРОВЕРКА после SEARCH-005.

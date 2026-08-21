@@ -6945,3 +6945,27 @@ body.resume-field-editor-open{overflow:hidden}
 /* PRIV-001 owner data controls */
 .privacy-center{max-width:980px}.privacy-control-card,.privacy-retention-card,.privacy-danger-card{display:grid;gap:20px}.privacy-control-card{grid-template-columns:minmax(0,1fr) auto;align-items:center}.privacy-control-card form{margin:0}.privacy-retention-list{display:grid;gap:10px;margin:14px 0 4px;padding-left:22px}.privacy-danger-card{border:1px solid rgba(194,54,75,.2);background:linear-gradient(180deg,rgba(255,255,255,.98),rgba(255,247,248,.98))}.privacy-danger-card h2{color:#a62f47}.privacy-delete-form{display:grid;gap:14px;max-width:620px}.privacy-delete-form label{display:grid;gap:7px;font-weight:700;color:#222946}.privacy-delete-form input{width:100%;border:1px solid #d7dcef;border-radius:15px;background:#fff;padding:14px 16px;font:inherit;color:#202640;outline:none}.privacy-delete-form input:focus{border-color:#6d62f3;box-shadow:0 0 0 4px rgba(109,98,243,.11)}.privacy-delete-complete{max-width:720px;text-align:center}.privacy-delete-complete .btn{margin-top:14px}.privacy-dashboard-card{align-items:center}
 @media (max-width:760px){.privacy-control-card{grid-template-columns:1fr}.privacy-control-card .btn,.privacy-delete-form .btn{width:100%}.privacy-center .page-heading{align-items:flex-start}.privacy-retention-list{padding-left:19px}.privacy-danger-card{padding:22px 18px}}
+
+
+/* SEARCH-005 admin source center */
+.admin-source-page{padding:36px 0 72px;background:linear-gradient(180deg,#f7f8ff 0%,#fff 70%);min-height:70vh}
+.admin-source-shell{max-width:1180px}
+.admin-source-heading{display:flex;justify-content:space-between;gap:24px;align-items:flex-end;margin-bottom:26px}
+.admin-source-heading h1{margin:8px 0 8px;font-size:clamp(30px,4vw,46px);line-height:1.05}
+.admin-source-heading p{max-width:760px;margin:0;color:#667085;line-height:1.65}
+.admin-source-eyebrow{font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#6856e8}
+.admin-source-generated{font-size:12px;color:#7a8194;white-space:nowrap}
+.admin-source-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+.admin-source-card{background:#fff;border:1px solid #e7e9f4;border-radius:22px;padding:22px;box-shadow:0 14px 36px rgba(38,46,92,.07)}
+.admin-source-card header{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;padding-bottom:16px;border-bottom:1px solid #edf0f7}
+.admin-source-card h2{margin:3px 0 0;font-size:22px}
+.admin-source-key{font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#858aa0}
+.admin-source-state{display:inline-flex;padding:7px 10px;border-radius:999px;background:#f1f2f7;color:#4b5267;font-size:12px;font-weight:800}
+.admin-source-card[data-state="available"] .admin-source-state,.admin-source-card[data-state="cached"] .admin-source-state{background:#eaf8ef;color:#246a3b}
+.admin-source-card[data-state="degraded"] .admin-source-state{background:#fff6df;color:#8d6312}
+.admin-source-card[data-state="temporarily_unavailable"] .admin-source-state,.admin-source-card[data-state="auth_required"] .admin-source-state{background:#fff0f1;color:#a13d46}
+.admin-source-card dl{margin:16px 0 0;display:grid;gap:10px}
+.admin-source-card dl>div{display:grid;grid-template-columns:minmax(130px,.8fr) minmax(0,1.2fr);gap:14px;align-items:start}
+.admin-source-card dt{font-size:13px;color:#7a8194}.admin-source-card dd{margin:0;font-size:13px;font-weight:650;color:#272c3f;overflow-wrap:anywhere}
+.admin-source-note{margin:16px 0 0;padding:10px 12px;border-radius:12px;background:#fff8e8;color:#86641c;font-size:13px}
+@media(max-width:760px){.admin-source-page{padding-top:22px}.admin-source-heading{display:block}.admin-source-generated{display:block;margin-top:12px}.admin-source-grid{grid-template-columns:1fr}.admin-source-card{padding:18px}.admin-source-card dl>div{grid-template-columns:1fr;gap:3px}}

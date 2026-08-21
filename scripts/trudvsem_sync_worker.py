@@ -21,6 +21,8 @@ from config import load_settings
 from database import create_database
 from observability import configure_logging, provider_operation
 from services.storage import StorageServices
+from services.source_health import configure_source_health
+from services.source_health_instrumentation import install_source_health_instrumentation
 from services.trudvsem_sync import TrudvsemSyncService
 
 logger = logging.getLogger("trudvsem_sync_worker")
@@ -64,6 +66,8 @@ def main() -> int:
         signal.signal(signal_name, _request_stop)
 
     database = create_database(settings.database_url)
+    configure_source_health(database)
+    install_source_health_instrumentation()
     storage = StorageServices.from_database(database)
     service = TrudvsemSyncService(
         settings=settings,

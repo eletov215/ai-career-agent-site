@@ -462,7 +462,7 @@ Render не считается гарантированным production для 
 
 ## 23. Текущий gate
 
-PROF-003 и PRIV-001 — ВЫПОЛНЕНО. Production PostgreSQL `20260813_0013`; privacy cleanup worker healthy. Следующий пакет SEARCH-005 — ГОТОВО К СТАРТУ.
+PROF-003 и PRIV-001 — ВЫПОЛНЕНО. Production PostgreSQL `20260813_0013`; privacy cleanup worker healthy. Следующий пакет SEARCH-005 — НУЖНА ПРОВЕРКА.
 
 ## 24. Правила рабочего чата
 
@@ -505,3 +505,15 @@ PROF-003 и PRIV-001 — ВЫПОЛНЕНО. Production PostgreSQL `20260813_001
 | 2.41 | 13.08.2026 | PROF-003 closed after final regression/log review. PRIV-001 candidate adds readable export, confirmed deletion, local integration/token cleanup, technical retention worker, identifier-free audit and migration `0013`; external CI/Render/E2E pending. |
 | 2.42 | 19.08.2026 | PRIV-001 hardened candidate after second privacy/security audit: re-authenticated consistent export, bounds/safe paths/sanitizer, delete concurrency locks, orphan asset cleanup and worker lock/heartbeat; external gate pending. |
 | 2.43 | 19.08.2026 | PRIV-001 completed after green CI/hotfix r1, Render `0013`, healthy privacy worker, export/asset/secret scan, destructive throwaway deletion, owner isolation, restart/regression/log review. SEARCH-005 ready next. |
+
+
+## SEARCH-005 architecture addendum v2.44
+
+- **Admin boundary:** active verified first-party account plus exact normalized email in deployment allowlist `SEARCH_ADMIN_EMAILS`. A diagnostics secret, hidden URL or OAuth provider account is not admin authorization.
+- **Persistence:** `source_health_states` stores only current safe operational aggregates for `hh`, `superjob`, `reed`, `trudvsem`; no user relation exists.
+- **Public/admin split:** public source state remains minimal. `/admin/sources` and `/api/admin/sources` are read-only, rate-limited, no-store and return neutral 404 to ordinary users.
+- **Recorded fields:** availability, configured boolean/reason, last attempt/success/failure, bounded latency, failure streak, safe error class/code, cache timestamp/count and allowlisted sync/worker aggregates.
+- **Forbidden fields:** tokens, credentials, provider bodies, URLs with query/fragment, user search terms, emails, user IDs, resume/profile content and external identity IDs.
+- **Telemetry:** current process observability events are persisted through a non-gating adapter. Trudvsem additionally uses persistent SyncRun/worker/checkpoint data. No external network probe runs when the page is opened.
+- **Schema:** candidate `20260819_0014`; production remains `20260813_0013` until external gate.
+- **Deployment:** administrator email allowlist must be configured in Render/VPS environment before E2E. `SOURCE_HEALTH_RECORDING_ENABLED=1`; default stale threshold 900 seconds.

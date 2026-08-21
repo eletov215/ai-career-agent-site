@@ -14,6 +14,7 @@ from .resume_drafts import (
     ResumeDraftRepository,
 )
 from .search_snapshots import SearchSnapshotRepository
+from .source_health import SourceHealthRepository
 from .sync_checkpoints import SyncCheckpointRepository
 from .sync_runs import SyncRunRepository
 from .sync_workers import SyncWorkerRepository
@@ -32,6 +33,7 @@ __all__ = [
     "ResumeDraftNotFoundError",
     "ResumeDraftRepository",
     "SearchSnapshotRepository",
+    "SourceHealthRepository",
     "SyncCheckpointRepository",
     "SyncRunRepository",
     "SyncWorkerRepository",

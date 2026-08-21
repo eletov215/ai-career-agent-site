@@ -7,7 +7,7 @@
 | AUTH-001/002 | ВЫПОЛНЕНО | regression only |
 | PROF-001/002/003 | ВЫПОЛНЕНО | regression only |
 | PRIV-001 | ВЫПОЛНЕНО | Green CI + Render `0013` + export/delete/restart/log E2E confirmed |
-| SEARCH-005 | ГОТОВО К СТАРТУ | next package; admin source-health center |
+| SEARCH-005 | НУЖНА ПРОВЕРКА | next package; admin source-health center |
 | AI-BENCH/AI-PROVIDER/LEGAL/AI-* | ЗАПЛАНИРОВАНО | later MVP stages |
 | INFRA-001 | ОТЛОЖЕНО | pre-release window |
 
@@ -29,8 +29,11 @@ Server drafts/autosave, immutable versions/history/restore, durable photo/logo a
 
 Production `0013` confirmed. Owner-readable re-authenticated ZIP export, current-password + exact-phrase account deletion, local HH/SuperJob credential cleanup, identifier-free privacy audit, technical retention worker, asset retention and restart/log regression passed. Legal policy wording/final retention and remote provider grant revoke remain outside the package claim.
 
-Next: `SEARCH-005` — ГОТОВО К СТАРТУ.
+Next: `SEARCH-005` — НУЖНА ПРОВЕРКА.
 
-## SEARCH-005 — ГОТОВО К СТАРТУ
+## SEARCH-005 — НУЖНА ПРОВЕРКА
 
 Цель: защищённый admin center для availability/latency/freshness/import state источников на базе уже существующих OPS/SYNC/search telemetry. Public/user surface остаётся кратким и sanitised; admin details не содержат tokens/credentials/PII. Dependencies AUTH-001, OPS-001, SYNC-001 выполнены.
+
+## SEARCH-005 candidate
+Status: NEEDS VERIFICATION. Read-only admin source center, persistent health state and migration 0014. Next after completion: AI-BENCH-001.

@@ -339,3 +339,6 @@ Resume draft routes require first-party session, CSRF and owner-scoped repositor
 - Deletion first removes local HH/SuperJob legacy credential mirrors, then deletes the first-party User so FK cascades remove AuthSession/AuthToken/OAuthConnection/CareerProfile/ResumeDraft subtrees. Remote provider-side OAuth grant revoke is not claimed.
 - `privacy_audit_events` is identifier-free by schema: no user ID, email, filename, asset ID, resume/profile content or credential fields. Logs contain aggregate counts only.
 - Retention worker removes stale pending accounts, expired/revoked auth artifacts and old identifier-free audit rows. Defaults are technical baseline values and are not a legal-compliance claim; LEGAL-001 owns final policy wording.
+
+## SEARCH-005 security
+Admin authorization is verified first-party session plus explicit deployment allowlist. Ordinary users receive 404. Tokens, response bodies, user queries and PII are forbidden in source-health DB/UI/API/logs.
