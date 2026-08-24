@@ -72,3 +72,7 @@ Each run writes:
 - `responses/<provider>/<case>.json` - sanitized model outputs.
 
 No provider may be selected from the deterministic reference run. A live comparative run plus manual rubric is the remaining external gate for AI-BENCH-001.
+
+## Package version 1.0.1
+
+Hotfix 1.0.1 prevents container nodes from being rescanned by the unsupported-number gate. Generated numeric fields such as `$.match_score` are excluded only at their scalar leaf, while an unsupported number added to narrative text still fails the strict gate.

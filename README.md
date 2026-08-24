@@ -1,8 +1,5 @@
 # AI Career Agent
 
-
-
-
 <!-- ACA-CANONICAL-STATUS:START -->
 ## Каноническое состояние — 2026-08-24
 
@@ -10,98 +7,70 @@
 |---|---|
 | Production schema | `20260819_0014` |
 | Последний завершённый пакет | `SEARCH-005` |
-| Текущий пакет | `AI-BENCH-001` — кодовый кандидат готов, внешний сравнительный прогон не выполнен |
-| Следующий пакет | `AI-PROVIDER-001`, заблокирован до live benchmark и ручной оценки |
-| Канонические документы | PLAN `v1.4.32`, PROJECT PASSPORT `v2.46`, SOURCE AUDIT `v1.4.32`, AI-BENCH verification `v1.0` |
+| Текущий пакет | `AI-BENCH-001 hotfix r1` — исправление готово, требуется повторный GitHub Actions |
+| Следующий функциональный gate | live comparative benchmark + manual rubric |
+| Следующий пакет | `AI-PROVIDER-001`, заблокирован до завершения AI-BENCH-001 |
+| Канонические документы | PLAN `v1.4.33`, PROJECT PASSPORT `v2.47`, SOURCE AUDIT `v1.4.33`, AI-BENCH verification `v1.1` |
 
-Пакет `evals/` изолирован от production Flask-приложения: новые пользовательские routes, миграции и production AI-вызовы не добавлялись. Детерминированный reference-run проверяет схемы, scoring, safety gates и формирование отчёта, но не является сравнением внешних AI-провайдеров.
+Первый AI-BENCH-001 candidate был отклонён GitHub CI: unsupported-number gate повторно сканировал весь корневой JSON-контейнер и ошибочно считал разрешённые `match_score` 78/72 неподтверждёнными числами. Hotfix `evals 1.0.1` проверяет только scalar leaves, сохраняет запрет на действительно выдуманные числа и добавляет регрессионные тесты. Production routes, migrations и Flask runtime не изменялись.
 <!-- ACA-CANONICAL-STATUS:END -->
-
-| Поле | Значение |
-|---|---|
-| Канонический план | `docs/PLAN_CURRENT.md` — 1.4.32 |
-| Паспорт | `docs/PROJECT_PASSPORT.md` — 2.46 |
-| Завершённый пакет | `PRIV-001 — ВЫПОЛНЕНО` |
-| Текущий пакет | `SEARCH-005 — ВЫПОЛНЕНО` |
-| Production revision | `20260813_0013` |
-
-> GitHub является главным источником кода. PRIV-001 завершён и подтверждён в production; следующий кодовый пакет SEARCH-005. Actual `.env`, secrets/tokens, DB/dumps/backups, virtualenv, caches и bytecode не входят в repository/release ZIP; `infra/vps/.env.example` остаётся обязательным secret-free template.
 
 ## 1. Назначение
 
-AI Career Agent — Flask/Gunicorn web-service карьерного сопровождения. WSGI entrypoint `app:app`. PROF-001/002/003 и PRIV-001 завершены; следующий SEARCH-005 добавит защищённый admin center состояния источников перед AI-контуром.
-
-## 2. PRIV-001 complete
+AI Career Agent — Flask/Gunicorn web-service карьерного сопровождения:
 
 ```text
-first-party User
--> /privacy-center
--> readable ZIP export
--> exact phrase + current password deletion
--> local Auth/OAuth/Profile/Resume cleanup
--> identifier-free privacy audit
--> periodic technical retention cleanup
+аккаунт -> резюме -> подтверждённый профиль -> AI-анализ
+-> вакансии -> объяснимый match -> сопроводительное письмо -> tracker
 ```
 
-Export содержит owner data и owned resume image assets, но не password/session/token hashes и не OAuth access/refresh credentials. Account deletion удаляет local HH/SuperJob credential mirrors; remote provider-side grant revoke не заявляется.
+Реальный production AI пока не подключён. Текущий `evals/` package предназначен для воспроизводимого выбора AI-моделей до интеграции в пользовательские routes.
 
-## 3. Retention baseline
+## 2. Runtime
+
+- WSGI entrypoint: `app:app`;
+- production database: PostgreSQL через SQLAlchemy/Alembic;
+- current production revision: `20260819_0014`;
+- local/test fallback: SQLite;
+- web, Trudvsem sync worker и privacy cleanup worker разделены на процессы;
+- Render остаётся staging/резервным контуром до предрелизной VPS-миграции.
+
+## 3. AI-BENCH-001 hotfix r1
+
+Root cause первого CI failure находился в `evals/ai_bench/scoring.py`: `iter_paths()` выдавал root/container nodes, а numeric scorer строкифицировал их и повторно видел вложенный `match_score` по пути `$`. Hotfix:
+
+- игнорирует `dict/list/tuple/set` в unsupported-number scan;
+- проверяет scalar leaves;
+- сохраняет hard failure для реально неподтверждённых чисел в narrative;
+- включает positive/negative regression tests;
+- поднимает benchmark package version до `1.0.1`.
+
+Проверка перед upload:
+
+```bash
+python scripts/check_ai_bench_package.py
+python -m unittest discover -s tests -p 'test_ai_bench_*.py' -v
+```
+
+Authoritative gate после upload:
 
 ```text
-pending unverified account       30 days
-expired/revoked auth artifacts   30 days
-orphan ResumeAsset                7 days
-identifier-free privacy audit   180 days
-cleanup interval                  24 hours
-active owner content              until explicit deletion
+GitHub Actions / AI-BENCH-001 package gate
+GitHub Actions / Python tests
 ```
 
-Это технические defaults. Финальные legal wording/retention фиксируются `LEGAL-001`.
+## 4. Документация
 
-## 4. Persistence
+- `docs/PLAN_CURRENT.md` — канонический порядок работ;
+- `docs/PROJECT_PASSPORT.md` — архитектура и границы продукта;
+- `docs/SOURCE_AUDIT.md` — аудит текущего hotfix;
+- `docs/AI_BENCH_VERIFICATION_STATUS.md` — failure evidence, root cause и gates;
+- `docs/evidence/ai-bench-001/` — deterministic validation/reference evidence.
 
-Migration `20260813_0013` применена в production; `privacy_audit_events` не содержит User FK/email/content. Existing AUTH/PROF/RESUME schema не меняется.
+## 5. Security and release hygiene
 
-## 5. Verification
+Repository/release ZIP не должен содержать `.env`, реальные credentials/tokens, databases, dumps, backups, virtualenv, caches, bytecode или runtime benchmark artifacts. API credentials задаются только через environment/secret storage.
 
-```text
-local compile/migration/focused tests      passed
-GitHub full workflow + dedicated PRIV gate green
-Render current=expected 0013               passed
-privacy cleanup worker healthy             passed
-export/secret/assets E2E                    passed
-throwaway delete/owner isolation E2E       passed
-restart/regression/log review               passed
-```
+## 6. Hosting roadmap
 
-## 6. Workflow
-
-```text
-PRIV-001 COMPLETE
--> SEARCH-005 audit current source-state/OPS/SYNC/admin boundaries
--> implement in feature branch
--> Pull Request / CI / Render / E2E
-```
-
-## 7. Documentation
-
-- `docs/PRIV001_IMPLEMENTATION.md`
-- `docs/PRIV001_VERIFICATION_STATUS.md`
-- `docs/PRIV001_RUNBOOK.md`
-- `docs/PRIV001_PRIVACY_REFERENCE.md`
-- `docs/PRIV001_SECURITY_REFERENCE.md`
-- `docs/PROF003_*` — COMPLETE evidence
-- `docs/PLAN_CURRENT.md`
-- `docs/PROJECT_PASSPORT.md`
-- `docs/SOURCE_AUDIT.md`
-
-## 8. Rollback
-
-Application revert может оставить additive `0013`. Downgrade `0013 -> 0012` удаляет только identifier-free privacy audit table. Уже выполненное account deletion не восстанавливается schema rollback.
-
-## 9. Hosting
-
-Render остаётся staging/резервной площадкой. Реальный VPS test `INFRA-001`, production host/domain migration и owned-domain transactional sender выполняются в предрелизном инфраструктурном окне.
-
-## Current package
-SEARCH-005 admin source status center is implemented as a candidate on revision `20260819_0014`. It requires `SEARCH_ADMIN_EMAILS` and remains NEEDS VERIFICATION until CI/Render/E2E.
+Render остаётся staging/резервной площадкой. Реальная аренда и полевой тест VPS выполняются в `INFRA-001` перед beta; далее следуют HOST-001, OPS-002, DOMAIN-001, MIG-001 и REL-001.

@@ -1,131 +1,152 @@
-# AI Career Agent — аудит источников v1.4.32
-
-
-
-
-<!-- ACA-CANONICAL-STATUS:START -->
-## Актуальный source audit — AI-BENCH-001 candidate
-
-**Документ:** AI Career Agent SOURCE_AUDIT `v1.4.32`  
-**Дата:** 2026-08-24  
-**Основа:** актуальный ZIP ветки `main`, предоставленный в текущем чате.
-
-| Метрика после реализации | Значение |
-|---|---:|
-| Файлы | 370 |
-| Python-файлы | 184 |
-| Test-файлы | 59 |
-| Alembic migrations | 14 |
-| AI benchmark cases | 8 |
-| AI output schemas | 4 |
-| Production revision | `20260819_0014` |
-
-### Изменённые поверхности
-
-- добавлены `evals/`, `scripts/check_ai_bench_package.py`, AI-BENCH unit tests и evidence;
-- добавлен dedicated `ai-bench-001` job в `.github/workflows/ci.yml`;
-- синхронизированы canonical Markdown documents;
-- `app.py`, route registration, services/repositories/models production-контура и Alembic chain не изменялись пакетом;
-- production dependencies не добавлялись: runner использует Python standard library.
-
-### Безопасность benchmark-контура
-
-- только synthetic fixtures с `synthetic=true`;
-- dataset validation отклоняет email/phone-like data;
-- credentials задаются именами environment variables, значения не хранятся в config;
-- error/result/report проходят secret redaction;
-- deterministic provider помечается как `deterministic_reference` и не может считаться vendor comparison;
-- human rubric остаётся `pending`, runner не генерирует фиктивные ручные оценки.
-
-### Остаточный риск
-
-Live latency, cost, quota behavior, transport errors, model availability and actual writing quality have not been measured because approved credentials/model IDs were not supplied. Therefore package status is **candidate / external run required**, not complete provider selection.
-<!-- ACA-CANONICAL-STATUS:END -->
+# AI Career Agent — аудит источников v1.4.33
 
 | Поле | Значение |
 |---|---|
 | Документ | SOURCE_AUDIT |
-| Версия | 1.4.32 |
-| Дата | 19 августа 2026 |
-| Проверяемый пакет | SEARCH-005 admin source status center candidate |
-| Исходный код | `ai-career-agent-site-main (18).zip`, GitHub main после PRIV-001 COMPLETE |
-| Production revision | `20260813_0013` |
-| Candidate revision | `20260819_0014` |
-| Результат | SEARCH-005 НУЖНА ПРОВЕРКА |
+| Версия | 1.4.33 |
+| Дата | 24 августа 2026 |
+| Проверяемый пакет | AI-BENCH-001 hotfix r1 |
+| Production revision | `20260819_0014` |
+| Статус | НУЖНА ПРОВЕРКА GITHUB ACTIONS |
 
-## 1. Контрольный статус
+<!-- ACA-CANONICAL-STATUS:START -->
+## Актуальный source audit — AI-BENCH-001 hotfix r1
 
-PRIV-001 подтверждён production E2E и закрыт. Загруженный ZIP принят как актуальная GitHub-основа. SEARCH-005 реализован как candidate; статус ВЫПОЛНЕНО не выставляется до GitHub/Render/E2E.
+**Документ:** AI Career Agent SOURCE_AUDIT `v1.4.33`  
+**Дата:** 2026-08-24  
+**Основа:** AI-BENCH-001 candidate v1.4.32, загруженный пользователем в GitHub `main`, и фактический CI failure screenshot.
 
-## 2. Аудит входного ZIP
+### Подтверждённый дефект
 
-- ZIP integrity проверена;
-- `database.CURRENT_REVISION=20260813_0013` до изменений;
-- repository docs отражают PRIV-001 COMPLETE v1.4.32;
-- `app.py` и WSGI `app:app` сохранены;
-- `infra/vps/.env.example` присутствует;
-- `.env`, databases, dumps, backups, caches, bytecode, virtualenv, `app_fixed.py` и секретные credential-файлы отсутствуют;
-- функциональные файлы не содержат вложенного лишнего ZIP или runtime output.
+| Наблюдение CI | Причина |
+|---|---|
+| `vacancy-match-ru-01`: unsupported value `78` at path `$` | root `dict` stringified and rescanned |
+| `vacancy-match-en-01`: unsupported value `72` at path `$` | same root-container false positive |
+| runner status `failed` | strict gate inherited both scoring failures |
+| dedicated package job exit code `1` | `--fail-on-gate` correctly rejected the run |
 
-## 3. Реализованный scope
+### Исправленные файлы кода
 
-- explicit verified first-party admin allowlist `SEARCH_ADMIN_EMAILS`;
-- owner-independent persistent `source_health_states` for HH/SuperJob/Reed/Trudvsem;
-- last attempt/success/failure, latency, failure streak, configured status, safe error category/code;
-- cache count/timestamp aggregation using database metadata;
-- Trudvsem persistent SyncRun/worker freshness aggregation;
-- non-gating instrumentation of existing provider observability events;
-- read-only `/admin/sources` and `/api/admin/sources`;
-- neutral 404 ordinary user, login gate unauthenticated user;
-- no-store, no ETag, rate limit, mobile UI;
-- migration, backup inventory, tests and dedicated CI gate.
+- `evals/ai_bench/scoring.py`;
+- `tests/test_ai_bench_scoring.py`;
+- `evals/VERSION` and `evals/ai_bench/__init__.py` -> `1.0.1`;
+- `scripts/check_ai_bench_package.py` version gate.
 
-## 4. Privacy and security evidence
+### Локальная проверка hotfix
 
-The model deliberately has no `user_id`. Stored `details_json` accepts only a fixed key allowlist and bounded scalar values. Exception messages, provider bodies, user search queries, tokens and credentials are never persisted. Error recording keeps only safe category and exception class/status code. The admin page performs no upstream request.
+- targeted pytest: PASS;
+- AI-BENCH unit discovery: 11 tests PASS;
+- deterministic package gate: PASS;
+- validate + strict reference run: PASS, 8/8 cases;
+- full repository suite в этом контейнере не завершилась в доступный timeout и не объявляется пройденной; authoritative next gate — GitHub Actions.
 
-## 5. Migration and rollback
+### Isolation
 
-`20260819_0014_source_health_admin` creates one additive table and two indexes. Downgrade removes only SEARCH-005 state. Application revert may keep 0014. Removing `SEARCH_ADMIN_EMAILS` disables access immediately.
+`app.py`, production routes, models, repositories, services, requirements и Alembic chain не менялись. Production revision остаётся `20260819_0014`.
+<!-- ACA-CANONICAL-STATUS:END -->
 
-## 6. Local evidence
+## 1. Источник истины
 
-- Python compile/AST checks passed;
-- full available pytest passed;
-- focused migration/model/service/frontend/route-registration tests passed;
-- SQLite migration upgrade/downgrade/re-upgrade passed;
-- repository hygiene, infra manifest, document structure and archive checks passed;
-- provider observability instrumentation test confirms at least one existing provider event hook;
-- no environment-dependent PostgreSQL/Render scenario is claimed complete locally.
+- Исходная база hotfix: full-project ZIP `v1.4.32`, ранее выданный и загруженный пользователем в GitHub `main`.
+- GitHub screenshot является evidence фактического внешнего gate.
+- Более позднего ZIP из GitHub после failed upload не предоставлялось; hotfix меняет только выявленный AI-BENCH scope и документацию.
 
-## 7. Required external gate
+## 2. Root cause analysis
 
-1. Separate branch and Pull Request.
-2. Full CI plus `Verify SEARCH-005 admin source health controls` green.
-3. Configure `SEARCH_ADMIN_EMAILS` for a verified test administrator.
-4. Render deploy with current/expected `20260819_0014`.
-5. Unauthenticated user -> login; ordinary verified user -> neutral 404.
-6. Administrator -> safe HTML and JSON for all four providers.
-7. Perform real vacancy search/provider attempt; timestamps/latency/status update without response body/query.
-8. Restart Render; latest persisted state remains available; Trudvsem sync/worker freshness remains consistent.
-9. Public source state and search behavior unchanged.
-10. Render logs contain no tokens, provider bodies, user queries or PII.
+`iter_paths(content)` возвращает пары для root, всех контейнеров и scalar leaves. До исправления `_unsupported_numbers()` выполнял `str(value)` для каждой пары. Поэтому root object содержал текстовое представление всех вложенных полей, включая generated `match_score`. Проверка `generated_numeric_paths` была корректной для `$.match_score`, но root path `$` не совпадал с exclusion.
 
-## 8. Limitations
+Это объясняет точное CI evidence:
 
-- Initial center is read-only; no manual retries or credential management.
-- Current provider observability hook is per process; persisted writes survive restart, but future multi-replica deployment needs a shared event/metrics transport.
-- Cache probing is metadata-based and intentionally fail-soft.
-- No external status-page or provider probe runs on admin page load.
-- Admin allowlist is deployment configuration, not a general RBAC system.
+```text
+unsupported_numbers: [{"path": "$", "value": "78"}]
+unsupported_numbers: [{"path": "$", "value": "72"}]
+```
 
-## 9. Next action
+## 3. Исправление и сохранённая защита
 
-`SEARCH-005 candidate -> Pull Request CI -> Render 0014 -> production E2E -> SEARCH-005 COMPLETE -> AI-BENCH-001`.
+Исправление пропускает container values до numeric token extraction. Оно не ослабляет anti-hallucination gate:
+
+- `$.match_score` разрешён как generated numeric field;
+- число из source messages/facts разрешено;
+- новое число в `$.recommendation` или другом narrative scalar остаётся unsupported и ломает strict gate;
+- boolean/`null` по-прежнему исключены.
+
+## 4. Regression coverage
+
+Добавлены проверки:
+
+1. generated score не пересканируется по root/container path;
+2. неподтверждённое narrative number фиксируется по точному scalar path.
+
+Existing checks для schema, grounding, evidence IDs, forbidden claims, report generation и redaction сохранены.
+
+## 5. Выполненная локальная проверка
+
+```text
+python -m pytest tests/test_ai_bench_scoring.py tests/test_ai_bench_runner.py -q
+9 passed, 8 subtests passed
+
+python -m unittest discover -s tests -p 'test_ai_bench_*.py' -v
+11 tests passed
+
+python scripts/check_ai_bench_package.py
+AI-BENCH-001 package gate passed
+```
+
+Full repository pytest запускался, но не завершился в лимит текущего container runtime. Поэтому full-suite статус не подменяется предположением.
+
+## 6. Files and surfaces
+
+### Functional hotfix
+
+- `evals/ai_bench/scoring.py`;
+- `tests/test_ai_bench_scoring.py`;
+- `evals/VERSION`;
+- `evals/ai_bench/__init__.py`;
+- `scripts/check_ai_bench_package.py`;
+- `evals/README.md`.
+
+### Documentation/evidence
+
+- `README.md`;
+- `docs/PLAN_CURRENT.md`;
+- `docs/PROJECT_PASSPORT.md`;
+- `docs/SOURCE_AUDIT.md`;
+- `docs/ROADMAP.md`;
+- `docs/CHANGELOG.md`;
+- `docs/CANONICAL_DOCUMENTS.md`;
+- `docs/AI_BENCH_VERIFICATION_STATUS.md`;
+- `docs/evidence/ai-bench-001/*`.
+
+## 7. Production isolation
+
+No changes to:
+
+- `app.py` or route registration;
+- `config.py` production settings;
+- models/repositories/application services;
+- `requirements.txt`;
+- migrations;
+- Docker/Render runtime;
+- database revision.
+
+## 8. Required external gate
+
+1. Upload hotfix to GitHub `main`.
+2. Confirm green `AI-BENCH-001 package gate`.
+3. Confirm green full `Python tests`.
+4. Preserve failure/hotfix evidence in verification status.
+5. Only then continue with live models, exact IDs, current prices and manual rubric.
+
+## 9. Status decision
+
+`AI-BENCH-001 hotfix r1` — **НУЖНА ПРОВЕРКА GITHUB ACTIONS**.  
+`AI-PROVIDER-001` — **ЗАБЛОКИРОВАН**.  
+Production — unchanged at `20260819_0014`.
 
 ## 10. Version log
 
 | Версия | Дата | Изменение |
 |---|---|---|
-| 1.4.32 | 19.08.2026 | PRIV-001 complete; SEARCH-005 next. |
-| 1.4.32 | 19.08.2026 | SEARCH-005 admin authorization, persistent source health, safe UI/API, migration 0014, tests and docs implemented; external gate pending. |
+| 1.4.32 | 24.08.2026 | Initial AI-BENCH implementation candidate. |
+| 1.4.33 | 24.08.2026 | CI failure audited; scalar-leaf numeric scorer hotfix and regression coverage prepared. |

@@ -1,0 +1,460 @@
+{
+  "benchmark_version": "1.0",
+  "config_fingerprint": "[REDACTED]",
+  "dataset": {
+    "case_count": 8,
+    "fingerprint": "[REDACTED]",
+    "id": "ai-career-agent-golden-v1",
+    "synthetic": true,
+    "version": "1.0.0"
+  },
+  "decision_status": "No external model/provider decision is allowed from a deterministic reference run. Run the approved live candidates and complete manual review before AI-PROVIDER-001.",
+  "execution_mode": "deterministic_reference",
+  "finished_at": "2026-08-24T10:27:07Z",
+  "limitations": [
+    "The included dataset is synthetic and intentionally excludes production user PII.",
+    "Human writing-quality rubrics remain pending until a named reviewer records scores.",
+    "This run validates the harness, schemas, scoring, safety gates, and report generation; it is not a comparative result for external AI vendors."
+  ],
+  "providers": [
+    {
+      "adapter": "fixture",
+      "id": "reference",
+      "summary": {
+        "case_count": 8,
+        "error_count": 0,
+        "error_rate": 0.0,
+        "estimated_cost_usd": null,
+        "forbidden_claim_count": 0,
+        "mean_grounding_score": 1.0,
+        "mean_quality_score": 1.0,
+        "p50_latency_ms": 0.029,
+        "p95_latency_ms": 0.053,
+        "passed_count": 8,
+        "schema_pass_rate": 1.0,
+        "unsupported_number_count": 0
+      }
+    }
+  ],
+  "quality_gate": {
+    "error_count": 0,
+    "error_rate": 0.0,
+    "passed_count": 8,
+    "result_count": 8,
+    "thresholds": {
+      "max_error_rate": 0.0,
+      "max_forbidden_claims": 0,
+      "max_invalid_evidence_ids": 0,
+      "max_unsupported_numbers": 0,
+      "min_grounding_score": 1.0,
+      "min_quality_score": 1.0,
+      "min_required_path_coverage": 1.0
+    }
+  },
+  "results": [
+    {
+      "adapter": "fixture",
+      "case_id": "resume-analysis-ru-01",
+      "error": null,
+      "finished_at": "2026-08-24T10:27:07Z",
+      "language": "ru",
+      "latency_ms": 0.031,
+      "metadata": {
+        "mode": "deterministic_fixture"
+      },
+      "passed": true,
+      "provider_id": "reference",
+      "response_sha256": "[REDACTED]",
+      "score": {
+        "evidence_precision": 1.0,
+        "evidence_recall": 1.0,
+        "forbidden_claim_count": 0,
+        "forbidden_claims": [],
+        "gate_failures": [],
+        "grounding_score": 1.0,
+        "grounding_term_coverage": 1.0,
+        "invalid_evidence_ids": [],
+        "manual_review": {
+          "rubric": [
+            "Факты не расширены сверх источника",
+            "Рекомендации конкретны и полезны",
+            "Тон нейтральный и профессиональный"
+          ],
+          "scores": null,
+          "status": "pending"
+        },
+        "missing_grounding_requirements": [],
+        "missing_required_evidence_ids": [],
+        "missing_required_paths": [],
+        "passed": true,
+        "quality_score": 1.0,
+        "required_path_coverage": 1.0,
+        "schema_compliance": 1.0,
+        "schema_errors": [],
+        "unsupported_number_count": 0,
+        "unsupported_numbers": []
+      },
+      "started_at": "2026-08-24T10:27:07Z",
+      "task": "resume_analysis",
+      "usage": {
+        "estimated_cost_usd": null,
+        "input_tokens": "[REDACTED]",
+        "output_tokens": "[REDACTED]"
+      }
+    },
+    {
+      "adapter": "fixture",
+      "case_id": "resume-analysis-en-01",
+      "error": null,
+      "finished_at": "2026-08-24T10:27:07Z",
+      "language": "en",
+      "latency_ms": 0.027,
+      "metadata": {
+        "mode": "deterministic_fixture"
+      },
+      "passed": true,
+      "provider_id": "reference",
+      "response_sha256": "[REDACTED]",
+      "score": {
+        "evidence_precision": 1.0,
+        "evidence_recall": 1.0,
+        "forbidden_claim_count": 0,
+        "forbidden_claims": [],
+        "gate_failures": [],
+        "grounding_score": 1.0,
+        "grounding_term_coverage": 1.0,
+        "invalid_evidence_ids": [],
+        "manual_review": {
+          "rubric": [
+            "No unsupported achievements",
+            "Actionable recommendations",
+            "Clear professional English"
+          ],
+          "scores": null,
+          "status": "pending"
+        },
+        "missing_grounding_requirements": [],
+        "missing_required_evidence_ids": [],
+        "missing_required_paths": [],
+        "passed": true,
+        "quality_score": 1.0,
+        "required_path_coverage": 1.0,
+        "schema_compliance": 1.0,
+        "schema_errors": [],
+        "unsupported_number_count": 0,
+        "unsupported_numbers": []
+      },
+      "started_at": "2026-08-24T10:27:07Z",
+      "task": "resume_analysis",
+      "usage": {
+        "estimated_cost_usd": null,
+        "input_tokens": "[REDACTED]",
+        "output_tokens": "[REDACTED]"
+      }
+    },
+    {
+      "adapter": "fixture",
+      "case_id": "vacancy-match-ru-01",
+      "error": null,
+      "finished_at": "2026-08-24T10:27:07Z",
+      "language": "ru",
+      "latency_ms": 0.031,
+      "metadata": {
+        "mode": "deterministic_fixture"
+      },
+      "passed": true,
+      "provider_id": "reference",
+      "response_sha256": "[REDACTED]",
+      "score": {
+        "evidence_precision": 1.0,
+        "evidence_recall": 1.0,
+        "forbidden_claim_count": 0,
+        "forbidden_claims": [],
+        "gate_failures": [],
+        "grounding_score": 1.0,
+        "grounding_term_coverage": 1.0,
+        "invalid_evidence_ids": [],
+        "manual_review": {
+          "rubric": [
+            "Оценка объяснима",
+            "Критичные требования отделены от плюсов",
+            "Нет ложного опыта"
+          ],
+          "scores": null,
+          "status": "pending"
+        },
+        "missing_grounding_requirements": [],
+        "missing_required_evidence_ids": [],
+        "missing_required_paths": [],
+        "passed": true,
+        "quality_score": 1.0,
+        "required_path_coverage": 1.0,
+        "schema_compliance": 1.0,
+        "schema_errors": [],
+        "unsupported_number_count": 0,
+        "unsupported_numbers": []
+      },
+      "started_at": "2026-08-24T10:27:07Z",
+      "task": "vacancy_match",
+      "usage": {
+        "estimated_cost_usd": null,
+        "input_tokens": "[REDACTED]",
+        "output_tokens": "[REDACTED]"
+      }
+    },
+    {
+      "adapter": "fixture",
+      "case_id": "vacancy-match-en-01",
+      "error": null,
+      "finished_at": "2026-08-24T10:27:07Z",
+      "language": "en",
+      "latency_ms": 0.025,
+      "metadata": {
+        "mode": "deterministic_fixture"
+      },
+      "passed": true,
+      "provider_id": "reference",
+      "response_sha256": "[REDACTED]",
+      "score": {
+        "evidence_precision": 1.0,
+        "evidence_recall": 1.0,
+        "forbidden_claim_count": 0,
+        "forbidden_claims": [],
+        "gate_failures": [],
+        "grounding_score": 1.0,
+        "grounding_term_coverage": 1.0,
+        "invalid_evidence_ids": [],
+        "manual_review": {
+          "rubric": [
+            "Transparent score rationale",
+            "No invented framework experience",
+            "Useful next action"
+          ],
+          "scores": null,
+          "status": "pending"
+        },
+        "missing_grounding_requirements": [],
+        "missing_required_evidence_ids": [],
+        "missing_required_paths": [],
+        "passed": true,
+        "quality_score": 1.0,
+        "required_path_coverage": 1.0,
+        "schema_compliance": 1.0,
+        "schema_errors": [],
+        "unsupported_number_count": 0,
+        "unsupported_numbers": []
+      },
+      "started_at": "2026-08-24T10:27:07Z",
+      "task": "vacancy_match",
+      "usage": {
+        "estimated_cost_usd": null,
+        "input_tokens": "[REDACTED]",
+        "output_tokens": "[REDACTED]"
+      }
+    },
+    {
+      "adapter": "fixture",
+      "case_id": "cover-letter-ru-01",
+      "error": null,
+      "finished_at": "2026-08-24T10:27:07Z",
+      "language": "ru",
+      "latency_ms": 0.061,
+      "metadata": {
+        "mode": "deterministic_fixture"
+      },
+      "passed": true,
+      "provider_id": "reference",
+      "response_sha256": "[REDACTED]",
+      "score": {
+        "evidence_precision": 1.0,
+        "evidence_recall": 1.0,
+        "forbidden_claim_count": 0,
+        "forbidden_claims": [],
+        "gate_failures": [],
+        "grounding_score": 1.0,
+        "grounding_term_coverage": 1.0,
+        "invalid_evidence_ids": [],
+        "manual_review": {
+          "rubric": [
+            "Письмо персонализировано под вакансию",
+            "Нет выдуманных метрик",
+            "Не скрыт пробел по английскому"
+          ],
+          "scores": null,
+          "status": "pending"
+        },
+        "missing_grounding_requirements": [],
+        "missing_required_evidence_ids": [],
+        "missing_required_paths": [],
+        "passed": true,
+        "quality_score": 1.0,
+        "required_path_coverage": 1.0,
+        "schema_compliance": 1.0,
+        "schema_errors": [],
+        "unsupported_number_count": 0,
+        "unsupported_numbers": []
+      },
+      "started_at": "2026-08-24T10:27:07Z",
+      "task": "cover_letter",
+      "usage": {
+        "estimated_cost_usd": null,
+        "input_tokens": "[REDACTED]",
+        "output_tokens": "[REDACTED]"
+      }
+    },
+    {
+      "adapter": "fixture",
+      "case_id": "cover-letter-en-01",
+      "error": null,
+      "finished_at": "2026-08-24T10:27:07Z",
+      "language": "en",
+      "latency_ms": 0.023,
+      "metadata": {
+        "mode": "deterministic_fixture"
+      },
+      "passed": true,
+      "provider_id": "reference",
+      "response_sha256": "[REDACTED]",
+      "score": {
+        "evidence_precision": 1.0,
+        "evidence_recall": 1.0,
+        "forbidden_claim_count": 0,
+        "forbidden_claims": [],
+        "gate_failures": [],
+        "grounding_score": 1.0,
+        "grounding_term_coverage": 1.0,
+        "invalid_evidence_ids": [],
+        "manual_review": {
+          "rubric": [
+            "Specific to the role",
+            "No invented impact metrics",
+            "Concise and credible"
+          ],
+          "scores": null,
+          "status": "pending"
+        },
+        "missing_grounding_requirements": [],
+        "missing_required_evidence_ids": [],
+        "missing_required_paths": [],
+        "passed": true,
+        "quality_score": 1.0,
+        "required_path_coverage": 1.0,
+        "schema_compliance": 1.0,
+        "schema_errors": [],
+        "unsupported_number_count": 0,
+        "unsupported_numbers": []
+      },
+      "started_at": "2026-08-24T10:27:07Z",
+      "task": "cover_letter",
+      "usage": {
+        "estimated_cost_usd": null,
+        "input_tokens": "[REDACTED]",
+        "output_tokens": "[REDACTED]"
+      }
+    },
+    {
+      "adapter": "fixture",
+      "case_id": "interview-ru-01",
+      "error": null,
+      "finished_at": "2026-08-24T10:27:07Z",
+      "language": "ru",
+      "latency_ms": 0.039,
+      "metadata": {
+        "mode": "deterministic_fixture"
+      },
+      "passed": true,
+      "provider_id": "reference",
+      "response_sha256": "[REDACTED]",
+      "score": {
+        "evidence_precision": 1.0,
+        "evidence_recall": 1.0,
+        "forbidden_claim_count": 0,
+        "forbidden_claims": [],
+        "gate_failures": [],
+        "grounding_score": 1.0,
+        "grounding_term_coverage": 1.0,
+        "invalid_evidence_ids": [],
+        "manual_review": {
+          "rubric": [
+            "Вопросы покрывают сильные стороны и пробелы",
+            "Есть безопасные follow-up",
+            "Нет ложных предпосылок"
+          ],
+          "scores": null,
+          "status": "pending"
+        },
+        "missing_grounding_requirements": [],
+        "missing_required_evidence_ids": [],
+        "missing_required_paths": [],
+        "passed": true,
+        "quality_score": 1.0,
+        "required_path_coverage": 1.0,
+        "schema_compliance": 1.0,
+        "schema_errors": [],
+        "unsupported_number_count": 0,
+        "unsupported_numbers": []
+      },
+      "started_at": "2026-08-24T10:27:07Z",
+      "task": "interview_questions",
+      "usage": {
+        "estimated_cost_usd": null,
+        "input_tokens": "[REDACTED]",
+        "output_tokens": "[REDACTED]"
+      }
+    },
+    {
+      "adapter": "fixture",
+      "case_id": "interview-en-01",
+      "error": null,
+      "finished_at": "2026-08-24T10:27:07Z",
+      "language": "en",
+      "latency_ms": 0.028,
+      "metadata": {
+        "mode": "deterministic_fixture"
+      },
+      "passed": true,
+      "provider_id": "reference",
+      "response_sha256": "[REDACTED]",
+      "score": {
+        "evidence_precision": 1.0,
+        "evidence_recall": 1.0,
+        "forbidden_claim_count": 0,
+        "forbidden_claims": [],
+        "gate_failures": [],
+        "grounding_score": 1.0,
+        "grounding_term_coverage": 1.0,
+        "invalid_evidence_ids": [],
+        "manual_review": {
+          "rubric": [
+            "Questions are role-specific",
+            "SQL gap is explored without false assumptions",
+            "Follow-ups are actionable"
+          ],
+          "scores": null,
+          "status": "pending"
+        },
+        "missing_grounding_requirements": [],
+        "missing_required_evidence_ids": [],
+        "missing_required_paths": [],
+        "passed": true,
+        "quality_score": 1.0,
+        "required_path_coverage": 1.0,
+        "schema_compliance": 1.0,
+        "schema_errors": [],
+        "unsupported_number_count": 0,
+        "unsupported_numbers": []
+      },
+      "started_at": "2026-08-24T10:27:07Z",
+      "task": "interview_questions",
+      "usage": {
+        "estimated_cost_usd": null,
+        "input_tokens": "[REDACTED]",
+        "output_tokens": "[REDACTED]"
+      }
+    }
+  ],
+  "run_id": "[REDACTED]",
+  "schema_version": "1.0",
+  "started_at": "2026-08-24T10:27:07Z",
+  "status": "passed"
+}

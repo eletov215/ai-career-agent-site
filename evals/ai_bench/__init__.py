@@ -3,4 +3,4 @@
 from .runner import BenchmarkRunner
 
 __all__ = ["BenchmarkRunner"]
-__version__ = "1.0.0"
+__version__ = "1.0.1"

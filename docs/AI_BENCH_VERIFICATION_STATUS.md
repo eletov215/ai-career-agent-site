@@ -1,87 +1,74 @@
-# AI Career Agent — AI-BENCH-001 Verification Status
+# AI Career Agent - AI-BENCH-001 Verification Status
 
-**Версия:** v1.0  
-**Дата:** 2026-08-24  
-**Пакет:** AI-BENCH-001  
-**Статус:** КАНДИДАТ ГОТОВ; НУЖЕН ВНЕШНИЙ СРАВНИТЕЛЬНЫЙ ПРОГОН  
-**Production revision:** `20260819_0014`
-
-## 1. Назначение
-
-AI-BENCH-001 создаёт воспроизводимый контур для сравнения AI-моделей до production-интеграции. Пакет оценивает четыре функции AI Career Agent:
-
-1. анализ резюме;
-2. объяснимое соответствие вакансии;
-3. сопроводительное письмо;
-4. адаптивные вопросы интервью.
-
-Пакет не регистрирует production routes, не изменяет БД и не выбирает провайдера автоматически.
-
-## 2. Реализованный состав
-
-| Компонент | Реализация |
+| Поле | Значение |
 |---|---|
-| Runner | `python -m evals.ai_bench` |
-| Config | versioned JSON, env-name credentials |
-| Dataset | `ai-career-agent-golden-v1`, 8 synthetic RU/EN cases |
-| Schemas | 4 JSON output contracts |
-| Providers | deterministic fixture, command wrapper, explicit OpenAI-compatible HTTPS endpoint |
-| Scoring | schema, required paths, evidence grounding, forbidden claims, unsupported numbers |
-| Performance | latency, token usage, estimated cost when usage is returned |
-| Evidence | `run.json`, `report.md`, sanitized per-case responses |
-| CI | `.github/workflows/ci.yml` job `ai-bench-001` |
-| Tests | dataset, schema, scoring, redaction, runner/report coverage |
+| Документ | AI_BENCH_VERIFICATION_STATUS |
+| Версия | 1.1 |
+| Дата | 24 августа 2026 |
+| Пакет | AI-BENCH-001 hotfix r1 |
+| Статус | НУЖНА ПРОВЕРКА GITHUB; LIVE COMPARATIVE RUN PENDING |
+| Production revision | `20260819_0014` |
 
-## 3. Выполненные проверки
+## 1. Initial CI result
+
+Candidate v1.4.32 was rejected by GitHub Actions:
 
 ```text
-python -m compileall -q evals scripts/check_ai_bench_package.py tests/test_ai_bench_*.py
-python scripts/check_ai_bench_package.py
-python -m unittest discover -s tests -p 'test_ai_bench_*.py' -v
-python -m evals.ai_bench validate --config evals/config/ci.json
-python -m evals.ai_bench run --config evals/config/ci.json --output-dir <temp> --fail-on-gate
+Python tests: 3 failed, 390 passed
+AI-BENCH-001 package gate: failed
+vacancy-match-ru-01: unsupported_numbers [{path: '$', value: '78'}]
+vacancy-match-en-01: unsupported_numbers [{path: '$', value: '72'}]
 ```
 
-Результат package-specific gate:
+This rejection is accepted as valid evidence; v1.0 statements that the external GitHub gate had passed are superseded.
+
+## 2. Root cause
+
+The unsupported-number scorer inspected both JSON containers and scalar leaves. The root dictionary was stringified, so an allowed generated `$.match_score` was scanned again as if it were a claim at `$`.
+
+## 3. Hotfix implementation
+
+- skip container values in `_unsupported_numbers()`;
+- continue checking all scalar leaves;
+- keep `generated_numeric_paths` exemptions exact and bounded;
+- test that reference `match_score` passes;
+- test that a narrative `99 years` claim still fails at `$.recommendation`;
+- preserve token counts, fingerprints and SHA-256 values while redacting real credentials.
+
+## 4. Local verification
 
 | Проверка | Результат |
 |---|---|
-| Dataset and schema validation | PASS |
-| Synthetic/PII guard | PASS |
-| Reference outputs | PASS |
-| Strict machine quality gate | PASS |
-| Secret-redaction checks | PASS |
-| Machine report generation | PASS |
-| Human report generation | PASS |
+| Python compile for benchmark files | PASS |
+| AI-BENCH unittest discover | 11 tests PASS |
+| Strict deterministic reference run | 8/8 PASS |
+| Dedicated package gate | PASS |
+| Forbidden claims | 0 |
+| Unsupported numbers | 0 |
+| Dataset/PII guard | PASS |
+| Secret-redaction tests | PASS |
 | Production route/migration isolation | PASS |
 
-Machine evidence:
+Evidence:
 
 - `docs/evidence/ai-bench-001/validation.json`;
 - `docs/evidence/ai-bench-001/reference-run.json`;
 - `docs/evidence/ai-bench-001/reference-report.md`.
 
-## 4. Что reference-run доказывает
+## 5. What remains unverified
 
-Reference-run подтверждает, что runner, fixtures, schemas, scoring, safety gates, artifacts and CI command work deterministically. Он нужен для regression-control benchmark-инфраструктуры.
+- the full GitHub workflow after hotfix upload;
+- live external model quality, latency, quota/error behavior and cost;
+- manual writing-quality rubric;
+- provider decision for AI-PROVIDER-001.
 
-## 5. Что reference-run не доказывает
+## 6. Status decision
 
-Reference-run **не является** сравнением Yandex AI Studio, OpenAI, Claude, Kimi или другой внешней модели. Он не даёт достоверных live latency/cost/error-rate данных и не заменяет ручную оценку качества текста.
+**Hotfix r1 is ready for GitHub. AI-BENCH-001 is not marked complete.** A green GitHub rerun will close only the implementation/CI defect; the package still requires the approved live comparative run and manual review.
 
-## 6. Незакрытый внешний gate
+## 7. Version log
 
-До статуса `ВЫПОЛНЕНО` необходимо:
-
-- утвердить список кандидатов и exact model IDs;
-- предоставить test credentials через environment, не помещая их в Git;
-- зафиксировать актуальную цену каждого кандидата в private run config;
-- выполнить все cases на одинаковом dataset fingerprint;
-- повторить failed/timeout cases по принятой политике;
-- заполнить human rubric минимум одним назначенным reviewer;
-- сохранить sanitized comparative evidence;
-- принять provider decision или зафиксировать отсутствие подходящего кандидата.
-
-## 7. Решение по статусу
-
-**AI-BENCH-001 implementation candidate принят. Полный пакет не закрывается до внешнего comparative run. `AI-PROVIDER-001` остаётся заблокирован.**
+| Версия | Дата | Изменение |
+|---|---|---|
+| 1.0 | 24.08.2026 | Initial implementation candidate and external-run gate defined. |
+| 1.1 | 24.08.2026 | Recorded GitHub rejection, fixed root-container numeric false positive and metric over-redaction, added regressions and regenerated local evidence. |

@@ -71,6 +71,13 @@ def _unsupported_numbers(case: BenchmarkCase, content: Any) -> list[dict[str, st
     for path, value in iter_paths(content):
         if any(path == prefix or path.startswith(prefix + "[") or path.startswith(prefix + ".") for prefix in generated_path_prefixes):
             continue
+        # ``iter_paths`` yields both containers and their descendants.  Scanning
+        # the string representation of a dict/list would inspect every nested
+        # number again at the container path (most notably at ``$``), bypassing
+        # generated_numeric_paths such as ``$.match_score``.  Only scalar leaves
+        # are meaningful claims for the unsupported-number gate.
+        if isinstance(value, (dict, list, tuple, set)):
+            continue
         if isinstance(value, bool) or value is None:
             continue
         text = str(value)

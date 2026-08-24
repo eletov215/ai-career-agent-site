@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import json
 import unittest
-from dataclasses import replace
 from pathlib import Path
 
 from evals.ai_bench.dataset import load_dataset
@@ -31,6 +30,22 @@ class ScoringTests(unittest.TestCase):
                 content = json.loads((ROOT / "evals/expected/reference" / f"{case.case_id}.json").read_text(encoding="utf-8"))
                 score = score_case(case, content, thresholds)
                 self.assertTrue(score["passed"], score)
+
+    def test_generated_numeric_leaf_is_not_rechecked_at_container_path(self) -> None:
+        case = next(item for item in self.cases if item.case_id == "vacancy-match-ru-01")
+        content = json.loads((ROOT / "evals/expected/reference" / f"{case.case_id}.json").read_text(encoding="utf-8"))
+        score = score_case(case, content, {"max_unsupported_numbers": 0})
+        self.assertEqual(score["unsupported_numbers"], [])
+        self.assertNotIn("unsupported_numbers", score["gate_failures"])
+
+    def test_unsupported_number_is_reported_at_scalar_leaf_path(self) -> None:
+        case = next(item for item in self.cases if item.case_id == "vacancy-match-en-01")
+        content = json.loads((ROOT / "evals/expected/reference" / f"{case.case_id}.json").read_text(encoding="utf-8"))
+        content["recommendation"] += " Complete 99 exercises first."
+        score = score_case(case, content, {"max_unsupported_numbers": 0})
+        self.assertFalse(score["passed"])
+        self.assertEqual(score["unsupported_numbers"], [{"path": "$.recommendation", "value": "99"}])
+        self.assertIn("unsupported_numbers", score["gate_failures"])
 
     def test_forbidden_claim_is_a_hard_failure(self) -> None:
         case = next(item for item in self.cases if item.case_id == "resume-analysis-ru-01")
