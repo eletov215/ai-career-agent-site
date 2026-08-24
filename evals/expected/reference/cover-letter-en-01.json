@@ -1,0 +1,32 @@
+{
+  "subject": "Application for the B2B Product Designer role",
+  "body": "Hello, I am applying for the B2B Product Designer role. Over three years in product design, I have built Figma design systems, conducted qualitative user interviews, and worked closely with product and engineering partners. These experiences align with your need for a designer who can support a consistent system while staying connected to user evidence and delivery constraints. Experimentation experience is listed as preferred but is not verified in the supplied profile, so I would discuss that area transparently. I would welcome the opportunity to show relevant design-system and research examples.",
+  "evidence_ids": [
+    "c1",
+    "c2",
+    "c3",
+    "c4",
+    "v1",
+    "v2",
+    "v3"
+  ],
+  "claims": [
+    {
+      "text": "The candidate has three years of product design experience.",
+      "evidence_ids": [
+        "c1"
+      ]
+    },
+    {
+      "text": "The candidate has worked with Figma design systems, user interviews, product, and engineering.",
+      "evidence_ids": [
+        "c2",
+        "c3",
+        "c4"
+      ]
+    }
+  ],
+  "caveats": [
+    "Experimentation experience is not verified in the supplied facts."
+  ]
+}

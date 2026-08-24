@@ -1,17 +1,49 @@
 # AI Career Agent - Единый план реализации и ведения разработки
 
+
+
+
+<!-- ACA-CANONICAL-STATUS:START -->
+## Канонический статус плана
+
+**Документ:** AI Career Agent PLAN_CURRENT `v1.4.33`  
+**Дата:** 2026-08-24  
+**Production revision:** `20260819_0014`  
+**Текущий пакет:** `AI-BENCH-001 - HOTFIX R1; НУЖНА ПРОВЕРКА GITHUB И LIVE BENCHMARK`
+
+### Причина hotfix r1
+
+GitHub Actions rejected candidate `v1.4.32` with three test failures and a failed dedicated package gate. The unsupported-number scanner stringified the root JSON container and re-detected allowed generated `match_score` values `78` and `72` at path `$`.
+
+### Что исправлено
+
+- unsupported-number validation now scans scalar leaves only;
+- generated numeric paths remain exempt without disabling checks in narrative fields;
+- regression tests cover both the false-positive case and a real unsupported number;
+- secret redaction preserves dataset/config fingerprints, SHA-256 evidence and token metrics while continuing to redact credentials;
+- deterministic evidence is stored under `docs/evidence/ai-bench-001/`.
+
+### Текущий gate
+
+Local compile, 11 AI-BENCH unit tests and `scripts/check_ai_bench_package.py` pass. GitHub Actions must be rerun. Even after green CI, AI-BENCH-001 remains open until approved external models complete one comparable run and a human reviewer fills the rubric.
+
+### Очередь
+
+`AI-BENCH-001 hotfix CI -> live comparative run -> AI-PROVIDER-001 -> LEGAL-001 -> AI-001 -> AI-002 -> AI-003 -> AI-004 -> AI-005 -> AI-006 -> JOB-001 -> JOB-002 -> JOB-003/JOB-004`
+<!-- ACA-CANONICAL-STATUS:END -->
+
 | Поле | Значение |
 |---|---|
 | Документ | PLAN_CURRENT |
-| Версия | 1.4.30 |
-| Дата | 19 августа 2026 |
+| Версия | 1.4.33 |
+| Дата | 24 августа 2026 |
 | Статус | ДЕЙСТВУЮЩИЙ |
-| Основа кода | GitHub `main` после PRIV-001 hardened v1.4.28 + CI hotfix r1; GitHub Actions green; Render/PostgreSQL `20260813_0013`; production export/delete/restart/log E2E подтверждены |
-| Текущий пакет | SEARCH-005 — центр состояния источников для администратора; кандидат 20260819_0014, внешний gate pending
+| Основа кода | GitHub `main` после AI-BENCH-001 candidate v1.4.32; initial CI rejected the candidate; hotfix r1 locally passes the AI-BENCH gate; GitHub rerun pending |
+| Текущий пакет | AI-BENCH-001 hotfix r1 - НУЖНА ПРОВЕРКА GitHub; затем live comparative run and manual rubric |
 
 > ОБЯЗАТЕЛЬНО ДЛЯ КАЖДОГО НОВОГО ЧАТА: прочитать этот план, новый паспорт и актуальный архив. После завершения любого пункта вернуть обновлённые DOCX/PDF/Markdown, новый ZIP, доказательства проверки и запись в журнале версий.
 
-> КОНТРОЛЬНЫЕ СТАТУСЫ ЭТОЙ ВЕРСИИ: `FND-001`, `FND-002`, `DATA-001`, `DATA-002`, `SEC-001`, `OPS-001`, `INFRA-PREP-001`, `SYNC-001`, `SYNC-002`, `SEARCH-001`, `SEARCH-002`, `SEARCH-003`, `SEARCH-004`, `AUTH-001` и `AUTH-002` — **ВЫПОЛНЕНО**; `PROF-001` — **ВЫПОЛНЕНО**; `PROF-002` — **ВЫПОЛНЕНО**; `PROF-003` — **ВЫПОЛНЕНО**; `PRIV-001` — **ВЫПОЛНЕНО**; `SEARCH-005` — **НУЖНА ПРОВЕРКА**; `DOC-001` — **В РАБОТЕ как постоянный процесс**; `INFRA-001` — **ОТЛОЖЕНО ДО ПРЕДРЕЛИЗНОГО ЭТАПА**. Документы с версией ниже `1.4.29` считаются устаревшими для определения очереди разработки.
+> КОНТРОЛЬНЫЕ СТАТУСЫ ЭТОЙ ВЕРСИИ: FND-001/FND-002/DATA-001/DATA-002/SEC-001/OPS-001/INFRA-PREP-001/SYNC-001/SYNC-002/SEARCH-001..005/AUTH-001/AUTH-002/PROF-001/PROF-002/PROF-003/PRIV-001 - **ВЫПОЛНЕНО**; `AI-BENCH-001` - **НУЖНА ПРОВЕРКА**; `AI-PROVIDER-001` - **ЗАБЛОКИРОВАНО** до завершения benchmark; `DOC-001` - **В РАБОТЕ**; `INFRA-001` - **ОТЛОЖЕНО ДО ПРЕДРЕЛИЗНОГО ЭТАПА**. Документы ниже `1.4.33` устарели для определения текущего gate.
 
 ## 1. Источник истины и аудит источников
 
@@ -46,10 +78,10 @@
 
 - Версия 1.4.28 усиливает PRIV-001 после повторного privacy/security audit: re-authenticated export, consistent snapshot, bounded/spooled ZIP, provider-profile sanitization, fail-closed asset ownership, password-hash recheck under lock, orphan asset cleanup, worker lock/heartbeat и migration/index `20260813_0013`. Внешний gate остаётся Pull Request CI -> Render 0013 -> production E2E.
 
-- Версия 1.4.29 закрывает PRIV-001 как ВЫПОЛНЕНО. После CI hotfix r1 весь GitHub workflow green, включая dedicated PRIV-001 gate, PostgreSQL migration/integration, AUTH/PROF regressions, encrypted backup/restore и Docker/runtime smoke. Render `/health/ready` подтвердил persistent PostgreSQL, current/expected `20260813_0013`, `migrations.ok=true`, `privacy_cleanup.enabled=true`, `worker_alive=true`, `last_status=ok`. Production E2E подтвердил re-authenticated export, secret exclusions, корректное отсутствие `assets/` для аккаунта без изображений и inclusion logo asset для аккаунта с изображением, negative delete checks, destructive delete throwaway account, невозможность повторного входа, owner isolation, restart persistence, final `/profile`/PROF-002/`/resumes`/AUTH/OAuth/`/vacancies` regression и Render Logs без новых 500/Traceback/IntegrityError/migration/privacy cleanup errors или sensitive payload. Time-bound 7/30/180-day retention semantics остаются CI-controlled; реальные дни вручную не ожидались. Следующий пакет — SEARCH-005.
+- Версия 1.4.32 закрывает PRIV-001 как ВЫПОЛНЕНО. После CI hotfix r1 весь GitHub workflow green, включая dedicated PRIV-001 gate, PostgreSQL migration/integration, AUTH/PROF regressions, encrypted backup/restore и Docker/runtime smoke. Render `/health/ready` подтвердил persistent PostgreSQL, current/expected `20260813_0013`, `migrations.ok=true`, `privacy_cleanup.enabled=true`, `worker_alive=true`, `last_status=ok`. Production E2E подтвердил re-authenticated export, secret exclusions, корректное отсутствие `assets/` для аккаунта без изображений и inclusion logo asset для аккаунта с изображением, negative delete checks, destructive delete throwaway account, невозможность повторного входа, owner isolation, restart persistence, final `/profile`/PROF-002/`/resumes`/AUTH/OAuth/`/vacancies` regression и Render Logs без новых 500/Traceback/IntegrityError/migration/privacy cleanup errors или sensitive payload. Time-bound 7/30/180-day retention semantics остаются CI-controlled; реальные дни вручную не ожидались. Текущий пакет — AI-BENCH-001 (внешний прогон).
 
 
-- Версия 1.4.30 реализует SEARCH-005 candidate поверх завершённого PRIV-001. Добавлены explicit verified first-party administrator allowlist `SEARCH_ADMIN_EMAILS`, persistent `source_health_states`, migration `20260819_0014`, read-only `/admin/sources` и `/api/admin/sources`, безопасная provider telemetry instrumentation, cache/sync freshness aggregation, mobile UI и dedicated CI gate. Панель не выполняет внешние probes и не показывает credentials, response bodies, пользовательские поисковые запросы или PII. Пакет остаётся НУЖНА ПРОВЕРКА до green Pull Request CI, Render 0014, admin/non-admin/restart/telemetry E2E и log review.
+- Версия 1.4.32 реализует SEARCH-005 candidate поверх завершённого PRIV-001. Добавлены explicit verified first-party administrator allowlist `SEARCH_ADMIN_EMAILS`, persistent `source_health_states`, migration `20260819_0014`, read-only `/admin/sources` и `/api/admin/sources`, безопасная provider telemetry instrumentation, cache/sync freshness aggregation, mobile UI и dedicated CI gate. Панель не выполняет внешние probes и не показывает credentials, response bodies, пользовательские поисковые запросы или PII. Пакет остаётся НУЖНА ПРОВЕРКА до green Pull Request CI, Render 0014, admin/non-admin/restart/telemetry E2E и log review.
 
 ## 2. Обязательный протокол работы
 
@@ -162,7 +194,7 @@ MVP не готов, если работает только отдельная �
 | SEARCH-002 | P0 | ВЫПОЛНЕНО | Консервативная cross-source deduplication, reversible grouping и multi-source карточки подтверждены CI/Render |
 | SEARCH-003 | P0 | ВЫПОЛНЕНО | Persistent bounded snapshots, stable committed pages, deterministic sort и honest totals подтверждены CI/Render |
 | SEARCH-004 | P1 | ВЫПОЛНЕНО | Canonical `/vacancies`, compatibility redirect и safe source states подтверждены GitHub CI и Render/mobile production smoke |
-| SEARCH-005 | P1 | НУЖНА ПРОВЕРКА | Центр состояния источников для администратора |
+| SEARCH-005 | P1 | ВЫПОЛНЕНО | Центр состояния источников для администратора подтверждён CI/Render/E2E |
 
 ### Этап 3. Собственный аккаунт и карьерный профиль
 
@@ -179,7 +211,7 @@ MVP не готов, если работает только отдельная �
 
 | ID | Приоритет | Статус | Пункт |
 |---|---|---|---|
-| AI-BENCH-001 | P0 | ЗАПЛАНИРОВАНО | Сравнительное тестирование Yandex AI Studio/Alice AI на функциях проекта |
+| AI-BENCH-001 | P0 | НУЖНА ПРОВЕРКА | Benchmark harness + hotfix r1 готовы; GitHub CI, затем live comparative run и manual rubric |
 | AI-PROVIDER-001 | P0 | ЗАПЛАНИРОВАНО | Стратегия AI-провайдеров, география, стоимость, fallback и privacy |
 | AI-001 | P1 | ЗАПЛАНИРОВАНО | Независимый слой AI-провайдера и контроль стоимости |
 | AI-002 | P1 | ЗАПЛАНИРОВАНО | Настоящий анализ резюме |
@@ -753,15 +785,15 @@ MVP не готов, если работает только отдельная �
 #### AI-BENCH-001 - Сравнительное тестирование Yandex AI Studio/Alice AI
 
 **Приоритет:** P0
-**Статус:** ЗАПЛАНИРОВАНО
+**Статус:** НУЖНА ПРОВЕРКА
 
 **Цель:** Проверить качество, скорость и стоимость выбранных моделей на реальных функциях AI Career Agent до интеграции.
 
-**Реализация:** Golden dataset русских и английских резюме/вакансий; тест JSON-schema, анализа резюме, match explanations, писем и интервью; p50/p95 latency, cost и hallucination rate.
+**Реализация:** Isolated `evals/` runner, 8 synthetic RU/EN fixtures, 4 JSON schemas, deterministic/command/OpenAI-compatible adapters, machine safety gates, latency/usage/cost reports and manual-review rubric. Hotfix r1 corrects container-level numeric false positives and preserves non-secret benchmark metrics during redaction.
 
 **Влияние на код:** `evals/`, fixtures, benchmark runner, отчёт моделей; production routes не меняются.
 
-**Критерии готовности:** Утверждены пороги качества; выбран набор моделей по задачам; не допускаются придуманные места работы и достижения.
+**Критерии готовности:** green GitHub hotfix CI; approved exact model IDs and credentials outside Git; one comparable run on the same dataset fingerprint; machine gates pass; human rubric complete; no invented employers, roles, dates, education, skills or achievements; provider decision evidence accepted.
 
 **Зависимости:** OPS-001, тестовый доступ к Yandex AI Studio. Реальный VPS не требуется для quality benchmark; исходящая доступность выбранных AI endpoints с production IP повторно проверяется в INFRA-001.
 
@@ -1515,7 +1547,7 @@ INFRA-001 real VPS test
 Следующий пакет:
 
 ```text
-SEARCH-005 — НУЖНА ПРОВЕРКА
+SEARCH-005 — ВЫПОЛНЕНО
 -> цель: защищённый центр состояния источников
 -> ProviderHealth/SyncRun-derived availability, latency, freshness/import age
 -> admin-only detailed page; public/user status остаётся sanitised
@@ -1595,7 +1627,8 @@ GitHub/production/API: <подтверждено или требуется>
 | 1.4.26 | 13.08.2026 | PROF-003-PRODUCTION-EVIDENCE | Green CI и Render `0012`; production E2E подтвердил drafts/autosave/cross-device, versions/no-op/read-only/restore, stale `409`, direct edit, iPhone photo, university logo, PDF parity, owner isolation и restart persistence. Hotfix r1-r4 зафиксированы; пакет остаётся НУЖНА ПРОВЕРКА только до final regression/log review. |
 | 1.4.27 | 13.08.2026 | PROF-003-COMPLETE / PRIV-001-CANDIDATE | Final regression и Render log privacy/error review подтверждены; PROF-003 ВЫПОЛНЕНО. Реализованы readable privacy export, confirmed account deletion, local integration/token cleanup, identifier-free audit, retention worker и migration `20260813_0013`; PRIV-001 ожидает CI/Render/E2E. |
 | 1.4.28 | 19.08.2026 | PRIV-001-HARDENED | Повторный privacy/security audit усилил re-auth export, consistent bounded/spooled ZIP, provider sanitizer, deletion concurrency locks, orphan asset retention и worker lock/heartbeat; external gate pending. |
-| 1.4.29 | 19.08.2026 | PRIV-001-COMPLETE / SEARCH-005-PREP | Green CI после test-contract hotfix r1, Render `0013`, privacy worker health, export/asset/secret scan, destructive delete/owner isolation, restart/regression/log review подтверждены. PRIV-001 ВЫПОЛНЕНО; SEARCH-005 НУЖНА ПРОВЕРКА. |
+| 1.4.32 | 19.08.2026 | PRIV-001-COMPLETE / SEARCH-005-PREP | Green CI после test-contract hotfix r1, Render `0013`, privacy worker health, export/asset/secret scan, destructive delete/owner isolation, restart/regression/log review подтверждены. PRIV-001 ВЫПОЛНЕНО; SEARCH-005 НУЖНА ПРОВЕРКА. |
+| 1.4.33 | 24.08.2026 | AI-BENCH-001-HOTFIX-R1 | GitHub CI выявил root-container false positive в unsupported-number gate. Scorer переведён на scalar-leaf scan, добавлены regression tests, evals version 1.0.1; повторный GitHub gate обязателен. |
 
 
 
@@ -1619,4 +1652,4 @@ GitHub/production/API: <подтверждено или требуется>
 **Зависимости:** SEARCH-001..004, SYNC-001/002, AUTH-001, OPS-001, PRIV-001 complete.
 
 
-**Следующий пакет после закрытия SEARCH-005:** AI-BENCH-001 — НУЖНА ПРОВЕРКА после SEARCH-005.
+**Текущий gate:** AI-BENCH-001 hotfix r1 - GitHub CI rerun, затем live comparative run и manual rubric. AI-PROVIDER-001 остаётся заблокирован.

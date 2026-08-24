@@ -339,3 +339,22 @@ jobs:
 
       - name: Run tests
         run: python -m pytest -ra
+
+  ai-bench-001:
+    name: AI-BENCH-001 package gate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Validate deterministic benchmark package
+        run: python scripts/check_ai_bench_package.py
+
+      - name: Run AI-BENCH-001 unit tests
+        run: python -m unittest discover -s tests -p 'test_ai_bench_*.py' -v
+

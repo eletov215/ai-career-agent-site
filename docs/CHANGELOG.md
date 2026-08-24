@@ -1,3 +1,13 @@
+# Changelog
+
+## 2026-08-24 — AI-BENCH-001 numeric scorer hotfix r1 / evals 1.0.1
+
+- GitHub CI correctly rejected the first candidate: the strict unsupported-number gate reported generated `match_score` values `78` and `72` at the root path `$`, causing two scoring subtest failures and one runner failure.
+- Root cause: `_unsupported_numbers()` stringified container nodes returned by `iter_paths()`, so nested numbers were rescanned at their parent/root path and bypassed `generated_numeric_paths` exclusions.
+- Fixed the scorer to inspect scalar leaves only. Truly unsupported numbers in narrative content remain hard failures.
+- Added positive and negative regression tests for generated numeric paths and unsupported narrative numbers.
+- Bumped benchmark package `1.0.0 -> 1.0.1`; deterministic package gate and 11 AI-BENCH unit tests pass locally.
+- Production Flask routes, dependencies, migrations and revision `20260819_0014` are unchanged. Repeat GitHub Actions remains required.
 
 ## 2026-08-20 — SEARCH-005 candidate CI hotfix r1
 - Corrected an incomplete candidate package that had shipped SEARCH-005 docs/tests without the new implementation modules/integration edits.
@@ -13,7 +23,6 @@
 - Render restart + `/profile`/PROF-002/`/resumes`/AUTH/OAuth/`/vacancies` regression и log review прошли без новых 500/Traceback/IntegrityError/migration/privacy-cleanup errors или sensitive payload.
 - PRIV-001 переведён в ВЫПОЛНЕНО. SEARCH-005 — следующий пакет, ГОТОВО К СТАРТУ.
 
-# Changelog
 
 ## 1.4.27 — PROF-003 complete / PRIV-001 candidate — 13.08.2026
 

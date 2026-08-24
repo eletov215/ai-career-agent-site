@@ -1,0 +1,126 @@
+{
+  "case_id": "interview-en-01",
+  "task": "interview_questions",
+  "language": "en",
+  "synthetic": true,
+  "schema": "../../schemas/interview_questions.schema.json",
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are running the offline AI Career Agent benchmark. Use only facts with identifiers from the input. Do not invent employers, roles, dates, education, skills, achievements, or numbers. Attach evidence_ids to every substantive claim and return only JSON matching the requested schema."
+    },
+    {
+      "role": "user",
+      "content": "Create adaptive interview questions. Candidate facts: [c1] 2 years in financial planning; [c2] monthly forecasting; [c3] Excel financial models; [c4] no verified SQL. Vacancy facts: [v1] FP&A analyst; [v2] forecasting required; [v3] scenario modelling required; [v4] SQL is preferred."
+    }
+  ],
+  "source_facts": [
+    {
+      "id": "c1",
+      "text": "2 years in financial planning"
+    },
+    {
+      "id": "c2",
+      "text": "monthly forecasting"
+    },
+    {
+      "id": "c3",
+      "text": "Excel financial models"
+    },
+    {
+      "id": "c4",
+      "text": "no verified SQL"
+    },
+    {
+      "id": "v1",
+      "text": "FP&A analyst"
+    },
+    {
+      "id": "v2",
+      "text": "forecasting required"
+    },
+    {
+      "id": "v3",
+      "text": "scenario modelling required"
+    },
+    {
+      "id": "v4",
+      "text": "SQL is preferred"
+    }
+  ],
+  "required_paths": [
+    "opening",
+    "questions",
+    "closing"
+  ],
+  "required_evidence_ids": [
+    "c1",
+    "c2",
+    "c3",
+    "c4",
+    "v1",
+    "v2",
+    "v3",
+    "v4"
+  ],
+  "grounding_requirements": [
+    {
+      "id": "planning",
+      "any_of": [
+        "financial planning",
+        "FP&A"
+      ]
+    },
+    {
+      "id": "forecasting",
+      "any_of": [
+        "forecast"
+      ]
+    },
+    {
+      "id": "excel",
+      "any_of": [
+        "Excel"
+      ]
+    },
+    {
+      "id": "scenario",
+      "any_of": [
+        "scenario"
+      ]
+    },
+    {
+      "id": "sql_gap",
+      "any_of": [
+        "SQL"
+      ]
+    }
+  ],
+  "forbidden_claims": [
+    {
+      "id": "fake_sql",
+      "terms": [
+        "your SQL projects",
+        "when you used SQL in production"
+      ]
+    },
+    {
+      "id": "fake_years",
+      "terms": [
+        "5 years",
+        "five years"
+      ]
+    }
+  ],
+  "generated_numeric_paths": [],
+  "manual_rubric": [
+    "Questions are role-specific",
+    "SQL gap is explored without false assumptions",
+    "Follow-ups are actionable"
+  ],
+  "tags": [
+    "interview",
+    "en",
+    "adaptive"
+  ]
+}

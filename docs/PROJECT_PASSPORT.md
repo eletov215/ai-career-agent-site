@@ -1,15 +1,41 @@
 # AI Career Agent — паспорт проекта
 
+
+
+
+<!-- ACA-CANONICAL-STATUS:START -->
+## Канонический срез проекта
+
+**Документ:** AI Career Agent PROJECT_PASSPORT `v2.47`  
+**Дата:** 2026-08-24  
+**Production revision:** `20260819_0014`
+
+| Контур | Состояние |
+|---|---|
+| Web | Flask + Gunicorn, WSGI `app:app` |
+| Data | PostgreSQL production, SQLite local/test fallback, Alembic `20260819_0014` |
+| Identity | first-party account, verification/reset, server sessions, owner-bound HH/SuperJob OAuth |
+| Career data | structured profile, immutable versions, confirmation-first PDF import, resume drafts/versions/assets |
+| Search | HH, SuperJob, Reed, Trudvsem; normalization, conservative dedup, stable snapshots; SEARCH-005 complete |
+| Operations | structured logs, probes, encrypted backup/restore, external sync/privacy workers |
+| AI benchmark | implementation candidate with hotfix r1; local deterministic gate passes; GitHub and live comparison pending |
+| Production AI | absent; no provider decision, production route or migration added |
+
+### Hotfix decision boundary
+
+Candidate v1.4.32 was not accepted because GitHub CI correctly found a numeric-grounding false positive. v2.47 records the scalar-leaf fix, regression coverage and narrower credential redaction. `AI-PROVIDER-001` remains blocked until green CI plus external comparative evidence and human review.
+<!-- ACA-CANONICAL-STATUS:END -->
+
 | Поле | Значение |
 |---|---|
 | Документ        | PROJECT_PASSPORT                                                                              |
-| Версия паспорта | 2.43 |
-| Дата            | 19 августа 2026                                                                               |
+| Версия паспорта | 2.47 |
+| Дата            | 24 августа 2026                                                                               |
 | Статус          | ДЕЙСТВУЮЩИЙ                                                                                   |
-| Связанный план | `AI_Career_Agent_PLAN_CURRENT v1.4.29` |
-| Основа кода | GitHub main после PRIV-001 hardened v1.4.28 + CI hotfix r1; full CI green; Render/PostgreSQL `20260813_0013`; production export/delete/restart/log E2E подтверждены |
+| Связанный план | `AI_Career_Agent_PLAN_CURRENT v1.4.33` |
+| Основа кода | GitHub main after AI-BENCH-001 v1.4.32 upload; CI rejection reproduced; hotfix r1 locally passes package-specific gates; GitHub rerun pending |
 
-> Контрольные статусы: FND-001/FND-002/DATA-001/DATA-002/SEC-001/OPS-001/INFRA-PREP-001/SYNC-001/SYNC-002/SEARCH-001/SEARCH-002/SEARCH-003/SEARCH-004/AUTH-001/AUTH-002 — ВЫПОЛНЕНО; PROF-001 — ВЫПОЛНЕНО; PROF-002 — ВЫПОЛНЕНО; PROF-003 — ВЫПОЛНЕНО; PRIV-001 — ВЫПОЛНЕНО; DOC-001 — В РАБОТЕ как постоянный процесс; INFRA-001 — ОТЛОЖЕНО ДО ПРЕДРЕЛИЗНОГО ЭТАПА.
+> Контрольные статусы: FND/DATA/SEC/OPS/INFRA-PREP/SYNC/SEARCH-001..005/AUTH/PROF/PRIV - ВЫПОЛНЕНО; AI-BENCH-001 - НУЖНА ПРОВЕРКА; AI-PROVIDER-001 - ЗАБЛОКИРОВАНО; DOC-001 - В РАБОТЕ; INFRA-001 - ОТЛОЖЕНО.
 
 ## 1. Назначение
 
@@ -54,8 +80,8 @@ AI Career Agent — коммерческий веб-сервис карьерн�
 >     scripts/                   migrations, backup, restore, alert, infra probes, sync CLI/worker/supervisor
 >     domain/ models/ repositories/ services/
 >     services/source_status.py    safe public source-state contract
->     migrations/                Alembic 0001..0013; production currently 0013
->     tests/                     unit/integration/security/ops/infra/sync/search/auth tests
+>     migrations/                Alembic 0001..0014; production currently 0014
+>     tests/                     unit/integration/security/ops/infra/sync/search/auth/AI benchmark tests
 >     docs/                      architecture, security and runbooks
 >     render.yaml
 >     .github/workflows/ci.yml
@@ -462,7 +488,7 @@ Render не считается гарантированным production для 
 
 ## 23. Текущий gate
 
-PROF-003 и PRIV-001 — ВЫПОЛНЕНО. Production PostgreSQL `20260813_0013`; privacy cleanup worker healthy. Следующий пакет SEARCH-005 — НУЖНА ПРОВЕРКА.
+SEARCH-005 — ВЫПОЛНЕНО. AI-BENCH-001 hotfix r1 — НУЖНА ПРОВЕРКА GITHUB ACTIONS. Production PostgreSQL остаётся на `20260819_0014`; live AI comparison и provider decision ещё не выполнены.
 
 ## 24. Правила рабочего чата
 
@@ -504,10 +530,11 @@ PROF-003 и PRIV-001 — ВЫПОЛНЕНО. Production PostgreSQL `20260813_001
 | 2.40 | 13.08.2026 | PROF-003 production evidence: CI/Render `0012`, drafts/autosave/cross-device, versions/restore/stale conflict, direct edit r2, iPhone photo r3, PDF/logo/education parity r4, owner isolation and restart persistence confirmed; final regression/log review remains. |
 | 2.41 | 13.08.2026 | PROF-003 closed after final regression/log review. PRIV-001 candidate adds readable export, confirmed deletion, local integration/token cleanup, technical retention worker, identifier-free audit and migration `0013`; external CI/Render/E2E pending. |
 | 2.42 | 19.08.2026 | PRIV-001 hardened candidate after second privacy/security audit: re-authenticated consistent export, bounds/safe paths/sanitizer, delete concurrency locks, orphan asset cleanup and worker lock/heartbeat; external gate pending. |
-| 2.43 | 19.08.2026 | PRIV-001 completed after green CI/hotfix r1, Render `0013`, healthy privacy worker, export/asset/secret scan, destructive throwaway deletion, owner isolation, restart/regression/log review. SEARCH-005 ready next. |
+| 2.46 | 19.08.2026 | PRIV-001 completed after green CI/hotfix r1, Render `0013`, healthy privacy worker, export/asset/secret scan, destructive throwaway deletion, owner isolation, restart/regression/log review. SEARCH-005 ready next. |
+| 2.47 | 24.08.2026 | AI-BENCH-001 candidate v1.4.32 rejected by CI because root containers were scanned by unsupported-number gate; hotfix r1 scans scalar leaves only, adds regression tests and awaits repeat GitHub Actions. |
 
 
-## SEARCH-005 architecture addendum v2.44
+## SEARCH-005 architecture addendum (historical)
 
 - **Admin boundary:** active verified first-party account plus exact normalized email in deployment allowlist `SEARCH_ADMIN_EMAILS`. A diagnostics secret, hidden URL or OAuth provider account is not admin authorization.
 - **Persistence:** `source_health_states` stores only current safe operational aggregates for `hh`, `superjob`, `reed`, `trudvsem`; no user relation exists.

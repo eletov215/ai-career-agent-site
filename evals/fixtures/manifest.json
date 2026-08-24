@@ -1,0 +1,25 @@
+{
+  "dataset_id": "ai-career-agent-golden-v1",
+  "version": "1.0.0",
+  "synthetic": true,
+  "languages": [
+    "ru",
+    "en"
+  ],
+  "tasks": [
+    "resume_analysis",
+    "vacancy_match",
+    "cover_letter",
+    "interview_questions"
+  ],
+  "cases": [
+    "cases/resume-analysis-ru-01.json",
+    "cases/resume-analysis-en-01.json",
+    "cases/vacancy-match-ru-01.json",
+    "cases/vacancy-match-en-01.json",
+    "cases/cover-letter-ru-01.json",
+    "cases/cover-letter-en-01.json",
+    "cases/interview-ru-01.json",
+    "cases/interview-en-01.json"
+  ]
+}

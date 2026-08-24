@@ -1,0 +1,135 @@
+{
+  "case_id": "vacancy-match-ru-01",
+  "task": "vacancy_match",
+  "language": "ru",
+  "synthetic": true,
+  "schema": "../../schemas/vacancy_match.schema.json",
+  "messages": [
+    {
+      "role": "system",
+      "content": "Ты выполняешь офлайн-бенчмарк AI Career Agent. Используй только факты с идентификаторами из входа. Не придумывай работодателей, должности, сроки, образование, навыки, достижения или числа. Каждое содержательное утверждение связывай с evidence_ids. Верни только JSON по переданной схеме."
+    },
+    {
+      "role": "user",
+      "content": "Оцени соответствие. Резюме: [c1] Python backend 3 года; [c2] FastAPI; [c3] PostgreSQL; [c4] нет подтвержденного Docker. Вакансия: [v1] Python обязателен; [v2] Django или FastAPI; [v3] PostgreSQL; [v4] Docker обязателен; [v5] Kubernetes будет плюсом. Объясни совпадения и пробелы."
+    }
+  ],
+  "source_facts": [
+    {
+      "id": "c1",
+      "text": "Python backend 3 года"
+    },
+    {
+      "id": "c2",
+      "text": "FastAPI"
+    },
+    {
+      "id": "c3",
+      "text": "PostgreSQL"
+    },
+    {
+      "id": "c4",
+      "text": "нет подтвержденного Docker"
+    },
+    {
+      "id": "v1",
+      "text": "Python обязателен"
+    },
+    {
+      "id": "v2",
+      "text": "Django или FastAPI"
+    },
+    {
+      "id": "v3",
+      "text": "PostgreSQL"
+    },
+    {
+      "id": "v4",
+      "text": "Docker обязателен"
+    },
+    {
+      "id": "v5",
+      "text": "Kubernetes будет плюсом"
+    }
+  ],
+  "required_paths": [
+    "match_score",
+    "verdict",
+    "matched_requirements",
+    "gaps",
+    "recommendation",
+    "caveats"
+  ],
+  "required_evidence_ids": [
+    "c1",
+    "c2",
+    "c3",
+    "c4",
+    "v1",
+    "v2",
+    "v3",
+    "v4",
+    "v5"
+  ],
+  "grounding_requirements": [
+    {
+      "id": "python",
+      "any_of": [
+        "Python"
+      ]
+    },
+    {
+      "id": "framework",
+      "any_of": [
+        "FastAPI"
+      ]
+    },
+    {
+      "id": "database",
+      "any_of": [
+        "PostgreSQL"
+      ]
+    },
+    {
+      "id": "docker_gap",
+      "any_of": [
+        "Docker"
+      ]
+    },
+    {
+      "id": "kubernetes",
+      "any_of": [
+        "Kubernetes"
+      ]
+    }
+  ],
+  "forbidden_claims": [
+    {
+      "id": "fake_docker",
+      "terms": [
+        "есть опыт Docker",
+        "работал с Docker"
+      ]
+    },
+    {
+      "id": "fake_kubernetes",
+      "terms": [
+        "есть опыт Kubernetes",
+        "работал с Kubernetes"
+      ]
+    }
+  ],
+  "generated_numeric_paths": [
+    "$.match_score"
+  ],
+  "manual_rubric": [
+    "Оценка объяснима",
+    "Критичные требования отделены от плюсов",
+    "Нет ложного опыта"
+  ],
+  "tags": [
+    "match",
+    "ru",
+    "explainability"
+  ]
+}

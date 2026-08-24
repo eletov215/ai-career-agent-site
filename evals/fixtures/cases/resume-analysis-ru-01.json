@@ -1,0 +1,119 @@
+{
+  "case_id": "resume-analysis-ru-01",
+  "task": "resume_analysis",
+  "language": "ru",
+  "synthetic": true,
+  "schema": "../../schemas/resume_analysis.schema.json",
+  "messages": [
+    {
+      "role": "system",
+      "content": "Ты выполняешь офлайн-бенчмарк AI Career Agent. Используй только факты с идентификаторами из входа. Не придумывай работодателей, должности, сроки, образование, навыки, достижения или числа. Каждое содержательное утверждение связывай с evidence_ids. Верни только JSON по переданной схеме."
+    },
+    {
+      "role": "user",
+      "content": "Проанализируй синтетическое резюме. Факты: [r1] 3 года backend-разработки на Python; [r2] FastAPI в коммерческом сервисе; [r3] PostgreSQL и оптимизация SQL-запросов; [r4] английский B1; [r5] нет подтвержденного опыта управления командой. Нужны сильные стороны, пробелы и практические рекомендации."
+    }
+  ],
+  "source_facts": [
+    {
+      "id": "r1",
+      "text": "3 года backend-разработки на Python"
+    },
+    {
+      "id": "r2",
+      "text": "FastAPI в коммерческом сервисе"
+    },
+    {
+      "id": "r3",
+      "text": "PostgreSQL и оптимизация SQL-запросов"
+    },
+    {
+      "id": "r4",
+      "text": "английский B1"
+    },
+    {
+      "id": "r5",
+      "text": "нет подтвержденного опыта управления командой"
+    }
+  ],
+  "required_paths": [
+    "summary",
+    "strengths",
+    "gaps",
+    "recommendations",
+    "facts_not_verified"
+  ],
+  "required_evidence_ids": [
+    "r1",
+    "r2",
+    "r3",
+    "r4",
+    "r5"
+  ],
+  "grounding_requirements": [
+    {
+      "id": "python",
+      "any_of": [
+        "Python"
+      ]
+    },
+    {
+      "id": "fastapi",
+      "any_of": [
+        "FastAPI"
+      ]
+    },
+    {
+      "id": "postgresql",
+      "any_of": [
+        "PostgreSQL"
+      ]
+    },
+    {
+      "id": "english",
+      "any_of": [
+        "B1"
+      ]
+    },
+    {
+      "id": "leadership_gap",
+      "any_of": [
+        "управления командой",
+        "лидер"
+      ]
+    }
+  ],
+  "forbidden_claims": [
+    {
+      "id": "fake_years",
+      "terms": [
+        "5 лет",
+        "пять лет"
+      ]
+    },
+    {
+      "id": "fake_kubernetes",
+      "terms": [
+        "Kubernetes"
+      ]
+    },
+    {
+      "id": "fake_leadership",
+      "terms": [
+        "руководил командой",
+        "управлял командой"
+      ]
+    }
+  ],
+  "generated_numeric_paths": [],
+  "manual_rubric": [
+    "Факты не расширены сверх источника",
+    "Рекомендации конкретны и полезны",
+    "Тон нейтральный и профессиональный"
+  ],
+  "tags": [
+    "resume",
+    "ru",
+    "grounding"
+  ]
+}

@@ -1,0 +1,73 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-career-agent.local/schemas/cover-letter-v1.json",
+  "title": "Cover letter output",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "subject",
+    "body",
+    "evidence_ids",
+    "claims",
+    "caveats"
+  ],
+  "properties": {
+    "subject": {
+      "type": "string",
+      "minLength": 5,
+      "maxLength": 160
+    },
+    "body": {
+      "type": "string",
+      "minLength": 120,
+      "maxLength": 2600
+    },
+    "evidence_ids": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "minItems": 1,
+      "maxItems": 8
+    },
+    "claims": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 8,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "text",
+          "evidence_ids"
+        ],
+        "properties": {
+          "text": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 420
+          },
+          "evidence_ids": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "minItems": 1,
+            "maxItems": 8
+          }
+        }
+      }
+    },
+    "caveats": {
+      "type": "array",
+      "maxItems": 8,
+      "items": {
+        "type": "string",
+        "minLength": 2,
+        "maxLength": 260
+      }
+    }
+  }
+}
