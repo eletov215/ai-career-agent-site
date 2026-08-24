@@ -1,11 +1,28 @@
 # AI Career Agent
 
+
+
+
+<!-- ACA-CANONICAL-STATUS:START -->
+## Каноническое состояние — 2026-08-24
+
 | Поле | Значение |
 |---|---|
-| Канонический план | `docs/PLAN_CURRENT.md` — 1.4.29 |
-| Паспорт | `docs/PROJECT_PASSPORT.md` — 2.43 |
+| Production schema | `20260819_0014` |
+| Последний завершённый пакет | `SEARCH-005` |
+| Текущий пакет | `AI-BENCH-001` — кодовый кандидат готов, внешний сравнительный прогон не выполнен |
+| Следующий пакет | `AI-PROVIDER-001`, заблокирован до live benchmark и ручной оценки |
+| Канонические документы | PLAN `v1.4.32`, PROJECT PASSPORT `v2.46`, SOURCE AUDIT `v1.4.32`, AI-BENCH verification `v1.0` |
+
+Пакет `evals/` изолирован от production Flask-приложения: новые пользовательские routes, миграции и production AI-вызовы не добавлялись. Детерминированный reference-run проверяет схемы, scoring, safety gates и формирование отчёта, но не является сравнением внешних AI-провайдеров.
+<!-- ACA-CANONICAL-STATUS:END -->
+
+| Поле | Значение |
+|---|---|
+| Канонический план | `docs/PLAN_CURRENT.md` — 1.4.32 |
+| Паспорт | `docs/PROJECT_PASSPORT.md` — 2.46 |
 | Завершённый пакет | `PRIV-001 — ВЫПОЛНЕНО` |
-| Текущий пакет | `SEARCH-005 — ГОТОВО К СТАРТУ` |
+| Текущий пакет | `SEARCH-005 — ВЫПОЛНЕНО` |
 | Production revision | `20260813_0013` |
 
 > GitHub является главным источником кода. PRIV-001 завершён и подтверждён в production; следующий кодовый пакет SEARCH-005. Actual `.env`, secrets/tokens, DB/dumps/backups, virtualenv, caches и bytecode не входят в repository/release ZIP; `infra/vps/.env.example` остаётся обязательным secret-free template.

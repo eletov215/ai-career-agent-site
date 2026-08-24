@@ -1,9 +1,51 @@
-# AI Career Agent — аудит источников v1.4.30
+# AI Career Agent — аудит источников v1.4.32
+
+
+
+
+<!-- ACA-CANONICAL-STATUS:START -->
+## Актуальный source audit — AI-BENCH-001 candidate
+
+**Документ:** AI Career Agent SOURCE_AUDIT `v1.4.32`  
+**Дата:** 2026-08-24  
+**Основа:** актуальный ZIP ветки `main`, предоставленный в текущем чате.
+
+| Метрика после реализации | Значение |
+|---|---:|
+| Файлы | 370 |
+| Python-файлы | 184 |
+| Test-файлы | 59 |
+| Alembic migrations | 14 |
+| AI benchmark cases | 8 |
+| AI output schemas | 4 |
+| Production revision | `20260819_0014` |
+
+### Изменённые поверхности
+
+- добавлены `evals/`, `scripts/check_ai_bench_package.py`, AI-BENCH unit tests и evidence;
+- добавлен dedicated `ai-bench-001` job в `.github/workflows/ci.yml`;
+- синхронизированы canonical Markdown documents;
+- `app.py`, route registration, services/repositories/models production-контура и Alembic chain не изменялись пакетом;
+- production dependencies не добавлялись: runner использует Python standard library.
+
+### Безопасность benchmark-контура
+
+- только synthetic fixtures с `synthetic=true`;
+- dataset validation отклоняет email/phone-like data;
+- credentials задаются именами environment variables, значения не хранятся в config;
+- error/result/report проходят secret redaction;
+- deterministic provider помечается как `deterministic_reference` и не может считаться vendor comparison;
+- human rubric остаётся `pending`, runner не генерирует фиктивные ручные оценки.
+
+### Остаточный риск
+
+Live latency, cost, quota behavior, transport errors, model availability and actual writing quality have not been measured because approved credentials/model IDs were not supplied. Therefore package status is **candidate / external run required**, not complete provider selection.
+<!-- ACA-CANONICAL-STATUS:END -->
 
 | Поле | Значение |
 |---|---|
 | Документ | SOURCE_AUDIT |
-| Версия | 1.4.30 |
+| Версия | 1.4.32 |
 | Дата | 19 августа 2026 |
 | Проверяемый пакет | SEARCH-005 admin source status center candidate |
 | Исходный код | `ai-career-agent-site-main (18).zip`, GitHub main после PRIV-001 COMPLETE |
@@ -19,7 +61,7 @@ PRIV-001 подтверждён production E2E и закрыт. Загружен
 
 - ZIP integrity проверена;
 - `database.CURRENT_REVISION=20260813_0013` до изменений;
-- repository docs отражают PRIV-001 COMPLETE v1.4.29;
+- repository docs отражают PRIV-001 COMPLETE v1.4.32;
 - `app.py` и WSGI `app:app` сохранены;
 - `infra/vps/.env.example` присутствует;
 - `.env`, databases, dumps, backups, caches, bytecode, virtualenv, `app_fixed.py` и секретные credential-файлы отсутствуют;
@@ -85,5 +127,5 @@ The model deliberately has no `user_id`. Stored `details_json` accepts only a fi
 
 | Версия | Дата | Изменение |
 |---|---|---|
-| 1.4.29 | 19.08.2026 | PRIV-001 complete; SEARCH-005 next. |
-| 1.4.30 | 19.08.2026 | SEARCH-005 admin authorization, persistent source health, safe UI/API, migration 0014, tests and docs implemented; external gate pending. |
+| 1.4.32 | 19.08.2026 | PRIV-001 complete; SEARCH-005 next. |
+| 1.4.32 | 19.08.2026 | SEARCH-005 admin authorization, persistent source health, safe UI/API, migration 0014, tests and docs implemented; external gate pending. |

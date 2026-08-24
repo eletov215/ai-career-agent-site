@@ -1,0 +1,51 @@
+{
+  "opening": "We will verify forecasting and modelling depth first, then explore the SQL preference without assuming unverified experience.",
+  "questions": [
+    {
+      "question": "Describe a monthly forecasting cycle you supported and the decisions it informed.",
+      "purpose": "Verify practical forecasting depth.",
+      "evidence_ids": [
+        "c1",
+        "c2",
+        "v2"
+      ],
+      "follow_up_if_weak": "Which inputs changed most often and how did you update the forecast?"
+    },
+    {
+      "question": "How do you structure an Excel financial model so another analyst can review it?",
+      "purpose": "Assess modelling discipline and transparency.",
+      "evidence_ids": [
+        "c3"
+      ],
+      "follow_up_if_weak": "How would you separate assumptions, calculations, and outputs?"
+    },
+    {
+      "question": "Give an example of a scenario model you would build for an FP&A decision.",
+      "purpose": "Test the vacancy requirement for scenario modelling.",
+      "evidence_ids": [
+        "v1",
+        "v3"
+      ],
+      "follow_up_if_weak": "Which base, upside, and downside assumptions would you define?"
+    },
+    {
+      "question": "SQL is preferred for this role but is not verified in your profile. How would you approach closing that gap?",
+      "purpose": "Explore the SQL gap without a false premise.",
+      "evidence_ids": [
+        "c4",
+        "v4"
+      ],
+      "follow_up_if_weak": "What small finance dataset and query would you use for practice?"
+    },
+    {
+      "question": "How do you communicate forecast uncertainty to non-finance stakeholders?",
+      "purpose": "Assess communication within financial planning work.",
+      "evidence_ids": [
+        "c1",
+        "c2"
+      ],
+      "follow_up_if_weak": "How would you distinguish a range from a single-point estimate?"
+    }
+  ],
+  "closing": "We will finish by clarifying the role context and the support available for scenario modelling and SQL development."
+}

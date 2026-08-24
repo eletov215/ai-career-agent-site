@@ -1,12 +1,49 @@
 # AI Career Agent — паспорт проекта
 
+
+
+
+<!-- ACA-CANONICAL-STATUS:START -->
+## Канонический срез проекта
+
+**Документ:** AI Career Agent PROJECT_PASSPORT `v2.46`  
+**Дата:** 2026-08-24  
+**Production revision:** `20260819_0014`
+
+| Контур | Состояние |
+|---|---|
+| Web | Flask + Gunicorn, WSGI `app:app` |
+| Data | PostgreSQL production, SQLite local/test fallback, Alembic `20260819_0014` |
+| Identity | first-party email/password, verification/reset, server sessions, owner-bound HH/SuperJob OAuth |
+| Career data | structured profile, immutable versions, confirmation-first PDF import, resume drafts/versions/assets |
+| Search | HH, SuperJob, Reed, Trudvsem; normalization, conservative dedup, stable snapshots |
+| Operations | structured logs, probes, encrypted backup/restore, external sync/privacy workers |
+| Admin | `/admin/sources` and `/api/admin/sources` with exact email allowlist |
+| AI benchmark | isolated candidate implemented; deterministic reference gate passed; live provider comparison pending |
+| Production AI | отсутствует; provider decision и routes не реализованы |
+
+### Неподвижные решения
+
+- GitHub/latest chat ZIP is the code source of truth.
+- PostgreSQL is mandatory in production; schema changes only through Alembic.
+- Provider OAuth does not replace first-party identity and is never linked by email coincidence.
+- Search dedup remains conservative; uncertain records stay separate.
+- Unconfirmed imported resume data never becomes canonical profile data.
+- API keys are server-side only; benchmark artifacts are secret-redacted and use synthetic fixtures.
+- Render remains staging/backup; final commercial hosting/domain migration is deferred to pre-release infrastructure packages.
+
+### Current decision boundary
+
+`AI-PROVIDER-001` may not start from the reference run alone. It requires a live comparative result and completed manual rubric. No provider has been selected by this package.
+<!-- ACA-CANONICAL-STATUS:END -->
+
 | Поле | Значение |
 |---|---|
 | Документ        | PROJECT_PASSPORT                                                                              |
-| Версия паспорта | 2.43 |
+| Версия паспорта | 2.46 |
 | Дата            | 19 августа 2026                                                                               |
 | Статус          | ДЕЙСТВУЮЩИЙ                                                                                   |
-| Связанный план | `AI_Career_Agent_PLAN_CURRENT v1.4.29` |
+| Связанный план | `AI_Career_Agent_PLAN_CURRENT v1.4.32` |
 | Основа кода | GitHub main после PRIV-001 hardened v1.4.28 + CI hotfix r1; full CI green; Render/PostgreSQL `20260813_0013`; production export/delete/restart/log E2E подтверждены |
 
 > Контрольные статусы: FND-001/FND-002/DATA-001/DATA-002/SEC-001/OPS-001/INFRA-PREP-001/SYNC-001/SYNC-002/SEARCH-001/SEARCH-002/SEARCH-003/SEARCH-004/AUTH-001/AUTH-002 — ВЫПОЛНЕНО; PROF-001 — ВЫПОЛНЕНО; PROF-002 — ВЫПОЛНЕНО; PROF-003 — ВЫПОЛНЕНО; PRIV-001 — ВЫПОЛНЕНО; DOC-001 — В РАБОТЕ как постоянный процесс; INFRA-001 — ОТЛОЖЕНО ДО ПРЕДРЕЛИЗНОГО ЭТАПА.
@@ -462,7 +499,7 @@ Render не считается гарантированным production для 
 
 ## 23. Текущий gate
 
-PROF-003 и PRIV-001 — ВЫПОЛНЕНО. Production PostgreSQL `20260813_0013`; privacy cleanup worker healthy. Следующий пакет SEARCH-005 — НУЖНА ПРОВЕРКА.
+PROF-003 и PRIV-001 — ВЫПОЛНЕНО. Production PostgreSQL `20260813_0013`; privacy cleanup worker healthy. Следующий пакет SEARCH-005 — ВЫПОЛНЕНО.
 
 ## 24. Правила рабочего чата
 
@@ -504,10 +541,10 @@ PROF-003 и PRIV-001 — ВЫПОЛНЕНО. Production PostgreSQL `20260813_001
 | 2.40 | 13.08.2026 | PROF-003 production evidence: CI/Render `0012`, drafts/autosave/cross-device, versions/restore/stale conflict, direct edit r2, iPhone photo r3, PDF/logo/education parity r4, owner isolation and restart persistence confirmed; final regression/log review remains. |
 | 2.41 | 13.08.2026 | PROF-003 closed after final regression/log review. PRIV-001 candidate adds readable export, confirmed deletion, local integration/token cleanup, technical retention worker, identifier-free audit and migration `0013`; external CI/Render/E2E pending. |
 | 2.42 | 19.08.2026 | PRIV-001 hardened candidate after second privacy/security audit: re-authenticated consistent export, bounds/safe paths/sanitizer, delete concurrency locks, orphan asset cleanup and worker lock/heartbeat; external gate pending. |
-| 2.43 | 19.08.2026 | PRIV-001 completed after green CI/hotfix r1, Render `0013`, healthy privacy worker, export/asset/secret scan, destructive throwaway deletion, owner isolation, restart/regression/log review. SEARCH-005 ready next. |
+| 2.46 | 19.08.2026 | PRIV-001 completed after green CI/hotfix r1, Render `0013`, healthy privacy worker, export/asset/secret scan, destructive throwaway deletion, owner isolation, restart/regression/log review. SEARCH-005 ready next. |
 
 
-## SEARCH-005 architecture addendum v2.44
+## SEARCH-005 architecture addendum v2.46
 
 - **Admin boundary:** active verified first-party account plus exact normalized email in deployment allowlist `SEARCH_ADMIN_EMAILS`. A diagnostics secret, hidden URL or OAuth provider account is not admin authorization.
 - **Persistence:** `source_health_states` stores only current safe operational aggregates for `hh`, `superjob`, `reed`, `trudvsem`; no user relation exists.

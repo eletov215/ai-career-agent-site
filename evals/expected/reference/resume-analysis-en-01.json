@@ -1,0 +1,49 @@
+{
+  "summary": "The profile shows a solid two-year analytics foundation with advanced SQL, Power BI, and Excel automation. Production Python should be treated as an unverified gap rather than an existing strength.",
+  "strengths": [
+    {
+      "title": "Data analysis experience",
+      "explanation": "Two years in a data analyst role provide relevant professional context.",
+      "evidence_ids": [
+        "e1"
+      ]
+    },
+    {
+      "title": "SQL and reporting stack",
+      "explanation": "Advanced SQL, Power BI dashboards, and Excel automation form a practical reporting toolkit.",
+      "evidence_ids": [
+        "e2",
+        "e3",
+        "e4"
+      ]
+    }
+  ],
+  "gaps": [
+    {
+      "title": "Production Python is not verified",
+      "explanation": "The source explicitly does not confirm production Python experience.",
+      "evidence_ids": [
+        "e5"
+      ]
+    }
+  ],
+  "recommendations": [
+    {
+      "action": "Show SQL problem-solving examples",
+      "rationale": "Concrete SQL cases will make the advanced skill claim easier to evaluate.",
+      "evidence_ids": [
+        "e2"
+      ]
+    },
+    {
+      "action": "Build one documented Python analytics project",
+      "rationale": "A scoped project can address the current production Python evidence gap.",
+      "evidence_ids": [
+        "e5"
+      ]
+    }
+  ],
+  "facts_not_verified": [
+    "Production Python experience is not verified."
+  ]
+}

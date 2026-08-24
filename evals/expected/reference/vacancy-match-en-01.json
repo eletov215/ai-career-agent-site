@@ -1,0 +1,44 @@
+{
+  "match_score": 72,
+  "verdict": "partial",
+  "matched_requirements": [
+    {
+      "requirement": "React",
+      "explanation": "The candidate has two years of React experience and the vacancy requires React.",
+      "evidence_ids": [
+        "c1",
+        "v1"
+      ]
+    },
+    {
+      "requirement": "TypeScript",
+      "explanation": "TypeScript is directly confirmed in the resume and required by the vacancy.",
+      "evidence_ids": [
+        "c2",
+        "v2"
+      ]
+    },
+    {
+      "requirement": "Frontend testing",
+      "explanation": "Jest component testing supports the preferred automated testing area.",
+      "evidence_ids": [
+        "c3",
+        "v4"
+      ]
+    }
+  ],
+  "gaps": [
+    {
+      "requirement": "Next.js",
+      "explanation": "Next.js is required, while the candidate has no verified Next.js evidence.",
+      "evidence_ids": [
+        "c4",
+        "v3"
+      ]
+    }
+  ],
+  "recommendation": "Apply with a transparent note about the Next.js gap and prepare a small documented Next.js example before the interview.",
+  "caveats": [
+    "The score is explainable and does not replace recruiter review."
+  ]
+}

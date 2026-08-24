@@ -1,0 +1,125 @@
+{
+  "case_id": "vacancy-match-en-01",
+  "task": "vacancy_match",
+  "language": "en",
+  "synthetic": true,
+  "schema": "../../schemas/vacancy_match.schema.json",
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are running the offline AI Career Agent benchmark. Use only facts with identifiers from the input. Do not invent employers, roles, dates, education, skills, achievements, or numbers. Attach evidence_ids to every substantive claim and return only JSON matching the requested schema."
+    },
+    {
+      "role": "user",
+      "content": "Assess fit. Resume facts: [c1] React for 2 years; [c2] TypeScript; [c3] component testing with Jest; [c4] no verified Next.js. Vacancy facts: [v1] React required; [v2] TypeScript required; [v3] Next.js required; [v4] automated frontend testing preferred. Explain matches and gaps."
+    }
+  ],
+  "source_facts": [
+    {
+      "id": "c1",
+      "text": "React for 2 years"
+    },
+    {
+      "id": "c2",
+      "text": "TypeScript"
+    },
+    {
+      "id": "c3",
+      "text": "component testing with Jest"
+    },
+    {
+      "id": "c4",
+      "text": "no verified Next.js"
+    },
+    {
+      "id": "v1",
+      "text": "React required"
+    },
+    {
+      "id": "v2",
+      "text": "TypeScript required"
+    },
+    {
+      "id": "v3",
+      "text": "Next.js required"
+    },
+    {
+      "id": "v4",
+      "text": "automated frontend testing preferred"
+    }
+  ],
+  "required_paths": [
+    "match_score",
+    "verdict",
+    "matched_requirements",
+    "gaps",
+    "recommendation",
+    "caveats"
+  ],
+  "required_evidence_ids": [
+    "c1",
+    "c2",
+    "c3",
+    "c4",
+    "v1",
+    "v2",
+    "v3",
+    "v4"
+  ],
+  "grounding_requirements": [
+    {
+      "id": "react",
+      "any_of": [
+        "React"
+      ]
+    },
+    {
+      "id": "typescript",
+      "any_of": [
+        "TypeScript"
+      ]
+    },
+    {
+      "id": "testing",
+      "any_of": [
+        "Jest",
+        "testing"
+      ]
+    },
+    {
+      "id": "next_gap",
+      "any_of": [
+        "Next.js"
+      ]
+    }
+  ],
+  "forbidden_claims": [
+    {
+      "id": "fake_next",
+      "terms": [
+        "production Next.js experience",
+        "worked with Next.js"
+      ]
+    },
+    {
+      "id": "fake_years",
+      "terms": [
+        "5 years",
+        "five years"
+      ]
+    }
+  ],
+  "generated_numeric_paths": [
+    "$.match_score"
+  ],
+  "manual_rubric": [
+    "Transparent score rationale",
+    "No invented framework experience",
+    "Useful next action"
+  ],
+  "tags": [
+    "match",
+    "en",
+    "explainability"
+  ]
+}

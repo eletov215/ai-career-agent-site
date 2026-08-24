@@ -1,0 +1,121 @@
+{
+  "case_id": "interview-ru-01",
+  "task": "interview_questions",
+  "language": "ru",
+  "synthetic": true,
+  "schema": "../../schemas/interview_questions.schema.json",
+  "messages": [
+    {
+      "role": "system",
+      "content": "Ты выполняешь офлайн-бенчмарк AI Career Agent. Используй только факты с идентификаторами из входа. Не придумывай работодателей, должности, сроки, образование, навыки, достижения или числа. Каждое содержательное утверждение связывай с evidence_ids. Верни только JSON по переданной схеме."
+    },
+    {
+      "role": "user",
+      "content": "Составь адаптивные вопросы. Кандидат: [c1] 1 год ручного тестирования; [c2] тест-кейсы и баг-репорты; [c3] базовая проверка REST API в Postman; [c4] нет подтвержденного опыта автотестов. Вакансия: [v1] QA Engineer; [v2] ручное тестирование; [v3] API; [v4] основы автоматизации будут плюсом."
+    }
+  ],
+  "source_facts": [
+    {
+      "id": "c1",
+      "text": "1 год ручного тестирования"
+    },
+    {
+      "id": "c2",
+      "text": "тест-кейсы и баг-репорты"
+    },
+    {
+      "id": "c3",
+      "text": "базовая проверка REST API в Postman"
+    },
+    {
+      "id": "c4",
+      "text": "нет подтвержденного опыта автотестов"
+    },
+    {
+      "id": "v1",
+      "text": "QA Engineer"
+    },
+    {
+      "id": "v2",
+      "text": "ручное тестирование"
+    },
+    {
+      "id": "v3",
+      "text": "API"
+    },
+    {
+      "id": "v4",
+      "text": "основы автоматизации будут плюсом"
+    }
+  ],
+  "required_paths": [
+    "opening",
+    "questions",
+    "closing"
+  ],
+  "required_evidence_ids": [
+    "c1",
+    "c2",
+    "c3",
+    "c4",
+    "v1",
+    "v2",
+    "v3",
+    "v4"
+  ],
+  "grounding_requirements": [
+    {
+      "id": "manual",
+      "any_of": [
+        "ручн"
+      ]
+    },
+    {
+      "id": "testcases",
+      "any_of": [
+        "тест-кейс",
+        "баг-репорт"
+      ]
+    },
+    {
+      "id": "api",
+      "any_of": [
+        "API",
+        "Postman"
+      ]
+    },
+    {
+      "id": "automation_gap",
+      "any_of": [
+        "автомат"
+      ]
+    }
+  ],
+  "forbidden_claims": [
+    {
+      "id": "fake_automation",
+      "terms": [
+        "ваш опыт автотестов",
+        "когда вы писали автотесты"
+      ]
+    },
+    {
+      "id": "fake_years",
+      "terms": [
+        "3 года",
+        "три года"
+      ]
+    }
+  ],
+  "generated_numeric_paths": [],
+  "manual_rubric": [
+    "Вопросы покрывают сильные стороны и пробелы",
+    "Есть безопасные follow-up",
+    "Нет ложных предпосылок"
+  ],
+  "tags": [
+    "interview",
+    "ru",
+    "adaptive"
+  ]
+}

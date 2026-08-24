@@ -1,0 +1,51 @@
+{
+  "match_score": 78,
+  "verdict": "partial",
+  "matched_requirements": [
+    {
+      "requirement": "Python",
+      "explanation": "Обязательное требование подтверждено тремя годами backend-опыта.",
+      "evidence_ids": [
+        "c1",
+        "v1"
+      ]
+    },
+    {
+      "requirement": "Django или FastAPI",
+      "explanation": "FastAPI кандидата соответствует допустимому фреймворку вакансии.",
+      "evidence_ids": [
+        "c2",
+        "v2"
+      ]
+    },
+    {
+      "requirement": "PostgreSQL",
+      "explanation": "Технология есть и в резюме, и в обязательных требованиях.",
+      "evidence_ids": [
+        "c3",
+        "v3"
+      ]
+    }
+  ],
+  "gaps": [
+    {
+      "requirement": "Docker",
+      "explanation": "Docker обязателен, но подтвержденного опыта у кандидата нет.",
+      "evidence_ids": [
+        "c4",
+        "v4"
+      ]
+    },
+    {
+      "requirement": "Kubernetes",
+      "explanation": "Kubernetes указан как плюс и не подтвержден в резюме.",
+      "evidence_ids": [
+        "v5"
+      ]
+    }
+  ],
+  "recommendation": "Отклик возможен, если честно обозначить пробел по Docker и заранее подготовить базовый практический пример контейнеризации.",
+  "caveats": [
+    "Kubernetes является плюсом, а не обязательным требованием."
+  ]
+}

@@ -1,5 +1,18 @@
 # AI Career Agent — ROADMAP
 
+
+
+
+<!-- ACA-CANONICAL-STATUS:START -->
+## Актуальная точка дорожной карты — 2026-08-24
+
+- `SEARCH-005` — **ВЫПОЛНЕНО**.
+- `AI-BENCH-001 implementation` — **КАНДИДАТ ГОТОВ**.
+- `AI-BENCH-001 live comparative run + manual rubric` — **НУЖЕН ВНЕШНИЙ ПРОГОН**.
+- `AI-PROVIDER-001` — **ЗАБЛОКИРОВАН ДО ЗАВЕРШЕНИЯ BENCHMARK**.
+- Production schema remains `20260819_0014`; production routes and migrations were not changed.
+<!-- ACA-CANONICAL-STATUS:END -->
+
 | Пакет | Статус | Следующий gate |
 |---|---|---|
 | FND/DATA/SEC/OPS/INFRA-PREP | ВЫПОЛНЕНО | regression only |
@@ -31,7 +44,7 @@ Production `0013` confirmed. Owner-readable re-authenticated ZIP export, current
 
 Next: `SEARCH-005` — НУЖНА ПРОВЕРКА.
 
-## SEARCH-005 — НУЖНА ПРОВЕРКА
+## SEARCH-005 — ВЫПОЛНЕНО
 
 Цель: защищённый admin center для availability/latency/freshness/import state источников на базе уже существующих OPS/SYNC/search telemetry. Public/user surface остаётся кратким и sanitised; admin details не содержат tokens/credentials/PII. Dependencies AUTH-001, OPS-001, SYNC-001 выполнены.
 

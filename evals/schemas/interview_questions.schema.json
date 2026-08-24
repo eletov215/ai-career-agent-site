@@ -1,0 +1,65 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-career-agent.local/schemas/interview-questions-v1.json",
+  "title": "Interview questions output",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "opening",
+    "questions",
+    "closing"
+  ],
+  "properties": {
+    "opening": {
+      "type": "string",
+      "minLength": 15,
+      "maxLength": 500
+    },
+    "questions": {
+      "type": "array",
+      "minItems": 5,
+      "maxItems": 10,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "question",
+          "purpose",
+          "evidence_ids",
+          "follow_up_if_weak"
+        ],
+        "properties": {
+          "question": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 500
+          },
+          "purpose": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 420
+          },
+          "evidence_ids": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "minItems": 1,
+            "maxItems": 8
+          },
+          "follow_up_if_weak": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 500
+          }
+        }
+      }
+    },
+    "closing": {
+      "type": "string",
+      "minLength": 10,
+      "maxLength": 500
+    }
+  }
+}
