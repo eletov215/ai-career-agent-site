@@ -4,6 +4,12 @@ name: CI
   push:
   pull_request:
   workflow_dispatch:
+    inputs:
+      run_ai_bench_live:
+        description: "Run billable AI-BENCH-001 comparison against Yandex AI Studio after all CI gates pass"
+        required: true
+        default: false
+        type: boolean
 
 permissions:
   contents: read
@@ -357,4 +363,95 @@ jobs:
 
       - name: Run AI-BENCH-001 unit tests
         run: python -m unittest discover -s tests -p 'test_ai_bench_*.py' -v
+
+  ai-bench-yandex-live:
+    name: AI-BENCH-001 Live Yandex
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.run_ai_bench_live == true }}
+    needs:
+      - tests
+      - ai-bench-001
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    concurrency:
+      group: ai-bench-001-yandex-live
+      cancel-in-progress: false
+    env:
+      AI_BENCH_YANDEX_API_KEY: ${{ secrets.AI_BENCH_YANDEX_API_KEY }}
+      AI_BENCH_YANDEX_FOLDER_ID: ${{ secrets.AI_BENCH_YANDEX_FOLDER_ID }}
+      AI_BENCH_YANDEX_ALICE_LLM_MODEL: gpt://${{ secrets.AI_BENCH_YANDEX_FOLDER_ID }}/aliceai-llm/latest
+      AI_BENCH_YANDEX_ALICE_LLM_FLASH_MODEL: gpt://${{ secrets.AI_BENCH_YANDEX_FOLDER_ID }}/aliceai-llm-flash/latest
+      AI_BENCH_YANDEX_YGPT51_MODEL: gpt://${{ secrets.AI_BENCH_YANDEX_FOLDER_ID }}/yandexgpt-5.1/latest
+      AI_BENCH_OUTPUT_DIR: ${{ runner.temp }}/ai-bench-yandex-live
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Verify required GitHub secrets
+        shell: bash
+        run: |
+          test -n "$AI_BENCH_YANDEX_API_KEY" || { echo "AI_BENCH_YANDEX_API_KEY is missing"; exit 1; }
+          test -n "$AI_BENCH_YANDEX_FOLDER_ID" || { echo "AI_BENCH_YANDEX_FOLDER_ID is missing"; exit 1; }
+
+      - name: Validate deterministic benchmark package
+        run: python scripts/check_ai_bench_package.py
+
+      - name: Validate Yandex live configuration
+        run: >-
+          python -m evals.ai_bench validate
+          --config evals/config/yandex-live.json
+          --check-credentials
+
+      - name: Run live comparative benchmark
+        run: >-
+          python -m evals.ai_bench run
+          --config evals/config/yandex-live.json
+          --output-dir "$AI_BENCH_OUTPUT_DIR"
+
+      - name: Add benchmark summary
+        if: always()
+        shell: bash
+        run: |
+          if [ -f "$AI_BENCH_OUTPUT_DIR/run.json" ]; then
+            python - "$AI_BENCH_OUTPUT_DIR/run.json" >> "$GITHUB_STEP_SUMMARY" <<'PY'
+          import json, sys
+          run = json.load(open(sys.argv[1], encoding="utf-8"))
+          print("# AI-BENCH-001 Yandex live result")
+          print()
+          print(f"Machine status: **{run.get('status')}**")
+          print()
+          print("| Provider | Passed | Errors | Quality | Grounding | p50 ms | p95 ms | Est. cost USD |")
+          print("|---|---:|---:|---:|---:|---:|---:|---:|")
+          for provider in run.get("providers", []):
+              s = provider.get("summary") or {}
+              print(
+                  f"| {provider.get('id')} | {s.get('passed_count')}/{s.get('case_count')} | {s.get('error_count')} | "
+                  f"{s.get('mean_quality_score')} | {s.get('mean_grounding_score')} | {s.get('p50_latency_ms')} | "
+                  f"{s.get('p95_latency_ms')} | {s.get('estimated_cost_usd')} |"
+              )
+          print()
+          print("Manual writing-quality rubric remains pending; no provider decision is made by this workflow.")
+          PY
+          else
+            echo "# AI-BENCH-001 Yandex live result" >> "$GITHUB_STEP_SUMMARY"
+            echo "run.json was not produced." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Upload sanitized benchmark evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: ai-bench-001-yandex-live-${{ github.run_id }}
+          path: ${{ env.AI_BENCH_OUTPUT_DIR }}
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Verify live transport completed without provider errors
+        if: always()
+        run: python scripts/check_ai_bench_live_result.py "$AI_BENCH_OUTPUT_DIR/run.json"
 
