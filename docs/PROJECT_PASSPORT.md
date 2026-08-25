@@ -6,8 +6,8 @@
 <!-- ACA-CANONICAL-STATUS:START -->
 ## Канонический срез проекта
 
-**Документ:** AI Career Agent PROJECT_PASSPORT `v2.47`  
-**Дата:** 2026-08-24  
+**Документ:** AI Career Agent PROJECT_PASSPORT `v2.48`  
+**Дата:** 2026-08-25  
 **Production revision:** `20260819_0014`
 
 | Контур | Состояние |
@@ -18,22 +18,23 @@
 | Career data | structured profile, immutable versions, confirmation-first PDF import, resume drafts/versions/assets |
 | Search | HH, SuperJob, Reed, Trudvsem; normalization, conservative dedup, stable snapshots; SEARCH-005 complete |
 | Operations | structured logs, probes, encrypted backup/restore, external sync/privacy workers |
-| AI benchmark | implementation candidate with hotfix r1; local deterministic gate passes; GitHub and live comparison pending |
+| AI benchmark | hotfix r1 GitHub CI confirmed; evals 1.1.0 live Yandex candidate ready for manual workflow |
+| Yandex test access | Alice AI LLM Playground PASS; benchmark service account/role and GitHub Actions Secrets configured by user |
 | Production AI | absent; no provider decision, production route or migration added |
 
-### Hotfix decision boundary
+### Decision boundary
 
-Candidate v1.4.32 was not accepted because GitHub CI correctly found a numeric-grounding false positive. v2.47 records the scalar-leaf fix, regression coverage and narrower credential redaction. `AI-PROVIDER-001` remains blocked until green CI plus external comparative evidence and human review.
+The live workflow is evaluation infrastructure only. It uses GitHub Secrets and a separate Yandex service account, compares Alice AI LLM, Alice AI LLM Flash and YandexGPT Pro 5.1, and stores only sanitized artifacts. It does not authorize production AI integration. `AI-PROVIDER-001` remains blocked until live evidence and the human rubric are reviewed.
 <!-- ACA-CANONICAL-STATUS:END -->
 
 | Поле | Значение |
 |---|---|
 | Документ        | PROJECT_PASSPORT                                                                              |
-| Версия паспорта | 2.47 |
-| Дата            | 24 августа 2026                                                                               |
+| Версия паспорта | 2.48 |
+| Дата            | 25 августа 2026                                                                               |
 | Статус          | ДЕЙСТВУЮЩИЙ                                                                                   |
-| Связанный план | `AI_Career_Agent_PLAN_CURRENT v1.4.33` |
-| Основа кода | GitHub main after AI-BENCH-001 v1.4.32 upload; CI rejection reproduced; hotfix r1 locally passes package-specific gates; GitHub rerun pending |
+| Связанный план | `AI_Career_Agent_PLAN_CURRENT v1.4.34` |
+| Основа кода | GitHub `main` from `ai-career-agent-site-main (21).zip`; hotfix r1 GitHub Actions green; live Yandex benchmark candidate prepared |
 
 > Контрольные статусы: FND/DATA/SEC/OPS/INFRA-PREP/SYNC/SEARCH-001..005/AUTH/PROF/PRIV - ВЫПОЛНЕНО; AI-BENCH-001 - НУЖНА ПРОВЕРКА; AI-PROVIDER-001 - ЗАБЛОКИРОВАНО; DOC-001 - В РАБОТЕ; INFRA-001 - ОТЛОЖЕНО.
 
@@ -488,7 +489,7 @@ Render не считается гарантированным production для 
 
 ## 23. Текущий gate
 
-SEARCH-005 — ВЫПОЛНЕНО. AI-BENCH-001 hotfix r1 — НУЖНА ПРОВЕРКА GITHUB ACTIONS. Production PostgreSQL остаётся на `20260819_0014`; live AI comparison и provider decision ещё не выполнены.
+SEARCH-005 — ВЫПОЛНЕНО. AI-BENCH-001 hotfix r1 GitHub Actions подтверждён GREEN; live Yandex candidate — НУЖНА ПРОВЕРКА manual workflow/artifact/manual rubric. Production PostgreSQL остаётся на `20260819_0014`; provider decision ещё не выполнен.
 
 ## 24. Правила рабочего чата
 
@@ -544,3 +545,10 @@ SEARCH-005 — ВЫПОЛНЕНО. AI-BENCH-001 hotfix r1 — НУЖНА ПРО�
 - **Telemetry:** current process observability events are persisted through a non-gating adapter. Trudvsem additionally uses persistent SyncRun/worker/checkpoint data. No external network probe runs when the page is opened.
 - **Schema:** candidate `20260819_0014`; production remains `20260813_0013` until external gate.
 - **Deployment:** administrator email allowlist must be configured in Render/VPS environment before E2E. `SOURCE_HEALTH_RECORDING_ENABLED=1`; default stale threshold 900 seconds.
+
+
+### PROJECT_PASSPORT v2.48 update
+
+| Версия | Дата | Изменение |
+|---|---|---|
+| 2.48 | 25.08.2026 | Confirmed hotfix r1 green GitHub Actions and manual Alice Playground smoke; added isolated evals 1.1.0 Yandex live workflow candidate with GitHub-secret-only credentials. AI-PROVIDER-001 remains blocked pending live artifact/manual review. |

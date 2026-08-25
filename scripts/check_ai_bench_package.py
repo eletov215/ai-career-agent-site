@@ -15,6 +15,9 @@ REQUIRED = [
     "evals/VERSION",
     "evals/config/ci.json",
     "evals/config/benchmark.example.json",
+    "evals/config/yandex-live.json",
+    "evals/.gitignore",
+    "evals/artifacts/.gitkeep",
     "evals/fixtures/manifest.json",
     "evals/schemas/resume_analysis.schema.json",
     "evals/schemas/vacancy_match.schema.json",
@@ -41,7 +44,7 @@ def main() -> int:
         fail(f"missing required files: {missing}")
 
     version = (ROOT / "evals/VERSION").read_text(encoding="utf-8").strip()
-    if version != "1.0.1":
+    if version != "1.1.0":
         fail(f"unexpected evals version: {version}")
 
     manifest = json.loads((ROOT / "evals/fixtures/manifest.json").read_text(encoding="utf-8"))

@@ -1,48 +1,45 @@
-# AI Career Agent — аудит источников v1.4.33
+# AI Career Agent — аудит источников v1.4.34
 
 | Поле | Значение |
 |---|---|
 | Документ | SOURCE_AUDIT |
-| Версия | 1.4.33 |
-| Дата | 24 августа 2026 |
-| Проверяемый пакет | AI-BENCH-001 hotfix r1 |
+| Версия | 1.4.34 |
+| Дата | 25 августа 2026 |
+| Проверяемый пакет | AI-BENCH-001 live Yandex candidate |
 | Production revision | `20260819_0014` |
-| Статус | НУЖНА ПРОВЕРКА GITHUB ACTIONS |
+| Статус | НУЖНА ПРОВЕРКА LIVE YANDEX WORKFLOW + MANUAL RUBRIC |
 
 <!-- ACA-CANONICAL-STATUS:START -->
-## Актуальный source audit — AI-BENCH-001 hotfix r1
+## Актуальный source audit — AI-BENCH-001 live Yandex candidate
 
-**Документ:** AI Career Agent SOURCE_AUDIT `v1.4.33`  
-**Дата:** 2026-08-24  
-**Основа:** AI-BENCH-001 candidate v1.4.32, загруженный пользователем в GitHub `main`, и фактический CI failure screenshot.
+**Документ:** AI Career Agent SOURCE_AUDIT `v1.4.34`  
+**Дата:** 2026-08-25  
+**Основа:** `ai-career-agent-site-main (21).zip`, предоставленный пользователем как актуальный GitHub `main`, плюс screenshots green GitHub Actions and Yandex setup.
 
-### Подтверждённый дефект
+### Подтверждённые внешние факты
 
-| Наблюдение CI | Причина |
-|---|---|
-| `vacancy-match-ru-01`: unsupported value `78` at path `$` | root `dict` stringified and rescanned |
-| `vacancy-match-en-01`: unsupported value `72` at path `$` | same root-container false positive |
-| runner status `failed` | strict gate inherited both scoring failures |
-| dedicated package job exit code `1` | `--fail-on-gate` correctly rejected the run |
+- GitHub run `#184` завершился Success: `Python tests` и `AI-BENCH-001 package gate` green;
+- manual Alice AI LLM Playground smoke вернул корректный карьерный match без добавления отсутствующих навыков;
+- Yandex folder `ai-career-agent-ai` создан;
+- service account `ai-career-agent-bench` имеет роль `ai.languageModels.user`;
+- пользователь создал API key и сохранил секрет и folder ID в GitHub Actions Secrets; значения в исходные материалы не передавались.
 
-### Исправленные файлы кода
+### Live candidate changes
 
-- `evals/ai_bench/scoring.py`;
-- `tests/test_ai_bench_scoring.py`;
-- `evals/VERSION` and `evals/ai_bench/__init__.py` -> `1.0.1`;
-- `scripts/check_ai_bench_package.py` version gate.
-
-### Локальная проверка hotfix
-
-- targeted pytest: PASS;
-- AI-BENCH unit discovery: 11 tests PASS;
-- deterministic package gate: PASS;
-- validate + strict reference run: PASS, 8/8 cases;
-- full repository suite в этом контейнере не завершилась в доступный timeout и не объявляется пройденной; authoritative next gate — GitHub Actions.
+- `evals 1.1.0`;
+- manual-only `.github/workflows/ai-bench-live.yml`;
+- exact current model families: Alice AI LLM, Alice AI LLM Flash, YandexGPT Pro 5.1;
+- OpenAI-compatible endpoint `https://ai.api.cloud.yandex.net/v1/chat/completions`;
+- `Api-Key` auth plus `OpenAI-Project` folder header;
+- model URI injected from environment, so folder ID is not hardcoded;
+- per-case `json_schema` structured output;
+- 2026-08-25 synchronous USD pricing snapshot;
+- sanitized artifact upload and separate transport gate;
+- runtime `evals/artifacts` ignored from Git.
 
 ### Isolation
 
-`app.py`, production routes, models, repositories, services, requirements и Alembic chain не менялись. Production revision остаётся `20260819_0014`.
+No changes to `app.py`, production routes, `config.py`, models/repositories/application services, `requirements.txt`, Render runtime or Alembic chain. Production revision remains `20260819_0014`.
 <!-- ACA-CANONICAL-STATUS:END -->
 
 ## 1. Источник истины
@@ -130,17 +127,21 @@ No changes to:
 - Docker/Render runtime;
 - database revision.
 
-## 8. Required external gate
+## 8. Current external gate
 
-1. Upload hotfix to GitHub `main`.
-2. Confirm green `AI-BENCH-001 package gate`.
-3. Confirm green full `Python tests`.
-4. Preserve failure/hotfix evidence in verification status.
-5. Only then continue with live models, exact IDs, current prices and manual rubric.
+The hotfix GitHub gate is complete. Current required gate:
+
+1. Upload the live Yandex candidate to GitHub.
+2. Confirm ordinary CI remains green.
+3. Manually run `AI-BENCH-001 Live Yandex`.
+4. Require zero provider transport/API errors and download the sanitized artifact.
+5. Review machine quality/grounding/cost/latency evidence.
+6. Complete the manual writing-quality rubric.
+7. Only then open `AI-PROVIDER-001`.
 
 ## 9. Status decision
 
-`AI-BENCH-001 hotfix r1` — **НУЖНА ПРОВЕРКА GITHUB ACTIONS**.  
+`AI-BENCH-001 live Yandex candidate` — **НУЖНА ПРОВЕРКА**.  
 `AI-PROVIDER-001` — **ЗАБЛОКИРОВАН**.  
 Production — unchanged at `20260819_0014`.
 
@@ -150,3 +151,5 @@ Production — unchanged at `20260819_0014`.
 |---|---|---|
 | 1.4.32 | 24.08.2026 | Initial AI-BENCH implementation candidate. |
 | 1.4.33 | 24.08.2026 | CI failure audited; scalar-leaf numeric scorer hotfix and regression coverage prepared. |
+
+| 1.4.34 | 25.08.2026 | GitHub hotfix CI confirmed green; manual Alice smoke and Yandex service account setup confirmed; live Yandex benchmark workflow candidate prepared. |

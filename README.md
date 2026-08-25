@@ -1,18 +1,19 @@
 # AI Career Agent
 
 <!-- ACA-CANONICAL-STATUS:START -->
-## Каноническое состояние — 2026-08-24
+## Каноническое состояние — 2026-08-25
 
 | Поле | Значение |
 |---|---|
 | Production schema | `20260819_0014` |
 | Последний завершённый пакет | `SEARCH-005` |
-| Текущий пакет | `AI-BENCH-001 hotfix r1` — исправление готово, требуется повторный GitHub Actions |
-| Следующий функциональный gate | live comparative benchmark + manual rubric |
+| Текущий пакет | `AI-BENCH-001` — live Yandex benchmark candidate; НУЖНА ПРОВЕРКА |
+| Подтверждено | hotfix r1 GitHub Actions GREEN; manual Alice AI LLM Playground smoke PASS; benchmark secrets configured in GitHub Actions |
+| Следующий gate | manual `AI-BENCH-001 Live Yandex` workflow, artifact review and human writing-quality rubric |
 | Следующий пакет | `AI-PROVIDER-001`, заблокирован до завершения AI-BENCH-001 |
-| Канонические документы | PLAN `v1.4.33`, PROJECT PASSPORT `v2.47`, SOURCE AUDIT `v1.4.33`, AI-BENCH verification `v1.1` |
+| Канонические документы | PLAN `v1.4.34`, PROJECT PASSPORT `v2.48`, SOURCE AUDIT `v1.4.34`, AI-BENCH verification `v1.2` |
 
-Первый AI-BENCH-001 candidate был отклонён GitHub CI: unsupported-number gate повторно сканировал весь корневой JSON-контейнер и ошибочно считал разрешённые `match_score` 78/72 неподтверждёнными числами. Hotfix `evals 1.0.1` проверяет только scalar leaves, сохраняет запрет на действительно выдуманные числа и добавляет регрессионные тесты. Production routes, migrations и Flask runtime не изменялись.
+`evals 1.1.0` adds a Yandex-only live evaluation transport for Alice AI LLM, Alice AI LLM Flash and YandexGPT Pro 5.1. Credentials remain outside Git in GitHub Actions Secrets; the workflow is manual-only and does not change Flask routes, production dependencies, database schema or Render runtime.
 <!-- ACA-CANONICAL-STATUS:END -->
 
 ## 1. Назначение
@@ -35,29 +36,33 @@ AI Career Agent — Flask/Gunicorn web-service карьерного сопров
 - web, Trudvsem sync worker и privacy cleanup worker разделены на процессы;
 - Render остаётся staging/резервным контуром до предрелизной VPS-миграции.
 
-## 3. AI-BENCH-001 hotfix r1
+## 3. AI-BENCH-001 live Yandex candidate
 
-Root cause первого CI failure находился в `evals/ai_bench/scoring.py`: `iter_paths()` выдавал root/container nodes, а numeric scorer строкифицировал их и повторно видел вложенный `match_score` по пути `$`. Hotfix:
+Hotfix r1 already passed the external GitHub gate. `evals 1.1.0` now adds the isolated live comparison stage:
 
-- игнорирует `dict/list/tuple/set` в unsupported-number scan;
-- проверяет scalar leaves;
-- сохраняет hard failure для реально неподтверждённых чисел в narrative;
-- включает positive/negative regression tests;
-- поднимает benchmark package version до `1.0.1`.
+- manual-only `AI-BENCH-001 Live Yandex` workflow;
+- Alice AI LLM, Alice AI LLM Flash and YandexGPT Pro 5.1;
+- Yandex OpenAI-compatible endpoint with `Api-Key` + `OpenAI-Project`;
+- model URI values constructed from GitHub-secret environment data, never committed;
+- per-case JSON Schema structured output;
+- latency/token/cost collection using a dated pricing snapshot;
+- sanitized artifact upload and a separate transport-error gate;
+- runtime `evals/artifacts/` ignored by Git.
 
-Проверка перед upload:
+Before upload:
 
 ```bash
 python scripts/check_ai_bench_package.py
 python -m unittest discover -s tests -p 'test_ai_bench_*.py' -v
 ```
 
-Authoritative gate после upload:
+After upload, confirm ordinary CI and manually run:
 
 ```text
-GitHub Actions / AI-BENCH-001 package gate
-GitHub Actions / Python tests
+GitHub Actions -> AI-BENCH-001 Live Yandex -> Run workflow
 ```
+
+A successful workflow is still not a provider decision: download the artifact and complete the human rubric first.
 
 ## 4. Документация
 

@@ -6,50 +6,51 @@
 <!-- ACA-CANONICAL-STATUS:START -->
 ## Канонический статус плана
 
-**Документ:** AI Career Agent PLAN_CURRENT `v1.4.33`  
-**Дата:** 2026-08-24  
+**Документ:** AI Career Agent PLAN_CURRENT `v1.4.34`  
+**Дата:** 2026-08-25  
 **Production revision:** `20260819_0014`  
-**Текущий пакет:** `AI-BENCH-001 - HOTFIX R1; НУЖНА ПРОВЕРКА GITHUB И LIVE BENCHMARK`
+**Текущий пакет:** `AI-BENCH-001 - LIVE YANDEX CANDIDATE; НУЖНА ПРОВЕРКА`
 
-### Причина hotfix r1
+### Подтверждено после hotfix r1
 
-GitHub Actions rejected candidate `v1.4.32` with three test failures and a failed dedicated package gate. The unsupported-number scanner stringified the root JSON container and re-detected allowed generated `match_score` values `78` and `72` at path `$`.
+- пользователь показал green GitHub Actions: основной `Python tests` job и dedicated `AI-BENCH-001 package gate` прошли;
+- manual Playground smoke для Alice AI LLM прошёл на карьерном match-кейсе без выдуманного опыта;
+- создан отдельный Yandex Cloud folder/service account с ролью `ai.languageModels.user`;
+- API key и folder ID сохранены пользователем только в GitHub Actions Secrets как `AI_BENCH_YANDEX_API_KEY` и `AI_BENCH_YANDEX_FOLDER_ID`; значения не входят в Git.
 
-### Что исправлено
+### Live candidate
 
-- unsupported-number validation now scans scalar leaves only;
-- generated numeric paths remain exempt without disabling checks in narrative fields;
-- regression tests cover both the false-positive case and a real unsupported number;
-- secret redaction preserves dataset/config fingerprints, SHA-256 evidence and token metrics while continuing to redact credentials;
-- deterministic evidence is stored under `docs/evidence/ai-bench-001/`.
+`evals 1.1.0` добавляет manual-only GitHub workflow для сравнения Alice AI LLM, Alice AI LLM Flash и YandexGPT Pro 5.1 через Yandex OpenAI-compatible API. Per-case JSON Schema передаётся через structured output; Yandex `Api-Key` authorization и `OpenAI-Project` header настраиваются только через benchmark adapter. Runtime artifacts игнорируются Git.
 
 ### Текущий gate
 
-Local compile, 11 AI-BENCH unit tests and `scripts/check_ai_bench_package.py` pass. GitHub Actions must be rerun. Even after green CI, AI-BENCH-001 remains open until approved external models complete one comparable run and a human reviewer fills the rubric.
+Загрузить candidate в GitHub, получить green ordinary CI, затем вручную запустить `AI-BENCH-001 Live Yandex`. Live transport должен завершиться без provider errors; machine quality failures остаются evidence, а не маскируются как infrastructure failure. После скачивания sanitized artifact требуется human writing-quality rubric. Только затем разрешён `AI-PROVIDER-001`.
 
 ### Очередь
 
-`AI-BENCH-001 hotfix CI -> live comparative run -> AI-PROVIDER-001 -> LEGAL-001 -> AI-001 -> AI-002 -> AI-003 -> AI-004 -> AI-005 -> AI-006 -> JOB-001 -> JOB-002 -> JOB-003/JOB-004`
+`AI-BENCH-001 live workflow -> artifact review -> manual rubric -> AI-PROVIDER-001 -> LEGAL-001 -> AI-001 -> AI-002 -> AI-003 -> AI-004 -> AI-005 -> AI-006 -> JOB-001 -> JOB-002 -> JOB-003/JOB-004`
 <!-- ACA-CANONICAL-STATUS:END -->
 
 | Поле | Значение |
 |---|---|
 | Документ | PLAN_CURRENT |
-| Версия | 1.4.33 |
-| Дата | 24 августа 2026 |
+| Версия | 1.4.34 |
+| Дата | 25 августа 2026 |
 | Статус | ДЕЙСТВУЮЩИЙ |
-| Основа кода | GitHub `main` после AI-BENCH-001 candidate v1.4.32; initial CI rejected the candidate; hotfix r1 locally passes the AI-BENCH gate; GitHub rerun pending |
-| Текущий пакет | AI-BENCH-001 hotfix r1 - НУЖНА ПРОВЕРКА GitHub; затем live comparative run and manual rubric |
+| Основа кода | GitHub `main` из `ai-career-agent-site-main (21).zip`; hotfix r1 GitHub Actions GREEN; live Yandex candidate подготовлен поверх этого состояния |
+| Текущий пакет | AI-BENCH-001 live Yandex candidate - НУЖНА ПРОВЕРКА manual workflow + artifact/manual rubric |
 
 > ОБЯЗАТЕЛЬНО ДЛЯ КАЖДОГО НОВОГО ЧАТА: прочитать этот план, новый паспорт и актуальный архив. После завершения любого пункта вернуть обновлённые DOCX/PDF/Markdown, новый ZIP, доказательства проверки и запись в журнале версий.
 
-> КОНТРОЛЬНЫЕ СТАТУСЫ ЭТОЙ ВЕРСИИ: FND-001/FND-002/DATA-001/DATA-002/SEC-001/OPS-001/INFRA-PREP-001/SYNC-001/SYNC-002/SEARCH-001..005/AUTH-001/AUTH-002/PROF-001/PROF-002/PROF-003/PRIV-001 - **ВЫПОЛНЕНО**; `AI-BENCH-001` - **НУЖНА ПРОВЕРКА**; `AI-PROVIDER-001` - **ЗАБЛОКИРОВАНО** до завершения benchmark; `DOC-001` - **В РАБОТЕ**; `INFRA-001` - **ОТЛОЖЕНО ДО ПРЕДРЕЛИЗНОГО ЭТАПА**. Документы ниже `1.4.33` устарели для определения текущего gate.
+> КОНТРОЛЬНЫЕ СТАТУСЫ ЭТОЙ ВЕРСИИ: FND-001/FND-002/DATA-001/DATA-002/SEC-001/OPS-001/INFRA-PREP-001/SYNC-001/SYNC-002/SEARCH-001..005/AUTH-001/AUTH-002/PROF-001/PROF-002/PROF-003/PRIV-001 - **ВЫПОЛНЕНО**; `AI-BENCH-001` - **НУЖНА ПРОВЕРКА**; `AI-PROVIDER-001` - **ЗАБЛОКИРОВАНО** до завершения benchmark; `DOC-001` - **В РАБОТЕ**; `INFRA-001` - **ОТЛОЖЕНО ДО ПРЕДРЕЛИЗНОГО ЭТАПА**. Документы ниже `1.4.34` устарели для определения текущего gate.
 
 ## 1. Источник истины и аудит источников
 
 - GitHub является главным источником актуального кода.
 - Если в текущем чате загружен более новый ZIP, он является рабочей основой этого чата.
 - Канонический план определяется наибольшей версией и датой; старые дубликаты не должны оставаться действующими.
+- Актуальная рабочая база для этой версии: `ai-career-agent-site-main (21).zip`, предоставленный пользователем как GitHub `main` после green hotfix r1 CI.
+- Версия 1.4.34 фиксирует live Yandex candidate: manual-only workflow, Alice AI LLM/Flash/YandexGPT Pro 5.1, structured JSON Schema output, current pricing snapshot and GitHub-secret-only credentials.
 - Перед DATA-002 проверено, что актуальный код находится в `ai-career-agent-site-main (1).zip` и соответствует завершённому DATA-001.
 - Загруженные планы/паспорт были устаревшими: они содержали версии 1.0.0/1.0.1 и раннее состояние HH 403, не отражали подтверждение FND-001/FND-002 и согласованную стратегию собственного домена/VPS.
 - Версия 1.4.8 закрывает SEARCH-002 как ВЫПОЛНЕНО. GitHub Actions полностью зелёный, включая отдельный `Verify SEARCH-002 cross-source deduplication controls`, PostgreSQL migration/integration, SEC/OPS/SYNC/SEARCH-001 regressions, backup/restore и container smoke. Render `/health/ready` подтвердил `current_revision=expected_revision=20260809_0006`, PostgreSQL `persistent=true`, `status=ok`. Public SuperJob vacancy search отвязан от обязательного user OAuth и работает по app-level credential. Production verification endpoint `/health/search-dedup` подтвердил реальную обработку multi-source candidate sets без ложных merge: контрольный поиск обработал 164 вакансии (`hh=20`, `reed=60`, `superjob=24`, `trudvsem=60`), `input_count=output_count=164`, `cross_source_duplicate_count=0`, `cross_source_groups=0`. Дополнительные реальные поиски также не выявили безопасной duplicate-pair; positive merge semantics подтверждены зелёным CI fixture. Остаточная задача — не dedup, а стабильная cross-page пагинация/сортировка/total в SEARCH-003.
@@ -211,7 +212,7 @@ MVP не готов, если работает только отдельная �
 
 | ID | Приоритет | Статус | Пункт |
 |---|---|---|---|
-| AI-BENCH-001 | P0 | НУЖНА ПРОВЕРКА | Benchmark harness + hotfix r1 готовы; GitHub CI, затем live comparative run и manual rubric |
+| AI-BENCH-001 | P0 | НУЖНА ПРОВЕРКА | Hotfix r1 GitHub CI green; live Yandex workflow candidate готов; требуются comparative artifact и manual rubric |
 | AI-PROVIDER-001 | P0 | ЗАПЛАНИРОВАНО | Стратегия AI-провайдеров, география, стоимость, fallback и privacy |
 | AI-001 | P1 | ЗАПЛАНИРОВАНО | Независимый слой AI-провайдера и контроль стоимости |
 | AI-002 | P1 | ЗАПЛАНИРОВАНО | Настоящий анализ резюме |
@@ -1652,4 +1653,11 @@ GitHub/production/API: <подтверждено или требуется>
 **Зависимости:** SEARCH-001..004, SYNC-001/002, AUTH-001, OPS-001, PRIV-001 complete.
 
 
-**Текущий gate:** AI-BENCH-001 hotfix r1 - GitHub CI rerun, затем live comparative run и manual rubric. AI-PROVIDER-001 остаётся заблокирован.
+**Текущий gate:** AI-BENCH-001 live Yandex manual workflow -> sanitized artifact review -> manual rubric. AI-PROVIDER-001 остаётся заблокирован.
+
+
+### PLAN_CURRENT v1.4.34 update
+
+| Версия | Дата | Пункт | Изменение |
+|---|---|---|---|
+| 1.4.34 | 25.08.2026 | AI-BENCH-001-LIVE-YANDEX | Hotfix r1 GitHub CI confirmed green; Yandex test access and GitHub Secrets configured; evals 1.1.0 adds manual live comparison workflow for Alice AI LLM, Alice AI LLM Flash and YandexGPT Pro 5.1. Live artifact and human rubric remain pending. |

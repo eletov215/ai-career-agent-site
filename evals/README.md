@@ -32,7 +32,9 @@ The `reference` provider reads versioned expected outputs. It validates the runn
 
 ## Live candidates
 
-Copy `evals/config/benchmark.example.json` outside version control, enable approved providers, fill exact model identifiers and current pricing, then set secrets in the environment. Two transports are available:
+The repository includes `evals/config/yandex-live.json` for the approved AI-BENCH-001 Yandex comparison. It is executed only by the manual `AI-BENCH-001 Live Yandex` GitHub Actions workflow and reads credentials from `AI_BENCH_YANDEX_API_KEY` / `AI_BENCH_YANDEX_FOLDER_ID`. Runtime artifacts stay outside Git.
+
+For any additional provider, copy `evals/config/benchmark.example.json` outside version control, enable approved providers, fill exact model identifiers and current pricing, then set secrets in the environment. Two transports are available:
 
 - `openai_compatible`: an explicit HTTPS chat-completions endpoint;
 - `command`: a local wrapper that receives a JSON request on stdin and returns a JSON envelope on stdout.
@@ -73,6 +75,6 @@ Each run writes:
 
 No provider may be selected from the deterministic reference run. A live comparative run plus manual rubric is the remaining external gate for AI-BENCH-001.
 
-## Package version 1.0.1
+## Package version 1.1.0
 
-Hotfix 1.0.1 prevents container nodes from being rescanned by the unsupported-number gate. Generated numeric fields such as `$.match_score` are excluded only at their scalar leaf, while an unsupported number added to narrative text still fails the strict gate.
+Version 1.1.0 keeps the 1.0.1 scalar-leaf hallucination fix and adds the isolated Yandex live-evaluation boundary: configurable auth scheme, model-from-environment, project header, per-case JSON Schema structured output, current Alice/YandexGPT candidate config, manual GitHub workflow and transport-only live gate. It does not add a production AI provider.

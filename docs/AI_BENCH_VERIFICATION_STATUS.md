@@ -3,72 +3,86 @@
 | Поле | Значение |
 |---|---|
 | Документ | AI_BENCH_VERIFICATION_STATUS |
-| Версия | 1.1 |
-| Дата | 24 августа 2026 |
-| Пакет | AI-BENCH-001 hotfix r1 |
-| Статус | НУЖНА ПРОВЕРКА GITHUB; LIVE COMPARATIVE RUN PENDING |
+| Версия | 1.2 |
+| Дата | 25 августа 2026 |
+| Пакет | AI-BENCH-001 live Yandex candidate |
+| Статус | НУЖНА ПРОВЕРКА LIVE COMPARATIVE RUN + MANUAL RUBRIC |
 | Production revision | `20260819_0014` |
 
-## 1. Initial CI result
+## 1. GitHub hotfix gate
 
-Candidate v1.4.32 was rejected by GitHub Actions:
+User-provided GitHub screenshots confirm run `#184` completed successfully:
+
+- `Python tests` - GREEN;
+- `AI-BENCH-001 package gate` - GREEN;
+- the previous unsupported-number false positive is no longer reproduced.
+
+The remaining annotation was a Node.js runtime deprecation warning in older action versions, not a test failure. The live candidate updates the AI-BENCH checkout/setup-python actions to v6.
+
+## 2. Manual Yandex access gate
+
+The user created an isolated Yandex Cloud folder `ai-career-agent-ai`, a service account `ai-career-agent-bench`, and assigned `ai.languageModels.user`. Alice AI LLM was opened in AI Studio Playground and passed a short career-match smoke without inventing experience.
+
+An API key was then created for the benchmark service account. The user stored the secret value and folder ID only as GitHub Actions Secrets:
 
 ```text
-Python tests: 3 failed, 390 passed
-AI-BENCH-001 package gate: failed
-vacancy-match-ru-01: unsupported_numbers [{path: '$', value: '78'}]
-vacancy-match-en-01: unsupported_numbers [{path: '$', value: '72'}]
+AI_BENCH_YANDEX_API_KEY
+AI_BENCH_YANDEX_FOLDER_ID
 ```
 
-This rejection is accepted as valid evidence; v1.0 statements that the external GitHub gate had passed are superseded.
+Secret values are not present in the repository or this document.
 
-## 2. Root cause
+## 3. Live candidate implementation
 
-The unsupported-number scorer inspected both JSON containers and scalar leaves. The root dictionary was stringified, so an allowed generated `$.match_score` was scanned again as if it were a claim at `$`.
+`evals 1.1.0` adds:
 
-## 3. Hotfix implementation
-
-- skip container values in `_unsupported_numbers()`;
-- continue checking all scalar leaves;
-- keep `generated_numeric_paths` exemptions exact and bounded;
-- test that reference `match_score` passes;
-- test that a narrative `99 years` claim still fails at `$.recommendation`;
-- preserve token counts, fingerprints and SHA-256 values while redacting real credentials.
+- `evals/config/yandex-live.json`;
+- manual-only `.github/workflows/ai-bench-live.yml`;
+- Alice AI LLM, Alice AI LLM Flash and YandexGPT Pro 5.1 candidates;
+- current OpenAI-compatible Yandex endpoint and model URI contract;
+- `Api-Key` authorization and `OpenAI-Project` header from environment;
+- per-case `json_schema` structured output;
+- current synchronous USD pricing snapshot for cost estimation;
+- sanitized run/report/response artifact upload;
+- a transport gate that fails on provider/API errors but does not turn model quality failures into infrastructure failures;
+- `evals/.gitignore` and `evals/artifacts/.gitkeep` to prevent runtime artifacts from being committed.
 
 ## 4. Local verification
 
 | Проверка | Результат |
 |---|---|
-| Python compile for benchmark files | PASS |
-| AI-BENCH unittest discover | 11 tests PASS |
-| Strict deterministic reference run | 8/8 PASS |
-| Dedicated package gate | PASS |
-| Forbidden claims | 0 |
-| Unsupported numbers | 0 |
-| Dataset/PII guard | PASS |
-| Secret-redaction tests | PASS |
+| Deterministic AI-BENCH package gate | PASS |
+| AI-BENCH unittest discovery | 14 tests PASS |
+| Yandex provider request/header/schema unit coverage | PASS |
+| Live config validation with dummy environment | PASS, 3 providers |
+| Repository hygiene after cleanup | PASS |
+| Document structure | PASS |
 | Production route/migration isolation | PASS |
 
-Evidence:
+No live API request was executed locally because the API key remains only in GitHub Secrets.
 
-- `docs/evidence/ai-bench-001/validation.json`;
-- `docs/evidence/ai-bench-001/reference-run.json`;
-- `docs/evidence/ai-bench-001/reference-report.md`.
+## 5. Required external run
 
-## 5. What remains unverified
+After this candidate is uploaded to GitHub:
 
-- the full GitHub workflow after hotfix upload;
-- live external model quality, latency, quota/error behavior and cost;
-- manual writing-quality rubric;
-- provider decision for AI-PROVIDER-001.
+1. confirm ordinary CI remains green;
+2. open Actions -> `AI-BENCH-001 Live Yandex` -> `Run workflow`;
+3. wait for `Yandex live comparative benchmark`;
+4. download the `ai-bench-001-yandex-live-<run_id>` artifact;
+5. review `run.json`, `report.md` and sanitized responses;
+6. complete the human writing-quality rubric;
+7. only then make the AI-PROVIDER-001 provider decision.
 
 ## 6. Status decision
 
-**Hotfix r1 is ready for GitHub. AI-BENCH-001 is not marked complete.** A green GitHub rerun will close only the implementation/CI defect; the package still requires the approved live comparative run and manual review.
+**AI-BENCH-001 remains open.** Benchmark infrastructure and credentials are ready, but live comparative evidence and manual review do not yet exist.
+
+`AI-PROVIDER-001` remains **ЗАБЛОКИРОВАН**.
 
 ## 7. Version log
 
 | Версия | Дата | Изменение |
 |---|---|---|
-| 1.0 | 24.08.2026 | Initial implementation candidate and external-run gate defined. |
-| 1.1 | 24.08.2026 | Recorded GitHub rejection, fixed root-container numeric false positive and metric over-redaction, added regressions and regenerated local evidence. |
+| 1.0 | 24.08.2026 | Initial benchmark implementation candidate and external-run gate defined. |
+| 1.1 | 24.08.2026 | Recorded CI rejection; fixed root-container numeric false positive; hotfix awaiting rerun. |
+| 1.2 | 25.08.2026 | Hotfix GitHub run confirmed green; Alice Playground/service account/GitHub Secrets confirmed; live Yandex workflow candidate prepared. |
