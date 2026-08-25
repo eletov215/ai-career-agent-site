@@ -94,6 +94,11 @@ def find_violations(root: Path) -> list[str]:
                 continue
         if relative.suffix.lower() in FORBIDDEN_SUFFIXES:
             violations.add(str(relative))
+            continue
+
+        if len(parts) >= 3 and parts[0] == "evals" and parts[1] == "artifacts":
+            if relative.as_posix() != "evals/artifacts/README.md":
+                violations.add(str(relative))
 
     return sorted(violations)
 

@@ -155,6 +155,10 @@ class OpenAICompatibleProvider(ProviderAdapter):
         self.response_schema_mode = str(spec.options.get("response_schema_mode", "")).strip()
         if self.response_schema_mode not in {"", "json_schema"}:
             raise ConfigurationError(f"{spec.provider_id}: unsupported response_schema_mode")
+        strict_option = spec.options.get("response_schema_strict")
+        if strict_option is not None and not isinstance(strict_option, bool):
+            raise ConfigurationError(f"{spec.provider_id}: response_schema_strict must be boolean")
+        self.response_schema_strict = strict_option
         self.extra_headers_env = spec.options.get("extra_headers_env", {})
         if not isinstance(self.extra_headers_env, dict):
             raise ConfigurationError(f"{spec.provider_id}: extra_headers_env must be an object")
@@ -177,13 +181,15 @@ class OpenAICompatibleProvider(ProviderAdapter):
         }
         if self.response_schema_mode == "json_schema":
             schema_name = f"aca_{case.task}_{case.language}".replace("-", "_")[:64]
+            json_schema = {
+                "name": schema_name,
+                "schema": schema,
+            }
+            if self.response_schema_strict is not None:
+                json_schema["strict"] = self.response_schema_strict
             body["response_format"] = {
                 "type": "json_schema",
-                "json_schema": {
-                    "name": schema_name,
-                    "schema": schema,
-                    "strict": False,
-                },
+                "json_schema": json_schema,
             }
         elif self.response_format:
             body["response_format"] = self.response_format

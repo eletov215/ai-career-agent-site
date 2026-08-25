@@ -178,7 +178,10 @@ def test_external_worker_executes_queued_run_and_updates_cache(tmp_path):
         assert result.status == "succeeded"
         assert result.processed == 3
         assert result.saved == 3
-        assert storage.vacancies.count(keyword="", sources=["trudvsem"]) == 3
+        # Verify durable cache state directly. The public search count has a
+        # rolling seven-day publication filter and must not make this
+        # SYNC-001 persistence test expire as the calendar advances.
+        assert storage.vacancies.source_status_counts("trudvsem") == {"active": 3}
         latest = storage.sync_runs.latest("trudvsem")
         assert latest.status == "succeeded"
         assert latest.processed == 3
@@ -212,7 +215,9 @@ def test_failed_external_sync_preserves_existing_cache(tmp_path):
 
         assert result.status == "failed"
         assert result.error_type == "TimeoutError"
-        assert storage.vacancies.count(keyword="", sources=["trudvsem"]) == 1
+        # A failed refresh must preserve the active cached source row,
+        # independent of the UI publication-window filter.
+        assert storage.vacancies.source_status_counts("trudvsem") == {"active": 1}
         latest = storage.sync_runs.latest("trudvsem")
         assert latest.status == "failed"
         assert latest.error_type == "TimeoutError"

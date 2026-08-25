@@ -3,79 +3,69 @@
 | Поле | Значение |
 |---|---|
 | Документ | AI_BENCH_VERIFICATION_STATUS |
-| Версия | 1.2 |
+| Версия | 1.3 |
 | Дата | 25 августа 2026 |
-| Пакет | AI-BENCH-001 live Yandex candidate |
-| Статус | НУЖНА ПРОВЕРКА LIVE COMPARATIVE RUN + MANUAL RUBRIC |
+| Пакет | AI-BENCH-001 stability hotfix r2 |
+| Статус | НУЖНА ПОВТОРНАЯ ПРОВЕРКА GITHUB ACTIONS |
 | Production revision | `20260819_0014` |
 
-## 1. GitHub hotfix gate
+## 1. External failure evidence
 
-User-provided GitHub screenshots confirm run `#184` completed successfully:
+GitHub run `#192` stopped in two independent places:
 
-- `Python tests` - GREEN;
-- `AI-BENCH-001 package gate` - GREEN;
-- the previous unsupported-number false positive is no longer reproduced.
+- `Verify SYNC-001 external worker controls`: two cache-count assertions returned zero even though the sync run itself reported `processed=3`, `saved=3`, `status=succeeded`;
+- `AI-BENCH-001 package gate`: required files `evals/.gitignore` and `evals/artifacts/.gitkeep` were absent after browser upload.
 
-The remaining annotation was a Node.js runtime deprecation warning in older action versions, not a test failure. The live candidate updates the AI-BENCH checkout/setup-python actions to v6.
+## 2. SYNC test correction
 
-## 2. Manual Yandex access gate
-
-The user created an isolated Yandex Cloud folder `ai-career-agent-ai`, a service account `ai-career-agent-bench`, and assigned `ai.languageModels.user`. Alice AI LLM was opened in AI Studio Playground and passed a short career-match smoke without inventing experience.
-
-An API key was then created for the benchmark service account. The user stored the secret value and folder ID only as GitHub Actions Secrets:
+The assertions were testing sync persistence through a time-filtered vacancy search with a fixed publication timestamp. They now assert persisted active source-record counts directly:
 
 ```text
-AI_BENCH_YANDEX_API_KEY
-AI_BENCH_YANDEX_FOLDER_ID
+source_status_counts("trudvsem") == {"active": 3}
+source_status_counts("trudvsem") == {"active": 1}
 ```
 
-Secret values are not present in the repository or this document.
+This keeps SYNC worker tests independent from calendar date while preserving SEARCH recency-filter coverage in its own package. Related persistence-only assertions in `tests/test_sync_incremental.py` and `tests/test_search_deduplication.py` use `period_days=0`, so future calendar boundaries cannot invalidate unrelated durability/dedup checks.
 
-## 3. Live candidate implementation
+## 3. Browser-upload-safe package contract
 
-`evals 1.1.0` adds:
+`evals 1.1.1`:
 
-- `evals/config/yandex-live.json`;
-- manual-only `.github/workflows/ai-bench-live.yml`;
-- Alice AI LLM, Alice AI LLM Flash and YandexGPT Pro 5.1 candidates;
-- current OpenAI-compatible Yandex endpoint and model URI contract;
-- `Api-Key` authorization and `OpenAI-Project` header from environment;
-- per-case `json_schema` structured output;
-- current synchronous USD pricing snapshot for cost estimation;
-- sanitized run/report/response artifact upload;
-- a transport gate that fails on provider/API errors but does not turn model quality failures into infrastructure failures;
-- `evals/.gitignore` and `evals/artifacts/.gitkeep` to prevent runtime artifacts from being committed.
+- requires visible `evals/artifacts/README.md` instead of nested dotfiles;
+- keeps a regression test that rejects hidden required paths;
+- retains deterministic reference validation, schemas, redaction and anti-hallucination gates;
+- keeps live output outside the checkout in GitHub runner temporary storage.
+
+The optional nested dotfiles are removed from the canonical full package; their absence can no longer fail CI.
 
 ## 4. Local verification
 
 | Проверка | Результат |
 |---|---|
+| All 59 local test modules, four bounded chunks | 298 passed, 14 environment-dependent skips, 8 subtests passed |
+| `tests/test_sync_worker.py` | 9 passed |
+| SYNC-001 available focused gate | 84 passed, 1 environment skip |
+| SYNC-002 focused gate | 92 passed |
 | Deterministic AI-BENCH package gate | PASS |
-| AI-BENCH unittest discovery | 14 tests PASS |
-| Yandex provider request/header/schema unit coverage | PASS |
-| Live config validation with dummy environment | PASS, 3 providers |
+| AI-BENCH unittest discovery | 20 passed |
+| SEARCH-001..005 available regression gates | PASS |
+| AUTH-001/002 available regression gates | PASS |
+| PROF-001/002/003 and PRIV-001 available regression gates | PASS |
+| SQLite migration `0001 -> 0014` and Alembic check | PASS |
 | Repository hygiene after cleanup | PASS |
-| Document structure | PASS |
-| Production route/migration isolation | PASS |
+| Infra manifest/document structure | PASS |
 
-No live API request was executed locally because the API key remains only in GitHub Secrets.
+Flask/Psycopg/Docker-dependent checks could not execute in the local container because those packages/services were unavailable and network installation was blocked. GitHub Actions remains the authoritative external gate for those checks.
 
-## 5. Required external run
+## 5. Live Yandex boundary
 
-After this candidate is uploaded to GitHub:
+The manual workflow, candidate models and GitHub Secrets remain unchanged. No live API call should be launched until ordinary CI is green. Secret values are not stored in Git.
 
-1. confirm ordinary CI remains green;
-2. open Actions -> `AI-BENCH-001 Live Yandex` -> `Run workflow`;
-3. wait for `Yandex live comparative benchmark`;
-4. download the `ai-bench-001-yandex-live-<run_id>` artifact;
-5. review `run.json`, `report.md` and sanitized responses;
-6. complete the human writing-quality rubric;
-7. only then make the AI-PROVIDER-001 provider decision.
+Current Yandex AI Studio documentation is inconsistent about the execution-scope name: the API-key creation page lists `yc.ai.languageModels.execute` for Model Gallery text generation, while the Completions and structured-output guides reference `yc.ai.foundationModels.execute`. The service-account role `ai.languageModels.user` is confirmed, and the existing key was created with `yc.ai.languageModels.execute`. GitHub Secrets expose neither the key value nor its metadata back to the repository, so the workflow preflight is the decisive external check. If Yandex returns a permission error, recreate the key through AI Studio's **Create API key** flow, which assigns the current required scopes.
 
 ## 6. Status decision
 
-**AI-BENCH-001 remains open.** Benchmark infrastructure and credentials are ready, but live comparative evidence and manual review do not yet exist.
+**AI-BENCH-001 remains open.** Hotfix r2 is locally verified but requires a clean GitHub Actions run. After that, run the live comparative workflow and complete the manual rubric.
 
 `AI-PROVIDER-001` remains **ЗАБЛОКИРОВАН**.
 
@@ -83,6 +73,7 @@ After this candidate is uploaded to GitHub:
 
 | Версия | Дата | Изменение |
 |---|---|---|
-| 1.0 | 24.08.2026 | Initial benchmark implementation candidate and external-run gate defined. |
-| 1.1 | 24.08.2026 | Recorded CI rejection; fixed root-container numeric false positive; hotfix awaiting rerun. |
-| 1.2 | 25.08.2026 | Hotfix GitHub run confirmed green; Alice Playground/service account/GitHub Secrets confirmed; live Yandex workflow candidate prepared. |
+| 1.0 | 24.08.2026 | Initial benchmark implementation candidate and external-run gate. |
+| 1.1 | 24.08.2026 | Scalar-leaf numeric scorer correction prepared. |
+| 1.2 | 25.08.2026 | Scorer hotfix CI green; Yandex live candidate prepared. |
+| 1.3 | 25.08.2026 | Run #192 audited; fixed SYNC calendar dependency and browser-upload dotfile gate dependency; rerun required. |

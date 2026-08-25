@@ -95,12 +95,62 @@ class OpenAICompatibleProviderTests(unittest.TestCase):
         self.assertEqual(body["model"], "gpt://folder-123/aliceai-llm/latest")
         self.assertEqual(body["response_format"]["type"], "json_schema")
         self.assertEqual(body["response_format"]["json_schema"]["schema"], schema)
-        self.assertFalse(body["response_format"]["json_schema"]["strict"])
+        self.assertNotIn("strict", body["response_format"]["json_schema"])
         self.assertEqual(response.content, {"summary": "ok"})
         self.assertEqual(response.input_tokens, 12)
         self.assertEqual(response.output_tokens, 4)
         self.assertEqual(response.metadata["model"], "aliceai-llm/latest")
         self.assertEqual(response.metadata["mode"], "live")
+
+    def test_json_schema_strict_is_sent_only_when_explicitly_configured(self) -> None:
+        spec = self._spec()
+        options = dict(spec.options)
+        options["response_schema_strict"] = True
+        strict_spec = ProviderSpec(
+            provider_id=spec.provider_id,
+            adapter=spec.adapter,
+            enabled=True,
+            options=options,
+        )
+        schema = {"type": "object", "properties": {"summary": {"type": "string"}}}
+        envelope = {"choices": [{"message": {"content": '{"summary":"ok"}'}}]}
+        captured = {}
+
+        def fake_urlopen(request, timeout):
+            captured["request"] = request
+            return _FakeHTTPResponse(envelope)
+
+        env = {
+            "AI_BENCH_TEST_KEY": "test-secret-value",
+            "AI_BENCH_TEST_FOLDER": "folder-123",
+            "AI_BENCH_TEST_MODEL": "gpt://folder-123/aliceai-llm/latest",
+        }
+        with patch.dict(os.environ, env, clear=False), patch(
+            "urllib.request.urlopen", side_effect=fake_urlopen
+        ):
+            OpenAICompatibleProvider(strict_spec, ROOT, 45).invoke(self._case(), schema)
+
+        body = json.loads(captured["request"].data.decode("utf-8"))
+        self.assertTrue(body["response_format"]["json_schema"]["strict"])
+
+    def test_invalid_json_schema_strict_type_is_rejected(self) -> None:
+        spec = self._spec()
+        options = dict(spec.options)
+        options["response_schema_strict"] = "false"
+        bad = ProviderSpec(
+            provider_id=spec.provider_id,
+            adapter=spec.adapter,
+            enabled=True,
+            options=options,
+        )
+        env = {
+            "AI_BENCH_TEST_KEY": "test-secret-value",
+            "AI_BENCH_TEST_FOLDER": "folder-123",
+            "AI_BENCH_TEST_MODEL": "gpt://folder-123/aliceai-llm/latest",
+        }
+        with patch.dict(os.environ, env, clear=False):
+            with self.assertRaises(ConfigurationError):
+                OpenAICompatibleProvider(bad, ROOT, 45)
 
     def test_missing_model_environment_variable_fails_closed(self) -> None:
         env = {

@@ -1,10 +1,19 @@
 # Changelog
 
+## 2026-08-25 — AI-BENCH-001 stability hotfix r2 / evals 1.1.1
+
+- Audited GitHub Actions run `#192` and separated two test/package defects from production behavior.
+- Replaced SYNC worker cache assertions that depended on a fixed publication date plus the default seven-day search filter with durable `source_status_counts` assertions.
+- Replaced AI-BENCH required nested dotfiles with visible `evals/artifacts/README.md`, matching the existing browser-upload-safety regression test.
+- Bumped eval package to `1.1.1`; deterministic package gate and AI-BENCH unit tests pass locally.
+- Re-ran all 59 locally executable test modules in bounded chunks: 298 passed, 14 environment-dependent skips and 8 subtests; also passed SQLite migrations/Alembic/infra/document checks.
+- No production route, dependency, migration or database revision change. Ordinary GitHub CI must be green before the live Yandex workflow is started.
+
 ## 2026-08-25 — AI-BENCH-001 Yandex live candidate / evals 1.1.0
 
 - User confirmed green GitHub Actions for hotfix r1: full Python tests and dedicated AI-BENCH package gate passed.
 - Manual Alice AI LLM Playground smoke passed on a career-match prompt without invented experience.
-- User created an isolated Yandex Cloud folder/service account, assigned `ai.languageModels.user`, created a scoped API key, and stored only its secret plus the folder ID in GitHub Actions Secrets.
+- User created an isolated Yandex Cloud folder/service account, assigned `ai.languageModels.user`, created an API key with `yc.ai.languageModels.execute`, and stored only its secret plus the folder ID in GitHub Actions Secrets. Current Yandex pages also reference `yc.ai.foundationModels.execute` for Completions, so the manual workflow preflight is the decisive authorization check; a permission error requires recreating the key through AI Studio's built-in key flow.
 - Added manual-only `.github/workflows/ai-bench-live.yml`; it never runs on push/PR and reads credentials only from `AI_BENCH_YANDEX_API_KEY` and `AI_BENCH_YANDEX_FOLDER_ID`.
 - Added `evals/config/yandex-live.json` for Alice AI LLM, Alice AI LLM Flash and YandexGPT Pro 5.1 using current Yandex OpenAI-compatible model URIs and a 2026-08-25 synchronous USD pricing snapshot.
 - Extended the generic OpenAI-compatible adapter with configurable `Api-Key` auth, model-from-environment, `OpenAI-Project` header support, and per-case JSON Schema structured output.

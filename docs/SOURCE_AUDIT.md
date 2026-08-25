@@ -1,155 +1,116 @@
-# AI Career Agent — аудит источников v1.4.34
+# AI Career Agent — аудит источников v1.4.35
 
 | Поле | Значение |
 |---|---|
 | Документ | SOURCE_AUDIT |
-| Версия | 1.4.34 |
+| Версия | 1.4.35 |
 | Дата | 25 августа 2026 |
-| Проверяемый пакет | AI-BENCH-001 live Yandex candidate |
+| Проверяемый пакет | AI-BENCH-001 stability hotfix r2 |
 | Production revision | `20260819_0014` |
-| Статус | НУЖНА ПРОВЕРКА LIVE YANDEX WORKFLOW + MANUAL RUBRIC |
+| Статус | НУЖНА ПОВТОРНАЯ ПРОВЕРКА GITHUB ACTIONS |
 
 <!-- ACA-CANONICAL-STATUS:START -->
-## Актуальный source audit — AI-BENCH-001 live Yandex candidate
+## Актуальный source audit
 
-**Документ:** AI Career Agent SOURCE_AUDIT `v1.4.34`  
-**Дата:** 2026-08-25  
-**Основа:** `ai-career-agent-site-main (21).zip`, предоставленный пользователем как актуальный GitHub `main`, плюс screenshots green GitHub Actions and Yandex setup.
+GitHub run `#192` предоставил два точных failure trace. Оба локализованы в тестовом/package контуре и не подтверждают отказ production-функций.
 
-### Подтверждённые внешние факты
+1. SYNC-001: `TrudvsemSyncService.run_once()` завершился `succeeded`, `processed=3`, `saved=3`. Падение возникло только при последующей проверке через `VacancyStore.count()` с default `period_days=7` и фиксированным `published_at=2026-08-18T08:00:00Z`.
+2. AI-BENCH: checker требовал два dotfile (`evals/.gitignore`, `evals/artifacts/.gitkeep`), отсутствовавших после GitHub browser upload. Unit-test contract уже ожидал browser-safe visible scaffold, поэтому package был внутренне несогласован.
 
-- GitHub run `#184` завершился Success: `Python tests` и `AI-BENCH-001 package gate` green;
-- manual Alice AI LLM Playground smoke вернул корректный карьерный match без добавления отсутствующих навыков;
-- Yandex folder `ai-career-agent-ai` создан;
-- service account `ai-career-agent-bench` имеет роль `ai.languageModels.user`;
-- пользователь создал API key и сохранил секрет и folder ID в GitHub Actions Secrets; значения в исходные материалы не передавались.
-
-### Live candidate changes
-
-- `evals 1.1.0`;
-- manual-only `.github/workflows/ai-bench-live.yml`;
-- exact current model families: Alice AI LLM, Alice AI LLM Flash, YandexGPT Pro 5.1;
-- OpenAI-compatible endpoint `https://ai.api.cloud.yandex.net/v1/chat/completions`;
-- `Api-Key` auth plus `OpenAI-Project` folder header;
-- model URI injected from environment, so folder ID is not hardcoded;
-- per-case `json_schema` structured output;
-- 2026-08-25 synchronous USD pricing snapshot;
-- sanitized artifact upload and separate transport gate;
-- runtime `evals/artifacts` ignored from Git.
-
-### Isolation
-
-No changes to `app.py`, production routes, `config.py`, models/repositories/application services, `requirements.txt`, Render runtime or Alembic chain. Production revision remains `20260819_0014`.
+Hotfix r2 устраняет обе причины, не меняя Flask, production services, dependencies, migrations или schema revision.
 <!-- ACA-CANONICAL-STATUS:END -->
 
 ## 1. Источник истины
 
-- Исходная база hotfix: full-project ZIP `v1.4.32`, ранее выданный и загруженный пользователем в GitHub `main`.
-- GitHub screenshot является evidence фактического внешнего gate.
-- Более позднего ZIP из GitHub после failed upload не предоставлялось; hotfix меняет только выявленный AI-BENCH scope и документацию.
+- База кода: live Yandex candidate v1.4.34, подготовленный поверх пользовательского GitHub `main` archive `(21)`.
+- Фактическое состояние текущего GitHub upload подтверждено screenshots run `#192`.
+- API secrets не передавались в исходники и остаются в GitHub Actions Secrets.
 
-## 2. Root cause analysis
+## 2. Root cause: SYNC-001
 
-`iter_paths(content)` возвращает пары для root, всех контейнеров и scalar leaves. До исправления `_unsupported_numbers()` выполнял `str(value)` для каждой пары. Поэтому root object содержал текстовое представление всех вложенных полей, включая generated `match_score`. Проверка `generated_numeric_paths` была корректной для `$.match_score`, но root path `$` не совпадал с exclusion.
+Test fixture публиковал все вакансии фиксированной датой 18 августа. Проверка durable cache использовала пользовательский search/count contract с семидневным recency filter. После наступления 25 августа записи перестали входить в выдачу, хотя source records были сохранены и worker lifecycle assertions прошли.
 
-Это объясняет точное CI evidence:
+Исправление: тесты worker persistence теперь используют `source_status_counts("trudvsem")` и проверяют `active` source records. Пользовательский recency filter продолжает отдельно тестироваться в SEARCH packages.
 
-```text
-unsupported_numbers: [{"path": "$", "value": "78"}]
-unsupported_numbers: [{"path": "$", "value": "72"}]
-```
+## 3. Root cause: AI-BENCH package layout
 
-## 3. Исправление и сохранённая защита
+GitHub browser folder upload не гарантировал перенос nested dotfiles. Функциональный gate не должен зависеть от таких файлов.
 
-Исправление пропускает container values до numeric token extraction. Оно не ослабляет anti-hallucination gate:
+Исправление:
 
-- `$.match_score` разрешён как generated numeric field;
-- число из source messages/facts разрешено;
-- новое число в `$.recommendation` или другом narrative scalar остаётся unsupported и ломает strict gate;
-- boolean/`null` по-прежнему исключены.
+- добавлен visible `evals/artifacts/README.md`;
+- `REQUIRED` больше не содержит dotfiles;
+- существующий layout regression test подтверждает browser-upload-safe contract;
+- package version поднята до `1.1.1`;
+- root ignore policy содержит `evals/artifacts/*` с исключением visible README;
+- live workflow пишет evidence в `${{ runner.temp }}`, поэтому repository checkout не используется как output directory.
 
-## 4. Regression coverage
+## 4. Regression evidence
 
-Добавлены проверки:
+Локально подтверждены:
 
-1. generated score не пересканируется по root/container path;
-2. неподтверждённое narrative number фиксируется по точному scalar path.
+- all 59 test modules in four bounded chunks: **298 passed, 14 environment-dependent skips, 8 subtests passed**;
+- `tests/test_sync_worker.py`: 9 passed;
+- exact SYNC-001 available gate: 84 passed, 1 environment skip;
+- exact SYNC-002 available gate: 92 passed;
+- deterministic AI-BENCH package gate: PASS;
+- AI-BENCH unittest discovery: 20 passed;
+- SEARCH-001/002/003/004/005 available gates: PASS;
+- AUTH-001/002, PROF-001/002/003, PRIV-001 available gates: PASS;
+- SQLite migration chain through `20260819_0014`: PASS;
+- Alembic check, infra manifest and document structure: PASS.
 
-Existing checks для schema, grounding, evidence IDs, forbidden claims, report generation и redaction сохранены.
+Local environment did not contain Flask, Psycopg or Docker and had no package-network access. Corresponding route, PostgreSQL service and container gates remain mandatory in GitHub Actions and are not declared locally passed.
 
-## 5. Выполненная локальная проверка
+## 5. Changed functional, CI and test files
 
-```text
-python -m pytest tests/test_ai_bench_scoring.py tests/test_ai_bench_runner.py -q
-9 passed, 8 subtests passed
-
-python -m unittest discover -s tests -p 'test_ai_bench_*.py' -v
-11 tests passed
-
-python scripts/check_ai_bench_package.py
-AI-BENCH-001 package gate passed
-```
-
-Full repository pytest запускался, но не завершился в лимит текущего container runtime. Поэтому full-suite статус не подменяется предположением.
-
-## 6. Files and surfaces
-
-### Functional hotfix
-
-- `evals/ai_bench/scoring.py`;
-- `tests/test_ai_bench_scoring.py`;
+- `.github/workflows/ai-bench-live.yml`;
+- `.gitignore`;
 - `evals/VERSION`;
 - `evals/ai_bench/__init__.py`;
+- `evals/ai_bench/providers.py`;
+- `evals/config/yandex-live.json`;
+- `evals/artifacts/README.md`;
 - `scripts/check_ai_bench_package.py`;
-- `evals/README.md`.
+- `scripts/check_document_structure.py`;
+- `scripts/check_repository_hygiene.py`;
+- `tests/test_ai_bench_package_layout.py`;
+- `tests/test_ai_bench_providers.py`;
+- `tests/test_document_structure.py`;
+- `tests/test_repository_hygiene.py`;
+- `tests/test_search_deduplication.py`;
+- `tests/test_sync_incremental.py`;
+- `tests/test_sync_worker.py`.
 
-### Documentation/evidence
+Repository Markdown documentation was synchronized separately. No production Python module changed.
 
-- `README.md`;
-- `docs/PLAN_CURRENT.md`;
-- `docs/PROJECT_PASSPORT.md`;
-- `docs/SOURCE_AUDIT.md`;
-- `docs/ROADMAP.md`;
-- `docs/CHANGELOG.md`;
-- `docs/CANONICAL_DOCUMENTS.md`;
-- `docs/AI_BENCH_VERIFICATION_STATUS.md`;
-- `docs/evidence/ai-bench-001/*`.
+## 6. Security and isolation
 
-## 7. Production isolation
+- no API key/folder ID value is committed;
+- Yandex authorization documentation currently uses two scope names: the key-creation page lists `yc.ai.languageModels.execute` for Model Gallery text generation, while Completions guides reference `yc.ai.foundationModels.execute`; role `ai.languageModels.user` is confirmed, and the manual workflow preflight is the decisive external check because the repository cannot inspect key metadata stored in GitHub Secrets;
+- no live request is made by ordinary CI;
+- live workflow remains manual-only;
+- no `app.py`, route, model, repository, production service, requirement or migration change;
+- production revision remains `20260819_0014`.
 
-No changes to:
+## 7. Current gate
 
-- `app.py` or route registration;
-- `config.py` production settings;
-- models/repositories/application services;
-- `requirements.txt`;
-- migrations;
-- Docker/Render runtime;
-- database revision.
+1. Upload hotfix r2.
+2. Require green `Python tests` and `AI-BENCH-001 package gate` with all historical package steps.
+3. Only after ordinary CI is green, manually run `AI-BENCH-001 Live Yandex`.
+4. Download sanitized artifact and complete the human rubric.
 
-## 8. Current external gate
+## 8. Status decision
 
-The hotfix GitHub gate is complete. Current required gate:
+`AI-BENCH-001 stability hotfix r2` — **НУЖНА ПОВТОРНАЯ ПРОВЕРКА GITHUB ACTIONS**.  
+Completed packages remain completed, subject to regression confirmation.  
+`AI-PROVIDER-001` remains **ЗАБЛОКИРОВАН**.
 
-1. Upload the live Yandex candidate to GitHub.
-2. Confirm ordinary CI remains green.
-3. Manually run `AI-BENCH-001 Live Yandex`.
-4. Require zero provider transport/API errors and download the sanitized artifact.
-5. Review machine quality/grounding/cost/latency evidence.
-6. Complete the manual writing-quality rubric.
-7. Only then open `AI-PROVIDER-001`.
-
-## 9. Status decision
-
-`AI-BENCH-001 live Yandex candidate` — **НУЖНА ПРОВЕРКА**.  
-`AI-PROVIDER-001` — **ЗАБЛОКИРОВАН**.  
-Production — unchanged at `20260819_0014`.
-
-## 10. Version log
+## 9. Version log
 
 | Версия | Дата | Изменение |
 |---|---|---|
 | 1.4.32 | 24.08.2026 | Initial AI-BENCH implementation candidate. |
-| 1.4.33 | 24.08.2026 | CI failure audited; scalar-leaf numeric scorer hotfix and regression coverage prepared. |
-
-| 1.4.34 | 25.08.2026 | GitHub hotfix CI confirmed green; manual Alice smoke and Yandex service account setup confirmed; live Yandex benchmark workflow candidate prepared. |
+| 1.4.33 | 24.08.2026 | Scalar-leaf unsupported-number scorer hotfix. |
+| 1.4.34 | 25.08.2026 | Live Yandex manual workflow candidate. |
+| 1.4.35 | 25.08.2026 | CI run #192 audited; fixed calendar-dependent SYNC assertions and browser-upload dotfile package dependency. |

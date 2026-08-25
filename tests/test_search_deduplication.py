@@ -240,7 +240,7 @@ def test_store_persists_search002_dedup_metadata(tmp_path):
     assert canonical.dedup_key == source.dedup_key
     assert canonical.dedup_version == DEDUP_VERSION
 
-    items = store.search(keyword="", sources=["trudvsem"], period_days=30)
+    items = store.search(keyword="", sources=["trudvsem"], period_days=0)
     assert items[0]["dedup_key"] == source.dedup_key
     assert items[0]["dedup_version"] == DEDUP_VERSION
 

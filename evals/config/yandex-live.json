@@ -1,7 +1,7 @@
 {
   "benchmark_version": "1.0",
   "fixtures_manifest": "evals/fixtures/manifest.json",
-  "timeout_seconds": 120,
+  "timeout_seconds": 90,
   "pricing_snapshot": {
     "as_of": "2026-08-25",
     "currency": "USD",

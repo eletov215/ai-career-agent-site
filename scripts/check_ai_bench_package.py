@@ -10,14 +10,13 @@ import tempfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-REQUIRED = [
+REQUIRED_VISIBLE = [
     "evals/README.md",
     "evals/VERSION",
     "evals/config/ci.json",
     "evals/config/benchmark.example.json",
     "evals/config/yandex-live.json",
-    "evals/.gitignore",
-    "evals/artifacts/.gitkeep",
+    "evals/artifacts/README.md",
     "evals/fixtures/manifest.json",
     "evals/schemas/resume_analysis.schema.json",
     "evals/schemas/vacancy_match.schema.json",
@@ -27,6 +26,11 @@ REQUIRED = [
     "evals/ai_bench/runner.py",
     "evals/ai_bench/scoring.py",
 ]
+REQUIRED_REPOSITORY = [
+    ".github/workflows/ai-bench-live.yml",
+    "scripts/check_ai_bench_live_result.py",
+]
+REQUIRED = [*REQUIRED_VISIBLE, *REQUIRED_REPOSITORY]
 SECRET_PATTERNS = [
     re.compile(r"\bsk-[A-Za-z0-9_-]{12,}\b"),
     re.compile(r"(?i)authorization\s*[:=]\s*bearer\s+(?!\[REDACTED\])\S+"),
@@ -39,12 +43,22 @@ def fail(message: str) -> None:
 
 
 def main() -> int:
+    hidden_required = [
+        path
+        for path in REQUIRED_VISIBLE
+        if any(part.startswith(".") for part in Path(path).parts)
+    ]
+    if hidden_required:
+        fail(
+            "visible package files must be safe for browser uploads: "
+            f"{hidden_required}"
+        )
     missing = [path for path in REQUIRED if not (ROOT / path).is_file()]
     if missing:
         fail(f"missing required files: {missing}")
 
     version = (ROOT / "evals/VERSION").read_text(encoding="utf-8").strip()
-    if version != "1.1.0":
+    if version != "1.1.1":
         fail(f"unexpected evals version: {version}")
 
     manifest = json.loads((ROOT / "evals/fixtures/manifest.json").read_text(encoding="utf-8"))
