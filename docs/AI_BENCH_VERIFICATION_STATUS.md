@@ -3,77 +3,112 @@
 | Поле | Значение |
 |---|---|
 | Документ | AI_BENCH_VERIFICATION_STATUS |
-| Версия | 1.3 |
+| Версия | 1.4 |
 | Дата | 25 августа 2026 |
-| Пакет | AI-BENCH-001 stability hotfix r2 |
+| Пакет | AI-BENCH-001 stability hotfix r3 |
 | Статус | НУЖНА ПОВТОРНАЯ ПРОВЕРКА GITHUB ACTIONS |
 | Production revision | `20260819_0014` |
 
 ## 1. External failure evidence
 
-GitHub run `#192` stopped in two independent places:
-
-- `Verify SYNC-001 external worker controls`: two cache-count assertions returned zero even though the sync run itself reported `processed=3`, `saved=3`, `status=succeeded`;
-- `AI-BENCH-001 package gate`: required files `evals/.gitignore` and `evals/artifacts/.gitkeep` were absent after browser upload.
-
-## 2. SYNC test correction
-
-The assertions were testing sync persistence through a time-filtered vacancy search with a fixed publication timestamp. They now assert persisted active source-record counts directly:
+GitHub run `#196` failed in two jobs with the same missing path:
 
 ```text
-source_status_counts("trudvsem") == {"active": 3}
-source_status_counts("trudvsem") == {"active": 1}
+.github/workflows/ai-bench-live.yml
 ```
 
-This keeps SYNC worker tests independent from calendar date while preserving SEARCH recency-filter coverage in its own package. Related persistence-only assertions in `tests/test_sync_incremental.py` and `tests/test_search_deduplication.py` use `period_days=0`, so future calendar boundaries cannot invalidate unrelated durability/dedup checks.
+`Python tests` raised `FileNotFoundError` in `test_live_workflow_uses_node24_artifact_action`. The dedicated package gate reported the same path as a missing required file.
 
-## 3. Browser-upload-safe package contract
+The uploaded ZIP contains the complete YAML content under:
 
-`evals 1.1.1`:
+```text
+.github/workflows/ai-bench-live
+```
 
-- requires visible `evals/artifacts/README.md` instead of nested dotfiles;
-- keeps a regression test that rejects hidden required paths;
-- retains deterministic reference validation, schemas, redaction and anti-hallucination gates;
-- keeps live output outside the checkout in GitHub runner temporary storage.
+Therefore the failure is a filename/upload-layout defect. It does not show a failure in SYNC, SEARCH, AUTH, PROF, PRIV or production runtime.
 
-The optional nested dotfiles are removed from the canonical full package; their absence can no longer fail CI.
+## 2. Architectural correction
+
+The live job is moved into the already established `.github/workflows/ci.yml`:
+
+```text
+workflow_dispatch input: run_ai_bench_live (boolean, default false)
+job: ai-bench-yandex-live
+condition: manual dispatch + explicit true
+needs: tests, ai-bench-001
+concurrency: ai-bench-001-yandex-live
+```
+
+Consequences:
+
+- no extra workflow file must survive browser upload;
+- normal push/PR behavior remains unchanged;
+- the first Yandex API request cannot occur until all previous package gates pass;
+- users must explicitly opt into the billable live run;
+- concurrent billable runs are not started.
+
+## 3. Package contract
+
+`evals 1.1.2` requires `.github/workflows/ci.yml`, not a newly added workflow file. The gate verifies the manual input, job condition, dependencies, secret references, timeout, concurrency and `actions/upload-artifact@v7`.
+
+A legacy extensionless `.github/workflows/ai-bench-live` is ignored with a warning for patch compatibility. The clean full project removes it.
 
 ## 4. Local verification
 
 | Проверка | Результат |
 |---|---|
-| All 59 local test modules, four bounded chunks | 298 passed, 14 environment-dependent skips, 8 subtests passed |
-| `tests/test_sync_worker.py` | 9 passed |
-| SYNC-001 available focused gate | 84 passed, 1 environment skip |
-| SYNC-002 focused gate | 92 passed |
 | Deterministic AI-BENCH package gate | PASS |
 | AI-BENCH unittest discovery | 20 passed |
-| SEARCH-001..005 available regression gates | PASS |
-| AUTH-001/002 available regression gates | PASS |
-| PROF-001/002/003 and PRIV-001 available regression gates | PASS |
-| SQLite migration `0001 -> 0014` and Alembic check | PASS |
-| Repository hygiene after cleanup | PASS |
-| Infra manifest/document structure | PASS |
+| Package-layout regression | PASS |
+| Current CI YAML parse | PASS |
+| Available project test matrix | 298 passed, 14 environment-dependent skips |
+| Search pagination | 20 passed |
+| Source/sync/vacancy regression | 44 passed |
+| Core data/auth/profile/privacy regression | 140 passed, 2 skips |
+| Provider/repository/resume/search regression | 74 passed |
+| Repository hygiene | PASS |
+| Document structure | PASS |
 
-Flask/Psycopg/Docker-dependent checks could not execute in the local container because those packages/services were unavailable and network installation was blocked. GitHub Actions remains the authoritative external gate for those checks.
+Local environment lacks Flask, Psycopg/PostgreSQL and Docker. Those gates are not declared locally passed and remain mandatory in GitHub Actions.
 
-## 5. Live Yandex boundary
+## 5. Production boundary
 
-The manual workflow, candidate models and GitHub Secrets remain unchanged. No live API call should be launched until ordinary CI is green. Secret values are not stored in Git.
+No changes were made to:
 
-Current Yandex AI Studio documentation is inconsistent about the execution-scope name: the API-key creation page lists `yc.ai.languageModels.execute` for Model Gallery text generation, while the Completions and structured-output guides reference `yc.ai.foundationModels.execute`. The service-account role `ai.languageModels.user` is confirmed, and the existing key was created with `yc.ai.languageModels.execute`. GitHub Secrets expose neither the key value nor its metadata back to the repository, so the workflow preflight is the decisive external check. If Yandex returns a permission error, recreate the key through AI Studio's **Create API key** flow, which assigns the current required scopes.
+```text
+app.py
+config.py
+routes/
+models/
+repositories/
+production services
+requirements.txt
+migrations/
+Render configuration
+```
 
-## 6. Status decision
+Production schema remains `20260819_0014`. No production AI route exists.
 
-**AI-BENCH-001 remains open.** Hotfix r2 is locally verified but requires a clean GitHub Actions run. After that, run the live comparative workflow and complete the manual rubric.
+## 6. Next external gate
+
+1. Upload hotfix r3.
+2. Confirm the normal `CI` run is fully green.
+3. Open `Actions -> CI -> Run workflow`.
+4. Set `run_ai_bench_live=true`.
+5. Review the artifact and complete the human rubric.
+
+## 7. Status decision
+
+**AI-BENCH-001 remains open.** Hotfix r3 is locally verified but requires clean GitHub Actions evidence and then the live comparative run.
 
 `AI-PROVIDER-001` remains **ЗАБЛОКИРОВАН**.
 
-## 7. Version log
+## 8. Version log
 
 | Версия | Дата | Изменение |
 |---|---|---|
 | 1.0 | 24.08.2026 | Initial benchmark implementation candidate and external-run gate. |
 | 1.1 | 24.08.2026 | Scalar-leaf numeric scorer correction prepared. |
 | 1.2 | 25.08.2026 | Scorer hotfix CI green; Yandex live candidate prepared. |
-| 1.3 | 25.08.2026 | Run #192 audited; fixed SYNC calendar dependency and browser-upload dotfile gate dependency; rerun required. |
+| 1.3 | 25.08.2026 | Fixed SYNC calendar dependency and browser-upload dotfile dependency. |
+| 1.4 | 25.08.2026 | Run #196 audited; integrated live job into existing `ci.yml` to remove separate workflow filename dependency. |

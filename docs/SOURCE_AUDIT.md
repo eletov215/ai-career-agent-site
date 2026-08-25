@@ -1,116 +1,104 @@
-# AI Career Agent — аудит источников v1.4.35
+# AI Career Agent — аудит источников v1.4.36
 
 | Поле | Значение |
 |---|---|
 | Документ | SOURCE_AUDIT |
-| Версия | 1.4.35 |
+| Версия | 1.4.36 |
 | Дата | 25 августа 2026 |
-| Проверяемый пакет | AI-BENCH-001 stability hotfix r2 |
+| Проверяемый пакет | AI-BENCH-001 stability hotfix r3 |
 | Production revision | `20260819_0014` |
 | Статус | НУЖНА ПОВТОРНАЯ ПРОВЕРКА GITHUB ACTIONS |
 
 <!-- ACA-CANONICAL-STATUS:START -->
 ## Актуальный source audit
 
-GitHub run `#192` предоставил два точных failure trace. Оба локализованы в тестовом/package контуре и не подтверждают отказ production-функций.
+Источником кода является предоставленный пользователем ZIP `ai-career-agent-site-eletov215-patch-1.zip`, экспортированный из GitHub после run `#196`. В нём подтверждена точная причина обоих CI failures: файл с live workflow содержимым существовал как `.github/workflows/ai-bench-live` без расширения, тогда как tests/package gate требовали `.github/workflows/ai-bench-live.yml`.
 
-1. SYNC-001: `TrudvsemSyncService.run_once()` завершился `succeeded`, `processed=3`, `saved=3`. Падение возникло только при последующей проверке через `VacancyStore.count()` с default `period_days=7` и фиксированным `published_at=2026-08-18T08:00:00Z`.
-2. AI-BENCH: checker требовал два dotfile (`evals/.gitignore`, `evals/artifacts/.gitkeep`), отсутствовавших после GitHub browser upload. Unit-test contract уже ожидал browser-safe visible scaffold, поэтому package был внутренне несогласован.
-
-Hotfix r2 устраняет обе причины, не меняя Flask, production services, dependencies, migrations или schema revision.
+Сравнение с поставкой v1.4.35 показало: количество файлов одинаковое; единственная path-разница — потерянное расширение workflow; `.gitignore` не получил три строки artifact policy. Production Python, migrations, requirements и user routes совпадают.
 <!-- ACA-CANONICAL-STATUS:END -->
 
-## 1. Источник истины
+## 1. Root cause
 
-- База кода: live Yandex candidate v1.4.34, подготовленный поверх пользовательского GitHub `main` archive `(21)`.
-- Фактическое состояние текущего GitHub upload подтверждено screenshots run `#192`.
-- API secrets не передавались в исходники и остаются в GitHub Actions Secrets.
+GitHub Actions исполняет workflow только из YAML-файлов в `.github/workflows`. Extensionless file не являлся workflow. Одновременно:
 
-## 2. Root cause: SYNC-001
+- `tests/test_ai_bench_package_layout.py` пытался прочитать отсутствующий `.yml` и падал `FileNotFoundError`;
+- `scripts/check_ai_bench_package.py` считал тот же path обязательным и завершался до deterministic run.
 
-Test fixture публиковал все вакансии фиксированной датой 18 августа. Проверка durable cache использовала пользовательский search/count contract с семидневным recency filter. После наступления 25 августа записи перестали входить в выдачу, хотя source records были сохранены и worker lifecycle assertions прошли.
+Это один packaging/layout defect, а не два независимых functional regressions.
 
-Исправление: тесты worker persistence теперь используют `source_status_counts("trudvsem")` и проверяют `active` source records. Пользовательский recency filter продолжает отдельно тестироваться в SEARCH packages.
+## 2. Stability correction
 
-## 3. Root cause: AI-BENCH package layout
+`evals 1.1.2` больше не требует отдельного live workflow filename:
 
-GitHub browser folder upload не гарантировал перенос nested dotfiles. Функциональный gate не должен зависеть от таких файлов.
+- `workflow_dispatch` input `run_ai_bench_live` добавлен в существующий `.github/workflows/ci.yml`;
+- job `ai-bench-yandex-live` встроен в тот же workflow;
+- default input — `false`;
+- job condition разрешает запуск только при manual dispatch и explicit `true`;
+- `needs: tests, ai-bench-001` не позволяет обращаться к Yandex до успешного завершения всех исторических package gates;
+- concurrency group предотвращает параллельные billable runs;
+- secrets используются только через GitHub Actions Secrets;
+- artifact upload использует `actions/upload-artifact@v7`;
+- package gate и unit tests проверяют integrated contract.
 
-Исправление:
+Clean full archive удаляет extensionless stale file. Patch-only не зависит от его удаления: если он останется в GitHub, checker выдаст только warning, а executable job берётся из `ci.yml`.
 
-- добавлен visible `evals/artifacts/README.md`;
-- `REQUIRED` больше не содержит dotfiles;
-- существующий layout regression test подтверждает browser-upload-safe contract;
-- package version поднята до `1.1.1`;
-- root ignore policy содержит `evals/artifacts/*` с исключением visible README;
-- live workflow пишет evidence в `${{ runner.temp }}`, поэтому repository checkout не используется как output directory.
-
-## 4. Regression evidence
+## 3. Regression evidence
 
 Локально подтверждены:
 
-- all 59 test modules in four bounded chunks: **298 passed, 14 environment-dependent skips, 8 subtests passed**;
-- `tests/test_sync_worker.py`: 9 passed;
-- exact SYNC-001 available gate: 84 passed, 1 environment skip;
-- exact SYNC-002 available gate: 92 passed;
-- deterministic AI-BENCH package gate: PASS;
-- AI-BENCH unittest discovery: 20 passed;
-- SEARCH-001/002/003/004/005 available gates: PASS;
-- AUTH-001/002, PROF-001/002/003, PRIV-001 available gates: PASS;
-- SQLite migration chain through `20260819_0014`: PASS;
-- Alembic check, infra manifest and document structure: PASS.
+- AI-BENCH package gate: PASS;
+- AI-BENCH unit tests: 20 passed;
+- all available test modules in bounded groups: 298 passed;
+- environment-dependent skips: 14 (Flask/Psycopg/PostgreSQL/Docker unavailable locally);
+- search pagination: 20 passed;
+- remaining source/sync/vacancy regression: 44 passed;
+- core data/auth/profile/privacy/non-route regression: 140 passed, 2 skips;
+- provider/repository/resume/search regression: 74 passed;
+- repository hygiene: PASS after cleanup;
+- document structure and YAML parse: PASS.
 
-Local environment did not contain Flask, Psycopg or Docker and had no package-network access. Corresponding route, PostgreSQL service and container gates remain mandatory in GitHub Actions and are not declared locally passed.
+The external GitHub workflow remains authoritative for Flask route gates, PostgreSQL service integration, Docker build/smoke, encrypted PostgreSQL restore and the complete historical CI matrix.
 
-## 5. Changed functional, CI and test files
+## 4. Changed files
 
-- `.github/workflows/ai-bench-live.yml`;
+Functional/CI changes:
+
+- `.github/workflows/ci.yml`;
 - `.gitignore`;
 - `evals/VERSION`;
-- `evals/ai_bench/__init__.py`;
-- `evals/ai_bench/providers.py`;
-- `evals/config/yandex-live.json`;
-- `evals/artifacts/README.md`;
 - `scripts/check_ai_bench_package.py`;
-- `scripts/check_document_structure.py`;
-- `scripts/check_repository_hygiene.py`;
-- `tests/test_ai_bench_package_layout.py`;
-- `tests/test_ai_bench_providers.py`;
-- `tests/test_document_structure.py`;
-- `tests/test_repository_hygiene.py`;
-- `tests/test_search_deduplication.py`;
-- `tests/test_sync_incremental.py`;
-- `tests/test_sync_worker.py`.
+- `tests/test_ai_bench_package_layout.py`.
 
-Repository Markdown documentation was synchronized separately. No production Python module changed.
+Repository Markdown canonical documents were synchronized. Clean full package removes `.github/workflows/ai-bench-live`. No production module changed.
 
-## 6. Security and isolation
+## 5. Security and isolation
 
-- no API key/folder ID value is committed;
-- Yandex authorization documentation currently uses two scope names: the key-creation page lists `yc.ai.languageModels.execute` for Model Gallery text generation, while Completions guides reference `yc.ai.foundationModels.execute`; role `ai.languageModels.user` is confirmed, and the manual workflow preflight is the decisive external check because the repository cannot inspect key metadata stored in GitHub Secrets;
-- no live request is made by ordinary CI;
-- live workflow remains manual-only;
-- no `app.py`, route, model, repository, production service, requirement or migration change;
+- no API key or Folder ID value is committed;
+- no live request occurs on push or pull request;
+- manual live request is default-off and gated by all ordinary jobs;
+- output remains in `${{ runner.temp }}` and only sanitized evidence is uploaded;
+- no `app.py`, production route, model, repository, service, dependency or migration change;
 - production revision remains `20260819_0014`.
 
-## 7. Current gate
+## 6. Current gate
 
-1. Upload hotfix r2.
-2. Require green `Python tests` and `AI-BENCH-001 package gate` with all historical package steps.
-3. Only after ordinary CI is green, manually run `AI-BENCH-001 Live Yandex`.
-4. Download sanitized artifact and complete the human rubric.
+1. Upload hotfix r3.
+2. Require green `Python tests` and `AI-BENCH-001 package gate`, including all historical steps.
+3. Open `Actions -> CI -> Run workflow` and set `run_ai_bench_live=true`.
+4. Download the sanitized artifact and complete the human rubric.
 
-## 8. Status decision
+## 7. Status decision
 
-`AI-BENCH-001 stability hotfix r2` — **НУЖНА ПОВТОРНАЯ ПРОВЕРКА GITHUB ACTIONS**.  
+`AI-BENCH-001 stability hotfix r3` — **НУЖНА ПОВТОРНАЯ ПРОВЕРКА GITHUB ACTIONS**.  
 Completed packages remain completed, subject to regression confirmation.  
 `AI-PROVIDER-001` remains **ЗАБЛОКИРОВАН**.
 
-## 9. Version log
+## 8. Version log
 
 | Версия | Дата | Изменение |
 |---|---|---|
 | 1.4.32 | 24.08.2026 | Initial AI-BENCH implementation candidate. |
 | 1.4.33 | 24.08.2026 | Scalar-leaf unsupported-number scorer hotfix. |
 | 1.4.34 | 25.08.2026 | Live Yandex manual workflow candidate. |
-| 1.4.35 | 25.08.2026 | CI run #192 audited; fixed calendar-dependent SYNC assertions and browser-upload dotfile package dependency. |
+| 1.4.35 | 25.08.2026 | Fixed calendar-dependent SYNC assertions and browser-upload dotfile dependency. |
+| 1.4.36 | 25.08.2026 | Run #196 audited; eliminated separate workflow filename dependency by integrating manual live job into existing `ci.yml`. |

@@ -32,7 +32,7 @@ The `reference` provider reads versioned expected outputs. It validates the runn
 
 ## Live candidates
 
-The repository includes `evals/config/yandex-live.json` for the approved AI-BENCH-001 Yandex comparison. It is executed only by the manual `AI-BENCH-001 Live Yandex` GitHub Actions workflow and reads credentials from `AI_BENCH_YANDEX_API_KEY` / `AI_BENCH_YANDEX_FOLDER_ID`. Runtime artifacts stay outside Git. The visible `evals/artifacts/README.md` scaffold is intentionally used instead of required dotfiles so GitHub browser uploads cannot break the package gate.
+The repository includes `evals/config/yandex-live.json` for the approved AI-BENCH-001 Yandex comparison. The billable job is integrated into the existing `CI` workflow and executes only on `workflow_dispatch` when `run_ai_bench_live=true`; it depends on successful ordinary tests and package gates. Credentials are read only from `AI_BENCH_YANDEX_API_KEY` / `AI_BENCH_YANDEX_FOLDER_ID`. Runtime artifacts stay outside Git. The visible `evals/artifacts/README.md` scaffold is intentionally used instead of required dotfiles, and no separate workflow filename is required.
 
 Yandex authorization preflight: the service account needs the `ai.languageModels.user` role. The AI Studio key-creation page lists `yc.ai.languageModels.execute` for Model Gallery text generation, while current Completions guides also reference `yc.ai.foundationModels.execute`. The existing key uses `yc.ai.languageModels.execute`; because secret values and key metadata are not readable from the repository, the manual workflow preflight is the decisive check. If it returns a permission error, recreate the key through AI Studio's built-in **Create API key** flow.
 

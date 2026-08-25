@@ -27,7 +27,7 @@ REQUIRED_VISIBLE = [
     "evals/ai_bench/scoring.py",
 ]
 REQUIRED_REPOSITORY = [
-    ".github/workflows/ai-bench-live.yml",
+    ".github/workflows/ci.yml",
     "scripts/check_ai_bench_live_result.py",
 ]
 REQUIRED = [*REQUIRED_VISIBLE, *REQUIRED_REPOSITORY]
@@ -58,8 +58,42 @@ def main() -> int:
         fail(f"missing required files: {missing}")
 
     version = (ROOT / "evals/VERSION").read_text(encoding="utf-8").strip()
-    if version != "1.1.1":
+    if version != "1.1.2":
         fail(f"unexpected evals version: {version}")
+
+    workflow = (ROOT / ".github/workflows/ci.yml").read_text(encoding="utf-8")
+    required_workflow_fragments = [
+        "workflow_dispatch:",
+        "run_ai_bench_live:",
+        "type: boolean",
+        "default: false",
+        "ai-bench-yandex-live:",
+        "name: AI-BENCH-001 Live Yandex",
+        "github.event_name == 'workflow_dispatch'",
+        "inputs.run_ai_bench_live == true",
+        "      - tests\n      - ai-bench-001",
+        "AI_BENCH_YANDEX_API_KEY: ${{ secrets.AI_BENCH_YANDEX_API_KEY }}",
+        "AI_BENCH_YANDEX_FOLDER_ID: ${{ secrets.AI_BENCH_YANDEX_FOLDER_ID }}",
+        "uses: actions/upload-artifact@v7",
+        "timeout-minutes: 45",
+        "group: ai-bench-001-yandex-live",
+    ]
+    missing_workflow_fragments = [
+        fragment for fragment in required_workflow_fragments if fragment not in workflow
+    ]
+    if missing_workflow_fragments:
+        fail(
+            "integrated live workflow controls are incomplete: "
+            f"{missing_workflow_fragments}"
+        )
+
+    legacy_workflow = ROOT / ".github/workflows/ai-bench-live"
+    if legacy_workflow.is_file():
+        print(
+            "AI-BENCH-001 gate warning: ignoring legacy extensionless workflow file; "
+            "the executable manual job is integrated into .github/workflows/ci.yml",
+            file=sys.stderr,
+        )
 
     manifest = json.loads((ROOT / "evals/fixtures/manifest.json").read_text(encoding="utf-8"))
     if manifest.get("synthetic") is not True:

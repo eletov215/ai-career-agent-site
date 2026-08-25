@@ -6,34 +6,34 @@
 <!-- ACA-CANONICAL-STATUS:START -->
 ## Канонический срез проекта
 
-**Документ:** AI Career Agent PROJECT_PASSPORT `v2.49`  
+**Документ:** AI Career Agent PROJECT_PASSPORT `v2.50`  
 **Дата:** 2026-08-25  
 **Production revision:** `20260819_0014`
 
 | Контур | Состояние |
 |---|---|
-| Web | Flask + Gunicorn, WSGI `app:app`; production code не менялся в hotfix r2 |
+| Web | Flask + Gunicorn, WSGI `app:app`; production code в hotfix r3 не менялся |
 | Data | PostgreSQL production, SQLite local/test fallback, Alembic `20260819_0014` |
-| Identity/career/search/privacy | ранее завершённые пакеты сохраняют статус ВЫПОЛНЕНО; требуется regression confirmation в повторном GitHub CI |
-| AI benchmark | `evals 1.1.1`; live Yandex workflow остаётся manual-only и изолированным от production |
-| Yandex access preflight | Playground PASS; `ai.languageModels.user` confirmed; existing key uses `yc.ai.languageModels.execute`; because Completions docs also mention `yc.ai.foundationModels.execute`, manual workflow preflight is decisive |
-| CI incident | v1.4.34 выявил time-dependent SYNC test assertion и browser-upload-unsafe dotfile requirements |
-| Fix | persisted source-status assertions + visible artifact scaffold; no route/schema/runtime change |
+| Identity/career/search/privacy | завершённые пакеты сохраняют статус ВЫПОЛНЕНО; их CI gates остаются в job `tests` |
+| AI benchmark | `evals 1.1.2`; live Yandex job встроен в существующий `CI` workflow |
+| Manual safety | `run_ai_bench_live=false` по умолчанию; API run возможен только через workflow_dispatch и после green `tests` + `ai-bench-001` |
+| CI incident | GitHub run #196: executable `.yml` отсутствовал, а YAML был сохранён extensionless file |
+| Fix | eliminated separate workflow filename dependency; no route/schema/runtime change |
 | Production AI | отсутствует; provider decision не принят |
 
 ### Decision boundary
 
-CI stability hotfix does not reopen completed product packages and does not connect Alice AI to the site. `AI-PROVIDER-001` remains blocked until ordinary CI is green, the live comparative artifact exists, and the human rubric is completed.
+Hotfix r3 меняет только CI/eval packaging. Он не подключает Alice AI к сайту и не открывает завершённые production packages. `AI-PROVIDER-001` остаётся заблокирован до green CI, live comparative artifact и human rubric.
 <!-- ACA-CANONICAL-STATUS:END -->
 
 | Поле | Значение |
 |---|---|
 | Документ        | PROJECT_PASSPORT                                                                              |
-| Версия паспорта | 2.49 |
+| Версия паспорта | 2.50 |
 | Дата            | 25 августа 2026                                                                               |
 | Статус          | ДЕЙСТВУЮЩИЙ                                                                                   |
-| Связанный план | `AI_Career_Agent_PLAN_CURRENT v1.4.35` |
-| Основа кода | GitHub `main` after live Yandex candidate v1.4.34; CI run #192 failure traces; stability hotfix r2 prepared |
+| Связанный план | `AI_Career_Agent_PLAN_CURRENT v1.4.36` |
+| Основа кода | GitHub archive `ai-career-agent-site-eletov215-patch-1.zip` after run #196; workflow-layout hotfix r3 prepared |
 
 > Контрольные статусы: FND/DATA/SEC/OPS/INFRA-PREP/SYNC/SEARCH-001..005/AUTH/PROF/PRIV - ВЫПОЛНЕНО; AI-BENCH-001 - НУЖНА ПРОВЕРКА; AI-PROVIDER-001 - ЗАБЛОКИРОВАНО; DOC-001 - В РАБОТЕ; INFRA-001 - ОТЛОЖЕНО.
 
@@ -488,7 +488,7 @@ Render не считается гарантированным production для 
 
 ## 23. Текущий gate
 
-SEARCH-005 — ВЫПОЛНЕНО. AI-BENCH-001 hotfix r1 GitHub Actions подтверждён GREEN; live Yandex candidate — НУЖНА ПРОВЕРКА manual workflow/artifact/manual rubric. Production PostgreSQL остаётся на `20260819_0014`; provider decision ещё не выполнен.
+SEARCH-005 — ВЫПОЛНЕНО. AI-BENCH-001 stability hotfix r3 требует green ordinary CI; затем integrated `CI` manual job с `run_ai_bench_live=true`, artifact review и manual rubric. Production PostgreSQL остаётся на `20260819_0014`; provider decision ещё не выполнен.
 
 ## 24. Правила рабочего чата
 
@@ -557,3 +557,9 @@ SEARCH-005 — ВЫПОЛНЕНО. AI-BENCH-001 hotfix r1 GitHub Actions под�
 | Версия | Дата | Изменение |
 |---|---|---|
 | 2.49 | 25.08.2026 | Audited GitHub run #192. The SYNC failure was a calendar-sensitive test assertion after a successful worker run; the AI-BENCH failure was a browser-upload dotfile packaging dependency. Added stable persisted-cache assertions and visible eval artifact scaffold. Production revision/routes remain unchanged; repeat CI is required. |
+
+### PROJECT_PASSPORT v2.50 update
+
+| Версия | Дата | Изменение |
+|---|---|---|
+| 2.50 | 25.08.2026 | Audited GitHub run #196 and the exact uploaded ZIP. The separate live workflow lost its `.yml` suffix while all production files remained unchanged. The billable Yandex job is now integrated into `ci.yml`, manual-only, default-off, concurrent-run protected, and dependent on all ordinary CI gates. |

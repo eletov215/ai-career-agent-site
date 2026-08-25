@@ -1,3 +1,15 @@
+## 2026-08-25 — AI-BENCH-001 stability hotfix r3 / evals 1.1.2
+
+- Audited the exact GitHub ZIP after run `#196`.
+- Confirmed `.github/workflows/ai-bench-live.yml` had been uploaded as extensionless `.github/workflows/ai-bench-live`; production files otherwise matched the v1.4.35 delivery.
+- Moved the manual billable Yandex job into the existing `.github/workflows/ci.yml`.
+- Added boolean `run_ai_bench_live` input with default `false`.
+- Added `needs: tests, ai-bench-001`, preventing API calls until every historical CI gate passes.
+- Added concurrency protection and retained `actions/upload-artifact@v7`.
+- Updated package checker/tests to validate the integrated contract and tolerate a stale extensionless file for patch compatibility.
+- Restored local artifact ignore rules without making them a package-gate dependency.
+- No production code, dependency, migration or Render change; revision remains `20260819_0014`.
+
 # Changelog
 
 ## 2026-08-25 — AI-BENCH-001 stability hotfix r2 / evals 1.1.1

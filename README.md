@@ -7,14 +7,15 @@
 |---|---|
 | Production schema | `20260819_0014` |
 | Последний завершённый пакет | `SEARCH-005` |
-| Текущий пакет | `AI-BENCH-001` — stability hotfix r2; НУЖНА ПОВТОРНАЯ ПРОВЕРКА GITHUB ACTIONS |
-| Исправлено | time-dependent SYNC-001 cache assertions; AI-BENCH gate no longer depends on dotfiles omitted by browser upload |
-| Локально подтверждено | 298 passed, 14 environment-dependent skips, 8 subtests; deterministic AI-BENCH, SQLite migrations/Alembic, document and infra gates PASS |
-| Следующий gate | green ordinary GitHub CI, then manual `AI-BENCH-001 Live Yandex` workflow and artifact/manual-rubric review |
+| Текущий пакет | `AI-BENCH-001` — stability hotfix r3; НУЖНА ПОВТОРНАЯ ПРОВЕРКА GITHUB ACTIONS |
+| Причина run #196 | GitHub upload сохранил live workflow как extensionless `.github/workflows/ai-bench-live`, поэтому executable `.yml` отсутствовал |
+| Исправлено | billable live job перенесён в существующий `.github/workflows/ci.yml`; отдельный workflow-файл больше не является зависимостью |
+| Локально подтверждено | 298 passed, 14 environment-dependent skips; deterministic AI-BENCH, YAML structure, repository/document/infra gates PASS |
+| Следующий gate | green ordinary CI; затем manual `CI` workflow с `run_ai_bench_live=true` и review artifact/manual rubric |
 | Следующий пакет | `AI-PROVIDER-001`, заблокирован до завершения AI-BENCH-001 |
-| Канонические документы | PLAN `v1.4.35`, PROJECT PASSPORT `v2.49`, SOURCE AUDIT `v1.4.35`, AI-BENCH verification `v1.3` |
+| Канонические документы | PLAN `v1.4.36`, PROJECT PASSPORT `v2.50`, SOURCE AUDIT `v1.4.36`, AI-BENCH verification `v1.4` |
 
-`evals 1.1.1` preserves the isolated Yandex live-evaluation workflow and hardens its repository contract for GitHub browser uploads. Credentials remain only in GitHub Actions Secrets; Flask routes, production dependencies, database schema and Render runtime are unchanged.
+`evals 1.1.2` устраняет зависимость от нового workflow filename. Обычные push/PR запускают прежние package gates; live Yandex job доступен только через `workflow_dispatch`, имеет boolean-confirmation и зависит от успешных `Python tests` и `AI-BENCH-001 package gate`. Credentials остаются только в GitHub Actions Secrets; Flask routes, production dependencies, database schema и Render runtime не изменялись.
 <!-- ACA-CANONICAL-STATUS:END -->
 
 ## 1. Назначение
@@ -39,31 +40,33 @@ AI Career Agent — Flask/Gunicorn web-service карьерного сопров
 
 ## 3. AI-BENCH-001 live Yandex candidate
 
-The earlier scorer hotfix remains confirmed. `evals 1.1.1` keeps the isolated live comparison stage and adds CI-stability fixes:
+`evals 1.1.2` сохраняет изолированный comparative benchmark и делает запуск устойчивым к browser upload:
 
-- manual-only `AI-BENCH-001 Live Yandex` workflow;
-- Alice AI LLM, Alice AI LLM Flash and YandexGPT Pro 5.1;
-- Yandex OpenAI-compatible endpoint with `Api-Key` + `OpenAI-Project`;
-- model URI values constructed from GitHub-secret environment data, never committed;
-- per-case JSON Schema structured output;
-- latency/token/cost collection using a dated pricing snapshot;
-- sanitized artifact upload and a separate transport-error gate;
-- a visible `evals/artifacts/README.md` scaffold that survives browser upload; runtime outputs are generated outside the checkout and remain uncommitted;
+- Alice AI LLM, Alice AI LLM Flash и YandexGPT Pro 5.1;
+- Yandex OpenAI-compatible endpoint с `Api-Key` + `OpenAI-Project`;
+- model URI строятся из GitHub-secret environment data и не коммитятся;
+- per-case JSON Schema output, grounding/hallucination checks, latency/token/cost evidence;
+- live job встроен в существующий `.github/workflows/ci.yml`, поэтому не требует добавления отдельного workflow-файла;
+- на push/pull request live job всегда пропускается;
+- на ручном запуске он выполняется только при `run_ai_bench_live=true` и только после успешных jobs `tests` и `ai-bench-001`;
+- sanitized artifact загружается через `actions/upload-artifact@v7`;
+- runtime output создаётся в `${{ runner.temp }}`, а не в repository checkout.
 
-Before upload:
+Перед загрузкой:
 
 ```bash
 python scripts/check_ai_bench_package.py
 python -m unittest discover -s tests -p 'test_ai_bench_*.py' -v
 ```
 
-After upload, confirm ordinary CI and manually run:
+После green ordinary CI запустите:
 
 ```text
-GitHub Actions -> AI-BENCH-001 Live Yandex -> Run workflow
+GitHub Actions -> CI -> Run workflow
+run_ai_bench_live = true
 ```
 
-First obtain a green ordinary CI for this hotfix. Before the manual run, verify that the Yandex service account has `ai.languageModels.user`. Current Yandex documentation exposes two scope names: the AI Studio key-creation page lists `yc.ai.languageModels.execute` for Model Gallery text generation, while the Completions guides reference `yc.ai.foundationModels.execute`. Use the existing key for the first workflow preflight; if Yandex returns a permission error, recreate the key through AI Studio's **Create API key** flow, which assigns the current required scopes. GitHub Secrets do not expose key metadata. A successful live workflow is still not a provider decision: download the artifact and complete the human rubric first.
+Успешный transport run ещё не является provider decision: artifact нужно скачать и заполнить human writing-quality rubric.
 
 ## 4. Документация
 

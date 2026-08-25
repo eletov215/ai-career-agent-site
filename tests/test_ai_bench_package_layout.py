@@ -21,17 +21,31 @@ class PackageLayoutTests(unittest.TestCase):
         self.assertNotIn("evals/.gitignore", required_visible)
         self.assertNotIn("evals/artifacts/.gitkeep", required_visible)
 
-    def test_live_repository_controls_remain_required(self) -> None:
+    def test_live_controls_are_integrated_into_existing_ci_workflow(self) -> None:
         namespace = runpy.run_path(str(ROOT / "scripts/check_ai_bench_package.py"))
         required_repository = tuple(namespace["REQUIRED_REPOSITORY"])
-        self.assertIn(".github/workflows/ai-bench-live.yml", required_repository)
+        self.assertIn(".github/workflows/ci.yml", required_repository)
         self.assertIn("scripts/check_ai_bench_live_result.py", required_repository)
+        self.assertNotIn(".github/workflows/ai-bench-live.yml", required_repository)
 
-    def test_live_workflow_uses_node24_artifact_action(self) -> None:
-        workflow = (ROOT / ".github/workflows/ai-bench-live.yml").read_text(encoding="utf-8")
+    def test_manual_live_job_runs_only_after_all_ordinary_ci_gates(self) -> None:
+        workflow = (ROOT / ".github/workflows/ci.yml").read_text(encoding="utf-8")
+        self.assertIn("run_ai_bench_live:", workflow)
+        self.assertIn("type: boolean", workflow)
+        self.assertIn("default: false", workflow)
+        self.assertIn("ai-bench-yandex-live:", workflow)
+        self.assertIn("name: AI-BENCH-001 Live Yandex", workflow)
+        self.assertIn(
+            "if: ${{ github.event_name == 'workflow_dispatch' && inputs.run_ai_bench_live == true }}",
+            workflow,
+        )
+        self.assertIn("      - tests\n      - ai-bench-001", workflow)
+        self.assertIn("AI_BENCH_YANDEX_API_KEY: ${{ secrets.AI_BENCH_YANDEX_API_KEY }}", workflow)
+        self.assertIn("AI_BENCH_YANDEX_FOLDER_ID: ${{ secrets.AI_BENCH_YANDEX_FOLDER_ID }}", workflow)
         self.assertIn("uses: actions/upload-artifact@v7", workflow)
         self.assertNotIn("uses: actions/upload-artifact@v4", workflow)
         self.assertIn("timeout-minutes: 45", workflow)
+        self.assertIn("group: ai-bench-001-yandex-live", workflow)
 
     def test_visible_artifact_scaffold_exists(self) -> None:
         readme = ROOT / "evals/artifacts/README.md"
