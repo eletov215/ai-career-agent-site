@@ -1,0 +1,42 @@
+{
+  "source_run_id": "32958938365",
+  "source_date": "2026-08-26",
+  "synthetic_only": true,
+  "purpose": "Regression patterns distilled from the first live Yandex AI-BENCH artifact. No credentials or production user data are included.",
+  "patterns": {
+    "user_facing_technical_metadata": [
+      {
+        "case_id": "cover-letter-ru-01",
+        "text": "В течение последних двух лет я работал в технической поддержке (evidence_ids: [c1])."
+      },
+      {
+        "case_id": "cover-letter-en-01",
+        "text": "Evidence IDs: [c1], [c2], [v2]."
+      },
+      {
+        "case_id": "resume-analysis-ru-01",
+        "text": "Опыт backend-разработки на Python [r1]."
+      }
+    ],
+    "unsupported_impact": "Документирование типовых решений позволило сократить время на обработку повторяющихся запросов.",
+    "invalid_evidence_ids": [
+      "Alternatively",
+      "[c1]",
+      ","
+    ],
+    "wrong_match_classification": {
+      "case_id": "vacancy-match-en-01",
+      "requirement_id": "v4",
+      "observed_status": "gap",
+      "expected_status": "matched"
+    },
+    "duplicate_match_requirement": {
+      "case_id": "vacancy-match-en-01",
+      "requirement_id": "v1"
+    },
+    "allowed_hypothetical_numbers": [
+      "15%",
+      "90 days"
+    ]
+  }
+}

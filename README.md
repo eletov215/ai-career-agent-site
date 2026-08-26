@@ -1,21 +1,22 @@
 # AI Career Agent
 
 <!-- ACA-CANONICAL-STATUS:START -->
-## Каноническое состояние — 2026-08-26
+## Каноническое состояние - 2026-08-26
 
 | Поле | Значение |
 |---|---|
 | Production schema | `20260819_0014` |
-| Последний завершённый пакет | `SEARCH-005` |
-| Текущий пакет | `AI-BENCH-001` — stability hotfix r4; НУЖНА ПОВТОРНАЯ ПРОВЕРКА GITHUB ACTIONS |
-| Причина run #201 | GitHub отклонил `ci.yml` до запуска jobs: `${{ runner.temp }}` использовался в `jobs.ai-bench-yandex-live.env`, где контекст `runner` недоступен |
-| Исправлено | `AI_BENCH_OUTPUT_DIR=/tmp/ai-bench-yandex-live`; package gate теперь локально парсит workflow и отклоняет недопустимые context roots в job-level `env` |
-| Локально подтверждено | 301 passed, 14 environment-dependent skips, 8 subtests; deterministic AI-BENCH, workflow semantic guard, repository/document gates PASS |
-| Следующий gate | green ordinary CI; затем manual `CI` workflow с `run_ai_bench_live=true` и review artifact/manual rubric |
-| Следующий пакет | `AI-PROVIDER-001`, заблокирован до завершения AI-BENCH-001 |
-| Канонические документы | PLAN `v1.4.37`, PROJECT PASSPORT `v2.51`, SOURCE AUDIT `v1.4.37`, AI-BENCH verification `v1.5` |
+| Последний завершённый production-пакет | `SEARCH-005` |
+| Текущий пакет | `AI-BENCH-001` - grounded-v2 hardening candidate; НУЖНА ПРОВЕРКА GITHUB ACTIONS + LIVE RUN #2 |
+| Ordinary CI | после stability r4 подтверждён green на `main`: `Python tests` и `AI-BENCH-001 package gate` успешны |
+| Live run #1 | GitHub Actions run artifact `32958938365`: 24/24 provider requests completed, 0 API errors; machine quality status `failed`, что является benchmark evidence, а не transport failure |
+| Live run #1 leader | Alice AI LLM: 4/8 strict passes, quality `0.952178`, grounding `0.957259`; provider decision НЕ принят |
+| Hardening | `evals 1.2.0`, grounded-v2 schemas/prompts/scoring, structured verification/caveats, exact evidence IDs, user-facing metadata ban, deterministic vacancy match score, scenario-number policy, live-run regressions |
+| Следующий gate | green ordinary CI -> manual `run_ai_bench_live=true` -> live run #2 artifact -> human rubric -> provider decision |
+| Следующий пакет | `AI-PROVIDER-001`, заблокирован до закрытия AI-BENCH-001 |
+| Канонические документы | PLAN `v1.4.38`, PROJECT PASSPORT `v2.52`, SOURCE AUDIT `v1.4.38`, AI-BENCH verification `v1.6` |
 
-`evals 1.1.3` сохраняет integrated manual Yandex job и устраняет GitHub workflow-parse blocker до runner allocation. Credentials остаются только в GitHub Actions Secrets; Flask routes, production dependencies, database schema и Render runtime не изменялись.
+Production Flask routes, dependencies, models, migrations, Render runtime and database schema are unchanged. The benchmark continues to use synthetic fixtures only and GitHub-secret-only credentials.
 <!-- ACA-CANONICAL-STATUS:END -->
 
 ## 1. Назначение
@@ -38,14 +39,17 @@ AI Career Agent — Flask/Gunicorn web-service карьерного сопров
 - web, Trudvsem sync worker и privacy cleanup worker разделены на процессы;
 - Render остаётся staging/резервным контуром до предрелизной VPS-миграции.
 
-## 3. AI-BENCH-001 live Yandex candidate
+## 3. AI-BENCH-001 grounded-v2 benchmark
 
-`evals 1.1.3` сохраняет изолированный comparative benchmark и делает запуск устойчивым к browser upload:
+`evals 1.2.0` усиливает изолированный comparative benchmark после анализа первого live run:
 
 - Alice AI LLM, Alice AI LLM Flash и YandexGPT Pro 5.1;
 - Yandex OpenAI-compatible endpoint с `Api-Key` + `OpenAI-Project`;
 - model URI строятся из GitHub-secret environment data и не коммитятся;
-- per-case JSON Schema output, grounding/hallucination checks, latency/token/cost evidence;
+- grounded-v2 JSON Schema output: raw evidence IDs only, structured `facts_not_verified`/`caveats`, claim-level evidence and stricter hallucination controls;
+- vacancy match is classified by requirement; numeric score is derived deterministically by benchmark logic rather than authored by the model;
+- user-facing text cannot contain internal evidence labels/IDs; unsupported impact claims are hard failures;
+- interview numbers are allowed only when supplied as source/scenario facts;
 - live job встроен в существующий `.github/workflows/ci.yml`, поэтому не требует добавления отдельного workflow-файла;
 - на push/pull request live job всегда пропускается;
 - на ручном запуске он выполняется только при `run_ai_bench_live=true` и только после успешных jobs `tests` и `ai-bench-001`;

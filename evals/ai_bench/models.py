@@ -9,6 +9,7 @@ from typing import Any
 class SourceFact:
     fact_id: str
     text: str
+    kind: str
 
 
 @dataclass(frozen=True)
@@ -21,6 +22,15 @@ class GroundingRequirement:
 class ForbiddenClaim:
     claim_id: str
     terms: tuple[str, ...]
+
+
+@dataclass(frozen=True)
+class MatchRequirement:
+    requirement_id: str
+    importance: str
+    weight: int
+    expected_status: str
+    candidate_evidence_ids: tuple[str, ...]
 
 
 @dataclass(frozen=True)
@@ -37,6 +47,9 @@ class BenchmarkCase:
     grounding_requirements: tuple[GroundingRequirement, ...]
     forbidden_claims: tuple[ForbiddenClaim, ...]
     generated_numeric_paths: tuple[str, ...]
+    required_unverified_evidence_ids: tuple[str, ...]
+    required_caveat_evidence_ids: tuple[str, ...]
+    match_requirements: tuple[MatchRequirement, ...]
     manual_rubric: tuple[str, ...]
     tags: tuple[str, ...]
     source_path: Path

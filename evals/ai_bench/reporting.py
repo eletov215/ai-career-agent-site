@@ -24,26 +24,36 @@ def render_markdown_report(run: dict[str, Any]) -> str:
         f"- Finished: `{safe['finished_at']}`",
         f"- Dataset: `{safe['dataset']['id']}` v{safe['dataset']['version']}",
         f"- Dataset fingerprint: `{safe['dataset']['fingerprint']}`",
+        f"- Benchmark contract: `{safe.get('benchmark_version')}`",
         f"- Execution mode: `{safe['execution_mode']}`",
         f"- Quality gate: **{safe['status'].upper()}**",
         "",
         "## Provider summary",
         "",
-        "| Provider | Adapter | Cases | Passed | Error rate | Quality | Schema | Grounding | p50 latency, ms | p95 latency, ms | Estimated cost, USD |",
-        "|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|",
+        "| Provider | Cases | Passed | Errors | Quality | Grounding | Clean text | Match consistency | Safety violations | p50 ms | p95 ms | Est. cost USD |",
+        "|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|",
     ]
     for provider in safe["providers"]:
         summary = provider["summary"]
+        safety_violations = (
+            int(summary.get("forbidden_claim_count") or 0)
+            + int(summary.get("unsupported_number_count") or 0)
+            + int(summary.get("user_facing_technical_token_count") or 0)
+            + int(summary.get("claim_evidence_violation_count") or 0)
+            + int(summary.get("unsupported_impact_claim_count") or 0)
+            + int(summary.get("match_consistency_violation_count") or 0)
+        )
         lines.append(
-            "| {id} | {adapter} | {cases} | {passed} | {error_rate} | {quality} | {schema} | {grounding} | {p50} | {p95} | {cost} |".format(
+            "| {id} | {cases} | {passed} | {errors} | {quality} | {grounding} | {clean} | {match} | {safety} | {p50} | {p95} | {cost} |".format(
                 id=provider["id"],
-                adapter=provider["adapter"],
                 cases=summary["case_count"],
                 passed=summary["passed_count"],
-                error_rate=_fmt(summary["error_rate"]),
+                errors=summary["error_count"],
                 quality=_fmt(summary["mean_quality_score"]),
-                schema=_fmt(summary["schema_pass_rate"]),
                 grounding=_fmt(summary["mean_grounding_score"]),
+                clean=_fmt(summary.get("mean_user_facing_cleanliness")),
+                match=_fmt(summary.get("mean_match_consistency_score")),
+                safety=safety_violations,
                 p50=_fmt(summary["p50_latency_ms"], 2),
                 p95=_fmt(summary["p95_latency_ms"], 2),
                 cost=_fmt(summary["estimated_cost_usd"], 6),
@@ -54,34 +64,39 @@ def render_markdown_report(run: dict[str, Any]) -> str:
         "",
         "## Case results",
         "",
-        "| Provider | Case | Task | Language | Result | Quality | Grounding | Forbidden claims | Unsupported numbers | Latency, ms |",
-        "|---|---|---|---|---|---:|---:|---:|---:|---:|",
+        "| Provider | Case | Result | Quality | Grounding | Clean text | Invalid evidence | Impact | Match violations | Derived match | Latency ms |",
+        "|---|---|---|---:|---:|---:|---:|---:|---:|---:|---:|",
     ])
     for result in safe["results"]:
         score = result.get("score") or {}
+        match = score.get("match_evaluation") or {}
         lines.append(
-            "| {provider} | {case} | {task} | {language} | {status} | {quality} | {grounding} | {forbidden} | {numbers} | {latency} |".format(
+            "| {provider} | {case} | {status} | {quality} | {grounding} | {clean} | {invalid} | {impact} | {match_v} | {derived} | {latency} |".format(
                 provider=result["provider_id"],
                 case=result["case_id"],
-                task=result["task"],
-                language=result["language"],
                 status="PASS" if result.get("passed") else "FAIL",
                 quality=_fmt(score.get("quality_score")),
                 grounding=_fmt(score.get("grounding_score")),
-                forbidden=_fmt(score.get("forbidden_claim_count")),
-                numbers=_fmt(score.get("unsupported_number_count")),
+                clean=_fmt(score.get("user_facing_cleanliness")),
+                invalid=len(score.get("invalid_evidence_ids") or []),
+                impact=score.get("unsupported_impact_claim_count", 0),
+                match_v=len(match.get("violations") or []),
+                derived=_fmt(match.get("deterministic_match_score"), 0),
                 latency=_fmt(result.get("latency_ms"), 2),
             )
         )
 
     lines.extend([
         "",
-        "## Quality-gate interpretation",
+        "## Grounded-v2 contract interpretation",
         "",
-        "- Schema compliance is machine-checked against the versioned JSON schemas in `evals/schemas/`.",
-        "- Grounding combines valid evidence references, required evidence recall, and fixture-specific grounding terms.",
-        "- Forbidden claims and unsupported numeric claims are hard safety gates in the CI configuration.",
-        "- Human writing-quality rubrics are recorded as pending; the runner never fabricates manual-review scores.",
+        "- Evidence identifiers must be exact raw IDs and stay out of user-facing text.",
+        "- Resume `facts_not_verified` and cover-letter `caveats` are structured objects with their own evidence references.",
+        "- Cover-letter candidate-fit paragraphs must cite candidate facts; unsupported impact claims are a hard gate.",
+        "- Vacancy requirements are classified exactly once by requirement ID. Duplicate, missing, contradictory, or weakly evidenced classifications are hard failures.",
+        "- Vacancy numeric match scores are derived deterministically from weighted requirement classifications; the LLM no longer authors a percentage.",
+        "- Interview numbers are accepted only when already supplied as source/scenario facts, preventing accidental candidate-achievement fabrication.",
+        "- Human writing-quality rubrics remain pending; the runner never fabricates manual-review scores.",
         "",
         "## Limitations",
         "",

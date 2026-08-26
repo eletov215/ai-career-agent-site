@@ -6,9 +6,10 @@
 
 - JSON/schema compliance;
 - required-field coverage;
-- evidence-based grounding;
-- forbidden or invented claims;
-- unsupported numeric claims;
+- evidence-based grounding and exact raw evidence-ID semantics;
+- forbidden/invented claims, unsupported impact claims, and internal-evidence leakage in user-facing text;
+- unsupported numeric claims, with explicit scenario-number provenance for interview hypotheticals;
+- deterministic vacancy match scoring from weighted requirement classifications;
 - request error rate;
 - p50/p95 latency;
 - token usage and estimated cost when a provider reports usage;
@@ -73,10 +74,11 @@ Each run writes:
 
 - `run.json` - machine-readable evidence;
 - `report.md` - human-readable comparison;
-- `responses/<provider>/<case>.json` - sanitized model outputs.
+- `responses/<provider>/<case>.json` - sanitized model outputs;
+- `manual_review_template.json` - pending named human-writing rubric, separate from machine safety gates.
 
 No provider may be selected from the deterministic reference run. A live comparative run plus manual rubric is the remaining external gate for AI-BENCH-001.
 
-## Package version 1.1.3
+## Package version 1.2.0 - grounded-v2
 
-Version 1.1.3 keeps the scalar-leaf hallucination fix, browser-upload-safe visible artifact scaffold, and integrated manual Yandex workflow. It replaces the invalid job-level `${{ runner.temp }}` expression with the static runner-local path `/tmp/ai-bench-yandex-live` and adds a local YAML/context guard for `jobs.<job_id>.env`. It does not add a production AI provider.
+Version 1.2.0 is the hardening release after live run #1. It adds typed source facts, exact raw evidence IDs, structured unverified facts/caveats, claim-level evidence checks, unsupported-impact and user-facing-metadata gates, deterministic vacancy match scoring, scenario-sourced interview numbers, live-run regressions and a separate pending manual-review template. Grounded-v2 scores are not directly comparable to the earlier grounded-v1 live run. It does not add a production AI provider.

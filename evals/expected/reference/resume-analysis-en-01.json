@@ -1,27 +1,39 @@
 {
-  "summary": "The profile shows a solid two-year analytics foundation with advanced SQL, Power BI, and Excel automation. Production Python should be treated as an unverified gap rather than an existing strength.",
+  "summary": "The candidate has two years of data-analysis experience with advanced SQL, Power BI dashboards, and Excel automation. Production Python experience is explicitly not verified.",
   "strengths": [
     {
       "title": "Data analysis experience",
-      "explanation": "Two years in a data analyst role provide relevant professional context.",
+      "explanation": "Two years in a data analyst role provide a confirmed foundation for analytics work.",
       "evidence_ids": [
         "e1"
       ]
     },
     {
-      "title": "SQL and reporting stack",
-      "explanation": "Advanced SQL, Power BI dashboards, and Excel automation form a practical reporting toolkit.",
+      "title": "Advanced SQL",
+      "explanation": "Advanced SQL is explicitly confirmed and supports database-heavy analytics tasks.",
       "evidence_ids": [
-        "e2",
-        "e3",
+        "e2"
+      ]
+    },
+    {
+      "title": "Power BI dashboards",
+      "explanation": "Power BI dashboard experience supports reporting and data-communication work.",
+      "evidence_ids": [
+        "e3"
+      ]
+    },
+    {
+      "title": "Excel automation",
+      "explanation": "Excel automation is a confirmed capability that can support repeatable analytical workflows.",
+      "evidence_ids": [
         "e4"
       ]
     }
   ],
   "gaps": [
     {
-      "title": "Production Python is not verified",
-      "explanation": "The source explicitly does not confirm production Python experience.",
+      "title": "Production Python is unverified",
+      "explanation": "The input explicitly states that production Python experience is not verified.",
       "evidence_ids": [
         "e5"
       ]
@@ -29,21 +41,28 @@
   ],
   "recommendations": [
     {
-      "action": "Show SQL problem-solving examples",
-      "rationale": "Concrete SQL cases will make the advanced skill claim easier to evaluate.",
+      "action": "Build verifiable Python practice",
+      "rationale": "If target roles require Python, create work that can be described and evidenced without presenting it as existing production experience.",
       "evidence_ids": [
-        "e2"
+        "e5"
       ]
     },
     {
-      "action": "Build one documented Python analytics project",
-      "rationale": "A scoped project can address the current production Python evidence gap.",
+      "action": "Strengthen the confirmed analytics stack",
+      "rationale": "Continue developing the already confirmed SQL, Power BI, and Excel capabilities around real analytical use cases.",
       "evidence_ids": [
-        "e5"
+        "e2",
+        "e3",
+        "e4"
       ]
     }
   ],
   "facts_not_verified": [
-    "Production Python experience is not verified."
+    {
+      "fact": "Production Python experience is not verified.",
+      "evidence_ids": [
+        "e5"
+      ]
+    }
   ]
 }

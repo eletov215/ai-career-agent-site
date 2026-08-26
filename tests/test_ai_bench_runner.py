@@ -22,9 +22,21 @@ class RunnerTests(unittest.TestCase):
             self.assertEqual(run["quality_gate"]["error_count"], 0)
             self.assertTrue((output / "run.json").is_file())
             self.assertTrue((output / "report.md").is_file())
+            self.assertTrue((output / "manual_review_template.json").is_file())
+            self.assertEqual(run["schema_version"], "1.1")
+            self.assertEqual(run["benchmark_version"], "1.1")
             self.assertEqual(len(list((output / "responses/reference").glob("*.json"))), run["dataset"]["case_count"])
             report = (output / "report.md").read_text(encoding="utf-8")
             self.assertIn("not a comparative result for external AI vendors", report)
+            self.assertIn("derived deterministically", report)
+            review = json.loads((output / "manual_review_template.json").read_text(encoding="utf-8"))
+            self.assertEqual(review["status"], "pending")
+            self.assertEqual(review["schema_version"], "1.1")
+            self.assertEqual(review["score_scale"]["min"], 1)
+            self.assertEqual(review["score_scale"]["max"], 5)
+            self.assertEqual(len(review["entries"]), run["dataset"]["case_count"])
+            self.assertTrue(all(entry["criteria"] for entry in review["entries"]))
+            self.assertTrue(all(item["score"] is None for entry in review["entries"] for item in entry["criteria"]))
 
     def test_report_redacts_secret_like_values(self) -> None:
         sample = {
@@ -42,6 +54,17 @@ class RunnerTests(unittest.TestCase):
         report = render_markdown_report(sample)
         self.assertNotIn("super-secret-value", report)
         self.assertIn("[REDACTED]", report)
+
+
+    def test_evidence_identifiers_are_not_redacted_as_secrets(self) -> None:
+        sample = {
+            "run_id": "ai-bench-20260826T120000Z-1234abcd",
+            "config_fingerprint": "a" * 64,
+            "dataset": {"fingerprint": "b" * 64},
+            "response_sha256": "c" * 64,
+        }
+        clean = redact_secrets(sample)
+        self.assertEqual(clean, sample)
 
     def test_recursive_redaction_hides_token_fields(self) -> None:
         clean = redact_secrets({"metadata": {"access_token": "abc", "safe": "ok"}})

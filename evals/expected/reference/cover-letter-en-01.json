@@ -1,32 +1,45 @@
 {
-  "subject": "Application for the B2B Product Designer role",
-  "body": "Hello, I am applying for the B2B Product Designer role. Over three years in product design, I have built Figma design systems, conducted qualitative user interviews, and worked closely with product and engineering partners. These experiences align with your need for a designer who can support a consistent system while staying connected to user evidence and delivery constraints. Experimentation experience is listed as preferred but is not verified in the supplied profile, so I would discuss that area transparently. I would welcome the opportunity to show relevant design-system and research examples.",
-  "evidence_ids": [
-    "c1",
-    "c2",
-    "c3",
-    "c4",
-    "v1",
-    "v2",
-    "v3"
-  ],
-  "claims": [
+  "subject": "Application for B2B Product Designer",
+  "paragraphs": [
     {
-      "text": "The candidate has three years of product design experience.",
+      "kind": "opening",
+      "text": "Dear Hiring Team, I am applying for the B2B Product Designer role and would like to highlight the experience that directly matches the position.",
       "evidence_ids": [
-        "c1"
+        "v1"
       ]
     },
     {
-      "text": "The candidate has worked with Figma design systems, user interviews, product, and engineering.",
+      "kind": "candidate_fit",
+      "text": "I have three years of product-design experience and have worked with Figma design systems, which aligns with the role's design-system requirement.",
       "evidence_ids": [
+        "c1",
         "c2",
+        "v2"
+      ]
+    },
+    {
+      "kind": "candidate_fit",
+      "text": "My background also includes qualitative user interviews and collaboration with product and engineering teams.",
+      "evidence_ids": [
         "c3",
         "c4"
+      ]
+    },
+    {
+      "kind": "closing",
+      "text": "I would welcome the opportunity to discuss how this confirmed experience could support your B2B product-design work.",
+      "evidence_ids": [
+        "v1"
       ]
     }
   ],
   "caveats": [
-    "Experimentation experience is not verified in the supplied facts."
+    {
+      "text": "Experimentation experience is preferred for the role, but it is not verified for the candidate.",
+      "evidence_ids": [
+        "v3",
+        "c5"
+      ]
+    }
   ]
 }

@@ -1,51 +1,54 @@
 {
-  "match_score": 78,
   "verdict": "partial",
   "matched_requirements": [
     {
-      "requirement": "Python",
-      "explanation": "Обязательное требование подтверждено тремя годами backend-опыта.",
+      "requirement_id": "v1",
+      "requirement": "Python обязателен",
+      "explanation": "Три года Python backend подтверждают соответствие обязательному требованию Python.",
       "evidence_ids": [
-        "c1",
-        "v1"
+        "v1",
+        "c1"
       ]
     },
     {
+      "requirement_id": "v2",
       "requirement": "Django или FastAPI",
-      "explanation": "FastAPI кандидата соответствует допустимому фреймворку вакансии.",
+      "explanation": "Подтвержденный FastAPI соответствует альтернативному требованию по фреймворку.",
       "evidence_ids": [
-        "c2",
-        "v2"
+        "v2",
+        "c2"
       ]
     },
     {
+      "requirement_id": "v3",
       "requirement": "PostgreSQL",
-      "explanation": "Технология есть и в резюме, и в обязательных требованиях.",
+      "explanation": "Опыт PostgreSQL подтвержден и соответствует требованию вакансии.",
       "evidence_ids": [
-        "c3",
-        "v3"
+        "v3",
+        "c3"
       ]
     }
   ],
   "gaps": [
     {
-      "requirement": "Docker",
-      "explanation": "Docker обязателен, но подтвержденного опыта у кандидата нет.",
+      "requirement_id": "v4",
+      "requirement": "Docker обязателен",
+      "explanation": "Опыт Docker не подтвержден, поэтому обязательное требование остается пробелом.",
       "evidence_ids": [
-        "c4",
-        "v4"
+        "v4",
+        "c4"
       ]
     },
     {
-      "requirement": "Kubernetes",
-      "explanation": "Kubernetes указан как плюс и не подтвержден в резюме.",
+      "requirement_id": "v5",
+      "requirement": "Kubernetes будет плюсом",
+      "explanation": "Опыт Kubernetes не подтвержден, поэтому предпочтительное требование не засчитывается как совпадение.",
       "evidence_ids": [
-        "v5"
+        "v5",
+        "c5"
       ]
     }
   ],
-  "recommendation": "Отклик возможен, если честно обозначить пробел по Docker и заранее подготовить базовый практический пример контейнеризации.",
-  "caveats": [
-    "Kubernetes является плюсом, а не обязательным требованием."
-  ]
+  "recommendation": "Кандидат частично соответствует вакансии; перед откликом важно честно учитывать обязательный пробел по Docker и не заявлять неподтвержденный Kubernetes.",
+  "caveats": []
 }

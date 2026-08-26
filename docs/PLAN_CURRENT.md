@@ -6,55 +6,58 @@
 <!-- ACA-CANONICAL-STATUS:START -->
 ## Канонический статус плана
 
-**Документ:** AI Career Agent PLAN_CURRENT `v1.4.37`  
+**Документ:** AI Career Agent PLAN_CURRENT `v1.4.38`  
 **Дата:** 2026-08-26  
 **Production revision:** `20260819_0014`  
-**Текущий пакет:** `AI-BENCH-001 - STABILITY HOTFIX R4; НУЖНА ПОВТОРНАЯ ПРОВЕРКА GITHUB ACTIONS`
+**Текущий пакет:** `AI-BENCH-001 - GROUNDED-V2 HARDENING; НУЖНА ПРОВЕРКА GITHUB ACTIONS + LIVE RUN #2`
 
-### GitHub evidence после загрузки v1.4.36
+### Подтверждённое внешнее evidence
 
-- run `#201` не запустил ни один job: GitHub остановил workflow на parse/validation этапе;
-- annotation указывает `.github/workflows/ci.yml`, line 384: `Unrecognized named-value: 'runner'`;
-- причина - `${{ runner.temp }}` находился в `jobs.ai-bench-yandex-live.env`; официальный GitHub context table для `jobs.<job_id>.env` разрешает `github/needs/strategy/matrix/vars/secrets/inputs`, но не `runner`;
-- изменение GitHub Secrets/Environment не является причиной этого сбоя: workflow был отклонён до выделения runner и до чтения steps.
+- stability r4 merged into `main`; ordinary CI confirmed green (`Python tests`, `AI-BENCH-001 package gate`), while paid live job correctly skipped on push;
+- first manual Yandex live benchmark then completed successfully as transport: 3 providers x 8 cases = 24 requests, `error_count=0` for every provider;
+- machine gate intentionally reported `failed`: Alice AI LLM passed 4/8, Alice AI LLM Flash 2/8, YandexGPT Pro 5.1 3/8;
+- artifact review found both real model defects and benchmark-contract defects, so no provider is selected yet.
 
-### Stability hotfix r4
+### Grounded-v2 hardening
 
-- `AI_BENCH_OUTPUT_DIR` переведён на статический runner-local path `/tmp/ai-bench-yandex-live`;
-- `evals` поднят до `1.1.3`;
-- `scripts/check_ai_bench_package.py` теперь парсит `ci.yml` и локально валидирует context roots в каждом job-level `env`;
-- добавлены positive/negative regression tests для workflow context guard;
-- восстановлена ignore policy для benchmark runtime artifacts, но она не является package-gate dependency;
-- production code, dependencies, routes, migrations и revision не изменены.
+- evidence IDs are exact raw IDs and are prohibited from user-facing text;
+- resume `facts_not_verified` and cover-letter `caveats` are structured objects with explicit evidence;
+- cover-letter candidate-fit claims require candidate evidence; unsupported impact claims are hard failures;
+- vacancy requirements are classified exactly once; duplicate/missing/contradictory/evidence-weak classifications fail;
+- numeric vacancy match is derived deterministically from weighted requirement classifications; the LLM no longer authors `match_score`;
+- interview numeric scenarios are allowed only when their numbers are supplied as source/scenario facts;
+- regressions encode real failure patterns from live run #1 without storing secrets or production PII;
+- manual review template is emitted separately; machine safety gates cannot be overridden by human writing scores.
 
 ### Текущий gate
 
-Загрузить hotfix r4 и получить полностью green ordinary GitHub CI. Затем открыть `Actions -> CI -> Run workflow`, включить `run_ai_bench_live=true`, скачать sanitized artifact и заполнить human writing-quality rubric. Только после этого разрешён `AI-PROVIDER-001`.
+Upload grounded-v2 candidate -> green ordinary GitHub CI -> `Actions -> CI -> Run workflow -> run_ai_bench_live=true` -> review live run #2 artifact -> complete human writing-quality rubric. Only then may `AI-PROVIDER-001` start.
 
 ### Очередь
 
-`AI-BENCH-001 stability CI -> CI workflow_dispatch(run_ai_bench_live=true) -> artifact review -> manual rubric -> AI-PROVIDER-001 -> LEGAL-001 -> AI-001 -> AI-002 -> AI-003 -> AI-004 -> AI-005 -> AI-006 -> JOB-001 -> JOB-002 -> JOB-003/JOB-004`
+`AI-BENCH-001 grounded-v2 CI -> live run #2 -> artifact review -> manual rubric -> AI-PROVIDER-001 -> LEGAL-001 -> AI-001 -> AI-002 -> AI-003 -> AI-004 -> AI-005 -> AI-006 -> JOB-001 -> JOB-002 -> JOB-003/JOB-004`
 <!-- ACA-CANONICAL-STATUS:END -->
 
 | Поле | Значение |
 |---|---|
 | Документ | PLAN_CURRENT |
-| Версия | 1.4.37 |
+| Версия | 1.4.38 |
 | Дата | 26 августа 2026 |
 | Статус | ДЕЙСТВУЮЩИЙ |
-| Основа кода | пользовательский ZIP `ai-career-agent-site-eletov215-patch-1 (1).zip`, экспортированный из GitHub после run `#201`; stability hotfix r4 подготовлен по фактическому repository workflow |
-| Текущий пакет | AI-BENCH-001 stability hotfix r4 - НУЖНА ПОВТОРНАЯ ПРОВЕРКА ordinary CI, затем integrated manual live job/artifact/manual rubric |
+| Основа кода | пользовательский ZIP `ai-career-agent-site-main (22).zip`, актуальный `main` после green ordinary CI и первого live Yandex benchmark |
+| Текущий пакет | AI-BENCH-001 grounded-v2 hardening - НУЖНА ПРОВЕРКА ordinary CI и live run #2, затем artifact/manual rubric |
 
 > ОБЯЗАТЕЛЬНО ДЛЯ КАЖДОГО НОВОГО ЧАТА: прочитать этот план, новый паспорт и актуальный архив. После завершения любого пункта вернуть обновлённые DOCX/PDF/Markdown, новый ZIP, доказательства проверки и запись в журнале версий.
 
-> КОНТРОЛЬНЫЕ СТАТУСЫ ЭТОЙ ВЕРСИИ: FND-001/FND-002/DATA-001/DATA-002/SEC-001/OPS-001/INFRA-PREP-001/SYNC-001/SYNC-002/SEARCH-001..005/AUTH-001/AUTH-002/PROF-001/PROF-002/PROF-003/PRIV-001 - **ВЫПОЛНЕНО**; `AI-BENCH-001` - **НУЖНА ПРОВЕРКА**; `AI-PROVIDER-001` - **ЗАБЛОКИРОВАНО** до завершения benchmark; `DOC-001` - **В РАБОТЕ**; `INFRA-001` - **ОТЛОЖЕНО ДО ПРЕДРЕЛИЗНОГО ЭТАПА**. Документы ниже `1.4.37` устарели для определения текущего gate.
+> КОНТРОЛЬНЫЕ СТАТУСЫ ЭТОЙ ВЕРСИИ: FND-001/FND-002/DATA-001/DATA-002/SEC-001/OPS-001/INFRA-PREP-001/SYNC-001/SYNC-002/SEARCH-001..005/AUTH-001/AUTH-002/PROF-001/PROF-002/PROF-003/PRIV-001 - **ВЫПОЛНЕНО**; `AI-BENCH-001` - **НУЖНА ПРОВЕРКА**; `AI-PROVIDER-001` - **ЗАБЛОКИРОВАНО** до завершения benchmark; `DOC-001` - **В РАБОТЕ**; `INFRA-001` - **ОТЛОЖЕНО ДО ПРЕДРЕЛИЗНОГО ЭТАПА**. Документы ниже `1.4.38` устарели для определения текущего gate.
 
 ## 1. Источник истины и аудит источников
 
 - GitHub является главным источником актуального кода.
 - Если в текущем чате загружен более новый ZIP, он является рабочей основой этого чата.
 - Канонический план определяется наибольшей версией и датой; старые дубликаты не должны оставаться действующими.
-- Актуальная рабочая база для этой версии: `ai-career-agent-site-eletov215-patch-1 (1).zip`, предоставленный пользователем как точный GitHub archive после run `#201`.
+- Актуальная рабочая база для этой версии: `ai-career-agent-site-main (22).zip`, предоставленный пользователем как точный archive текущего GitHub `main`.
+- Версия 1.4.38 фиксирует grounded-v2 hardening после первого live run: ordinary CI r4 green; manual run artifact 32958938365 completed 24/24 API calls with zero transport errors; stricter evidence/safety/match contract prepared for live run #2.
 - Версия 1.4.34 фиксирует live Yandex candidate: manual-only workflow, Alice AI LLM/Flash/YandexGPT Pro 5.1, structured JSON Schema output, current pricing snapshot and GitHub-secret-only credentials.
 - Версия 1.4.35 фиксирует CI-stability hotfix r2: SYNC worker cache assertions отвязаны от календарного 7-дневного search filter; AI-BENCH package contract использует browser-upload-safe visible scaffold и не зависит от dotfiles.
 - Версия 1.4.36 фиксирует workflow-layout hotfix r3: live Yandex job встроен в существующий `ci.yml`, отдельный `.yml` больше не нужен, а manual API run зависит от полного green CI.
@@ -220,7 +223,7 @@ MVP не готов, если работает только отдельная �
 
 | ID | Приоритет | Статус | Пункт |
 |---|---|---|---|
-| AI-BENCH-001 | P0 | НУЖНА ПРОВЕРКА | Hotfix r1 GitHub CI green; live Yandex workflow candidate готов; требуются comparative artifact и manual rubric |
+| AI-BENCH-001 | P0 | НУЖНА ПРОВЕРКА | Live run #1 reviewed; grounded-v2 hardening candidate готов; требуются green CI, live run #2 artifact и manual rubric |
 | AI-PROVIDER-001 | P0 | ЗАПЛАНИРОВАНО | Стратегия AI-провайдеров, география, стоимость, fallback и privacy |
 | AI-001 | P1 | ЗАПЛАНИРОВАНО | Независимый слой AI-провайдера и контроль стоимости |
 | AI-002 | P1 | ЗАПЛАНИРОВАНО | Настоящий анализ резюме |
@@ -796,15 +799,15 @@ MVP не готов, если работает только отдельная �
 **Приоритет:** P0
 **Статус:** НУЖНА ПРОВЕРКА
 
-**Цель:** Проверить качество, скорость и стоимость выбранных моделей на реальных функциях AI Career Agent до интеграции.
+**Цель:** Выбрать модель на воспроизводимых RU/EN функциях AI Career Agent, отделив качество/grounding/safety от transport и стоимости до production-интеграции.
 
-**Реализация:** Isolated `evals/` runner, 8 synthetic RU/EN fixtures, 4 JSON schemas, deterministic/command/OpenAI-compatible adapters, machine safety gates, latency/usage/cost reports and manual-review rubric. Hotfix r1 corrects container-level numeric false positives and preserves non-secret benchmark metrics during redaction.
+**Реализация:** `evals 1.2.0` grounded-v2: 8 synthetic RU/EN fixtures, 4 versioned schemas, exact raw evidence IDs, structured unverified facts/caveats, claim-evidence validation, unsupported-impact gate, user-facing metadata gate, deterministic weighted vacancy match score, scenario-sourced interview numbers, deterministic/command/OpenAI-compatible adapters, latency/usage/cost evidence and separate manual-review template. First live run is preserved as historical evidence and regression patterns.
 
-**Влияние на код:** `evals/`, fixtures, benchmark runner, отчёт моделей; production routes не меняются.
+**Влияние на код:** только `evals/`, benchmark tests/scripts, CI summary and docs/evidence. Production routes, models, services, dependencies and database schema do not change.
 
-**Критерии готовности:** green GitHub hotfix CI; approved exact model IDs and credentials outside Git; one comparable run on the same dataset fingerprint; machine gates pass; human rubric complete; no invented employers, roles, dates, education, skills or achievements; provider decision evidence accepted.
+**Критерии готовности:** grounded-v2 ordinary GitHub CI green; same three approved Yandex candidates complete live run #2 without transport errors; machine artifact reviewed; human writing-quality rubric completed; no unsupported candidate facts/impact/skills/achievements; final provider decision evidence accepted. Numeric vacancy match is code-derived, not model-authored.
 
-**Зависимости:** OPS-001, тестовый доступ к Yandex AI Studio. Реальный VPS не требуется для quality benchmark; исходящая доступность выбранных AI endpoints с production IP повторно проверяется в INFRA-001.
+**Зависимости:** OPS-001, test access to Yandex AI Studio and existing GitHub Secrets. Реальный VPS не требуется для quality benchmark; production-IP transport повторно проверяется в INFRA-001.
 
 #### AI-PROVIDER-001 - Стратегия AI-провайдеров
 
@@ -879,13 +882,13 @@ MVP не готов, если работает только отдельная �
 
 **Цель:** Рассчитывать реальный match вместо демонстрационного процента.
 
-**Реализация:** Deterministic features + AI requirement extraction; versioned algorithm and confidence.
+**Реализация:** AI extracts/classifies vacancy requirements with source evidence; deterministic versioned code computes the numeric match score from weighted requirement classifications. The model does not author the percentage. Confidence and missing evidence remain explicit.
 
 **Влияние на код:** matching service, vacancy/profile features, UI, evaluation dataset.
 
 **Влияние на сайт:** Карточка показывает процент, причины, gaps и uncertainty.
 
-**Критерии готовности:** Оценка воспроизводима; причины соответствуют данным; ручной benchmark.
+**Критерии готовности:** одинаковые classifications дают одинаковый numeric score независимо от provider; every displayed reason is source-grounded; mandatory gaps cannot be hidden by prose; benchmark/manual review confirm explainability.
 
 **Зависимости:** SEARCH-001, PROF-001, AI-001.
 
@@ -1687,3 +1690,10 @@ GitHub/production/API: <подтверждено или требуется>
 | Версия | Дата | Package | Изменение |
 |---|---|---|---|
 | 1.4.37 | 26.08.2026 | AI-BENCH-001-STABILITY-R4 | GitHub run #201 отклонён до запуска jobs из-за недопустимого `runner` context в job-level `env`. `AI_BENCH_OUTPUT_DIR` заменён на `/tmp/ai-bench-yandex-live`; evals 1.1.3 и local workflow-context guard добавлены. Ordinary GitHub CI must be rerun before live benchmark. |
+
+
+### PLAN_CURRENT v1.4.38 update
+
+| Версия | Дата | Package | Изменение |
+|---|---|---|---|
+| 1.4.38 | 26.08.2026 | AI-BENCH-001-GROUNDED-V2 | Ordinary CI r4 green; first live run completed 24/24 API requests with zero transport errors. Artifact review exposed model hallucinations and contract weaknesses. Evals 1.2.0 introduces grounded-v2 evidence/safety/match controls and awaits green CI + live run #2 + manual rubric. |

@@ -1,44 +1,45 @@
 {
-  "match_score": 72,
   "verdict": "partial",
   "matched_requirements": [
     {
-      "requirement": "React",
-      "explanation": "The candidate has two years of React experience and the vacancy requires React.",
+      "requirement_id": "v1",
+      "requirement": "React required",
+      "explanation": "Two years of React experience directly support the required React skill.",
       "evidence_ids": [
-        "c1",
-        "v1"
+        "v1",
+        "c1"
       ]
     },
     {
-      "requirement": "TypeScript",
-      "explanation": "TypeScript is directly confirmed in the resume and required by the vacancy.",
+      "requirement_id": "v2",
+      "requirement": "TypeScript required",
+      "explanation": "TypeScript is explicitly confirmed in the candidate facts.",
       "evidence_ids": [
-        "c2",
-        "v2"
+        "v2",
+        "c2"
       ]
     },
     {
-      "requirement": "Frontend testing",
-      "explanation": "Jest component testing supports the preferred automated testing area.",
+      "requirement_id": "v4",
+      "requirement": "Automated frontend testing preferred",
+      "explanation": "Component testing with Jest is relevant evidence for the preferred automated frontend testing requirement.",
       "evidence_ids": [
-        "c3",
-        "v4"
+        "v4",
+        "c3"
       ]
     }
   ],
   "gaps": [
     {
-      "requirement": "Next.js",
-      "explanation": "Next.js is required, while the candidate has no verified Next.js evidence.",
+      "requirement_id": "v3",
+      "requirement": "Next.js required",
+      "explanation": "Verified Next.js experience is absent, so this mandatory requirement remains a gap.",
       "evidence_ids": [
-        "c4",
-        "v3"
+        "v3",
+        "c4"
       ]
     }
   ],
-  "recommendation": "Apply with a transparent note about the Next.js gap and prepare a small documented Next.js example before the interview.",
-  "caveats": [
-    "The score is explainable and does not replace recruiter review."
-  ]
+  "recommendation": "The candidate is a partial fit: React, TypeScript, and testing align, while the mandatory Next.js gap should be addressed honestly during screening.",
+  "caveats": []
 }

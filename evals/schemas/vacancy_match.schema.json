@@ -1,11 +1,11 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://ai-career-agent.local/schemas/vacancy-match-v1.json",
-  "title": "Vacancy match output",
+  "$id": "https://ai-career-agent.local/schemas/vacancy-match-v2.json",
+  "title": "Vacancy match classification output v2",
+  "description": "The model classifies each vacancy requirement. AI Career Agent derives the numeric score deterministically from these classifications.",
   "type": "object",
   "additionalProperties": false,
   "required": [
-    "match_score",
     "verdict",
     "matched_requirements",
     "gaps",
@@ -13,48 +13,24 @@
     "caveats"
   ],
   "properties": {
-    "match_score": {
-      "type": "integer",
-      "minimum": 0,
-      "maximum": 100
-    },
     "verdict": {
       "type": "string",
-      "enum": [
-        "strong",
-        "partial",
-        "weak"
-      ]
+      "enum": ["strong", "partial", "weak"]
     },
     "matched_requirements": {
       "type": "array",
-      "minItems": 2,
       "maxItems": 8,
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": [
-          "requirement",
-          "explanation",
-          "evidence_ids"
-        ],
+        "required": ["requirement_id", "requirement", "explanation", "evidence_ids"],
         "properties": {
-          "requirement": {
-            "type": "string",
-            "minLength": 2,
-            "maxLength": 180
-          },
-          "explanation": {
-            "type": "string",
-            "minLength": 8,
-            "maxLength": 420
-          },
+          "requirement_id": {"type": "string", "pattern": "^v[0-9]+$"},
+          "requirement": {"type": "string", "minLength": 2, "maxLength": 180},
+          "explanation": {"type": "string", "minLength": 8, "maxLength": 420},
           "evidence_ids": {
             "type": "array",
-            "items": {
-              "type": "string",
-              "minLength": 1
-            },
+            "items": {"type": "string", "pattern": "^[a-z][0-9]+$"},
             "minItems": 1,
             "maxItems": 8
           }
@@ -63,33 +39,18 @@
     },
     "gaps": {
       "type": "array",
-      "minItems": 1,
-      "maxItems": 6,
+      "maxItems": 8,
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": [
-          "requirement",
-          "explanation",
-          "evidence_ids"
-        ],
+        "required": ["requirement_id", "requirement", "explanation", "evidence_ids"],
         "properties": {
-          "requirement": {
-            "type": "string",
-            "minLength": 2,
-            "maxLength": 180
-          },
-          "explanation": {
-            "type": "string",
-            "minLength": 8,
-            "maxLength": 420
-          },
+          "requirement_id": {"type": "string", "pattern": "^v[0-9]+$"},
+          "requirement": {"type": "string", "minLength": 2, "maxLength": 180},
+          "explanation": {"type": "string", "minLength": 8, "maxLength": 420},
           "evidence_ids": {
             "type": "array",
-            "items": {
-              "type": "string",
-              "minLength": 1
-            },
+            "items": {"type": "string", "pattern": "^[a-z][0-9]+$"},
             "minItems": 1,
             "maxItems": 8
           }
@@ -105,9 +66,18 @@
       "type": "array",
       "maxItems": 8,
       "items": {
-        "type": "string",
-        "minLength": 2,
-        "maxLength": 260
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["text", "evidence_ids"],
+        "properties": {
+          "text": {"type": "string", "minLength": 4, "maxLength": 320},
+          "evidence_ids": {
+            "type": "array",
+            "items": {"type": "string", "pattern": "^[a-z][0-9]+$"},
+            "minItems": 1,
+            "maxItems": 8
+          }
+        }
       }
     }
   }

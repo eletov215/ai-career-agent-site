@@ -7,33 +7,38 @@
   "messages": [
     {
       "role": "system",
-      "content": "You are running the offline AI Career Agent benchmark. Use only facts with identifiers from the input. Do not invent employers, roles, dates, education, skills, achievements, or numbers. Attach evidence_ids to every substantive claim and return only JSON matching the requested schema."
+      "content": "You are running the offline AI Career Agent benchmark. Use only the listed facts with identifiers from the input. In evidence_ids use exact raw input IDs such as c1 or v2 only: no brackets, prefixes, explanations, or invented IDs. Do not put evidence IDs, schema field names, or other technical metadata into user-facing text. Do not turn vacancy requirements into candidate skills. Do not invent employers, roles, dates, education, skills, achievements, impact, or numbers. If a candidate fact is not verified, do not state it as present. Return only JSON matching the requested schema. Fill facts_not_verified with fact + evidence_ids objects and explicitly include every input fact that is stated as unverified."
     },
     {
       "role": "user",
-      "content": "Analyze this synthetic resume. Facts: [e1] 2 years as a data analyst; [e2] advanced SQL; [e3] Power BI dashboards; [e4] Excel automation; [e5] no verified production Python experience. Return strengths, gaps, and actions."
+      "content": "Analyze this synthetic resume. Facts: [e1] 2 years as a data analyst; [e2] advanced SQL; [e3] Power BI dashboards; [e4] Excel automation; [e5] no verified production Python experience. Return strengths, gaps, actions, and the explicitly unverified fact. Recommendations may suggest learning, but must not present new tools or achievements as existing experience."
     }
   ],
   "source_facts": [
     {
       "id": "e1",
-      "text": "2 years as a data analyst"
+      "text": "2 years as a data analyst",
+      "kind": "candidate"
     },
     {
       "id": "e2",
-      "text": "advanced SQL"
+      "text": "advanced SQL",
+      "kind": "candidate"
     },
     {
       "id": "e3",
-      "text": "Power BI dashboards"
+      "text": "Power BI dashboards",
+      "kind": "candidate"
     },
     {
       "id": "e4",
-      "text": "Excel automation"
+      "text": "Excel automation",
+      "kind": "candidate"
     },
     {
       "id": "e5",
-      "text": "no verified production Python experience"
+      "text": "no verified production Python experience",
+      "kind": "candidate"
     }
   ],
   "required_paths": [
@@ -50,6 +55,10 @@
     "e4",
     "e5"
   ],
+  "required_unverified_evidence_ids": [
+    "e5"
+  ],
+  "required_caveat_evidence_ids": [],
   "grounding_requirements": [
     {
       "id": "analytics",
@@ -104,14 +113,17 @@
     }
   ],
   "generated_numeric_paths": [],
+  "match_requirements": [],
   "manual_rubric": [
     "No unsupported achievements",
-    "Actionable recommendations",
+    "Unverified production Python is explicit",
+    "Actionable recommendations do not masquerade as existing skills",
     "Clear professional English"
   ],
   "tags": [
     "resume",
     "en",
-    "grounding"
+    "grounding",
+    "contract-v2"
   ]
 }

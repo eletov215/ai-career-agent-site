@@ -7,48 +7,58 @@
   "messages": [
     {
       "role": "system",
-      "content": "You are running the offline AI Career Agent benchmark. Use only facts with identifiers from the input. Do not invent employers, roles, dates, education, skills, achievements, or numbers. Attach evidence_ids to every substantive claim and return only JSON matching the requested schema."
+      "content": "You are running the offline AI Career Agent benchmark. Use only the listed facts with identifiers from the input. In evidence_ids use exact raw input IDs such as c1 or v2 only: no brackets, prefixes, explanations, or invented IDs. Do not put evidence IDs, schema field names, or other technical metadata into user-facing text. Do not turn vacancy requirements into candidate skills. Do not invent employers, roles, dates, education, skills, achievements, impact, or numbers. If a candidate fact is not verified, do not state it as present. Return only JSON matching the requested schema. For cover_letter return the user-facing letter as paragraphs. Every candidate_fit paragraph must cite at least one candidate fact. Do not claim impact, improvement, acceleration, conversion gains, or other results unless a candidate fact explicitly states that result. Put unverified role requirements in caveats with evidence_ids."
     },
     {
       "role": "user",
-      "content": "Write a cover letter. Candidate facts: [c1] product designer for 3 years; [c2] Figma design systems; [c3] qualitative user interviews; [c4] collaboration with product and engineering. Vacancy facts: [v1] B2B product designer; [v2] design systems required; [v3] experimentation experience preferred but not verified for the candidate. Do not invent experiment metrics."
+      "content": "Write a cover letter. Candidate facts: [c1] product designer for 3 years; [c2] Figma design systems; [c3] qualitative user interviews; [c4] collaboration with product and engineering; [c5] experimentation experience is not verified for the candidate. Vacancy facts: [v1] B2B product designer; [v2] design systems required; [v3] experimentation experience preferred. Do not invent experiment metrics or claim experimentation experience."
     }
   ],
   "source_facts": [
     {
       "id": "c1",
-      "text": "product designer for 3 years"
+      "text": "product designer for 3 years",
+      "kind": "candidate"
     },
     {
       "id": "c2",
-      "text": "Figma design systems"
+      "text": "Figma design systems",
+      "kind": "candidate"
     },
     {
       "id": "c3",
-      "text": "qualitative user interviews"
+      "text": "qualitative user interviews",
+      "kind": "candidate"
     },
     {
       "id": "c4",
-      "text": "collaboration with product and engineering"
+      "text": "collaboration with product and engineering",
+      "kind": "candidate"
+    },
+    {
+      "id": "c5",
+      "text": "experimentation experience is not verified for the candidate",
+      "kind": "candidate"
     },
     {
       "id": "v1",
-      "text": "B2B product designer"
+      "text": "B2B product designer",
+      "kind": "vacancy"
     },
     {
       "id": "v2",
-      "text": "design systems required"
+      "text": "design systems required",
+      "kind": "vacancy"
     },
     {
       "id": "v3",
-      "text": "experimentation experience preferred but not verified for the candidate"
+      "text": "experimentation experience preferred",
+      "kind": "vacancy"
     }
   ],
   "required_paths": [
     "subject",
-    "body",
-    "evidence_ids",
-    "claims",
+    "paragraphs",
     "caveats"
   ],
   "required_evidence_ids": [
@@ -56,8 +66,14 @@
     "c2",
     "c3",
     "c4",
+    "c5",
     "v1",
     "v2",
+    "v3"
+  ],
+  "required_unverified_evidence_ids": [],
+  "required_caveat_evidence_ids": [
+    "c5",
     "v3"
   ],
   "grounding_requirements": [
@@ -82,7 +98,8 @@
     {
       "id": "collaboration",
       "any_of": [
-        "product and engineering"
+        "product",
+        "engineering"
       ]
     },
     {
@@ -105,17 +122,29 @@
       "terms": [
         "Sketch expert"
       ]
+    },
+    {
+      "id": "fake_experimentation",
+      "terms": [
+        "my experimentation experience",
+        "I have experimentation experience"
+      ]
     }
   ],
   "generated_numeric_paths": [],
+  "match_requirements": [],
   "manual_rubric": [
     "Specific to the role",
     "No invented impact metrics",
+    "Experimentation gap remains explicit",
+    "Technical evidence IDs are absent from user-facing text",
     "Concise and credible"
   ],
   "tags": [
     "cover-letter",
     "en",
-    "grounding"
+    "grounding",
+    "impact-safety",
+    "contract-v2"
   ]
 }

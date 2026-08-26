@@ -3,75 +3,72 @@
 | Поле | Значение |
 |---|---|
 | Документ | AI_BENCH_VERIFICATION_STATUS |
-| Версия | 1.5 |
+| Версия | 1.6 |
 | Дата | 26 августа 2026 |
-| Пакет | AI-BENCH-001 stability hotfix r4 |
-| Статус | НУЖНА ПОВТОРНАЯ ПРОВЕРКА GITHUB ACTIONS |
+| Пакет | AI-BENCH-001 grounded-v2 hardening |
+| Статус | НУЖНА ПРОВЕРКА GITHUB ACTIONS + LIVE RUN #2 + MANUAL RUBRIC |
 | Production revision | `20260819_0014` |
 
-## 1. External failure evidence
+## 1. Closed stability gate and first live transport
 
-GitHub run `#201` failed before jobs started. Annotation:
+Stability r4 is externally confirmed: ordinary CI on `main` passed `Python tests` and the dedicated AI-BENCH package gate. The live job correctly skipped on push. Manual run then completed successfully and produced artifact `32958938365`.
 
-```text
-Invalid workflow file: .github/workflows/ci.yml#L1
-Line: 384, Col: 28
-Unrecognized named-value: 'runner'
-```
+All three providers completed 8/8 API calls with `error_count=0`. Therefore this run confirms benchmark transport/configuration, not model fitness.
 
-The referenced line was:
+## 2. First live machine evidence
 
-```yaml
-AI_BENCH_OUTPUT_DIR: ${{ runner.temp }}/ai-bench-yandex-live
-```
+| Provider | Passed | Quality | Grounding | p50 ms | p95 ms | Cost USD |
+|---|---:|---:|---:|---:|---:|---:|
+| Alice AI LLM | 4/8 | 0.952178 | 0.957259 | 5193.153 | 9444.269 | 0.047868023 |
+| Alice AI LLM Flash | 2/8 | 0.950094 | 0.897536 | 3146.667 | 3919.065 | 0.006081147 |
+| YandexGPT Pro 5.1 | 3/8 | 0.937723 | 0.859077 | 5738.538 | 7977.200 | 0.034518028 |
 
-This is a workflow-definition error, not a failing application test. No `Python tests`, package gate, provider request or production route executed.
+These grounded-v1 scores are historical and must not be compared numerically to grounded-v2 scores as if the scoring contract were unchanged.
 
-## 2. Verified rule
+## 3. Why AI-BENCH-001 is not complete
 
-GitHub's context availability table for `jobs.<job_id>.env` allows `github`, `needs`, `strategy`, `matrix`, `vars`, `secrets`, `inputs`. It does not allow `runner`. The `runner` context is valid at step level after a runner exists.
+Artifact review found real model failures (unsupported skills/impact, malformed evidence, weak match consistency) and benchmark weaknesses (user-facing evidence leakage, model-authored numeric match score, false-positive hypothetical-number handling). Selecting a provider now would freeze known safety/quality defects into the production design.
 
-## 3. Correction
+## 4. Grounded-v2 verification target
 
-Hotfix r4 changes the job-level output path to:
+Evals 1.2.0 must prove:
 
-```yaml
-AI_BENCH_OUTPUT_DIR: /tmp/ai-bench-yandex-live
-```
+- exact raw evidence IDs and no internal evidence metadata in user-facing text;
+- structured `facts_not_verified` and cover-letter `caveats` with required evidence coverage;
+- candidate-fit claims supported by candidate facts;
+- unsupported impact claims blocked;
+- each vacancy requirement classified exactly once with mandatory evidence;
+- deterministic numeric match score derived by code, not authored by LLM;
+- hypothetical interview numbers allowed only when supplied as scenario facts;
+- live-run #1 failure patterns covered by regression tests;
+- separate pending manual writing-review template.
 
-`evals` is `1.1.3`. The package checker now parses the workflow and rejects unsupported context roots in job-level `env`. Regression tests prove a fixture with `${{ runner.temp }}` is rejected while the current workflow passes.
+## 5. Local candidate evidence
 
-## 4. Local verification
+- deterministic grounded-v2 reference run: 8/8 PASS under strict gates;
+- AI-BENCH unit/package regression suite covers the new contracts and known first-run failure patterns;
+- benchmark package checker verifies version/schema/dataset/workflow invariants;
+- production revision/routes/dependencies remain unchanged.
 
-- deterministic AI-BENCH package gate: PASS;
-- AI-BENCH unit tests: 23 passed;
-- targeted current-package/SYNC/SEARCH/hygiene regression: 41 passed;
-- all repository test modules in bounded groups: 301 passed, 14 environment-dependent skips, 8 subtests;
-- repository hygiene after cleanup: PASS;
-- document structure: PASS;
-- compileall: PASS.
-
-## 5. Security
-
-GitHub Secret values are not committed. The live benchmark remains manual-only and default-off. The output path is runner-local `/tmp`; sanitized evidence is uploaded only after an explicit live run. Production Flask code and database revision are unchanged.
+Full repository CI remains authoritative for environment-dependent PostgreSQL/Docker and historical package checks.
 
 ## 6. Remaining external gate
 
-1. Upload r4.
-2. Ordinary GitHub CI must be fully green.
-3. Then run `CI` manually with `run_ai_bench_live=true`.
-4. Review sanitized artifact and fill the human rubric.
+1. Green ordinary GitHub CI for this grounded-v2 candidate.
+2. Manual `CI` run with `run_ai_bench_live=true` on `main`.
+3. Review sanitized live run #2 artifact.
+4. Complete named human writing-quality rubric.
+5. Record final benchmark decision; only then unblock `AI-PROVIDER-001`.
 
 ## 7. Status decision
 
-`AI-BENCH-001` remains **НУЖНА ПРОВЕРКА** until those external gates are complete.  
-`AI-PROVIDER-001` remains **ЗАБЛОКИРОВАН**.
+`AI-BENCH-001` remains **НУЖНА ПРОВЕРКА**.  
+`AI-PROVIDER-001` remains **ЗАБЛОКИРОВАН**.  
+No production AI provider is connected.
 
 ## 8. Version log
 
 | Версия | Дата | Изменение |
 |---|---|---|
-| 1.2 | 25.08.2026 | Live Yandex candidate after green scorer hotfix. |
-| 1.3 | 25.08.2026 | Stability r2 after run #192. |
-| 1.4 | 25.08.2026 | Stability r3 after run #196 workflow filename defect. |
-| 1.5 | 26.08.2026 | Stability r4 after run #201 invalid job-level `runner` context. |
+| 1.5 | 26.08.2026 | Stability r4 fixed invalid job-level `runner` context. |
+| 1.6 | 26.08.2026 | Green CI + first live run reviewed; grounded-v2 hardening defines second-run gate before provider selection. |

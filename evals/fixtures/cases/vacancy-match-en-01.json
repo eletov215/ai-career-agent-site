@@ -7,49 +7,56 @@
   "messages": [
     {
       "role": "system",
-      "content": "You are running the offline AI Career Agent benchmark. Use only facts with identifiers from the input. Do not invent employers, roles, dates, education, skills, achievements, or numbers. Attach evidence_ids to every substantive claim and return only JSON matching the requested schema."
+      "content": "You are running the offline AI Career Agent benchmark. Use only the listed facts with identifiers from the input. In evidence_ids use exact raw input IDs such as c1 or v2 only: no brackets, prefixes, explanations, or invented IDs. Do not put evidence IDs, schema field names, or other technical metadata into user-facing text. Do not turn vacancy requirements into candidate skills. Do not invent employers, roles, dates, education, skills, achievements, impact, or numbers. If a candidate fact is not verified, do not state it as present. Return only JSON matching the requested schema. For vacancy_match classify every vacancy requirement v* exactly once into either matched_requirements or gaps. requirement_id must be the exact v-ID. Each item's evidence_ids must include its own v-ID and the relevant candidate fact when one is provided. Do not generate a numeric match score; AI Career Agent computes it deterministically."
     },
     {
       "role": "user",
-      "content": "Assess fit. Resume facts: [c1] React for 2 years; [c2] TypeScript; [c3] component testing with Jest; [c4] no verified Next.js. Vacancy facts: [v1] React required; [v2] TypeScript required; [v3] Next.js required; [v4] automated frontend testing preferred. Explain matches and gaps."
+      "content": "Assess fit. Resume facts: [c1] React for 2 years; [c2] TypeScript; [c3] component testing with Jest; [c4] no verified Next.js. Vacancy facts: [v1] React required; [v2] TypeScript required; [v3] Next.js required; [v4] automated frontend testing preferred. Classify v1-v4 exactly once and explain matches and gaps."
     }
   ],
   "source_facts": [
     {
       "id": "c1",
-      "text": "React for 2 years"
+      "text": "React for 2 years",
+      "kind": "candidate"
     },
     {
       "id": "c2",
-      "text": "TypeScript"
+      "text": "TypeScript",
+      "kind": "candidate"
     },
     {
       "id": "c3",
-      "text": "component testing with Jest"
+      "text": "component testing with Jest",
+      "kind": "candidate"
     },
     {
       "id": "c4",
-      "text": "no verified Next.js"
+      "text": "no verified Next.js",
+      "kind": "candidate"
     },
     {
       "id": "v1",
-      "text": "React required"
+      "text": "React required",
+      "kind": "vacancy"
     },
     {
       "id": "v2",
-      "text": "TypeScript required"
+      "text": "TypeScript required",
+      "kind": "vacancy"
     },
     {
       "id": "v3",
-      "text": "Next.js required"
+      "text": "Next.js required",
+      "kind": "vacancy"
     },
     {
       "id": "v4",
-      "text": "automated frontend testing preferred"
+      "text": "automated frontend testing preferred",
+      "kind": "vacancy"
     }
   ],
   "required_paths": [
-    "match_score",
     "verdict",
     "matched_requirements",
     "gaps",
@@ -66,6 +73,8 @@
     "v3",
     "v4"
   ],
+  "required_unverified_evidence_ids": [],
+  "required_caveat_evidence_ids": [],
   "grounding_requirements": [
     {
       "id": "react",
@@ -109,17 +118,56 @@
       ]
     }
   ],
-  "generated_numeric_paths": [
-    "$.match_score"
+  "generated_numeric_paths": [],
+  "match_requirements": [
+    {
+      "requirement_id": "v1",
+      "importance": "mandatory",
+      "weight": 2,
+      "expected_status": "matched",
+      "candidate_evidence_ids": [
+        "c1"
+      ]
+    },
+    {
+      "requirement_id": "v2",
+      "importance": "mandatory",
+      "weight": 2,
+      "expected_status": "matched",
+      "candidate_evidence_ids": [
+        "c2"
+      ]
+    },
+    {
+      "requirement_id": "v3",
+      "importance": "mandatory",
+      "weight": 2,
+      "expected_status": "gap",
+      "candidate_evidence_ids": [
+        "c4"
+      ]
+    },
+    {
+      "requirement_id": "v4",
+      "importance": "preferred",
+      "weight": 1,
+      "expected_status": "matched",
+      "candidate_evidence_ids": [
+        "c3"
+      ]
+    }
   ],
   "manual_rubric": [
-    "Transparent score rationale",
-    "No invented framework experience",
-    "Useful next action"
+    "Every requirement is classified exactly once",
+    "Mandatory Next.js gap stays explicit",
+    "Testing evidence is treated as a preferred match, not a gap",
+    "Recommendation is useful without an LLM-generated percentage"
   ],
   "tags": [
     "match",
     "en",
-    "explainability"
+    "explainability",
+    "deterministic-score",
+    "contract-v2"
   ]
 }
