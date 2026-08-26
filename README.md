@@ -1,21 +1,21 @@
 # AI Career Agent
 
 <!-- ACA-CANONICAL-STATUS:START -->
-## Каноническое состояние — 2026-08-25
+## Каноническое состояние — 2026-08-26
 
 | Поле | Значение |
 |---|---|
 | Production schema | `20260819_0014` |
 | Последний завершённый пакет | `SEARCH-005` |
-| Текущий пакет | `AI-BENCH-001` — stability hotfix r3; НУЖНА ПОВТОРНАЯ ПРОВЕРКА GITHUB ACTIONS |
-| Причина run #196 | GitHub upload сохранил live workflow как extensionless `.github/workflows/ai-bench-live`, поэтому executable `.yml` отсутствовал |
-| Исправлено | billable live job перенесён в существующий `.github/workflows/ci.yml`; отдельный workflow-файл больше не является зависимостью |
-| Локально подтверждено | 298 passed, 14 environment-dependent skips; deterministic AI-BENCH, YAML structure, repository/document/infra gates PASS |
+| Текущий пакет | `AI-BENCH-001` — stability hotfix r4; НУЖНА ПОВТОРНАЯ ПРОВЕРКА GITHUB ACTIONS |
+| Причина run #201 | GitHub отклонил `ci.yml` до запуска jobs: `${{ runner.temp }}` использовался в `jobs.ai-bench-yandex-live.env`, где контекст `runner` недоступен |
+| Исправлено | `AI_BENCH_OUTPUT_DIR=/tmp/ai-bench-yandex-live`; package gate теперь локально парсит workflow и отклоняет недопустимые context roots в job-level `env` |
+| Локально подтверждено | 301 passed, 14 environment-dependent skips, 8 subtests; deterministic AI-BENCH, workflow semantic guard, repository/document gates PASS |
 | Следующий gate | green ordinary CI; затем manual `CI` workflow с `run_ai_bench_live=true` и review artifact/manual rubric |
 | Следующий пакет | `AI-PROVIDER-001`, заблокирован до завершения AI-BENCH-001 |
-| Канонические документы | PLAN `v1.4.36`, PROJECT PASSPORT `v2.50`, SOURCE AUDIT `v1.4.36`, AI-BENCH verification `v1.4` |
+| Канонические документы | PLAN `v1.4.37`, PROJECT PASSPORT `v2.51`, SOURCE AUDIT `v1.4.37`, AI-BENCH verification `v1.5` |
 
-`evals 1.1.2` устраняет зависимость от нового workflow filename. Обычные push/PR запускают прежние package gates; live Yandex job доступен только через `workflow_dispatch`, имеет boolean-confirmation и зависит от успешных `Python tests` и `AI-BENCH-001 package gate`. Credentials остаются только в GitHub Actions Secrets; Flask routes, production dependencies, database schema и Render runtime не изменялись.
+`evals 1.1.3` сохраняет integrated manual Yandex job и устраняет GitHub workflow-parse blocker до runner allocation. Credentials остаются только в GitHub Actions Secrets; Flask routes, production dependencies, database schema и Render runtime не изменялись.
 <!-- ACA-CANONICAL-STATUS:END -->
 
 ## 1. Назначение
@@ -40,7 +40,7 @@ AI Career Agent — Flask/Gunicorn web-service карьерного сопров
 
 ## 3. AI-BENCH-001 live Yandex candidate
 
-`evals 1.1.2` сохраняет изолированный comparative benchmark и делает запуск устойчивым к browser upload:
+`evals 1.1.3` сохраняет изолированный comparative benchmark и делает запуск устойчивым к browser upload:
 
 - Alice AI LLM, Alice AI LLM Flash и YandexGPT Pro 5.1;
 - Yandex OpenAI-compatible endpoint с `Api-Key` + `OpenAI-Project`;
@@ -50,7 +50,7 @@ AI Career Agent — Flask/Gunicorn web-service карьерного сопров
 - на push/pull request live job всегда пропускается;
 - на ручном запуске он выполняется только при `run_ai_bench_live=true` и только после успешных jobs `tests` и `ai-bench-001`;
 - sanitized artifact загружается через `actions/upload-artifact@v7`;
-- runtime output создаётся в `${{ runner.temp }}`, а не в repository checkout.
+- runtime output создаётся в `/tmp/ai-bench-yandex-live`, вне repository checkout.
 
 Перед загрузкой:
 

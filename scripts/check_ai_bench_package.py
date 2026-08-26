@@ -9,6 +9,7 @@ import sys
 import tempfile
 from pathlib import Path
 
+
 ROOT = Path(__file__).resolve().parents[1]
 REQUIRED_VISIBLE = [
     "evals/README.md",
@@ -31,6 +32,10 @@ REQUIRED_REPOSITORY = [
     "scripts/check_ai_bench_live_result.py",
 ]
 REQUIRED = [*REQUIRED_VISIBLE, *REQUIRED_REPOSITORY]
+EXPRESSION_RE = re.compile(r"\$\{\{\s*(.*?)\s*\}\}")
+CONTEXT_REF_RE = re.compile(r"\b([A-Za-z_][A-Za-z0-9_-]*)\.")
+JOB_ENV_ALLOWED_CONTEXTS = {"github", "needs", "strategy", "matrix", "vars", "secrets", "inputs"}
+
 SECRET_PATTERNS = [
     re.compile(r"\bsk-[A-Za-z0-9_-]{12,}\b"),
     re.compile(r"(?i)authorization\s*[:=]\s*bearer\s+(?!\[REDACTED\])\S+"),
@@ -40,6 +45,70 @@ SECRET_PATTERNS = [
 
 def fail(message: str) -> None:
     raise SystemExit(f"AI-BENCH-001 gate failed: {message}")
+
+
+def validate_job_level_env_contexts(workflow_path: Path) -> None:
+    """Reject contexts unavailable in jobs.<job_id>.env using stdlib only.
+
+    The dedicated AI-BENCH job intentionally installs no dependencies before
+    running this checker. GitHub job-level ``env`` is indented four spaces
+    under a two-space job key, while step/container env blocks are deeper.
+    """
+    lines = workflow_path.read_text(encoding="utf-8").splitlines()
+    in_jobs = False
+    current_job: str | None = None
+    in_job_env = False
+    violations: list[str] = []
+
+    for line in lines:
+        stripped = line.strip()
+        if not stripped or stripped.startswith("#"):
+            continue
+        indent = len(line) - len(line.lstrip(" "))
+
+        if indent == 0 and stripped == "jobs:":
+            in_jobs = True
+            current_job = None
+            in_job_env = False
+            continue
+        if in_jobs and indent == 0:
+            in_jobs = False
+            current_job = None
+            in_job_env = False
+
+        if not in_jobs:
+            continue
+
+        job_match = re.match(r"^  ([A-Za-z0-9_-]+):\s*$", line)
+        if job_match:
+            current_job = job_match.group(1)
+            in_job_env = False
+            continue
+
+        if current_job and indent == 4 and stripped == "env:":
+            in_job_env = True
+            continue
+
+        if in_job_env and indent <= 4:
+            in_job_env = False
+
+        if not in_job_env or indent < 6:
+            continue
+
+        env_match = re.match(r"^\s{6}([A-Za-z_][A-Za-z0-9_]*):\s*(.*)$", line)
+        if not env_match:
+            continue
+        env_name, value = env_match.groups()
+        for expression in EXPRESSION_RE.findall(value):
+            roots = set(CONTEXT_REF_RE.findall(expression))
+            disallowed = sorted(roots - JOB_ENV_ALLOWED_CONTEXTS)
+            if disallowed:
+                violations.append(
+                    f"jobs.{current_job}.env.{env_name}: unsupported contexts {disallowed}"
+                )
+
+    if violations:
+        fail("invalid job-level env context usage: " + "; ".join(violations))
 
 
 def main() -> int:
@@ -58,10 +127,12 @@ def main() -> int:
         fail(f"missing required files: {missing}")
 
     version = (ROOT / "evals/VERSION").read_text(encoding="utf-8").strip()
-    if version != "1.1.2":
+    if version != "1.1.3":
         fail(f"unexpected evals version: {version}")
 
-    workflow = (ROOT / ".github/workflows/ci.yml").read_text(encoding="utf-8")
+    workflow_path = ROOT / ".github/workflows/ci.yml"
+    validate_job_level_env_contexts(workflow_path)
+    workflow = workflow_path.read_text(encoding="utf-8")
     required_workflow_fragments = [
         "workflow_dispatch:",
         "run_ai_bench_live:",
@@ -77,6 +148,7 @@ def main() -> int:
         "uses: actions/upload-artifact@v7",
         "timeout-minutes: 45",
         "group: ai-bench-001-yandex-live",
+        "AI_BENCH_OUTPUT_DIR: /tmp/ai-bench-yandex-live",
     ]
     missing_workflow_fragments = [
         fragment for fragment in required_workflow_fragments if fragment not in workflow

@@ -1,3 +1,13 @@
+## 2026-08-26 — AI-BENCH-001 stability hotfix r4 / evals 1.1.3
+
+- Audited the exact GitHub ZIP after run `#201`.
+- Confirmed GitHub rejected the workflow before any job ran because `${{ runner.temp }}` was referenced from `jobs.ai-bench-yandex-live.env`, where the `runner` context is unavailable.
+- Replaced the output path with runner-local `/tmp/ai-bench-yandex-live`.
+- Added a dependency-free package check for context roots in every job-level `env`, plus positive/negative regression tests.
+- Re-ran all repository test modules in bounded groups: 301 passed, 14 environment-dependent skips, 8 subtests; package/hygiene/document/compile checks pass locally.
+- Restored benchmark runtime ignore rules; they remain non-gating for browser-upload compatibility.
+- GitHub Secrets remain external to code; production routes/dependencies/migrations are unchanged and revision remains `20260819_0014`.
+
 ## 2026-08-25 — AI-BENCH-001 stability hotfix r3 / evals 1.1.2
 
 - Audited the exact GitHub ZIP after run `#196`.

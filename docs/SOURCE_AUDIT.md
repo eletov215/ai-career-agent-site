@@ -1,104 +1,106 @@
-# AI Career Agent — аудит источников v1.4.36
+# AI Career Agent — аудит источников v1.4.37
+
+<!-- ACA-CANONICAL-STATUS:START -->
+## Канонический аудит — 2026-08-26
 
 | Поле | Значение |
 |---|---|
 | Документ | SOURCE_AUDIT |
-| Версия | 1.4.36 |
-| Дата | 25 августа 2026 |
-| Проверяемый пакет | AI-BENCH-001 stability hotfix r3 |
+| Версия | 1.4.37 |
+| Проверяемый пакет | AI-BENCH-001 stability hotfix r4 |
+| Исходный код | `ai-career-agent-site-eletov215-patch-1 (1).zip`, актуальный GitHub archive после run #201 |
 | Production revision | `20260819_0014` |
-| Статус | НУЖНА ПОВТОРНАЯ ПРОВЕРКА GITHUB ACTIONS |
+| Результат | workflow-context defect локализован и исправлен; ordinary GitHub CI требуется повторить |
 
-<!-- ACA-CANONICAL-STATUS:START -->
-## Актуальный source audit
-
-Источником кода является предоставленный пользователем ZIP `ai-career-agent-site-eletov215-patch-1.zip`, экспортированный из GitHub после run `#196`. В нём подтверждена точная причина обоих CI failures: файл с live workflow содержимым существовал как `.github/workflows/ai-bench-live` без расширения, тогда как tests/package gate требовали `.github/workflows/ai-bench-live.yml`.
-
-Сравнение с поставкой v1.4.35 показало: количество файлов одинаковое; единственная path-разница — потерянное расширение workflow; `.gitignore` не получил три строки artifact policy. Production Python, migrations, requirements и user routes совпадают.
+Run #201 не является regression предыдущих product packages: GitHub rejected workflow definition before any runner/job/step executed. GitHub annotation points to `.github/workflows/ci.yml` line 384 and `Unrecognized named-value: 'runner'`.
 <!-- ACA-CANONICAL-STATUS:END -->
 
 ## 1. Root cause
 
-GitHub Actions исполняет workflow только из YAML-файлов в `.github/workflows`. Extensionless file не являлся workflow. Одновременно:
+В job `ai-bench-yandex-live` было:
 
-- `tests/test_ai_bench_package_layout.py` пытался прочитать отсутствующий `.yml` и падал `FileNotFoundError`;
-- `scripts/check_ai_bench_package.py` считал тот же path обязательным и завершался до deterministic run.
+```yaml
+env:
+  AI_BENCH_OUTPUT_DIR: ${{ runner.temp }}/ai-bench-yandex-live
+```
 
-Это один packaging/layout defect, а не два независимых functional regressions.
+Официальная GitHub context availability table разрешает для `jobs.<job_id>.env` только `github`, `needs`, `strategy`, `matrix`, `vars`, `secrets`, `inputs`. `runner` доступен уже внутри step-level contexts, но не в job-level `env`. Поэтому GitHub отклонял весь workflow до запуска `Python tests` и `AI-BENCH-001 package gate`.
 
-## 2. Stability correction
+GitHub Secrets `AI_BENCH_YANDEX_API_KEY` и `AI_BENCH_YANDEX_FOLDER_ID` не являются причиной этого failure: их значения не выводятся в код/логи, а run #201 остановлен до выполнения steps.
 
-`evals 1.1.2` больше не требует отдельного live workflow filename:
+## 2. Stability correction r4
 
-- `workflow_dispatch` input `run_ai_bench_live` добавлен в существующий `.github/workflows/ci.yml`;
-- job `ai-bench-yandex-live` встроен в тот же workflow;
-- default input — `false`;
-- job condition разрешает запуск только при manual dispatch и explicit `true`;
-- `needs: tests, ai-bench-001` не позволяет обращаться к Yandex до успешного завершения всех исторических package gates;
-- concurrency group предотвращает параллельные billable runs;
-- secrets используются только через GitHub Actions Secrets;
-- artifact upload использует `actions/upload-artifact@v7`;
-- package gate и unit tests проверяют integrated contract.
+Исправлено:
 
-Clean full archive удаляет extensionless stale file. Patch-only не зависит от его удаления: если он останется в GitHub, checker выдаст только warning, а executable job берётся из `ci.yml`.
+```yaml
+env:
+  AI_BENCH_OUTPUT_DIR: /tmp/ai-bench-yandex-live
+```
+
+Дополнительно:
+
+- `evals/VERSION` -> `1.1.3`;
+- `scripts/check_ai_bench_package.py` выполняет dependency-free structural scan `.github/workflows/ci.yml`;
+- package checker локально валидирует context roots внутри `jobs.<job_id>.env` и fail-closed отклоняет `runner/job/steps/env` там, где GitHub их не разрешает;
+- `tests/test_ai_bench_package_layout.py` содержит positive test текущего workflow и negative regression fixture с `${{ runner.temp }}`;
+- `.gitignore` снова исключает local/live benchmark runtime evidence, но package gate не зависит от hidden files;
+- live job остаётся manual-only, default-off, зависит от `tests` и `ai-bench-001`, uses GitHub Secrets and uploads only sanitized evidence.
 
 ## 3. Regression evidence
 
-Локально подтверждены:
+Локально на exact updated tree подтверждены:
 
-- AI-BENCH package gate: PASS;
-- AI-BENCH unit tests: 20 passed;
-- all available test modules in bounded groups: 298 passed;
-- environment-dependent skips: 14 (Flask/Psycopg/PostgreSQL/Docker unavailable locally);
-- search pagination: 20 passed;
-- remaining source/sync/vacancy regression: 44 passed;
-- core data/auth/profile/privacy/non-route regression: 140 passed, 2 skips;
-- provider/repository/resume/search regression: 74 passed;
-- repository hygiene: PASS after cleanup;
-- document structure and YAML parse: PASS.
+- AI-BENCH deterministic package gate: PASS;
+- AI-BENCH unit discovery: 23 passed;
+- targeted SYNC/SEARCH/package/hygiene regression: 41 passed;
+- all 59 test modules executed in bounded groups: **301 passed, 14 environment-dependent skips, 8 subtests passed**;
+- repository hygiene: PASS after generated-cache cleanup;
+- document structure: PASS;
+- Python compileall: PASS.
 
-The external GitHub workflow remains authoritative for Flask route gates, PostgreSQL service integration, Docker build/smoke, encrypted PostgreSQL restore and the complete historical CI matrix.
+Fourteen skips are not promoted to PASS: they require Flask/Psycopg/PostgreSQL service conditions supplied by GitHub Actions. The external workflow remains authoritative for PostgreSQL integration, Docker build/smoke, encrypted restore and the complete route matrix.
 
 ## 4. Changed files
 
-Functional/CI changes:
+Functional/CI changes are limited to:
 
 - `.github/workflows/ci.yml`;
 - `.gitignore`;
 - `evals/VERSION`;
+- `evals/README.md`;
+- `evals/artifacts/README.md`;
 - `scripts/check_ai_bench_package.py`;
 - `tests/test_ai_bench_package_layout.py`.
 
-Repository Markdown canonical documents were synchronized. Clean full package removes `.github/workflows/ai-bench-live`. No production module changed.
+Canonical/repository docs are synchronized separately. No production module, dependency, migration or Render setting changed.
 
 ## 5. Security and isolation
 
-- no API key or Folder ID value is committed;
-- no live request occurs on push or pull request;
-- manual live request is default-off and gated by all ordinary jobs;
-- output remains in `${{ runner.temp }}` and only sanitized evidence is uploaded;
-- no `app.py`, production route, model, repository, service, dependency or migration change;
-- production revision remains `20260819_0014`.
+- API key and Folder ID values remain only in GitHub Actions Secrets;
+- no live AI request occurs on push or pull_request;
+- manual live run is default-off;
+- benchmark output is runner-local `/tmp/ai-bench-yandex-live`;
+- production revision remains `20260819_0014`;
+- `app.py`, routes, models, repositories, production services and migrations are unchanged.
 
 ## 6. Current gate
 
-1. Upload hotfix r3.
-2. Require green `Python tests` and `AI-BENCH-001 package gate`, including all historical steps.
-3. Open `Actions -> CI -> Run workflow` and set `run_ai_bench_live=true`.
-4. Download the sanitized artifact and complete the human rubric.
+1. Upload stability hotfix r4.
+2. Require green `Python tests` and `AI-BENCH-001 package gate`, including historical package steps.
+3. Only after green ordinary CI run `Actions -> CI -> Run workflow -> run_ai_bench_live=true`.
+4. Download sanitized artifact and complete the human writing-quality rubric.
 
 ## 7. Status decision
 
-`AI-BENCH-001 stability hotfix r3` — **НУЖНА ПОВТОРНАЯ ПРОВЕРКА GITHUB ACTIONS**.  
-Completed packages remain completed, subject to regression confirmation.  
+`AI-BENCH-001 stability hotfix r4` — **НУЖНА ПОВТОРНАЯ ПРОВЕРКА GITHUB ACTIONS**.  
+Previously completed packages remain **ВЫПОЛНЕНО** unless the rerun exposes a real regression.  
 `AI-PROVIDER-001` remains **ЗАБЛОКИРОВАН**.
 
 ## 8. Version log
 
 | Версия | Дата | Изменение |
 |---|---|---|
-| 1.4.32 | 24.08.2026 | Initial AI-BENCH implementation candidate. |
-| 1.4.33 | 24.08.2026 | Scalar-leaf unsupported-number scorer hotfix. |
 | 1.4.34 | 25.08.2026 | Live Yandex manual workflow candidate. |
 | 1.4.35 | 25.08.2026 | Fixed calendar-dependent SYNC assertions and browser-upload dotfile dependency. |
-| 1.4.36 | 25.08.2026 | Run #196 audited; eliminated separate workflow filename dependency by integrating manual live job into existing `ci.yml`. |
+| 1.4.36 | 25.08.2026 | Integrated manual live job into existing `ci.yml` after run #196 filename defect. |
+| 1.4.37 | 26.08.2026 | Run #201 workflow parse defect fixed: removed illegal `runner` context from job-level env and added local context validation. |

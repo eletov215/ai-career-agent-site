@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import runpy
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -46,6 +47,36 @@ class PackageLayoutTests(unittest.TestCase):
         self.assertNotIn("uses: actions/upload-artifact@v4", workflow)
         self.assertIn("timeout-minutes: 45", workflow)
         self.assertIn("group: ai-bench-001-yandex-live", workflow)
+        self.assertIn("AI_BENCH_OUTPUT_DIR: /tmp/ai-bench-yandex-live", workflow)
+        self.assertNotIn("AI_BENCH_OUTPUT_DIR: ${{ runner.temp", workflow)
+
+    def test_job_level_env_context_validator_rejects_runner_context(self) -> None:
+        namespace = runpy.run_path(str(ROOT / "scripts/check_ai_bench_package.py"))
+        validate = namespace["validate_job_level_env_contexts"]
+        with tempfile.TemporaryDirectory() as tmp:
+            workflow = Path(tmp) / "bad.yml"
+            workflow.write_text(
+                "name: bad\n'on': push\njobs:\n  bad:\n    runs-on: ubuntu-latest\n    env:\n      OUT: ${{ runner.temp }}/x\n    steps:\n      - run: echo ok\n",
+                encoding="utf-8",
+            )
+            with self.assertRaises(SystemExit):
+                validate(workflow)
+
+    def test_job_level_env_context_validator_allows_runner_in_step_env(self) -> None:
+        namespace = runpy.run_path(str(ROOT / "scripts/check_ai_bench_package.py"))
+        validate = namespace["validate_job_level_env_contexts"]
+        with tempfile.TemporaryDirectory() as tmp:
+            workflow = Path(tmp) / "good.yml"
+            workflow.write_text(
+                "name: good\n'on': push\njobs:\n  ok:\n    runs-on: ubuntu-latest\n    steps:\n      - name: allowed\n        env:\n          OUT: ${{ runner.temp }}/x\n        run: echo \"$OUT\"\n",
+                encoding="utf-8",
+            )
+            validate(workflow)
+
+    def test_current_workflow_job_env_contexts_are_valid(self) -> None:
+        namespace = runpy.run_path(str(ROOT / "scripts/check_ai_bench_package.py"))
+        validate = namespace["validate_job_level_env_contexts"]
+        validate(ROOT / ".github/workflows/ci.yml")
 
     def test_visible_artifact_scaffold_exists(self) -> None:
         readme = ROOT / "evals/artifacts/README.md"

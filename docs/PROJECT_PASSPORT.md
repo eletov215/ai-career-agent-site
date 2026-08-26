@@ -6,34 +6,34 @@
 <!-- ACA-CANONICAL-STATUS:START -->
 ## Канонический срез проекта
 
-**Документ:** AI Career Agent PROJECT_PASSPORT `v2.50`  
-**Дата:** 2026-08-25  
+**Документ:** AI Career Agent PROJECT_PASSPORT `v2.51`  
+**Дата:** 2026-08-26  
 **Production revision:** `20260819_0014`
 
 | Контур | Состояние |
 |---|---|
-| Web | Flask + Gunicorn, WSGI `app:app`; production code в hotfix r3 не менялся |
+| Web | Flask + Gunicorn, WSGI `app:app`; production code в hotfix r4 не менялся |
 | Data | PostgreSQL production, SQLite local/test fallback, Alembic `20260819_0014` |
 | Identity/career/search/privacy | завершённые пакеты сохраняют статус ВЫПОЛНЕНО; их CI gates остаются в job `tests` |
-| AI benchmark | `evals 1.1.2`; live Yandex job встроен в существующий `CI` workflow |
-| Manual safety | `run_ai_bench_live=false` по умолчанию; API run возможен только через workflow_dispatch и после green `tests` + `ai-bench-001` |
-| CI incident | GitHub run #196: executable `.yml` отсутствовал, а YAML был сохранён extensionless file |
-| Fix | eliminated separate workflow filename dependency; no route/schema/runtime change |
+| AI benchmark | `evals 1.1.3`; live Yandex job встроен в existing `CI` workflow |
+| Manual safety | `run_ai_bench_live=false` по умолчанию; API run возможен только после green `tests` + `ai-bench-001` |
+| CI incident | GitHub run #201: workflow validation failed before runner allocation because `runner.temp` was used in job-level `env` |
+| Fix | output path `/tmp/ai-bench-yandex-live` + local job-env context validator/regression tests |
 | Production AI | отсутствует; provider decision не принят |
 
 ### Decision boundary
 
-Hotfix r3 меняет только CI/eval packaging. Он не подключает Alice AI к сайту и не открывает завершённые production packages. `AI-PROVIDER-001` остаётся заблокирован до green CI, live comparative artifact и human rubric.
+Hotfix r4 меняет только CI/eval packaging и документацию. Он не подключает Alice AI к сайту и не открывает завершённые production packages. `AI-PROVIDER-001` остаётся заблокирован до green CI, live comparative artifact и human rubric.
 <!-- ACA-CANONICAL-STATUS:END -->
 
 | Поле | Значение |
 |---|---|
 | Документ        | PROJECT_PASSPORT                                                                              |
-| Версия паспорта | 2.50 |
-| Дата            | 25 августа 2026                                                                               |
+| Версия паспорта | 2.51 |
+| Дата            | 26 августа 2026                                                                               |
 | Статус          | ДЕЙСТВУЮЩИЙ                                                                                   |
-| Связанный план | `AI_Career_Agent_PLAN_CURRENT v1.4.36` |
-| Основа кода | GitHub archive `ai-career-agent-site-eletov215-patch-1.zip` after run #196; workflow-layout hotfix r3 prepared |
+| Связанный план | `AI_Career_Agent_PLAN_CURRENT v1.4.37` |
+| Основа кода | GitHub archive `ai-career-agent-site-eletov215-patch-1 (1).zip` after run #201; workflow-context hotfix r4 prepared |
 
 > Контрольные статусы: FND/DATA/SEC/OPS/INFRA-PREP/SYNC/SEARCH-001..005/AUTH/PROF/PRIV - ВЫПОЛНЕНО; AI-BENCH-001 - НУЖНА ПРОВЕРКА; AI-PROVIDER-001 - ЗАБЛОКИРОВАНО; DOC-001 - В РАБОТЕ; INFRA-001 - ОТЛОЖЕНО.
 
@@ -532,6 +532,7 @@ SEARCH-005 — ВЫПОЛНЕНО. AI-BENCH-001 stability hotfix r3 требуе
 | 2.42 | 19.08.2026 | PRIV-001 hardened candidate after second privacy/security audit: re-authenticated consistent export, bounds/safe paths/sanitizer, delete concurrency locks, orphan asset cleanup and worker lock/heartbeat; external gate pending. |
 | 2.46 | 19.08.2026 | PRIV-001 completed after green CI/hotfix r1, Render `0013`, healthy privacy worker, export/asset/secret scan, destructive throwaway deletion, owner isolation, restart/regression/log review. SEARCH-005 ready next. |
 | 2.47 | 24.08.2026 | AI-BENCH-001 candidate v1.4.32 rejected by CI because root containers were scanned by unsupported-number gate; hotfix r1 scans scalar leaves only, adds regression tests and awaits repeat GitHub Actions. |
+| 2.51 | 26.08.2026 | GitHub run #201 was rejected before runner allocation because `runner.temp` was referenced from `jobs.ai-bench-yandex-live.env`. Hotfix r4 uses `/tmp/ai-bench-yandex-live`, adds local job-env context validation/regression coverage, and keeps production revision `20260819_0014` unchanged. |
 
 
 ## SEARCH-005 architecture addendum (historical)
@@ -563,3 +564,8 @@ SEARCH-005 — ВЫПОЛНЕНО. AI-BENCH-001 stability hotfix r3 требуе
 | Версия | Дата | Изменение |
 |---|---|---|
 | 2.50 | 25.08.2026 | Audited GitHub run #196 and the exact uploaded ZIP. The separate live workflow lost its `.yml` suffix while all production files remained unchanged. The billable Yandex job is now integrated into `ci.yml`, manual-only, default-off, concurrent-run protected, and dependent on all ordinary CI gates. |
+### PROJECT_PASSPORT v2.51 update
+
+| Версия | Дата | Изменение |
+|---|---|---|
+| 2.51 | 26.08.2026 | GitHub run #201 was rejected before runner allocation because `runner.temp` was referenced from `jobs.ai-bench-yandex-live.env`. Hotfix r4 uses `/tmp/ai-bench-yandex-live`, adds local job-env context validation/regression coverage, and keeps production revision `20260819_0014` unchanged. |

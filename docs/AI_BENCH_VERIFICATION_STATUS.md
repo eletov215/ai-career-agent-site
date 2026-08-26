@@ -3,112 +3,75 @@
 | Поле | Значение |
 |---|---|
 | Документ | AI_BENCH_VERIFICATION_STATUS |
-| Версия | 1.4 |
-| Дата | 25 августа 2026 |
-| Пакет | AI-BENCH-001 stability hotfix r3 |
+| Версия | 1.5 |
+| Дата | 26 августа 2026 |
+| Пакет | AI-BENCH-001 stability hotfix r4 |
 | Статус | НУЖНА ПОВТОРНАЯ ПРОВЕРКА GITHUB ACTIONS |
 | Production revision | `20260819_0014` |
 
 ## 1. External failure evidence
 
-GitHub run `#196` failed in two jobs with the same missing path:
+GitHub run `#201` failed before jobs started. Annotation:
 
 ```text
-.github/workflows/ai-bench-live.yml
+Invalid workflow file: .github/workflows/ci.yml#L1
+Line: 384, Col: 28
+Unrecognized named-value: 'runner'
 ```
 
-`Python tests` raised `FileNotFoundError` in `test_live_workflow_uses_node24_artifact_action`. The dedicated package gate reported the same path as a missing required file.
+The referenced line was:
 
-The uploaded ZIP contains the complete YAML content under:
-
-```text
-.github/workflows/ai-bench-live
+```yaml
+AI_BENCH_OUTPUT_DIR: ${{ runner.temp }}/ai-bench-yandex-live
 ```
 
-Therefore the failure is a filename/upload-layout defect. It does not show a failure in SYNC, SEARCH, AUTH, PROF, PRIV or production runtime.
+This is a workflow-definition error, not a failing application test. No `Python tests`, package gate, provider request or production route executed.
 
-## 2. Architectural correction
+## 2. Verified rule
 
-The live job is moved into the already established `.github/workflows/ci.yml`:
+GitHub's context availability table for `jobs.<job_id>.env` allows `github`, `needs`, `strategy`, `matrix`, `vars`, `secrets`, `inputs`. It does not allow `runner`. The `runner` context is valid at step level after a runner exists.
 
-```text
-workflow_dispatch input: run_ai_bench_live (boolean, default false)
-job: ai-bench-yandex-live
-condition: manual dispatch + explicit true
-needs: tests, ai-bench-001
-concurrency: ai-bench-001-yandex-live
+## 3. Correction
+
+Hotfix r4 changes the job-level output path to:
+
+```yaml
+AI_BENCH_OUTPUT_DIR: /tmp/ai-bench-yandex-live
 ```
 
-Consequences:
-
-- no extra workflow file must survive browser upload;
-- normal push/PR behavior remains unchanged;
-- the first Yandex API request cannot occur until all previous package gates pass;
-- users must explicitly opt into the billable live run;
-- concurrent billable runs are not started.
-
-## 3. Package contract
-
-`evals 1.1.2` requires `.github/workflows/ci.yml`, not a newly added workflow file. The gate verifies the manual input, job condition, dependencies, secret references, timeout, concurrency and `actions/upload-artifact@v7`.
-
-A legacy extensionless `.github/workflows/ai-bench-live` is ignored with a warning for patch compatibility. The clean full project removes it.
+`evals` is `1.1.3`. The package checker now parses the workflow and rejects unsupported context roots in job-level `env`. Regression tests prove a fixture with `${{ runner.temp }}` is rejected while the current workflow passes.
 
 ## 4. Local verification
 
-| Проверка | Результат |
-|---|---|
-| Deterministic AI-BENCH package gate | PASS |
-| AI-BENCH unittest discovery | 20 passed |
-| Package-layout regression | PASS |
-| Current CI YAML parse | PASS |
-| Available project test matrix | 298 passed, 14 environment-dependent skips |
-| Search pagination | 20 passed |
-| Source/sync/vacancy regression | 44 passed |
-| Core data/auth/profile/privacy regression | 140 passed, 2 skips |
-| Provider/repository/resume/search regression | 74 passed |
-| Repository hygiene | PASS |
-| Document structure | PASS |
+- deterministic AI-BENCH package gate: PASS;
+- AI-BENCH unit tests: 23 passed;
+- targeted current-package/SYNC/SEARCH/hygiene regression: 41 passed;
+- all repository test modules in bounded groups: 301 passed, 14 environment-dependent skips, 8 subtests;
+- repository hygiene after cleanup: PASS;
+- document structure: PASS;
+- compileall: PASS.
 
-Local environment lacks Flask, Psycopg/PostgreSQL and Docker. Those gates are not declared locally passed and remain mandatory in GitHub Actions.
+## 5. Security
 
-## 5. Production boundary
+GitHub Secret values are not committed. The live benchmark remains manual-only and default-off. The output path is runner-local `/tmp`; sanitized evidence is uploaded only after an explicit live run. Production Flask code and database revision are unchanged.
 
-No changes were made to:
+## 6. Remaining external gate
 
-```text
-app.py
-config.py
-routes/
-models/
-repositories/
-production services
-requirements.txt
-migrations/
-Render configuration
-```
-
-Production schema remains `20260819_0014`. No production AI route exists.
-
-## 6. Next external gate
-
-1. Upload hotfix r3.
-2. Confirm the normal `CI` run is fully green.
-3. Open `Actions -> CI -> Run workflow`.
-4. Set `run_ai_bench_live=true`.
-5. Review the artifact and complete the human rubric.
+1. Upload r4.
+2. Ordinary GitHub CI must be fully green.
+3. Then run `CI` manually with `run_ai_bench_live=true`.
+4. Review sanitized artifact and fill the human rubric.
 
 ## 7. Status decision
 
-**AI-BENCH-001 remains open.** Hotfix r3 is locally verified but requires clean GitHub Actions evidence and then the live comparative run.
-
+`AI-BENCH-001` remains **НУЖНА ПРОВЕРКА** until those external gates are complete.  
 `AI-PROVIDER-001` remains **ЗАБЛОКИРОВАН**.
 
 ## 8. Version log
 
 | Версия | Дата | Изменение |
 |---|---|---|
-| 1.0 | 24.08.2026 | Initial benchmark implementation candidate and external-run gate. |
-| 1.1 | 24.08.2026 | Scalar-leaf numeric scorer correction prepared. |
-| 1.2 | 25.08.2026 | Scorer hotfix CI green; Yandex live candidate prepared. |
-| 1.3 | 25.08.2026 | Fixed SYNC calendar dependency and browser-upload dotfile dependency. |
-| 1.4 | 25.08.2026 | Run #196 audited; integrated live job into existing `ci.yml` to remove separate workflow filename dependency. |
+| 1.2 | 25.08.2026 | Live Yandex candidate after green scorer hotfix. |
+| 1.3 | 25.08.2026 | Stability r2 after run #192. |
+| 1.4 | 25.08.2026 | Stability r3 after run #196 workflow filename defect. |
+| 1.5 | 26.08.2026 | Stability r4 after run #201 invalid job-level `runner` context. |

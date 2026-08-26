@@ -6,30 +6,30 @@
 <!-- ACA-CANONICAL-STATUS:START -->
 ## Канонический статус плана
 
-**Документ:** AI Career Agent PLAN_CURRENT `v1.4.36`  
-**Дата:** 2026-08-25  
+**Документ:** AI Career Agent PLAN_CURRENT `v1.4.37`  
+**Дата:** 2026-08-26  
 **Production revision:** `20260819_0014`  
-**Текущий пакет:** `AI-BENCH-001 - STABILITY HOTFIX R3; НУЖНА ПОВТОРНАЯ ПРОВЕРКА GITHUB ACTIONS`
+**Текущий пакет:** `AI-BENCH-001 - STABILITY HOTFIX R4; НУЖНА ПОВТОРНАЯ ПРОВЕРКА GITHUB ACTIONS`
 
-### GitHub evidence после загрузки v1.4.35
+### GitHub evidence после загрузки v1.4.36
 
-- run `#196` снова остановил `Python tests` и `AI-BENCH-001 package gate` по одной общей причине: `.github/workflows/ai-bench-live.yml` отсутствовал;
-- в фактическом ZIP из GitHub находился файл `.github/workflows/ai-bench-live` без расширения, с корректным YAML-содержимым;
-- сравнение с поставкой v1.4.35 показало, что остальные 377 файлов совпадают, кроме не применившихся строк `.gitignore`; production code regression не найден.
+- run `#201` не запустил ни один job: GitHub остановил workflow на parse/validation этапе;
+- annotation указывает `.github/workflows/ci.yml`, line 384: `Unrecognized named-value: 'runner'`;
+- причина - `${{ runner.temp }}` находился в `jobs.ai-bench-yandex-live.env`; официальный GitHub context table для `jobs.<job_id>.env` разрешает `github/needs/strategy/matrix/vars/secrets/inputs`, но не `runner`;
+- изменение GitHub Secrets/Environment не является причиной этого сбоя: workflow был отклонён до выделения runner и до чтения steps.
 
-### Stability hotfix r3
+### Stability hotfix r4
 
-- отдельный live workflow больше не требуется;
-- billable job `ai-bench-yandex-live` встроен в существующий `.github/workflows/ci.yml`;
-- push/pull_request сохраняют обычный CI: live job имеет job-level condition и пропускается;
-- ручной запуск требует boolean `run_ai_bench_live=true`;
-- live job зависит от `tests` и `ai-bench-001`, поэтому все исторические package gates должны пройти до первого API-запроса;
-- package gate и tests проверяют integrated workflow contract, secrets references, timeout, concurrency и artifact action;
-- legacy extensionless file не является executable dependency; clean full archive его удаляет, patch-only остаётся совместимым даже если stale file сохранится.
+- `AI_BENCH_OUTPUT_DIR` переведён на статический runner-local path `/tmp/ai-bench-yandex-live`;
+- `evals` поднят до `1.1.3`;
+- `scripts/check_ai_bench_package.py` теперь парсит `ci.yml` и локально валидирует context roots в каждом job-level `env`;
+- добавлены positive/negative regression tests для workflow context guard;
+- восстановлена ignore policy для benchmark runtime artifacts, но она не является package-gate dependency;
+- production code, dependencies, routes, migrations и revision не изменены.
 
 ### Текущий gate
 
-Загрузить hotfix r3 и получить полностью green ordinary GitHub CI. Затем открыть `Actions -> CI -> Run workflow`, включить `run_ai_bench_live=true`, скачать sanitized artifact и заполнить human writing-quality rubric. Только после этого разрешён `AI-PROVIDER-001`.
+Загрузить hotfix r4 и получить полностью green ordinary GitHub CI. Затем открыть `Actions -> CI -> Run workflow`, включить `run_ai_bench_live=true`, скачать sanitized artifact и заполнить human writing-quality rubric. Только после этого разрешён `AI-PROVIDER-001`.
 
 ### Очередь
 
@@ -39,25 +39,26 @@
 | Поле | Значение |
 |---|---|
 | Документ | PLAN_CURRENT |
-| Версия | 1.4.36 |
-| Дата | 25 августа 2026 |
+| Версия | 1.4.37 |
+| Дата | 26 августа 2026 |
 | Статус | ДЕЙСТВУЮЩИЙ |
-| Основа кода | пользовательский ZIP `ai-career-agent-site-eletov215-patch-1.zip`, экспортированный из GitHub после run `#196`; stability hotfix r3 подготовлен по фактическому repository layout |
-| Текущий пакет | AI-BENCH-001 stability hotfix r3 - НУЖНА ПОВТОРНАЯ ПРОВЕРКА ordinary CI, затем integrated manual live job/artifact/manual rubric |
+| Основа кода | пользовательский ZIP `ai-career-agent-site-eletov215-patch-1 (1).zip`, экспортированный из GitHub после run `#201`; stability hotfix r4 подготовлен по фактическому repository workflow |
+| Текущий пакет | AI-BENCH-001 stability hotfix r4 - НУЖНА ПОВТОРНАЯ ПРОВЕРКА ordinary CI, затем integrated manual live job/artifact/manual rubric |
 
 > ОБЯЗАТЕЛЬНО ДЛЯ КАЖДОГО НОВОГО ЧАТА: прочитать этот план, новый паспорт и актуальный архив. После завершения любого пункта вернуть обновлённые DOCX/PDF/Markdown, новый ZIP, доказательства проверки и запись в журнале версий.
 
-> КОНТРОЛЬНЫЕ СТАТУСЫ ЭТОЙ ВЕРСИИ: FND-001/FND-002/DATA-001/DATA-002/SEC-001/OPS-001/INFRA-PREP-001/SYNC-001/SYNC-002/SEARCH-001..005/AUTH-001/AUTH-002/PROF-001/PROF-002/PROF-003/PRIV-001 - **ВЫПОЛНЕНО**; `AI-BENCH-001` - **НУЖНА ПРОВЕРКА**; `AI-PROVIDER-001` - **ЗАБЛОКИРОВАНО** до завершения benchmark; `DOC-001` - **В РАБОТЕ**; `INFRA-001` - **ОТЛОЖЕНО ДО ПРЕДРЕЛИЗНОГО ЭТАПА**. Документы ниже `1.4.36` устарели для определения текущего gate.
+> КОНТРОЛЬНЫЕ СТАТУСЫ ЭТОЙ ВЕРСИИ: FND-001/FND-002/DATA-001/DATA-002/SEC-001/OPS-001/INFRA-PREP-001/SYNC-001/SYNC-002/SEARCH-001..005/AUTH-001/AUTH-002/PROF-001/PROF-002/PROF-003/PRIV-001 - **ВЫПОЛНЕНО**; `AI-BENCH-001` - **НУЖНА ПРОВЕРКА**; `AI-PROVIDER-001` - **ЗАБЛОКИРОВАНО** до завершения benchmark; `DOC-001` - **В РАБОТЕ**; `INFRA-001` - **ОТЛОЖЕНО ДО ПРЕДРЕЛИЗНОГО ЭТАПА**. Документы ниже `1.4.37` устарели для определения текущего gate.
 
 ## 1. Источник истины и аудит источников
 
 - GitHub является главным источником актуального кода.
 - Если в текущем чате загружен более новый ZIP, он является рабочей основой этого чата.
 - Канонический план определяется наибольшей версией и датой; старые дубликаты не должны оставаться действующими.
-- Актуальная рабочая база для этой версии: `ai-career-agent-site-main (21).zip`, предоставленный пользователем как GitHub `main` после green hotfix r1 CI.
+- Актуальная рабочая база для этой версии: `ai-career-agent-site-eletov215-patch-1 (1).zip`, предоставленный пользователем как точный GitHub archive после run `#201`.
 - Версия 1.4.34 фиксирует live Yandex candidate: manual-only workflow, Alice AI LLM/Flash/YandexGPT Pro 5.1, structured JSON Schema output, current pricing snapshot and GitHub-secret-only credentials.
 - Версия 1.4.35 фиксирует CI-stability hotfix r2: SYNC worker cache assertions отвязаны от календарного 7-дневного search filter; AI-BENCH package contract использует browser-upload-safe visible scaffold и не зависит от dotfiles.
 - Версия 1.4.36 фиксирует workflow-layout hotfix r3: live Yandex job встроен в существующий `ci.yml`, отдельный `.yml` больше не нужен, а manual API run зависит от полного green CI.
+- Версия 1.4.37 фиксирует workflow-context hotfix r4: run #201 отклонён до jobs из-за `${{ runner.temp }}` в job-level `env`; output path переведён на `/tmp`, а package checker получил локальный guard по официальной GitHub context availability table.
 - Перед DATA-002 проверено, что актуальный код находится в `ai-career-agent-site-main (1).zip` и соответствует завершённому DATA-001.
 - Загруженные планы/паспорт были устаревшими: они содержали версии 1.0.0/1.0.1 и раннее состояние HH 403, не отражали подтверждение FND-001/FND-002 и согласованную стратегию собственного домена/VPS.
 - Версия 1.4.8 закрывает SEARCH-002 как ВЫПОЛНЕНО. GitHub Actions полностью зелёный, включая отдельный `Verify SEARCH-002 cross-source deduplication controls`, PostgreSQL migration/integration, SEC/OPS/SYNC/SEARCH-001 regressions, backup/restore и container smoke. Render `/health/ready` подтвердил `current_revision=expected_revision=20260809_0006`, PostgreSQL `persistent=true`, `status=ok`. Public SuperJob vacancy search отвязан от обязательного user OAuth и работает по app-level credential. Production verification endpoint `/health/search-dedup` подтвердил реальную обработку multi-source candidate sets без ложных merge: контрольный поиск обработал 164 вакансии (`hh=20`, `reed=60`, `superjob=24`, `trudvsem=60`), `input_count=output_count=164`, `cross_source_duplicate_count=0`, `cross_source_groups=0`. Дополнительные реальные поиски также не выявили безопасной duplicate-pair; positive merge semantics подтверждены зелёным CI fixture. Остаточная задача — не dedup, а стабильная cross-page пагинация/сортировка/total в SEARCH-003.
@@ -1680,3 +1681,9 @@ GitHub/production/API: <подтверждено или требуется>
 | Версия | Дата | Пакет | Изменение |
 |---|---|---|---|
 | 1.4.36 | 25.08.2026 | AI-BENCH-001-STABILITY-R3 | GitHub run #196 показал, что отдельный live workflow был загружен без `.yml`. Live job перенесён в существующий `ci.yml`, защищён manual boolean input и `needs: tests, ai-bench-001`; evals поднят до 1.1.2. Ordinary GitHub CI must be rerun before live benchmark. |
+
+### PLAN_CURRENT v1.4.37 update
+
+| Версия | Дата | Package | Изменение |
+|---|---|---|---|
+| 1.4.37 | 26.08.2026 | AI-BENCH-001-STABILITY-R4 | GitHub run #201 отклонён до запуска jobs из-за недопустимого `runner` context в job-level `env`. `AI_BENCH_OUTPUT_DIR` заменён на `/tmp/ai-bench-yandex-live`; evals 1.1.3 и local workflow-context guard добавлены. Ordinary GitHub CI must be rerun before live benchmark. |
