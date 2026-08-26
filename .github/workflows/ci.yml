@@ -382,7 +382,7 @@ jobs:
       AI_BENCH_YANDEX_ALICE_LLM_FLASH_MODEL: gpt://${{ secrets.AI_BENCH_YANDEX_FOLDER_ID }}/aliceai-llm-flash/latest
       AI_BENCH_YANDEX_YGPT51_MODEL: gpt://${{ secrets.AI_BENCH_YANDEX_FOLDER_ID }}/yandexgpt-5.1/latest
 
-      AI_BENCH_OUTPUT_DIR: /tmp/ai-bench-yandex-live     
+      AI_BENCH_OUTPUT_DIR: /tmp/ai-bench-yandex-live
     steps:
       - name: Check out repository
         uses: actions/checkout@v6
@@ -424,10 +424,10 @@ jobs:
           print("# AI-BENCH-001 Yandex live result")
           print()
           print(f"Machine status: **{run.get('status')}**")
-          print(f"Benchmark contract: **{run.get('benchmark_version')} / grounded-v2**")
+          print(f"Benchmark contract: **{run.get('benchmark_version')} / grounded-v2.1**")
           print()
-          print("| Provider | Passed | Errors | Quality | Grounding | Clean text | Match consistency | Safety violations | Avg derived match | p50 ms | p95 ms | Est. cost USD |")
-          print("|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|")
+          print("| Provider | Passed | Errors | Retries | Quality | Grounding | Language violations | Scenario violations | Clean text | Match consistency | Safety violations | Avg derived match | p50 ms | p95 ms | Est. cost USD |")
+          print("|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|")
           for provider in run.get("providers", []):
               s = provider.get("summary") or {}
               safety = sum(int(s.get(key) or 0) for key in (
@@ -436,16 +436,21 @@ jobs:
                   "user_facing_technical_token_count",
                   "claim_evidence_violation_count",
                   "unsupported_impact_claim_count",
+                  "language_consistency_violation_count",
+                  "scenario_provenance_violation_count",
                   "match_consistency_violation_count",
               ))
               print(
-                  f"| {provider.get('id')} | {s.get('passed_count')}/{s.get('case_count')} | {s.get('error_count')} | "
-                  f"{s.get('mean_quality_score')} | {s.get('mean_grounding_score')} | {s.get('mean_user_facing_cleanliness')} | "
+                  f"| {provider.get('id')} | {s.get('passed_count')}/{s.get('case_count')} | {s.get('error_count')} | {s.get('retry_count')} | "
+                  f"{s.get('mean_quality_score')} | {s.get('mean_grounding_score')} | {s.get('language_consistency_violation_count')} | "
+                  f"{s.get('scenario_provenance_violation_count')} | {s.get('mean_user_facing_cleanliness')} | "
                   f"{s.get('mean_match_consistency_score')} | {safety} | {s.get('mean_deterministic_match_score')} | "
                   f"{s.get('p50_latency_ms')} | {s.get('p95_latency_ms')} | {s.get('estimated_cost_usd')} |"
               )
           print()
           print("Numeric vacancy match is derived by deterministic benchmark logic; models do not author match_score.")
+          print("Language consistency and scenario-number provenance are hard-gated before manual review.")
+          print("At most one bounded retry is allowed per live request and retry evidence is retained.")
           print("Manual writing-quality rubric remains pending; no provider decision is made by this workflow.")
           PY
           else
