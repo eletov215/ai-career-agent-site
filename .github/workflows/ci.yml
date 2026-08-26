@@ -381,7 +381,7 @@ jobs:
       AI_BENCH_YANDEX_ALICE_LLM_MODEL: gpt://${{ secrets.AI_BENCH_YANDEX_FOLDER_ID }}/aliceai-llm/latest
       AI_BENCH_YANDEX_ALICE_LLM_FLASH_MODEL: gpt://${{ secrets.AI_BENCH_YANDEX_FOLDER_ID }}/aliceai-llm-flash/latest
       AI_BENCH_YANDEX_YGPT51_MODEL: gpt://${{ secrets.AI_BENCH_YANDEX_FOLDER_ID }}/yandexgpt-5.1/latest
-      AI_BENCH_OUTPUT_DIR: ${{ runner.temp }}/ai-bench-yandex-live
+      AI_BENCH_OUTPUT_DIR: /tmp/ai-bench-yandex-live
 
     steps:
       - name: Check out repository
