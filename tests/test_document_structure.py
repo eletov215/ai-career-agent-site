@@ -65,6 +65,7 @@ def test_canonical_documents_have_metadata_tables():
         "docs/PRIV001_RUNBOOK.md",
         "docs/PRIV001_PRIVACY_REFERENCE.md",
         "docs/PRIV001_SECURITY_REFERENCE.md",
+        "docs/AI_BENCH_VERIFICATION_STATUS.md",
         "docs/SOURCE_AUDIT.md",
     ]:
         text = (ROOT / relative).read_text(encoding="utf-8")

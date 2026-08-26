@@ -9,12 +9,15 @@ import sys
 import tempfile
 from pathlib import Path
 
+
 ROOT = Path(__file__).resolve().parents[1]
-REQUIRED = [
+REQUIRED_VISIBLE = [
     "evals/README.md",
     "evals/VERSION",
     "evals/config/ci.json",
     "evals/config/benchmark.example.json",
+    "evals/config/yandex-live.json",
+    "evals/artifacts/README.md",
     "evals/fixtures/manifest.json",
     "evals/schemas/resume_analysis.schema.json",
     "evals/schemas/vacancy_match.schema.json",
@@ -24,6 +27,15 @@ REQUIRED = [
     "evals/ai_bench/runner.py",
     "evals/ai_bench/scoring.py",
 ]
+REQUIRED_REPOSITORY = [
+    ".github/workflows/ci.yml",
+    "scripts/check_ai_bench_live_result.py",
+]
+REQUIRED = [*REQUIRED_VISIBLE, *REQUIRED_REPOSITORY]
+EXPRESSION_RE = re.compile(r"\$\{\{\s*(.*?)\s*\}\}")
+CONTEXT_REF_RE = re.compile(r"\b([A-Za-z_][A-Za-z0-9_-]*)\.")
+JOB_ENV_ALLOWED_CONTEXTS = {"github", "needs", "strategy", "matrix", "vars", "secrets", "inputs"}
+
 SECRET_PATTERNS = [
     re.compile(r"\bsk-[A-Za-z0-9_-]{12,}\b"),
     re.compile(r"(?i)authorization\s*[:=]\s*bearer\s+(?!\[REDACTED\])\S+"),
@@ -35,14 +47,125 @@ def fail(message: str) -> None:
     raise SystemExit(f"AI-BENCH-001 gate failed: {message}")
 
 
+def validate_job_level_env_contexts(workflow_path: Path) -> None:
+    """Reject contexts unavailable in jobs.<job_id>.env using stdlib only.
+
+    The dedicated AI-BENCH job intentionally installs no dependencies before
+    running this checker. GitHub job-level ``env`` is indented four spaces
+    under a two-space job key, while step/container env blocks are deeper.
+    """
+    lines = workflow_path.read_text(encoding="utf-8").splitlines()
+    in_jobs = False
+    current_job: str | None = None
+    in_job_env = False
+    violations: list[str] = []
+
+    for line in lines:
+        stripped = line.strip()
+        if not stripped or stripped.startswith("#"):
+            continue
+        indent = len(line) - len(line.lstrip(" "))
+
+        if indent == 0 and stripped == "jobs:":
+            in_jobs = True
+            current_job = None
+            in_job_env = False
+            continue
+        if in_jobs and indent == 0:
+            in_jobs = False
+            current_job = None
+            in_job_env = False
+
+        if not in_jobs:
+            continue
+
+        job_match = re.match(r"^  ([A-Za-z0-9_-]+):\s*$", line)
+        if job_match:
+            current_job = job_match.group(1)
+            in_job_env = False
+            continue
+
+        if current_job and indent == 4 and stripped == "env:":
+            in_job_env = True
+            continue
+
+        if in_job_env and indent <= 4:
+            in_job_env = False
+
+        if not in_job_env or indent < 6:
+            continue
+
+        env_match = re.match(r"^\s{6}([A-Za-z_][A-Za-z0-9_]*):\s*(.*)$", line)
+        if not env_match:
+            continue
+        env_name, value = env_match.groups()
+        for expression in EXPRESSION_RE.findall(value):
+            roots = set(CONTEXT_REF_RE.findall(expression))
+            disallowed = sorted(roots - JOB_ENV_ALLOWED_CONTEXTS)
+            if disallowed:
+                violations.append(
+                    f"jobs.{current_job}.env.{env_name}: unsupported contexts {disallowed}"
+                )
+
+    if violations:
+        fail("invalid job-level env context usage: " + "; ".join(violations))
+
+
 def main() -> int:
+    hidden_required = [
+        path
+        for path in REQUIRED_VISIBLE
+        if any(part.startswith(".") for part in Path(path).parts)
+    ]
+    if hidden_required:
+        fail(
+            "visible package files must be safe for browser uploads: "
+            f"{hidden_required}"
+        )
     missing = [path for path in REQUIRED if not (ROOT / path).is_file()]
     if missing:
         fail(f"missing required files: {missing}")
 
     version = (ROOT / "evals/VERSION").read_text(encoding="utf-8").strip()
-    if version != "1.0.1":
+    if version != "1.1.3":
         fail(f"unexpected evals version: {version}")
+
+    workflow_path = ROOT / ".github/workflows/ci.yml"
+    validate_job_level_env_contexts(workflow_path)
+    workflow = workflow_path.read_text(encoding="utf-8")
+    required_workflow_fragments = [
+        "workflow_dispatch:",
+        "run_ai_bench_live:",
+        "type: boolean",
+        "default: false",
+        "ai-bench-yandex-live:",
+        "name: AI-BENCH-001 Live Yandex",
+        "github.event_name == 'workflow_dispatch'",
+        "inputs.run_ai_bench_live == true",
+        "      - tests\n      - ai-bench-001",
+        "AI_BENCH_YANDEX_API_KEY: ${{ secrets.AI_BENCH_YANDEX_API_KEY }}",
+        "AI_BENCH_YANDEX_FOLDER_ID: ${{ secrets.AI_BENCH_YANDEX_FOLDER_ID }}",
+        "uses: actions/upload-artifact@v7",
+        "timeout-minutes: 45",
+        "group: ai-bench-001-yandex-live",
+        "AI_BENCH_OUTPUT_DIR: /tmp/ai-bench-yandex-live",
+    ]
+    missing_workflow_fragments = [
+        fragment for fragment in required_workflow_fragments if fragment not in workflow
+    ]
+    if missing_workflow_fragments:
+        fail(
+            "integrated live workflow controls are incomplete: "
+            f"{missing_workflow_fragments}"
+        )
+
+    legacy_workflow = ROOT / ".github/workflows/ai-bench-live"
+    if legacy_workflow.is_file():
+        print(
+            "AI-BENCH-001 gate warning: ignoring legacy extensionless workflow file; "
+            "the executable manual job is integrated into .github/workflows/ci.yml",
+            file=sys.stderr,
+        )
 
     manifest = json.loads((ROOT / "evals/fixtures/manifest.json").read_text(encoding="utf-8"))
     if manifest.get("synthetic") is not True:

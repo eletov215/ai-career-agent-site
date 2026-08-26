@@ -32,7 +32,11 @@ The `reference` provider reads versioned expected outputs. It validates the runn
 
 ## Live candidates
 
-Copy `evals/config/benchmark.example.json` outside version control, enable approved providers, fill exact model identifiers and current pricing, then set secrets in the environment. Two transports are available:
+The repository includes `evals/config/yandex-live.json` for the approved AI-BENCH-001 Yandex comparison. The billable job is integrated into the existing `CI` workflow and executes only on `workflow_dispatch` when `run_ai_bench_live=true`; it depends on successful ordinary tests and package gates. Credentials are read only from `AI_BENCH_YANDEX_API_KEY` / `AI_BENCH_YANDEX_FOLDER_ID`. Runtime artifacts stay outside Git; the integrated live job writes to `/tmp/ai-bench-yandex-live`. The visible `evals/artifacts/README.md` scaffold is intentionally used instead of required dotfiles, and no separate workflow filename is required.
+
+Yandex authorization preflight: the service account needs the `ai.languageModels.user` role. The AI Studio key-creation page lists `yc.ai.languageModels.execute` for Model Gallery text generation, while current Completions guides also reference `yc.ai.foundationModels.execute`. The existing key uses `yc.ai.languageModels.execute`; because secret values and key metadata are not readable from the repository, the manual workflow preflight is the decisive check. If it returns a permission error, recreate the key through AI Studio's built-in **Create API key** flow.
+
+For any additional provider, copy `evals/config/benchmark.example.json` outside version control, enable approved providers, fill exact model identifiers and current pricing, then set secrets in the environment. Two transports are available:
 
 - `openai_compatible`: an explicit HTTPS chat-completions endpoint;
 - `command`: a local wrapper that receives a JSON request on stdin and returns a JSON envelope on stdout.
@@ -73,6 +77,6 @@ Each run writes:
 
 No provider may be selected from the deterministic reference run. A live comparative run plus manual rubric is the remaining external gate for AI-BENCH-001.
 
-## Package version 1.0.1
+## Package version 1.1.3
 
-Hotfix 1.0.1 prevents container nodes from being rescanned by the unsupported-number gate. Generated numeric fields such as `$.match_score` are excluded only at their scalar leaf, while an unsupported number added to narrative text still fails the strict gate.
+Version 1.1.3 keeps the scalar-leaf hallucination fix, browser-upload-safe visible artifact scaffold, and integrated manual Yandex workflow. It replaces the invalid job-level `${{ runner.temp }}` expression with the static runner-local path `/tmp/ai-bench-yandex-live` and adds a local YAML/context guard for `jobs.<job_id>.env`. It does not add a production AI provider.

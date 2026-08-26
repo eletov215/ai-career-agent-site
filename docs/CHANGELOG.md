@@ -1,4 +1,48 @@
+## 2026-08-26 — AI-BENCH-001 stability hotfix r4 / evals 1.1.3
+
+- Audited the exact GitHub ZIP after run `#201`.
+- Confirmed GitHub rejected the workflow before any job ran because `${{ runner.temp }}` was referenced from `jobs.ai-bench-yandex-live.env`, where the `runner` context is unavailable.
+- Replaced the output path with runner-local `/tmp/ai-bench-yandex-live`.
+- Added a dependency-free package check for context roots in every job-level `env`, plus positive/negative regression tests.
+- Re-ran all repository test modules in bounded groups: 301 passed, 14 environment-dependent skips, 8 subtests; package/hygiene/document/compile checks pass locally.
+- Restored benchmark runtime ignore rules; they remain non-gating for browser-upload compatibility.
+- GitHub Secrets remain external to code; production routes/dependencies/migrations are unchanged and revision remains `20260819_0014`.
+
+## 2026-08-25 — AI-BENCH-001 stability hotfix r3 / evals 1.1.2
+
+- Audited the exact GitHub ZIP after run `#196`.
+- Confirmed `.github/workflows/ai-bench-live.yml` had been uploaded as extensionless `.github/workflows/ai-bench-live`; production files otherwise matched the v1.4.35 delivery.
+- Moved the manual billable Yandex job into the existing `.github/workflows/ci.yml`.
+- Added boolean `run_ai_bench_live` input with default `false`.
+- Added `needs: tests, ai-bench-001`, preventing API calls until every historical CI gate passes.
+- Added concurrency protection and retained `actions/upload-artifact@v7`.
+- Updated package checker/tests to validate the integrated contract and tolerate a stale extensionless file for patch compatibility.
+- Restored local artifact ignore rules without making them a package-gate dependency.
+- No production code, dependency, migration or Render change; revision remains `20260819_0014`.
+
 # Changelog
+
+## 2026-08-25 — AI-BENCH-001 stability hotfix r2 / evals 1.1.1
+
+- Audited GitHub Actions run `#192` and separated two test/package defects from production behavior.
+- Replaced SYNC worker cache assertions that depended on a fixed publication date plus the default seven-day search filter with durable `source_status_counts` assertions.
+- Replaced AI-BENCH required nested dotfiles with visible `evals/artifacts/README.md`, matching the existing browser-upload-safety regression test.
+- Bumped eval package to `1.1.1`; deterministic package gate and AI-BENCH unit tests pass locally.
+- Re-ran all 59 locally executable test modules in bounded chunks: 298 passed, 14 environment-dependent skips and 8 subtests; also passed SQLite migrations/Alembic/infra/document checks.
+- No production route, dependency, migration or database revision change. Ordinary GitHub CI must be green before the live Yandex workflow is started.
+
+## 2026-08-25 — AI-BENCH-001 Yandex live candidate / evals 1.1.0
+
+- User confirmed green GitHub Actions for hotfix r1: full Python tests and dedicated AI-BENCH package gate passed.
+- Manual Alice AI LLM Playground smoke passed on a career-match prompt without invented experience.
+- User created an isolated Yandex Cloud folder/service account, assigned `ai.languageModels.user`, created an API key with `yc.ai.languageModels.execute`, and stored only its secret plus the folder ID in GitHub Actions Secrets. Current Yandex pages also reference `yc.ai.foundationModels.execute` for Completions, so the manual workflow preflight is the decisive authorization check; a permission error requires recreating the key through AI Studio's built-in key flow.
+- Added manual-only `.github/workflows/ai-bench-live.yml`; it never runs on push/PR and reads credentials only from `AI_BENCH_YANDEX_API_KEY` and `AI_BENCH_YANDEX_FOLDER_ID`.
+- Added `evals/config/yandex-live.json` for Alice AI LLM, Alice AI LLM Flash and YandexGPT Pro 5.1 using current Yandex OpenAI-compatible model URIs and a 2026-08-25 synchronous USD pricing snapshot.
+- Extended the generic OpenAI-compatible adapter with configurable `Api-Key` auth, model-from-environment, `OpenAI-Project` header support, and per-case JSON Schema structured output.
+- Added a transport-only post-run gate: provider API errors fail the live workflow, while machine quality failures remain benchmark evidence for review instead of being confused with infrastructure failure.
+- Restored `evals/.gitignore` and `evals/artifacts/.gitkeep` so runtime benchmark output is not committed.
+- Updated AI-BENCH Actions to checkout/setup-python v6 to remove the observed Node 20 deprecation warning from this job.
+- Production Flask routes, dependencies, Render settings, migrations and revision `20260819_0014` remain unchanged. AI-BENCH-001 is still not complete until the live artifact and manual rubric are reviewed.
 
 ## 2026-08-24 — AI-BENCH-001 numeric scorer hotfix r1 / evals 1.0.1
 

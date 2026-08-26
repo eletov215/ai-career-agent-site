@@ -132,16 +132,33 @@ class OpenAICompatibleProvider(ProviderAdapter):
         if not isinstance(endpoint, str) or not endpoint.startswith("https://"):
             raise ConfigurationError(f"{spec.provider_id}: openai_compatible requires an explicit HTTPS endpoint or endpoint_env")
         self.endpoint = endpoint
-        self.model = str(spec.options.get("model", "")).strip()
-        if not self.model:
-            raise ConfigurationError(f"{spec.provider_id}: model is required")
+        model = str(spec.options.get("model", "")).strip()
+        model_env = str(spec.options.get("model_env", "")).strip()
+        if model_env:
+            model = os.environ.get(model_env, "").strip()
+            if not model:
+                raise ConfigurationError(f"{spec.provider_id}: model environment variable is not set")
+        if not model:
+            raise ConfigurationError(f"{spec.provider_id}: model or model_env is required")
+        self.model = model
+        self.metadata_model = str(spec.options.get("metadata_model", "")).strip() or self.model
         api_key_env = str(spec.options.get("api_key_env", "")).strip()
         if not api_key_env:
             raise ConfigurationError(f"{spec.provider_id}: api_key_env is required")
         self.api_key_env = api_key_env
+        self.auth_scheme = str(spec.options.get("auth_scheme", "Bearer")).strip() or "Bearer"
+        if self.auth_scheme not in {"Bearer", "Api-Key"}:
+            raise ConfigurationError(f"{spec.provider_id}: auth_scheme must be Bearer or Api-Key")
         self.temperature = float(spec.options.get("temperature", 0.0))
         self.max_tokens = int(spec.options.get("max_tokens", 1600))
         self.response_format = spec.options.get("response_format", {"type": "json_object"})
+        self.response_schema_mode = str(spec.options.get("response_schema_mode", "")).strip()
+        if self.response_schema_mode not in {"", "json_schema"}:
+            raise ConfigurationError(f"{spec.provider_id}: unsupported response_schema_mode")
+        strict_option = spec.options.get("response_schema_strict")
+        if strict_option is not None and not isinstance(strict_option, bool):
+            raise ConfigurationError(f"{spec.provider_id}: response_schema_strict must be boolean")
+        self.response_schema_strict = strict_option
         self.extra_headers_env = spec.options.get("extra_headers_env", {})
         if not isinstance(self.extra_headers_env, dict):
             raise ConfigurationError(f"{spec.provider_id}: extra_headers_env must be an object")
@@ -150,7 +167,7 @@ class OpenAICompatibleProvider(ProviderAdapter):
         api_key = os.environ.get(self.api_key_env)
         if not api_key:
             raise ProviderError(f"{self.spec.provider_id}: required credential environment variable is not set")
-        headers = {"Content-Type": "application/json", "Authorization": f"Bearer {api_key}"}
+        headers = {"Content-Type": "application/json", "Authorization": f"{self.auth_scheme} {api_key}"}
         for header_name, env_name in self.extra_headers_env.items():
             value = os.environ.get(str(env_name))
             if not value:
@@ -162,7 +179,19 @@ class OpenAICompatibleProvider(ProviderAdapter):
             "temperature": self.temperature,
             "max_tokens": self.max_tokens,
         }
-        if self.response_format:
+        if self.response_schema_mode == "json_schema":
+            schema_name = f"aca_{case.task}_{case.language}".replace("-", "_")[:64]
+            json_schema = {
+                "name": schema_name,
+                "schema": schema,
+            }
+            if self.response_schema_strict is not None:
+                json_schema["strict"] = self.response_schema_strict
+            body["response_format"] = {
+                "type": "json_schema",
+                "json_schema": json_schema,
+            }
+        elif self.response_format:
             body["response_format"] = self.response_format
         request = urllib.request.Request(
             self.endpoint,
@@ -196,7 +225,7 @@ class OpenAICompatibleProvider(ProviderAdapter):
             latency_ms=latency,
             input_tokens=_optional_int(usage.get("prompt_tokens") or usage.get("input_tokens")),
             output_tokens=_optional_int(usage.get("completion_tokens") or usage.get("output_tokens")),
-            metadata={"model": self.model, "mode": "live"},
+            metadata={"model": self.metadata_model, "mode": "live"},
         )
 
 

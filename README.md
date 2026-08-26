@@ -1,18 +1,21 @@
 # AI Career Agent
 
 <!-- ACA-CANONICAL-STATUS:START -->
-## Каноническое состояние — 2026-08-24
+## Каноническое состояние — 2026-08-26
 
 | Поле | Значение |
 |---|---|
 | Production schema | `20260819_0014` |
 | Последний завершённый пакет | `SEARCH-005` |
-| Текущий пакет | `AI-BENCH-001 hotfix r1` — исправление готово, требуется повторный GitHub Actions |
-| Следующий функциональный gate | live comparative benchmark + manual rubric |
+| Текущий пакет | `AI-BENCH-001` — stability hotfix r4; НУЖНА ПОВТОРНАЯ ПРОВЕРКА GITHUB ACTIONS |
+| Причина run #201 | GitHub отклонил `ci.yml` до запуска jobs: `${{ runner.temp }}` использовался в `jobs.ai-bench-yandex-live.env`, где контекст `runner` недоступен |
+| Исправлено | `AI_BENCH_OUTPUT_DIR=/tmp/ai-bench-yandex-live`; package gate теперь локально парсит workflow и отклоняет недопустимые context roots в job-level `env` |
+| Локально подтверждено | 301 passed, 14 environment-dependent skips, 8 subtests; deterministic AI-BENCH, workflow semantic guard, repository/document gates PASS |
+| Следующий gate | green ordinary CI; затем manual `CI` workflow с `run_ai_bench_live=true` и review artifact/manual rubric |
 | Следующий пакет | `AI-PROVIDER-001`, заблокирован до завершения AI-BENCH-001 |
-| Канонические документы | PLAN `v1.4.33`, PROJECT PASSPORT `v2.47`, SOURCE AUDIT `v1.4.33`, AI-BENCH verification `v1.1` |
+| Канонические документы | PLAN `v1.4.37`, PROJECT PASSPORT `v2.51`, SOURCE AUDIT `v1.4.37`, AI-BENCH verification `v1.5` |
 
-Первый AI-BENCH-001 candidate был отклонён GitHub CI: unsupported-number gate повторно сканировал весь корневой JSON-контейнер и ошибочно считал разрешённые `match_score` 78/72 неподтверждёнными числами. Hotfix `evals 1.0.1` проверяет только scalar leaves, сохраняет запрет на действительно выдуманные числа и добавляет регрессионные тесты. Production routes, migrations и Flask runtime не изменялись.
+`evals 1.1.3` сохраняет integrated manual Yandex job и устраняет GitHub workflow-parse blocker до runner allocation. Credentials остаются только в GitHub Actions Secrets; Flask routes, production dependencies, database schema и Render runtime не изменялись.
 <!-- ACA-CANONICAL-STATUS:END -->
 
 ## 1. Назначение
@@ -35,29 +38,35 @@ AI Career Agent — Flask/Gunicorn web-service карьерного сопров
 - web, Trudvsem sync worker и privacy cleanup worker разделены на процессы;
 - Render остаётся staging/резервным контуром до предрелизной VPS-миграции.
 
-## 3. AI-BENCH-001 hotfix r1
+## 3. AI-BENCH-001 live Yandex candidate
 
-Root cause первого CI failure находился в `evals/ai_bench/scoring.py`: `iter_paths()` выдавал root/container nodes, а numeric scorer строкифицировал их и повторно видел вложенный `match_score` по пути `$`. Hotfix:
+`evals 1.1.3` сохраняет изолированный comparative benchmark и делает запуск устойчивым к browser upload:
 
-- игнорирует `dict/list/tuple/set` в unsupported-number scan;
-- проверяет scalar leaves;
-- сохраняет hard failure для реально неподтверждённых чисел в narrative;
-- включает positive/negative regression tests;
-- поднимает benchmark package version до `1.0.1`.
+- Alice AI LLM, Alice AI LLM Flash и YandexGPT Pro 5.1;
+- Yandex OpenAI-compatible endpoint с `Api-Key` + `OpenAI-Project`;
+- model URI строятся из GitHub-secret environment data и не коммитятся;
+- per-case JSON Schema output, grounding/hallucination checks, latency/token/cost evidence;
+- live job встроен в существующий `.github/workflows/ci.yml`, поэтому не требует добавления отдельного workflow-файла;
+- на push/pull request live job всегда пропускается;
+- на ручном запуске он выполняется только при `run_ai_bench_live=true` и только после успешных jobs `tests` и `ai-bench-001`;
+- sanitized artifact загружается через `actions/upload-artifact@v7`;
+- runtime output создаётся в `/tmp/ai-bench-yandex-live`, вне repository checkout.
 
-Проверка перед upload:
+Перед загрузкой:
 
 ```bash
 python scripts/check_ai_bench_package.py
 python -m unittest discover -s tests -p 'test_ai_bench_*.py' -v
 ```
 
-Authoritative gate после upload:
+После green ordinary CI запустите:
 
 ```text
-GitHub Actions / AI-BENCH-001 package gate
-GitHub Actions / Python tests
+GitHub Actions -> CI -> Run workflow
+run_ai_bench_live = true
 ```
+
+Успешный transport run ещё не является provider decision: artifact нужно скачать и заполнить human writing-quality rubric.
 
 ## 4. Документация
 

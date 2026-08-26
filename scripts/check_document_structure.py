@@ -67,6 +67,7 @@ DOCUMENTS = {
     "docs/PROF003_RUNBOOK.md": ["| Поле | Значение |", "## 1.", "## 2."],
     "docs/PROF003_RESUME_REFERENCE.md": ["| Поле | Значение |", "## 1.", "## 2."],
     "docs/PROF003_SECURITY_REFERENCE.md": ["| Поле | Значение |", "## 1.", "## 2."],
+    "docs/AI_BENCH_VERIFICATION_STATUS.md": ["| Поле | Значение |", "## 1."],
     "docs/SOURCE_AUDIT.md": ["| Поле | Значение |", "## 1."],
 }
 

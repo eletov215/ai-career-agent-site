@@ -6,34 +6,34 @@
 <!-- ACA-CANONICAL-STATUS:START -->
 ## Канонический срез проекта
 
-**Документ:** AI Career Agent PROJECT_PASSPORT `v2.47`  
-**Дата:** 2026-08-24  
+**Документ:** AI Career Agent PROJECT_PASSPORT `v2.51`  
+**Дата:** 2026-08-26  
 **Production revision:** `20260819_0014`
 
 | Контур | Состояние |
 |---|---|
-| Web | Flask + Gunicorn, WSGI `app:app` |
+| Web | Flask + Gunicorn, WSGI `app:app`; production code в hotfix r4 не менялся |
 | Data | PostgreSQL production, SQLite local/test fallback, Alembic `20260819_0014` |
-| Identity | first-party account, verification/reset, server sessions, owner-bound HH/SuperJob OAuth |
-| Career data | structured profile, immutable versions, confirmation-first PDF import, resume drafts/versions/assets |
-| Search | HH, SuperJob, Reed, Trudvsem; normalization, conservative dedup, stable snapshots; SEARCH-005 complete |
-| Operations | structured logs, probes, encrypted backup/restore, external sync/privacy workers |
-| AI benchmark | implementation candidate with hotfix r1; local deterministic gate passes; GitHub and live comparison pending |
-| Production AI | absent; no provider decision, production route or migration added |
+| Identity/career/search/privacy | завершённые пакеты сохраняют статус ВЫПОЛНЕНО; их CI gates остаются в job `tests` |
+| AI benchmark | `evals 1.1.3`; live Yandex job встроен в existing `CI` workflow |
+| Manual safety | `run_ai_bench_live=false` по умолчанию; API run возможен только после green `tests` + `ai-bench-001` |
+| CI incident | GitHub run #201: workflow validation failed before runner allocation because `runner.temp` was used in job-level `env` |
+| Fix | output path `/tmp/ai-bench-yandex-live` + local job-env context validator/regression tests |
+| Production AI | отсутствует; provider decision не принят |
 
-### Hotfix decision boundary
+### Decision boundary
 
-Candidate v1.4.32 was not accepted because GitHub CI correctly found a numeric-grounding false positive. v2.47 records the scalar-leaf fix, regression coverage and narrower credential redaction. `AI-PROVIDER-001` remains blocked until green CI plus external comparative evidence and human review.
+Hotfix r4 меняет только CI/eval packaging и документацию. Он не подключает Alice AI к сайту и не открывает завершённые production packages. `AI-PROVIDER-001` остаётся заблокирован до green CI, live comparative artifact и human rubric.
 <!-- ACA-CANONICAL-STATUS:END -->
 
 | Поле | Значение |
 |---|---|
 | Документ        | PROJECT_PASSPORT                                                                              |
-| Версия паспорта | 2.47 |
-| Дата            | 24 августа 2026                                                                               |
+| Версия паспорта | 2.51 |
+| Дата            | 26 августа 2026                                                                               |
 | Статус          | ДЕЙСТВУЮЩИЙ                                                                                   |
-| Связанный план | `AI_Career_Agent_PLAN_CURRENT v1.4.33` |
-| Основа кода | GitHub main after AI-BENCH-001 v1.4.32 upload; CI rejection reproduced; hotfix r1 locally passes package-specific gates; GitHub rerun pending |
+| Связанный план | `AI_Career_Agent_PLAN_CURRENT v1.4.37` |
+| Основа кода | GitHub archive `ai-career-agent-site-eletov215-patch-1 (1).zip` after run #201; workflow-context hotfix r4 prepared |
 
 > Контрольные статусы: FND/DATA/SEC/OPS/INFRA-PREP/SYNC/SEARCH-001..005/AUTH/PROF/PRIV - ВЫПОЛНЕНО; AI-BENCH-001 - НУЖНА ПРОВЕРКА; AI-PROVIDER-001 - ЗАБЛОКИРОВАНО; DOC-001 - В РАБОТЕ; INFRA-001 - ОТЛОЖЕНО.
 
@@ -488,7 +488,7 @@ Render не считается гарантированным production для 
 
 ## 23. Текущий gate
 
-SEARCH-005 — ВЫПОЛНЕНО. AI-BENCH-001 hotfix r1 — НУЖНА ПРОВЕРКА GITHUB ACTIONS. Production PostgreSQL остаётся на `20260819_0014`; live AI comparison и provider decision ещё не выполнены.
+SEARCH-005 — ВЫПОЛНЕНО. AI-BENCH-001 stability hotfix r3 требует green ordinary CI; затем integrated `CI` manual job с `run_ai_bench_live=true`, artifact review и manual rubric. Production PostgreSQL остаётся на `20260819_0014`; provider decision ещё не выполнен.
 
 ## 24. Правила рабочего чата
 
@@ -532,6 +532,7 @@ SEARCH-005 — ВЫПОЛНЕНО. AI-BENCH-001 hotfix r1 — НУЖНА ПРО�
 | 2.42 | 19.08.2026 | PRIV-001 hardened candidate after second privacy/security audit: re-authenticated consistent export, bounds/safe paths/sanitizer, delete concurrency locks, orphan asset cleanup and worker lock/heartbeat; external gate pending. |
 | 2.46 | 19.08.2026 | PRIV-001 completed after green CI/hotfix r1, Render `0013`, healthy privacy worker, export/asset/secret scan, destructive throwaway deletion, owner isolation, restart/regression/log review. SEARCH-005 ready next. |
 | 2.47 | 24.08.2026 | AI-BENCH-001 candidate v1.4.32 rejected by CI because root containers were scanned by unsupported-number gate; hotfix r1 scans scalar leaves only, adds regression tests and awaits repeat GitHub Actions. |
+| 2.51 | 26.08.2026 | GitHub run #201 was rejected before runner allocation because `runner.temp` was referenced from `jobs.ai-bench-yandex-live.env`. Hotfix r4 uses `/tmp/ai-bench-yandex-live`, adds local job-env context validation/regression coverage, and keeps production revision `20260819_0014` unchanged. |
 
 
 ## SEARCH-005 architecture addendum (historical)
@@ -544,3 +545,27 @@ SEARCH-005 — ВЫПОЛНЕНО. AI-BENCH-001 hotfix r1 — НУЖНА ПРО�
 - **Telemetry:** current process observability events are persisted through a non-gating adapter. Trudvsem additionally uses persistent SyncRun/worker/checkpoint data. No external network probe runs when the page is opened.
 - **Schema:** candidate `20260819_0014`; production remains `20260813_0013` until external gate.
 - **Deployment:** administrator email allowlist must be configured in Render/VPS environment before E2E. `SOURCE_HEALTH_RECORDING_ENABLED=1`; default stale threshold 900 seconds.
+
+
+### PROJECT_PASSPORT v2.48 update
+
+| Версия | Дата | Изменение |
+|---|---|---|
+| 2.48 | 25.08.2026 | Confirmed hotfix r1 green GitHub Actions and manual Alice Playground smoke; added isolated evals 1.1.0 Yandex live workflow candidate with GitHub-secret-only credentials. AI-PROVIDER-001 remains blocked pending live artifact/manual review. |
+
+### PROJECT_PASSPORT v2.49 update
+
+| Версия | Дата | Изменение |
+|---|---|---|
+| 2.49 | 25.08.2026 | Audited GitHub run #192. The SYNC failure was a calendar-sensitive test assertion after a successful worker run; the AI-BENCH failure was a browser-upload dotfile packaging dependency. Added stable persisted-cache assertions and visible eval artifact scaffold. Production revision/routes remain unchanged; repeat CI is required. |
+
+### PROJECT_PASSPORT v2.50 update
+
+| Версия | Дата | Изменение |
+|---|---|---|
+| 2.50 | 25.08.2026 | Audited GitHub run #196 and the exact uploaded ZIP. The separate live workflow lost its `.yml` suffix while all production files remained unchanged. The billable Yandex job is now integrated into `ci.yml`, manual-only, default-off, concurrent-run protected, and dependent on all ordinary CI gates. |
+### PROJECT_PASSPORT v2.51 update
+
+| Версия | Дата | Изменение |
+|---|---|---|
+| 2.51 | 26.08.2026 | GitHub run #201 was rejected before runner allocation because `runner.temp` was referenced from `jobs.ai-bench-yandex-live.env`. Hotfix r4 uses `/tmp/ai-bench-yandex-live`, adds local job-env context validation/regression coverage, and keeps production revision `20260819_0014` unchanged. |

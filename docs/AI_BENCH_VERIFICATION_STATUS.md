@@ -3,72 +3,75 @@
 | Поле | Значение |
 |---|---|
 | Документ | AI_BENCH_VERIFICATION_STATUS |
-| Версия | 1.1 |
-| Дата | 24 августа 2026 |
-| Пакет | AI-BENCH-001 hotfix r1 |
-| Статус | НУЖНА ПРОВЕРКА GITHUB; LIVE COMPARATIVE RUN PENDING |
+| Версия | 1.5 |
+| Дата | 26 августа 2026 |
+| Пакет | AI-BENCH-001 stability hotfix r4 |
+| Статус | НУЖНА ПОВТОРНАЯ ПРОВЕРКА GITHUB ACTIONS |
 | Production revision | `20260819_0014` |
 
-## 1. Initial CI result
+## 1. External failure evidence
 
-Candidate v1.4.32 was rejected by GitHub Actions:
+GitHub run `#201` failed before jobs started. Annotation:
 
 ```text
-Python tests: 3 failed, 390 passed
-AI-BENCH-001 package gate: failed
-vacancy-match-ru-01: unsupported_numbers [{path: '$', value: '78'}]
-vacancy-match-en-01: unsupported_numbers [{path: '$', value: '72'}]
+Invalid workflow file: .github/workflows/ci.yml#L1
+Line: 384, Col: 28
+Unrecognized named-value: 'runner'
 ```
 
-This rejection is accepted as valid evidence; v1.0 statements that the external GitHub gate had passed are superseded.
+The referenced line was:
 
-## 2. Root cause
+```yaml
+AI_BENCH_OUTPUT_DIR: ${{ runner.temp }}/ai-bench-yandex-live
+```
 
-The unsupported-number scorer inspected both JSON containers and scalar leaves. The root dictionary was stringified, so an allowed generated `$.match_score` was scanned again as if it were a claim at `$`.
+This is a workflow-definition error, not a failing application test. No `Python tests`, package gate, provider request or production route executed.
 
-## 3. Hotfix implementation
+## 2. Verified rule
 
-- skip container values in `_unsupported_numbers()`;
-- continue checking all scalar leaves;
-- keep `generated_numeric_paths` exemptions exact and bounded;
-- test that reference `match_score` passes;
-- test that a narrative `99 years` claim still fails at `$.recommendation`;
-- preserve token counts, fingerprints and SHA-256 values while redacting real credentials.
+GitHub's context availability table for `jobs.<job_id>.env` allows `github`, `needs`, `strategy`, `matrix`, `vars`, `secrets`, `inputs`. It does not allow `runner`. The `runner` context is valid at step level after a runner exists.
+
+## 3. Correction
+
+Hotfix r4 changes the job-level output path to:
+
+```yaml
+AI_BENCH_OUTPUT_DIR: /tmp/ai-bench-yandex-live
+```
+
+`evals` is `1.1.3`. The package checker now parses the workflow and rejects unsupported context roots in job-level `env`. Regression tests prove a fixture with `${{ runner.temp }}` is rejected while the current workflow passes.
 
 ## 4. Local verification
 
-| Проверка | Результат |
-|---|---|
-| Python compile for benchmark files | PASS |
-| AI-BENCH unittest discover | 11 tests PASS |
-| Strict deterministic reference run | 8/8 PASS |
-| Dedicated package gate | PASS |
-| Forbidden claims | 0 |
-| Unsupported numbers | 0 |
-| Dataset/PII guard | PASS |
-| Secret-redaction tests | PASS |
-| Production route/migration isolation | PASS |
+- deterministic AI-BENCH package gate: PASS;
+- AI-BENCH unit tests: 23 passed;
+- targeted current-package/SYNC/SEARCH/hygiene regression: 41 passed;
+- all repository test modules in bounded groups: 301 passed, 14 environment-dependent skips, 8 subtests;
+- repository hygiene after cleanup: PASS;
+- document structure: PASS;
+- compileall: PASS.
 
-Evidence:
+## 5. Security
 
-- `docs/evidence/ai-bench-001/validation.json`;
-- `docs/evidence/ai-bench-001/reference-run.json`;
-- `docs/evidence/ai-bench-001/reference-report.md`.
+GitHub Secret values are not committed. The live benchmark remains manual-only and default-off. The output path is runner-local `/tmp`; sanitized evidence is uploaded only after an explicit live run. Production Flask code and database revision are unchanged.
 
-## 5. What remains unverified
+## 6. Remaining external gate
 
-- the full GitHub workflow after hotfix upload;
-- live external model quality, latency, quota/error behavior and cost;
-- manual writing-quality rubric;
-- provider decision for AI-PROVIDER-001.
+1. Upload r4.
+2. Ordinary GitHub CI must be fully green.
+3. Then run `CI` manually with `run_ai_bench_live=true`.
+4. Review sanitized artifact and fill the human rubric.
 
-## 6. Status decision
+## 7. Status decision
 
-**Hotfix r1 is ready for GitHub. AI-BENCH-001 is not marked complete.** A green GitHub rerun will close only the implementation/CI defect; the package still requires the approved live comparative run and manual review.
+`AI-BENCH-001` remains **НУЖНА ПРОВЕРКА** until those external gates are complete.  
+`AI-PROVIDER-001` remains **ЗАБЛОКИРОВАН**.
 
-## 7. Version log
+## 8. Version log
 
 | Версия | Дата | Изменение |
 |---|---|---|
-| 1.0 | 24.08.2026 | Initial implementation candidate and external-run gate defined. |
-| 1.1 | 24.08.2026 | Recorded GitHub rejection, fixed root-container numeric false positive and metric over-redaction, added regressions and regenerated local evidence. |
+| 1.2 | 25.08.2026 | Live Yandex candidate after green scorer hotfix. |
+| 1.3 | 25.08.2026 | Stability r2 after run #192. |
+| 1.4 | 25.08.2026 | Stability r3 after run #196 workflow filename defect. |
+| 1.5 | 26.08.2026 | Stability r4 after run #201 invalid job-level `runner` context. |

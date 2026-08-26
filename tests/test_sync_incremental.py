@@ -320,7 +320,7 @@ def test_incremental_cursor_continues_across_runs_without_duplicates(tmp_path):
         assert storage.vacancies.count(
             keyword="",
             sources=["trudvsem"],
-            period_days=3650,
+            period_days=0,
         ) == 4
 
         second = service.run_once(trigger="manual-cli")
@@ -332,7 +332,7 @@ def test_incremental_cursor_continues_across_runs_without_duplicates(tmp_path):
         assert storage.vacancies.count(
             keyword="",
             sources=["trudvsem"],
-            period_days=3650,
+            period_days=0,
         ) == 8
 
         # Replaying the same records is an idempotent upsert, not duplication.
@@ -442,7 +442,7 @@ def test_closed_records_are_hidden_ttl_cleaned_and_reactivated(tmp_path):
         assert storage.vacancies.count(
             keyword="",
             sources=["trudvsem"],
-            period_days=3650,
+            period_days=0,
         ) == 2
 
         cleanup = storage.vacancies.cleanup_source(
@@ -456,7 +456,7 @@ def test_closed_records_are_hidden_ttl_cleaned_and_reactivated(tmp_path):
         assert storage.vacancies.count(
             keyword="",
             sources=["trudvsem"],
-            period_days=3650,
+            period_days=0,
         ) == 1
         old = storage.vacancies.repository.get_source("trudvsem", "old")
         assert old.source_status == "closed"
@@ -475,7 +475,7 @@ def test_closed_records_are_hidden_ttl_cleaned_and_reactivated(tmp_path):
         assert storage.vacancies.count(
             keyword="",
             sources=["trudvsem"],
-            period_days=3650,
+            period_days=0,
         ) == 2
     finally:
         runtime.dispose()

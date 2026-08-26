@@ -18,19 +18,32 @@
       "enabled": false,
       "endpoint_env": "AI_BENCH_CANDIDATE_ENDPOINT",
       "api_key_env": "AI_BENCH_CANDIDATE_API_KEY",
-      "model": "REPLACE_WITH_APPROVED_MODEL_ID",
       "temperature": 0.0,
       "max_tokens": 1600,
-      "response_format": {"type": "json_object"},
-      "pricing_usd_per_million": {"input": 0.0, "output": 0.0}
+      "pricing_usd_per_million": {
+        "input": 0.0,
+        "output": 0.0
+      },
+      "auth_scheme": "Bearer",
+      "model_env": "AI_BENCH_CANDIDATE_MODEL",
+      "metadata_model": "approved-model-id",
+      "response_schema_mode": "json_schema"
     },
     {
       "id": "candidate-command-wrapper",
       "adapter": "command",
       "enabled": false,
-      "command": ["python", "path/to/provider_wrapper.py"],
-      "pass_env": ["AI_BENCH_WRAPPER_API_KEY"],
-      "pricing_usd_per_million": {"input": 0.0, "output": 0.0}
+      "command": [
+        "python",
+        "path/to/provider_wrapper.py"
+      ],
+      "pass_env": [
+        "AI_BENCH_WRAPPER_API_KEY"
+      ],
+      "pricing_usd_per_million": {
+        "input": 0.0,
+        "output": 0.0
+      }
     }
   ]
 }
