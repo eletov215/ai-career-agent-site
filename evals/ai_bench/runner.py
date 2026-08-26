@@ -123,17 +123,20 @@ class BenchmarkRunner:
                         encoding="utf-8",
                     )
                 except Exception as exc:  # execution errors are evidence, not a runner crash
+                    diagnostics = getattr(exc, "diagnostics", {})
+                    safe_diagnostics = redact_secrets(diagnostics) if isinstance(diagnostics, dict) else {}
                     result.update(
                         {
                             "finished_at": utc_now_iso(),
                             "passed": False,
                             "latency_ms": None,
                             "usage": {"input_tokens": None, "output_tokens": None, "estimated_cost_usd": None},
-                            "metadata": {},
+                            "metadata": {"provider_diagnostics": safe_diagnostics} if safe_diagnostics else {},
                             "score": None,
                             "error": {
                                 "category": type(exc).__name__,
                                 "message": str(redact_secrets(str(exc)))[:800],
+                                "diagnostics": safe_diagnostics,
                             },
                             "response_sha256": None,
                         }
@@ -164,7 +167,9 @@ class BenchmarkRunner:
             "The included dataset is synthetic and intentionally excludes production user PII.",
             "Human writing-quality rubrics remain pending until a named reviewer records scores.",
             "Vacancy numeric match scores are derived deterministically from requirement classifications; models do not author the score field.",
-            "Live run v2 uses the grounded-v2 output contract, so its quality scores are not directly comparable to the earlier grounded-v1 run.",
+            "Live run v3 uses the grounded-v2.1 output/scoring contract, so quality scores are not directly comparable to grounded-v1 or grounded-v2 runs.",
+            "Language consistency and scenario-number provenance are machine-gated before manual writing review.",
+            "Live OpenAI-compatible adapters may perform at most one explicitly configured bounded retry; retry evidence is retained in safe diagnostics.",
         ]
         if fixture_only:
             limitations.append(
@@ -177,7 +182,7 @@ class BenchmarkRunner:
         )
 
         run = {
-            "schema_version": "1.1",
+            "schema_version": "1.2",
             "run_id": run_id,
             "benchmark_version": self.config.get("benchmark_version"),
             "started_at": started_at,
@@ -211,7 +216,7 @@ class BenchmarkRunner:
             encoding="utf-8",
         )
         manual_review = {
-            "schema_version": "1.1",
+            "schema_version": "1.2",
             "run_id": run_id,
             "status": "pending",
             "score_scale": {
@@ -302,7 +307,11 @@ def _summarize_provider(results: list[dict[str, Any]]) -> dict[str, Any]:
         "user_facing_technical_token_count": sum(score["user_facing_technical_token_count"] for score in scores),
         "claim_evidence_violation_count": sum(score["claim_evidence_violation_count"] for score in scores),
         "unsupported_impact_claim_count": sum(score["unsupported_impact_claim_count"] for score in scores),
+        "language_consistency_violation_count": sum(score.get("language_consistency_violation_count", 0) for score in scores),
+        "scenario_provenance_violation_count": sum(score.get("scenario_provenance_violation_count", 0) for score in scores),
         "match_consistency_violation_count": sum(len(score.get("match_evaluation", {}).get("violations", [])) for score in scores),
+        "retry_count": sum(int((result.get("metadata") or {}).get("provider_diagnostics", {}).get("retry_count") or 0) for result in results),
+        "retried_case_count": sum(1 for result in results if int((result.get("metadata") or {}).get("provider_diagnostics", {}).get("retry_count") or 0) > 0),
         "mean_deterministic_match_score": round(statistics.fmean(deterministic_match_scores), 3) if deterministic_match_scores else None,
         "p50_latency_ms": round(_percentile(latencies, 0.50), 3) if latencies else None,
         "p95_latency_ms": round(_percentile(latencies, 0.95), 3) if latencies else None,

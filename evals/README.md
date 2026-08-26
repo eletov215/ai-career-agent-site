@@ -79,6 +79,6 @@ Each run writes:
 
 No provider may be selected from the deterministic reference run. A live comparative run plus manual rubric is the remaining external gate for AI-BENCH-001.
 
-## Package version 1.2.0 - grounded-v2
+## Package version 1.3.0 - grounded-v2.1
 
-Version 1.2.0 is the hardening release after live run #1. It adds typed source facts, exact raw evidence IDs, structured unverified facts/caveats, claim-level evidence checks, unsupported-impact and user-facing-metadata gates, deterministic vacancy match scoring, scenario-sourced interview numbers, live-run regressions and a separate pending manual-review template. Grounded-v2 scores are not directly comparable to the earlier grounded-v1 live run. It does not add a production AI provider.
+Version 1.3.0 is the hardening release after live run #2. It keeps grounded-v2 evidence and deterministic match controls, then adds Unicode percent normalization, same-question scenario provenance, explicit RU/EN language consistency, vacancy-grounded `motivation` paragraphs, safe provider-envelope diagnostics and at most one bounded retry for transient/malformed responses. Live-run #2 patterns are versioned in `evals/regressions/live-run-2.json`. Grounded-v2.1 scores are not directly comparable to earlier contracts. It does not add a production AI provider.

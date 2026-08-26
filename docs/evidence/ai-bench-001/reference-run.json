@@ -1,21 +1,23 @@
 {
-  "benchmark_version": "1.1",
-  "config_fingerprint": "0814a31a5a636c2407a0811e2467644d65ce5ad86422c850239ab3494335472a",
+  "benchmark_version": "1.2",
+  "config_fingerprint": "52ca526d689102ee88f1ad10d35ba3f37c879e94197d236d3ad80053de9c3ded",
   "dataset": {
     "case_count": 8,
-    "fingerprint": "962aa5559802e897501890c04848572d3e1afc3980e1d97f782b94af67210b99",
+    "fingerprint": "7aaf4b72f605a13483ca00c9be63c94928e2115c209d7c3f1f48c11f92238c2f",
     "id": "ai-career-agent-golden-v1",
     "synthetic": true,
-    "version": "1.1.0"
+    "version": "1.2.0"
   },
   "decision_status": "No external model/provider decision is allowed from a deterministic reference run. Run the approved live candidates and complete manual review before AI-PROVIDER-001.",
   "execution_mode": "deterministic_reference",
-  "finished_at": "2026-08-26T12:28:59Z",
+  "finished_at": "2026-08-26T13:43:29Z",
   "limitations": [
     "The included dataset is synthetic and intentionally excludes production user PII.",
     "Human writing-quality rubrics remain pending until a named reviewer records scores.",
     "Vacancy numeric match scores are derived deterministically from requirement classifications; models do not author the score field.",
-    "Live run v2 uses the grounded-v2 output contract, so its quality scores are not directly comparable to the earlier grounded-v1 run.",
+    "Live run v3 uses the grounded-v2.1 output/scoring contract, so quality scores are not directly comparable to grounded-v1 or grounded-v2 runs.",
+    "Language consistency and scenario-number provenance are machine-gated before manual writing review.",
+    "Live OpenAI-compatible adapters may perform at most one explicitly configured bounded retry; retry evidence is retained in safe diagnostics.",
     "This run validates the harness, schemas, scoring, safety gates, and report generation; it is not a comparative result for external AI vendors."
   ],
   "manual_review_template": "manual_review_template.json",
@@ -30,15 +32,19 @@
         "error_rate": 0.0,
         "estimated_cost_usd": null,
         "forbidden_claim_count": 0,
+        "language_consistency_violation_count": 0,
         "match_consistency_violation_count": 0,
         "mean_deterministic_match_score": 69.0,
         "mean_grounding_score": 1.0,
         "mean_match_consistency_score": 1.0,
         "mean_quality_score": 1.0,
         "mean_user_facing_cleanliness": 1.0,
-        "p50_latency_ms": 0.036,
-        "p95_latency_ms": 0.046,
+        "p50_latency_ms": 0.051,
+        "p95_latency_ms": 0.801,
         "passed_count": 8,
+        "retried_case_count": 0,
+        "retry_count": 0,
+        "scenario_provenance_violation_count": 0,
         "schema_pass_rate": 1.0,
         "unsupported_impact_claim_count": 0,
         "unsupported_number_count": 0,
@@ -56,7 +62,9 @@
       "max_error_rate": 0.0,
       "max_forbidden_claims": 0,
       "max_invalid_evidence_ids": 0,
+      "max_language_consistency_violations": 0,
       "max_match_consistency_violations": 0,
+      "max_scenario_provenance_violations": 0,
       "max_unsupported_impact_claims": 0,
       "max_unsupported_numbers": 0,
       "max_user_facing_technical_tokens": 0,
@@ -72,9 +80,9 @@
       "adapter": "fixture",
       "case_id": "resume-analysis-ru-01",
       "error": null,
-      "finished_at": "2026-08-26T12:28:59Z",
+      "finished_at": "2026-08-26T13:43:29Z",
       "language": "ru",
-      "latency_ms": 0.036,
+      "latency_ms": 0.15,
       "metadata": {
         "mode": "deterministic_fixture"
       },
@@ -94,6 +102,16 @@
         "grounding_score": 1.0,
         "grounding_term_coverage": 1.0,
         "invalid_evidence_ids": [],
+        "language_consistency": {
+          "cyrillic_letters": 934,
+          "cyrillic_ratio": 0.864015,
+          "latin_letters": 147,
+          "latin_ratio": 0.135985,
+          "score": 1.0,
+          "violations": []
+        },
+        "language_consistency_score": 1.0,
+        "language_consistency_violation_count": 0,
         "manual_review": {
           "rubric": [
             "Факты не расширены сверх источника",
@@ -123,6 +141,9 @@
         "quality_score": 1.0,
         "required_path_coverage": 1.0,
         "safety_score": 1.0,
+        "scenario_provenance_score": 1.0,
+        "scenario_provenance_violation_count": 0,
+        "scenario_provenance_violations": [],
         "schema_compliance": 1.0,
         "schema_errors": [],
         "unsupported_impact_claim_count": 0,
@@ -134,7 +155,7 @@
         "user_facing_technical_token_count": 0,
         "user_facing_technical_tokens": []
       },
-      "started_at": "2026-08-26T12:28:59Z",
+      "started_at": "2026-08-26T13:43:29Z",
       "task": "resume_analysis",
       "usage": {
         "estimated_cost_usd": null,
@@ -146,9 +167,9 @@
       "adapter": "fixture",
       "case_id": "resume-analysis-en-01",
       "error": null,
-      "finished_at": "2026-08-26T12:28:59Z",
+      "finished_at": "2026-08-26T13:43:29Z",
       "language": "en",
-      "latency_ms": 0.031,
+      "latency_ms": 0.069,
       "metadata": {
         "mode": "deterministic_fixture"
       },
@@ -168,6 +189,16 @@
         "grounding_score": 1.0,
         "grounding_term_coverage": 1.0,
         "invalid_evidence_ids": [],
+        "language_consistency": {
+          "cyrillic_letters": 0,
+          "cyrillic_ratio": 0.0,
+          "latin_letters": 906,
+          "latin_ratio": 1.0,
+          "score": 1.0,
+          "violations": []
+        },
+        "language_consistency_score": 1.0,
+        "language_consistency_violation_count": 0,
         "manual_review": {
           "rubric": [
             "No unsupported achievements",
@@ -197,6 +228,9 @@
         "quality_score": 1.0,
         "required_path_coverage": 1.0,
         "safety_score": 1.0,
+        "scenario_provenance_score": 1.0,
+        "scenario_provenance_violation_count": 0,
+        "scenario_provenance_violations": [],
         "schema_compliance": 1.0,
         "schema_errors": [],
         "unsupported_impact_claim_count": 0,
@@ -208,7 +242,7 @@
         "user_facing_technical_token_count": 0,
         "user_facing_technical_tokens": []
       },
-      "started_at": "2026-08-26T12:28:59Z",
+      "started_at": "2026-08-26T13:43:29Z",
       "task": "resume_analysis",
       "usage": {
         "estimated_cost_usd": null,
@@ -220,9 +254,9 @@
       "adapter": "fixture",
       "case_id": "vacancy-match-ru-01",
       "error": null,
-      "finished_at": "2026-08-26T12:28:59Z",
+      "finished_at": "2026-08-26T13:43:29Z",
       "language": "ru",
-      "latency_ms": 0.036,
+      "latency_ms": 0.124,
       "metadata": {
         "mode": "deterministic_fixture"
       },
@@ -242,6 +276,16 @@
         "grounding_score": 1.0,
         "grounding_term_coverage": 1.0,
         "invalid_evidence_ids": [],
+        "language_consistency": {
+          "cyrillic_letters": 456,
+          "cyrillic_ratio": 0.801406,
+          "latin_letters": 113,
+          "latin_ratio": 0.198594,
+          "score": 1.0,
+          "violations": []
+        },
+        "language_consistency_score": 1.0,
+        "language_consistency_violation_count": 0,
         "manual_review": {
           "rubric": [
             "Каждое требование классифицировано ровно один раз",
@@ -272,6 +316,9 @@
         "quality_score": 1.0,
         "required_path_coverage": 1.0,
         "safety_score": 1.0,
+        "scenario_provenance_score": 1.0,
+        "scenario_provenance_violation_count": 0,
+        "scenario_provenance_violations": [],
         "schema_compliance": 1.0,
         "schema_errors": [],
         "unsupported_impact_claim_count": 0,
@@ -283,7 +330,7 @@
         "user_facing_technical_token_count": 0,
         "user_facing_technical_tokens": []
       },
-      "started_at": "2026-08-26T12:28:59Z",
+      "started_at": "2026-08-26T13:43:29Z",
       "task": "vacancy_match",
       "usage": {
         "estimated_cost_usd": null,
@@ -295,9 +342,9 @@
       "adapter": "fixture",
       "case_id": "vacancy-match-en-01",
       "error": null,
-      "finished_at": "2026-08-26T12:28:59Z",
+      "finished_at": "2026-08-26T13:43:29Z",
       "language": "en",
-      "latency_ms": 0.035,
+      "latency_ms": 0.025,
       "metadata": {
         "mode": "deterministic_fixture"
       },
@@ -317,6 +364,16 @@
         "grounding_score": 1.0,
         "grounding_term_coverage": 1.0,
         "invalid_evidence_ids": [],
+        "language_consistency": {
+          "cyrillic_letters": 0,
+          "cyrillic_ratio": 0.0,
+          "latin_letters": 471,
+          "latin_ratio": 1.0,
+          "score": 1.0,
+          "violations": []
+        },
+        "language_consistency_score": 1.0,
+        "language_consistency_violation_count": 0,
         "manual_review": {
           "rubric": [
             "Every requirement is classified exactly once",
@@ -347,6 +404,9 @@
         "quality_score": 1.0,
         "required_path_coverage": 1.0,
         "safety_score": 1.0,
+        "scenario_provenance_score": 1.0,
+        "scenario_provenance_violation_count": 0,
+        "scenario_provenance_violations": [],
         "schema_compliance": 1.0,
         "schema_errors": [],
         "unsupported_impact_claim_count": 0,
@@ -358,7 +418,7 @@
         "user_facing_technical_token_count": 0,
         "user_facing_technical_tokens": []
       },
-      "started_at": "2026-08-26T12:28:59Z",
+      "started_at": "2026-08-26T13:43:29Z",
       "task": "vacancy_match",
       "usage": {
         "estimated_cost_usd": null,
@@ -370,15 +430,15 @@
       "adapter": "fixture",
       "case_id": "cover-letter-ru-01",
       "error": null,
-      "finished_at": "2026-08-26T12:28:59Z",
+      "finished_at": "2026-08-26T13:43:29Z",
       "language": "ru",
-      "latency_ms": 0.031,
+      "latency_ms": 0.033,
       "metadata": {
         "mode": "deterministic_fixture"
       },
       "passed": true,
       "provider_id": "reference",
-      "response_sha256": "8373bedbc258e909e9eb0139537e726c7f0978094540936531f01960047e84c4",
+      "response_sha256": "e7419631b3b905251fac6a99b581fd416c4936b3f94bbcc01aebc52616fd8ca5",
       "score": {
         "caveat_coverage": 1.0,
         "claim_evidence_violation_count": 0,
@@ -392,6 +452,16 @@
         "grounding_score": 1.0,
         "grounding_term_coverage": 1.0,
         "invalid_evidence_ids": [],
+        "language_consistency": {
+          "cyrillic_letters": 523,
+          "cyrillic_ratio": 0.880471,
+          "latin_letters": 71,
+          "latin_ratio": 0.119529,
+          "score": 1.0,
+          "violations": []
+        },
+        "language_consistency_score": 1.0,
+        "language_consistency_violation_count": 0,
         "manual_review": {
           "rubric": [
             "Письмо персонализировано под вакансию",
@@ -422,6 +492,9 @@
         "quality_score": 1.0,
         "required_path_coverage": 1.0,
         "safety_score": 1.0,
+        "scenario_provenance_score": 1.0,
+        "scenario_provenance_violation_count": 0,
+        "scenario_provenance_violations": [],
         "schema_compliance": 1.0,
         "schema_errors": [],
         "unsupported_impact_claim_count": 0,
@@ -433,7 +506,7 @@
         "user_facing_technical_token_count": 0,
         "user_facing_technical_tokens": []
       },
-      "started_at": "2026-08-26T12:28:59Z",
+      "started_at": "2026-08-26T13:43:29Z",
       "task": "cover_letter",
       "usage": {
         "estimated_cost_usd": null,
@@ -445,15 +518,15 @@
       "adapter": "fixture",
       "case_id": "cover-letter-en-01",
       "error": null,
-      "finished_at": "2026-08-26T12:28:59Z",
+      "finished_at": "2026-08-26T13:43:29Z",
       "language": "en",
-      "latency_ms": 0.037,
+      "latency_ms": 0.033,
       "metadata": {
         "mode": "deterministic_fixture"
       },
       "passed": true,
       "provider_id": "reference",
-      "response_sha256": "22a81fabcace4e7abc0a1433402bd99d7e4e8dc311821b15b36932f754f03fec",
+      "response_sha256": "05417fbb62e8b73ae4c0b3c6a5a62821cd828e6d83bd0efdd45c4213cff31af0",
       "score": {
         "caveat_coverage": 1.0,
         "claim_evidence_violation_count": 0,
@@ -467,6 +540,16 @@
         "grounding_score": 1.0,
         "grounding_term_coverage": 1.0,
         "invalid_evidence_ids": [],
+        "language_consistency": {
+          "cyrillic_letters": 0,
+          "cyrillic_ratio": 0.0,
+          "latin_letters": 654,
+          "latin_ratio": 1.0,
+          "score": 1.0,
+          "violations": []
+        },
+        "language_consistency_score": 1.0,
+        "language_consistency_violation_count": 0,
         "manual_review": {
           "rubric": [
             "Specific to the role",
@@ -497,6 +580,9 @@
         "quality_score": 1.0,
         "required_path_coverage": 1.0,
         "safety_score": 1.0,
+        "scenario_provenance_score": 1.0,
+        "scenario_provenance_violation_count": 0,
+        "scenario_provenance_violations": [],
         "schema_compliance": 1.0,
         "schema_errors": [],
         "unsupported_impact_claim_count": 0,
@@ -508,7 +594,7 @@
         "user_facing_technical_token_count": 0,
         "user_facing_technical_tokens": []
       },
-      "started_at": "2026-08-26T12:28:59Z",
+      "started_at": "2026-08-26T13:43:29Z",
       "task": "cover_letter",
       "usage": {
         "estimated_cost_usd": null,
@@ -520,9 +606,9 @@
       "adapter": "fixture",
       "case_id": "interview-ru-01",
       "error": null,
-      "finished_at": "2026-08-26T12:28:59Z",
+      "finished_at": "2026-08-26T13:43:29Z",
       "language": "ru",
-      "latency_ms": 0.051,
+      "latency_ms": 1.151,
       "metadata": {
         "mode": "deterministic_fixture"
       },
@@ -542,6 +628,16 @@
         "grounding_score": 1.0,
         "grounding_term_coverage": 1.0,
         "invalid_evidence_ids": [],
+        "language_consistency": {
+          "cyrillic_letters": 1175,
+          "cyrillic_ratio": 0.967078,
+          "latin_letters": 40,
+          "latin_ratio": 0.032922,
+          "score": 1.0,
+          "violations": []
+        },
+        "language_consistency_score": 1.0,
+        "language_consistency_violation_count": 0,
         "manual_review": {
           "rubric": [
             "Вопросы привязаны к роли",
@@ -572,6 +668,9 @@
         "quality_score": 1.0,
         "required_path_coverage": 1.0,
         "safety_score": 1.0,
+        "scenario_provenance_score": 1.0,
+        "scenario_provenance_violation_count": 0,
+        "scenario_provenance_violations": [],
         "schema_compliance": 1.0,
         "schema_errors": [],
         "unsupported_impact_claim_count": 0,
@@ -583,7 +682,7 @@
         "user_facing_technical_token_count": 0,
         "user_facing_technical_tokens": []
       },
-      "started_at": "2026-08-26T12:28:59Z",
+      "started_at": "2026-08-26T13:43:29Z",
       "task": "interview_questions",
       "usage": {
         "estimated_cost_usd": null,
@@ -595,9 +694,9 @@
       "adapter": "fixture",
       "case_id": "interview-en-01",
       "error": null,
-      "finished_at": "2026-08-26T12:28:59Z",
+      "finished_at": "2026-08-26T13:43:29Z",
       "language": "en",
-      "latency_ms": 0.027,
+      "latency_ms": 0.032,
       "metadata": {
         "mode": "deterministic_fixture"
       },
@@ -617,6 +716,16 @@
         "grounding_score": 1.0,
         "grounding_term_coverage": 1.0,
         "invalid_evidence_ids": [],
+        "language_consistency": {
+          "cyrillic_letters": 0,
+          "cyrillic_ratio": 0.0,
+          "latin_letters": 1428,
+          "latin_ratio": 1.0,
+          "score": 1.0,
+          "violations": []
+        },
+        "language_consistency_score": 1.0,
+        "language_consistency_violation_count": 0,
         "manual_review": {
           "rubric": [
             "Questions are role-specific",
@@ -647,6 +756,9 @@
         "quality_score": 1.0,
         "required_path_coverage": 1.0,
         "safety_score": 1.0,
+        "scenario_provenance_score": 1.0,
+        "scenario_provenance_violation_count": 0,
+        "scenario_provenance_violations": [],
         "schema_compliance": 1.0,
         "schema_errors": [],
         "unsupported_impact_claim_count": 0,
@@ -658,7 +770,7 @@
         "user_facing_technical_token_count": 0,
         "user_facing_technical_tokens": []
       },
-      "started_at": "2026-08-26T12:28:59Z",
+      "started_at": "2026-08-26T13:43:29Z",
       "task": "interview_questions",
       "usage": {
         "estimated_cost_usd": null,
@@ -667,8 +779,8 @@
       }
     }
   ],
-  "run_id": "ai-bench-20260826T122859Z-46e01af2",
-  "schema_version": "1.1",
-  "started_at": "2026-08-26T12:28:59Z",
+  "run_id": "ai-bench-20260826T134329Z-91f7fb7a",
+  "schema_version": "1.2",
+  "started_at": "2026-08-26T13:43:29Z",
   "status": "passed"
 }

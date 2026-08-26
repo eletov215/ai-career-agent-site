@@ -1,80 +1,75 @@
-# AI Career Agent - аудит источников v1.4.38
+# AI Career Agent - аудит источников v1.4.39
+
+**Дата:** 26.08.2026  
+**Production revision:** `20260819_0014`
 
 | Поле | Значение |
 |---|---|
-| Документ | SOURCE_AUDIT |
-| Версия | 1.4.38 |
-| Дата | 26 августа 2026 |
-| Проверяемый пакет | AI-BENCH-001 grounded-v2 hardening |
-| Исходный код | `ai-career-agent-site-main (22).zip`, предоставленный как актуальный GitHub `main` |
-| Live evidence | artifact `ai-bench-001-yandex-live-32958938365.zip` |
-| Production revision | `20260819_0014` |
-| Результат | first live run transport подтверждён; hardening candidate подготовлен; нужен GitHub CI + live run #2 |
+| Проверяемая кодовая основа | `ai-career-agent-site-main (23).zip` |
+| ZIP comment | `cd775f25a546d4ce0184d65dc0f3bc87adcc9ae1` |
+| Проверяемый пакет | AI-BENCH-001 grounded-v2.1 hardening |
+| Evals | `1.3.0` |
+| Benchmark contract | `1.2` |
+| Dataset | `ai-career-agent-golden-v1` v`1.2.0`, `contract=grounded-v2.1` |
+| External evidence | live run #2 artifact `32972783843` |
+| Результат | candidate локально готов; нужен ordinary GitHub CI + live run #3 + manual rubric |
 
-## 1. Подтверждённое состояние перед hardening
+## 1. Source precedence
 
-После stability r4 пользователь подтвердил green CI на `main`: `Python tests` и `AI-BENCH-001 package gate` прошли, live job корректно skipped на push. Затем manual `workflow_dispatch` завершился Success и выполнил comparative Yandex run.
+The user supplied `ai-career-agent-site-main (23).zip` as the current GitHub `main` snapshot. All changes in this package are based on that archive. Live-run #2 evidence is read from the separately supplied sanitized artifact `ai-bench-001-yandex-live-32972783843.zip`; it is evidence only and is not copied wholesale into the repository.
 
-Artifact содержит 24 response files (8 cases x 3 providers), `run.json` and `report.md`. For every provider `error_count=0`, therefore API key, Folder ID, service-account permission, model routing, JSON structured-output transport and artifact upload worked for this run.
+## 2. Live run #2 audit
 
-| Provider | Strict pass | Quality | Grounding | p50 ms | p95 ms | Cost USD |
-|---|---:|---:|---:|---:|---:|---:|
-| Alice AI LLM | 4/8 | 0.952178 | 0.957259 | 5193.153 | 9444.269 | 0.047868023 |
-| Alice AI LLM Flash | 2/8 | 0.950094 | 0.897536 | 3146.667 | 3919.065 | 0.006081147 |
-| YandexGPT Pro 5.1 | 3/8 | 0.937723 | 0.859077 | 5738.538 | 7977.200 | 0.034518028 |
+The artifact contains synthetic benchmark outputs only. It reports Alice AI LLM 5/8, Alice Flash 4/8 and YandexGPT Pro 5.1 3/8, with one YandexGPT Pro provider error on `cover-letter-en-01`. The old adapter could only label that response as an unsupported JSON chat-completions envelope, so the exact envelope shape could not be proven from the artifact.
 
-`Machine status: failed` represents quality-gate evidence, not transport failure. No provider decision is made from this run.
+The artifact also demonstrates the following regression targets: Unicode percent spacing, scenario-number provenance, RU output returned in English, a valid vacancy-only motivation paragraph, technical-ID leakage in user text, and incomplete match evidence.
 
-## 2. Live run #1 findings driving grounded-v2
+## 3. Grounded-v2.1 implementation audit
 
-- Alice AI LLM had the strongest overall grounding but still introduced an unsupported Kubernetes recommendation, returned incomplete `facts_not_verified`, emitted an invalid evidence ID in RU vacancy match, and produced unsupported causal/impact language in a cover letter.
-- Alice AI LLM Flash was much cheaper/faster but unstable on vacancy-match classification and could understate required gaps.
-- YandexGPT Pro 5.1 produced inconsistent model-authored match scores and malformed/decorated evidence IDs in some cases.
-- The old benchmark also produced false positives for legitimate hypothetical interview numbers because it could not distinguish scenario numbers from invented candidate achievements.
-- User-facing text could pass while leaking internal evidence metadata, so claim/evidence metadata needed a stronger separation from presentation text.
+The isolated `evals/` package now:
 
-## 3. Grounded-v2 implementation
+- normalizes percent tokens across regular, NBSP and narrow-NBSP spacing;
+- derives allowed numeric facts from canonical `source_facts`, not arbitrary prompt prose;
+- requires same-question `scenario` evidence when an interview question/purpose/follow-up uses a scenario number;
+- explicitly hard-gates RU/EN user-facing language consistency;
+- adds `motivation` to cover-letter paragraph kinds and requires vacancy evidence for it;
+- retains candidate-evidence requirements for `candidate_fit`;
+- records bounded safe provider diagnostics without raw response body or refusal text;
+- allows at most one configured retry for 429/5xx/transport/malformed-envelope failures and preserves retry evidence;
+- does not retry normal HTTP 4xx or model refusal;
+- adds `evals/regressions/live-run-2.json` and focused unit tests for the observed second-run failures;
+- keeps numeric vacancy match code-derived rather than model-authored.
 
-`evals/VERSION` is `1.2.0`; benchmark contract is `1.1`; dataset manifest is `1.1.0` with `contract=grounded-v2`.
+## 4. Local verification
 
-Implemented controls:
+| Check | Result |
+|---|---|
+| AI-BENCH unit tests | 50 PASS |
+| Deterministic reference | 8/8 PASS |
+| Reference fingerprint | `7aaf4b72f605a13483ca00c9be63c94928e2115c209d7c3f1f48c11f92238c2f` |
+| Repository regression groups | 328 PASS, 14 environment-dependent skips, 11 subtests PASS |
+| AI-BENCH package gate | PASS |
+| Repository hygiene | PASS after generated caches were removed |
+| Document structure | PASS |
+| Yandex live config validation with non-secret test environment | PASS, 3 providers |
 
-- source facts are typed `candidate` / `vacancy` / `scenario`;
-- evidence IDs must match raw `^[a-z][0-9]+$` identifiers;
-- user-facing strings reject technical evidence labels and decorated known IDs;
-- resume `facts_not_verified` and cover-letter `caveats` are structured with evidence IDs;
-- cover-letter `candidate_fit` paragraphs require candidate evidence;
-- unsupported impact/causal claims are a hard gate unless supported by cited candidate evidence;
-- vacancy-match output no longer contains model-authored `match_score`;
-- every vacancy requirement is classified exactly once as matched/gap and checked against expected status/evidence;
-- deterministic weighted code derives the numeric match score and verdict check;
-- interview hypothetical numbers are accepted only when supplied as source/scenario facts;
-- live-run #1 failure patterns are encoded in `evals/regressions/live-run-1.json`;
-- runner emits `manual_review_template.json`; manual writing review cannot override machine safety gates;
-- report/run fingerprints remain visible while credential-bearing fields continue to be redacted.
-
-## 4. Regression and deterministic evidence
-
-The grounded-v2 deterministic reference run passes all 8 reference cases with strict thresholds. Current local package tests cover invalid/decorated evidence IDs, metadata leakage, unsupported impact, structured verification/caveats, duplicate/wrong/missing match classifications, candidate/vacancy evidence requirements, deterministic scores and scenario-number policy.
-
-Repository evidence under `docs/evidence/ai-bench-001/` is regenerated for contract 1.1, including a separate pending manual-review template. Live run #1 is summarized without copying credentials or production user data.
+Full GitHub Actions remains authoritative for skipped Flask/Psycopg/PostgreSQL/Docker-dependent checks.
 
 ## 5. Production boundary
 
-No production Flask route, model, repository, service, dependency, Render setting or Alembic migration is changed by grounded-v2. Production revision remains `20260819_0014`. GitHub Secrets remain external to repository content and live requests remain manual-only/default-off.
+No production Flask route, model, repository, service, template, static asset, runtime dependency, Render setting or Alembic migration is changed by this package. Production revision remains `20260819_0014`. GitHub/Yandex secret values are not stored in source files or generated evidence.
 
 ## 6. Current gate
 
-1. Upload grounded-v2 candidate from the current `main` base.
-2. Require green ordinary `Python tests` and `AI-BENCH-001 package gate`, including historical package checks.
-3. Run `Actions -> CI -> Run workflow -> run_ai_bench_live=true` on `main`.
-4. Download live run #2 artifact and compare machine evidence against run #1 qualitatively (scores are not directly comparable because contract changed).
-5. Complete named human writing-quality rubric.
-6. Only then decide whether AI-BENCH-001 can be closed and unblock AI-PROVIDER-001.
+1. Green ordinary GitHub CI on the grounded-v2.1 candidate.
+2. Manual `run_ai_bench_live=true` on `main`.
+3. Review live run #3 artifact, including retry/diagnostic evidence.
+4. Complete named human writing-quality rubric.
+5. Only then decide whether `AI-BENCH-001` can close and `AI-PROVIDER-001` can start.
 
 ## 7. Status decision
 
-`AI-BENCH-001 grounded-v2 hardening` - **НУЖНА ПРОВЕРКА**.  
+`AI-BENCH-001 grounded-v2.1 hardening` - **НУЖНА ПРОВЕРКА**.  
 Previously completed packages remain **ВЫПОЛНЕНО**.  
 `AI-PROVIDER-001` remains **ЗАБЛОКИРОВАНО**.
 
@@ -82,5 +77,5 @@ Previously completed packages remain **ВЫПОЛНЕНО**.
 
 | Версия | Дата | Изменение |
 |---|---|---|
-| 1.4.37 | 26.08.2026 | Stability r4 removed invalid job-level `runner` context. |
-| 1.4.38 | 26.08.2026 | Ordinary CI green and live run #1 reviewed; grounded-v2 evidence/safety/match hardening prepared for live run #2. |
+| 1.4.38 | 26.08.2026 | Live run #1 reviewed; grounded-v2 evidence/safety/match hardening prepared. |
+| 1.4.39 | 26.08.2026 | Live run #2 reviewed; grounded-v2.1 adds language/scenario/motivation/diagnostic/retry hardening for live run #3. |

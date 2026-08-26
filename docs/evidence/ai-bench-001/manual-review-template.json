@@ -1,0 +1,279 @@
+{
+  "entries": [
+    {
+      "case_id": "resume-analysis-ru-01",
+      "criteria": [
+        {
+          "criterion": "Факты не расширены сверх источника",
+          "notes": null,
+          "score": null
+        },
+        {
+          "criterion": "Неподтвержденный лидерский опыт явно отражен",
+          "notes": null,
+          "score": null
+        },
+        {
+          "criterion": "Рекомендации конкретны и не маскируются под текущие навыки",
+          "notes": null,
+          "score": null
+        },
+        {
+          "criterion": "Тон нейтральный и профессиональный",
+          "notes": null,
+          "score": null
+        }
+      ],
+      "language": "ru",
+      "overall_notes": null,
+      "provider_id": "reference",
+      "reviewer": null,
+      "task": "resume_analysis"
+    },
+    {
+      "case_id": "resume-analysis-en-01",
+      "criteria": [
+        {
+          "criterion": "No unsupported achievements",
+          "notes": null,
+          "score": null
+        },
+        {
+          "criterion": "Unverified production Python is explicit",
+          "notes": null,
+          "score": null
+        },
+        {
+          "criterion": "Actionable recommendations do not masquerade as existing skills",
+          "notes": null,
+          "score": null
+        },
+        {
+          "criterion": "Clear professional English",
+          "notes": null,
+          "score": null
+        }
+      ],
+      "language": "en",
+      "overall_notes": null,
+      "provider_id": "reference",
+      "reviewer": null,
+      "task": "resume_analysis"
+    },
+    {
+      "case_id": "vacancy-match-ru-01",
+      "criteria": [
+        {
+          "criterion": "Каждое требование классифицировано ровно один раз",
+          "notes": null,
+          "score": null
+        },
+        {
+          "criterion": "Обязательные требования отделены от предпочтительных",
+          "notes": null,
+          "score": null
+        },
+        {
+          "criterion": "Нет ложного Docker/Kubernetes опыта",
+          "notes": null,
+          "score": null
+        },
+        {
+          "criterion": "Рекомендация объяснима без LLM-generated процента",
+          "notes": null,
+          "score": null
+        }
+      ],
+      "language": "ru",
+      "overall_notes": null,
+      "provider_id": "reference",
+      "reviewer": null,
+      "task": "vacancy_match"
+    },
+    {
+      "case_id": "vacancy-match-en-01",
+      "criteria": [
+        {
+          "criterion": "Every requirement is classified exactly once",
+          "notes": null,
+          "score": null
+        },
+        {
+          "criterion": "Mandatory Next.js gap stays explicit",
+          "notes": null,
+          "score": null
+        },
+        {
+          "criterion": "Testing evidence is treated as a preferred match, not a gap",
+          "notes": null,
+          "score": null
+        },
+        {
+          "criterion": "Recommendation is useful without an LLM-generated percentage",
+          "notes": null,
+          "score": null
+        }
+      ],
+      "language": "en",
+      "overall_notes": null,
+      "provider_id": "reference",
+      "reviewer": null,
+      "task": "vacancy_match"
+    },
+    {
+      "case_id": "cover-letter-ru-01",
+      "criteria": [
+        {
+          "criterion": "Письмо персонализировано под вакансию",
+          "notes": null,
+          "score": null
+        },
+        {
+          "criterion": "Нет выдуманных результатов или метрик",
+          "notes": null,
+          "score": null
+        },
+        {
+          "criterion": "Требование коммуникации не превращено в неподтвержденный навык кандидата",
+          "notes": null,
+          "score": null
+        },
+        {
+          "criterion": "Пробел по английскому явно отражен в caveats",
+          "notes": null,
+          "score": null
+        },
+        {
+          "criterion": "Технические evidence IDs не видны пользователю",
+          "notes": null,
+          "score": null
+        }
+      ],
+      "language": "ru",
+      "overall_notes": null,
+      "provider_id": "reference",
+      "reviewer": null,
+      "task": "cover_letter"
+    },
+    {
+      "case_id": "cover-letter-en-01",
+      "criteria": [
+        {
+          "criterion": "Specific to the role",
+          "notes": null,
+          "score": null
+        },
+        {
+          "criterion": "No invented impact metrics",
+          "notes": null,
+          "score": null
+        },
+        {
+          "criterion": "Experimentation gap remains explicit",
+          "notes": null,
+          "score": null
+        },
+        {
+          "criterion": "Technical evidence IDs are absent from user-facing text",
+          "notes": null,
+          "score": null
+        },
+        {
+          "criterion": "Concise and credible",
+          "notes": null,
+          "score": null
+        }
+      ],
+      "language": "en",
+      "overall_notes": null,
+      "provider_id": "reference",
+      "reviewer": null,
+      "task": "cover_letter"
+    },
+    {
+      "case_id": "interview-ru-01",
+      "criteria": [
+        {
+          "criterion": "Вопросы привязаны к роли",
+          "notes": null,
+          "score": null
+        },
+        {
+          "criterion": "Пробел по автоматизации исследуется без ложной предпосылки",
+          "notes": null,
+          "score": null
+        },
+        {
+          "criterion": "Гипотетические числа не выдаются за достижения кандидата",
+          "notes": null,
+          "score": null
+        },
+        {
+          "criterion": "Follow-up помогает углубить слабый ответ",
+          "notes": null,
+          "score": null
+        },
+        {
+          "criterion": "Технические IDs скрыты",
+          "notes": null,
+          "score": null
+        }
+      ],
+      "language": "ru",
+      "overall_notes": null,
+      "provider_id": "reference",
+      "reviewer": null,
+      "task": "interview_questions"
+    },
+    {
+      "case_id": "interview-en-01",
+      "criteria": [
+        {
+          "criterion": "Questions are role-specific",
+          "notes": null,
+          "score": null
+        },
+        {
+          "criterion": "SQL gap is explored without false assumptions",
+          "notes": null,
+          "score": null
+        },
+        {
+          "criterion": "Hypothetical numbers remain hypothetical rather than candidate achievements",
+          "notes": null,
+          "score": null
+        },
+        {
+          "criterion": "Follow-ups are actionable",
+          "notes": null,
+          "score": null
+        },
+        {
+          "criterion": "Technical IDs are hidden",
+          "notes": null,
+          "score": null
+        }
+      ],
+      "language": "en",
+      "overall_notes": null,
+      "provider_id": "reference",
+      "reviewer": null,
+      "task": "interview_questions"
+    }
+  ],
+  "instructions": "A named human reviewer scores only writing quality, clarity and usefulness on the 1-5 scale. Machine safety/grounding gates remain authoritative and cannot be overridden by manual scores.",
+  "run_id": "ai-bench-20260826T134329Z-91f7fb7a",
+  "schema_version": "1.2",
+  "score_scale": {
+    "anchors": {
+      "1": "unacceptable",
+      "2": "major_revision_needed",
+      "3": "usable_with_revision",
+      "4": "good",
+      "5": "excellent"
+    },
+    "max": 5,
+    "min": 1
+  },
+  "status": "pending"
+}

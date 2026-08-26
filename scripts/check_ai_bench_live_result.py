@@ -39,6 +39,8 @@ def main() -> int:
         print(
             f"{provider.get('id')}: passed={summary.get('passed_count')}/{summary.get('case_count')} "
             f"quality={summary.get('mean_quality_score')} grounding={summary.get('mean_grounding_score')} "
+            f"retries={summary.get('retry_count')} language_violations={summary.get('language_consistency_violation_count')} "
+            f"scenario_violations={summary.get('scenario_provenance_violation_count')} "
             f"p95_ms={summary.get('p95_latency_ms')} cost_usd={summary.get('estimated_cost_usd')}"
         )
     print("Machine quality failures are benchmark evidence and do not fail this transport gate.")

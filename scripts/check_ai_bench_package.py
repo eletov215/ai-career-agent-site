@@ -19,6 +19,7 @@ REQUIRED_VISIBLE = [
     "evals/config/yandex-live.json",
     "evals/artifacts/README.md",
     "evals/regressions/live-run-1.json",
+    "evals/regressions/live-run-2.json",
     "evals/fixtures/manifest.json",
     "evals/schemas/resume_analysis.schema.json",
     "evals/schemas/vacancy_match.schema.json",
@@ -128,7 +129,7 @@ def main() -> int:
         fail(f"missing required files: {missing}")
 
     version = (ROOT / "evals/VERSION").read_text(encoding="utf-8").strip()
-    if version != "1.2.0":
+    if version != "1.3.0":
         fail(f"unexpected evals version: {version}")
 
     workflow_path = ROOT / ".github/workflows/ci.yml"
@@ -171,8 +172,8 @@ def main() -> int:
     manifest = json.loads((ROOT / "evals/fixtures/manifest.json").read_text(encoding="utf-8"))
     if manifest.get("synthetic") is not True:
         fail("manifest must declare synthetic=true")
-    if manifest.get("version") != "1.1.0" or manifest.get("contract") != "grounded-v2":
-        fail("manifest must declare version=1.1.0 and contract=grounded-v2")
+    if manifest.get("version") != "1.2.0" or manifest.get("contract") != "grounded-v2.1":
+        fail("manifest must declare version=1.2.0 and contract=grounded-v2.1")
     cases = manifest.get("cases") or []
     if len(cases) < 8:
         fail("golden dataset must contain at least eight bilingual/task-diverse cases")
@@ -233,13 +234,20 @@ def main() -> int:
             fail("deterministic reference run did not pass")
         if run.get("execution_mode") != "deterministic_reference":
             fail("reference run must be labeled deterministic_reference")
-        if run.get("schema_version") != "1.1" or run.get("benchmark_version") != "1.1":
-            fail("reference run must use grounded-v2 benchmark/run schema version 1.1")
+        if run.get("schema_version") != "1.2" or run.get("benchmark_version") != "1.2":
+            fail("reference run must use grounded-v2.1 benchmark/run schema version 1.2")
         if run.get("quality_gate", {}).get("passed_count") != len(cases):
             fail("not all reference cases passed")
         vacancy_schema = json.loads((ROOT / "evals/schemas/vacancy_match.schema.json").read_text(encoding="utf-8"))
         if "match_score" in (vacancy_schema.get("properties") or {}):
             fail("vacancy model schema must not ask the LLM to author match_score")
+        cover_schema = json.loads((ROOT / "evals/schemas/cover_letter.schema.json").read_text(encoding="utf-8"))
+        paragraph_kinds = cover_schema.get("properties", {}).get("paragraphs", {}).get("items", {}).get("properties", {}).get("kind", {}).get("enum", [])
+        if "motivation" not in paragraph_kinds:
+            fail("cover-letter schema must support vacancy-grounded motivation paragraphs")
+        required_thresholds = {"max_language_consistency_violations", "max_scenario_provenance_violations"}
+        if not required_thresholds.issubset(set((run.get("quality_gate", {}).get("thresholds") or {}).keys())):
+            fail("grounded-v2.1 language/scenario thresholds are missing")
         for schema_name in (
             "resume_analysis.schema.json",
             "vacancy_match.schema.json",

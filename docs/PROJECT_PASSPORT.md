@@ -6,34 +6,35 @@
 <!-- ACA-CANONICAL-STATUS:START -->
 ## Канонический срез проекта
 
-**Документ:** AI Career Agent PROJECT_PASSPORT `v2.52`  
+**Документ:** AI Career Agent PROJECT_PASSPORT `v2.53`  
 **Дата:** 2026-08-26  
 **Production revision:** `20260819_0014`
 
 | Контур | Состояние |
 |---|---|
-| Web | Flask + Gunicorn, WSGI `app:app`; grounded-v2 package production code не меняет |
+| Web | Flask + Gunicorn, WSGI `app:app`; grounded-v2.1 package production code не меняет |
 | Data | PostgreSQL production, SQLite local/test fallback, Alembic `20260819_0014` |
-| Identity/career/search/privacy | ранее завершённые пакеты остаются ВЫПОЛНЕНО; ordinary CI после r4 green |
-| AI benchmark | `evals 1.2.0`, grounded-v2 contract, first live run reviewed, second live run pending |
-| Live transport | first run: 24/24 requests completed, 0 API errors across Alice AI LLM / Flash / YandexGPT Pro 5.1 |
-| Safety boundary | synthetic dataset; exact evidence IDs; structured unverified/caveats; unsupported impact and user-facing metadata gates |
+| Identity/career/search/privacy | ранее завершённые пакеты остаются ВЫПОЛНЕНО; regression matrix локально без confirmed failures |
+| AI benchmark | `evals 1.3.0`, benchmark `1.2`, dataset `1.2.0`, `grounded-v2.1`; live run #2 reviewed, live run #3 pending |
+| Live run #2 | Alice 5/8, Flash 4/8, YandexGPT Pro 3/8; one diagnosable provider-envelope failure target; no provider decision |
+| Safety boundary | synthetic dataset; exact evidence; structured unverified/caveats; language/scenario/motivation/impact/user-text gates |
 | Match architecture | LLM classifies requirements; numeric score is deterministic code-derived output |
+| Provider resilience | safe envelope diagnostics + max one bounded retry for transient/malformed failures; no raw response/refusal persistence |
 | Production AI | отсутствует; provider decision не принят |
 
 ### Decision boundary
 
-First live run establishes transport viability and reveals quality risks; it is not provider approval. Grounded-v2 must pass ordinary CI, live run #2 and human writing review before `AI-PROVIDER-001`.
+Live run #2 materially improved Alice behavior and validated deterministic match scoring, but exposed remaining benchmark/transport gaps. Grounded-v2.1 must pass ordinary CI, live run #3 artifact review and named human writing review before `AI-PROVIDER-001`.
 <!-- ACA-CANONICAL-STATUS:END -->
 
 | Поле | Значение |
 |---|---|
 | Документ        | PROJECT_PASSPORT                                                                              |
-| Версия паспорта | 2.52 |
+| Версия паспорта | 2.53 |
 | Дата            | 26 августа 2026                                                                               |
 | Статус          | ДЕЙСТВУЮЩИЙ                                                                                   |
-| Связанный план | `AI_Career_Agent_PLAN_CURRENT v1.4.38` |
-| Основа кода | GitHub `main` archive `ai-career-agent-site-main (22).zip` after green ordinary CI and first Yandex live benchmark |
+| Связанный план | `AI_Career_Agent_PLAN_CURRENT v1.4.39` |
+| Основа кода | GitHub `main` archive `ai-career-agent-site-main (23).zip` after grounded-v2 live run #2 |
 
 > Контрольные статусы: FND/DATA/SEC/OPS/INFRA-PREP/SYNC/SEARCH-001..005/AUTH/PROF/PRIV - ВЫПОЛНЕНО; AI-BENCH-001 - НУЖНА ПРОВЕРКА; AI-PROVIDER-001 - ЗАБЛОКИРОВАНО; DOC-001 - В РАБОТЕ; INFRA-001 - ОТЛОЖЕНО.
 
@@ -488,7 +489,7 @@ Render не считается гарантированным production для 
 
 ## 23. Текущий gate
 
-SEARCH-005 — ВЫПОЛНЕНО. AI-BENCH-001 first live run completed with zero transport errors and was reviewed; grounded-v2 hardening now requires green ordinary CI, live run #2 and manual rubric. Production PostgreSQL remains `20260819_0014`; provider decision is not yet made.
+SEARCH-005 — ВЫПОЛНЕНО. AI-BENCH-001 live run #2 was reviewed; grounded-v2.1 hardening now requires green ordinary CI, live run #3 artifact review and named manual rubric. Production PostgreSQL remains `20260819_0014`; provider decision is not yet made.
 
 ## 24. Правила рабочего чата
 
@@ -576,3 +577,10 @@ SEARCH-005 — ВЫПОЛНЕНО. AI-BENCH-001 first live run completed with ze
 | Версия | Дата | Изменение |
 |---|---|---|
 | 2.52 | 26.08.2026 | Ordinary CI after stability r4 confirmed green; first Yandex live run completed 24 requests without API errors. Artifact review drove grounded-v2: stronger evidence/safety contracts and deterministic vacancy match score. Production architecture/revision unchanged; provider decision remains pending live run #2/manual review. |
+
+
+### PROJECT_PASSPORT v2.53 update
+
+| Версия | Дата | Изменение |
+|---|---|---|
+| 2.53 | 26.08.2026 | Live run #2 reviewed. Grounded-v2.1 / evals 1.3.0 adds Unicode numeric normalization, scenario provenance, language gate, motivation semantics, safe provider diagnostics and one bounded retry. Production architecture/revision remains unchanged; provider decision awaits live run #3/manual rubric. |

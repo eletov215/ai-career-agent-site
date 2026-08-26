@@ -1,0 +1,77 @@
+{
+  "source_run_id": "32972783843",
+  "source_date": "2026-08-26",
+  "synthetic_only": true,
+  "purpose": "Regression patterns distilled from the second live Yandex AI-BENCH artifact after grounded-v2 hardening. No credentials or production user data are included.",
+  "patterns": {
+    "unicode_percent_equivalence": [
+      "20%",
+      "20 %",
+      "20 %",
+      "15%",
+      "15 %",
+      "15 %"
+    ],
+    "scenario_provenance": [
+      {
+        "case_id": "interview-ru-01",
+        "number": "20%",
+        "required_evidence_id": "s1"
+      },
+      {
+        "case_id": "interview-ru-01",
+        "number": "30",
+        "required_evidence_id": "s2"
+      },
+      {
+        "case_id": "interview-en-01",
+        "number": "15%",
+        "required_evidence_id": "s1"
+      },
+      {
+        "case_id": "interview-en-01",
+        "number": "90",
+        "required_evidence_id": "s2"
+      }
+    ],
+    "unsupported_scenario_number": {
+      "case_id": "interview-en-01",
+      "text": "after 30 days",
+      "number": "30"
+    },
+    "wrong_language": {
+      "case_id": "cover-letter-ru-01",
+      "observed": "English user-facing cover letter",
+      "expected": "Russian"
+    },
+    "legitimate_motivation": {
+      "case_id": "cover-letter-en-01",
+      "kind": "motivation",
+      "text": "I appreciate your focus on B2B product design.",
+      "evidence_ids": [
+        "v1",
+        "v2"
+      ]
+    },
+    "provider_envelope_diagnostics": [
+      "content_null",
+      "model_refusal",
+      "choices_missing",
+      "content_invalid_json",
+      "envelope_invalid_json"
+    ],
+    "bounded_retry": {
+      "max_retries": 1,
+      "retryable": [
+        "HTTP 429",
+        "HTTP 5xx",
+        "transport timeout/error",
+        "malformed envelope"
+      ],
+      "non_retryable": [
+        "model refusal",
+        "HTTP 4xx except 429"
+      ]
+    }
+  }
+}

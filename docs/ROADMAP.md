@@ -4,10 +4,10 @@
 ## Актуальная точка дорожной карты - 2026-08-26
 
 - `SEARCH-005` и все более ранние product packages - **ВЫПОЛНЕНО**.
-- stability r4 ordinary CI on `main` - **GREEN**.
-- first Yandex live benchmark - **TRANSPORT PASS / QUALITY REVIEWED**: 24/24 calls, 0 API errors; no provider decision.
-- `AI-BENCH-001 grounded-v2 / evals 1.2.0` - **НУЖНА ПРОВЕРКА**.
-- Next: green ordinary CI -> manual live run #2 -> artifact review -> named human rubric.
+- grounded-v2 ordinary CI on `main` - **GREEN** before live run #2.
+- Yandex live run #2 - **TRANSPORT PARTIAL / QUALITY REVIEWED**: Alice 5/8, Flash 4/8, YandexGPT Pro 3/8 with one provider-envelope error; no provider decision.
+- `AI-BENCH-001 grounded-v2.1 / evals 1.3.0` - **НУЖНА ПРОВЕРКА**.
+- Next: green ordinary CI -> manual live run #3 -> artifact review -> named human rubric.
 - `AI-PROVIDER-001` - **ЗАБЛОКИРОВАН ДО ЗАВЕРШЕНИЯ AI-BENCH-001**.
 - Production schema remains `20260819_0014`; production routes and migrations are unchanged.
 <!-- ACA-CANONICAL-STATUS:END -->
@@ -15,9 +15,9 @@
 ## Текущая очередь
 
 ```text
-AI-BENCH-001 grounded-v2 -> green ordinary CI
+AI-BENCH-001 grounded-v2.1 -> green ordinary CI
 -> CI workflow_dispatch(run_ai_bench_live=true)
--> live run #2: Alice AI LLM / Flash / YandexGPT Pro 5.1
+-> live run #3: Alice AI LLM / Flash / YandexGPT Pro 5.1
 -> sanitized artifact review
 -> named manual writing-quality rubric
 -> AI-PROVIDER-001
@@ -34,7 +34,7 @@ AI-BENCH-001 grounded-v2 -> green ordinary CI
 | SYNC-001/002, SEARCH-001..005 | ВЫПОЛНЕНО | regression only |
 | AUTH-001/002 | ВЫПОЛНЕНО | regression only |
 | PROF-001/002/003, PRIV-001 | ВЫПОЛНЕНО | regression only |
-| AI-BENCH-001 | НУЖНА ПРОВЕРКА | grounded-v2 CI -> live run #2 -> artifact review -> manual rubric |
+| AI-BENCH-001 | НУЖНА ПРОВЕРКА | grounded-v2.1 CI -> live run #3 -> artifact review -> manual rubric |
 | AI-PROVIDER-001 | ЗАБЛОКИРОВАНО | AI-BENCH-001 complete |
 | LEGAL-001, AI-001..006 | ЗАПЛАНИРОВАНО | provider strategy and legal gate |
 | JOB-001..004 | ЗАПЛАНИРОВАНО | AI core and account integration |
