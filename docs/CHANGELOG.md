@@ -1,3 +1,16 @@
+## 2026-08-26 - AI-BENCH-001 grounded-v2 hardening / evals 1.2.0
+
+- Confirmed stability r4 ordinary GitHub CI green on `main`; paid live job correctly skipped on push.
+- Reviewed first manual Yandex artifact `32958938365`: 24/24 provider requests completed with zero API errors; machine quality status remained failed, so transport and quality are now separated explicitly.
+- Recorded first-run evidence: Alice AI LLM 4/8, Flash 2/8, YandexGPT Pro 5.1 3/8 under the old grounded-v1 contract; no provider decision made.
+- Added grounded-v2 typed source facts, exact raw evidence-ID contract, structured unverified facts/caveats, user-facing metadata leakage gate, claim/evidence checks and unsupported-impact hard gate.
+- Removed model-authored vacancy `match_score`; the benchmark now derives weighted numeric match deterministically after exact requirement classification and evidence checks.
+- Added scenario facts so legitimate hypothetical interview numbers are allowed only when explicitly supplied, while invented candidate-achievement numbers remain blocked.
+- Added live-run #1 regression patterns and separate pending `manual_review_template.json`.
+- Upgraded schemas/dataset/config contract to v2/1.1 and regenerated deterministic evidence; all 8 reference cases pass strict grounded-v2 gates.
+- Production Flask routes, dependencies, models, Render settings and database revision `20260819_0014` remain unchanged.
+- Next gate: green ordinary CI -> live run #2 -> artifact review -> named manual rubric.
+
 ## 2026-08-26 — AI-BENCH-001 stability hotfix r4 / evals 1.1.3
 
 - Audited the exact GitHub ZIP after run `#201`.

@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://ai-career-agent.local/schemas/resume-analysis-v1.json",
-  "title": "Resume analysis output",
+  "$id": "https://ai-career-agent.local/schemas/resume-analysis-v2.json",
+  "title": "Resume analysis output v2",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -24,28 +24,13 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": [
-          "title",
-          "explanation",
-          "evidence_ids"
-        ],
+        "required": ["title", "explanation", "evidence_ids"],
         "properties": {
-          "title": {
-            "type": "string",
-            "minLength": 2,
-            "maxLength": 120
-          },
-          "explanation": {
-            "type": "string",
-            "minLength": 10,
-            "maxLength": 500
-          },
+          "title": {"type": "string", "minLength": 2, "maxLength": 120},
+          "explanation": {"type": "string", "minLength": 10, "maxLength": 500},
           "evidence_ids": {
             "type": "array",
-            "items": {
-              "type": "string",
-              "minLength": 1
-            },
+            "items": {"type": "string", "pattern": "^[a-z][0-9]+$"},
             "minItems": 1,
             "maxItems": 8
           }
@@ -59,28 +44,13 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": [
-          "title",
-          "explanation",
-          "evidence_ids"
-        ],
+        "required": ["title", "explanation", "evidence_ids"],
         "properties": {
-          "title": {
-            "type": "string",
-            "minLength": 2,
-            "maxLength": 120
-          },
-          "explanation": {
-            "type": "string",
-            "minLength": 10,
-            "maxLength": 500
-          },
+          "title": {"type": "string", "minLength": 2, "maxLength": 120},
+          "explanation": {"type": "string", "minLength": 10, "maxLength": 500},
           "evidence_ids": {
             "type": "array",
-            "items": {
-              "type": "string",
-              "minLength": 1
-            },
+            "items": {"type": "string", "pattern": "^[a-z][0-9]+$"},
             "minItems": 1,
             "maxItems": 8
           }
@@ -94,28 +64,13 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": [
-          "action",
-          "rationale",
-          "evidence_ids"
-        ],
+        "required": ["action", "rationale", "evidence_ids"],
         "properties": {
-          "action": {
-            "type": "string",
-            "minLength": 5,
-            "maxLength": 300
-          },
-          "rationale": {
-            "type": "string",
-            "minLength": 10,
-            "maxLength": 500
-          },
+          "action": {"type": "string", "minLength": 5, "maxLength": 300},
+          "rationale": {"type": "string", "minLength": 10, "maxLength": 500},
           "evidence_ids": {
             "type": "array",
-            "items": {
-              "type": "string",
-              "minLength": 1
-            },
+            "items": {"type": "string", "pattern": "^[a-z][0-9]+$"},
             "minItems": 1,
             "maxItems": 8
           }
@@ -124,11 +79,21 @@
     },
     "facts_not_verified": {
       "type": "array",
+      "minItems": 1,
       "maxItems": 10,
       "items": {
-        "type": "string",
-        "minLength": 2,
-        "maxLength": 240
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["fact", "evidence_ids"],
+        "properties": {
+          "fact": {"type": "string", "minLength": 4, "maxLength": 320},
+          "evidence_ids": {
+            "type": "array",
+            "items": {"type": "string", "pattern": "^[a-z][0-9]+$"},
+            "minItems": 1,
+            "maxItems": 4
+          }
+        }
       }
     }
   }

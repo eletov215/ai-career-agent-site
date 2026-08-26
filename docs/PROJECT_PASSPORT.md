@@ -6,34 +6,34 @@
 <!-- ACA-CANONICAL-STATUS:START -->
 ## Канонический срез проекта
 
-**Документ:** AI Career Agent PROJECT_PASSPORT `v2.51`  
+**Документ:** AI Career Agent PROJECT_PASSPORT `v2.52`  
 **Дата:** 2026-08-26  
 **Production revision:** `20260819_0014`
 
 | Контур | Состояние |
 |---|---|
-| Web | Flask + Gunicorn, WSGI `app:app`; production code в hotfix r4 не менялся |
+| Web | Flask + Gunicorn, WSGI `app:app`; grounded-v2 package production code не меняет |
 | Data | PostgreSQL production, SQLite local/test fallback, Alembic `20260819_0014` |
-| Identity/career/search/privacy | завершённые пакеты сохраняют статус ВЫПОЛНЕНО; их CI gates остаются в job `tests` |
-| AI benchmark | `evals 1.1.3`; live Yandex job встроен в existing `CI` workflow |
-| Manual safety | `run_ai_bench_live=false` по умолчанию; API run возможен только после green `tests` + `ai-bench-001` |
-| CI incident | GitHub run #201: workflow validation failed before runner allocation because `runner.temp` was used in job-level `env` |
-| Fix | output path `/tmp/ai-bench-yandex-live` + local job-env context validator/regression tests |
+| Identity/career/search/privacy | ранее завершённые пакеты остаются ВЫПОЛНЕНО; ordinary CI после r4 green |
+| AI benchmark | `evals 1.2.0`, grounded-v2 contract, first live run reviewed, second live run pending |
+| Live transport | first run: 24/24 requests completed, 0 API errors across Alice AI LLM / Flash / YandexGPT Pro 5.1 |
+| Safety boundary | synthetic dataset; exact evidence IDs; structured unverified/caveats; unsupported impact and user-facing metadata gates |
+| Match architecture | LLM classifies requirements; numeric score is deterministic code-derived output |
 | Production AI | отсутствует; provider decision не принят |
 
 ### Decision boundary
 
-Hotfix r4 меняет только CI/eval packaging и документацию. Он не подключает Alice AI к сайту и не открывает завершённые production packages. `AI-PROVIDER-001` остаётся заблокирован до green CI, live comparative artifact и human rubric.
+First live run establishes transport viability and reveals quality risks; it is not provider approval. Grounded-v2 must pass ordinary CI, live run #2 and human writing review before `AI-PROVIDER-001`.
 <!-- ACA-CANONICAL-STATUS:END -->
 
 | Поле | Значение |
 |---|---|
 | Документ        | PROJECT_PASSPORT                                                                              |
-| Версия паспорта | 2.51 |
+| Версия паспорта | 2.52 |
 | Дата            | 26 августа 2026                                                                               |
 | Статус          | ДЕЙСТВУЮЩИЙ                                                                                   |
-| Связанный план | `AI_Career_Agent_PLAN_CURRENT v1.4.37` |
-| Основа кода | GitHub archive `ai-career-agent-site-eletov215-patch-1 (1).zip` after run #201; workflow-context hotfix r4 prepared |
+| Связанный план | `AI_Career_Agent_PLAN_CURRENT v1.4.38` |
+| Основа кода | GitHub `main` archive `ai-career-agent-site-main (22).zip` after green ordinary CI and first Yandex live benchmark |
 
 > Контрольные статусы: FND/DATA/SEC/OPS/INFRA-PREP/SYNC/SEARCH-001..005/AUTH/PROF/PRIV - ВЫПОЛНЕНО; AI-BENCH-001 - НУЖНА ПРОВЕРКА; AI-PROVIDER-001 - ЗАБЛОКИРОВАНО; DOC-001 - В РАБОТЕ; INFRA-001 - ОТЛОЖЕНО.
 
@@ -488,7 +488,7 @@ Render не считается гарантированным production для 
 
 ## 23. Текущий gate
 
-SEARCH-005 — ВЫПОЛНЕНО. AI-BENCH-001 stability hotfix r3 требует green ordinary CI; затем integrated `CI` manual job с `run_ai_bench_live=true`, artifact review и manual rubric. Production PostgreSQL остаётся на `20260819_0014`; provider decision ещё не выполнен.
+SEARCH-005 — ВЫПОЛНЕНО. AI-BENCH-001 first live run completed with zero transport errors and was reviewed; grounded-v2 hardening now requires green ordinary CI, live run #2 and manual rubric. Production PostgreSQL remains `20260819_0014`; provider decision is not yet made.
 
 ## 24. Правила рабочего чата
 
@@ -569,3 +569,10 @@ SEARCH-005 — ВЫПОЛНЕНО. AI-BENCH-001 stability hotfix r3 требуе
 | Версия | Дата | Изменение |
 |---|---|---|
 | 2.51 | 26.08.2026 | GitHub run #201 was rejected before runner allocation because `runner.temp` was referenced from `jobs.ai-bench-yandex-live.env`. Hotfix r4 uses `/tmp/ai-bench-yandex-live`, adds local job-env context validation/regression coverage, and keeps production revision `20260819_0014` unchanged. |
+
+
+### PROJECT_PASSPORT v2.52 update
+
+| Версия | Дата | Изменение |
+|---|---|---|
+| 2.52 | 26.08.2026 | Ordinary CI after stability r4 confirmed green; first Yandex live run completed 24 requests without API errors. Artifact review drove grounded-v2: stronger evidence/safety contracts and deterministic vacancy match score. Production architecture/revision unchanged; provider decision remains pending live run #2/manual review. |

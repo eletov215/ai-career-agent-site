@@ -1,43 +1,49 @@
 # AI-BENCH-001 benchmark report
 
-- Run ID: `[REDACTED]`
-- Started: `2026-08-24T10:27:07Z`
-- Finished: `2026-08-24T10:27:07Z`
-- Dataset: `ai-career-agent-golden-v1` v1.0.0
-- Dataset fingerprint: `[REDACTED]`
+- Run ID: `ai-bench-20260826T122859Z-46e01af2`
+- Started: `2026-08-26T12:28:59Z`
+- Finished: `2026-08-26T12:28:59Z`
+- Dataset: `ai-career-agent-golden-v1` v1.1.0
+- Dataset fingerprint: `962aa5559802e897501890c04848572d3e1afc3980e1d97f782b94af67210b99`
+- Benchmark contract: `1.1`
 - Execution mode: `deterministic_reference`
 - Quality gate: **PASSED**
 
 ## Provider summary
 
-| Provider | Adapter | Cases | Passed | Error rate | Quality | Schema | Grounding | p50 latency, ms | p95 latency, ms | Estimated cost, USD |
-|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| reference | fixture | 8 | 8 | 0.000 | 1.000 | 1.000 | 1.000 | 0.03 | 0.05 | n/a |
+| Provider | Cases | Passed | Errors | Quality | Grounding | Clean text | Match consistency | Safety violations | p50 ms | p95 ms | Est. cost USD |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| reference | 8 | 8 | 0 | 1.000 | 1.000 | 1.000 | 1.000 | 0 | 0.04 | 0.05 | n/a |
 
 ## Case results
 
-| Provider | Case | Task | Language | Result | Quality | Grounding | Forbidden claims | Unsupported numbers | Latency, ms |
-|---|---|---|---|---|---:|---:|---:|---:|---:|
-| reference | resume-analysis-ru-01 | resume_analysis | ru | PASS | 1.000 | 1.000 | 0 | 0 | 0.03 |
-| reference | resume-analysis-en-01 | resume_analysis | en | PASS | 1.000 | 1.000 | 0 | 0 | 0.03 |
-| reference | vacancy-match-ru-01 | vacancy_match | ru | PASS | 1.000 | 1.000 | 0 | 0 | 0.03 |
-| reference | vacancy-match-en-01 | vacancy_match | en | PASS | 1.000 | 1.000 | 0 | 0 | 0.03 |
-| reference | cover-letter-ru-01 | cover_letter | ru | PASS | 1.000 | 1.000 | 0 | 0 | 0.06 |
-| reference | cover-letter-en-01 | cover_letter | en | PASS | 1.000 | 1.000 | 0 | 0 | 0.02 |
-| reference | interview-ru-01 | interview_questions | ru | PASS | 1.000 | 1.000 | 0 | 0 | 0.04 |
-| reference | interview-en-01 | interview_questions | en | PASS | 1.000 | 1.000 | 0 | 0 | 0.03 |
+| Provider | Case | Result | Quality | Grounding | Clean text | Invalid evidence | Impact | Match violations | Derived match | Latency ms |
+|---|---|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| reference | resume-analysis-ru-01 | PASS | 1.000 | 1.000 | 1.000 | 0 | 0 | 0 | n/a | 0.04 |
+| reference | resume-analysis-en-01 | PASS | 1.000 | 1.000 | 1.000 | 0 | 0 | 0 | n/a | 0.03 |
+| reference | vacancy-match-ru-01 | PASS | 1.000 | 1.000 | 1.000 | 0 | 0 | 0 | 67 | 0.04 |
+| reference | vacancy-match-en-01 | PASS | 1.000 | 1.000 | 1.000 | 0 | 0 | 0 | 71 | 0.04 |
+| reference | cover-letter-ru-01 | PASS | 1.000 | 1.000 | 1.000 | 0 | 0 | 0 | n/a | 0.03 |
+| reference | cover-letter-en-01 | PASS | 1.000 | 1.000 | 1.000 | 0 | 0 | 0 | n/a | 0.04 |
+| reference | interview-ru-01 | PASS | 1.000 | 1.000 | 1.000 | 0 | 0 | 0 | n/a | 0.05 |
+| reference | interview-en-01 | PASS | 1.000 | 1.000 | 1.000 | 0 | 0 | 0 | n/a | 0.03 |
 
-## Quality-gate interpretation
+## Grounded-v2 contract interpretation
 
-- Schema compliance is machine-checked against the versioned JSON schemas in `evals/schemas/`.
-- Grounding combines valid evidence references, required evidence recall, and fixture-specific grounding terms.
-- Forbidden claims and unsupported numeric claims are hard safety gates in the CI configuration.
-- Human writing-quality rubrics are recorded as pending; the runner never fabricates manual-review scores.
+- Evidence identifiers must be exact raw IDs and stay out of user-facing text.
+- Resume `facts_not_verified` and cover-letter `caveats` are structured objects with their own evidence references.
+- Cover-letter candidate-fit paragraphs must cite candidate facts; unsupported impact claims are a hard gate.
+- Vacancy requirements are classified exactly once by requirement ID. Duplicate, missing, contradictory, or weakly evidenced classifications are hard failures.
+- Vacancy numeric match scores are derived deterministically from weighted requirement classifications; the LLM no longer authors a percentage.
+- Interview numbers are accepted only when already supplied as source/scenario facts, preventing accidental candidate-achievement fabrication.
+- Human writing-quality rubrics remain pending; the runner never fabricates manual-review scores.
 
 ## Limitations
 
 - The included dataset is synthetic and intentionally excludes production user PII.
 - Human writing-quality rubrics remain pending until a named reviewer records scores.
+- Vacancy numeric match scores are derived deterministically from requirement classifications; models do not author the score field.
+- Live run v2 uses the grounded-v2 output contract, so its quality scores are not directly comparable to the earlier grounded-v1 run.
 - This run validates the harness, schemas, scoring, safety gates, and report generation; it is not a comparative result for external AI vendors.
 
 ## Decision status

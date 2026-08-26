@@ -7,45 +7,63 @@
   "messages": [
     {
       "role": "system",
-      "content": "You are running the offline AI Career Agent benchmark. Use only facts with identifiers from the input. Do not invent employers, roles, dates, education, skills, achievements, or numbers. Attach evidence_ids to every substantive claim and return only JSON matching the requested schema."
+      "content": "You are running the offline AI Career Agent benchmark. Use only the listed facts with identifiers from the input. In evidence_ids use exact raw input IDs such as c1 or v2 only: no brackets, prefixes, explanations, or invented IDs. Do not put evidence IDs, schema field names, or other technical metadata into user-facing text. Do not turn vacancy requirements into candidate skills. Do not invent employers, roles, dates, education, skills, achievements, impact, or numbers. If a candidate fact is not verified, do not state it as present. Return only JSON matching the requested schema. For interview_questions numbers are allowed only when they already appear in the input facts. Facts with kind=scenario are hypothetical question parameters, not candidate experience or achievements; use them only as scenarios."
     },
     {
       "role": "user",
-      "content": "Create adaptive interview questions. Candidate facts: [c1] 2 years in financial planning; [c2] monthly forecasting; [c3] Excel financial models; [c4] no verified SQL. Vacancy facts: [v1] FP&A analyst; [v2] forecasting required; [v3] scenario modelling required; [v4] SQL is preferred."
+      "content": "Create adaptive interview questions. Candidate facts: [c1] 2 years in financial planning; [c2] monthly forecasting; [c3] Excel financial models; [c4] no verified SQL. Vacancy facts: [v1] FP&A analyst; [v2] forecasting required; [v3] scenario modelling required; [v4] SQL is preferred. Allowed hypothetical scenario parameters: [s1] forecast variance 15%; [s2] onboarding horizon 90 days. Do not present s1/s2 as past candidate achievements."
     }
   ],
   "source_facts": [
     {
       "id": "c1",
-      "text": "2 years in financial planning"
+      "text": "2 years in financial planning",
+      "kind": "candidate"
     },
     {
       "id": "c2",
-      "text": "monthly forecasting"
+      "text": "monthly forecasting",
+      "kind": "candidate"
     },
     {
       "id": "c3",
-      "text": "Excel financial models"
+      "text": "Excel financial models",
+      "kind": "candidate"
     },
     {
       "id": "c4",
-      "text": "no verified SQL"
+      "text": "no verified SQL",
+      "kind": "candidate"
     },
     {
       "id": "v1",
-      "text": "FP&A analyst"
+      "text": "FP&A analyst",
+      "kind": "vacancy"
     },
     {
       "id": "v2",
-      "text": "forecasting required"
+      "text": "forecasting required",
+      "kind": "vacancy"
     },
     {
       "id": "v3",
-      "text": "scenario modelling required"
+      "text": "scenario modelling required",
+      "kind": "vacancy"
     },
     {
       "id": "v4",
-      "text": "SQL is preferred"
+      "text": "SQL is preferred",
+      "kind": "vacancy"
+    },
+    {
+      "id": "s1",
+      "text": "hypothetical forecast variance 15%",
+      "kind": "scenario"
+    },
+    {
+      "id": "s2",
+      "text": "hypothetical onboarding horizon 90 days",
+      "kind": "scenario"
     }
   ],
   "required_paths": [
@@ -63,6 +81,8 @@
     "v3",
     "v4"
   ],
+  "required_unverified_evidence_ids": [],
+  "required_caveat_evidence_ids": [],
   "grounding_requirements": [
     {
       "id": "planning",
@@ -113,14 +133,19 @@
     }
   ],
   "generated_numeric_paths": [],
+  "match_requirements": [],
   "manual_rubric": [
     "Questions are role-specific",
     "SQL gap is explored without false assumptions",
-    "Follow-ups are actionable"
+    "Hypothetical numbers remain hypothetical rather than candidate achievements",
+    "Follow-ups are actionable",
+    "Technical IDs are hidden"
   ],
   "tags": [
     "interview",
     "en",
-    "adaptive"
+    "adaptive",
+    "scenario-numbers",
+    "contract-v2"
   ]
 }

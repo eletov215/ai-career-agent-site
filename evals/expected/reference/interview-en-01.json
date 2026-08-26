@@ -1,51 +1,54 @@
 {
-  "opening": "We will verify forecasting and modelling depth first, then explore the SQL preference without assuming unverified experience.",
+  "opening": "Thank you for your interest in the FP&A analyst role. The questions will focus on your verified planning, forecasting, Excel modelling, and the unverified SQL area.",
   "questions": [
     {
-      "question": "Describe a monthly forecasting cycle you supported and the decisions it informed.",
-      "purpose": "Verify practical forecasting depth.",
+      "question": "Walk me through your monthly forecasting process and how you review assumptions before sharing a forecast.",
+      "purpose": "Assess the depth of verified forecasting practice.",
       "evidence_ids": [
         "c1",
         "c2",
         "v2"
       ],
-      "follow_up_if_weak": "Which inputs changed most often and how did you update the forecast?"
+      "follow_up_if_weak": "Which assumption would you validate first, and what evidence would you use?"
     },
     {
-      "question": "How do you structure an Excel financial model so another analyst can review it?",
-      "purpose": "Assess modelling discipline and transparency.",
+      "question": "Describe how you build and check Excel financial models for planning work.",
+      "purpose": "Evaluate the confirmed modelling skill that is relevant to FP&A work.",
       "evidence_ids": [
-        "c3"
+        "c3",
+        "v1"
       ],
-      "follow_up_if_weak": "How would you separate assumptions, calculations, and outputs?"
+      "follow_up_if_weak": "How would you make a model easier for another analyst to review?"
     },
     {
-      "question": "Give an example of a scenario model you would build for an FP&A decision.",
-      "purpose": "Test the vacancy requirement for scenario modelling.",
+      "question": "Imagine a hypothetical forecast variance of 15%. How would you investigate the drivers and decide whether the model or business assumptions need revision?",
+      "purpose": "Test forecasting reasoning with a supplied hypothetical parameter rather than an invented candidate achievement.",
       "evidence_ids": [
-        "v1",
+        "c2",
+        "v2",
+        "s1"
+      ],
+      "follow_up_if_weak": "What evidence would help you distinguish a modelling issue from a business change?"
+    },
+    {
+      "question": "The role requires scenario modelling. How would you structure base, upside, and downside scenarios using your existing Excel modelling experience?",
+      "purpose": "Assess transfer from confirmed Excel modelling to a vacancy requirement without claiming prior scenario-modelling experience.",
+      "evidence_ids": [
+        "c3",
         "v3"
       ],
-      "follow_up_if_weak": "Which base, upside, and downside assumptions would you define?"
+      "follow_up_if_weak": "Which assumptions would you isolate so that the scenarios remain easy to compare?"
     },
     {
-      "question": "SQL is preferred for this role but is not verified in your profile. How would you approach closing that gap?",
-      "purpose": "Explore the SQL gap without a false premise.",
+      "question": "SQL is preferred but not verified in your background. How would you approach learning enough SQL to support FP&A analysis?",
+      "purpose": "Explore the SQL gap without assuming production SQL experience.",
       "evidence_ids": [
         "c4",
-        "v4"
+        "v4",
+        "s2"
       ],
-      "follow_up_if_weak": "What small finance dataset and query would you use for practice?"
-    },
-    {
-      "question": "How do you communicate forecast uncertainty to non-finance stakeholders?",
-      "purpose": "Assess communication within financial planning work.",
-      "evidence_ids": [
-        "c1",
-        "c2"
-      ],
-      "follow_up_if_weak": "How would you distinguish a range from a single-point estimate?"
+      "follow_up_if_weak": "During a hypothetical first 90 days, what small SQL learning milestone would you set for yourself?"
     }
   ],
-  "closing": "We will finish by clarifying the role context and the support available for scenario modelling and SQL development."
+  "closing": "Thank you. These answers will help distinguish verified strengths from areas that would require development for the role."
 }

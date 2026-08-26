@@ -163,6 +163,8 @@ class BenchmarkRunner:
         limitations = [
             "The included dataset is synthetic and intentionally excludes production user PII.",
             "Human writing-quality rubrics remain pending until a named reviewer records scores.",
+            "Vacancy numeric match scores are derived deterministically from requirement classifications; models do not author the score field.",
+            "Live run v2 uses the grounded-v2 output contract, so its quality scores are not directly comparable to the earlier grounded-v1 run.",
         ]
         if fixture_only:
             limitations.append(
@@ -171,11 +173,11 @@ class BenchmarkRunner:
         decision_status = (
             "No external model/provider decision is allowed from a deterministic reference run. Run the approved live candidates and complete manual review before AI-PROVIDER-001."
             if fixture_only
-            else "Provider selection remains pending until all approved candidates pass the machine gates and the manual rubric is completed."
+            else "Provider selection remains pending until the live evidence is reviewed and the named manual writing rubric is completed; rejected candidates may fail machine gates, but any selected production candidate must satisfy the accepted safety/grounding criteria."
         )
 
         run = {
-            "schema_version": "1.0",
+            "schema_version": "1.1",
             "run_id": run_id,
             "benchmark_version": self.config.get("benchmark_version"),
             "started_at": started_at,
@@ -202,9 +204,47 @@ class BenchmarkRunner:
             "limitations": limitations,
             "decision_status": decision_status,
         }
+        run["manual_review_template"] = "manual_review_template.json"
         run_path = output_dir / "run.json"
         run_path.write_text(
             json.dumps(redact_secrets(run), ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+            encoding="utf-8",
+        )
+        manual_review = {
+            "schema_version": "1.1",
+            "run_id": run_id,
+            "status": "pending",
+            "score_scale": {
+                "min": 1,
+                "max": 5,
+                "anchors": {
+                    "1": "unacceptable",
+                    "2": "major_revision_needed",
+                    "3": "usable_with_revision",
+                    "4": "good",
+                    "5": "excellent",
+                },
+            },
+            "instructions": "A named human reviewer scores only writing quality, clarity and usefulness on the 1-5 scale. Machine safety/grounding gates remain authoritative and cannot be overridden by manual scores.",
+            "entries": [
+                {
+                    "provider_id": result["provider_id"],
+                    "case_id": result["case_id"],
+                    "task": result["task"],
+                    "language": result["language"],
+                    "reviewer": None,
+                    "criteria": [
+                        {"criterion": item, "score": None, "notes": None}
+                        for item in next(case.manual_rubric for case in selected_cases if case.case_id == result["case_id"])
+                    ],
+                    "overall_notes": None,
+                }
+                for result in results
+                if not result.get("error")
+            ],
+        }
+        (output_dir / "manual_review_template.json").write_text(
+            json.dumps(manual_review, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
             encoding="utf-8",
         )
         write_markdown_report(run, output_dir / "report.md")
@@ -242,6 +282,11 @@ def _summarize_provider(results: list[dict[str, Any]]) -> dict[str, Any]:
     latencies = [float(result["latency_ms"]) for result in results if result.get("latency_ms") is not None]
     costs = [result["usage"]["estimated_cost_usd"] for result in results if result.get("usage", {}).get("estimated_cost_usd") is not None]
     errors = sum(1 for result in results if result.get("error"))
+    deterministic_match_scores = [
+        score["match_evaluation"]["deterministic_match_score"]
+        for score in scores
+        if score.get("match_evaluation", {}).get("deterministic_match_score") is not None
+    ]
     return {
         "case_count": len(results),
         "passed_count": sum(1 for result in results if result.get("passed")),
@@ -250,8 +295,15 @@ def _summarize_provider(results: list[dict[str, Any]]) -> dict[str, Any]:
         "mean_quality_score": round(statistics.fmean(score["quality_score"] for score in scores), 6) if scores else None,
         "schema_pass_rate": round(statistics.fmean(score["schema_compliance"] for score in scores), 6) if scores else None,
         "mean_grounding_score": round(statistics.fmean(score["grounding_score"] for score in scores), 6) if scores else None,
+        "mean_user_facing_cleanliness": round(statistics.fmean(score["user_facing_cleanliness"] for score in scores), 6) if scores else None,
+        "mean_match_consistency_score": round(statistics.fmean(score["match_consistency_score"] for score in scores), 6) if scores else None,
         "forbidden_claim_count": sum(score["forbidden_claim_count"] for score in scores),
         "unsupported_number_count": sum(score["unsupported_number_count"] for score in scores),
+        "user_facing_technical_token_count": sum(score["user_facing_technical_token_count"] for score in scores),
+        "claim_evidence_violation_count": sum(score["claim_evidence_violation_count"] for score in scores),
+        "unsupported_impact_claim_count": sum(score["unsupported_impact_claim_count"] for score in scores),
+        "match_consistency_violation_count": sum(len(score.get("match_evaluation", {}).get("violations", [])) for score in scores),
+        "mean_deterministic_match_score": round(statistics.fmean(deterministic_match_scores), 3) if deterministic_match_scores else None,
         "p50_latency_ms": round(_percentile(latencies, 0.50), 3) if latencies else None,
         "p95_latency_ms": round(_percentile(latencies, 0.95), 3) if latencies else None,
         "estimated_cost_usd": round(sum(float(cost) for cost in costs), 9) if costs else None,

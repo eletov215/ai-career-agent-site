@@ -1,106 +1,86 @@
-# AI Career Agent — аудит источников v1.4.37
-
-<!-- ACA-CANONICAL-STATUS:START -->
-## Канонический аудит — 2026-08-26
+# AI Career Agent - аудит источников v1.4.38
 
 | Поле | Значение |
 |---|---|
 | Документ | SOURCE_AUDIT |
-| Версия | 1.4.37 |
-| Проверяемый пакет | AI-BENCH-001 stability hotfix r4 |
-| Исходный код | `ai-career-agent-site-eletov215-patch-1 (1).zip`, актуальный GitHub archive после run #201 |
+| Версия | 1.4.38 |
+| Дата | 26 августа 2026 |
+| Проверяемый пакет | AI-BENCH-001 grounded-v2 hardening |
+| Исходный код | `ai-career-agent-site-main (22).zip`, предоставленный как актуальный GitHub `main` |
+| Live evidence | artifact `ai-bench-001-yandex-live-32958938365.zip` |
 | Production revision | `20260819_0014` |
-| Результат | workflow-context defect локализован и исправлен; ordinary GitHub CI требуется повторить |
+| Результат | first live run transport подтверждён; hardening candidate подготовлен; нужен GitHub CI + live run #2 |
 
-Run #201 не является regression предыдущих product packages: GitHub rejected workflow definition before any runner/job/step executed. GitHub annotation points to `.github/workflows/ci.yml` line 384 and `Unrecognized named-value: 'runner'`.
-<!-- ACA-CANONICAL-STATUS:END -->
+## 1. Подтверждённое состояние перед hardening
 
-## 1. Root cause
+После stability r4 пользователь подтвердил green CI на `main`: `Python tests` и `AI-BENCH-001 package gate` прошли, live job корректно skipped на push. Затем manual `workflow_dispatch` завершился Success и выполнил comparative Yandex run.
 
-В job `ai-bench-yandex-live` было:
+Artifact содержит 24 response files (8 cases x 3 providers), `run.json` and `report.md`. For every provider `error_count=0`, therefore API key, Folder ID, service-account permission, model routing, JSON structured-output transport and artifact upload worked for this run.
 
-```yaml
-env:
-  AI_BENCH_OUTPUT_DIR: ${{ runner.temp }}/ai-bench-yandex-live
-```
+| Provider | Strict pass | Quality | Grounding | p50 ms | p95 ms | Cost USD |
+|---|---:|---:|---:|---:|---:|---:|
+| Alice AI LLM | 4/8 | 0.952178 | 0.957259 | 5193.153 | 9444.269 | 0.047868023 |
+| Alice AI LLM Flash | 2/8 | 0.950094 | 0.897536 | 3146.667 | 3919.065 | 0.006081147 |
+| YandexGPT Pro 5.1 | 3/8 | 0.937723 | 0.859077 | 5738.538 | 7977.200 | 0.034518028 |
 
-Официальная GitHub context availability table разрешает для `jobs.<job_id>.env` только `github`, `needs`, `strategy`, `matrix`, `vars`, `secrets`, `inputs`. `runner` доступен уже внутри step-level contexts, но не в job-level `env`. Поэтому GitHub отклонял весь workflow до запуска `Python tests` и `AI-BENCH-001 package gate`.
+`Machine status: failed` represents quality-gate evidence, not transport failure. No provider decision is made from this run.
 
-GitHub Secrets `AI_BENCH_YANDEX_API_KEY` и `AI_BENCH_YANDEX_FOLDER_ID` не являются причиной этого failure: их значения не выводятся в код/логи, а run #201 остановлен до выполнения steps.
+## 2. Live run #1 findings driving grounded-v2
 
-## 2. Stability correction r4
+- Alice AI LLM had the strongest overall grounding but still introduced an unsupported Kubernetes recommendation, returned incomplete `facts_not_verified`, emitted an invalid evidence ID in RU vacancy match, and produced unsupported causal/impact language in a cover letter.
+- Alice AI LLM Flash was much cheaper/faster but unstable on vacancy-match classification and could understate required gaps.
+- YandexGPT Pro 5.1 produced inconsistent model-authored match scores and malformed/decorated evidence IDs in some cases.
+- The old benchmark also produced false positives for legitimate hypothetical interview numbers because it could not distinguish scenario numbers from invented candidate achievements.
+- User-facing text could pass while leaking internal evidence metadata, so claim/evidence metadata needed a stronger separation from presentation text.
 
-Исправлено:
+## 3. Grounded-v2 implementation
 
-```yaml
-env:
-  AI_BENCH_OUTPUT_DIR: /tmp/ai-bench-yandex-live
-```
+`evals/VERSION` is `1.2.0`; benchmark contract is `1.1`; dataset manifest is `1.1.0` with `contract=grounded-v2`.
 
-Дополнительно:
+Implemented controls:
 
-- `evals/VERSION` -> `1.1.3`;
-- `scripts/check_ai_bench_package.py` выполняет dependency-free structural scan `.github/workflows/ci.yml`;
-- package checker локально валидирует context roots внутри `jobs.<job_id>.env` и fail-closed отклоняет `runner/job/steps/env` там, где GitHub их не разрешает;
-- `tests/test_ai_bench_package_layout.py` содержит positive test текущего workflow и negative regression fixture с `${{ runner.temp }}`;
-- `.gitignore` снова исключает local/live benchmark runtime evidence, но package gate не зависит от hidden files;
-- live job остаётся manual-only, default-off, зависит от `tests` и `ai-bench-001`, uses GitHub Secrets and uploads only sanitized evidence.
+- source facts are typed `candidate` / `vacancy` / `scenario`;
+- evidence IDs must match raw `^[a-z][0-9]+$` identifiers;
+- user-facing strings reject technical evidence labels and decorated known IDs;
+- resume `facts_not_verified` and cover-letter `caveats` are structured with evidence IDs;
+- cover-letter `candidate_fit` paragraphs require candidate evidence;
+- unsupported impact/causal claims are a hard gate unless supported by cited candidate evidence;
+- vacancy-match output no longer contains model-authored `match_score`;
+- every vacancy requirement is classified exactly once as matched/gap and checked against expected status/evidence;
+- deterministic weighted code derives the numeric match score and verdict check;
+- interview hypothetical numbers are accepted only when supplied as source/scenario facts;
+- live-run #1 failure patterns are encoded in `evals/regressions/live-run-1.json`;
+- runner emits `manual_review_template.json`; manual writing review cannot override machine safety gates;
+- report/run fingerprints remain visible while credential-bearing fields continue to be redacted.
 
-## 3. Regression evidence
+## 4. Regression and deterministic evidence
 
-Локально на exact updated tree подтверждены:
+The grounded-v2 deterministic reference run passes all 8 reference cases with strict thresholds. Current local package tests cover invalid/decorated evidence IDs, metadata leakage, unsupported impact, structured verification/caveats, duplicate/wrong/missing match classifications, candidate/vacancy evidence requirements, deterministic scores and scenario-number policy.
 
-- AI-BENCH deterministic package gate: PASS;
-- AI-BENCH unit discovery: 23 passed;
-- targeted SYNC/SEARCH/package/hygiene regression: 41 passed;
-- all 59 test modules executed in bounded groups: **301 passed, 14 environment-dependent skips, 8 subtests passed**;
-- repository hygiene: PASS after generated-cache cleanup;
-- document structure: PASS;
-- Python compileall: PASS.
+Repository evidence under `docs/evidence/ai-bench-001/` is regenerated for contract 1.1, including a separate pending manual-review template. Live run #1 is summarized without copying credentials or production user data.
 
-Fourteen skips are not promoted to PASS: they require Flask/Psycopg/PostgreSQL service conditions supplied by GitHub Actions. The external workflow remains authoritative for PostgreSQL integration, Docker build/smoke, encrypted restore and the complete route matrix.
+## 5. Production boundary
 
-## 4. Changed files
-
-Functional/CI changes are limited to:
-
-- `.github/workflows/ci.yml`;
-- `.gitignore`;
-- `evals/VERSION`;
-- `evals/README.md`;
-- `evals/artifacts/README.md`;
-- `scripts/check_ai_bench_package.py`;
-- `tests/test_ai_bench_package_layout.py`.
-
-Canonical/repository docs are synchronized separately. No production module, dependency, migration or Render setting changed.
-
-## 5. Security and isolation
-
-- API key and Folder ID values remain only in GitHub Actions Secrets;
-- no live AI request occurs on push or pull_request;
-- manual live run is default-off;
-- benchmark output is runner-local `/tmp/ai-bench-yandex-live`;
-- production revision remains `20260819_0014`;
-- `app.py`, routes, models, repositories, production services and migrations are unchanged.
+No production Flask route, model, repository, service, dependency, Render setting or Alembic migration is changed by grounded-v2. Production revision remains `20260819_0014`. GitHub Secrets remain external to repository content and live requests remain manual-only/default-off.
 
 ## 6. Current gate
 
-1. Upload stability hotfix r4.
-2. Require green `Python tests` and `AI-BENCH-001 package gate`, including historical package steps.
-3. Only after green ordinary CI run `Actions -> CI -> Run workflow -> run_ai_bench_live=true`.
-4. Download sanitized artifact and complete the human writing-quality rubric.
+1. Upload grounded-v2 candidate from the current `main` base.
+2. Require green ordinary `Python tests` and `AI-BENCH-001 package gate`, including historical package checks.
+3. Run `Actions -> CI -> Run workflow -> run_ai_bench_live=true` on `main`.
+4. Download live run #2 artifact and compare machine evidence against run #1 qualitatively (scores are not directly comparable because contract changed).
+5. Complete named human writing-quality rubric.
+6. Only then decide whether AI-BENCH-001 can be closed and unblock AI-PROVIDER-001.
 
 ## 7. Status decision
 
-`AI-BENCH-001 stability hotfix r4` — **НУЖНА ПОВТОРНАЯ ПРОВЕРКА GITHUB ACTIONS**.  
-Previously completed packages remain **ВЫПОЛНЕНО** unless the rerun exposes a real regression.  
-`AI-PROVIDER-001` remains **ЗАБЛОКИРОВАН**.
+`AI-BENCH-001 grounded-v2 hardening` - **НУЖНА ПРОВЕРКА**.  
+Previously completed packages remain **ВЫПОЛНЕНО**.  
+`AI-PROVIDER-001` remains **ЗАБЛОКИРОВАНО**.
 
 ## 8. Version log
 
 | Версия | Дата | Изменение |
 |---|---|---|
-| 1.4.34 | 25.08.2026 | Live Yandex manual workflow candidate. |
-| 1.4.35 | 25.08.2026 | Fixed calendar-dependent SYNC assertions and browser-upload dotfile dependency. |
-| 1.4.36 | 25.08.2026 | Integrated manual live job into existing `ci.yml` after run #196 filename defect. |
-| 1.4.37 | 26.08.2026 | Run #201 workflow parse defect fixed: removed illegal `runner` context from job-level env and added local context validation. |
+| 1.4.37 | 26.08.2026 | Stability r4 removed invalid job-level `runner` context. |
+| 1.4.38 | 26.08.2026 | Ordinary CI green and live run #1 reviewed; grounded-v2 evidence/safety/match hardening prepared for live run #2. |

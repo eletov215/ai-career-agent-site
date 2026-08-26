@@ -18,6 +18,7 @@ REQUIRED_VISIBLE = [
     "evals/config/benchmark.example.json",
     "evals/config/yandex-live.json",
     "evals/artifacts/README.md",
+    "evals/regressions/live-run-1.json",
     "evals/fixtures/manifest.json",
     "evals/schemas/resume_analysis.schema.json",
     "evals/schemas/vacancy_match.schema.json",
@@ -127,7 +128,7 @@ def main() -> int:
         fail(f"missing required files: {missing}")
 
     version = (ROOT / "evals/VERSION").read_text(encoding="utf-8").strip()
-    if version != "1.1.3":
+    if version != "1.2.0":
         fail(f"unexpected evals version: {version}")
 
     workflow_path = ROOT / ".github/workflows/ci.yml"
@@ -170,6 +171,8 @@ def main() -> int:
     manifest = json.loads((ROOT / "evals/fixtures/manifest.json").read_text(encoding="utf-8"))
     if manifest.get("synthetic") is not True:
         fail("manifest must declare synthetic=true")
+    if manifest.get("version") != "1.1.0" or manifest.get("contract") != "grounded-v2":
+        fail("manifest must declare version=1.1.0 and contract=grounded-v2")
     cases = manifest.get("cases") or []
     if len(cases) < 8:
         fail("golden dataset must contain at least eight bilingual/task-diverse cases")
@@ -182,6 +185,11 @@ def main() -> int:
         case = json.loads(case_path.read_text(encoding="utf-8"))
         if case.get("synthetic") is not True:
             fail(f"case is not synthetic: {case.get('case_id')}")
+        facts = case.get("source_facts") or []
+        if not facts or any(fact.get("kind") not in {"candidate", "vacancy", "scenario"} for fact in facts):
+            fail(f"case source_facts must carry candidate/vacancy/scenario kind: {case.get('case_id')}")
+        if case.get("task") == "vacancy_match" and not case.get("match_requirements"):
+            fail(f"vacancy match case lacks deterministic match requirements: {case.get('case_id')}")
         languages.add(str(case.get("language")))
         tasks.add(str(case.get("task")))
         expected = ROOT / "evals/expected/reference" / f"{case['case_id']}.json"
@@ -217,16 +225,31 @@ def main() -> int:
                 fail(f"command failed ({completed.returncode}): {' '.join(command)}\n{completed.stdout}\n{completed.stderr}")
         run_path = out / "run.json"
         report_path = out / "report.md"
-        if not run_path.is_file() or not report_path.is_file():
-            fail("runner did not create run.json and report.md")
+        manual_review_path = out / "manual_review_template.json"
+        if not run_path.is_file() or not report_path.is_file() or not manual_review_path.is_file():
+            fail("runner did not create run.json, report.md and manual_review_template.json")
         run = json.loads(run_path.read_text(encoding="utf-8"))
         if run.get("status") != "passed":
             fail("deterministic reference run did not pass")
         if run.get("execution_mode") != "deterministic_reference":
             fail("reference run must be labeled deterministic_reference")
+        if run.get("schema_version") != "1.1" or run.get("benchmark_version") != "1.1":
+            fail("reference run must use grounded-v2 benchmark/run schema version 1.1")
         if run.get("quality_gate", {}).get("passed_count") != len(cases):
             fail("not all reference cases passed")
-        combined = run_path.read_text(encoding="utf-8") + report_path.read_text(encoding="utf-8")
+        vacancy_schema = json.loads((ROOT / "evals/schemas/vacancy_match.schema.json").read_text(encoding="utf-8"))
+        if "match_score" in (vacancy_schema.get("properties") or {}):
+            fail("vacancy model schema must not ask the LLM to author match_score")
+        for schema_name in (
+            "resume_analysis.schema.json",
+            "vacancy_match.schema.json",
+            "cover_letter.schema.json",
+            "interview_questions.schema.json",
+        ):
+            schema_text = (ROOT / "evals/schemas" / schema_name).read_text(encoding="utf-8")
+            if "^[a-z][0-9]+$" not in schema_text:
+                fail(f"schema does not enforce raw evidence ID format: {schema_name}")
+        combined = run_path.read_text(encoding="utf-8") + report_path.read_text(encoding="utf-8") + manual_review_path.read_text(encoding="utf-8")
         for pattern in SECRET_PATTERNS:
             if pattern.search(combined):
                 fail(f"possible secret leaked into evidence: {pattern.pattern}")
