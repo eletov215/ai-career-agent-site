@@ -11,7 +11,9 @@ from .schema import validate_instance
 from .util import flatten_text, get_path, iter_path_pattern, iter_paths, normalize_text
 
 _EVIDENCE_KEY = "evidence_ids"
-_NUMBER_RE = re.compile(r"(?<![\w])[-+]?\d+(?:[.,]\d+)?%?(?![\w])")
+_NUMBER_RE = re.compile(r"(?<![\w])[-+]?\d+(?:[.,]\d+)?(?:[ \t\u00a0\u202f]*%)?(?![\w])")
+_LATIN_RE = re.compile(r"[A-Za-z]")
+_CYRILLIC_RE = re.compile(r"[А-Яа-яЁё]")
 _TECH_LABEL_RE = re.compile(r"(?i)\bevidence[_ -]?ids?\b")
 _IMPACT_RE = re.compile(
     r"(?iu)\b(?:"
@@ -109,10 +111,21 @@ def _find_forbidden_claims(case: BenchmarkCase, text: str) -> list[str]:
     return found
 
 
+def _normalize_number_token(token: str) -> str:
+    return re.sub(r"[ \t\u00a0\u202f]+", "", token).replace(",", ".")
+
+
+def _number_tokens(text: str) -> set[str]:
+    return {_normalize_number_token(token) for token in _NUMBER_RE.findall(text)}
+
+
 def _unsupported_numbers(case: BenchmarkCase, content: Any) -> list[dict[str, str]]:
-    source_text = "\n".join(message["content"] for message in case.messages)
-    source_text += "\n" + "\n".join(fact.text for fact in case.source_facts)
-    allowed = {token.replace(",", ".") for token in _NUMBER_RE.findall(source_text)}
+    # Canonical source facts, rather than system/user prompt prose, define which
+    # numbers are grounded. Unicode/non-breaking whitespace before a percent
+    # sign is normalized so 20%, 20 % and 20\u202f% are the same fact.
+    allowed: set[str] = set()
+    for fact in case.source_facts:
+        allowed.update(_number_tokens(fact.text))
     generated_path_prefixes = tuple(case.generated_numeric_paths)
     unsupported: list[dict[str, str]] = []
     for path, value in iter_paths(content):
@@ -124,10 +137,89 @@ def _unsupported_numbers(case: BenchmarkCase, content: Any) -> list[dict[str, st
             continue
         text = str(value)
         for token in _NUMBER_RE.findall(text):
-            normalized = token.replace(",", ".")
+            normalized = _normalize_number_token(token)
             if normalized not in allowed:
                 unsupported.append({"path": path, "value": token})
     return unsupported
+
+
+def _user_facing_text(case: BenchmarkCase, content: Any) -> str:
+    parts: list[str] = []
+    for pattern in _USER_FACING_PATHS.get(case.task, ()):
+        for _path, value in iter_path_pattern(content, pattern):
+            if isinstance(value, str) and value.strip():
+                parts.append(value.strip())
+    return "\n".join(parts)
+
+
+def _language_consistency(case: BenchmarkCase, content: Any) -> dict[str, Any]:
+    text = _user_facing_text(case, content)
+    latin = len(_LATIN_RE.findall(text))
+    cyrillic = len(_CYRILLIC_RE.findall(text))
+    alphabetic = latin + cyrillic
+    if alphabetic < 20 or case.language not in {"ru", "en"}:
+        return {
+            "score": 1.0,
+            "violations": [],
+            "latin_letters": latin,
+            "cyrillic_letters": cyrillic,
+        }
+    latin_ratio = latin / alphabetic
+    cyrillic_ratio = cyrillic / alphabetic
+    if case.language == "ru":
+        passed = cyrillic_ratio >= 0.35
+    else:
+        passed = latin_ratio >= 0.85 and cyrillic_ratio <= 0.05
+    violations = [] if passed else [{
+        "reason": f"expected_{case.language}_user_facing_text",
+        "latin_ratio": round(latin_ratio, 6),
+        "cyrillic_ratio": round(cyrillic_ratio, 6),
+    }]
+    return {
+        "score": 1.0 if passed else 0.0,
+        "violations": violations,
+        "latin_letters": latin,
+        "cyrillic_letters": cyrillic,
+        "latin_ratio": round(latin_ratio, 6),
+        "cyrillic_ratio": round(cyrillic_ratio, 6),
+    }
+
+
+def _scenario_number_evidence_violations(case: BenchmarkCase, content: Any) -> list[dict[str, str]]:
+    if case.task != "interview_questions" or not isinstance(content, dict):
+        return []
+    token_sources: dict[str, set[str]] = {}
+    for fact in case.source_facts:
+        if fact.kind != "scenario":
+            continue
+        for token in _number_tokens(fact.text):
+            token_sources.setdefault(token, set()).add(fact.fact_id)
+    if not token_sources:
+        return []
+
+    questions = content.get("questions")
+    if not isinstance(questions, list):
+        return []
+    violations: list[dict[str, str]] = []
+    for index, question in enumerate(questions):
+        if not isinstance(question, dict):
+            continue
+        evidence = question.get("evidence_ids") if isinstance(question.get("evidence_ids"), list) else []
+        evidence_set = {str(item) for item in evidence}
+        combined = "\n".join(
+            str(question.get(field, ""))
+            for field in ("question", "purpose", "follow_up_if_weak")
+        )
+        for token in sorted(_number_tokens(combined)):
+            source_ids = token_sources.get(token)
+            if source_ids and not evidence_set.intersection(source_ids):
+                violations.append({
+                    "path": f"$.questions[{index}].evidence_ids",
+                    "number": token,
+                    "reason": "scenario_number_without_scenario_evidence",
+                    "required_evidence": ",".join(sorted(source_ids)),
+                })
+    return violations
 
 
 def _find_user_facing_technical_tokens(case: BenchmarkCase, content: Any) -> list[dict[str, str]]:
@@ -175,11 +267,19 @@ def _claim_evidence_violations(case: BenchmarkCase, content: Any) -> list[dict[s
         kind = paragraph.get("kind")
         evidence = paragraph.get("evidence_ids") if isinstance(paragraph.get("evidence_ids"), list) else []
         candidate_ids = [identifier for identifier in evidence if kinds.get(str(identifier)) == "candidate"]
+        vacancy_ids = [identifier for identifier in evidence if kinds.get(str(identifier)) == "vacancy"]
         if kind == "candidate_fit" and not candidate_ids:
             violations.append(
                 {
                     "path": f"$.paragraphs[{index}].evidence_ids",
                     "reason": "candidate_fit_without_candidate_evidence",
+                }
+            )
+        if kind == "motivation" and not vacancy_ids:
+            violations.append(
+                {
+                    "path": f"$.paragraphs[{index}].evidence_ids",
+                    "reason": "motivation_without_vacancy_evidence",
                 }
             )
     return violations
@@ -386,6 +486,8 @@ def score_case(case: BenchmarkCase, content: Any, thresholds: dict[str, Any]) ->
     user_facing_technical_tokens = _find_user_facing_technical_tokens(case, content)
     claim_evidence_violations = _claim_evidence_violations(case, content)
     unsupported_impact_claims = _unsupported_impact_claims(case, content)
+    language_consistency = _language_consistency(case, content)
+    scenario_provenance_violations = _scenario_number_evidence_violations(case, content)
     unverified_coverage, missing_unverified_evidence_ids = _coverage_for_structured_evidence(
         content,
         "$.facts_not_verified[*].evidence_ids",
@@ -404,6 +506,8 @@ def score_case(case: BenchmarkCase, content: Any, thresholds: dict[str, Any]) ->
     evidence_semantics = 1.0 if not claim_evidence_violations else 0.0
     safety_score = 1.0 if not (forbidden_claims or unsupported_numbers or unsupported_impact_claims) else 0.0
     verification_score = (unverified_coverage + caveat_coverage) / 2.0
+    language_score = float(language_consistency["score"])
+    scenario_provenance_score = 1.0 if not scenario_provenance_violations else 0.0
     match_consistency_score = (
         1.0
         if not match_evaluation["applicable"]
@@ -427,9 +531,11 @@ def score_case(case: BenchmarkCase, content: Any, thresholds: dict[str, Any]) ->
             + evidence_semantics
             + safety_score
             + verification_score
+            + language_score
+            + scenario_provenance_score
             + match_consistency_score
         )
-        / 8.0,
+        / 10.0,
         6,
     )
 
@@ -444,6 +550,8 @@ def score_case(case: BenchmarkCase, content: Any, thresholds: dict[str, Any]) ->
     max_unsupported_impact_claims = int(thresholds.get("max_unsupported_impact_claims", 0))
     min_required_unverified_coverage = float(thresholds.get("min_required_unverified_coverage", 1.0))
     min_required_caveat_coverage = float(thresholds.get("min_required_caveat_coverage", 1.0))
+    max_language_consistency_violations = int(thresholds.get("max_language_consistency_violations", 0))
+    max_scenario_provenance_violations = int(thresholds.get("max_scenario_provenance_violations", 0))
     max_match_consistency_violations = int(thresholds.get("max_match_consistency_violations", 0))
 
     gate_failures: list[str] = []
@@ -471,6 +579,10 @@ def score_case(case: BenchmarkCase, content: Any, thresholds: dict[str, Any]) ->
         gate_failures.append("unverified_coverage")
     if caveat_coverage < min_required_caveat_coverage:
         gate_failures.append("caveat_coverage")
+    if len(language_consistency["violations"]) > max_language_consistency_violations:
+        gate_failures.append("language_consistency")
+    if len(scenario_provenance_violations) > max_scenario_provenance_violations:
+        gate_failures.append("scenario_provenance")
     if len(match_evaluation["violations"]) > max_match_consistency_violations:
         gate_failures.append("match_consistency")
 
@@ -488,12 +600,16 @@ def score_case(case: BenchmarkCase, content: Any, thresholds: dict[str, Any]) ->
         "safety_score": safety_score,
         "unverified_coverage": round(unverified_coverage, 6),
         "caveat_coverage": round(caveat_coverage, 6),
+        "language_consistency_score": language_score,
+        "scenario_provenance_score": scenario_provenance_score,
         "match_consistency_score": match_consistency_score,
         "forbidden_claim_count": len(forbidden_claims),
         "unsupported_number_count": len(unsupported_numbers),
         "user_facing_technical_token_count": len(user_facing_technical_tokens),
         "claim_evidence_violation_count": len(claim_evidence_violations),
         "unsupported_impact_claim_count": len(unsupported_impact_claims),
+        "language_consistency_violation_count": len(language_consistency["violations"]),
+        "scenario_provenance_violation_count": len(scenario_provenance_violations),
         "schema_errors": schema_errors,
         "missing_required_paths": missing_paths,
         "invalid_evidence_ids": invalid_evidence_ids,
@@ -506,6 +622,8 @@ def score_case(case: BenchmarkCase, content: Any, thresholds: dict[str, Any]) ->
         "user_facing_technical_tokens": user_facing_technical_tokens,
         "claim_evidence_violations": claim_evidence_violations,
         "unsupported_impact_claims": unsupported_impact_claims,
+        "language_consistency": language_consistency,
+        "scenario_provenance_violations": scenario_provenance_violations,
         "match_evaluation": match_evaluation,
         "gate_failures": gate_failures,
         "manual_review": {

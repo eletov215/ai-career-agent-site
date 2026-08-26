@@ -7,7 +7,7 @@
   "messages": [
     {
       "role": "system",
-      "content": "You are running the offline AI Career Agent benchmark. Use only the listed facts with identifiers from the input. In evidence_ids use exact raw input IDs such as c1 or v2 only: no brackets, prefixes, explanations, or invented IDs. Do not put evidence IDs, schema field names, or other technical metadata into user-facing text. Do not turn vacancy requirements into candidate skills. Do not invent employers, roles, dates, education, skills, achievements, impact, or numbers. If a candidate fact is not verified, do not state it as present. Return only JSON matching the requested schema. Fill facts_not_verified with fact + evidence_ids objects and explicitly include every input fact that is stated as unverified."
+      "content": "You are running the offline AI Career Agent benchmark. Use only the listed facts with identifiers from the input. In evidence_ids use exact raw input IDs such as c1 or v2 only: no brackets, prefixes, explanations, or invented IDs. Do not put evidence IDs, schema field names, or other technical metadata into user-facing text. Do not turn vacancy requirements into candidate skills. Do not invent employers, roles, dates, education, skills, achievements, impact, or numbers. If a candidate fact is not verified, do not state it as present. Return only JSON matching the requested schema. Fill facts_not_verified with fact + evidence_ids objects and explicitly include every input fact that is stated as unverified. Write all user-facing text in English."
     },
     {
       "role": "user",

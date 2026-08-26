@@ -1,5 +1,5 @@
 {
-  "benchmark_version": "1.1",
+  "benchmark_version": "1.2",
   "fixtures_manifest": "evals/fixtures/manifest.json",
   "timeout_seconds": 90,
   "pricing_snapshot": {
@@ -21,7 +21,9 @@
     "max_unsupported_impact_claims": 0,
     "min_required_unverified_coverage": 1.0,
     "min_required_caveat_coverage": 1.0,
-    "max_match_consistency_violations": 0
+    "max_match_consistency_violations": 0,
+    "max_language_consistency_violations": 0,
+    "max_scenario_provenance_violations": 0
   },
   "providers": [
     {
@@ -42,7 +44,9 @@
       "pricing_usd_per_million": {
         "input": 4.09836,
         "output": 9.836064
-      }
+      },
+      "max_retries": 1,
+      "retry_backoff_seconds": 1.0
     },
     {
       "id": "yandex-alice-ai-llm-flash",
@@ -62,7 +66,9 @@
       "pricing_usd_per_million": {
         "input": 0.819672,
         "output": 1.639344
-      }
+      },
+      "max_retries": 1,
+      "retry_backoff_seconds": 1.0
     },
     {
       "id": "yandex-yandexgpt-pro-5-1",
@@ -82,7 +88,9 @@
       "pricing_usd_per_million": {
         "input": 6.557376,
         "output": 6.557376
-      }
+      },
+      "max_retries": 1,
+      "retry_backoff_seconds": 1.0
     }
   ]
 }

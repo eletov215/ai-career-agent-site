@@ -30,8 +30,8 @@ def render_markdown_report(run: dict[str, Any]) -> str:
         "",
         "## Provider summary",
         "",
-        "| Provider | Cases | Passed | Errors | Quality | Grounding | Clean text | Match consistency | Safety violations | p50 ms | p95 ms | Est. cost USD |",
-        "|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|",
+        "| Provider | Cases | Passed | Errors | Retries | Quality | Grounding | Language | Scenario provenance | Clean text | Match consistency | Safety violations | p50 ms | p95 ms | Est. cost USD |",
+        "|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|",
     ]
     for provider in safe["providers"]:
         summary = provider["summary"]
@@ -41,16 +41,21 @@ def render_markdown_report(run: dict[str, Any]) -> str:
             + int(summary.get("user_facing_technical_token_count") or 0)
             + int(summary.get("claim_evidence_violation_count") or 0)
             + int(summary.get("unsupported_impact_claim_count") or 0)
+            + int(summary.get("language_consistency_violation_count") or 0)
+            + int(summary.get("scenario_provenance_violation_count") or 0)
             + int(summary.get("match_consistency_violation_count") or 0)
         )
         lines.append(
-            "| {id} | {cases} | {passed} | {errors} | {quality} | {grounding} | {clean} | {match} | {safety} | {p50} | {p95} | {cost} |".format(
+            "| {id} | {cases} | {passed} | {errors} | {retries} | {quality} | {grounding} | {language} | {scenario} | {clean} | {match} | {safety} | {p50} | {p95} | {cost} |".format(
                 id=provider["id"],
                 cases=summary["case_count"],
                 passed=summary["passed_count"],
                 errors=summary["error_count"],
+                retries=summary.get("retry_count", 0),
                 quality=_fmt(summary["mean_quality_score"]),
                 grounding=_fmt(summary["mean_grounding_score"]),
+                language=_fmt(1.0 if not summary.get("language_consistency_violation_count") else 0.0),
+                scenario=_fmt(1.0 if not summary.get("scenario_provenance_violation_count") else 0.0),
                 clean=_fmt(summary.get("mean_user_facing_cleanliness")),
                 match=_fmt(summary.get("mean_match_consistency_score")),
                 safety=safety_violations,
@@ -64,19 +69,22 @@ def render_markdown_report(run: dict[str, Any]) -> str:
         "",
         "## Case results",
         "",
-        "| Provider | Case | Result | Quality | Grounding | Clean text | Invalid evidence | Impact | Match violations | Derived match | Latency ms |",
-        "|---|---|---|---:|---:|---:|---:|---:|---:|---:|---:|",
+        "| Provider | Case | Result | Retries | Quality | Grounding | Language | Scenario | Clean text | Invalid evidence | Impact | Match violations | Derived match | Latency ms |",
+        "|---|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|",
     ])
     for result in safe["results"]:
         score = result.get("score") or {}
         match = score.get("match_evaluation") or {}
         lines.append(
-            "| {provider} | {case} | {status} | {quality} | {grounding} | {clean} | {invalid} | {impact} | {match_v} | {derived} | {latency} |".format(
+            "| {provider} | {case} | {status} | {retries} | {quality} | {grounding} | {language} | {scenario} | {clean} | {invalid} | {impact} | {match_v} | {derived} | {latency} |".format(
                 provider=result["provider_id"],
                 case=result["case_id"],
                 status="PASS" if result.get("passed") else "FAIL",
+                retries=int((result.get("metadata") or {}).get("provider_diagnostics", {}).get("retry_count") or 0),
                 quality=_fmt(score.get("quality_score")),
                 grounding=_fmt(score.get("grounding_score")),
+                language=_fmt(score.get("language_consistency_score")),
+                scenario=_fmt(score.get("scenario_provenance_score")),
                 clean=_fmt(score.get("user_facing_cleanliness")),
                 invalid=len(score.get("invalid_evidence_ids") or []),
                 impact=score.get("unsupported_impact_claim_count", 0),
@@ -88,14 +96,18 @@ def render_markdown_report(run: dict[str, Any]) -> str:
 
     lines.extend([
         "",
-        "## Grounded-v2 contract interpretation",
+        "## Grounded-v2.1 contract interpretation",
         "",
         "- Evidence identifiers must be exact raw IDs and stay out of user-facing text.",
         "- Resume `facts_not_verified` and cover-letter `caveats` are structured objects with their own evidence references.",
         "- Cover-letter candidate-fit paragraphs must cite candidate facts; unsupported impact claims are a hard gate.",
         "- Vacancy requirements are classified exactly once by requirement ID. Duplicate, missing, contradictory, or weakly evidenced classifications are hard failures.",
         "- Vacancy numeric match scores are derived deterministically from weighted requirement classifications; the LLM no longer authors a percentage.",
-        "- Interview numbers are accepted only when already supplied as source/scenario facts, preventing accidental candidate-achievement fabrication.",
+        "- Interview numbers are accepted only when already supplied as source/scenario facts, and any scenario number must cite its scenario fact in the same question.",
+        "- Percent formatting is Unicode-normalized, so 20%, 20 % and 20\u202f% represent the same grounded number.",
+        "- RU/EN user-facing language consistency is a separate hard gate.",
+        "- Cover letters distinguish candidate_fit from vacancy-grounded motivation paragraphs.",
+        "- Live provider diagnostics record only safe envelope shape/status metadata; raw provider bodies and refusal text are never persisted.",
         "- Human writing-quality rubrics remain pending; the runner never fabricates manual-review scores.",
         "",
         "## Limitations",

@@ -23,6 +23,8 @@ STRICT_THRESHOLDS = {
     "max_unsupported_impact_claims": 0,
     "min_required_unverified_coverage": 1.0,
     "min_required_caveat_coverage": 1.0,
+    "max_language_consistency_violations": 0,
+    "max_scenario_provenance_violations": 0,
     "max_match_consistency_violations": 0,
 }
 
@@ -33,6 +35,7 @@ class ScoringTests(unittest.TestCase):
         _, cls.cases, _ = load_dataset(ROOT / "evals/fixtures/manifest.json")
         cls.by_id = {case.case_id: case for case in cls.cases}
         cls.regressions = json.loads((ROOT / "evals/regressions/live-run-1.json").read_text(encoding="utf-8"))
+        cls.regressions_v2 = json.loads((ROOT / "evals/regressions/live-run-2.json").read_text(encoding="utf-8"))
 
     def _reference(self, case_id: str) -> dict:
         return json.loads((ROOT / "evals/expected/reference" / f"{case_id}.json").read_text(encoding="utf-8"))
@@ -178,6 +181,82 @@ class ScoringTests(unittest.TestCase):
         self.assertFalse(score["passed"])
         reasons = [item["reason"] for item in score["match_evaluation"]["violations"]]
         self.assertTrue(any("vacancy_requirement_evidence" in reason for reason in reasons), reasons)
+
+
+    def test_unicode_percent_spacing_is_normalized(self) -> None:
+        ru_case = self.by_id["interview-ru-01"]
+        ru_content = self._reference(ru_case.case_id)
+        target = next(item for item in ru_content["questions"] if "20%" in item["question"])
+        target["question"] = target["question"].replace("20%", "20\u202f%")
+        score = score_case(ru_case, ru_content, STRICT_THRESHOLDS)
+        self.assertTrue(score["passed"], score)
+        self.assertEqual(score["unsupported_numbers"], [])
+
+        en_case = self.by_id["interview-en-01"]
+        en_content = self._reference(en_case.case_id)
+        target = next(item for item in en_content["questions"] if "15%" in item["question"])
+        target["question"] = target["question"].replace("15%", "15 %")
+        score = score_case(en_case, en_content, STRICT_THRESHOLDS)
+        self.assertTrue(score["passed"], score)
+        self.assertEqual(score["unsupported_numbers"], [])
+
+    def test_interview_scenario_number_requires_same_question_provenance(self) -> None:
+        case = self.by_id["interview-en-01"]
+        content = self._reference(case.case_id)
+        target = next(item for item in content["questions"] if "15%" in item["question"])
+        target["evidence_ids"] = [item for item in target["evidence_ids"] if item != "s1"]
+        score = score_case(case, content, {"max_scenario_provenance_violations": 0})
+        self.assertFalse(score["passed"])
+        self.assertEqual(score["scenario_provenance_violation_count"], 1)
+        self.assertEqual(score["scenario_provenance_violations"][0]["number"], "15%")
+        self.assertIn("scenario_provenance", score["gate_failures"])
+
+    def test_unsourced_interview_30_days_remains_a_hard_failure(self) -> None:
+        case = self.by_id["interview-en-01"]
+        content = self._reference(case.case_id)
+        content["questions"][0]["question"] += " What would you do after 30 days?"
+        score = score_case(case, content, {"max_unsupported_numbers": 0})
+        self.assertFalse(score["passed"])
+        self.assertTrue(any(item["value"] == "30" for item in score["unsupported_numbers"]), score)
+
+    def test_ru_case_written_in_english_fails_language_gate(self) -> None:
+        case = self.by_id["cover-letter-ru-01"]
+        content = self._reference(case.case_id)
+        content["subject"] = "Application for Customer Success Specialist"
+        for paragraph in content["paragraphs"]:
+            paragraph["text"] = "I am applying for this role because my confirmed support experience is relevant to the position and I would welcome a conversation about the team."
+        content["caveats"][0]["text"] = "English proficiency is required for the role but is not verified for the candidate."
+        score = score_case(case, content, {"max_language_consistency_violations": 0})
+        self.assertFalse(score["passed"])
+        self.assertEqual(score["language_consistency_violation_count"], 1)
+        self.assertIn("language_consistency", score["gate_failures"])
+
+    def test_en_case_written_in_russian_fails_language_gate(self) -> None:
+        case = self.by_id["cover-letter-en-01"]
+        content = self._reference(case.case_id)
+        for paragraph in content["paragraphs"]:
+            paragraph["text"] = "Меня заинтересовала эта вакансия, и я хотел бы обсудить подтвержденный опыт кандидата и требования позиции без добавления новых фактов."
+        score = score_case(case, content, {"max_language_consistency_violations": 0})
+        self.assertFalse(score["passed"])
+        self.assertEqual(score["language_consistency_violation_count"], 1)
+
+    def test_vacancy_grounded_motivation_paragraph_is_valid(self) -> None:
+        case = self.by_id["cover-letter-en-01"]
+        content = self._reference(case.case_id)
+        motivation = next(item for item in content["paragraphs"] if item["kind"] == "motivation")
+        self.assertEqual(motivation["evidence_ids"], ["v1", "v2"])
+        score = score_case(case, content, STRICT_THRESHOLDS)
+        self.assertTrue(score["passed"], score)
+
+    def test_motivation_paragraph_requires_vacancy_evidence(self) -> None:
+        case = self.by_id["cover-letter-en-01"]
+        content = self._reference(case.case_id)
+        motivation = next(item for item in content["paragraphs"] if item["kind"] == "motivation")
+        motivation["evidence_ids"] = ["c1"]
+        score = score_case(case, content, {"max_claim_evidence_violations": 0})
+        self.assertFalse(score["passed"])
+        reasons = [item["reason"] for item in score["claim_evidence_violations"]]
+        self.assertIn("motivation_without_vacancy_evidence", reasons)
 
     def test_schema_rejects_additional_property(self) -> None:
         schema = json.loads((ROOT / "evals/schemas/cover_letter.schema.json").read_text(encoding="utf-8"))

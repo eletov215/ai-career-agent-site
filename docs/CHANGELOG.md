@@ -1,3 +1,16 @@
+## 2026-08-26 - AI-BENCH-001 grounded-v2.1 hardening / evals 1.3.0
+
+- Reviewed grounded-v2 live run #2 artifact `32972783843`: Alice AI LLM 5/8, Flash 4/8, YandexGPT Pro 5.1 3/8 with one provider-envelope error; no provider decision made.
+- Normalized percent-source numbers across ordinary/NBSP/narrow-NBSP spacing while preserving hard failures for unsourced numeric claims.
+- Added same-question scenario provenance so interview scenario numbers require the matching `sN` evidence.
+- Added explicit RU/EN user-facing language consistency hard gates.
+- Added cover-letter `motivation` semantics: vacancy-grounded motivation is valid, while `candidate_fit` still requires candidate evidence.
+- Hardened OpenAI-compatible provider diagnostics without raw response/refusal persistence and added at most one bounded retry for 429/5xx/transport/malformed-envelope failures.
+- Added live-run #2 regressions and expanded AI-BENCH unit/package coverage; deterministic reference remains 8/8 PASS.
+- Local repository regression groups: 328 PASS, 14 environment-dependent skips, 11 subtests PASS, 0 confirmed failures.
+- Production routes, models, services, dependencies, migrations and revision `20260819_0014` remain unchanged.
+- Next gate: green ordinary CI -> live run #3 -> artifact review -> named manual rubric.
+
 ## 2026-08-26 - AI-BENCH-001 grounded-v2 hardening / evals 1.2.0
 
 - Confirmed stability r4 ordinary GitHub CI green on `main`; paid live job correctly skipped on push.
