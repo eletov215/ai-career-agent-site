@@ -10,6 +10,11 @@ name: CI
         required: true
         default: false
         type: boolean
+      run_ai_bench_alice_final:
+        description: "Run final billable Alice AI LLM-only verification after all CI gates pass"
+        required: true
+        default: false
+        type: boolean
 
 permissions:
   contents: read
@@ -470,4 +475,94 @@ jobs:
       - name: Verify live transport completed without provider errors
         if: always()
         run: python scripts/check_ai_bench_live_result.py "$AI_BENCH_OUTPUT_DIR/run.json"
+
+  ai-bench-yandex-alice-final:
+    name: AI-BENCH-001 Alice Final
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.run_ai_bench_alice_final == true }}
+    needs:
+      - tests
+      - ai-bench-001
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    concurrency:
+      group: ai-bench-001-yandex-alice-final
+      cancel-in-progress: false
+    env:
+      AI_BENCH_YANDEX_API_KEY: ${{ secrets.AI_BENCH_YANDEX_API_KEY }}
+      AI_BENCH_YANDEX_FOLDER_ID: ${{ secrets.AI_BENCH_YANDEX_FOLDER_ID }}
+      AI_BENCH_YANDEX_ALICE_LLM_MODEL: gpt://${{ secrets.AI_BENCH_YANDEX_FOLDER_ID }}/aliceai-llm/latest
+      AI_BENCH_ALICE_FINAL_OUTPUT_DIR: /tmp/ai-bench-yandex-alice-final
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Verify required GitHub secrets
+        shell: bash
+        run: |
+          test -n "$AI_BENCH_YANDEX_API_KEY" || { echo "AI_BENCH_YANDEX_API_KEY is missing"; exit 1; }
+          test -n "$AI_BENCH_YANDEX_FOLDER_ID" || { echo "AI_BENCH_YANDEX_FOLDER_ID is missing"; exit 1; }
+
+      - name: Validate deterministic benchmark package
+        run: python scripts/check_ai_bench_package.py
+
+      - name: Validate Alice final configuration
+        run: >-
+          python -m evals.ai_bench validate
+          --config evals/config/yandex-alice-final.json
+          --check-credentials
+
+      - name: Run Alice final machine verification
+        run: >-
+          python -m evals.ai_bench run
+          --config evals/config/yandex-alice-final.json
+          --output-dir "$AI_BENCH_ALICE_FINAL_OUTPUT_DIR"
+
+      - name: Add Alice final summary
+        if: always()
+        shell: bash
+        run: |
+          if [ -f "$AI_BENCH_ALICE_FINAL_OUTPUT_DIR/run.json" ]; then
+            python - "$AI_BENCH_ALICE_FINAL_OUTPUT_DIR/run.json" >> "$GITHUB_STEP_SUMMARY" <<'PY'
+          import json, sys
+          run = json.load(open(sys.argv[1], encoding="utf-8"))
+          print("# AI-BENCH-001 Alice final verification")
+          print()
+          print(f"Machine status: **{run.get('status')}**")
+          print(f"Dataset: **{(run.get('dataset') or {}).get('version')} / grounded-v2.2**")
+          print()
+          provider = (run.get("providers") or [{}])[0]
+          s = provider.get("summary") or {}
+          print("| Provider | Passed | Errors | Retries | Quality | Grounding | Impact | Scenario | Clean text | p50 ms | p95 ms | Est. cost USD |")
+          print("|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|")
+          print(
+              f"| {provider.get('id')} | {s.get('passed_count')}/{s.get('case_count')} | {s.get('error_count')} | {s.get('retry_count')} | "
+              f"{s.get('mean_quality_score')} | {s.get('mean_grounding_score')} | {s.get('unsupported_impact_claim_count')} | "
+              f"{s.get('scenario_provenance_violation_count')} | {s.get('mean_user_facing_cleanliness')} | "
+              f"{s.get('p50_latency_ms')} | {s.get('p95_latency_ms')} | {s.get('estimated_cost_usd')} |"
+          )
+          print()
+          print("This job verifies Alice AI LLM machine safety only. A named human writing-quality review is still mandatory before AI-BENCH-001 closure.")
+          PY
+          else
+            echo "# AI-BENCH-001 Alice final verification" >> "$GITHUB_STEP_SUMMARY"
+            echo "run.json was not produced." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Upload sanitized Alice final evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: ai-bench-001-yandex-alice-final-${{ github.run_id }}
+          path: ${{ env.AI_BENCH_ALICE_FINAL_OUTPUT_DIR }}
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Verify Alice final machine safety gate
+        if: always()
+        run: python scripts/check_ai_bench_alice_final_result.py "$AI_BENCH_ALICE_FINAL_OUTPUT_DIR/run.json"
 
