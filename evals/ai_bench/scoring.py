@@ -40,6 +40,21 @@ _CAUSAL_IMPACT_RE = re.compile(
     r"(?iu)\b(?:помог(?:ал(?:а|о|и)?|ает|ают|ло|ла|ли|ать)?|позвол(?:ил(?:а|о|и)?|ить|ять|яет|ял(?:а|о|и)?|яют)|help(?:ed|s|ing)?|enabl(?:e|ed|es|ing)|allow(?:ed|s|ing)?)\b"
 )
 
+_INTERVIEW_RESPONSE_COUNT_PATTERNS = (
+    re.compile(
+        r"(?iu)\b(?:приведите|назовите|перечислите|укажите)\s+"
+        r"(?:до\s+|не\s+менее\s+|не\s+более\s+)?"
+        r"\d+(?:\s*[\-–—]\s*\d+)?\s+"
+        r"(?:конкретн\w+\s+)?(?:пример\w*|вариант\w*|шаг\w*|причин\w*)\b"
+    ),
+    re.compile(
+        r"(?iu)\b(?:give|provide|name|list)\s+"
+        r"(?:up\s+to\s+|at\s+least\s+|no\s+more\s+than\s+)?"
+        r"\d+(?:\s*(?:[\-–—]|to)\s*\d+)?\s+"
+        r"(?:specific\s+)?(?:examples?|options?|steps?|reasons?)\b"
+    ),
+)
+
 
 def _impact_families(text: str) -> set[str]:
     families = {name for name, pattern in _IMPACT_FAMILY_PATTERNS.items() if pattern.search(text)}
@@ -143,10 +158,29 @@ def _number_tokens(text: str) -> set[str]:
     return {_normalize_number_token(token) for token in _NUMBER_RE.findall(text)}
 
 
+def _safe_interview_response_count_spans(case: BenchmarkCase, path: str, text: str) -> tuple[tuple[int, int], ...]:
+    """Return spans for harmless interview answer-cardinality instructions.
+
+    A phrase such as ``Приведите 2–3 примера`` asks the candidate how many
+    examples to provide; it does not assert a candidate fact, achievement,
+    duration, percentage, salary, or scenario value. Only tightly-scoped
+    imperative patterns on interview user-facing fields are exempted.
+    """
+    if case.task != "interview_questions" or not path.startswith("$.questions["):
+        return ()
+    spans: list[tuple[int, int]] = []
+    for pattern in _INTERVIEW_RESPONSE_COUNT_PATTERNS:
+        spans.extend(match.span() for match in pattern.finditer(text))
+    return tuple(spans)
+
+
 def _unsupported_numbers(case: BenchmarkCase, content: Any) -> list[dict[str, str]]:
     # Canonical source facts, rather than system/user prompt prose, define which
-    # numbers are grounded. Unicode/non-breaking whitespace before a percent
-    # sign is normalized so 20%, 20 % and 20\u202f% are the same fact.
+    # factual numbers are grounded. Unicode/non-breaking whitespace before a
+    # percent sign is normalized so 20%, 20 % and 20\u202f% are the same fact.
+    # The only non-source exception is a tightly-scoped interview instruction
+    # that asks for a count of examples/options/steps/reasons. Such a count is
+    # an answer-format instruction, not a factual claim.
     allowed: set[str] = set()
     for fact in case.source_facts:
         allowed.update(_number_tokens(fact.text))
@@ -160,10 +194,15 @@ def _unsupported_numbers(case: BenchmarkCase, content: Any) -> list[dict[str, st
         if isinstance(value, bool) or value is None:
             continue
         text = str(value)
-        for token in _NUMBER_RE.findall(text):
+        safe_spans = _safe_interview_response_count_spans(case, path, text)
+        for match in _NUMBER_RE.finditer(text):
+            token = match.group(0)
             normalized = _normalize_number_token(token)
-            if normalized not in allowed:
-                unsupported.append({"path": path, "value": token})
+            if normalized in allowed:
+                continue
+            if any(start <= match.start() and match.end() <= end for start, end in safe_spans):
+                continue
+            unsupported.append({"path": path, "value": token})
     return unsupported
 
 
@@ -283,6 +322,68 @@ def _language_consistency(case: BenchmarkCase, content: Any) -> dict[str, Any]:
         "cyrillic_letters": cyrillic,
         "latin_ratio": round(latin_ratio, 6),
         "cyrillic_ratio": round(cyrillic_ratio, 6),
+    }
+
+
+def normalize_structured_scenario_provenance(case: BenchmarkCase, content: Any) -> tuple[Any, dict[str, Any]]:
+    """Repair uniquely inferable scenario provenance in interview metadata.
+
+    This normalization never changes user-facing wording and never invents a
+    scenario. A repair is permitted only when an exact normalized number token
+    used by one question maps to exactly one ``kind=scenario`` source fact. If
+    the mapping is missing or ambiguous, the content is left unchanged and the
+    ordinary scenario-provenance gate remains authoritative. Raw provider output
+    is retained separately by the runner for auditability.
+    """
+    normalized = copy.deepcopy(content)
+    repairs: list[dict[str, str]] = []
+    if case.task != "interview_questions" or not isinstance(normalized, dict):
+        return normalized, {
+            "scenario_provenance_repair_count": 0,
+            "scenario_provenance_repairs": repairs,
+        }
+
+    token_sources: dict[str, set[str]] = {}
+    for fact in case.source_facts:
+        if fact.kind != "scenario":
+            continue
+        for token in _number_tokens(fact.text):
+            token_sources.setdefault(token, set()).add(fact.fact_id)
+
+    questions = normalized.get("questions")
+    if not isinstance(questions, list):
+        return normalized, {
+            "scenario_provenance_repair_count": 0,
+            "scenario_provenance_repairs": repairs,
+        }
+
+    for index, question in enumerate(questions):
+        if not isinstance(question, dict):
+            continue
+        evidence = question.get("evidence_ids")
+        if not isinstance(evidence, list):
+            continue
+        evidence_set = {str(item) for item in evidence}
+        combined = "\n".join(str(question.get(field, "")) for field in ("question", "purpose", "follow_up_if_weak"))
+        for token in sorted(_number_tokens(combined)):
+            source_ids = token_sources.get(token) or set()
+            if len(source_ids) != 1:
+                continue
+            source_id = next(iter(source_ids))
+            if source_id in evidence_set:
+                continue
+            evidence.append(source_id)
+            evidence_set.add(source_id)
+            repairs.append({
+                "path": f"$.questions[{index}].evidence_ids",
+                "number": token,
+                "evidence_id": source_id,
+                "reason": "unique_exact_scenario_number_match",
+            })
+
+    return normalized, {
+        "scenario_provenance_repair_count": len(repairs),
+        "scenario_provenance_repairs": repairs,
     }
 
 

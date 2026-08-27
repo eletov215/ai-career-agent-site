@@ -1,3 +1,17 @@
+## 2026-08-27 - AI-BENCH-001 Alice Final v2 / grounded-v2.3 / evals 1.5.0
+
+- Reviewed Alice Final run #1 artifact `33061758538`: 8/8 calls, 0 provider errors, 0 retries, source machine result 6/8.
+- Localized both FAILs to interview structured metadata rather than transport/schema/provider failure: allowed scenario numbers lacked matching `sN` in the same question objects; RU additionally triggered an over-broad numeric gate on `2-3 примера`.
+- Added raw/machine/presentation evidence separation. Raw provider output remains unchanged; machine scoring may apply only a deterministic one-to-one exact-number -> unique scenario `sN` provenance repair, with path/number/evidence ID recorded in run evidence.
+- Ambiguous/unknown scenario mappings remain hard failures and no candidate/vacancy evidence or user-visible semantic text is invented by the normalizer.
+- Added a narrow interview answer-cardinality exception for commands such as `2-3 примера` / `2 examples`; unsourced durations, percentages, salary, experience years, achievements and outcomes remain blocked.
+- Tightened RU/EN interview prompts to avoid repeated scenario numbers and prefer nonnumeric response-cardinality wording.
+- Added `evals/regressions/alice-final-run-1.json`, benchmark `1.4`, dataset `1.3.2`, `grounded-v2.3`, and report/CI visibility for audited scenario repairs.
+- Offline replay of the retained raw Alice Final run #1 responses is 8/8 with six audited repairs, zero unresolved scenario violations and zero unsupported numbers. Replay is regression evidence, not a new provider result.
+- Local verification: AI-BENCH 70 PASS; repository groups 348 PASS, 14 environment-dependent skips, 15 subtests PASS; deterministic reference 8/8; package/hygiene/infra/migration checks pass.
+- Production routes, models, services, templates, dependencies, migrations, Render runtime and revision `20260819_0014` remain unchanged.
+- Next gate: green ordinary CI -> fresh `run_ai_bench_alice_final=true` -> 8/8 machine pass -> artifact audit -> named human writing-quality rubric.
+
 ## 2026-08-27 - AI-BENCH-001 Alice final candidate / evals 1.4.1
 
 - Reviewed comparative grounded-v2.2 live run #4 artifact `33050972910`: 24/24 calls, 0 provider errors, 0 retries; Alice AI LLM 5/8, Flash 5/8, YandexGPT Pro 5.1 4/8.

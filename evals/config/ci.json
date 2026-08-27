@@ -1,5 +1,5 @@
 {
-  "benchmark_version": "1.3",
+  "benchmark_version": "1.4",
   "fixtures_manifest": "evals/fixtures/manifest.json",
   "timeout_seconds": 10,
   "thresholds": {

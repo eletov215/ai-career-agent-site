@@ -1,8 +1,8 @@
 {
   "case_count": 8,
-  "dataset_fingerprint": "e83621f50f1ed0a594bc9513901fa093c1815cf90ad1c7afa0d9bd4a4cfd2525",
+  "dataset_fingerprint": "c0d6946af29356f8e19abdb1178beac3428752f7985d33d78f2ab01b9edc7b2f",
   "dataset_id": "ai-career-agent-golden-v1",
-  "dataset_version": "1.3.1",
+  "dataset_version": "1.3.2",
   "providers": [
     {
       "adapter": "fixture",
