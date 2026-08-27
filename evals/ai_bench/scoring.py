@@ -43,7 +43,11 @@ _CAUSAL_IMPACT_RE = re.compile(
 
 def _impact_families(text: str) -> set[str]:
     families = {name for name, pattern in _IMPACT_FAMILY_PATTERNS.items() if pattern.search(text)}
-    if not families and _CAUSAL_IMPACT_RE.search(text):
+    # Causal language is its own safety signal. Do not suppress it merely because
+    # the same paragraph also contains another impact family (for example
+    # "allowed us to ... ensure ..."). A cited candidate fact must explicitly
+    # support the causal/outcome framing as well.
+    if _CAUSAL_IMPACT_RE.search(text):
         families.add("causal_effect")
     return families
 

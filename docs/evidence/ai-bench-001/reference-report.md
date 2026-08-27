@@ -1,10 +1,10 @@
 # AI-BENCH-001 benchmark report
 
-- Run ID: `ai-bench-20260826T181603Z-9f7ae17b`
-- Started: `2026-08-26T18:16:03Z`
-- Finished: `2026-08-26T18:16:03Z`
-- Dataset: `ai-career-agent-golden-v1` v1.3.0
-- Dataset fingerprint: `1051e1c8de4e5e1df484ed1a66f933e592e998eb7fb0ef527bf3e4f8d5ce16d9`
+- Run ID: `ai-bench-20260827T085927Z-b9e8eef5`
+- Started: `2026-08-27T08:59:27Z`
+- Finished: `2026-08-27T08:59:27Z`
+- Dataset: `ai-career-agent-golden-v1` v1.3.1
+- Dataset fingerprint: `e83621f50f1ed0a594bc9513901fa093c1815cf90ad1c7afa0d9bd4a4cfd2525`
 - Benchmark contract: `1.3`
 - Execution mode: `deterministic_reference`
 - Quality gate: **PASSED**
@@ -21,11 +21,11 @@
 |---|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
 | reference | resume-analysis-ru-01 | PASS | 0 | 1.000 | 1.000 | 1.000 | 1.000 | 0 | 1.000 | 0 | 0 | 0 | n/a | 0.04 |
 | reference | resume-analysis-en-01 | PASS | 0 | 1.000 | 1.000 | 1.000 | 1.000 | 0 | 1.000 | 0 | 0 | 0 | n/a | 0.03 |
-| reference | vacancy-match-ru-01 | PASS | 0 | 1.000 | 1.000 | 1.000 | 1.000 | 0 | 1.000 | 0 | 0 | 0 | 67 | 0.03 |
+| reference | vacancy-match-ru-01 | PASS | 0 | 1.000 | 1.000 | 1.000 | 1.000 | 0 | 1.000 | 0 | 0 | 0 | 67 | 0.04 |
 | reference | vacancy-match-en-01 | PASS | 0 | 1.000 | 1.000 | 1.000 | 1.000 | 0 | 1.000 | 0 | 0 | 0 | 71 | 0.03 |
 | reference | cover-letter-ru-01 | PASS | 0 | 1.000 | 1.000 | 1.000 | 1.000 | 0 | 1.000 | 0 | 0 | 0 | n/a | 0.03 |
-| reference | cover-letter-en-01 | PASS | 0 | 1.000 | 1.000 | 1.000 | 1.000 | 0 | 1.000 | 0 | 0 | 0 | n/a | 0.02 |
-| reference | interview-ru-01 | PASS | 0 | 1.000 | 1.000 | 1.000 | 1.000 | 0 | 1.000 | 0 | 0 | 0 | n/a | 0.04 |
+| reference | cover-letter-en-01 | PASS | 0 | 1.000 | 1.000 | 1.000 | 1.000 | 0 | 1.000 | 0 | 0 | 0 | n/a | 0.03 |
+| reference | interview-ru-01 | PASS | 0 | 1.000 | 1.000 | 1.000 | 1.000 | 0 | 1.000 | 0 | 0 | 0 | n/a | 0.03 |
 | reference | interview-en-01 | PASS | 0 | 1.000 | 1.000 | 1.000 | 1.000 | 0 | 1.000 | 0 | 0 | 0 | n/a | 0.03 |
 
 ## Grounded-v2.2 contract interpretation

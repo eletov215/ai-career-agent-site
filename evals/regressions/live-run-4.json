@@ -1,0 +1,65 @@
+{
+  "source_run_id": "33050972910",
+  "source_date": "2026-08-27",
+  "synthetic_only": true,
+  "purpose": "Regression patterns distilled from final comparative Yandex live run #4. No credentials or production user data are included.",
+  "patterns": {
+    "alice_unsupported_impact_claims": [
+      {
+        "case_id": "cover-letter-ru-01",
+        "text": "Имею двухлетний опыт работы в технической поддержке, что позволило мне на практике отработать процессы работы с обращениями пользователей. В работе придерживался требований SLA, что обеспечивало соблюдение установленных сроков реагирования и решения вопросов. Владею опытом работы с CRM-системами и имею практику документирования типовых решений.",
+        "evidence_ids": [
+          "c1",
+          "c2",
+          "c3",
+          "c4"
+        ]
+      },
+      {
+        "case_id": "cover-letter-en-01",
+        "text": "With three years of experience as a product designer, I have worked extensively with Figma to build and maintain design systems, ensuring consistency and scalability across products.",
+        "evidence_ids": [
+          "c1",
+          "c2"
+        ]
+      },
+      {
+        "case_id": "cover-letter-en-01",
+        "text": "In my work, I have conducted qualitative user interviews to gather insights that inform design decisions and improve the user experience. I also have experience collaborating closely with product and engineering teams to bring designs to life and ensure technical feasibility.",
+        "evidence_ids": [
+          "c3",
+          "c4"
+        ]
+      }
+    ],
+    "alice_missing_scenario_provenance": {
+      "case_id": "interview-ru-01",
+      "question": "Расскажите, как вы проводите проверку REST API в Postman. Приведите пример реального сценария - какой эндпоинт проверяли, какие методы и параметры использовали.",
+      "purpose": "Проверить практические навыки работы с API и понимание базовых методов HTTP.",
+      "follow_up_if_weak": "Допустим, API возвращает 20% ошибочных ответов, но без явных кодов ошибок. Как бы вы систематизировали такие случаи и помогли команде выявить причину?",
+      "evidence_ids": [
+        "c3",
+        "v3"
+      ],
+      "required_evidence_id": "s1"
+    },
+    "safe_literal_rewrites": [
+      {
+        "case_id": "cover-letter-ru-01",
+        "text": "Работал по SLA и использовал CRM в ежедневной работе.",
+        "evidence_ids": [
+          "c2",
+          "c3"
+        ]
+      },
+      {
+        "case_id": "cover-letter-en-01",
+        "text": "I built and maintained Figma design systems and conducted qualitative user interviews.",
+        "evidence_ids": [
+          "c2",
+          "c3"
+        ]
+      }
+    ]
+  }
+}

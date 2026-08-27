@@ -17,10 +17,12 @@ REQUIRED_VISIBLE = [
     "evals/config/ci.json",
     "evals/config/benchmark.example.json",
     "evals/config/yandex-live.json",
+    "evals/config/yandex-alice-final.json",
     "evals/artifacts/README.md",
     "evals/regressions/live-run-1.json",
     "evals/regressions/live-run-2.json",
     "evals/regressions/live-run-3.json",
+    "evals/regressions/live-run-4.json",
     "evals/fixtures/manifest.json",
     "evals/schemas/resume_analysis.schema.json",
     "evals/schemas/vacancy_match.schema.json",
@@ -33,6 +35,7 @@ REQUIRED_VISIBLE = [
 REQUIRED_REPOSITORY = [
     ".github/workflows/ci.yml",
     "scripts/check_ai_bench_live_result.py",
+    "scripts/check_ai_bench_alice_final_result.py",
 ]
 REQUIRED = [*REQUIRED_VISIBLE, *REQUIRED_REPOSITORY]
 EXPRESSION_RE = re.compile(r"\$\{\{\s*(.*?)\s*\}\}")
@@ -130,7 +133,7 @@ def main() -> int:
         fail(f"missing required files: {missing}")
 
     version = (ROOT / "evals/VERSION").read_text(encoding="utf-8").strip()
-    if version != "1.4.0":
+    if version != "1.4.1":
         fail(f"unexpected evals version: {version}")
 
     workflow_path = ROOT / ".github/workflows/ci.yml"
@@ -152,6 +155,13 @@ def main() -> int:
         "timeout-minutes: 45",
         "group: ai-bench-001-yandex-live",
         "AI_BENCH_OUTPUT_DIR: /tmp/ai-bench-yandex-live",
+        "run_ai_bench_alice_final:",
+        "ai-bench-yandex-alice-final:",
+        "name: AI-BENCH-001 Alice Final",
+        "inputs.run_ai_bench_alice_final == true",
+        "AI_BENCH_ALICE_FINAL_OUTPUT_DIR: /tmp/ai-bench-yandex-alice-final",
+        "--config evals/config/yandex-alice-final.json",
+        "scripts/check_ai_bench_alice_final_result.py",
     ]
     missing_workflow_fragments = [
         fragment for fragment in required_workflow_fragments if fragment not in workflow
@@ -161,6 +171,13 @@ def main() -> int:
             "integrated live workflow controls are incomplete: "
             f"{missing_workflow_fragments}"
         )
+
+    alice_final = json.loads((ROOT / "evals/config/yandex-alice-final.json").read_text(encoding="utf-8"))
+    alice_providers = alice_final.get("providers") or []
+    if [item.get("id") for item in alice_providers] != ["yandex-alice-ai-llm"]:
+        fail("Alice final config must enable exactly yandex-alice-ai-llm")
+    if float((alice_final.get("thresholds") or {}).get("max_error_rate", 1.0)) != 0.0:
+        fail("Alice final config must require max_error_rate=0.0")
 
     legacy_workflow = ROOT / ".github/workflows/ai-bench-live"
     if legacy_workflow.is_file():
@@ -173,8 +190,8 @@ def main() -> int:
     manifest = json.loads((ROOT / "evals/fixtures/manifest.json").read_text(encoding="utf-8"))
     if manifest.get("synthetic") is not True:
         fail("manifest must declare synthetic=true")
-    if manifest.get("version") != "1.3.0" or manifest.get("contract") != "grounded-v2.2":
-        fail("manifest must declare version=1.3.0 and contract=grounded-v2.2")
+    if manifest.get("version") != "1.3.1" or manifest.get("contract") != "grounded-v2.2":
+        fail("manifest must declare version=1.3.1 and contract=grounded-v2.2")
     cases = manifest.get("cases") or []
     if len(cases) < 8:
         fail("golden dataset must contain at least eight bilingual/task-diverse cases")
@@ -208,6 +225,15 @@ def main() -> int:
     cleanup_samples = (regression3.get("patterns") or {}).get("simple_marker_cleanup") or []
     if len(impact_samples) < 2 or len(cleanup_samples) < 2:
         fail("live-run-3 impact/marker regressions are incomplete")
+
+    regression4 = json.loads((ROOT / "evals/regressions/live-run-4.json").read_text(encoding="utf-8"))
+    patterns4 = regression4.get("patterns") or {}
+    if len(patterns4.get("alice_unsupported_impact_claims") or []) < 3:
+        fail("live-run-4 Alice impact regressions are incomplete")
+    if not (patterns4.get("alice_missing_scenario_provenance") or {}).get("required_evidence_id"):
+        fail("live-run-4 Alice scenario provenance regression is incomplete")
+    if len(patterns4.get("safe_literal_rewrites") or []) < 2:
+        fail("live-run-4 safe literal rewrite regressions are incomplete")
 
     with tempfile.TemporaryDirectory(prefix="ai-bench-gate-") as temporary:
         out = Path(temporary)

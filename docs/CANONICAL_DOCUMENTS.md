@@ -1,11 +1,11 @@
 # Canonical documents
 
-**Updated:** 2026-08-26
+**Updated:** 2026-08-27
 
 | Document | Version | Status |
 |---|---|---|
-| `PLAN_CURRENT.md` | v1.4.40 | AI-BENCH grounded-v2.2 final safety candidate; ordinary CI + live run #4 + manual rubric pending |
-| `PROJECT_PASSPORT.md` | v2.54 | Live run #3 reviewed; production architecture unchanged |
-| `SOURCE_AUDIT.md` | v1.4.40 | Current main/archive + live-run-3 evidence + grounded-v2.2 boundary |
+| `PLAN_CURRENT.md` | v1.4.41 | AI-BENCH Alice final candidate; ordinary CI + Alice-only 8/8 machine run + named manual rubric pending |
+| `PROJECT_PASSPORT.md` | v2.55 | Comparative live run #4 reviewed; production architecture unchanged |
+| `SOURCE_AUDIT.md` | v1.4.41 | Current `main (25)` + live-run-4 evidence + Alice-final package boundary |
 | `SEARCH005_VERIFICATION_STATUS.md` | v1.1 | SEARCH-005 completed |
-| `AI_BENCH_VERIFICATION_STATUS.md` | v1.8 | Live run #3 reviewed; final live-run-4 safety gate |
+| `AI_BENCH_VERIFICATION_STATUS.md` | v1.9 | Alice-only final machine verification pending |
