@@ -7,14 +7,15 @@
 |---|---|
 | Production schema | `20260819_0014` |
 | Последний завершённый production-пакет | `SEARCH-005` |
-| Текущий пакет | `AI-BENCH-001` - grounded-v2.1 hardening candidate; НУЖНА ПРОВЕРКА GITHUB ACTIONS + LIVE RUN #3 |
-| Ordinary CI | grounded-v2 candidate v1.4.38 прошёл ordinary CI перед live run #2; текущий v2.1 candidate требует нового green CI |
+| Текущий пакет | `AI-BENCH-001` - grounded-v2.2 final safety hardening candidate; НУЖНА ПРОВЕРКА GITHUB ACTIONS + LIVE RUN #4 + MANUAL RUBRIC |
+| Ordinary CI | grounded-v2.1 v1.4.39 прошёл ordinary CI на `main` перед live run #3; текущий v2.2 candidate требует нового green CI |
 | Live run #1 | artifact `32958938365`: 24/24 API calls, 0 errors; использован для grounded-v2 hardening |
-| Live run #2 | artifact `32972783843`: Alice 5/8, Flash 4/8, YandexGPT Pro 3/8; один provider error у YandexGPT Pro; provider decision НЕ принят |
-| Hardening | `evals 1.3.0`, benchmark `1.2`, dataset `1.2.0` / `grounded-v2.1`: Unicode-percent normalization, scenario provenance, RU/EN language gate, cover-letter motivation kind, safe provider diagnostics and one bounded retry |
-| Следующий gate | green ordinary CI -> manual `run_ai_bench_live=true` -> live run #3 artifact -> named human writing rubric -> provider decision |
+| Live run #2 | artifact `32972783843`: Alice 5/8, Flash 4/8, YandexGPT Pro 3/8; один provider error; использован для grounded-v2.1 |
+| Live run #3 | artifact `32978362483`: Alice 7/8, Flash 4/8, YandexGPT Pro 5/8, 24/24 calls без provider errors; manual review выявил unsupported impact в machine-passed Alice cover letter |
+| Hardening | `evals 1.4.0`, benchmark `1.3`, dataset `1.3.0` / `grounded-v2.2`: source-matched impact families, live-run-3 regressions, post-score presentation sanitizer for simple decorated evidence IDs |
+| Следующий gate | green ordinary CI -> manual `run_ai_bench_live=true` -> live run #4 artifact -> named human writing rubric -> benchmark closure decision |
 | Следующий пакет | `AI-PROVIDER-001`, заблокирован до закрытия AI-BENCH-001 |
-| Канонические документы | PLAN `v1.4.39`, PROJECT PASSPORT `v2.53`, SOURCE AUDIT `v1.4.39`, AI-BENCH verification `v1.7` |
+| Канонические документы | PLAN `v1.4.40`, PROJECT PASSPORT `v2.54`, SOURCE AUDIT `v1.4.40`, AI-BENCH verification `v1.8` |
 
 Production Flask routes, dependencies, models, migrations, Render runtime and database schema are unchanged. The benchmark continues to use synthetic fixtures only and GitHub-secret-only credentials.
 <!-- ACA-CANONICAL-STATUS:END -->
@@ -39,41 +40,29 @@ AI Career Agent — Flask/Gunicorn web-service карьерного сопров
 - web, Trudvsem sync worker и privacy cleanup worker разделены на процессы;
 - Render остаётся staging/резервным контуром до предрелизной VPS-миграции.
 
-## 3. AI-BENCH-001 grounded-v2.1 benchmark
+## 3. AI-BENCH-001 grounded-v2.2 benchmark
 
-`evals 1.3.0` усиливает изолированный comparative benchmark после анализа второго live run:
+`evals 1.4.0` is the final safety-hardening candidate after manual review of live run #3:
 
-- Alice AI LLM, Alice AI LLM Flash и YandexGPT Pro 5.1;
-- Yandex OpenAI-compatible endpoint с `Api-Key` + `OpenAI-Project`;
-- model URI строятся из GitHub-secret environment data и не коммитятся;
-- grounded-v2.1 JSON Schema/scoring output: raw evidence IDs only, structured `facts_not_verified`/`caveats`, claim-level evidence, `motivation` paragraphs and stricter hallucination controls;
-- vacancy match is classified by requirement; numeric score is derived deterministically by benchmark logic rather than authored by the model;
-- user-facing text cannot contain internal evidence labels/IDs; unsupported impact claims are hard failures;
-- interview numbers are allowed only when supplied as source/scenario facts; percent spacing is Unicode-normalized and scenario numbers require same-question scenario evidence;
-- RU/EN user-facing language consistency is a hard gate;
-- live provider diagnostics persist only safe envelope shape/status metadata; raw response bodies/refusal text are not stored;
-- live providers may perform at most one configured bounded retry for transient 429/5xx/transport/malformed-envelope failures; retries are visible in evidence;
-- live job встроен в существующий `.github/workflows/ci.yml`, поэтому не требует добавления отдельного workflow-файла;
-- на push/pull request live job всегда пропускается;
-- на ручном запуске он выполняется только при `run_ai_bench_live=true` и только после успешных jobs `tests` и `ai-bench-001`;
-- sanitized artifact загружается через `actions/upload-artifact@v7`;
-- runtime output создаётся в `/tmp/ai-bench-yandex-live`, вне repository checkout.
+- Alice AI LLM, Alice AI LLM Flash and YandexGPT Pro 5.1 remain the approved comparison set;
+- exact raw evidence IDs, structured unverified facts/caveats, deterministic vacancy scoring, language/scenario/claim-evidence gates and safe provider diagnostics remain mandatory;
+- cover-letter outcome claims are now checked by semantic impact family against the cited candidate evidence, so inferred speed, efficiency or service-quality gains are rejected unless the source facts contain the same impact family;
+- the real unsupported Alice phrases found in live run #3 are versioned in `evals/regressions/live-run-3.json`;
+- simple decorated known evidence markers such as `(s1)` or `[c1]` are recorded as repairable presentation noise, but scoring always evaluates the original payload first;
+- `presentation/<provider>/<case>.json` removes only those simple decorated markers after scoring; missing evidence, unknown IDs, `evidence_ids:` labels and serialized schema/debug metadata remain hard failures;
+- scenario provenance remains hard: removing `(s1)` from visible text never satisfies a missing structured `s1` citation;
+- live providers still use safe envelope diagnostics and at most one bounded retry for configured transient/malformed failures;
+- live job remains integrated into `.github/workflows/ci.yml`, runs only via manual `workflow_dispatch` with `run_ai_bench_live=true`, and waits for ordinary tests/package gate;
+- runtime output remains outside the repository at `/tmp/ai-bench-yandex-live` and credentials are read only from GitHub Actions Secrets.
 
-Перед загрузкой:
+Before upload:
 
 ```bash
 python scripts/check_ai_bench_package.py
 python -m unittest discover -s tests -p 'test_ai_bench_*.py' -v
 ```
 
-После green ordinary CI запустите:
-
-```text
-GitHub Actions -> CI -> Run workflow
-run_ai_bench_live = true
-```
-
-Успешный transport run ещё не является provider decision: artifact нужно скачать и заполнить human writing-quality rubric.
+After green ordinary CI run the manual live benchmark and review its artifact. A green transport job is not enough to select a provider: the final accepted candidate must also pass machine safety review and the named human writing-quality rubric.
 
 ## 4. Документация
 

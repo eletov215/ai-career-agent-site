@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://ai-career-agent.local/schemas/cover-letter-v2.1.json",
-  "title": "Grounded cover letter output v2.1",
+  "$id": "https://ai-career-agent.local/schemas/cover-letter-v2.2.json",
+  "title": "Grounded cover letter output v2.2",
   "type": "object",
   "additionalProperties": false,
   "required": [

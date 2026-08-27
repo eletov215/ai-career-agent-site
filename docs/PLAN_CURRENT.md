@@ -6,60 +6,59 @@
 <!-- ACA-CANONICAL-STATUS:START -->
 ## Канонический статус плана
 
-**Документ:** AI Career Agent PLAN_CURRENT `v1.4.39`  
+**Документ:** AI Career Agent PLAN_CURRENT `v1.4.40`  
 **Дата:** 2026-08-26  
 **Production revision:** `20260819_0014`  
-**Текущий пакет:** `AI-BENCH-001 - GROUNDED-V2.1 HARDENING; НУЖНА ПРОВЕРКА GITHUB ACTIONS + LIVE RUN #3 + MANUAL RUBRIC`
+**Текущий пакет:** `AI-BENCH-001 - GROUNDED-V2.2 FINAL SAFETY HARDENING; НУЖНА ПРОВЕРКА GITHUB ACTIONS + LIVE RUN #4 + MANUAL RUBRIC`
 
 ### Подтверждённое внешнее evidence
 
-- grounded-v2 ordinary CI на `main` был подтверждён green перед вторым manual benchmark;
-- live run #2 artifact `32972783843` проверен: Alice AI LLM 5/8, Alice AI LLM Flash 4/8, YandexGPT Pro 5.1 3/8; у YandexGPT Pro один provider-envelope error;
-- deterministic vacancy match подтвердил ожидаемую архитектуру: LLM классифицирует требования, а числовой score вычисляется кодом;
-- live-run #2 выявил оставшиеся contract gaps: Unicode percent spacing, scenario provenance, language consistency, vacancy-grounded motivation semantics и недостаточную provider-envelope diagnostics;
-- provider decision не принят; Alice AI LLM остаётся ведущим кандидатом, но AI-BENCH-001 не закрыт.
+- grounded-v2.1 ordinary CI v1.4.39 на `main` подтверждён green до третьего manual benchmark;
+- live run #3 artifact `32978362483` проверен: Alice AI LLM 7/8, Alice AI LLM Flash 4/8, YandexGPT Pro 5.1 5/8; все 24 provider calls завершились без provider errors и без retry;
+- Alice остаётся ведущим кандидатом, однако manual safety review выявил machine-missed unsupported impact в `cover-letter-ru-01`: source responsibilities were expanded into acceleration/efficiency/service-quality outcomes without source support;
+- scenario-provenance gate корректно оставил Alice `interview-ru-01` failed: simple `(s1)/(s2)` markers do not replace structured evidence;
+- provider decision не принят; AI-BENCH-001 не закрыт.
 
-### Grounded-v2.1 hardening
+### Grounded-v2.2 hardening
 
-- `evals 1.3.0`, benchmark contract `1.2`, dataset `1.2.0`, `contract=grounded-v2.1`;
-- `20%`, `20 %`, NBSP/narrow-NBSP variants нормализуются как одно source number;
-- interview scenario number требует citation соответствующего `sN` в том же вопросе;
-- RU/EN language consistency стала отдельным hard gate;
-- cover-letter `motivation` разрешает vacancy evidence, а `candidate_fit` по-прежнему требует candidate evidence;
-- provider errors получают безопасную envelope diagnostics без raw body/refusal text;
-- разрешён максимум один bounded retry только для 429/5xx/transport/malformed-envelope случаев; retry evidence сохраняется;
-- live-run #2 failure patterns добавлены как regressions; machine safety gates не перекрываются human writing scores.
+- `evals 1.4.0`, benchmark contract `1.3`, dataset `1.3.0`, `contract=grounded-v2.2`;
+- cover-letter impact is checked by semantic family against cited candidate evidence; unsupported speed/time, efficiency, quality/reliability, growth, reduction and conversion/retention claims are hard failures;
+- live-run #3 impact phrases and presentation-marker cases are versioned regressions;
+- simple decorated known evidence IDs may be removed only from a post-score `presentation/` copy; machine scoring always sees the original response;
+- missing provenance, unknown IDs, schema/debug serialization and `evidence_ids:` labels remain hard failures and are never silently repaired;
+- deterministic vacancy match remains code-derived, not LLM-authored; language/scenario/claim-evidence/diagnostic/retry controls remain unchanged.
 
 ### Текущий gate
 
-Upload grounded-v2.1 candidate -> green ordinary GitHub CI -> `Actions -> CI -> Run workflow -> run_ai_bench_live=true` -> review live run #3 artifact -> complete named human writing-quality rubric. Only then may `AI-PROVIDER-001` start.
+Upload grounded-v2.2 candidate -> green ordinary GitHub CI -> `Actions -> CI -> Run workflow -> run_ai_bench_live=true` -> review live run #4 artifact -> complete named human writing-quality rubric. Only then may `AI-BENCH-001` close and `AI-PROVIDER-001` start.
 
 ### Очередь
 
-`AI-BENCH-001 grounded-v2.1 CI -> live run #3 -> artifact review -> manual rubric -> AI-PROVIDER-001 -> LEGAL-001 -> AI-001 -> AI-002 -> AI-003 -> AI-004 -> AI-005 -> AI-006 -> JOB-001 -> JOB-002 -> JOB-003/JOB-004`
+`AI-BENCH-001 grounded-v2.2 CI -> live run #4 -> artifact review -> manual rubric -> AI-PROVIDER-001 -> LEGAL-001 -> AI-001 -> AI-002 -> AI-003 -> AI-004 -> AI-005 -> AI-006 -> JOB-001 -> JOB-002 -> JOB-003/JOB-004`
 <!-- ACA-CANONICAL-STATUS:END -->
 
 | Поле | Значение |
 |---|---|
 | Документ | PLAN_CURRENT |
-| Версия | 1.4.39 |
+| Версия | 1.4.40 |
 | Дата | 26 августа 2026 |
 | Статус | ДЕЙСТВУЮЩИЙ |
-| Основа кода | пользовательский ZIP `ai-career-agent-site-main (23).zip`, актуальный `main` после grounded-v2 live run #2 |
-| Текущий пакет | AI-BENCH-001 grounded-v2.1 hardening - НУЖНА ПРОВЕРКА ordinary CI и live run #3, затем artifact/manual rubric |
+| Основа кода | пользовательский ZIP `ai-career-agent-site-main (24).zip`, актуальный `main` после grounded-v2.1 live run #3 |
+| Текущий пакет | AI-BENCH-001 grounded-v2.2 final safety hardening - НУЖНА ПРОВЕРКА ordinary CI и live run #4, затем artifact/manual rubric |
 
 > ОБЯЗАТЕЛЬНО ДЛЯ КАЖДОГО НОВОГО ЧАТА: прочитать этот план, новый паспорт и актуальный архив. После завершения любого пункта вернуть обновлённые DOCX/PDF/Markdown, новый ZIP, доказательства проверки и запись в журнале версий.
 
-> КОНТРОЛЬНЫЕ СТАТУСЫ ЭТОЙ ВЕРСИИ: FND-001/FND-002/DATA-001/DATA-002/SEC-001/OPS-001/INFRA-PREP-001/SYNC-001/SYNC-002/SEARCH-001..005/AUTH-001/AUTH-002/PROF-001/PROF-002/PROF-003/PRIV-001 - **ВЫПОЛНЕНО**; `AI-BENCH-001` - **НУЖНА ПРОВЕРКА**; `AI-PROVIDER-001` - **ЗАБЛОКИРОВАНО** до завершения benchmark; `DOC-001` - **В РАБОТЕ**; `INFRA-001` - **ОТЛОЖЕНО ДО ПРЕДРЕЛИЗНОГО ЭТАПА**. Документы ниже `1.4.39` устарели для определения текущего gate.
+> КОНТРОЛЬНЫЕ СТАТУСЫ ЭТОЙ ВЕРСИИ: FND-001/FND-002/DATA-001/DATA-002/SEC-001/OPS-001/INFRA-PREP-001/SYNC-001/SYNC-002/SEARCH-001..005/AUTH-001/AUTH-002/PROF-001/PROF-002/PROF-003/PRIV-001 - **ВЫПОЛНЕНО**; `AI-BENCH-001` - **НУЖНА ПРОВЕРКА**; `AI-PROVIDER-001` - **ЗАБЛОКИРОВАНО** до завершения benchmark; `DOC-001` - **В РАБОТЕ**; `INFRA-001` - **ОТЛОЖЕНО ДО ПРЕДРЕЛИЗНОГО ЭТАПА**. Документы ниже `1.4.40` устарели для определения текущего gate.
 
 ## 1. Источник истины и аудит источников
 
 - GitHub является главным источником актуального кода.
 - Если в текущем чате загружен более новый ZIP, он является рабочей основой этого чата.
 - Канонический план определяется наибольшей версией и датой; старые дубликаты не должны оставаться действующими.
-- Актуальная рабочая база для этой версии: `ai-career-agent-site-main (23).zip`, предоставленный пользователем как точный archive текущего GitHub `main`.
+- Актуальная рабочая база для этой версии: `ai-career-agent-site-main (24).zip`, предоставленный пользователем как точный archive текущего GitHub `main`.
 - Версия 1.4.38 фиксирует grounded-v2 hardening после первого live run: ordinary CI r4 green; manual run artifact 32958938365 completed 24/24 API calls with zero transport errors; stricter evidence/safety/match contract prepared for live run #2.
 - Версия 1.4.39 фиксирует grounded-v2.1 hardening после live run #2 artifact 32972783843: Unicode percent normalization, scenario provenance, RU/EN language gate, cover-letter motivation semantics, safe provider diagnostics and one bounded retry prepared for live run #3.
+- Версия 1.4.40 фиксирует grounded-v2.2 final safety hardening после live run #3 artifact 32978362483: source-matched impact families, regressions на реальные Alice outcome-inferences и post-score presentation sanitizer prepared for live run #4.
 - Версия 1.4.34 фиксирует live Yandex candidate: manual-only workflow, Alice AI LLM/Flash/YandexGPT Pro 5.1, structured JSON Schema output, current pricing snapshot and GitHub-secret-only credentials.
 - Версия 1.4.35 фиксирует CI-stability hotfix r2: SYNC worker cache assertions отвязаны от календарного 7-дневного search filter; AI-BENCH package contract использует browser-upload-safe visible scaffold и не зависит от dotfiles.
 - Версия 1.4.36 фиксирует workflow-layout hotfix r3: live Yandex job встроен в существующий `ci.yml`, отдельный `.yml` больше не нужен, а manual API run зависит от полного green CI.
@@ -225,7 +224,7 @@ MVP не готов, если работает только отдельная �
 
 | ID | Приоритет | Статус | Пункт |
 |---|---|---|---|
-| AI-BENCH-001 | P0 | НУЖНА ПРОВЕРКА | Live run #2 reviewed; grounded-v2.1 hardening candidate готов; требуются green CI, live run #3 artifact и manual rubric |
+| AI-BENCH-001 | P0 | НУЖНА ПРОВЕРКА | Live run #3 reviewed; grounded-v2.2 final safety hardening candidate готов; требуются green CI, live run #4 artifact и named manual rubric |
 | AI-PROVIDER-001 | P0 | ЗАПЛАНИРОВАНО | Стратегия AI-провайдеров, география, стоимость, fallback и privacy |
 | AI-001 | P1 | ЗАПЛАНИРОВАНО | Независимый слой AI-провайдера и контроль стоимости |
 | AI-002 | P1 | ЗАПЛАНИРОВАНО | Настоящий анализ резюме |
@@ -803,11 +802,11 @@ MVP не готов, если работает только отдельная �
 
 **Цель:** Выбрать модель на воспроизводимых RU/EN функциях AI Career Agent, отделив качество/grounding/safety от transport и стоимости до production-интеграции.
 
-**Реализация:** `evals 1.3.0` grounded-v2.1: 8 synthetic RU/EN fixtures, 4 versioned schemas, exact raw evidence IDs, structured unverified facts/caveats, claim-evidence validation, unsupported-impact/user-facing metadata/language gates, deterministic weighted vacancy match score, Unicode-normalized source numbers, same-question scenario provenance, vacancy-grounded `motivation`, safe provider-envelope diagnostics, one bounded transient/malformed retry, deterministic/command/OpenAI-compatible adapters, latency/usage/cost/retry evidence and separate manual-review template. Live runs #1/#2 are preserved as historical evidence and regression patterns.
+**Реализация:** `evals 1.4.0` grounded-v2.2: 8 synthetic RU/EN fixtures, 4 versioned schemas, exact raw evidence IDs, structured unverified facts/caveats, claim-evidence/language/scenario gates, deterministic weighted vacancy match score, Unicode-normalized source numbers, vacancy-grounded `motivation`, safe provider-envelope diagnostics and one bounded retry. Final hardening adds source-matched impact-family validation, live-run #3 regression patterns and separate post-score `presentation/` copies that may strip only simple decorated known evidence markers. Missing provenance, unknown IDs and serialized schema/debug metadata remain hard failures. Live runs #1/#2/#3 are historical evidence, not production traffic.
 
 **Влияние на код:** только `evals/`, benchmark tests/scripts, CI summary and docs/evidence. Production routes, models, services, dependencies and database schema do not change.
 
-**Критерии готовности:** grounded-v2.1 ordinary GitHub CI green; same three approved Yandex candidates complete live run #3 with provider errors/retries diagnosable and no unresolved transport blocker; machine artifact reviewed; named human writing-quality rubric completed; no unsupported candidate facts/impact/skills/achievements; final provider decision evidence accepted. Numeric vacancy match remains code-derived, not model-authored.
+**Критерии готовности:** grounded-v2.2 ordinary GitHub CI green; same three approved Yandex candidates complete final live run #4 with provider errors/retries diagnosable and no unresolved transport blocker; machine artifact reviewed; named human writing-quality rubric completed; selected candidate has no unresolved unsupported candidate facts/impact/skills/achievements; final benchmark decision evidence accepted. Numeric vacancy match remains code-derived, not model-authored.
 
 **Зависимости:** OPS-001, test access to Yandex AI Studio and existing GitHub Secrets. Реальный VPS не требуется для quality benchmark; production-IP transport повторно проверяется в INFRA-001.
 
@@ -1590,59 +1589,58 @@ GitHub/production/API: <подтверждено или требуется>
 
 ## 18. Журнал версий
 
-| Версия | Дата | Пункт | Изменение |
-|---|---|---|---|
-| 1.0.0 | 03.08.2026 | PLAN | Первичный единый план. |
-| 1.0.1 | 03.08.2026 | FND-001 | Тесты/CI подготовлены, требовалась verification. |
-| 1.0.2 | 03.08.2026 | FND-002 | Конфигурационный слой подготовлен. |
-| 1.1.0 | 04.08.2026 | INFRA strategy | Согласованы own domain, paid Render first и optional VPS packages. |
-| 1.2.0 | 04.08.2026 | SOURCE/DATA-001 | Источники сверены; FND-001/002 подтверждены; DATA-001 реализован и ожидает production verification. |
-| 1.2.1 | 04.08.2026 | DOC-SYNC | Исправлена рассинхронизация экспортированных DOCX/PDF: FND-001 и FND-002 отмечены ВЫПОЛНЕНО; DATA-001 остаётся НУЖНА ПРОВЕРКА. |
-| 1.2.2 | 04.08.2026 | DOC-CACHE-FIX | Перевыпущены документы с уникальными versioned filenames; FND-001/FND-002 подтверждены как ВЫПОЛНЕНО, DATA-001 остаётся НУЖНА ПРОВЕРКА. |
-| 1.2.3 | 04.08.2026 | DATA-001-CI-FIX | Исправлен request-context тест OAuth-хранилища; усилен workflow отдельным PostgreSQL integration step. DATA-001 остаётся НУЖНА ПРОВЕРКА. |
-| 1.2.4 | 04.08.2026 | DATA-001-WORKFLOW-FIX | Исправлен недопустимый `${{ runner.temp }}` в job-level env; тестовый DATA_DIR перенесён в `/tmp`. Статус DATA-001 не изменён. |
-| 1.2.5 | 04.08.2026 | DATA-001-COMPLETE | Подтверждены зелёный PostgreSQL CI, Render PostgreSQL 17, Alembic revision и сохранность данных после restart; DATA-002 готов к старту. |
-| 1.2.6 | 04.08.2026 | DATA-002 | Добавлены domain/repository layers и migration 20260804_0002; DOMAIN-001 подтверждён в этапе 6. DATA-002 ожидает GitHub/Render verification. |
-| 1.2.7 | 05.08.2026 | DATA-002-COMPLETE | Подтверждены зелёный CI, Render revision 20260804_0002, штатный поиск и сохранность persisted sync/cache state после restart; SEC-001 готов к старту. |
-| 1.2.8 | 05.08.2026 | SEC-001 | Реализованы secure session, CSRF, rate limiting, CSP/headers, request/PDF limits, diagnostics gate, neutral errors и SSRF baseline; пакет ожидает GitHub/Render verification. |
-| 1.2.9 | 05.08.2026 | SEC-001-CI-FIX | Исправлены тип `WTF_CSRF_TIME_LIMIT` для Flask-WTF 1.3 и безопасный ответ при недоверенном Host; workflow содержит отдельную SEC-001 проверку, пакет ожидает повторный CI/Render smoke. |
-| 1.3.0 | 05.08.2026 | INFRA/AI/REED STRATEGY | После подтверждённой недоступности Render из части сетей РФ перестроена очередь: OPS -> VPS test -> Alice AI benchmark -> Reed compatibility -> provider strategy -> production VPS -> domain -> migration -> AI layer. |
-| 1.3.1 | 05.08.2026 | OPS-001 | Добавлены structured JSON logs, correlation ID, provider/HTTP metrics, live/readiness, optional alert webhook и encrypted PostgreSQL/SQLite backup-restore с secret-free manifest; пакет ожидает GitHub/Render/alert/restore verification. |
-| 1.3.2 | 06.08.2026 | SEC-001-RATE-LIMIT-FIX | Исправлен нестабильный client key за Cloudflare/Render, добавлен HMAC bucket и безопасный production probe; OPS-001 сохранён. |
-| 1.3.3 | 06.08.2026 | SEC-001-COMPLETE / OPS-001-VERIFY | SEC-001 закрыт после production `429` + `Retry-After`. Зафиксированы успешные live/readiness, revision, request ID response, protected ops status, Trudvsem metrics и redeploy persistence; OPS-001 остаётся на проверке до logs correlation, POST alert и production backup/restore. |
-| 1.3.4 | 06.08.2026 | OPS-001-VERIFICATION-UPDATE | Подтверждены зелёные OPS/backup GitHub steps, correlation `X-Request-ID` в application JSON log и реальная sanitised POST-доставка alert webhook. OPS-001 остаётся на финальной проверке только до production backup/restore drill. |
-| 1.3.5 | 06.08.2026 | INFRA-001 | Добавлены non-root Docker runtime/ops images, Compose stack, Caddy TLS profile, VPS probes, isolated restore database, CI container build/smoke, provider decision record и единый стандарт документов; требуется real VPS verification. |
-| 1.4.0 | 07.08.2026 | DEVELOPMENT-SEQUENCE / INFRA-DEFER | Реальный VPS перенесён в предрелизное окно; кодовая container/probe часть выделена в выполненный INFRA-PREP-001; OPS-001 закрыт как базовый пакет с переносом production restore drill в OPS-002/REL-001; следующий кодовый пакет — SYNC-001. |
-| 1.4.1 | 07.08.2026 | SYNC-001 | Удалён daemon thread из Gunicorn; добавлены durable queue, external worker/CLI, cross-process locks, worker heartbeat, stale recovery, migration 20260807_0003, Render/Compose integration, tests и verification runbook. Статус - НУЖНА ПРОВЕРКА. |
-| 1.4.2 | 07.08.2026 | SYNC-001-COMPLETE | GitHub CI и Render production verification пройдены; исправлен script import-path, подтверждены внешний worker, provider batches, persisted run lifecycle, revision 20260807_0003 и cache persistence после реального restart. SYNC-002 готов к старту. |
-| 1.4.3 | 07.08.2026 | SYNC-002 | Добавлены migration 20260807_0004, persistent watermark/cursor, bounded modified windows, idempotent lifecycle upsert, retry/backoff, TTL closure и retention purge; пакет ожидает GitHub/Render verification. |
-| 1.4.4 | 08.08.2026 | SYNC-002-COMPLETE / SEARCH-001-PREP | GitHub CI и Render revision 0004 подтверждены; production доказал checkpoint/retry/backoff/cache/restart persistence на реальных Trudvsem timeouts. Остаточный successful provider-smoke принят и перенесён в INFRA-001/OPS-002; SEARCH-001 подготовлен и переведён в ГОТОВО К СТАРТУ. |
-| 1.4.5 | 08.08.2026 | SEARCH-001 | Добавлены typed `NormalizedVacancy`, central provider normalization, canonical vacancy codes и migration `20260808_0005`, exact-code filters, compatibility fallback, contract tests и единый документный шаблон v1.1. Статус — НУЖНА ПРОВЕРКА. |
-| 1.4.6 | 08.08.2026 | SEARCH-001-COMPLETE | Подтверждены зелёный CI, Render revision `20260808_0005` и production canonical filter smoke; SEARCH-002 готов к старту. |
-| 1.4.7 | 09.08.2026 | SEARCH-002 | Добавлены conservative cross-source fingerprint/similarity, complete-link grouping, explainability, multi-source card/persistence integration и отдельный CI gate. Additive migration `20260809_0006` добавляет dedup metadata и reversible grouping; статус — НУЖНА ПРОВЕРКА. |
-| 1.4.8 | 09.08.2026 | SEARCH-002-COMPLETE / SEARCH-003-PREP | GitHub CI и Render revision `0006` подтверждены; SuperJob public search включён без user OAuth; production `/health/search-dedup` подтвердил real candidate processing без ложных merge; positive merge semantics подтверждены CI. SEARCH-002 закрыт, SEARCH-003 готов к старту. |
-| 1.4.9 | 09.08.2026 | SEARCH-003 | Добавлены persistent bounded snapshots, per-provider cursor state, stable committed ordinals, deterministic global sort, honest totals, migration `20260809_0007`, health verification endpoint и отдельный CI gate. Статус — НУЖНА ПРОВЕРКА. |
-| 1.4.10 | 09.08.2026 | SEARCH-003-COMPLETE / SEARCH-004-PREP | CI и Render `0007` подтверждены; исправлена latency regression (`SEARCH_PAGE_SIZE=20`, one extension round, batch persistence); production snapshot подтвердил stable committed pages, honest totals, late arrivals и restart persistence. SEARCH-003 закрыт, SEARCH-004 готов к старту. |
-| 1.4.11 | 10.08.2026 | SEARCH-004 | `/vacancies` стал canonical route; legacy query-preserving redirect, safe source-state contract, cached/degraded Trudvsem labels, canonical links/forms/pagination и dedicated tests/CI gate реализованы. Статус — НУЖНА ПРОВЕРКА. |
-| 1.4.12 | 10.08.2026 | SEARCH-004-COMPLETE / AUTH-001-PREP | Green CI, Render revision 0007, canonical `/vacancies` mobile search and legacy redirect confirmed; SEARCH-004 closed, AUTH-001 ready. |
-| 1.4.13 | 10.08.2026 | AUTH-001-CANDIDATE | First-party account, migration `20260810_0008`, scrypt, verification/reset tokens, revocable sessions, SMTP adapter, UI/tests/CI готовы; требуется GitHub/Render/SMTP E2E. |
-| 1.4.14 | 10.08.2026 | AUTH-001-SAFARI-CSRF-HOTFIX | Render `0008` и SMTP readiness подтверждены; Safari register POST выявил missing Referer из-за auth `no-referrer`; policy изменена на `strict-origin`, strict CSRF сохранён; требуется CI/Render E2E. |
-| 1.4.15 | 11.08.2026 | AUTH-001-MAILRU-SMTP-SSL | Safari hotfix production-pass подтверждён; Yandex external anti-spam blocker локализован; добавлен Mail.ru-compatible implicit SSL/TLS; GitHub Actions green, Render readiness green. |
-| 1.4.16 | 11.08.2026 | AUTH-001-GMAIL-API-STAGING | Render Free SMTP egress blocker подтверждён `OSError`; добавлен Gmail API HTTPS backend с OAuth refresh-token flow, mocked tests и обязательным future domain sender gate. |
-| 1.4.17 | 11.08.2026 | AUTH-001-COMPLETE / AUTH-002-PREP | Green CI, Gmail API delivery и полный production E2E подтверждены; AUTH-001 ВЫПОЛНЕНО, AUTH-002 ГОТОВО К СТАРТУ. Gmail API staging-only; domain sender + SPF/DKIM/DMARC — pre-release gate. |
-| 1.4.18 | 11.08.2026 | AUTH-002-CANDIDATE | Owner-bound HH/SuperJob identities, state tied to first-party session, migration `20260811_0009`, owner-scoped refresh/disconnect, safe conflicts and dedicated tests/CI gate; требуется GitHub/Render/real provider E2E. |
-| 1.4.19 | 11.08.2026 | AUTH-002-COMPLETE / PROF-001-PREP | Green GitHub Actions, Render `0009`, полный HH/SuperJob production ownership E2E и regression smoke подтверждены; AUTH-002 ВЫПОЛНЕНО, следующий пакет — PROF-001. |
-| 1.4.20 | 11.08.2026 | PROF-001-CANDIDATE | Owner-scoped structured profile, immutable versions, migration `20260811_0010`, edit/view/history UI, validation, backup inventory and dedicated CI gate; требуется Pull Request/Render/production E2E. |
-| 1.4.21 | 12.08.2026 | PROF-001-PARTIAL-PROFILE-HOTFIX | После green CI и Render `0010` production E2E выявил false-required validation из-за default values пустых repeatable rows. Исправлено игнорирование default-only rows, добавлены regression tests; schema без изменений. |
-| 1.4.22 | 12.08.2026 | PROF-001-COMPLETE / PROF-002-PREP | Hotfix CI green; Render redeploy сохранил `0010`; partial save, versions/history/no-op, owner isolation, stale conflict, restart persistence, mobile and final regression confirmed. PROF-001 ВЫПОЛНЕНО; PROF-002 ГОТОВО К СТАРТУ. |
-| 1.4.23 | 12.08.2026 | PROF-002-CANDIDATE | Text-PDF extraction proposal, editable review, explicit confirmation, metadata-only owner/version-bound token, migration `20260812_0011` source/provenance audit fields, upload/privacy controls and dedicated tests; external CI/Render/E2E pending. |
-| 1.4.24 | 12.08.2026 | PROF-002-COMPLETE / PROF-003-PREP | CI and Render `0011` green; upload-limit defect fixed by hotfix r2; confirmation/privacy/stale/restart/mobile/regression E2E passed. PROF-002 ВЫПОЛНЕНО; PROF-003 ГОТОВО К СТАРТУ. |
-| 1.4.25 | 13.08.2026 | PROF-003-CANDIDATE | Server-side resume drafts, optimistic autosave, immutable checkpoint/export/restore versions, durable assets, migration `20260812_0012`, UI/tests/backup/CI gate implemented; external GitHub/Render/E2E verification pending. |
-| 1.4.26 | 13.08.2026 | PROF-003-PRODUCTION-EVIDENCE | Green CI и Render `0012`; production E2E подтвердил drafts/autosave/cross-device, versions/no-op/read-only/restore, stale `409`, direct edit, iPhone photo, university logo, PDF parity, owner isolation и restart persistence. Hotfix r1-r4 зафиксированы; пакет остаётся НУЖНА ПРОВЕРКА только до final regression/log review. |
-| 1.4.27 | 13.08.2026 | PROF-003-COMPLETE / PRIV-001-CANDIDATE | Final regression и Render log privacy/error review подтверждены; PROF-003 ВЫПОЛНЕНО. Реализованы readable privacy export, confirmed account deletion, local integration/token cleanup, identifier-free audit, retention worker и migration `20260813_0013`; PRIV-001 ожидает CI/Render/E2E. |
-| 1.4.28 | 19.08.2026 | PRIV-001-HARDENED | Повторный privacy/security audit усилил re-auth export, consistent bounded/spooled ZIP, provider sanitizer, deletion concurrency locks, orphan asset retention и worker lock/heartbeat; external gate pending. |
-| 1.4.32 | 19.08.2026 | PRIV-001-COMPLETE / SEARCH-005-PREP | Green CI после test-contract hotfix r1, Render `0013`, privacy worker health, export/asset/secret scan, destructive delete/owner isolation, restart/regression/log review подтверждены. PRIV-001 ВЫПОЛНЕНО; SEARCH-005 НУЖНА ПРОВЕРКА. |
-| 1.4.33 | 24.08.2026 | AI-BENCH-001-HOTFIX-R1 | GitHub CI выявил root-container false positive в unsupported-number gate. Scorer переведён на scalar-leaf scan, добавлены regression tests, evals version 1.0.1; повторный GitHub gate обязателен. |
+- **1.0.0 — 03.08.2026 — PLAN:** Первичный единый план.
+- **1.0.1 — 03.08.2026 — FND-001:** Тесты/CI подготовлены, требовалась verification.
+- **1.0.2 — 03.08.2026 — FND-002:** Конфигурационный слой подготовлен.
+- **1.1.0 — 04.08.2026 — INFRA strategy:** Согласованы own domain, paid Render first и optional VPS packages.
+- **1.2.0 — 04.08.2026 — SOURCE/DATA-001:** Источники сверены; FND-001/002 подтверждены; DATA-001 реализован и ожидает production verification.
+- **1.2.1 — 04.08.2026 — DOC-SYNC:** Исправлена рассинхронизация экспортированных DOCX/PDF: FND-001 и FND-002 отмечены ВЫПОЛНЕНО; DATA-001 остаётся НУЖНА ПРОВЕРКА.
+- **1.2.2 — 04.08.2026 — DOC-CACHE-FIX:** Перевыпущены документы с уникальными versioned filenames; FND-001/FND-002 подтверждены как ВЫПОЛНЕНО, DATA-001 остаётся НУЖНА ПРОВЕРКА.
+- **1.2.3 — 04.08.2026 — DATA-001-CI-FIX:** Исправлен request-context тест OAuth-хранилища; усилен workflow отдельным PostgreSQL integration step. DATA-001 остаётся НУЖНА ПРОВЕРКА.
+- **1.2.4 — 04.08.2026 — DATA-001-WORKFLOW-FIX:** Исправлен недопустимый `${{ runner.temp }}` в job-level env; тестовый DATA_DIR перенесён в `/tmp`. Статус DATA-001 не изменён.
+- **1.2.5 — 04.08.2026 — DATA-001-COMPLETE:** Подтверждены зелёный PostgreSQL CI, Render PostgreSQL 17, Alembic revision и сохранность данных после restart; DATA-002 готов к старту.
+- **1.2.6 — 04.08.2026 — DATA-002:** Добавлены domain/repository layers и migration 20260804_0002; DOMAIN-001 подтверждён в этапе 6. DATA-002 ожидает GitHub/Render verification.
+- **1.2.7 — 05.08.2026 — DATA-002-COMPLETE:** Подтверждены зелёный CI, Render revision 20260804_0002, штатный поиск и сохранность persisted sync/cache state после restart; SEC-001 готов к старту.
+- **1.2.8 — 05.08.2026 — SEC-001:** Реализованы secure session, CSRF, rate limiting, CSP/headers, request/PDF limits, diagnostics gate, neutral errors и SSRF baseline; пакет ожидает GitHub/Render verification.
+- **1.2.9 — 05.08.2026 — SEC-001-CI-FIX:** Исправлены тип `WTF_CSRF_TIME_LIMIT` для Flask-WTF 1.3 и безопасный ответ при недоверенном Host; workflow содержит отдельную SEC-001 проверку, пакет ожидает повторный CI/Render smoke.
+- **1.3.0 — 05.08.2026 — INFRA/AI/REED STRATEGY:** После подтверждённой недоступности Render из части сетей РФ перестроена очередь: OPS -> VPS test -> Alice AI benchmark -> Reed compatibility -> provider strategy -> production VPS -> domain -> migration -> AI layer.
+- **1.3.1 — 05.08.2026 — OPS-001:** Добавлены structured JSON logs, correlation ID, provider/HTTP metrics, live/readiness, optional alert webhook и encrypted PostgreSQL/SQLite backup-restore с secret-free manifest; пакет ожидает GitHub/Render/alert/restore verification.
+- **1.3.2 — 06.08.2026 — SEC-001-RATE-LIMIT-FIX:** Исправлен нестабильный client key за Cloudflare/Render, добавлен HMAC bucket и безопасный production probe; OPS-001 сохранён.
+- **1.3.3 — 06.08.2026 — SEC-001-COMPLETE / OPS-001-VERIFY:** SEC-001 закрыт после production `429` + `Retry-After`. Зафиксированы успешные live/readiness, revision, request ID response, protected ops status, Trudvsem metrics и redeploy persistence; OPS-001 остаётся на проверке до logs correlation, POST alert и production backup/restore.
+- **1.3.4 — 06.08.2026 — OPS-001-VERIFICATION-UPDATE:** Подтверждены зелёные OPS/backup GitHub steps, correlation `X-Request-ID` в application JSON log и реальная sanitised POST-доставка alert webhook. OPS-001 остаётся на финальной проверке только до production backup/restore drill.
+- **1.3.5 — 06.08.2026 — INFRA-001:** Добавлены non-root Docker runtime/ops images, Compose stack, Caddy TLS profile, VPS probes, isolated restore database, CI container build/smoke, provider decision record и единый стандарт документов; требуется real VPS verification.
+- **1.4.0 — 07.08.2026 — DEVELOPMENT-SEQUENCE / INFRA-DEFER:** Реальный VPS перенесён в предрелизное окно; кодовая container/probe часть выделена в выполненный INFRA-PREP-001; OPS-001 закрыт как базовый пакет с переносом production restore drill в OPS-002/REL-001; следующий кодовый пакет — SYNC-001.
+- **1.4.1 — 07.08.2026 — SYNC-001:** Удалён daemon thread из Gunicorn; добавлены durable queue, external worker/CLI, cross-process locks, worker heartbeat, stale recovery, migration 20260807_0003, Render/Compose integration, tests и verification runbook. Статус - НУЖНА ПРОВЕРКА.
+- **1.4.2 — 07.08.2026 — SYNC-001-COMPLETE:** GitHub CI и Render production verification пройдены; исправлен script import-path, подтверждены внешний worker, provider batches, persisted run lifecycle, revision 20260807_0003 и cache persistence после реального restart. SYNC-002 готов к старту.
+- **1.4.3 — 07.08.2026 — SYNC-002:** Добавлены migration 20260807_0004, persistent watermark/cursor, bounded modified windows, idempotent lifecycle upsert, retry/backoff, TTL closure и retention purge; пакет ожидает GitHub/Render verification.
+- **1.4.4 — 08.08.2026 — SYNC-002-COMPLETE / SEARCH-001-PREP:** GitHub CI и Render revision 0004 подтверждены; production доказал checkpoint/retry/backoff/cache/restart persistence на реальных Trudvsem timeouts. Остаточный successful provider-smoke принят и перенесён в INFRA-001/OPS-002; SEARCH-001 подготовлен и переведён в ГОТОВО К СТАРТУ.
+- **1.4.5 — 08.08.2026 — SEARCH-001:** Добавлены typed `NormalizedVacancy`, central provider normalization, canonical vacancy codes и migration `20260808_0005`, exact-code filters, compatibility fallback, contract tests и единый документный шаблон v1.1. Статус — НУЖНА ПРОВЕРКА.
+- **1.4.6 — 08.08.2026 — SEARCH-001-COMPLETE:** Подтверждены зелёный CI, Render revision `20260808_0005` и production canonical filter smoke; SEARCH-002 готов к старту.
+- **1.4.7 — 09.08.2026 — SEARCH-002:** Добавлены conservative cross-source fingerprint/similarity, complete-link grouping, explainability, multi-source card/persistence integration и отдельный CI gate. Additive migration `20260809_0006` добавляет dedup metadata и reversible grouping; статус — НУЖНА ПРОВЕРКА.
+- **1.4.8 — 09.08.2026 — SEARCH-002-COMPLETE / SEARCH-003-PREP:** GitHub CI и Render revision `0006` подтверждены; SuperJob public search включён без user OAuth; production `/health/search-dedup` подтвердил real candidate processing без ложных merge; positive merge semantics подтверждены CI. SEARCH-002 закрыт, SEARCH-003 готов к старту.
+- **1.4.9 — 09.08.2026 — SEARCH-003:** Добавлены persistent bounded snapshots, per-provider cursor state, stable committed ordinals, deterministic global sort, honest totals, migration `20260809_0007`, health verification endpoint и отдельный CI gate. Статус — НУЖНА ПРОВЕРКА.
+- **1.4.10 — 09.08.2026 — SEARCH-003-COMPLETE / SEARCH-004-PREP:** CI и Render `0007` подтверждены; исправлена latency regression (`SEARCH_PAGE_SIZE=20`, one extension round, batch persistence); production snapshot подтвердил stable committed pages, honest totals, late arrivals и restart persistence. SEARCH-003 закрыт, SEARCH-004 готов к старту.
+- **1.4.11 — 10.08.2026 — SEARCH-004:** `/vacancies` стал canonical route; legacy query-preserving redirect, safe source-state contract, cached/degraded Trudvsem labels, canonical links/forms/pagination и dedicated tests/CI gate реализованы. Статус — НУЖНА ПРОВЕРКА.
+- **1.4.12 — 10.08.2026 — SEARCH-004-COMPLETE / AUTH-001-PREP:** Green CI, Render revision 0007, canonical `/vacancies` mobile search and legacy redirect confirmed; SEARCH-004 closed, AUTH-001 ready.
+- **1.4.13 — 10.08.2026 — AUTH-001-CANDIDATE:** First-party account, migration `20260810_0008`, scrypt, verification/reset tokens, revocable sessions, SMTP adapter, UI/tests/CI готовы; требуется GitHub/Render/SMTP E2E.
+- **1.4.14 — 10.08.2026 — AUTH-001-SAFARI-CSRF-HOTFIX:** Render `0008` и SMTP readiness подтверждены; Safari register POST выявил missing Referer из-за auth `no-referrer`; policy изменена на `strict-origin`, strict CSRF сохранён; требуется CI/Render E2E.
+- **1.4.15 — 11.08.2026 — AUTH-001-MAILRU-SMTP-SSL:** Safari hotfix production-pass подтверждён; Yandex external anti-spam blocker локализован; добавлен Mail.ru-compatible implicit SSL/TLS; GitHub Actions green, Render readiness green.
+- **1.4.16 — 11.08.2026 — AUTH-001-GMAIL-API-STAGING:** Render Free SMTP egress blocker подтверждён `OSError`; добавлен Gmail API HTTPS backend с OAuth refresh-token flow, mocked tests и обязательным future domain sender gate.
+- **1.4.17 — 11.08.2026 — AUTH-001-COMPLETE / AUTH-002-PREP:** Green CI, Gmail API delivery и полный production E2E подтверждены; AUTH-001 ВЫПОЛНЕНО, AUTH-002 ГОТОВО К СТАРТУ. Gmail API staging-only; domain sender + SPF/DKIM/DMARC — pre-release gate.
+- **1.4.18 — 11.08.2026 — AUTH-002-CANDIDATE:** Owner-bound HH/SuperJob identities, state tied to first-party session, migration `20260811_0009`, owner-scoped refresh/disconnect, safe conflicts and dedicated tests/CI gate; требуется GitHub/Render/real provider E2E.
+- **1.4.19 — 11.08.2026 — AUTH-002-COMPLETE / PROF-001-PREP:** Green GitHub Actions, Render `0009`, полный HH/SuperJob production ownership E2E и regression smoke подтверждены; AUTH-002 ВЫПОЛНЕНО, следующий пакет — PROF-001.
+- **1.4.20 — 11.08.2026 — PROF-001-CANDIDATE:** Owner-scoped structured profile, immutable versions, migration `20260811_0010`, edit/view/history UI, validation, backup inventory and dedicated CI gate; требуется Pull Request/Render/production E2E.
+- **1.4.21 — 12.08.2026 — PROF-001-PARTIAL-PROFILE-HOTFIX:** После green CI и Render `0010` production E2E выявил false-required validation из-за default values пустых repeatable rows. Исправлено игнорирование default-only rows, добавлены regression tests; schema без изменений.
+- **1.4.22 — 12.08.2026 — PROF-001-COMPLETE / PROF-002-PREP:** Hotfix CI green; Render redeploy сохранил `0010`; partial save, versions/history/no-op, owner isolation, stale conflict, restart persistence, mobile and final regression confirmed. PROF-001 ВЫПОЛНЕНО; PROF-002 ГОТОВО К СТАРТУ.
+- **1.4.23 — 12.08.2026 — PROF-002-CANDIDATE:** Text-PDF extraction proposal, editable review, explicit confirmation, metadata-only owner/version-bound token, migration `20260812_0011` source/provenance audit fields, upload/privacy controls and dedicated tests; external CI/Render/E2E pending.
+- **1.4.24 — 12.08.2026 — PROF-002-COMPLETE / PROF-003-PREP:** CI and Render `0011` green; upload-limit defect fixed by hotfix r2; confirmation/privacy/stale/restart/mobile/regression E2E passed. PROF-002 ВЫПОЛНЕНО; PROF-003 ГОТОВО К СТАРТУ.
+- **1.4.25 — 13.08.2026 — PROF-003-CANDIDATE:** Server-side resume drafts, optimistic autosave, immutable checkpoint/export/restore versions, durable assets, migration `20260812_0012`, UI/tests/backup/CI gate implemented; external GitHub/Render/E2E verification pending.
+- **1.4.26 — 13.08.2026 — PROF-003-PRODUCTION-EVIDENCE:** Green CI и Render `0012`; production E2E подтвердил drafts/autosave/cross-device, versions/no-op/read-only/restore, stale `409`, direct edit, iPhone photo, university logo, PDF parity, owner isolation и restart persistence. Hotfix r1-r4 зафиксированы; пакет остаётся НУЖНА ПРОВЕРКА только до final regression/log review.
+- **1.4.27 — 13.08.2026 — PROF-003-COMPLETE / PRIV-001-CANDIDATE:** Final regression и Render log privacy/error review подтверждены; PROF-003 ВЫПОЛНЕНО. Реализованы readable privacy export, confirmed account deletion, local integration/token cleanup, identifier-free audit, retention worker и migration `20260813_0013`; PRIV-001 ожидает CI/Render/E2E.
+- **1.4.28 — 19.08.2026 — PRIV-001-HARDENED:** Повторный privacy/security audit усилил re-auth export, consistent bounded/spooled ZIP, provider sanitizer, deletion concurrency locks, orphan asset retention и worker lock/heartbeat; external gate pending.
+- **1.4.32 — 19.08.2026 — PRIV-001-COMPLETE / SEARCH-005-PREP:** Green CI после test-contract hotfix r1, Render `0013`, privacy worker health, export/asset/secret scan, destructive delete/owner isolation, restart/regression/log review подтверждены. PRIV-001 ВЫПОЛНЕНО; SEARCH-005 НУЖНА ПРОВЕРКА.
+- **1.4.33 — 24.08.2026 — AI-BENCH-001-HOTFIX-R1:** GitHub CI выявил root-container false positive в unsupported-number gate. Scorer переведён на scalar-leaf scan, добавлены regression tests, evals version 1.0.1; повторный GitHub gate обязателен.
+
 
 
 
@@ -1706,3 +1704,10 @@ GitHub/production/API: <подтверждено или требуется>
 | Версия | Дата | Package | Изменение |
 |---|---|---|---|
 | 1.4.39 | 26.08.2026 | AI-BENCH-001-GROUNDED-V2.1 | Live run #2 artifact reviewed. Evals 1.3.0 adds Unicode percent normalization, scenario provenance, explicit RU/EN language gate, vacancy-grounded motivation semantics, safe provider-envelope diagnostics and one bounded retry. Current gate: green CI -> live run #3 -> artifact review -> named manual rubric. |
+
+
+### PLAN_CURRENT v1.4.40 update
+
+| Версия | Дата | Package | Изменение |
+|---|---|---|---|
+| 1.4.40 | 26.08.2026 | AI-BENCH-001-GROUNDED-V2.2 | Live run #3 artifact `32978362483` reviewed: 24/24 calls, Alice 7/8 machine, Flash 4/8, YandexGPT Pro 5/8. Manual safety review found unsupported Alice impact that v2.1 missed. Evals 1.4.0 adds source-matched impact families, live-run-3 regressions and post-score presentation-only marker repair. Current gate: green CI -> live run #4 -> artifact review -> named manual rubric. |

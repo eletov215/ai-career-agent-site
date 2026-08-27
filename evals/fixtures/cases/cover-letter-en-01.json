@@ -7,7 +7,7 @@
   "messages": [
     {
       "role": "system",
-      "content": "You are running the offline AI Career Agent benchmark. Use only the listed facts with identifiers from the input. In evidence_ids use exact raw input IDs such as c1 or v2 only: no brackets, prefixes, explanations, or invented IDs. Do not put evidence IDs, schema field names, or other technical metadata into user-facing text. Do not turn vacancy requirements into candidate skills. Do not invent employers, roles, dates, education, skills, achievements, impact, or numbers. If a candidate fact is not verified, do not state it as present. Return only JSON matching the requested schema. For cover_letter return the user-facing letter as paragraphs. Every candidate_fit paragraph must cite at least one candidate fact. Do not claim impact, improvement, acceleration, conversion gains, or other results unless a candidate fact explicitly states that result. Put unverified role requirements in caveats with evidence_ids. Write all user-facing text in English. A paragraph with kind=motivation may explain why the vacancy or role is attractive and may cite vacancy facts without candidate facts; it must not claim those vacancy requirements as candidate skills. Keep kind=candidate_fit only for claims grounded in candidate evidence."
+      "content": "You are running the offline AI Career Agent benchmark. Use only the listed facts with identifiers from the input. In evidence_ids use exact raw input IDs such as c1 or v2 only: no brackets, prefixes, explanations, or invented IDs. Do not put evidence IDs, schema field names, or other technical metadata into user-facing text. Do not turn vacancy requirements into candidate skills. Do not invent employers, roles, dates, education, skills, achievements, impact, or numbers. If a candidate fact is not verified, do not state it as present. Return only JSON matching the requested schema. For cover_letter return the user-facing letter as paragraphs. Every candidate_fit paragraph must cite at least one candidate fact. Do not claim impact, improvement, acceleration, conversion gains, or other results unless a candidate fact explicitly states that result. Put unverified role requirements in caveats with evidence_ids. Write all user-facing text in English. A paragraph with kind=motivation may explain why the vacancy or role is attractive and may cite vacancy facts without candidate facts; it must not claim those vacancy requirements as candidate skills. Keep kind=candidate_fit only for claims grounded in candidate evidence. Any causal or outcome claim about the candidate (for example: helped, enabled, ensured, accelerated, improved, reduced, streamlined) is allowed only when that impact is explicitly present in the cited candidate fact."
     },
     {
       "role": "user",
@@ -145,6 +145,6 @@
     "en",
     "grounding",
     "impact-safety",
-    "contract-v2"
+    "contract-v2.2"
   ]
 }

@@ -12,7 +12,7 @@ from .dataset import load_dataset
 from .errors import BenchmarkError
 from .providers import create_provider
 from .reporting import write_markdown_report
-from .scoring import score_case
+from .scoring import normalize_user_facing_evidence_markers, score_case
 from .util import canonical_json, redact_secrets, sha256_text, utc_now_iso
 
 
@@ -59,6 +59,8 @@ class BenchmarkRunner:
         output_dir.mkdir(parents=True, exist_ok=True)
         response_dir = output_dir / "responses"
         response_dir.mkdir(parents=True, exist_ok=True)
+        presentation_dir = output_dir / "presentation"
+        presentation_dir.mkdir(parents=True, exist_ok=True)
 
         selected_specs = [
             spec
@@ -98,6 +100,7 @@ class BenchmarkRunner:
                 try:
                     response = provider.invoke(case, schema)
                     score = score_case(case, response.content, self.thresholds)
+                    normalized_content, normalization = normalize_user_facing_evidence_markers(case, response.content)
                     cost = _estimate_cost(response.input_tokens, response.output_tokens, pricing)
                     result.update(
                         {
@@ -110,9 +113,11 @@ class BenchmarkRunner:
                                 "estimated_cost_usd": cost,
                             },
                             "metadata": redact_secrets(response.metadata),
+                            "normalization": normalization,
                             "score": score,
                             "error": None,
                             "response_sha256": sha256_text(canonical_json(response.content)),
+                            "presentation_sha256": sha256_text(canonical_json(normalized_content)),
                         }
                     )
                     execution_modes.add(str(response.metadata.get("mode", "live")))
@@ -120,6 +125,12 @@ class BenchmarkRunner:
                     response_path.parent.mkdir(parents=True, exist_ok=True)
                     response_path.write_text(
                         json.dumps(redact_secrets(response.content), ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+                        encoding="utf-8",
+                    )
+                    presentation_path = presentation_dir / spec.provider_id / f"{case.case_id}.json"
+                    presentation_path.parent.mkdir(parents=True, exist_ok=True)
+                    presentation_path.write_text(
+                        json.dumps(redact_secrets(normalized_content), ensure_ascii=False, indent=2, sort_keys=True) + "\n",
                         encoding="utf-8",
                     )
                 except Exception as exc:  # execution errors are evidence, not a runner crash
@@ -132,6 +143,7 @@ class BenchmarkRunner:
                             "latency_ms": None,
                             "usage": {"input_tokens": None, "output_tokens": None, "estimated_cost_usd": None},
                             "metadata": {"provider_diagnostics": safe_diagnostics} if safe_diagnostics else {},
+                            "normalization": {"user_facing_marker_cleanup_count": 0, "user_facing_marker_cleanups": []},
                             "score": None,
                             "error": {
                                 "category": type(exc).__name__,
@@ -139,6 +151,7 @@ class BenchmarkRunner:
                                 "diagnostics": safe_diagnostics,
                             },
                             "response_sha256": None,
+                            "presentation_sha256": None,
                         }
                     )
                 results.append(result)
@@ -167,7 +180,7 @@ class BenchmarkRunner:
             "The included dataset is synthetic and intentionally excludes production user PII.",
             "Human writing-quality rubrics remain pending until a named reviewer records scores.",
             "Vacancy numeric match scores are derived deterministically from requirement classifications; models do not author the score field.",
-            "Live run v3 uses the grounded-v2.1 output/scoring contract, so quality scores are not directly comparable to grounded-v1 or grounded-v2 runs.",
+            "Grounded-v2.2 adds deterministic marker cleanup and expanded impact-safety gates; its quality scores are not directly comparable to earlier contracts.",
             "Language consistency and scenario-number provenance are machine-gated before manual writing review.",
             "Live OpenAI-compatible adapters may perform at most one explicitly configured bounded retry; retry evidence is retained in safe diagnostics.",
         ]
@@ -182,7 +195,7 @@ class BenchmarkRunner:
         )
 
         run = {
-            "schema_version": "1.2",
+            "schema_version": "1.3",
             "run_id": run_id,
             "benchmark_version": self.config.get("benchmark_version"),
             "started_at": started_at,
@@ -216,7 +229,7 @@ class BenchmarkRunner:
             encoding="utf-8",
         )
         manual_review = {
-            "schema_version": "1.2",
+            "schema_version": "1.3",
             "run_id": run_id,
             "status": "pending",
             "score_scale": {
@@ -310,6 +323,7 @@ def _summarize_provider(results: list[dict[str, Any]]) -> dict[str, Any]:
         "language_consistency_violation_count": sum(score.get("language_consistency_violation_count", 0) for score in scores),
         "scenario_provenance_violation_count": sum(score.get("scenario_provenance_violation_count", 0) for score in scores),
         "match_consistency_violation_count": sum(len(score.get("match_evaluation", {}).get("violations", [])) for score in scores),
+        "user_facing_marker_cleanup_count": sum(int((result.get("normalization") or {}).get("user_facing_marker_cleanup_count") or 0) for result in results),
         "retry_count": sum(int((result.get("metadata") or {}).get("provider_diagnostics", {}).get("retry_count") or 0) for result in results),
         "retried_case_count": sum(1 for result in results if int((result.get("metadata") or {}).get("provider_diagnostics", {}).get("retry_count") or 0) > 0),
         "mean_deterministic_match_score": round(statistics.fmean(deterministic_match_scores), 3) if deterministic_match_scores else None,

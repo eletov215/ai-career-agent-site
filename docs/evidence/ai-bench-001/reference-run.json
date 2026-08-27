@@ -1,21 +1,21 @@
 {
-  "benchmark_version": "1.2",
-  "config_fingerprint": "52ca526d689102ee88f1ad10d35ba3f37c879e94197d236d3ad80053de9c3ded",
+  "benchmark_version": "1.3",
+  "config_fingerprint": "7c9e25f886497fc4d507ffff5cc2fddbb22fe404e79f96d7c96a5bfde4b1b884",
   "dataset": {
     "case_count": 8,
-    "fingerprint": "7aaf4b72f605a13483ca00c9be63c94928e2115c209d7c3f1f48c11f92238c2f",
+    "fingerprint": "1051e1c8de4e5e1df484ed1a66f933e592e998eb7fb0ef527bf3e4f8d5ce16d9",
     "id": "ai-career-agent-golden-v1",
     "synthetic": true,
-    "version": "1.2.0"
+    "version": "1.3.0"
   },
   "decision_status": "No external model/provider decision is allowed from a deterministic reference run. Run the approved live candidates and complete manual review before AI-PROVIDER-001.",
   "execution_mode": "deterministic_reference",
-  "finished_at": "2026-08-26T13:43:29Z",
+  "finished_at": "2026-08-26T18:16:03Z",
   "limitations": [
     "The included dataset is synthetic and intentionally excludes production user PII.",
     "Human writing-quality rubrics remain pending until a named reviewer records scores.",
     "Vacancy numeric match scores are derived deterministically from requirement classifications; models do not author the score field.",
-    "Live run v3 uses the grounded-v2.1 output/scoring contract, so quality scores are not directly comparable to grounded-v1 or grounded-v2 runs.",
+    "Grounded-v2.2 adds deterministic marker cleanup and expanded impact-safety gates; its quality scores are not directly comparable to earlier contracts.",
     "Language consistency and scenario-number provenance are machine-gated before manual writing review.",
     "Live OpenAI-compatible adapters may perform at most one explicitly configured bounded retry; retry evidence is retained in safe diagnostics.",
     "This run validates the harness, schemas, scoring, safety gates, and report generation; it is not a comparative result for external AI vendors."
@@ -39,8 +39,8 @@
         "mean_match_consistency_score": 1.0,
         "mean_quality_score": 1.0,
         "mean_user_facing_cleanliness": 1.0,
-        "p50_latency_ms": 0.051,
-        "p95_latency_ms": 0.801,
+        "p50_latency_ms": 0.029,
+        "p95_latency_ms": 0.036,
         "passed_count": 8,
         "retried_case_count": 0,
         "retry_count": 0,
@@ -48,6 +48,7 @@
         "schema_pass_rate": 1.0,
         "unsupported_impact_claim_count": 0,
         "unsupported_number_count": 0,
+        "user_facing_marker_cleanup_count": 0,
         "user_facing_technical_token_count": 0
       }
     }
@@ -80,13 +81,18 @@
       "adapter": "fixture",
       "case_id": "resume-analysis-ru-01",
       "error": null,
-      "finished_at": "2026-08-26T13:43:29Z",
+      "finished_at": "2026-08-26T18:16:03Z",
       "language": "ru",
-      "latency_ms": 0.15,
+      "latency_ms": 0.036,
       "metadata": {
         "mode": "deterministic_fixture"
       },
+      "normalization": {
+        "user_facing_marker_cleanup_count": 0,
+        "user_facing_marker_cleanups": []
+      },
       "passed": true,
+      "presentation_sha256": "[REDACTED]",
       "provider_id": "reference",
       "response_sha256": "bf4985cac5f0747764f5295e11bc58767f4fbde680cd801dd6678d318d3b7c49",
       "score": {
@@ -155,7 +161,7 @@
         "user_facing_technical_token_count": 0,
         "user_facing_technical_tokens": []
       },
-      "started_at": "2026-08-26T13:43:29Z",
+      "started_at": "2026-08-26T18:16:03Z",
       "task": "resume_analysis",
       "usage": {
         "estimated_cost_usd": null,
@@ -167,13 +173,18 @@
       "adapter": "fixture",
       "case_id": "resume-analysis-en-01",
       "error": null,
-      "finished_at": "2026-08-26T13:43:29Z",
+      "finished_at": "2026-08-26T18:16:03Z",
       "language": "en",
-      "latency_ms": 0.069,
+      "latency_ms": 0.028,
       "metadata": {
         "mode": "deterministic_fixture"
       },
+      "normalization": {
+        "user_facing_marker_cleanup_count": 0,
+        "user_facing_marker_cleanups": []
+      },
       "passed": true,
+      "presentation_sha256": "[REDACTED]",
       "provider_id": "reference",
       "response_sha256": "5107a0577c4bf5c23b22c7975a28d71ee91c95f253bfa451a8898f4a2b1e0629",
       "score": {
@@ -242,7 +253,7 @@
         "user_facing_technical_token_count": 0,
         "user_facing_technical_tokens": []
       },
-      "started_at": "2026-08-26T13:43:29Z",
+      "started_at": "2026-08-26T18:16:03Z",
       "task": "resume_analysis",
       "usage": {
         "estimated_cost_usd": null,
@@ -254,13 +265,18 @@
       "adapter": "fixture",
       "case_id": "vacancy-match-ru-01",
       "error": null,
-      "finished_at": "2026-08-26T13:43:29Z",
+      "finished_at": "2026-08-26T18:16:03Z",
       "language": "ru",
-      "latency_ms": 0.124,
+      "latency_ms": 0.031,
       "metadata": {
         "mode": "deterministic_fixture"
       },
+      "normalization": {
+        "user_facing_marker_cleanup_count": 0,
+        "user_facing_marker_cleanups": []
+      },
       "passed": true,
+      "presentation_sha256": "[REDACTED]",
       "provider_id": "reference",
       "response_sha256": "76618b8a3ae18ac140388251a999d66b1d4db1d90482615a4eeb0c774ee66d6d",
       "score": {
@@ -330,7 +346,7 @@
         "user_facing_technical_token_count": 0,
         "user_facing_technical_tokens": []
       },
-      "started_at": "2026-08-26T13:43:29Z",
+      "started_at": "2026-08-26T18:16:03Z",
       "task": "vacancy_match",
       "usage": {
         "estimated_cost_usd": null,
@@ -342,13 +358,18 @@
       "adapter": "fixture",
       "case_id": "vacancy-match-en-01",
       "error": null,
-      "finished_at": "2026-08-26T13:43:29Z",
+      "finished_at": "2026-08-26T18:16:03Z",
       "language": "en",
       "latency_ms": 0.025,
       "metadata": {
         "mode": "deterministic_fixture"
       },
+      "normalization": {
+        "user_facing_marker_cleanup_count": 0,
+        "user_facing_marker_cleanups": []
+      },
       "passed": true,
+      "presentation_sha256": "[REDACTED]",
       "provider_id": "reference",
       "response_sha256": "051d10ed4f2b21070f84309d66d5e5d0fe5b067318aedf6db45c7476adf9794a",
       "score": {
@@ -418,7 +439,7 @@
         "user_facing_technical_token_count": 0,
         "user_facing_technical_tokens": []
       },
-      "started_at": "2026-08-26T13:43:29Z",
+      "started_at": "2026-08-26T18:16:03Z",
       "task": "vacancy_match",
       "usage": {
         "estimated_cost_usd": null,
@@ -430,13 +451,18 @@
       "adapter": "fixture",
       "case_id": "cover-letter-ru-01",
       "error": null,
-      "finished_at": "2026-08-26T13:43:29Z",
+      "finished_at": "2026-08-26T18:16:03Z",
       "language": "ru",
-      "latency_ms": 0.033,
+      "latency_ms": 0.029,
       "metadata": {
         "mode": "deterministic_fixture"
       },
+      "normalization": {
+        "user_facing_marker_cleanup_count": 0,
+        "user_facing_marker_cleanups": []
+      },
       "passed": true,
+      "presentation_sha256": "[REDACTED]",
       "provider_id": "reference",
       "response_sha256": "e7419631b3b905251fac6a99b581fd416c4936b3f94bbcc01aebc52616fd8ca5",
       "score": {
@@ -506,7 +532,7 @@
         "user_facing_technical_token_count": 0,
         "user_facing_technical_tokens": []
       },
-      "started_at": "2026-08-26T13:43:29Z",
+      "started_at": "2026-08-26T18:16:03Z",
       "task": "cover_letter",
       "usage": {
         "estimated_cost_usd": null,
@@ -518,13 +544,18 @@
       "adapter": "fixture",
       "case_id": "cover-letter-en-01",
       "error": null,
-      "finished_at": "2026-08-26T13:43:29Z",
+      "finished_at": "2026-08-26T18:16:03Z",
       "language": "en",
-      "latency_ms": 0.033,
+      "latency_ms": 0.023,
       "metadata": {
         "mode": "deterministic_fixture"
       },
+      "normalization": {
+        "user_facing_marker_cleanup_count": 0,
+        "user_facing_marker_cleanups": []
+      },
       "passed": true,
+      "presentation_sha256": "[REDACTED]",
       "provider_id": "reference",
       "response_sha256": "05417fbb62e8b73ae4c0b3c6a5a62821cd828e6d83bd0efdd45c4213cff31af0",
       "score": {
@@ -594,7 +625,7 @@
         "user_facing_technical_token_count": 0,
         "user_facing_technical_tokens": []
       },
-      "started_at": "2026-08-26T13:43:29Z",
+      "started_at": "2026-08-26T18:16:03Z",
       "task": "cover_letter",
       "usage": {
         "estimated_cost_usd": null,
@@ -606,13 +637,18 @@
       "adapter": "fixture",
       "case_id": "interview-ru-01",
       "error": null,
-      "finished_at": "2026-08-26T13:43:29Z",
+      "finished_at": "2026-08-26T18:16:03Z",
       "language": "ru",
-      "latency_ms": 1.151,
+      "latency_ms": 0.035,
       "metadata": {
         "mode": "deterministic_fixture"
       },
+      "normalization": {
+        "user_facing_marker_cleanup_count": 0,
+        "user_facing_marker_cleanups": []
+      },
       "passed": true,
+      "presentation_sha256": "[REDACTED]",
       "provider_id": "reference",
       "response_sha256": "e5c12619f5f0f5ab8b442fd7e1a32e4851d37026f5ce42dea9617b52c5d56283",
       "score": {
@@ -682,7 +718,7 @@
         "user_facing_technical_token_count": 0,
         "user_facing_technical_tokens": []
       },
-      "started_at": "2026-08-26T13:43:29Z",
+      "started_at": "2026-08-26T18:16:03Z",
       "task": "interview_questions",
       "usage": {
         "estimated_cost_usd": null,
@@ -694,13 +730,18 @@
       "adapter": "fixture",
       "case_id": "interview-en-01",
       "error": null,
-      "finished_at": "2026-08-26T13:43:29Z",
+      "finished_at": "2026-08-26T18:16:03Z",
       "language": "en",
-      "latency_ms": 0.032,
+      "latency_ms": 0.027,
       "metadata": {
         "mode": "deterministic_fixture"
       },
+      "normalization": {
+        "user_facing_marker_cleanup_count": 0,
+        "user_facing_marker_cleanups": []
+      },
       "passed": true,
+      "presentation_sha256": "[REDACTED]",
       "provider_id": "reference",
       "response_sha256": "03af8721b109e332e94adf64344d300a4cbcedaabe15e796cead976d08be0839",
       "score": {
@@ -770,7 +811,7 @@
         "user_facing_technical_token_count": 0,
         "user_facing_technical_tokens": []
       },
-      "started_at": "2026-08-26T13:43:29Z",
+      "started_at": "2026-08-26T18:16:03Z",
       "task": "interview_questions",
       "usage": {
         "estimated_cost_usd": null,
@@ -779,8 +820,8 @@
       }
     }
   ],
-  "run_id": "ai-bench-20260826T134329Z-91f7fb7a",
-  "schema_version": "1.2",
-  "started_at": "2026-08-26T13:43:29Z",
+  "run_id": "ai-bench-20260826T181603Z-9f7ae17b",
+  "schema_version": "1.3",
+  "started_at": "2026-08-26T18:16:03Z",
   "status": "passed"
 }

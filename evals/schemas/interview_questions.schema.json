@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://ai-career-agent.local/schemas/interview-questions-v2.1.json",
-  "title": "Interview questions output v2.1",
+  "$id": "https://ai-career-agent.local/schemas/interview-questions-v2.2.json",
+  "title": "Interview questions output v2.2",
   "type": "object",
   "additionalProperties": false,
   "required": [

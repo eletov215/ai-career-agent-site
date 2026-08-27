@@ -7,7 +7,7 @@ from pathlib import Path
 
 from evals.ai_bench.dataset import load_dataset
 from evals.ai_bench.schema import validate_instance
-from evals.ai_bench.scoring import score_case
+from evals.ai_bench.scoring import normalize_user_facing_evidence_markers, score_case
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -36,6 +36,7 @@ class ScoringTests(unittest.TestCase):
         cls.by_id = {case.case_id: case for case in cls.cases}
         cls.regressions = json.loads((ROOT / "evals/regressions/live-run-1.json").read_text(encoding="utf-8"))
         cls.regressions_v2 = json.loads((ROOT / "evals/regressions/live-run-2.json").read_text(encoding="utf-8"))
+        cls.regressions_v3 = json.loads((ROOT / "evals/regressions/live-run-3.json").read_text(encoding="utf-8"))
 
     def _reference(self, case_id: str) -> dict:
         return json.loads((ROOT / "evals/expected/reference" / f"{case_id}.json").read_text(encoding="utf-8"))
@@ -90,15 +91,18 @@ class ScoringTests(unittest.TestCase):
         errors = validate_instance(content, schema)
         self.assertTrue(any("pattern" in error for error in errors), errors)
 
-    def test_live_run_technical_metadata_is_blocked_from_user_facing_text(self) -> None:
-        for sample in self.regressions["patterns"]["user_facing_technical_metadata"]:
+    def test_live_run_serialized_technical_metadata_is_blocked_from_user_facing_text(self) -> None:
+        samples = [
+            sample
+            for sample in self.regressions["patterns"]["user_facing_technical_metadata"]
+            if "evidence" in sample["text"].casefold()
+        ]
+        self.assertTrue(samples)
+        for sample in samples:
             case = self.by_id[sample["case_id"]]
             with self.subTest(case=case.case_id, sample=sample["text"]):
                 content = self._reference(case.case_id)
-                if case.task == "cover_letter":
-                    content["paragraphs"][1]["text"] = sample["text"]
-                else:
-                    content["summary"] = sample["text"]
+                content["paragraphs"][1]["text"] = sample["text"]
                 score = score_case(case, content, {"max_user_facing_technical_tokens": 0})
                 self.assertFalse(score["passed"])
                 self.assertTrue(score["user_facing_technical_tokens"], score)
@@ -257,6 +261,60 @@ class ScoringTests(unittest.TestCase):
         self.assertFalse(score["passed"])
         reasons = [item["reason"] for item in score["claim_evidence_violations"]]
         self.assertIn("motivation_without_vacancy_evidence", reasons)
+
+    def test_live_run_3_impact_phrases_are_hard_failures(self) -> None:
+        case = self.by_id["cover-letter-ru-01"]
+        for sample in self.regressions_v3["patterns"]["unsupported_impact_claims"]:
+            with self.subTest(text=sample["text"]):
+                content = self._reference(case.case_id)
+                content["paragraphs"][1]["kind"] = "candidate_fit"
+                content["paragraphs"][1]["text"] = sample["text"]
+                content["paragraphs"][1]["evidence_ids"] = sample["evidence_ids"]
+                score = score_case(case, content, {"max_unsupported_impact_claims": 0})
+                self.assertFalse(score["passed"], score)
+                self.assertEqual(score["unsupported_impact_claim_count"], 1)
+                self.assertIn("unsupported_impact_claims", score["gate_failures"])
+
+    def test_simple_evidence_markers_are_removed_before_user_display(self) -> None:
+        case = self.by_id["interview-ru-01"]
+        for sample in self.regressions_v3["patterns"]["simple_marker_cleanup"]:
+            content = self._reference(case.case_id)
+            content["questions"][0]["question"] = sample["input"]
+            normalized, audit = normalize_user_facing_evidence_markers(case, content)
+            self.assertEqual(normalized["questions"][0]["question"], sample["expected"])
+            self.assertEqual(audit["user_facing_marker_cleanup_count"], 1)
+
+    def test_marker_cleanup_does_not_substitute_structured_scenario_provenance(self) -> None:
+        case = self.by_id["interview-ru-01"]
+        content = self._reference(case.case_id)
+        content["questions"][0]["question"] = "Если 20 % ответов API ошибочны (s1), что вы проверите?"
+        content["questions"][0]["evidence_ids"] = ["c3"]
+        score = score_case(case, content, {"max_scenario_provenance_violations": 0, "max_user_facing_technical_tokens": 0})
+        normalized, audit = normalize_user_facing_evidence_markers(case, content)
+        self.assertEqual(audit["user_facing_marker_cleanup_count"], 1)
+        self.assertNotIn("(s1)", normalized["questions"][0]["question"])
+        self.assertFalse(score["passed"], score)
+        self.assertIn("scenario_provenance", score["gate_failures"])
+
+    def test_known_decorated_marker_is_repairable_not_hard_metadata(self) -> None:
+        case = self.by_id["interview-ru-01"]
+        content = self._reference(case.case_id)
+        content["questions"][0]["question"] += " (c1)"
+        score = score_case(case, content, {"max_user_facing_technical_tokens": 0})
+        self.assertNotIn("user_facing_technical_tokens", score["gate_failures"])
+        normalized, audit = normalize_user_facing_evidence_markers(case, content)
+        self.assertEqual(audit["user_facing_marker_cleanup_count"], 1)
+        self.assertNotIn("(c1)", normalized["questions"][0]["question"])
+
+    def test_serious_metadata_label_is_not_silently_cleaned(self) -> None:
+        case = self.by_id["interview-ru-01"]
+        content = self._reference(case.case_id)
+        content["questions"][0]["question"] += " evidence_ids: c1"
+        normalized, audit = normalize_user_facing_evidence_markers(case, content)
+        self.assertEqual(audit["user_facing_marker_cleanup_count"], 0)
+        score = score_case(case, normalized, {"max_user_facing_technical_tokens": 0})
+        self.assertFalse(score["passed"], score)
+        self.assertIn("user_facing_technical_tokens", score["gate_failures"])
 
     def test_schema_rejects_additional_property(self) -> None:
         schema = json.loads((ROOT / "evals/schemas/cover_letter.schema.json").read_text(encoding="utf-8"))
