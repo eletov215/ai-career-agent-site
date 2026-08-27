@@ -20,6 +20,7 @@ REQUIRED_VISIBLE = [
     "evals/artifacts/README.md",
     "evals/regressions/live-run-1.json",
     "evals/regressions/live-run-2.json",
+    "evals/regressions/live-run-3.json",
     "evals/fixtures/manifest.json",
     "evals/schemas/resume_analysis.schema.json",
     "evals/schemas/vacancy_match.schema.json",
@@ -129,7 +130,7 @@ def main() -> int:
         fail(f"missing required files: {missing}")
 
     version = (ROOT / "evals/VERSION").read_text(encoding="utf-8").strip()
-    if version != "1.3.0":
+    if version != "1.4.0":
         fail(f"unexpected evals version: {version}")
 
     workflow_path = ROOT / ".github/workflows/ci.yml"
@@ -172,8 +173,8 @@ def main() -> int:
     manifest = json.loads((ROOT / "evals/fixtures/manifest.json").read_text(encoding="utf-8"))
     if manifest.get("synthetic") is not True:
         fail("manifest must declare synthetic=true")
-    if manifest.get("version") != "1.2.0" or manifest.get("contract") != "grounded-v2.1":
-        fail("manifest must declare version=1.2.0 and contract=grounded-v2.1")
+    if manifest.get("version") != "1.3.0" or manifest.get("contract") != "grounded-v2.2":
+        fail("manifest must declare version=1.3.0 and contract=grounded-v2.2")
     cases = manifest.get("cases") or []
     if len(cases) < 8:
         fail("golden dataset must contain at least eight bilingual/task-diverse cases")
@@ -201,6 +202,12 @@ def main() -> int:
     required_tasks = {"resume_analysis", "vacancy_match", "cover_letter", "interview_questions"}
     if not required_tasks.issubset(tasks):
         fail(f"task coverage is incomplete: {sorted(tasks)}")
+
+    regression3 = json.loads((ROOT / "evals/regressions/live-run-3.json").read_text(encoding="utf-8"))
+    impact_samples = (regression3.get("patterns") or {}).get("unsupported_impact_claims") or []
+    cleanup_samples = (regression3.get("patterns") or {}).get("simple_marker_cleanup") or []
+    if len(impact_samples) < 2 or len(cleanup_samples) < 2:
+        fail("live-run-3 impact/marker regressions are incomplete")
 
     with tempfile.TemporaryDirectory(prefix="ai-bench-gate-") as temporary:
         out = Path(temporary)
@@ -234,8 +241,8 @@ def main() -> int:
             fail("deterministic reference run did not pass")
         if run.get("execution_mode") != "deterministic_reference":
             fail("reference run must be labeled deterministic_reference")
-        if run.get("schema_version") != "1.2" or run.get("benchmark_version") != "1.2":
-            fail("reference run must use grounded-v2.1 benchmark/run schema version 1.2")
+        if run.get("schema_version") != "1.3" or run.get("benchmark_version") != "1.3":
+            fail("reference run must use grounded-v2.2 benchmark/run schema version 1.3")
         if run.get("quality_gate", {}).get("passed_count") != len(cases):
             fail("not all reference cases passed")
         vacancy_schema = json.loads((ROOT / "evals/schemas/vacancy_match.schema.json").read_text(encoding="utf-8"))
@@ -247,7 +254,7 @@ def main() -> int:
             fail("cover-letter schema must support vacancy-grounded motivation paragraphs")
         required_thresholds = {"max_language_consistency_violations", "max_scenario_provenance_violations"}
         if not required_thresholds.issubset(set((run.get("quality_gate", {}).get("thresholds") or {}).keys())):
-            fail("grounded-v2.1 language/scenario thresholds are missing")
+            fail("grounded-v2.2 language/scenario thresholds are missing")
         for schema_name in (
             "resume_analysis.schema.json",
             "vacancy_match.schema.json",

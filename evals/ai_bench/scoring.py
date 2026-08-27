@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 import json
 import re
 from collections import Counter
@@ -15,18 +16,37 @@ _NUMBER_RE = re.compile(r"(?<![\w])[-+]?\d+(?:[.,]\d+)?(?:[ \t\u00a0\u202f]*%)?(
 _LATIN_RE = re.compile(r"[A-Za-z]")
 _CYRILLIC_RE = re.compile(r"[А-Яа-яЁё]")
 _TECH_LABEL_RE = re.compile(r"(?i)\bevidence[_ -]?ids?\b")
-_IMPACT_RE = re.compile(
-    r"(?iu)\b(?:"
-    r"сократ(?:ил(?:а|о|и)?|ить|ило|или)|"
-    r"повыс(?:ил(?:а|о|и)?|ить|ило|или)|"
-    r"увелич(?:ил(?:а|о|и)?|ить|ило|или)|"
-    r"улучш(?:ил(?:а|о|и)?|ить|ило|или)|"
-    r"сниз(?:ил(?:а|о|и)?|ить|ило|или)|"
-    r"ускор(?:ил(?:а|о|и)?|ить|ило|или)|"
-    r"оптимизировал(?:а|о|и)?|"
-    r"increased|improved|reduced|boosted|saved|accelerated|raised|grew|cut"
-    r")\b"
+_IMPACT_FAMILY_PATTERNS: dict[str, re.Pattern[str]] = {
+    "speed_time": re.compile(
+        r"(?iu)\b(?:ускор(?:ил(?:а|о|и)?|ить|ять|яет|ял(?:а|о|и)?|яют)|сократ(?:ил(?:а|о|и)?|ить)|сокращ(?:ать|ает|ал(?:а|о|и)?|ают)|accelerat(?:e|ed|es|ing)|sped\s+up|speed(?:ed)?\s+up|shorten(?:ed|s|ing)?|faster|quicker)\b"
+    ),
+    "efficiency_process": re.compile(
+        r"(?iu)\b(?:оптимиз(?:ировал(?:а|о|и)?|ировать|ирует|ируют)|упорядоч(?:ил(?:а|о|и)?|ить|ивать|ивает|ивал(?:а|о|и)?|ивают)|optimiz(?:e|ed|es|ing)|streamlin(?:e|ed|es|ing)|efficien(?:cy|t))\b"
+    ),
+    "quality_reliability": re.compile(
+        r"(?iu)\b(?:улучш(?:ил(?:а|о|и)?|ить|ать|ает|ал(?:а|о|и)?|ают)|стабилиз(?:ировал(?:а|о|и)?|ировать|ирует|ируют)|обеспеч(?:ил(?:а|о|и)?|ить|ивать|ивает|ивал(?:а|о|и)?|ивают)|improv(?:e|ed|es|ing)|ensur(?:e|ed|es|ing)|stabiliz(?:e|ed|es|ing)|reliab(?:ility|le)|quality)\b"
+    ),
+    "growth_increase": re.compile(
+        r"(?iu)\b(?:повыс(?:ил(?:а|о|и)?|ить)|повыш(?:ать|ает|ал(?:а|о|и)?|ают)|увелич(?:ил(?:а|о|и)?|ить|ивать|ивает|ивал(?:а|о|и)?|ивают)|increas(?:e|ed|es|ing)|boost(?:ed|s|ing)?|rais(?:e|ed|es|ing)|grew|grow(?:s|ing)?)\b"
+    ),
+    "reduction": re.compile(
+        r"(?iu)\b(?:сниз(?:ил(?:а|о|и)?|ить)|сниж(?:ать|ает|ал(?:а|о|и)?|ают)|reduc(?:e|ed|es|ing)|cut(?:s|ting)?)\b"
+    ),
+    "delivery_result": re.compile(
+        r"(?iu)\b(?:deliver(?:ed|s|ing)?|drove|driven|result(?:ed|s|ing)?\s+in|led\s+to)\b"
+    ),
+}
+_CAUSAL_IMPACT_RE = re.compile(
+    r"(?iu)\b(?:помог(?:ал(?:а|о|и)?|ает|ают|ло|ла|ли|ать)?|позвол(?:ил(?:а|о|и)?|ить|ять|яет|ял(?:а|о|и)?|яют)|help(?:ed|s|ing)?|enabl(?:e|ed|es|ing)|allow(?:ed|s|ing)?)\b"
 )
+
+
+def _impact_families(text: str) -> set[str]:
+    families = {name for name, pattern in _IMPACT_FAMILY_PATTERNS.items() if pattern.search(text)}
+    if not families and _CAUSAL_IMPACT_RE.search(text):
+        families.add("causal_effect")
+    return families
+
 
 _USER_FACING_PATHS: dict[str, tuple[str, ...]] = {
     "resume_analysis": (
@@ -152,6 +172,83 @@ def _user_facing_text(case: BenchmarkCase, content: Any) -> str:
     return "\n".join(parts)
 
 
+def _clean_decorated_evidence_markers(text: str, fact_ids: tuple[str, ...]) -> tuple[str, list[str]]:
+    if not fact_ids or not text:
+        return text, []
+    alternatives = "|".join(re.escape(identifier) for identifier in sorted(fact_ids, key=len, reverse=True))
+    marker_re = re.compile(rf"(?<![\w])(?:\(\s*({alternatives})\s*\)|\[\s*({alternatives})\s*\])(?![\w])")
+    removed: list[str] = []
+
+    def repl(match: re.Match[str]) -> str:
+        removed.append(match.group(1) or match.group(2))
+        return ""
+
+    cleaned = marker_re.sub(repl, text)
+    cleaned = re.sub(r"[ \t]{2,}", " ", cleaned)
+    cleaned = re.sub(r"\s+([,.;:!?])", r"\1", cleaned)
+    cleaned = re.sub(r"\(\s*\)", "", cleaned)
+    cleaned = cleaned.strip()
+    return cleaned, removed
+
+
+def _transform_path_pattern(value: Any, pattern: str, transform) -> None:
+    if not pattern.startswith("$."):
+        return
+    segments = pattern[2:].split(".")
+
+    def visit(node: Any, index: int, path: str) -> None:
+        raw = segments[index]
+        wildcard = raw.endswith("[*]")
+        key = raw[:-3] if wildcard else raw
+        if not isinstance(node, dict) or key not in node:
+            return
+        child = node[key]
+        child_path = f"{path}.{key}"
+        if index == len(segments) - 1:
+            if wildcard and isinstance(child, list):
+                for item_index, item in enumerate(child):
+                    child[item_index] = transform(item, f"{child_path}[{item_index}]")
+            elif not wildcard:
+                node[key] = transform(child, child_path)
+            return
+        if wildcard:
+            if not isinstance(child, list):
+                return
+            for item_index, item in enumerate(child):
+                visit(item, index + 1, f"{child_path}[{item_index}]")
+        else:
+            visit(child, index + 1, child_path)
+
+    visit(value, 0, "$")
+
+
+def normalize_user_facing_evidence_markers(case: BenchmarkCase, content: Any) -> tuple[Any, dict[str, Any]]:
+    """Remove only simple decorated source IDs from user-facing text.
+
+    Structured ``evidence_ids`` remain untouched and authoritative. Labels such
+    as ``evidence_ids:`` or serialized metadata are deliberately *not* cleaned
+    so the existing technical-metadata gate still rejects them. The returned
+    audit record contains only paths/IDs, never the original text.
+    """
+    normalized = copy.deepcopy(content)
+    fact_ids = tuple(fact.fact_id for fact in case.source_facts)
+    removals: list[dict[str, str]] = []
+
+    def transform(value: Any, path: str) -> Any:
+        if not isinstance(value, str):
+            return value
+        cleaned, removed = _clean_decorated_evidence_markers(value, fact_ids)
+        removals.extend({"path": path, "evidence_id": identifier} for identifier in removed)
+        return cleaned
+
+    for pattern in _USER_FACING_PATHS.get(case.task, ()):
+        _transform_path_pattern(normalized, pattern, transform)
+    return normalized, {
+        "user_facing_marker_cleanup_count": len(removals),
+        "user_facing_marker_cleanups": removals,
+    }
+
+
 def _language_consistency(case: BenchmarkCase, content: Any) -> dict[str, Any]:
     text = _user_facing_text(case, content)
     latin = len(_LATIN_RE.findall(text))
@@ -223,22 +320,26 @@ def _scenario_number_evidence_violations(case: BenchmarkCase, content: Any) -> l
 
 
 def _find_user_facing_technical_tokens(case: BenchmarkCase, content: Any) -> list[dict[str, str]]:
+    """Return hard user-facing metadata leaks.
+
+    Decorated *known* fact IDs such as ``(s1)`` are repairable presentation
+    noise and are intentionally handled by the presentation normalizer. Unknown
+    decorated IDs and field labels such as ``evidence_ids:`` remain hard
+    failures and are never silently removed.
+    """
     violations: list[dict[str, str]] = []
-    fact_ids = tuple(fact.fact_id for fact in case.source_facts)
-    decorated_patterns = [
-        (identifier, re.compile(rf"[\[(]\s*{re.escape(identifier)}\s*[\])]") )
-        for identifier in fact_ids
-    ]
+    known_fact_ids = {fact.fact_id for fact in case.source_facts}
+    generic_decorated = re.compile(r"[\[(]\s*([a-z][0-9]+)\s*[\])]", re.IGNORECASE)
     for pattern in _USER_FACING_PATHS.get(case.task, ()):
         for path, value in iter_path_pattern(content, pattern):
             if not isinstance(value, str):
                 continue
             if _TECH_LABEL_RE.search(value):
                 violations.append({"path": path, "token": "evidence_id"})
-            for identifier, regex in decorated_patterns:
-                if regex.search(value):
+            for match in generic_decorated.finditer(value):
+                identifier = match.group(1)
+                if identifier not in known_fact_ids:
                     violations.append({"path": path, "token": identifier})
-    # Stable dedup keeps reports compact when a long paragraph repeats the same token.
     seen: set[tuple[str, str]] = set()
     unique: list[dict[str, str]] = []
     for item in violations:
@@ -285,11 +386,11 @@ def _claim_evidence_violations(case: BenchmarkCase, content: Any) -> list[dict[s
     return violations
 
 
-def _unsupported_impact_claims(case: BenchmarkCase, content: Any) -> list[dict[str, str]]:
+def _unsupported_impact_claims(case: BenchmarkCase, content: Any) -> list[dict[str, Any]]:
     if case.task != "cover_letter" or not isinstance(content, dict):
         return []
     fact_map = {fact.fact_id: fact for fact in case.source_facts}
-    violations: list[dict[str, str]] = []
+    violations: list[dict[str, Any]] = []
     paragraphs = content.get("paragraphs")
     if not isinstance(paragraphs, list):
         return violations
@@ -297,20 +398,25 @@ def _unsupported_impact_claims(case: BenchmarkCase, content: Any) -> list[dict[s
         if not isinstance(paragraph, dict) or paragraph.get("kind") != "candidate_fit":
             continue
         text = paragraph.get("text")
-        if not isinstance(text, str) or not _IMPACT_RE.search(text):
+        if not isinstance(text, str):
+            continue
+        claimed_families = _impact_families(text)
+        if not claimed_families:
             continue
         evidence = paragraph.get("evidence_ids") if isinstance(paragraph.get("evidence_ids"), list) else []
-        supported = False
+        supported_families: set[str] = set()
         for identifier in evidence:
             fact = fact_map.get(str(identifier))
-            if fact and fact.kind == "candidate" and _IMPACT_RE.search(fact.text):
-                supported = True
-                break
-        if not supported:
+            if fact and fact.kind == "candidate":
+                supported_families.update(_impact_families(fact.text))
+        unsupported = sorted(claimed_families - supported_families)
+        if unsupported:
             violations.append(
                 {
                     "path": f"$.paragraphs[{index}].text",
-                    "reason": "impact_claim_without_source_impact",
+                    "reason": "impact_family_without_source_support",
+                    "unsupported_families": unsupported,
+                    "supported_families": sorted(supported_families),
                 }
             )
     return violations

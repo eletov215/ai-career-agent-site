@@ -1,0 +1,49 @@
+{
+  "source_run_id": "32978362483",
+  "source_date": "2026-08-26",
+  "synthetic_only": true,
+  "purpose": "Regression patterns distilled from live Yandex run #3 after grounded-v2.1. No credentials or production user data are included.",
+  "patterns": {
+    "unsupported_impact_claims": [
+      {
+        "case_id": "cover-letter-ru-01",
+        "text": "Также занимался документированием типовых решений — это помогало упорядочивать накопленный опыт и ускорять обработку повторяющихся запросов.",
+        "evidence_ids": [
+          "c1",
+          "c2",
+          "c3",
+          "c4"
+        ]
+      },
+      {
+        "case_id": "cover-letter-ru-01",
+        "text": "Соблюдение SLA и работа с CRM позволяли обеспечивать стабильное качество обслуживания.",
+        "evidence_ids": [
+          "c1",
+          "c2",
+          "c3"
+        ]
+      }
+    ],
+    "simple_marker_cleanup": [
+      {
+        "case_id": "interview-ru-01",
+        "input": "Допустим, 20 % ответов API содержат ошибки формата данных (s1).",
+        "expected": "Допустим, 20 % ответов API содержат ошибки формата данных."
+      },
+      {
+        "case_id": "interview-ru-01",
+        "input": "За 30 дней [s2] составьте план адаптации.",
+        "expected": "За 30 дней составьте план адаптации."
+      }
+    ],
+    "cleanup_does_not_replace_provenance": {
+      "case_id": "interview-ru-01",
+      "scenario_id": "s1",
+      "evidence_ids": [
+        "c3"
+      ]
+    },
+    "serious_metadata_remains_blocked": "evidence_ids: c3, s1"
+  }
+}

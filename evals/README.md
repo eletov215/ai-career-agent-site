@@ -74,11 +74,12 @@ Each run writes:
 
 - `run.json` - machine-readable evidence;
 - `report.md` - human-readable comparison;
-- `responses/<provider>/<case>.json` - sanitized model outputs;
+- `responses/<provider>/<case>.json` - sanitized raw structured model outputs used for machine scoring;
+- `presentation/<provider>/<case>.json` - presentation-safe copy with only simple decorated known evidence markers removed after scoring;
 - `manual_review_template.json` - pending named human-writing rubric, separate from machine safety gates.
 
 No provider may be selected from the deterministic reference run. A live comparative run plus manual rubric is the remaining external gate for AI-BENCH-001.
 
-## Package version 1.3.0 - grounded-v2.1
+## Package version 1.4.0 - grounded-v2.2
 
-Version 1.3.0 is the hardening release after live run #2. It keeps grounded-v2 evidence and deterministic match controls, then adds Unicode percent normalization, same-question scenario provenance, explicit RU/EN language consistency, vacancy-grounded `motivation` paragraphs, safe provider-envelope diagnostics and at most one bounded retry for transient/malformed responses. Live-run #2 patterns are versioned in `evals/regressions/live-run-2.json`. Grounded-v2.1 scores are not directly comparable to earlier contracts. It does not add a production AI provider.
+Version 1.4.0 is the final safety-hardening candidate after live run #3. It keeps grounded-v2.1 numeric/language/scenario/diagnostic controls and adds source-matched impact-family validation for cover letters, versioned regressions for the unsupported Alice impact phrases found during manual review, and a narrow presentation sanitizer for decorated known evidence markers such as `(s1)` or `[c1]`. Machine scoring always runs on the unsanitized structured response first: missing evidence, unknown IDs, serialized schema/debug metadata, unsupported impact and other safety failures remain hard failures. Live-run #3 patterns are versioned in `evals/regressions/live-run-3.json`. Grounded-v2.2 scores are not directly comparable to earlier contracts. It does not add a production AI provider.

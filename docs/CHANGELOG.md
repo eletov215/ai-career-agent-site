@@ -1,3 +1,16 @@
+## 2026-08-26 - AI-BENCH-001 grounded-v2.2 final safety hardening / evals 1.4.0
+
+- Reviewed grounded-v2.1 live run #3 artifact `32978362483`: Alice AI LLM 7/8, Flash 4/8, YandexGPT Pro 5.1 5/8; all 24 provider calls completed without errors or retries.
+- Manual safety review found a machine-missed Alice Russian cover-letter defect: source responsibilities were expanded into unsupported speed/efficiency/service-quality outcomes.
+- Replaced the narrow unsupported-impact verb check with source-matched semantic impact families and added regression coverage for the real Alice phrases.
+- Added `evals/regressions/live-run-3.json` for unsupported impact, repairable decorated evidence markers, hard serialized metadata and scenario provenance.
+- Added post-score `presentation/<provider>/<case>.json`: only simple decorated known evidence markers may be stripped; machine scoring always uses the original payload.
+- Kept missing evidence, unknown IDs, `evidence_ids:` labels, serialized schema/debug metadata and scenario-provenance violations as hard failures.
+- Grounded-v2.2 replay of live-run #3 under live thresholds demonstrates the new gate catches the Alice impact defect while presentation-only marker noise is repairable.
+- Local regression groups: 333 PASS, 14 environment-dependent skips, 12 subtests PASS; AI-BENCH unit tests 55 PASS; deterministic reference 8/8 PASS.
+- Production routes, models, services, templates, dependencies, migrations, Render runtime and revision `20260819_0014` remain unchanged.
+- Next gate: green ordinary CI -> final live run #4 -> artifact review -> named manual rubric.
+
 ## 2026-08-26 - AI-BENCH-001 grounded-v2.1 hardening / evals 1.3.0
 
 - Reviewed grounded-v2 live run #2 artifact `32972783843`: Alice AI LLM 5/8, Flash 4/8, YandexGPT Pro 5.1 3/8 with one provider-envelope error; no provider decision made.

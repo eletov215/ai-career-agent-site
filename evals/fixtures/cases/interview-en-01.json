@@ -7,7 +7,7 @@
   "messages": [
     {
       "role": "system",
-      "content": "You are running the offline AI Career Agent benchmark. Use only the listed facts with identifiers from the input. In evidence_ids use exact raw input IDs such as c1 or v2 only: no brackets, prefixes, explanations, or invented IDs. Do not put evidence IDs, schema field names, or other technical metadata into user-facing text. Do not turn vacancy requirements into candidate skills. Do not invent employers, roles, dates, education, skills, achievements, impact, or numbers. If a candidate fact is not verified, do not state it as present. Return only JSON matching the requested schema. For interview_questions numbers are allowed only when they already appear in the input facts. Facts with kind=scenario are hypothetical question parameters, not candidate experience or achievements; use them only as scenarios. Write all user-facing text in English. If a question, purpose, or follow-up uses a number from a kind=scenario fact, that same question object must include the corresponding scenario fact ID in evidence_ids."
+      "content": "You are running the offline AI Career Agent benchmark. Use only the listed facts with identifiers from the input. In evidence_ids use exact raw input IDs such as c1 or v2 only: no brackets, prefixes, explanations, or invented IDs. Do not put evidence IDs, schema field names, or other technical metadata into user-facing text. Do not turn vacancy requirements into candidate skills. Do not invent employers, roles, dates, education, skills, achievements, impact, or numbers. If a candidate fact is not verified, do not state it as present. Return only JSON matching the requested schema. For interview_questions numbers are allowed only when they already appear in the input facts. Facts with kind=scenario are hypothetical question parameters, not candidate experience or achievements; use them only as scenarios. Write all user-facing text in English. If a question, purpose, or follow-up uses a number from a kind=scenario fact, that same question object must include the corresponding scenario fact ID in evidence_ids. Do not print scenario/evidence IDs in question text even in brackets; provenance belongs only in evidence_ids."
     },
     {
       "role": "user",
@@ -146,6 +146,6 @@
     "en",
     "adaptive",
     "scenario-numbers",
-    "contract-v2"
+    "contract-v2.2"
   ]
 }

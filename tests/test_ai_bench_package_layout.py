@@ -21,6 +21,7 @@ class PackageLayoutTests(unittest.TestCase):
         self.assertIn("evals/artifacts/README.md", required_visible)
         self.assertIn("evals/regressions/live-run-1.json", required_visible)
         self.assertIn("evals/regressions/live-run-2.json", required_visible)
+        self.assertIn("evals/regressions/live-run-3.json", required_visible)
         self.assertNotIn("evals/.gitignore", required_visible)
         self.assertNotIn("evals/artifacts/.gitkeep", required_visible)
 
@@ -81,9 +82,9 @@ class PackageLayoutTests(unittest.TestCase):
         validate(ROOT / ".github/workflows/ci.yml")
 
 
-    def test_grounded_v21_contract_is_package_gated(self) -> None:
+    def test_grounded_v22_contract_is_package_gated(self) -> None:
         version = (ROOT / "evals/VERSION").read_text(encoding="utf-8").strip()
-        self.assertEqual(version, "1.3.0")
+        self.assertEqual(version, "1.4.0")
         vacancy_schema = (ROOT / "evals/schemas/vacancy_match.schema.json").read_text(encoding="utf-8")
         self.assertNotIn('"match_score"', vacancy_schema)
         for schema in (ROOT / "evals/schemas").glob("*.json"):

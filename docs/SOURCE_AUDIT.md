@@ -1,75 +1,75 @@
-# AI Career Agent - аудит источников v1.4.39
+# AI Career Agent - аудит источников v1.4.40
 
 **Дата:** 26.08.2026  
 **Production revision:** `20260819_0014`
 
 | Поле | Значение |
 |---|---|
-| Проверяемая кодовая основа | `ai-career-agent-site-main (23).zip` |
-| ZIP comment | `cd775f25a546d4ce0184d65dc0f3bc87adcc9ae1` |
-| Проверяемый пакет | AI-BENCH-001 grounded-v2.1 hardening |
-| Evals | `1.3.0` |
-| Benchmark contract | `1.2` |
-| Dataset | `ai-career-agent-golden-v1` v`1.2.0`, `contract=grounded-v2.1` |
-| External evidence | live run #2 artifact `32972783843` |
-| Результат | candidate локально готов; нужен ordinary GitHub CI + live run #3 + manual rubric |
+| Проверяемая кодовая основа | `ai-career-agent-site-main (24).zip` |
+| ZIP comment | `4e7c2eb99fa21741774c65cdb8e8e2b150883354` |
+| Проверяемый пакет | AI-BENCH-001 grounded-v2.2 final safety hardening |
+| Evals | `1.4.0` |
+| Benchmark contract | `1.3` |
+| Dataset | `ai-career-agent-golden-v1` v`1.3.0`, `contract=grounded-v2.2` |
+| External evidence | live run #3 artifact `32978362483`; run ID `ai-bench-20260826T141439Z-b4d94c09` |
+| Результат | candidate локально готов; нужен ordinary GitHub CI + final live run #4 + named manual rubric |
 
 ## 1. Source precedence
 
-The user supplied `ai-career-agent-site-main (23).zip` as the current GitHub `main` snapshot. All changes in this package are based on that archive. Live-run #2 evidence is read from the separately supplied sanitized artifact `ai-bench-001-yandex-live-32972783843.zip`; it is evidence only and is not copied wholesale into the repository.
+The user supplied `ai-career-agent-site-main (24).zip` as the current GitHub `main` snapshot. All code changes in this package are based on that archive. Live-run #3 evidence is read from the separately supplied sanitized artifact `ai-bench-001-yandex-live-32978362483.zip`; only a concise review and synthetic regression patterns are stored in the repository.
 
-## 2. Live run #2 audit
+## 2. Live run #3 audit
 
-The artifact contains synthetic benchmark outputs only. It reports Alice AI LLM 5/8, Alice Flash 4/8 and YandexGPT Pro 5.1 3/8, with one YandexGPT Pro provider error on `cover-letter-en-01`. The old adapter could only label that response as an unsupported JSON chat-completions envelope, so the exact envelope shape could not be proven from the artifact.
+The artifact contains synthetic benchmark outputs only. It records Alice AI LLM 7/8, Alice Flash 4/8 and YandexGPT Pro 5.1 5/8 under grounded-v2.1. All 24 provider calls completed without provider errors and no retry was required.
 
-The artifact also demonstrates the following regression targets: Unicode percent spacing, scenario-number provenance, RU output returned in English, a valid vacancy-only motivation paragraph, technical-ID leakage in user text, and incomplete match evidence.
+Manual review found a material machine-missed safety issue in Alice `cover-letter-ru-01`. Candidate evidence stated support experience, SLA, CRM and documentation of typical solutions, but the response additionally inferred acceleration/efficiency and stable service-quality outcomes. These impact claims were not present in the cited candidate facts. The same run also confirmed that Alice `interview-ru-01` used a `20%` scenario without structured `s1` evidence while displaying `(s1)` in user text.
 
-## 3. Grounded-v2.1 implementation audit
+Replay of the same raw artifact through grounded-v2.2 with live thresholds is regression evidence only, not a new live score: Alice 5/8 because both cover letters now trigger unsupported-impact safety and Russian interview still fails grounding/scenario provenance; Flash 4/8 with unverified-fact, unsupported-impact and scenario-provenance failures plus 12 repairable decorated markers; YandexGPT Pro 4/8 with hard serialized metadata, match-consistency, caveat-coverage and unsupported-impact failures plus four repairable markers.
+
+## 3. Grounded-v2.2 implementation audit
 
 The isolated `evals/` package now:
 
-- normalizes percent tokens across regular, NBSP and narrow-NBSP spacing;
-- derives allowed numeric facts from canonical `source_facts`, not arbitrary prompt prose;
-- requires same-question `scenario` evidence when an interview question/purpose/follow-up uses a scenario number;
-- explicitly hard-gates RU/EN user-facing language consistency;
-- adds `motivation` to cover-letter paragraph kinds and requires vacancy evidence for it;
-- retains candidate-evidence requirements for `candidate_fit`;
-- records bounded safe provider diagnostics without raw response body or refusal text;
-- allows at most one configured retry for 429/5xx/transport/malformed-envelope failures and preserves retry evidence;
-- does not retry normal HTTP 4xx or model refusal;
-- adds `evals/regressions/live-run-2.json` and focused unit tests for the observed second-run failures;
-- keeps numeric vacancy match code-derived rather than model-authored.
+- classifies cover-letter outcome language into semantic impact families and requires every claimed family to exist in cited candidate evidence;
+- hard-fails unsupported speed/time, efficiency, quality/reliability, growth, reduction and conversion/retention outcome families;
+- versions the real live-run #3 Alice impact phrases and marker patterns in `evals/regressions/live-run-3.json`;
+- scores the original provider payload before any presentation repair;
+- writes a separate `presentation/<provider>/<case>.json` copy where only simple decorated known evidence markers such as `(s1)` or `[c1]` may be stripped;
+- keeps missing evidence, unknown IDs, `evidence_ids:` labels and serialized schema/debug metadata as hard failures;
+- preserves same-question scenario provenance, deterministic vacancy match scoring, language consistency, safe provider diagnostics and one bounded retry;
+- remains fully isolated from production AI routes/services/models and requires no migration.
 
 ## 4. Local verification
 
 | Check | Result |
 |---|---|
-| AI-BENCH unit tests | 50 PASS |
+| AI-BENCH unit tests | 55 PASS |
 | Deterministic reference | 8/8 PASS |
-| Reference fingerprint | `7aaf4b72f605a13483ca00c9be63c94928e2115c209d7c3f1f48c11f92238c2f` |
-| Repository regression groups | 328 PASS, 14 environment-dependent skips, 11 subtests PASS |
+| Reference fingerprint | `1051e1c8de4e5e1df484ed1a66f933e592e998eb7fb0ef527bf3e4f8d5ce16d9` |
+| Repository regression groups | 333 PASS, 14 environment-dependent skips, 12 subtests PASS |
 | AI-BENCH package gate | PASS |
 | Repository hygiene | PASS after generated caches were removed |
 | Document structure | PASS |
-| Yandex live config validation with non-secret test environment | PASS, 3 providers |
+| Infrastructure manifest | PASS |
+| SQLite migrations | `0001 -> 0014` PASS; current/check `20260819_0014` |
 
-Full GitHub Actions remains authoritative for skipped Flask/Psycopg/PostgreSQL/Docker-dependent checks.
+The 14 local skips require the full GitHub CI Flask/Psycopg/PostgreSQL environment and are not claimed as locally passed. GitHub Actions remains authoritative for those environment-dependent checks.
 
 ## 5. Production boundary
 
-No production Flask route, model, repository, service, template, static asset, runtime dependency, Render setting or Alembic migration is changed by this package. Production revision remains `20260819_0014`. GitHub/Yandex secret values are not stored in source files or generated evidence.
+Hash comparison against the supplied `main` archive returned `PRODUCTION_BOUNDARY_CHANGED = []` for production application boundaries. This package is limited to `evals/`, AI-BENCH tests/scripts, `.github/workflows/ci.yml`, repository documentation and benchmark evidence. Production revision remains `20260819_0014`; no production AI provider is connected. GitHub/Yandex secret values are not stored in source files or generated evidence.
 
 ## 6. Current gate
 
-1. Green ordinary GitHub CI on the grounded-v2.1 candidate.
+1. Green ordinary GitHub CI on the grounded-v2.2 candidate.
 2. Manual `run_ai_bench_live=true` on `main`.
-3. Review live run #3 artifact, including retry/diagnostic evidence.
-4. Complete named human writing-quality rubric.
+3. Review final live run #4 artifact, including impact/scenario/repair diagnostics.
+4. Complete named human writing-quality rubric for the accepted candidate.
 5. Only then decide whether `AI-BENCH-001` can close and `AI-PROVIDER-001` can start.
 
 ## 7. Status decision
 
-`AI-BENCH-001 grounded-v2.1 hardening` - **НУЖНА ПРОВЕРКА**.  
+`AI-BENCH-001 grounded-v2.2 final safety hardening` - **НУЖНА ПРОВЕРКА**.  
 Previously completed packages remain **ВЫПОЛНЕНО**.  
 `AI-PROVIDER-001` remains **ЗАБЛОКИРОВАНО**.
 
@@ -79,3 +79,4 @@ Previously completed packages remain **ВЫПОЛНЕНО**.
 |---|---|---|
 | 1.4.38 | 26.08.2026 | Live run #1 reviewed; grounded-v2 evidence/safety/match hardening prepared. |
 | 1.4.39 | 26.08.2026 | Live run #2 reviewed; grounded-v2.1 adds language/scenario/motivation/diagnostic/retry hardening for live run #3. |
+| 1.4.40 | 26.08.2026 | Live run #3 reviewed; grounded-v2.2 adds source-matched impact-family safety, live-run-3 regressions and presentation-only simple marker repair before final live run #4. |

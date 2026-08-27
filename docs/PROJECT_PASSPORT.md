@@ -6,35 +6,35 @@
 <!-- ACA-CANONICAL-STATUS:START -->
 ## Канонический срез проекта
 
-**Документ:** AI Career Agent PROJECT_PASSPORT `v2.53`  
+**Документ:** AI Career Agent PROJECT_PASSPORT `v2.54`  
 **Дата:** 2026-08-26  
 **Production revision:** `20260819_0014`
 
 | Контур | Состояние |
 |---|---|
-| Web | Flask + Gunicorn, WSGI `app:app`; grounded-v2.1 package production code не меняет |
+| Web | Flask + Gunicorn, WSGI `app:app`; grounded-v2.2 package production code не меняет |
 | Data | PostgreSQL production, SQLite local/test fallback, Alembic `20260819_0014` |
 | Identity/career/search/privacy | ранее завершённые пакеты остаются ВЫПОЛНЕНО; regression matrix локально без confirmed failures |
-| AI benchmark | `evals 1.3.0`, benchmark `1.2`, dataset `1.2.0`, `grounded-v2.1`; live run #2 reviewed, live run #3 pending |
-| Live run #2 | Alice 5/8, Flash 4/8, YandexGPT Pro 3/8; one diagnosable provider-envelope failure target; no provider decision |
-| Safety boundary | synthetic dataset; exact evidence; structured unverified/caveats; language/scenario/motivation/impact/user-text gates |
-| Match architecture | LLM classifies requirements; numeric score is deterministic code-derived output |
-| Provider resilience | safe envelope diagnostics + max one bounded retry for transient/malformed failures; no raw response/refusal persistence |
+| AI benchmark | `evals 1.4.0`, benchmark `1.3`, dataset `1.3.0`, `grounded-v2.2`; live run #3 reviewed, final live run #4 pending |
+| Live run #3 | Alice 7/8, Flash 4/8, YandexGPT Pro 5/8; 24/24 calls without provider errors; manual review found unsupported Alice impact missed by v2.1 |
+| Safety boundary | synthetic dataset; exact evidence; structured unverified/caveats; deterministic match; language/scenario/impact/metadata gates |
+| Presentation boundary | raw structured response is scored first; only simple decorated known evidence markers may be stripped from separate presentation copy |
+| Provider resilience | safe envelope diagnostics + max one bounded retry for configured transient/malformed failures; no raw response/refusal persistence |
 | Production AI | отсутствует; provider decision не принят |
 
 ### Decision boundary
 
-Live run #2 materially improved Alice behavior and validated deterministic match scoring, but exposed remaining benchmark/transport gaps. Grounded-v2.1 must pass ordinary CI, live run #3 artifact review and named human writing review before `AI-PROVIDER-001`.
+Alice AI LLM remains the leading candidate, but live run #3 proved that machine-pass alone is insufficient: unsupported outcome inference in a Russian cover letter was found manually. Grounded-v2.2 must pass ordinary CI, final live run #4 artifact review and the named human writing rubric before `AI-PROVIDER-001`.
 <!-- ACA-CANONICAL-STATUS:END -->
 
 | Поле | Значение |
 |---|---|
 | Документ        | PROJECT_PASSPORT                                                                              |
-| Версия паспорта | 2.53 |
+| Версия паспорта | 2.54 |
 | Дата            | 26 августа 2026                                                                               |
 | Статус          | ДЕЙСТВУЮЩИЙ                                                                                   |
-| Связанный план | `AI_Career_Agent_PLAN_CURRENT v1.4.39` |
-| Основа кода | GitHub `main` archive `ai-career-agent-site-main (23).zip` after grounded-v2 live run #2 |
+| Связанный план | `AI_Career_Agent_PLAN_CURRENT v1.4.40` |
+| Основа кода | GitHub `main` archive `ai-career-agent-site-main (24).zip` after grounded-v2.1 live run #3 |
 
 > Контрольные статусы: FND/DATA/SEC/OPS/INFRA-PREP/SYNC/SEARCH-001..005/AUTH/PROF/PRIV - ВЫПОЛНЕНО; AI-BENCH-001 - НУЖНА ПРОВЕРКА; AI-PROVIDER-001 - ЗАБЛОКИРОВАНО; DOC-001 - В РАБОТЕ; INFRA-001 - ОТЛОЖЕНО.
 
@@ -489,7 +489,7 @@ Render не считается гарантированным production для 
 
 ## 23. Текущий gate
 
-SEARCH-005 — ВЫПОЛНЕНО. AI-BENCH-001 live run #2 was reviewed; grounded-v2.1 hardening now requires green ordinary CI, live run #3 artifact review and named manual rubric. Production PostgreSQL remains `20260819_0014`; provider decision is not yet made.
+SEARCH-005 — ВЫПОЛНЕНО. AI-BENCH-001 live run #3 was reviewed; grounded-v2.2 final safety hardening now requires green ordinary CI, live run #4 artifact review and named manual rubric. Production PostgreSQL remains `20260819_0014`; provider decision is not yet made.
 
 ## 24. Правила рабочего чата
 
@@ -506,34 +506,34 @@ SEARCH-005 — ВЫПОЛНЕНО. AI-BENCH-001 live run #2 was reviewed; ground
 
 ## 25. Журнал версий
 
-| Версия | Дата | Изменение |
-|---|---|---|
-| 2.20 | 08.08.2026 | SEARCH-001 закрыт после CI, Render revision `0005` и production filter smoke. |
-| 2.21 | 09.08.2026 | SEARCH-002 реализован как conservative reversible cross-source dedup candidate с additive migration `20260809_0006`; требуется GitHub/Render verification. |
-| 2.22 | 09.08.2026 | SEARCH-002 complete; SEARCH-003 ready. |
-| 2.23 | 09.08.2026 | SEARCH-003 persistent stable pagination/honest totals candidate с migration `20260809_0007`; требуется GitHub/Render verification. |
-| 2.24 | 09.08.2026 | SEARCH-003 complete: green CI, Render `0007`, latency hotfix, stable committed pages, honest totals и restart persistence; SEARCH-004 ready. |
-| 2.25 | 10.08.2026 | SEARCH-004 candidate: canonical `/vacancies`, permanent method-preserving legacy redirect, safe public source-state contract и dedicated CI gate; требуется GitHub/Render verification. |
-| 2.26 | 10.08.2026 | SEARCH-004 complete: green CI, Render `0007`, canonical `/vacancies` mobile search and legacy redirect; AUTH-001 ready. |
-| 2.27 | 10.08.2026 | AUTH-001 candidate: migration `20260810_0008`, first-party identity, versioned scrypt, one-time tokens, revocable sessions, SMTP adapter, UI/tests/CI; требуется GitHub/Render/SMTP E2E. |
-| 2.28 | 10.08.2026 | Render `0008` + SMTP readiness confirmed; Safari missing-Referer CSRF regression localized; `strict-origin` hotfix prepared without weakening strict CSRF. |
-| 2.29 | 11.08.2026 | Safari hotfix production-pass confirmed; Mail.ru implicit SSL/TLS fallback added; v1.4.15 CI/readiness green. |
-| 2.30 | 11.08.2026 | Render Free SMTP egress blocker documented; Gmail API HTTPS staging backend added with mandatory domain sender migration before beta/commercial release. |
-| 2.31 | 11.08.2026 | AUTH-001 закрыт после green GitHub Actions, Render Gmail API readiness/delivery и полного production E2E; AUTH-002 становится следующим пакетом. Domain sender + SPF/DKIM/DMARC остаются обязательным pre-release gate. |
-| 2.32 | 11.08.2026 | AUTH-002 candidate: owner-bound HH/SJ identities, migration 0009, state/session binding, encrypted owner-scoped reconnect/disconnect and dedicated tests; external verification pending. |
-| 2.33 | 11.08.2026 | AUTH-002 complete: green GitHub Actions, Render `0009`, полный HH/SJ ownership E2E и regression smoke подтверждены; PROF-001 становится следующим пакетом. |
-| 2.34 | 11.08.2026 | PROF-001 candidate: owner-scoped structured facts, immutable version history, migration `0010`, UI/service/repository/tests and dedicated CI gate; external verification pending. |
-| 2.35 | 12.08.2026 | PROF-001 hotfix candidate: initial CI/Render `0010` passed; production partial-save uncovered default-only repeatable-row validation bug. Hotfix keeps schema `0010`, fixes optional-row detection and adds regression tests; verification resumes after redeploy. |
-| 2.36 | 12.08.2026 | PROF-001 complete after green hotfix CI, Render `0010`, full owner/version/concurrency/restart/mobile/regression E2E; PROF-002 becomes next. |
-| 2.37 | 12.08.2026 | PROF-002 candidate: bounded text-PDF extraction proposal, editable review, explicit confirmation, metadata-only owner/version-bound review token, migration `0011` provenance audit fields and dedicated tests; external verification pending. |
-| 2.38 | 12.08.2026 | PROF-002 complete after green CI, Render `0011`, upload-limit hotfix and production confirmation/privacy/stale/restart/mobile/regression E2E; PROF-003 next. |
-| 2.39 | 13.08.2026 | PROF-003 candidate: server drafts, optimistic autosave, immutable versions/history/restore, durable assets, export metadata, migration `0012`, UI/tests/CI gate; external verification pending. |
-| 2.40 | 13.08.2026 | PROF-003 production evidence: CI/Render `0012`, drafts/autosave/cross-device, versions/restore/stale conflict, direct edit r2, iPhone photo r3, PDF/logo/education parity r4, owner isolation and restart persistence confirmed; final regression/log review remains. |
-| 2.41 | 13.08.2026 | PROF-003 closed after final regression/log review. PRIV-001 candidate adds readable export, confirmed deletion, local integration/token cleanup, technical retention worker, identifier-free audit and migration `0013`; external CI/Render/E2E pending. |
-| 2.42 | 19.08.2026 | PRIV-001 hardened candidate after second privacy/security audit: re-authenticated consistent export, bounds/safe paths/sanitizer, delete concurrency locks, orphan asset cleanup and worker lock/heartbeat; external gate pending. |
-| 2.46 | 19.08.2026 | PRIV-001 completed after green CI/hotfix r1, Render `0013`, healthy privacy worker, export/asset/secret scan, destructive throwaway deletion, owner isolation, restart/regression/log review. SEARCH-005 ready next. |
-| 2.47 | 24.08.2026 | AI-BENCH-001 candidate v1.4.32 rejected by CI because root containers were scanned by unsupported-number gate; hotfix r1 scans scalar leaves only, adds regression tests and awaits repeat GitHub Actions. |
-| 2.51 | 26.08.2026 | GitHub run #201 was rejected before runner allocation because `runner.temp` was referenced from `jobs.ai-bench-yandex-live.env`. Hotfix r4 uses `/tmp/ai-bench-yandex-live`, adds local job-env context validation/regression coverage, and keeps production revision `20260819_0014` unchanged. |
+- **2.20 — 08.08.2026:** SEARCH-001 закрыт после CI, Render revision `0005` и production filter smoke.
+- **2.21 — 09.08.2026:** SEARCH-002 реализован как conservative reversible cross-source dedup candidate с additive migration `20260809_0006`; требуется GitHub/Render verification.
+- **2.22 — 09.08.2026:** SEARCH-002 complete; SEARCH-003 ready.
+- **2.23 — 09.08.2026:** SEARCH-003 persistent stable pagination/honest totals candidate с migration `20260809_0007`; требуется GitHub/Render verification.
+- **2.24 — 09.08.2026:** SEARCH-003 complete: green CI, Render `0007`, latency hotfix, stable committed pages, honest totals и restart persistence; SEARCH-004 ready.
+- **2.25 — 10.08.2026:** SEARCH-004 candidate: canonical `/vacancies`, permanent method-preserving legacy redirect, safe public source-state contract и dedicated CI gate; требуется GitHub/Render verification.
+- **2.26 — 10.08.2026:** SEARCH-004 complete: green CI, Render `0007`, canonical `/vacancies` mobile search and legacy redirect; AUTH-001 ready.
+- **2.27 — 10.08.2026:** AUTH-001 candidate: migration `20260810_0008`, first-party identity, versioned scrypt, one-time tokens, revocable sessions, SMTP adapter, UI/tests/CI; требуется GitHub/Render/SMTP E2E.
+- **2.28 — 10.08.2026:** Render `0008` + SMTP readiness confirmed; Safari missing-Referer CSRF regression localized; `strict-origin` hotfix prepared without weakening strict CSRF.
+- **2.29 — 11.08.2026:** Safari hotfix production-pass confirmed; Mail.ru implicit SSL/TLS fallback added; v1.4.15 CI/readiness green.
+- **2.30 — 11.08.2026:** Render Free SMTP egress blocker documented; Gmail API HTTPS staging backend added with mandatory domain sender migration before beta/commercial release.
+- **2.31 — 11.08.2026:** AUTH-001 закрыт после green GitHub Actions, Render Gmail API readiness/delivery и полного production E2E; AUTH-002 становится следующим пакетом. Domain sender + SPF/DKIM/DMARC остаются обязательным pre-release gate.
+- **2.32 — 11.08.2026:** AUTH-002 candidate: owner-bound HH/SJ identities, migration 0009, state/session binding, encrypted owner-scoped reconnect/disconnect and dedicated tests; external verification pending.
+- **2.33 — 11.08.2026:** AUTH-002 complete: green GitHub Actions, Render `0009`, полный HH/SJ ownership E2E и regression smoke подтверждены; PROF-001 становится следующим пакетом.
+- **2.34 — 11.08.2026:** PROF-001 candidate: owner-scoped structured facts, immutable version history, migration `0010`, UI/service/repository/tests and dedicated CI gate; external verification pending.
+- **2.35 — 12.08.2026:** PROF-001 hotfix candidate: initial CI/Render `0010` passed; production partial-save uncovered default-only repeatable-row validation bug. Hotfix keeps schema `0010`, fixes optional-row detection and adds regression tests; verification resumes after redeploy.
+- **2.36 — 12.08.2026:** PROF-001 complete after green hotfix CI, Render `0010`, full owner/version/concurrency/restart/mobile/regression E2E; PROF-002 becomes next.
+- **2.37 — 12.08.2026:** PROF-002 candidate: bounded text-PDF extraction proposal, editable review, explicit confirmation, metadata-only owner/version-bound review token, migration `0011` provenance audit fields and dedicated tests; external verification pending.
+- **2.38 — 12.08.2026:** PROF-002 complete after green CI, Render `0011`, upload-limit hotfix and production confirmation/privacy/stale/restart/mobile/regression E2E; PROF-003 next.
+- **2.39 — 13.08.2026:** PROF-003 candidate: server drafts, optimistic autosave, immutable versions/history/restore, durable assets, export metadata, migration `0012`, UI/tests/CI gate; external verification pending.
+- **2.40 — 13.08.2026:** PROF-003 production evidence: CI/Render `0012`, drafts/autosave/cross-device, versions/restore/stale conflict, direct edit r2, iPhone photo r3, PDF/logo/education parity r4, owner isolation and restart persistence confirmed; final regression/log review remains.
+- **2.41 — 13.08.2026:** PROF-003 closed after final regression/log review. PRIV-001 candidate adds readable export, confirmed deletion, local integration/token cleanup, technical retention worker, identifier-free audit and migration `0013`; external CI/Render/E2E pending.
+- **2.42 — 19.08.2026:** PRIV-001 hardened candidate after second privacy/security audit: re-authenticated consistent export, bounds/safe paths/sanitizer, delete concurrency locks, orphan asset cleanup and worker lock/heartbeat; external gate pending.
+- **2.46 — 19.08.2026:** PRIV-001 completed after green CI/hotfix r1, Render `0013`, healthy privacy worker, export/asset/secret scan, destructive throwaway deletion, owner isolation, restart/regression/log review. SEARCH-005 ready next.
+- **2.47 — 24.08.2026:** AI-BENCH-001 candidate v1.4.32 rejected by CI because root containers were scanned by unsupported-number gate; hotfix r1 scans scalar leaves only, adds regression tests and awaits repeat GitHub Actions.
+- **2.51 — 26.08.2026:** GitHub run #201 was rejected before runner allocation because `runner.temp` was referenced from `jobs.ai-bench-yandex-live.env`. Hotfix r4 uses `/tmp/ai-bench-yandex-live`, adds local job-env context validation/regression coverage, and keeps production revision `20260819_0014` unchanged.
+
+
 
 
 ## SEARCH-005 architecture addendum (historical)
@@ -584,3 +584,10 @@ SEARCH-005 — ВЫПОЛНЕНО. AI-BENCH-001 live run #2 was reviewed; ground
 | Версия | Дата | Изменение |
 |---|---|---|
 | 2.53 | 26.08.2026 | Live run #2 reviewed. Grounded-v2.1 / evals 1.3.0 adds Unicode numeric normalization, scenario provenance, language gate, motivation semantics, safe provider diagnostics and one bounded retry. Production architecture/revision remains unchanged; provider decision awaits live run #3/manual rubric. |
+
+
+### PROJECT_PASSPORT v2.54 update
+
+| Версия | Дата | Изменение |
+|---|---|---|
+| 2.54 | 26.08.2026 | Live run #3 reviewed. Grounded-v2.2 / evals 1.4.0 adds source-matched cover-letter impact families, regressions for the machine-missed Alice outcome inference and a presentation-only sanitizer for simple decorated evidence markers. Production architecture/revision remains unchanged; provider decision awaits final live run #4 and named manual rubric. |
