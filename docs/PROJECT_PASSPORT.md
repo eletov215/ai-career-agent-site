@@ -6,35 +6,35 @@
 <!-- ACA-CANONICAL-STATUS:START -->
 ## Канонический срез проекта
 
-**Документ:** AI Career Agent PROJECT_PASSPORT `v2.54`  
-**Дата:** 2026-08-26  
+**Документ:** AI Career Agent PROJECT_PASSPORT `v2.55`  
+**Дата:** 2026-08-27  
 **Production revision:** `20260819_0014`
 
 | Контур | Состояние |
 |---|---|
-| Web | Flask + Gunicorn, WSGI `app:app`; grounded-v2.2 package production code не меняет |
+| Web | Flask + Gunicorn, WSGI `app:app`; Alice-final package production code не меняет |
 | Data | PostgreSQL production, SQLite local/test fallback, Alembic `20260819_0014` |
 | Identity/career/search/privacy | ранее завершённые пакеты остаются ВЫПОЛНЕНО; regression matrix локально без confirmed failures |
-| AI benchmark | `evals 1.4.0`, benchmark `1.3`, dataset `1.3.0`, `grounded-v2.2`; live run #3 reviewed, final live run #4 pending |
-| Live run #3 | Alice 7/8, Flash 4/8, YandexGPT Pro 5/8; 24/24 calls without provider errors; manual review found unsupported Alice impact missed by v2.1 |
-| Safety boundary | synthetic dataset; exact evidence; structured unverified/caveats; deterministic match; language/scenario/impact/metadata gates |
-| Presentation boundary | raw structured response is scored first; only simple decorated known evidence markers may be stripped from separate presentation copy |
-| Provider resilience | safe envelope diagnostics + max one bounded retry for configured transient/malformed failures; no raw response/refusal persistence |
-| Production AI | отсутствует; provider decision не принят |
+| AI benchmark | `evals 1.4.1`, benchmark `1.3`, dataset `1.3.1`, `grounded-v2.2`; comparative live run #4 reviewed; Alice-only final run pending |
+| Live run #4 | 24/24 calls, 0 errors/retries; Alice 5/8, Flash 5/8, YandexGPT Pro 4/8 |
+| Candidate | Alice AI LLM is the primary candidate; no production provider is connected |
+| Safety boundary | synthetic dataset; exact evidence; deterministic match; language/scenario/impact/metadata gates; literal cover-letter action discipline |
+| Final verification | manual-only `run_ai_bench_alice_final`; exactly one Alice provider; 8/8 machine gate before human rubric |
+| Production AI | отсутствует; final provider decision ещё не принят |
 
 ### Decision boundary
 
-Alice AI LLM remains the leading candidate, but live run #3 proved that machine-pass alone is insufficient: unsupported outcome inference in a Russian cover letter was found manually. Grounded-v2.2 must pass ordinary CI, final live run #4 artifact review and the named human writing rubric before `AI-PROVIDER-001`.
+The three-provider comparison phase is complete enough to nominate Alice AI LLM as the final candidate. `AI-BENCH-001` still requires a fresh Alice-only 8/8 machine-safety run and a named human writing-quality rubric. Only then may `AI-PROVIDER-001` record the production-provider decision.
 <!-- ACA-CANONICAL-STATUS:END -->
 
 | Поле | Значение |
 |---|---|
 | Документ        | PROJECT_PASSPORT                                                                              |
-| Версия паспорта | 2.54 |
-| Дата            | 26 августа 2026                                                                               |
+| Версия паспорта | 2.55 |
+| Дата            | 27 августа 2026                                                                               |
 | Статус          | ДЕЙСТВУЮЩИЙ                                                                                   |
-| Связанный план | `AI_Career_Agent_PLAN_CURRENT v1.4.40` |
-| Основа кода | GitHub `main` archive `ai-career-agent-site-main (24).zip` after grounded-v2.1 live run #3 |
+| Связанный план | `AI_Career_Agent_PLAN_CURRENT v1.4.41` |
+| Основа кода | GitHub `main` archive `ai-career-agent-site-main (25).zip` after comparative grounded-v2.2 live run #4 |
 
 > Контрольные статусы: FND/DATA/SEC/OPS/INFRA-PREP/SYNC/SEARCH-001..005/AUTH/PROF/PRIV - ВЫПОЛНЕНО; AI-BENCH-001 - НУЖНА ПРОВЕРКА; AI-PROVIDER-001 - ЗАБЛОКИРОВАНО; DOC-001 - В РАБОТЕ; INFRA-001 - ОТЛОЖЕНО.
 
@@ -489,7 +489,7 @@ Render не считается гарантированным production для 
 
 ## 23. Текущий gate
 
-SEARCH-005 — ВЫПОЛНЕНО. AI-BENCH-001 live run #3 was reviewed; grounded-v2.2 final safety hardening now requires green ordinary CI, live run #4 artifact review and named manual rubric. Production PostgreSQL remains `20260819_0014`; provider decision is not yet made.
+SEARCH-005 — ВЫПОЛНЕНО. Comparative AI-BENCH live run #4 was reviewed; Alice AI LLM is the primary candidate. Final gate is green ordinary CI, Alice-only 8/8 machine verification and named human rubric. Production PostgreSQL remains `20260819_0014`; no production AI provider is connected.
 
 ## 24. Правила рабочего чата
 
@@ -591,3 +591,9 @@ SEARCH-005 — ВЫПОЛНЕНО. AI-BENCH-001 live run #3 was reviewed; ground
 | Версия | Дата | Изменение |
 |---|---|---|
 | 2.54 | 26.08.2026 | Live run #3 reviewed. Grounded-v2.2 / evals 1.4.0 adds source-matched cover-letter impact families, regressions for the machine-missed Alice outcome inference and a presentation-only sanitizer for simple decorated evidence markers. Production architecture/revision remains unchanged; provider decision awaits final live run #4 and named manual rubric. |
+
+### PROJECT_PASSPORT v2.55 update
+
+| Версия | Дата | Изменение |
+|---|---|---|
+| 2.55 | 27.08.2026 | Comparative grounded-v2.2 live run #4 reviewed: Alice 5/8, Flash 5/8, YandexGPT Pro 4/8 with 24/24 calls and no transport errors/retries. Alice nominated as final candidate. Evals 1.4.1 adds prompt-level literal fact discipline, independent causal-impact safety, run-4 regressions and dedicated Alice-only 8/8 machine verification before named human review. Production architecture/revision remains unchanged. |

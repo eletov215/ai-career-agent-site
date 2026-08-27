@@ -3,14 +3,14 @@
   "config_fingerprint": "7c9e25f886497fc4d507ffff5cc2fddbb22fe404e79f96d7c96a5bfde4b1b884",
   "dataset": {
     "case_count": 8,
-    "fingerprint": "1051e1c8de4e5e1df484ed1a66f933e592e998eb7fb0ef527bf3e4f8d5ce16d9",
+    "fingerprint": "e83621f50f1ed0a594bc9513901fa093c1815cf90ad1c7afa0d9bd4a4cfd2525",
     "id": "ai-career-agent-golden-v1",
     "synthetic": true,
-    "version": "1.3.0"
+    "version": "1.3.1"
   },
   "decision_status": "No external model/provider decision is allowed from a deterministic reference run. Run the approved live candidates and complete manual review before AI-PROVIDER-001.",
   "execution_mode": "deterministic_reference",
-  "finished_at": "2026-08-26T18:16:03Z",
+  "finished_at": "2026-08-27T08:59:27Z",
   "limitations": [
     "The included dataset is synthetic and intentionally excludes production user PII.",
     "Human writing-quality rubrics remain pending until a named reviewer records scores.",
@@ -39,7 +39,7 @@
         "mean_match_consistency_score": 1.0,
         "mean_quality_score": 1.0,
         "mean_user_facing_cleanliness": 1.0,
-        "p50_latency_ms": 0.029,
+        "p50_latency_ms": 0.034,
         "p95_latency_ms": 0.036,
         "passed_count": 8,
         "retried_case_count": 0,
@@ -81,9 +81,9 @@
       "adapter": "fixture",
       "case_id": "resume-analysis-ru-01",
       "error": null,
-      "finished_at": "2026-08-26T18:16:03Z",
+      "finished_at": "2026-08-27T08:59:27Z",
       "language": "ru",
-      "latency_ms": 0.036,
+      "latency_ms": 0.037,
       "metadata": {
         "mode": "deterministic_fixture"
       },
@@ -161,7 +161,7 @@
         "user_facing_technical_token_count": 0,
         "user_facing_technical_tokens": []
       },
-      "started_at": "2026-08-26T18:16:03Z",
+      "started_at": "2026-08-27T08:59:27Z",
       "task": "resume_analysis",
       "usage": {
         "estimated_cost_usd": null,
@@ -173,9 +173,9 @@
       "adapter": "fixture",
       "case_id": "resume-analysis-en-01",
       "error": null,
-      "finished_at": "2026-08-26T18:16:03Z",
+      "finished_at": "2026-08-27T08:59:27Z",
       "language": "en",
-      "latency_ms": 0.028,
+      "latency_ms": 0.029,
       "metadata": {
         "mode": "deterministic_fixture"
       },
@@ -253,7 +253,7 @@
         "user_facing_technical_token_count": 0,
         "user_facing_technical_tokens": []
       },
-      "started_at": "2026-08-26T18:16:03Z",
+      "started_at": "2026-08-27T08:59:27Z",
       "task": "resume_analysis",
       "usage": {
         "estimated_cost_usd": null,
@@ -265,9 +265,9 @@
       "adapter": "fixture",
       "case_id": "vacancy-match-ru-01",
       "error": null,
-      "finished_at": "2026-08-26T18:16:03Z",
+      "finished_at": "2026-08-27T08:59:27Z",
       "language": "ru",
-      "latency_ms": 0.031,
+      "latency_ms": 0.035,
       "metadata": {
         "mode": "deterministic_fixture"
       },
@@ -346,7 +346,7 @@
         "user_facing_technical_token_count": 0,
         "user_facing_technical_tokens": []
       },
-      "started_at": "2026-08-26T18:16:03Z",
+      "started_at": "2026-08-27T08:59:27Z",
       "task": "vacancy_match",
       "usage": {
         "estimated_cost_usd": null,
@@ -358,9 +358,9 @@
       "adapter": "fixture",
       "case_id": "vacancy-match-en-01",
       "error": null,
-      "finished_at": "2026-08-26T18:16:03Z",
+      "finished_at": "2026-08-27T08:59:27Z",
       "language": "en",
-      "latency_ms": 0.025,
+      "latency_ms": 0.027,
       "metadata": {
         "mode": "deterministic_fixture"
       },
@@ -439,7 +439,7 @@
         "user_facing_technical_token_count": 0,
         "user_facing_technical_tokens": []
       },
-      "started_at": "2026-08-26T18:16:03Z",
+      "started_at": "2026-08-27T08:59:27Z",
       "task": "vacancy_match",
       "usage": {
         "estimated_cost_usd": null,
@@ -451,9 +451,9 @@
       "adapter": "fixture",
       "case_id": "cover-letter-ru-01",
       "error": null,
-      "finished_at": "2026-08-26T18:16:03Z",
+      "finished_at": "2026-08-27T08:59:27Z",
       "language": "ru",
-      "latency_ms": 0.029,
+      "latency_ms": 0.033,
       "metadata": {
         "mode": "deterministic_fixture"
       },
@@ -532,7 +532,7 @@
         "user_facing_technical_token_count": 0,
         "user_facing_technical_tokens": []
       },
-      "started_at": "2026-08-26T18:16:03Z",
+      "started_at": "2026-08-27T08:59:27Z",
       "task": "cover_letter",
       "usage": {
         "estimated_cost_usd": null,
@@ -544,9 +544,9 @@
       "adapter": "fixture",
       "case_id": "cover-letter-en-01",
       "error": null,
-      "finished_at": "2026-08-26T18:16:03Z",
+      "finished_at": "2026-08-27T08:59:27Z",
       "language": "en",
-      "latency_ms": 0.023,
+      "latency_ms": 0.034,
       "metadata": {
         "mode": "deterministic_fixture"
       },
@@ -625,7 +625,7 @@
         "user_facing_technical_token_count": 0,
         "user_facing_technical_tokens": []
       },
-      "started_at": "2026-08-26T18:16:03Z",
+      "started_at": "2026-08-27T08:59:27Z",
       "task": "cover_letter",
       "usage": {
         "estimated_cost_usd": null,
@@ -637,9 +637,9 @@
       "adapter": "fixture",
       "case_id": "interview-ru-01",
       "error": null,
-      "finished_at": "2026-08-26T18:16:03Z",
+      "finished_at": "2026-08-27T08:59:27Z",
       "language": "ru",
-      "latency_ms": 0.035,
+      "latency_ms": 0.034,
       "metadata": {
         "mode": "deterministic_fixture"
       },
@@ -718,7 +718,7 @@
         "user_facing_technical_token_count": 0,
         "user_facing_technical_tokens": []
       },
-      "started_at": "2026-08-26T18:16:03Z",
+      "started_at": "2026-08-27T08:59:27Z",
       "task": "interview_questions",
       "usage": {
         "estimated_cost_usd": null,
@@ -730,9 +730,9 @@
       "adapter": "fixture",
       "case_id": "interview-en-01",
       "error": null,
-      "finished_at": "2026-08-26T18:16:03Z",
+      "finished_at": "2026-08-27T08:59:27Z",
       "language": "en",
-      "latency_ms": 0.027,
+      "latency_ms": 0.026,
       "metadata": {
         "mode": "deterministic_fixture"
       },
@@ -811,7 +811,7 @@
         "user_facing_technical_token_count": 0,
         "user_facing_technical_tokens": []
       },
-      "started_at": "2026-08-26T18:16:03Z",
+      "started_at": "2026-08-27T08:59:27Z",
       "task": "interview_questions",
       "usage": {
         "estimated_cost_usd": null,
@@ -820,8 +820,8 @@
       }
     }
   ],
-  "run_id": "ai-bench-20260826T181603Z-9f7ae17b",
+  "run_id": "ai-bench-20260827T085927Z-b9e8eef5",
   "schema_version": "1.3",
-  "started_at": "2026-08-26T18:16:03Z",
+  "started_at": "2026-08-27T08:59:27Z",
   "status": "passed"
 }

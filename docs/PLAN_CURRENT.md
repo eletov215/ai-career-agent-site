@@ -6,59 +6,61 @@
 <!-- ACA-CANONICAL-STATUS:START -->
 ## Канонический статус плана
 
-**Документ:** AI Career Agent PLAN_CURRENT `v1.4.40`  
-**Дата:** 2026-08-26  
+**Документ:** AI Career Agent PLAN_CURRENT `v1.4.41`  
+**Дата:** 2026-08-27  
 **Production revision:** `20260819_0014`  
-**Текущий пакет:** `AI-BENCH-001 - GROUNDED-V2.2 FINAL SAFETY HARDENING; НУЖНА ПРОВЕРКА GITHUB ACTIONS + LIVE RUN #4 + MANUAL RUBRIC`
+**Текущий пакет:** `AI-BENCH-001 - ALICE AI LLM FINAL CANDIDATE; НУЖНА ПРОВЕРКА GITHUB ACTIONS + ALICE-ONLY 8/8 MACHINE RUN + NAMED MANUAL RUBRIC`
 
 ### Подтверждённое внешнее evidence
 
-- grounded-v2.1 ordinary CI v1.4.39 на `main` подтверждён green до третьего manual benchmark;
-- live run #3 artifact `32978362483` проверен: Alice AI LLM 7/8, Alice AI LLM Flash 4/8, YandexGPT Pro 5.1 5/8; все 24 provider calls завершились без provider errors и без retry;
-- Alice остаётся ведущим кандидатом, однако manual safety review выявил machine-missed unsupported impact в `cover-letter-ru-01`: source responsibilities were expanded into acceleration/efficiency/service-quality outcomes without source support;
-- scenario-provenance gate корректно оставил Alice `interview-ru-01` failed: simple `(s1)/(s2)` markers do not replace structured evidence;
-- provider decision не принят; AI-BENCH-001 не закрыт.
+- comparative grounded-v2.2 live run #4 artifact `33050972910` проверен: 24/24 provider calls, 0 provider errors, 0 retries; Alice AI LLM 5/8, Flash 5/8, YandexGPT Pro 5.1 4/8;
+- Alice прошла 2/2 resume-analysis, 2/2 vacancy-match и EN interview; deterministic match сохранил 67 RU и 71 EN;
+- три Alice blocker локализованы: unsupported impact в RU/EN cover letters и missing `s1` provenance в RU interview follow-up;
+- сравнительный этап достаточен для выбора Alice AI LLM как primary candidate, но production provider ещё не выбран;
+- AI-BENCH-001 не закрыт до нового Alice-only machine run и named human rubric.
 
-### Grounded-v2.2 hardening
+### Alice final hardening
 
-- `evals 1.4.0`, benchmark contract `1.3`, dataset `1.3.0`, `contract=grounded-v2.2`;
-- cover-letter impact is checked by semantic family against cited candidate evidence; unsupported speed/time, efficiency, quality/reliability, growth, reduction and conversion/retention claims are hard failures;
-- live-run #3 impact phrases and presentation-marker cases are versioned regressions;
-- simple decorated known evidence IDs may be removed only from a post-score `presentation/` copy; machine scoring always sees the original response;
-- missing provenance, unknown IDs, schema/debug serialization and `evidence_ids:` labels remain hard failures and are never silently repaired;
-- deterministic vacancy match remains code-derived, not LLM-authored; language/scenario/claim-evidence/diagnostic/retry controls remain unchanged.
+- `evals 1.4.1`, benchmark contract `1.3`, dataset `1.3.1`, `contract=grounded-v2.2`;
+- cover-letter prompts требуют буквального evidence-bound описания действий и запрещают inferred benefit/outcome language без явной опоры в candidate facts;
+- causal language теперь отдельная impact-family даже рядом с другим outcome family;
+- interview prompts требуют final audit всех scenario numbers в `question`, `purpose`, `follow_up_if_weak` и matching `sN` в том же `evidence_ids`;
+- live-run #4 Alice failures и безопасные literal rewrites версионированы в `evals/regressions/live-run-4.json`;
+- добавлены `yandex-alice-final.json`, manual-only `run_ai_bench_alice_final` и strict final-result checker;
+- production routes/services/models/schema не меняются.
 
 ### Текущий gate
 
-Upload grounded-v2.2 candidate -> green ordinary GitHub CI -> `Actions -> CI -> Run workflow -> run_ai_bench_live=true` -> review live run #4 artifact -> complete named human writing-quality rubric. Only then may `AI-BENCH-001` close and `AI-PROVIDER-001` start.
+Upload Alice-final candidate -> green ordinary GitHub CI -> `Actions -> CI -> Run workflow -> run_ai_bench_alice_final=true` -> Alice 8/8 machine-safety artifact -> named human writing-quality rubric. Only then may `AI-BENCH-001` close and `AI-PROVIDER-001` start.
 
 ### Очередь
 
-`AI-BENCH-001 grounded-v2.2 CI -> live run #4 -> artifact review -> manual rubric -> AI-PROVIDER-001 -> LEGAL-001 -> AI-001 -> AI-002 -> AI-003 -> AI-004 -> AI-005 -> AI-006 -> JOB-001 -> JOB-002 -> JOB-003/JOB-004`
+`AI-BENCH-001 Alice-final CI -> Alice 8/8 live verification -> artifact review -> named manual rubric -> AI-PROVIDER-001 -> LEGAL-001 -> AI-001 -> AI-002 -> AI-003 -> AI-004 -> AI-005 -> AI-006 -> JOB-001 -> JOB-002 -> JOB-003/JOB-004`
 <!-- ACA-CANONICAL-STATUS:END -->
 
 | Поле | Значение |
 |---|---|
 | Документ | PLAN_CURRENT |
-| Версия | 1.4.40 |
-| Дата | 26 августа 2026 |
+| Версия | 1.4.41 |
+| Дата | 27 августа 2026 |
 | Статус | ДЕЙСТВУЮЩИЙ |
-| Основа кода | пользовательский ZIP `ai-career-agent-site-main (24).zip`, актуальный `main` после grounded-v2.1 live run #3 |
-| Текущий пакет | AI-BENCH-001 grounded-v2.2 final safety hardening - НУЖНА ПРОВЕРКА ordinary CI и live run #4, затем artifact/manual rubric |
+| Основа кода | пользовательский ZIP `ai-career-agent-site-main (25).zip`, актуальный `main` после comparative grounded-v2.2 live run #4 |
+| Текущий пакет | AI-BENCH-001 Alice final candidate - НУЖНА ПРОВЕРКА ordinary CI, Alice-only 8/8 live machine gate и named manual rubric |
 
 > ОБЯЗАТЕЛЬНО ДЛЯ КАЖДОГО НОВОГО ЧАТА: прочитать этот план, новый паспорт и актуальный архив. После завершения любого пункта вернуть обновлённые DOCX/PDF/Markdown, новый ZIP, доказательства проверки и запись в журнале версий.
 
-> КОНТРОЛЬНЫЕ СТАТУСЫ ЭТОЙ ВЕРСИИ: FND-001/FND-002/DATA-001/DATA-002/SEC-001/OPS-001/INFRA-PREP-001/SYNC-001/SYNC-002/SEARCH-001..005/AUTH-001/AUTH-002/PROF-001/PROF-002/PROF-003/PRIV-001 - **ВЫПОЛНЕНО**; `AI-BENCH-001` - **НУЖНА ПРОВЕРКА**; `AI-PROVIDER-001` - **ЗАБЛОКИРОВАНО** до завершения benchmark; `DOC-001` - **В РАБОТЕ**; `INFRA-001` - **ОТЛОЖЕНО ДО ПРЕДРЕЛИЗНОГО ЭТАПА**. Документы ниже `1.4.40` устарели для определения текущего gate.
+> КОНТРОЛЬНЫЕ СТАТУСЫ ЭТОЙ ВЕРСИИ: FND-001/FND-002/DATA-001/DATA-002/SEC-001/OPS-001/INFRA-PREP-001/SYNC-001/SYNC-002/SEARCH-001..005/AUTH-001/AUTH-002/PROF-001/PROF-002/PROF-003/PRIV-001 - **ВЫПОЛНЕНО**; `AI-BENCH-001` - **НУЖНА ПРОВЕРКА**; `AI-PROVIDER-001` - **ЗАБЛОКИРОВАНО** до завершения benchmark; `DOC-001` - **В РАБОТЕ**; `INFRA-001` - **ОТЛОЖЕНО ДО ПРЕДРЕЛИЗНОГО ЭТАПА**. Документы ниже `1.4.41` устарели для определения текущего gate.
 
 ## 1. Источник истины и аудит источников
 
 - GitHub является главным источником актуального кода.
 - Если в текущем чате загружен более новый ZIP, он является рабочей основой этого чата.
 - Канонический план определяется наибольшей версией и датой; старые дубликаты не должны оставаться действующими.
-- Актуальная рабочая база для этой версии: `ai-career-agent-site-main (24).zip`, предоставленный пользователем как точный archive текущего GitHub `main`.
+- Актуальная рабочая база для этой версии: `ai-career-agent-site-main (25).zip`, предоставленный пользователем как точный archive текущего GitHub `main`.
 - Версия 1.4.38 фиксирует grounded-v2 hardening после первого live run: ordinary CI r4 green; manual run artifact 32958938365 completed 24/24 API calls with zero transport errors; stricter evidence/safety/match contract prepared for live run #2.
 - Версия 1.4.39 фиксирует grounded-v2.1 hardening после live run #2 artifact 32972783843: Unicode percent normalization, scenario provenance, RU/EN language gate, cover-letter motivation semantics, safe provider diagnostics and one bounded retry prepared for live run #3.
 - Версия 1.4.40 фиксирует grounded-v2.2 final safety hardening после live run #3 artifact 32978362483: source-matched impact families, regressions на реальные Alice outcome-inferences и post-score presentation sanitizer prepared for live run #4.
+- Версия 1.4.41 фиксирует comparative live run #4 artifact 33050972910 и Alice-final candidate: prompt-level literal fact discipline, independent causal-impact safety, live-run-4 regressions and a dedicated Alice-only 8/8 machine verification job.
 - Версия 1.4.34 фиксирует live Yandex candidate: manual-only workflow, Alice AI LLM/Flash/YandexGPT Pro 5.1, structured JSON Schema output, current pricing snapshot and GitHub-secret-only credentials.
 - Версия 1.4.35 фиксирует CI-stability hotfix r2: SYNC worker cache assertions отвязаны от календарного 7-дневного search filter; AI-BENCH package contract использует browser-upload-safe visible scaffold и не зависит от dotfiles.
 - Версия 1.4.36 фиксирует workflow-layout hotfix r3: live Yandex job встроен в существующий `ci.yml`, отдельный `.yml` больше не нужен, а manual API run зависит от полного green CI.
@@ -224,7 +226,7 @@ MVP не готов, если работает только отдельная �
 
 | ID | Приоритет | Статус | Пункт |
 |---|---|---|---|
-| AI-BENCH-001 | P0 | НУЖНА ПРОВЕРКА | Live run #3 reviewed; grounded-v2.2 final safety hardening candidate готов; требуются green CI, live run #4 artifact и named manual rubric |
+| AI-BENCH-001 | P0 | НУЖНА ПРОВЕРКА | Comparative live run #4 reviewed; Alice AI LLM primary candidate; требуются green CI, Alice-only 8/8 machine artifact и named manual rubric |
 | AI-PROVIDER-001 | P0 | ЗАПЛАНИРОВАНО | Стратегия AI-провайдеров, география, стоимость, fallback и privacy |
 | AI-001 | P1 | ЗАПЛАНИРОВАНО | Независимый слой AI-провайдера и контроль стоимости |
 | AI-002 | P1 | ЗАПЛАНИРОВАНО | Настоящий анализ резюме |
@@ -802,11 +804,11 @@ MVP не готов, если работает только отдельная �
 
 **Цель:** Выбрать модель на воспроизводимых RU/EN функциях AI Career Agent, отделив качество/grounding/safety от transport и стоимости до production-интеграции.
 
-**Реализация:** `evals 1.4.0` grounded-v2.2: 8 synthetic RU/EN fixtures, 4 versioned schemas, exact raw evidence IDs, structured unverified facts/caveats, claim-evidence/language/scenario gates, deterministic weighted vacancy match score, Unicode-normalized source numbers, vacancy-grounded `motivation`, safe provider-envelope diagnostics and one bounded retry. Final hardening adds source-matched impact-family validation, live-run #3 regression patterns and separate post-score `presentation/` copies that may strip only simple decorated known evidence markers. Missing provenance, unknown IDs and serialized schema/debug metadata remain hard failures. Live runs #1/#2/#3 are historical evidence, not production traffic.
+**Реализация:** `evals 1.4.1` keeps grounded-v2.2 machine scoring: 8 synthetic RU/EN fixtures, 4 versioned schemas, exact raw evidence IDs, structured unverified facts/caveats, claim-evidence/language/scenario gates, deterministic weighted vacancy match score, Unicode-normalized source numbers, vacancy-grounded `motivation`, safe provider-envelope diagnostics and one bounded retry. After comparative live run #4, final candidate hardening adds literal cover-letter action prompts, independent causal-impact detection, live-run-4 regressions and a dedicated Alice-only final config/workflow/result gate. Presentation marker cleanup remains post-score only. Live runs #1..#4 are historical evaluation evidence, not production traffic.
 
 **Влияние на код:** только `evals/`, benchmark tests/scripts, CI summary and docs/evidence. Production routes, models, services, dependencies and database schema do not change.
 
-**Критерии готовности:** grounded-v2.2 ordinary GitHub CI green; same three approved Yandex candidates complete final live run #4 with provider errors/retries diagnosable and no unresolved transport blocker; machine artifact reviewed; named human writing-quality rubric completed; selected candidate has no unresolved unsupported candidate facts/impact/skills/achievements; final benchmark decision evidence accepted. Numeric vacancy match remains code-derived, not model-authored.
+**Критерии готовности:** ordinary GitHub CI green; `AI-BENCH-001 Alice Final` runs only `yandex-alice-ai-llm` and returns 8/8 machine pass with zero provider errors and zero hard safety counters; sanitized artifact reviewed; named human writing-quality rubric completed for all eight Alice outputs; no unresolved unsupported candidate facts/impact/skills/achievements; final benchmark decision evidence accepted. Numeric vacancy match remains code-derived, not model-authored.
 
 **Зависимости:** OPS-001, test access to Yandex AI Studio and existing GitHub Secrets. Реальный VPS не требуется для quality benchmark; production-IP transport повторно проверяется в INFRA-001.
 
@@ -1664,7 +1666,7 @@ GitHub/production/API: <подтверждено или требуется>
 **Зависимости:** SEARCH-001..004, SYNC-001/002, AUTH-001, OPS-001, PRIV-001 complete.
 
 
-**Текущий gate:** green ordinary CI -> `CI` workflow_dispatch с `run_ai_bench_live=true` -> sanitized artifact review -> manual rubric. AI-PROVIDER-001 остаётся заблокирован.
+**Текущий gate:** green ordinary CI -> `CI` workflow_dispatch с `run_ai_bench_alice_final=true` -> Alice 8/8 machine artifact -> named manual rubric. AI-PROVIDER-001 остаётся заблокирован.
 
 
 ### PLAN_CURRENT v1.4.34 update
@@ -1711,3 +1713,9 @@ GitHub/production/API: <подтверждено или требуется>
 | Версия | Дата | Package | Изменение |
 |---|---|---|---|
 | 1.4.40 | 26.08.2026 | AI-BENCH-001-GROUNDED-V2.2 | Live run #3 artifact `32978362483` reviewed: 24/24 calls, Alice 7/8 machine, Flash 4/8, YandexGPT Pro 5/8. Manual safety review found unsupported Alice impact that v2.1 missed. Evals 1.4.0 adds source-matched impact families, live-run-3 regressions and post-score presentation-only marker repair. Current gate: green CI -> live run #4 -> artifact review -> named manual rubric. |
+
+### PLAN_CURRENT v1.4.41 update
+
+| Версия | Дата | Package | Изменение |
+|---|---|---|---|
+| 1.4.41 | 27.08.2026 | AI-BENCH-001-ALICE-FINAL | Comparative live run #4 artifact `33050972910` reviewed: 24/24 calls, 0 errors/retries; Alice 5/8, Flash 5/8, YandexGPT Pro 4/8. Alice selected as final candidate. Evals 1.4.1 / dataset 1.3.1 hardens literal cover-letter phrasing, causal-impact detection, scenario provenance instructions, run-4 regressions and adds a dedicated manual Alice-only 8/8 machine gate before named human review. |

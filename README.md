@@ -1,23 +1,21 @@
 # AI Career Agent
 
 <!-- ACA-CANONICAL-STATUS:START -->
-## Каноническое состояние - 2026-08-26
+## Каноническое состояние - 2026-08-27
 
 | Поле | Значение |
 |---|---|
 | Production schema | `20260819_0014` |
 | Последний завершённый production-пакет | `SEARCH-005` |
-| Текущий пакет | `AI-BENCH-001` - grounded-v2.2 final safety hardening candidate; НУЖНА ПРОВЕРКА GITHUB ACTIONS + LIVE RUN #4 + MANUAL RUBRIC |
-| Ordinary CI | grounded-v2.1 v1.4.39 прошёл ordinary CI на `main` перед live run #3; текущий v2.2 candidate требует нового green CI |
-| Live run #1 | artifact `32958938365`: 24/24 API calls, 0 errors; использован для grounded-v2 hardening |
-| Live run #2 | artifact `32972783843`: Alice 5/8, Flash 4/8, YandexGPT Pro 3/8; один provider error; использован для grounded-v2.1 |
-| Live run #3 | artifact `32978362483`: Alice 7/8, Flash 4/8, YandexGPT Pro 5/8, 24/24 calls без provider errors; manual review выявил unsupported impact в machine-passed Alice cover letter |
-| Hardening | `evals 1.4.0`, benchmark `1.3`, dataset `1.3.0` / `grounded-v2.2`: source-matched impact families, live-run-3 regressions, post-score presentation sanitizer for simple decorated evidence IDs |
-| Следующий gate | green ordinary CI -> manual `run_ai_bench_live=true` -> live run #4 artifact -> named human writing rubric -> benchmark closure decision |
+| Текущий пакет | `AI-BENCH-001` - Alice AI LLM final candidate hardening; НУЖНА ПРОВЕРКА GITHUB ACTIONS + ALICE-ONLY LIVE + NAMED MANUAL RUBRIC |
+| Comparative live run #4 | artifact `33050972910`: 24/24 calls, 0 errors/retries; Alice 5/8, Flash 5/8, YandexGPT Pro 4/8 under grounded-v2.2 |
+| Candidate decision | Alice AI LLM остаётся primary candidate; Flash - возможный future economy/low-risk option; YandexGPT Pro 5.1 не является leading primary candidate |
+| Hardening | `evals 1.4.1`, benchmark `1.3`, dataset `1.3.1` / `grounded-v2.2`: final prompt audit, causal-impact guard, live-run-4 regressions, dedicated Alice-only final job |
+| Следующий gate | green ordinary CI -> manual `run_ai_bench_alice_final=true` -> Alice 8/8 machine artifact -> named human writing rubric -> benchmark closure decision |
 | Следующий пакет | `AI-PROVIDER-001`, заблокирован до закрытия AI-BENCH-001 |
-| Канонические документы | PLAN `v1.4.40`, PROJECT PASSPORT `v2.54`, SOURCE AUDIT `v1.4.40`, AI-BENCH verification `v1.8` |
+| Канонические документы | PLAN `v1.4.41`, PROJECT PASSPORT `v2.55`, SOURCE AUDIT `v1.4.41`, AI-BENCH verification `v1.9` |
 
-Production Flask routes, dependencies, models, migrations, Render runtime and database schema are unchanged. The benchmark continues to use synthetic fixtures only and GitHub-secret-only credentials.
+Production Flask routes, dependencies, models, migrations, Render runtime and database schema are unchanged. Benchmark fixtures remain synthetic and credentials remain GitHub-secret-only.
 <!-- ACA-CANONICAL-STATUS:END -->
 
 ## 1. Назначение
@@ -40,20 +38,18 @@ AI Career Agent — Flask/Gunicorn web-service карьерного сопров
 - web, Trudvsem sync worker и privacy cleanup worker разделены на процессы;
 - Render остаётся staging/резервным контуром до предрелизной VPS-миграции.
 
-## 3. AI-BENCH-001 grounded-v2.2 benchmark
+## 3. AI-BENCH-001 Alice final verification
 
-`evals 1.4.0` is the final safety-hardening candidate after manual review of live run #3:
+`evals 1.4.1` keeps the grounded-v2.2 machine contract but hardens generation instructions after comparative live run #4:
 
-- Alice AI LLM, Alice AI LLM Flash and YandexGPT Pro 5.1 remain the approved comparison set;
-- exact raw evidence IDs, structured unverified facts/caveats, deterministic vacancy scoring, language/scenario/claim-evidence gates and safe provider diagnostics remain mandatory;
-- cover-letter outcome claims are now checked by semantic impact family against the cited candidate evidence, so inferred speed, efficiency or service-quality gains are rejected unless the source facts contain the same impact family;
-- the real unsupported Alice phrases found in live run #3 are versioned in `evals/regressions/live-run-3.json`;
-- simple decorated known evidence markers such as `(s1)` or `[c1]` are recorded as repairable presentation noise, but scoring always evaluates the original payload first;
-- `presentation/<provider>/<case>.json` removes only those simple decorated markers after scoring; missing evidence, unknown IDs, `evidence_ids:` labels and serialized schema/debug metadata remain hard failures;
-- scenario provenance remains hard: removing `(s1)` from visible text never satisfies a missing structured `s1` citation;
-- live providers still use safe envelope diagnostics and at most one bounded retry for configured transient/malformed failures;
-- live job remains integrated into `.github/workflows/ci.yml`, runs only via manual `workflow_dispatch` with `run_ai_bench_live=true`, and waits for ordinary tests/package gate;
-- runtime output remains outside the repository at `/tmp/ai-bench-yandex-live` and credentials are read only from GitHub Actions Secrets.
+- Alice AI LLM is the only provider in `evals/config/yandex-alice-final.json`; the historical three-provider comparison remains available separately through `run_ai_bench_live`;
+- cover-letter prompts now require literal evidence-bound phrasing and explicitly rewrite unsupported causal/outcome language into neutral descriptions of verified actions;
+- causal language is tracked as an independent impact-safety family even when another impact family appears in the same paragraph;
+- interview prompts require a final per-question audit so every scenario number used in `question`, `purpose`, or `follow_up_if_weak` has its matching `sN` in the same `evidence_ids`;
+- exact failures from live run #4 are versioned in `evals/regressions/live-run-4.json`; safe literal rewrites are protected against false positives;
+- ordinary CI remains non-billable. The dedicated `AI-BENCH-001 Alice Final` job runs only on manual `workflow_dispatch` with `run_ai_bench_alice_final=true` and only after `Python tests` plus the deterministic AI-BENCH package gate pass;
+- the Alice final gate requires exactly one provider, zero transport errors, all eight cases machine-pass, and zero hard safety counters;
+- machine pass still does not close AI-BENCH-001: the named human writing-quality rubric remains mandatory.
 
 Before upload:
 
@@ -62,7 +58,7 @@ python scripts/check_ai_bench_package.py
 python -m unittest discover -s tests -p 'test_ai_bench_*.py' -v
 ```
 
-After green ordinary CI run the manual live benchmark and review its artifact. A green transport job is not enough to select a provider: the final accepted candidate must also pass machine safety review and the named human writing-quality rubric.
+After green ordinary CI, run `Actions -> CI -> Run workflow -> run_ai_bench_alice_final=true`. Do not run the full three-provider comparison again unless a regression investigation specifically requires it.
 
 ## 4. Документация
 

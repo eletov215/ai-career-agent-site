@@ -15,7 +15,7 @@ class DatasetTests(unittest.TestCase):
     def test_golden_dataset_is_bilingual_complete_and_grounded_v2(self) -> None:
         manifest, cases, fingerprint = load_dataset(ROOT / "evals/fixtures/manifest.json")
         self.assertTrue(manifest["synthetic"])
-        self.assertEqual(manifest["version"], "1.3.0")
+        self.assertEqual(manifest["version"], "1.3.1")
         self.assertEqual(manifest["contract"], "grounded-v2.2")
         self.assertEqual({case.language for case in cases}, {"ru", "en"})
         self.assertEqual(

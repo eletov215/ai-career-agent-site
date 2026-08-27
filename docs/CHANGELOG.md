@@ -1,3 +1,15 @@
+## 2026-08-27 - AI-BENCH-001 Alice final candidate / evals 1.4.1
+
+- Reviewed comparative grounded-v2.2 live run #4 artifact `33050972910`: 24/24 calls, 0 provider errors, 0 retries; Alice AI LLM 5/8, Flash 5/8, YandexGPT Pro 5.1 4/8.
+- Confirmed Alice AI LLM as the leading candidate for final verification; no production provider decision is made yet.
+- Hardened cover-letter prompts to use literal evidence-bound action statements and to avoid inferred benefit/quality/speed/feasibility/UX outcomes when candidate evidence does not state them.
+- Strengthened impact scoring so causal language remains an independent safety family even when another outcome family is present.
+- Hardened interview prompts with a final per-question scenario-number/evidence audit.
+- Added `evals/regressions/live-run-4.json`, a one-provider `evals/config/yandex-alice-final.json`, strict Alice final result checker, and manual-only `AI-BENCH-001 Alice Final` workflow job.
+- Dataset prompt version is `1.3.1`; grounded-v2.2 scoring contract remains unchanged for direct gate comparability.
+- Production routes, models, services, templates, dependencies, migrations, Render runtime and revision `20260819_0014` remain unchanged.
+- Next gate: green ordinary CI -> `run_ai_bench_alice_final=true` -> Alice 8/8 machine pass -> named human writing-quality rubric.
+
 ## 2026-08-26 - AI-BENCH-001 grounded-v2.2 final safety hardening / evals 1.4.0
 
 - Reviewed grounded-v2.1 live run #3 artifact `32978362483`: Alice AI LLM 7/8, Flash 4/8, YandexGPT Pro 5.1 5/8; all 24 provider calls completed without errors or retries.

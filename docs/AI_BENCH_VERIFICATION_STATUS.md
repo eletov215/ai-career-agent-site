@@ -3,77 +3,83 @@
 | Поле | Значение |
 |---|---|
 | Документ | AI_BENCH_VERIFICATION_STATUS |
-| Версия | 1.8 |
-| Дата | 26 августа 2026 |
-| Пакет | AI-BENCH-001 grounded-v2.2 final safety hardening |
-| Статус | НУЖНА ПРОВЕРКА GITHUB ACTIONS + LIVE RUN #4 + MANUAL RUBRIC |
+| Версия | 1.9 |
+| Дата | 27 августа 2026 |
+| Пакет | AI-BENCH-001 Alice AI LLM final candidate hardening |
+| Статус | НУЖНА ПРОВЕРКА GITHUB ACTIONS + ALICE-ONLY MACHINE RUN + NAMED MANUAL RUBRIC |
 | Production revision | `20260819_0014` |
 
-## 1. Confirmed external evidence
+## 1. Confirmed comparative evidence
 
-Grounded-v2.1 ordinary CI was confirmed green on `main`. Live run #3 then completed from artifact `32978362483` (`run_id=ai-bench-20260826T141439Z-b4d94c09`) with 24/24 provider calls, zero provider errors and zero retries.
+Comparative grounded-v2.2 live run #4 completed from artifact `33050972910` (`run_id=ai-bench-20260827T074944Z-b93e74a2`). All 24 configured provider calls completed without provider errors or retries.
 
-Live run #3 machine summary under grounded-v2.1:
+Machine summary:
 
-- **Alice AI LLM:** 7/8 passed; 0 errors; quality 0.971354; grounding 0.963542; clean text 0.875000; p50 6835.051 ms; p95 8408.902 ms; cost USD 0.045744254.
-- **Alice AI LLM Flash:** 4/8 passed; 0 errors; quality 0.955208; grounding 0.989583; clean text 0.750000; p50 6964.514 ms; p95 12137.943 ms; cost USD 0.007288525.
-- **YandexGPT Pro 5.1:** 5/8 passed; 0 errors; quality 0.963802; grounding 0.958333; clean text 0.750000; p50 2908.523 ms; p95 7410.318 ms; cost USD 0.039193435.
+- **Alice AI LLM:** 5/8 passed; grounding 0.979; clean text 1.000; p50 3763.20 ms; estimated cost USD 0.047170.
+- **Alice AI LLM Flash:** 5/8 passed; grounding 0.974; clean text 1.000; p50 3048.30 ms; estimated cost USD 0.007431.
+- **YandexGPT Pro 5.1:** 4/8 passed; grounding 0.953; clean text 0.875; p50 2607.47 ms; estimated cost USD 0.038984.
 
-Those scores are historical evidence. Grounded-v2.2 changes the machine contract and is not directly score-comparable.
+The three-provider comparison phase is considered sufficient for model ranking. Alice AI LLM remains the leading candidate, but it is not yet a production provider.
 
-## 2. Live run #3 safety finding
+## 2. Alice blockers found in live run #4
 
-Alice AI LLM remained the strongest overall candidate, but manual inspection found an unsupported-impact defect in a machine-passed Russian cover letter. The source stated documentation of typical solutions, SLA work and CRM usage. The generated text additionally claimed that those responsibilities accelerated repeat-request handling, organized accumulated experience and ensured stable service quality. Those outcome claims were absent from the cited candidate facts.
+Alice passed both resume-analysis cases, both vacancy-match cases and English interview. Deterministic vacancy match remained `67` for RU and `71` for EN.
 
-Alice `interview-ru-01` also showed the intended distinction between presentation noise and provenance: `(s1)`/`(s2)` appeared in visible text, while the `20%` follow-up omitted structured `s1` evidence. A presentation sanitizer may remove visible markers, but it must not cure the missing citation.
+Three machine blockers remained:
 
-## 3. Grounded-v2.2 implementation target
+1. `cover-letter-ru-01` - source responsibilities were expanded into unsupported causal/quality outcome language. SLA work was described as ensuring response/resolution deadlines even though the candidate facts only stated work under SLA.
+2. `cover-letter-en-01` - design-system and interview activities were expanded into unsupported consistency/scalability, UX-improvement and feasibility outcomes absent from candidate evidence.
+3. `interview-ru-01` - a `20%` scenario appeared in `follow_up_if_weak`, but the same question object's structured `evidence_ids` omitted `s1`. A visible `(s1)` marker is presentation noise and cannot replace structured provenance.
 
-`evals 1.4.0` / benchmark `1.3` / dataset `1.3.0` must prove:
+These failures are authoritative machine-safety findings and cannot be overridden by writing-quality scores.
 
-- source-matched cover-letter impact families, with unsupported speed/time, efficiency, quality/reliability, growth, reduction and conversion/retention outcomes blocked;
-- exact regression coverage for the live-run #3 Alice impact phrases;
-- machine scoring on the untouched structured provider response;
-- a separate presentation-safe copy that removes only simple decorated known evidence markers;
-- hard failure for missing provenance, unknown evidence IDs, `evidence_ids:` labels and serialized schema/debug metadata;
-- same-question scenario provenance remains mandatory after presentation repair;
-- existing deterministic vacancy score, structured unverified/caveat, language, claim-evidence, safe diagnostics and bounded retry controls remain intact;
-- manual writing-quality scores remain pending and cannot override machine safety gates.
+## 3. Alice final hardening target
+
+`evals 1.4.1`, benchmark `1.3`, dataset `1.3.1`, contract `grounded-v2.2` adds only the final candidate controls needed after run #4:
+
+- cover-letter prompts require literal evidence-bound action descriptions and provide safe rewrite examples instead of unsupported impact/outcome language;
+- causal language is independently machine-tracked even when another impact family appears in the same paragraph;
+- interview prompts require a final scan of `question`, `purpose`, and `follow_up_if_weak` so every scenario number brings the matching `sN` into the same question object's `evidence_ids`;
+- real Alice run-4 failures are versioned in `evals/regressions/live-run-4.json`;
+- safe literal rewrites are regression-tested so stricter safety does not block ordinary fact statements;
+- `evals/config/yandex-alice-final.json` contains exactly one live provider: `yandex-alice-ai-llm`;
+- `.github/workflows/ci.yml` adds a separate manual `run_ai_bench_alice_final` input and `AI-BENCH-001 Alice Final` job;
+- `scripts/check_ai_bench_alice_final_result.py` accepts only an 8/8, zero-error, zero-hard-safety-counter Alice run;
+- the historical three-provider live job remains available but is not required for the final candidate gate.
 
 ## 4. Local candidate evidence
 
-- 55 AI-BENCH unit tests PASS;
-- deterministic grounded-v2.2 reference run: 8/8 PASS under strict gates;
-- dataset fingerprint: `1051e1c8de4e5e1df484ed1a66f933e592e998eb7fb0ef527bf3e4f8d5ce16d9`;
-- full repository regression groups: 333 passed, 14 environment-dependent skips, 12 subtests passed, 0 confirmed failures;
-- package gate, repository hygiene, document structure and infra manifest PASS after generated-cache cleanup;
-- SQLite migration chain `0001 -> 0014`, current/check `20260819_0014` PASS;
-- production routes/models/services/dependencies/migrations remain unchanged; revision stays `20260819_0014`.
+- AI-BENCH unit/package tests: PASS, including live-run-4 regressions and strict Alice-final result checker;
+- deterministic grounded-v2.2 reference: 8/8 PASS;
+- dataset fingerprint after prompt hardening: `e83621f50f1ed0a594bc9513901fa093c1815cf90ad1c7afa0d9bd4a4cfd2525`;
+- repository regression groups: 342 passed, 14 environment-dependent skips, 15 subtests passed, 0 confirmed failures;
+- package gate, repository hygiene, document structure and infrastructure manifest: PASS;
+- SQLite migration chain `0001 -> 0014`, current/check `20260819_0014`: PASS;
+- production application boundary remains unchanged.
 
-The 14 local skips require the full GitHub CI Flask/Psycopg/PostgreSQL environment and are not claimed as locally passed.
+The 14 local skips require the complete GitHub CI Flask/Psycopg/PostgreSQL environment and are not claimed as locally passed.
 
-## 5. Grounded-v2.2 replay of live run #3
+## 5. Regression replay of live run #4
 
-The same raw live-run #3 responses were replayed locally under the new live thresholds. This is regression evidence only, not a new provider run:
+The original Alice live-run-4 responses were replayed locally against the hardened scorer. Replay remains 5/8 because a replay cannot apply the new generation instructions retroactively. The same two cover letters fail unsupported-impact safety and Russian interview fails scenario provenance. This proves the machine gates remain strict while the new prompt changes must be validated by a fresh live call.
 
-- Alice AI LLM: 5/8; both cover-letter cases now fail unsupported-impact safety under the stricter contract, and Russian interview still fails grounding/scenario provenance; two simple decorated markers are repairable presentation noise.
-- Alice AI LLM Flash: 4/8; blockers remain unverified-fact coverage, unsupported-impact safety and scenario provenance; 12 decorated markers are repairable but do not improve missing provenance.
-- YandexGPT Pro 5.1: 4/8; hard serialized metadata, match consistency, caveat coverage and one unsupported-impact finding remain; four simple markers are repairable.
-
-This replay confirms that the new impact gate catches the manual Alice safety finding without turning simple known marker decoration into a false hard failure.
+Replay evidence is stored in `docs/evidence/ai-bench-001/live-run-4-alice-final-replay.json`.
 
 ## 6. Remaining external gate
 
-1. Upload grounded-v2.2 candidate to `main` through the normal PR/CI path.
-2. Require green `Python tests` and `AI-BENCH-001 package gate` with all historical package checks.
-3. Run `Actions -> CI -> Run workflow -> run_ai_bench_live=true` on `main`.
-4. Review sanitized final live run #4 artifact, including impact/scenario/repair evidence.
-5. Complete the named human writing-quality rubric for the accepted candidate.
-6. Record final benchmark decision; only then unblock `AI-PROVIDER-001`.
+1. Upload this candidate through the normal PR/CI path.
+2. Require green `Python tests` and `AI-BENCH-001 package gate` with all historical checks.
+3. Do **not** run the full three-provider comparison again by default.
+4. Run `Actions -> CI -> Run workflow -> run_ai_bench_alice_final=true` on `main`.
+5. Require `AI-BENCH-001 Alice Final` to pass all 8 cases with zero provider errors and zero hard safety counters.
+6. Download and review the sanitized Alice-only artifact.
+7. Complete the named human writing-quality rubric for the eight Alice outputs.
+8. Record the benchmark closure decision; only then unblock `AI-PROVIDER-001`.
 
 ## 7. Status decision
 
 `AI-BENCH-001` remains **НУЖНА ПРОВЕРКА**.  
+Alice AI LLM is the **PRIMARY CANDIDATE**, not yet a production provider.  
 `AI-PROVIDER-001` remains **ЗАБЛОКИРОВАН**.  
 No production AI provider is connected.
 
@@ -81,7 +87,7 @@ No production AI provider is connected.
 
 | Версия | Дата | Изменение |
 |---|---|---|
-| 1.5 | 26.08.2026 | Stability r4 fixed invalid job-level `runner` context. |
-| 1.6 | 26.08.2026 | Green CI + live run #1 reviewed; grounded-v2 prepared for live run #2. |
-| 1.7 | 26.08.2026 | Live run #2 reviewed; grounded-v2.1 adds Unicode numeric normalization, scenario provenance, language gate, motivation semantics, safe provider diagnostics and one bounded retry before live run #3. |
-| 1.8 | 26.08.2026 | Live run #3 reviewed; grounded-v2.2 adds source-matched impact-family safety, live-run-3 regressions and presentation-only simple marker repair before final live run #4. |
+| 1.6 | 26.08.2026 | Green CI + live run #1 reviewed; grounded-v2 prepared. |
+| 1.7 | 26.08.2026 | Live run #2 reviewed; grounded-v2.1 added language/scenario/motivation/diagnostic/retry hardening. |
+| 1.8 | 26.08.2026 | Live run #3 reviewed; grounded-v2.2 added source-matched impact safety and presentation-only marker repair. |
+| 1.9 | 27.08.2026 | Live run #4 reviewed; Alice selected as final candidate, prompts hardened, causal-impact scoring tightened, run-4 regressions and dedicated Alice-only 8/8 machine gate added. |

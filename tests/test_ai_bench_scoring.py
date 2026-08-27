@@ -37,6 +37,7 @@ class ScoringTests(unittest.TestCase):
         cls.regressions = json.loads((ROOT / "evals/regressions/live-run-1.json").read_text(encoding="utf-8"))
         cls.regressions_v2 = json.loads((ROOT / "evals/regressions/live-run-2.json").read_text(encoding="utf-8"))
         cls.regressions_v3 = json.loads((ROOT / "evals/regressions/live-run-3.json").read_text(encoding="utf-8"))
+        cls.regressions_v4 = json.loads((ROOT / "evals/regressions/live-run-4.json").read_text(encoding="utf-8"))
 
     def _reference(self, case_id: str) -> dict:
         return json.loads((ROOT / "evals/expected/reference" / f"{case_id}.json").read_text(encoding="utf-8"))
@@ -315,6 +316,54 @@ class ScoringTests(unittest.TestCase):
         score = score_case(case, normalized, {"max_user_facing_technical_tokens": 0})
         self.assertFalse(score["passed"], score)
         self.assertIn("user_facing_technical_tokens", score["gate_failures"])
+
+    def test_live_run_4_alice_impact_phrases_are_hard_failures(self) -> None:
+        for sample in self.regressions_v4["patterns"]["alice_unsupported_impact_claims"]:
+            case = self.by_id[sample["case_id"]]
+            with self.subTest(case=case.case_id, text=sample["text"]):
+                content = self._reference(case.case_id)
+                content["paragraphs"][1]["kind"] = "candidate_fit"
+                content["paragraphs"][1]["text"] = sample["text"]
+                content["paragraphs"][1]["evidence_ids"] = sample["evidence_ids"]
+                score = score_case(case, content, {"max_unsupported_impact_claims": 0})
+                self.assertFalse(score["passed"], score)
+                self.assertGreaterEqual(score["unsupported_impact_claim_count"], 1)
+                self.assertIn("unsupported_impact_claims", score["gate_failures"])
+
+    def test_causal_language_is_tracked_even_with_another_impact_family(self) -> None:
+        case = self.by_id["cover-letter-ru-01"]
+        content = self._reference(case.case_id)
+        content["paragraphs"][1]["text"] = "Работа по SLA позволила мне улучшить качество обслуживания."
+        content["paragraphs"][1]["evidence_ids"] = ["c2"]
+        score = score_case(case, content, {"max_unsupported_impact_claims": 0})
+        self.assertFalse(score["passed"], score)
+        families = set(score["unsupported_impact_claims"][0]["unsupported_families"])
+        self.assertIn("causal_effect", families)
+        self.assertIn("quality_reliability", families)
+
+    def test_live_run_4_safe_literal_rewrites_remain_allowed(self) -> None:
+        for sample in self.regressions_v4["patterns"]["safe_literal_rewrites"]:
+            case = self.by_id[sample["case_id"]]
+            content = self._reference(case.case_id)
+            content["paragraphs"][1]["kind"] = "candidate_fit"
+            content["paragraphs"][1]["text"] = sample["text"]
+            content["paragraphs"][1]["evidence_ids"] = sample["evidence_ids"]
+            score = score_case(case, content, {"max_unsupported_impact_claims": 0})
+            self.assertNotIn("unsupported_impact_claims", score["gate_failures"], score)
+
+    def test_live_run_4_missing_scenario_provenance_remains_hard_failure(self) -> None:
+        sample = self.regressions_v4["patterns"]["alice_missing_scenario_provenance"]
+        case = self.by_id[sample["case_id"]]
+        content = self._reference(case.case_id)
+        target = content["questions"][1]
+        target["question"] = sample["question"]
+        target["purpose"] = sample["purpose"]
+        target["follow_up_if_weak"] = sample["follow_up_if_weak"]
+        target["evidence_ids"] = sample["evidence_ids"]
+        score = score_case(case, content, {"max_scenario_provenance_violations": 0})
+        self.assertFalse(score["passed"], score)
+        self.assertEqual(score["scenario_provenance_violation_count"], 1)
+        self.assertEqual(score["scenario_provenance_violations"][0]["required_evidence"], sample["required_evidence_id"])
 
     def test_schema_rejects_additional_property(self) -> None:
         schema = json.loads((ROOT / "evals/schemas/cover_letter.schema.json").read_text(encoding="utf-8"))

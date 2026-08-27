@@ -22,6 +22,8 @@ class PackageLayoutTests(unittest.TestCase):
         self.assertIn("evals/regressions/live-run-1.json", required_visible)
         self.assertIn("evals/regressions/live-run-2.json", required_visible)
         self.assertIn("evals/regressions/live-run-3.json", required_visible)
+        self.assertIn("evals/regressions/live-run-4.json", required_visible)
+        self.assertIn("evals/config/yandex-alice-final.json", required_visible)
         self.assertNotIn("evals/.gitignore", required_visible)
         self.assertNotIn("evals/artifacts/.gitkeep", required_visible)
 
@@ -30,6 +32,7 @@ class PackageLayoutTests(unittest.TestCase):
         required_repository = tuple(namespace["REQUIRED_REPOSITORY"])
         self.assertIn(".github/workflows/ci.yml", required_repository)
         self.assertIn("scripts/check_ai_bench_live_result.py", required_repository)
+        self.assertIn("scripts/check_ai_bench_alice_final_result.py", required_repository)
         self.assertNotIn(".github/workflows/ai-bench-live.yml", required_repository)
 
     def test_manual_live_job_runs_only_after_all_ordinary_ci_gates(self) -> None:
@@ -52,6 +55,19 @@ class PackageLayoutTests(unittest.TestCase):
         self.assertIn("group: ai-bench-001-yandex-live", workflow)
         self.assertIn("AI_BENCH_OUTPUT_DIR: /tmp/ai-bench-yandex-live", workflow)
         self.assertNotIn("AI_BENCH_OUTPUT_DIR: ${{ runner.temp", workflow)
+
+    def test_alice_final_job_is_manual_and_single_provider(self) -> None:
+        workflow = (ROOT / ".github/workflows/ci.yml").read_text(encoding="utf-8")
+        self.assertIn("run_ai_bench_alice_final:", workflow)
+        self.assertIn("ai-bench-yandex-alice-final:", workflow)
+        self.assertIn("name: AI-BENCH-001 Alice Final", workflow)
+        self.assertIn("inputs.run_ai_bench_alice_final == true", workflow)
+        self.assertIn("AI_BENCH_ALICE_FINAL_OUTPUT_DIR: /tmp/ai-bench-yandex-alice-final", workflow)
+        self.assertIn("--config evals/config/yandex-alice-final.json", workflow)
+        self.assertIn("scripts/check_ai_bench_alice_final_result.py", workflow)
+        config = __import__("json").loads((ROOT / "evals/config/yandex-alice-final.json").read_text(encoding="utf-8"))
+        self.assertEqual([item["id"] for item in config["providers"]], ["yandex-alice-ai-llm"])
+        self.assertEqual(config["thresholds"]["max_error_rate"], 0.0)
 
     def test_job_level_env_context_validator_rejects_runner_context(self) -> None:
         namespace = runpy.run_path(str(ROOT / "scripts/check_ai_bench_package.py"))
@@ -84,7 +100,7 @@ class PackageLayoutTests(unittest.TestCase):
 
     def test_grounded_v22_contract_is_package_gated(self) -> None:
         version = (ROOT / "evals/VERSION").read_text(encoding="utf-8").strip()
-        self.assertEqual(version, "1.4.0")
+        self.assertEqual(version, "1.4.1")
         vacancy_schema = (ROOT / "evals/schemas/vacancy_match.schema.json").read_text(encoding="utf-8")
         self.assertNotIn('"match_score"', vacancy_schema)
         for schema in (ROOT / "evals/schemas").glob("*.json"):

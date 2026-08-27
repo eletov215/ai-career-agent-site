@@ -33,7 +33,11 @@ The `reference` provider reads versioned expected outputs. It validates the runn
 
 ## Live candidates
 
-The repository includes `evals/config/yandex-live.json` for the approved AI-BENCH-001 Yandex comparison. The billable job is integrated into the existing `CI` workflow and executes only on `workflow_dispatch` when `run_ai_bench_live=true`; it depends on successful ordinary tests and package gates. Credentials are read only from `AI_BENCH_YANDEX_API_KEY` / `AI_BENCH_YANDEX_FOLDER_ID`. Runtime artifacts stay outside Git; the integrated live job writes to `/tmp/ai-bench-yandex-live`. The visible `evals/artifacts/README.md` scaffold is intentionally used instead of required dotfiles, and no separate workflow filename is required.
+The historical three-provider Yandex comparison remains available through `evals/config/yandex-live.json` and the manual `run_ai_bench_live=true` workflow input. It is retained for regression and investigative comparison, not as the next release gate.
+
+The current release gate is the Alice AI LLM-only verification in `evals/config/yandex-alice-final.json`. It runs only on `workflow_dispatch` when `run_ai_bench_alice_final=true`, after ordinary tests and the deterministic AI-BENCH package gate have passed. The job requires exactly one live provider (`yandex-alice-ai-llm`) and its final result checker requires 8/8 machine cases, zero provider errors, and zero hard-safety counters. A named human writing-quality review remains mandatory after the machine gate.
+
+Credentials are read only from `AI_BENCH_YANDEX_API_KEY` / `AI_BENCH_YANDEX_FOLDER_ID`. Runtime artifacts stay outside Git. The comparison job writes to `/tmp/ai-bench-yandex-live`; the Alice final job writes to `/tmp/ai-bench-yandex-alice-final`. The visible `evals/artifacts/README.md` scaffold is intentionally used instead of required dotfiles.
 
 Yandex authorization preflight: the service account needs the `ai.languageModels.user` role. The AI Studio key-creation page lists `yc.ai.languageModels.execute` for Model Gallery text generation, while current Completions guides also reference `yc.ai.foundationModels.execute`. The existing key uses `yc.ai.languageModels.execute`; because secret values and key metadata are not readable from the repository, the manual workflow preflight is the decisive check. If it returns a permission error, recreate the key through AI Studio's built-in **Create API key** flow.
 
@@ -78,8 +82,10 @@ Each run writes:
 - `presentation/<provider>/<case>.json` - presentation-safe copy with only simple decorated known evidence markers removed after scoring;
 - `manual_review_template.json` - pending named human-writing rubric, separate from machine safety gates.
 
-No provider may be selected from the deterministic reference run. A live comparative run plus manual rubric is the remaining external gate for AI-BENCH-001.
+No provider may be selected from the deterministic reference run. Comparative runs #1-#4 established Alice AI LLM as the final candidate; the remaining external gates are the dedicated Alice-only 8/8 machine verification and the named human writing-quality rubric.
 
-## Package version 1.4.0 - grounded-v2.2
+## Package version 1.4.1 - Alice final candidate
 
-Version 1.4.0 is the final safety-hardening candidate after live run #3. It keeps grounded-v2.1 numeric/language/scenario/diagnostic controls and adds source-matched impact-family validation for cover letters, versioned regressions for the unsupported Alice impact phrases found during manual review, and a narrow presentation sanitizer for decorated known evidence markers such as `(s1)` or `[c1]`. Machine scoring always runs on the unsanitized structured response first: missing evidence, unknown IDs, serialized schema/debug metadata, unsupported impact and other safety failures remain hard failures. Live-run #3 patterns are versioned in `evals/regressions/live-run-3.json`. Grounded-v2.2 scores are not directly comparable to earlier contracts. It does not add a production AI provider.
+Version 1.4.1 keeps the grounded-v2.2 machine-scoring contract and changes only the final candidate generation instructions and regression coverage after comparative live run #4. Cover-letter prompts explicitly require literal source facts and prohibit unsupported causal or outcome language. Interview prompts explicitly require scenario provenance in the same question object whenever a scenario number is used. The scorer now records causal-effect language independently of other impact families so combined phrases cannot bypass the unsupported-impact gate.
+
+The exact Alice failures from live run #4 and safe literal rewrites are versioned in `evals/regressions/live-run-4.json`. `evals/config/yandex-alice-final.json` contains only Alice AI LLM, and `scripts/check_ai_bench_alice_final_result.py` requires a complete 8/8 machine pass before the benchmark can proceed to named human review. This package does not connect any AI provider to production routes or user data.

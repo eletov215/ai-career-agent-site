@@ -1,0 +1,116 @@
+{
+  "source_run_id": "33050972910",
+  "provider": "yandex-alice-ai-llm",
+  "replay_evals_version": "1.4.1",
+  "dataset_version": "1.3.1",
+  "dataset_fingerprint": "e83621f50f1ed0a594bc9513901fa093c1815cf90ad1c7afa0d9bd4a4cfd2525",
+  "passed_count": 5,
+  "case_count": 8,
+  "results": [
+    {
+      "case_id": "resume-analysis-ru-01",
+      "passed": true,
+      "gate_failures": [],
+      "unsupported_impact_claims": [],
+      "scenario_provenance_violations": [],
+      "marker_cleanup_count": 0
+    },
+    {
+      "case_id": "resume-analysis-en-01",
+      "passed": true,
+      "gate_failures": [],
+      "unsupported_impact_claims": [],
+      "scenario_provenance_violations": [],
+      "marker_cleanup_count": 0
+    },
+    {
+      "case_id": "vacancy-match-ru-01",
+      "passed": true,
+      "gate_failures": [],
+      "unsupported_impact_claims": [],
+      "scenario_provenance_violations": [],
+      "marker_cleanup_count": 0
+    },
+    {
+      "case_id": "vacancy-match-en-01",
+      "passed": true,
+      "gate_failures": [],
+      "unsupported_impact_claims": [],
+      "scenario_provenance_violations": [],
+      "marker_cleanup_count": 0
+    },
+    {
+      "case_id": "cover-letter-ru-01",
+      "passed": false,
+      "gate_failures": [
+        "unsupported_impact_claims"
+      ],
+      "unsupported_impact_claims": [
+        {
+          "path": "$.paragraphs[1].text",
+          "reason": "impact_family_without_source_support",
+          "unsupported_families": [
+            "causal_effect",
+            "quality_reliability"
+          ],
+          "supported_families": []
+        }
+      ],
+      "scenario_provenance_violations": [],
+      "marker_cleanup_count": 0
+    },
+    {
+      "case_id": "cover-letter-en-01",
+      "passed": false,
+      "gate_failures": [
+        "unsupported_impact_claims"
+      ],
+      "unsupported_impact_claims": [
+        {
+          "path": "$.paragraphs[1].text",
+          "reason": "impact_family_without_source_support",
+          "unsupported_families": [
+            "quality_reliability"
+          ],
+          "supported_families": []
+        },
+        {
+          "path": "$.paragraphs[2].text",
+          "reason": "impact_family_without_source_support",
+          "unsupported_families": [
+            "quality_reliability"
+          ],
+          "supported_families": []
+        }
+      ],
+      "scenario_provenance_violations": [],
+      "marker_cleanup_count": 0
+    },
+    {
+      "case_id": "interview-ru-01",
+      "passed": false,
+      "gate_failures": [
+        "scenario_provenance"
+      ],
+      "unsupported_impact_claims": [],
+      "scenario_provenance_violations": [
+        {
+          "path": "$.questions[1].evidence_ids",
+          "number": "20%",
+          "reason": "scenario_number_without_scenario_evidence",
+          "required_evidence": "s1"
+        }
+      ],
+      "marker_cleanup_count": 1
+    },
+    {
+      "case_id": "interview-en-01",
+      "passed": true,
+      "gate_failures": [],
+      "unsupported_impact_claims": [],
+      "scenario_provenance_violations": [],
+      "marker_cleanup_count": 0
+    }
+  ],
+  "note": "Regression replay only. Prompt changes in dataset v1.3.1 cannot be evaluated without a new live call."
+}
