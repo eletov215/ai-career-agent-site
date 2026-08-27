@@ -3,11 +3,17 @@ from __future__ import annotations
 import json
 import unittest
 from copy import deepcopy
+from dataclasses import replace
 from pathlib import Path
 
 from evals.ai_bench.dataset import load_dataset
+from evals.ai_bench.models import SourceFact
 from evals.ai_bench.schema import validate_instance
-from evals.ai_bench.scoring import normalize_user_facing_evidence_markers, score_case
+from evals.ai_bench.scoring import (
+    normalize_structured_scenario_provenance,
+    normalize_user_facing_evidence_markers,
+    score_case,
+)
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -38,6 +44,7 @@ class ScoringTests(unittest.TestCase):
         cls.regressions_v2 = json.loads((ROOT / "evals/regressions/live-run-2.json").read_text(encoding="utf-8"))
         cls.regressions_v3 = json.loads((ROOT / "evals/regressions/live-run-3.json").read_text(encoding="utf-8"))
         cls.regressions_v4 = json.loads((ROOT / "evals/regressions/live-run-4.json").read_text(encoding="utf-8"))
+        cls.regressions_alice_final_1 = json.loads((ROOT / "evals/regressions/alice-final-run-1.json").read_text(encoding="utf-8"))
 
     def _reference(self, case_id: str) -> dict:
         return json.loads((ROOT / "evals/expected/reference" / f"{case_id}.json").read_text(encoding="utf-8"))
@@ -364,6 +371,72 @@ class ScoringTests(unittest.TestCase):
         self.assertFalse(score["passed"], score)
         self.assertEqual(score["scenario_provenance_violation_count"], 1)
         self.assertEqual(score["scenario_provenance_violations"][0]["required_evidence"], sample["required_evidence_id"])
+
+
+    def test_alice_final_unique_scenario_provenance_is_repaired_before_machine_scoring(self) -> None:
+        patterns = self.regressions_alice_final_1["patterns"]["repairable_scenario_provenance"]
+        for sample in patterns:
+            case = self.by_id[sample["case_id"]]
+            content = self._reference(case.case_id)
+            target = next(
+                question
+                for question in content["questions"]
+                if sample["required_evidence_id"] in question["evidence_ids"]
+            )
+            target["evidence_ids"] = list(sample["evidence_ids_before"])
+            if sample["number"] == "20%":
+                target["follow_up_if_weak"] = "Если 20 % ответов API ошибочны, что вы проверите дальше?"
+            elif sample["number"] == "15%":
+                target["follow_up_if_weak"] = "Suppose actuals are 15 % below forecast. What would you check first?"
+            else:
+                target["follow_up_if_weak"] = "What would you prioritize during the first 90 days?"
+            raw_score = score_case(case, content, {"max_scenario_provenance_violations": 0})
+            self.assertIn("scenario_provenance", raw_score["gate_failures"], raw_score)
+            normalized, audit = normalize_structured_scenario_provenance(case, content)
+            self.assertGreaterEqual(audit["scenario_provenance_repair_count"], 1)
+            repaired_question = next(
+                question for question in normalized["questions"]
+                if sample["required_evidence_id"] in question["evidence_ids"]
+                and sample["number"].replace("%", "") in json.dumps(question, ensure_ascii=False)
+            )
+            self.assertIn(sample["required_evidence_id"], repaired_question["evidence_ids"])
+            repaired_score = score_case(case, normalized, {"max_scenario_provenance_violations": 0})
+            self.assertNotIn("scenario_provenance", repaired_score["gate_failures"], repaired_score)
+
+    def test_ambiguous_scenario_number_is_never_auto_repaired(self) -> None:
+        case = self.by_id["interview-en-01"]
+        ambiguous_case = replace(
+            case,
+            source_facts=case.source_facts + (SourceFact("s9", "another hypothetical horizon 90 days", "scenario"),),
+        )
+        content = self._reference(case.case_id)
+        target = content["questions"][0]
+        target["follow_up_if_weak"] = "What would you prioritize during the first 90 days?"
+        target["evidence_ids"] = ["c1", "c2", "v2"]
+        normalized, audit = normalize_structured_scenario_provenance(ambiguous_case, content)
+        self.assertEqual(audit["scenario_provenance_repair_count"], 0)
+        self.assertNotIn("s2", normalized["questions"][0]["evidence_ids"])
+        self.assertNotIn("s9", normalized["questions"][0]["evidence_ids"])
+        score = score_case(ambiguous_case, normalized, {"max_scenario_provenance_violations": 0})
+        self.assertIn("scenario_provenance", score["gate_failures"], score)
+
+    def test_interview_response_cardinality_is_not_a_factual_number_claim(self) -> None:
+        sample = self.regressions_alice_final_1["patterns"]["safe_response_cardinality"]
+        case = self.by_id[sample["case_id"]]
+        content = self._reference(case.case_id)
+        content["questions"][0]["follow_up_if_weak"] = sample["text"]
+        score = score_case(case, content, {"max_unsupported_numbers": 0})
+        self.assertEqual(score["unsupported_numbers"], [], score)
+        self.assertNotIn("unsupported_numbers", score["gate_failures"], score)
+
+    def test_unsourced_interview_duration_remains_a_hard_failure(self) -> None:
+        sample = self.regressions_alice_final_1["patterns"]["unsafe_unsourced_duration"]
+        case = self.by_id[sample["case_id"]]
+        content = self._reference(case.case_id)
+        content["questions"][0]["follow_up_if_weak"] = sample["text"]
+        score = score_case(case, content, {"max_unsupported_numbers": 0})
+        self.assertTrue(any(item["value"] == sample["number"] for item in score["unsupported_numbers"]), score)
+        self.assertIn("unsupported_numbers", score["gate_failures"], score)
 
     def test_schema_rejects_additional_property(self) -> None:
         schema = json.loads((ROOT / "evals/schemas/cover_letter.schema.json").read_text(encoding="utf-8"))

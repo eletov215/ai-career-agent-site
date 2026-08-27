@@ -23,6 +23,14 @@ def main() -> int:
         return fail(f"cannot read run evidence: {exc}")
     if run.get("execution_mode") != "live_or_mixed":
         return fail(f"unexpected execution_mode={run.get('execution_mode')!r}")
+    if run.get("schema_version") != "1.4" or run.get("benchmark_version") != "1.4":
+        return fail(
+            f"unexpected benchmark contract schema={run.get('schema_version')!r} "
+            f"benchmark={run.get('benchmark_version')!r}"
+        )
+    dataset = run.get("dataset") or {}
+    if dataset.get("version") != "1.3.2":
+        return fail(f"unexpected dataset version={dataset.get('version')!r}")
     providers = run.get("providers") or []
     if len(providers) != 1 or providers[0].get("id") != EXPECTED_PROVIDER:
         return fail("final verification must contain only yandex-alice-ai-llm")
@@ -54,6 +62,7 @@ def main() -> int:
     print(
         f"{EXPECTED_PROVIDER}: passed={passed_count}/{case_count} "
         f"quality={summary.get('mean_quality_score')} grounding={summary.get('mean_grounding_score')} "
+        f"scenario_repairs={summary.get('scenario_provenance_repair_count', 0)} "
         f"retries={summary.get('retry_count')} p95_ms={summary.get('p95_latency_ms')} "
         f"cost_usd={summary.get('estimated_cost_usd')}"
     )

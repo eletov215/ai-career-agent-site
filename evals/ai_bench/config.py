@@ -24,8 +24,8 @@ def load_config(path: Path) -> tuple[dict[str, Any], Path, list[ProviderSpec]]:
         raise ConfigurationError(f"Cannot read benchmark config {path}: {exc}") from exc
     if not isinstance(config, dict):
         raise ConfigurationError("Benchmark config root must be an object")
-    if str(config.get("benchmark_version", "")) != "1.3":
-        raise ConfigurationError("benchmark_version must be '1.3'")
+    if str(config.get("benchmark_version", "")) != "1.4":
+        raise ConfigurationError("benchmark_version must be '1.4'")
 
     repo_root = find_repo_root(path.parent)
     providers_raw = config.get("providers")

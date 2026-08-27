@@ -429,10 +429,10 @@ jobs:
           print("# AI-BENCH-001 Yandex live result")
           print()
           print(f"Machine status: **{run.get('status')}**")
-          print(f"Benchmark contract: **{run.get('benchmark_version')} / grounded-v2.2**")
+          print(f"Benchmark contract: **{run.get('benchmark_version')} / grounded-v2.3**")
           print()
-          print("| Provider | Passed | Errors | Retries | Quality | Grounding | Language violations | Scenario violations | Marker cleanup | Clean text | Match consistency | Safety violations | Avg derived match | p50 ms | p95 ms | Est. cost USD |")
-          print("|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|")
+          print("| Provider | Passed | Errors | Retries | Quality | Grounding | Language violations | Scenario violations | Scenario repairs | Marker cleanup | Clean text | Match consistency | Safety violations | Avg derived match | p50 ms | p95 ms | Est. cost USD |")
+          print("|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|")
           for provider in run.get("providers", []):
               s = provider.get("summary") or {}
               safety = sum(int(s.get(key) or 0) for key in (
@@ -448,7 +448,7 @@ jobs:
               print(
                   f"| {provider.get('id')} | {s.get('passed_count')}/{s.get('case_count')} | {s.get('error_count')} | {s.get('retry_count')} | "
                   f"{s.get('mean_quality_score')} | {s.get('mean_grounding_score')} | {s.get('language_consistency_violation_count')} | "
-                  f"{s.get('scenario_provenance_violation_count')} | {s.get('user_facing_marker_cleanup_count')} | {s.get('mean_user_facing_cleanliness')} | "
+                  f"{s.get('scenario_provenance_violation_count')} | {s.get('scenario_provenance_repair_count')} | {s.get('user_facing_marker_cleanup_count')} | {s.get('mean_user_facing_cleanliness')} | "
                   f"{s.get('mean_match_consistency_score')} | {safety} | {s.get('mean_deterministic_match_score')} | "
                   f"{s.get('p50_latency_ms')} | {s.get('p95_latency_ms')} | {s.get('estimated_cost_usd')} |"
               )
@@ -533,16 +533,16 @@ jobs:
           print("# AI-BENCH-001 Alice final verification")
           print()
           print(f"Machine status: **{run.get('status')}**")
-          print(f"Dataset: **{(run.get('dataset') or {}).get('version')} / grounded-v2.2**")
+          print(f"Dataset: **{(run.get('dataset') or {}).get('version')} / grounded-v2.3**")
           print()
           provider = (run.get("providers") or [{}])[0]
           s = provider.get("summary") or {}
-          print("| Provider | Passed | Errors | Retries | Quality | Grounding | Impact | Scenario | Clean text | p50 ms | p95 ms | Est. cost USD |")
-          print("|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|")
+          print("| Provider | Passed | Errors | Retries | Quality | Grounding | Impact | Scenario | Scenario repairs | Clean text | p50 ms | p95 ms | Est. cost USD |")
+          print("|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|")
           print(
               f"| {provider.get('id')} | {s.get('passed_count')}/{s.get('case_count')} | {s.get('error_count')} | {s.get('retry_count')} | "
               f"{s.get('mean_quality_score')} | {s.get('mean_grounding_score')} | {s.get('unsupported_impact_claim_count')} | "
-              f"{s.get('scenario_provenance_violation_count')} | {s.get('mean_user_facing_cleanliness')} | "
+              f"{s.get('scenario_provenance_violation_count')} | {s.get('scenario_provenance_repair_count')} | {s.get('mean_user_facing_cleanliness')} | "
               f"{s.get('p50_latency_ms')} | {s.get('p95_latency_ms')} | {s.get('estimated_cost_usd')} |"
           )
           print()

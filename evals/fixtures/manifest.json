@@ -1,6 +1,6 @@
 {
   "dataset_id": "ai-career-agent-golden-v1",
-  "version": "1.3.1",
+  "version": "1.3.2",
   "synthetic": true,
   "languages": [
     "ru",
@@ -22,5 +22,5 @@
     "cases/interview-ru-01.json",
     "cases/interview-en-01.json"
   ],
-  "contract": "grounded-v2.2"
+  "contract": "grounded-v2.3"
 }

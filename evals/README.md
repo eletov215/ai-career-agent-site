@@ -8,7 +8,7 @@
 - required-field coverage;
 - evidence-based grounding and exact raw evidence-ID semantics;
 - forbidden/invented claims, unsupported impact claims, and internal-evidence leakage in user-facing text;
-- unsupported numeric claims, with explicit scenario-number provenance for interview hypotheticals;
+- unsupported factual numeric claims, with exact scenario-number provenance for interview hypotheticals and a narrow non-factual response-cardinality exception;
 - deterministic vacancy match scoring from weighted requirement classifications;
 - request error rate;
 - p50/p95 latency;
@@ -78,11 +78,22 @@ Each run writes:
 
 - `run.json` - machine-readable evidence;
 - `report.md` - human-readable comparison;
-- `responses/<provider>/<case>.json` - sanitized raw structured model outputs used for machine scoring;
-- `presentation/<provider>/<case>.json` - presentation-safe copy with only simple decorated known evidence markers removed after scoring;
+- `responses/<provider>/<case>.json` - sanitized raw structured provider output retained unchanged for audit;
+- `machine/<provider>/<case>.json` - machine-scored copy after only deterministic, one-to-one scenario-provenance normalization;
+- `presentation/<provider>/<case>.json` - presentation-safe copy after machine normalization plus removal of simple decorated known evidence markers;
 - `manual_review_template.json` - pending named human-writing rubric, separate from machine safety gates.
 
 No provider may be selected from the deterministic reference run. Comparative runs #1-#4 established Alice AI LLM as the final candidate; the remaining external gates are the dedicated Alice-only 8/8 machine verification and the named human writing-quality rubric.
+
+## Package version 1.5.0 - Alice Final v2 provenance normalization
+
+Version 1.5.0 advances the machine contract to benchmark `1.4`, dataset `1.3.2`, `grounded-v2.3`. Alice Final run #1 (`ai-bench-20260827T101353Z-bd9809d6`) completed all eight provider calls with zero transport errors/retries but scored 6/8 because the two interview cases exposed metadata/provenance behavior that is deterministically inferable from the known scenario inputs.
+
+The runner now preserves raw provider output, creates a separate machine copy, and may append an `sN` only when an exact normalized scenario-number token maps to exactly one scenario fact. Repairs are recorded in `normalization.scenario_provenance_repairs`; ambiguous or unknown numbers remain unresolved hard failures. The numeric safety gate also distinguishes a tightly-scoped response-cardinality instruction such as `give 2 examples` from a factual numeric claim, while unsourced durations, percentages, salary/experience figures and outcomes remain blocked.
+
+The retained 6/8 raw artifact replays 8/8 through the new deterministic layer with six audited scenario repairs, zero unresolved scenario violations and zero unsupported numbers. This is regression evidence only: the updated interview prompt (use each scenario at most once; avoid numeric answer-count wording) still requires a fresh Alice-only live run before human review.
+
+`evals/regressions/alice-final-run-1.json` and `docs/evidence/ai-bench-001/alice-final-run-1-grounded-v2.3-replay.json` preserve the observed failure classes and replay evidence. Production routes and user data remain outside this package.
 
 ## Package version 1.4.1 - Alice final candidate
 

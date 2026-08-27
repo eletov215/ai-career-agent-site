@@ -1,0 +1,45 @@
+{
+  "source_run_id": "ai-bench-20260827T101353Z-bd9809d6",
+  "source_contract": "grounded-v2.2 / benchmark 1.3",
+  "observed_status": "6/8 machine pass",
+  "patterns": {
+    "repairable_scenario_provenance": [
+      {
+        "case_id": "interview-ru-01",
+        "number": "20%",
+        "required_evidence_id": "s1",
+        "evidence_ids_before": ["c3", "v3"],
+        "field": "follow_up_if_weak"
+      },
+      {
+        "case_id": "interview-en-01",
+        "number": "90",
+        "required_evidence_id": "s2",
+        "evidence_ids_before": ["c1", "c2", "v2"],
+        "field": "follow_up_if_weak"
+      },
+      {
+        "case_id": "interview-en-01",
+        "number": "15%",
+        "required_evidence_id": "s1",
+        "evidence_ids_before": ["c3", "v3"],
+        "field": "follow_up_if_weak"
+      }
+    ],
+    "safe_response_cardinality": {
+      "case_id": "interview-ru-01",
+      "text": "Приведите 2–3 конкретных примера.",
+      "reason": "instructional answer count, not a candidate/scenario fact"
+    },
+    "unsafe_unsourced_duration": {
+      "case_id": "interview-ru-01",
+      "text": "Как бы вы выстроили план на первые 14 дней?",
+      "number": "14"
+    }
+  },
+  "policy": {
+    "scenario_repair": "Only exact normalized number tokens that map to exactly one kind=scenario fact may append that scenario ID to structured evidence_ids. Raw provider output remains retained for audit.",
+    "ambiguous_or_unknown": "No repair. The unresolved scenario-provenance or unsupported-number gate remains a hard failure.",
+    "response_cardinality": "Only tightly-scoped interview imperatives asking for a count of examples/options/steps/reasons are exempt from factual-number gating."
+  }
+}

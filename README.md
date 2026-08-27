@@ -7,13 +7,14 @@
 |---|---|
 | Production schema | `20260819_0014` |
 | Последний завершённый production-пакет | `SEARCH-005` |
-| Текущий пакет | `AI-BENCH-001` - Alice AI LLM final candidate hardening; НУЖНА ПРОВЕРКА GITHUB ACTIONS + ALICE-ONLY LIVE + NAMED MANUAL RUBRIC |
-| Comparative live run #4 | artifact `33050972910`: 24/24 calls, 0 errors/retries; Alice 5/8, Flash 5/8, YandexGPT Pro 4/8 under grounded-v2.2 |
-| Candidate decision | Alice AI LLM остаётся primary candidate; Flash - возможный future economy/low-risk option; YandexGPT Pro 5.1 не является leading primary candidate |
-| Hardening | `evals 1.4.1`, benchmark `1.3`, dataset `1.3.1` / `grounded-v2.2`: final prompt audit, causal-impact guard, live-run-4 regressions, dedicated Alice-only final job |
-| Следующий gate | green ordinary CI -> manual `run_ai_bench_alice_final=true` -> Alice 8/8 machine artifact -> named human writing rubric -> benchmark closure decision |
+| Текущий пакет | `AI-BENCH-001` - Alice Final v2 / provenance normalization; НУЖНА ПРОВЕРКА GITHUB ACTIONS + FRESH ALICE-ONLY LIVE + NAMED MANUAL RUBRIC |
+| Alice Final run #1 | artifact `33061758538`: 8/8 calls, 0 errors/retries; source machine result 6/8; оба FAIL локализованы в interview provenance/number-classification |
+| Regression replay | те же raw responses под `grounded-v2.3`: 8/8 PASS, 6 однозначных scenario-evidence repairs, 0 unresolved provenance, 0 unsupported numbers |
+| Candidate decision | Alice AI LLM остаётся primary candidate; provider decision не финализирован до machine 8/8 + named human rubric |
+| Hardening | `evals 1.5.0`, benchmark `1.4`, dataset `1.3.2` / `grounded-v2.3`: auditable unique scenario-provenance repair + narrow answer-cardinality numeric exception + prompt de-duplication |
+| Следующий gate | green ordinary CI -> manual `run_ai_bench_alice_final=true` -> fresh Alice 8/8 machine artifact -> named human writing rubric -> benchmark closure decision |
 | Следующий пакет | `AI-PROVIDER-001`, заблокирован до закрытия AI-BENCH-001 |
-| Канонические документы | PLAN `v1.4.41`, PROJECT PASSPORT `v2.55`, SOURCE AUDIT `v1.4.41`, AI-BENCH verification `v1.9` |
+| Канонические документы | PLAN `v1.4.42`, PROJECT PASSPORT `v2.56`, SOURCE AUDIT `v1.4.42`, AI-BENCH verification `v1.10` |
 
 Production Flask routes, dependencies, models, migrations, Render runtime and database schema are unchanged. Benchmark fixtures remain synthetic and credentials remain GitHub-secret-only.
 <!-- ACA-CANONICAL-STATUS:END -->
@@ -40,25 +41,27 @@ AI Career Agent — Flask/Gunicorn web-service карьерного сопров
 
 ## 3. AI-BENCH-001 Alice final verification
 
-`evals 1.4.1` keeps the grounded-v2.2 machine contract but hardens generation instructions after comparative live run #4:
+`evals 1.5.0` moves the final Alice candidate to benchmark `1.4` / dataset `1.3.2` / `grounded-v2.3` after Alice Final run #1 exposed two machine-contract defects rather than new provider transport problems:
 
-- Alice AI LLM is the only provider in `evals/config/yandex-alice-final.json`; the historical three-provider comparison remains available separately through `run_ai_bench_live`;
-- cover-letter prompts now require literal evidence-bound phrasing and explicitly rewrite unsupported causal/outcome language into neutral descriptions of verified actions;
-- causal language is tracked as an independent impact-safety family even when another impact family appears in the same paragraph;
-- interview prompts require a final per-question audit so every scenario number used in `question`, `purpose`, or `follow_up_if_weak` has its matching `sN` in the same `evidence_ids`;
-- exact failures from live run #4 are versioned in `evals/regressions/live-run-4.json`; safe literal rewrites are protected against false positives;
-- ordinary CI remains non-billable. The dedicated `AI-BENCH-001 Alice Final` job runs only on manual `workflow_dispatch` with `run_ai_bench_alice_final=true` and only after `Python tests` plus the deterministic AI-BENCH package gate pass;
-- the Alice final gate requires exactly one provider, zero transport errors, all eight cases machine-pass, and zero hard safety counters;
+- the raw Alice run completed 8/8 calls with zero errors/retries, but both interview cases omitted some `sN` provenance for scenario numbers;
+- one RU follow-up asked for `2-3` examples, which the previous generic number detector incorrectly treated as a factual numeric claim;
+- raw provider JSON is still retained in `responses/`; a separate deterministic `machine/` copy may append a scenario ID only when an exact normalized number maps to exactly one `kind=scenario` fact; every repair is audited;
+- unknown or ambiguous numbers are never repaired and remain hard failures; unsupported durations/percentages/experience/impact numbers remain blocked;
+- a tightly-scoped interview response-count phrase such as `give 2 examples` is treated as answer formatting, not a candidate/scenario fact;
+- RU/EN interview prompts now ask the model to use each scenario fact at most once, avoid repeated scenario numbers, and prefer non-numeric wording for answer-count instructions;
+- the retained Alice Final run #1 responses replay 8/8 under grounded-v2.3 with six audited scenario-provenance repairs and zero unresolved safety violations; this replay is not a new provider result;
+- ordinary CI remains non-billable. `AI-BENCH-001 Alice Final` still runs only on manual `workflow_dispatch` with `run_ai_bench_alice_final=true`;
+- the final checker now rejects old benchmark/dataset versions and still requires exactly one Alice provider, zero provider errors, all eight machine cases PASS and zero unresolved hard-safety counters;
 - machine pass still does not close AI-BENCH-001: the named human writing-quality rubric remains mandatory.
 
 Before upload:
 
 ```bash
 python scripts/check_ai_bench_package.py
-python -m unittest discover -s tests -p 'test_ai_bench_*.py' -v
+python -m unittest discover -s tests -p 'test_ai_bench*.py' -v
 ```
 
-After green ordinary CI, run `Actions -> CI -> Run workflow -> run_ai_bench_alice_final=true`. Do not run the full three-provider comparison again unless a regression investigation specifically requires it.
+After green ordinary CI, run `Actions -> CI -> Run workflow -> run_ai_bench_alice_final=true`. Do not reuse the old 6/8 artifact as the final provider result; it is regression evidence only.
 
 ## 4. Документация
 

@@ -262,8 +262,8 @@
     }
   ],
   "instructions": "A named human reviewer scores only writing quality, clarity and usefulness on the 1-5 scale. Machine safety/grounding gates remain authoritative and cannot be overridden by manual scores.",
-  "run_id": "ai-bench-20260827T085927Z-b9e8eef5",
-  "schema_version": "1.3",
+  "run_id": "ai-bench-20260827T104236Z-08fce3bb",
+  "schema_version": "1.4",
   "score_scale": {
     "anchors": {
       "1": "unacceptable",
