@@ -1,3 +1,9 @@
+## Package version 1.5.3 - Alice Final run #4 artifact-sanitization hotfix r1
+
+Alice Final run `ai-bench-20260828T111023Z-62a5cc1a` (artifact `33165683757`) is the first fresh grounded-v2.5 Alice-only result to pass all **8/8** machine cases with zero provider errors/retries and zero hard-safety counters. Raw/machine/presentation audit then found two `interview-en-01` purpose strings containing grouped known evidence markers such as `(c1, c2)` and `(c1, c2, v2)`. The existing presentation sanitizer handled only one known ID per bracket pair, so seven grouped IDs survived even though `purpose` is user-facing.
+
+Version 1.5.3 does not change prompts, provider calls, machine evidence semantics, thresholds, dataset `1.3.4`, contract `grounded-v2.5`, production routes, or database schema. It extends deterministic presentation cleanup only when an entire parenthesized/bracketed group consists exclusively of known source IDs separated by commas/semicolons; mixed or unknown groups remain unmodified and hard-fail metadata detection. The retained live raw responses replay 8/8 with 20 audited marker removals and zero residual evidence IDs in declared user-facing paths. After green ordinary CI, the remaining AI-BENCH-001 gate is the named human writing-quality rubric; another billable Alice call is not required for this sanitizer-only correction.
+
 ## Package version 1.5.2 - Alice Final v4 contract corrections
 
 Version 1.5.2 advances the dataset to `1.3.4` / `grounded-v2.5`. It keeps all grounded-v2.4 hard safety gates and adds two narrow corrections from Alice Final run `ai-bench-20260828T102540Z-bcf4c2ed`: an audited `candidate_fit` -> `motivation` repair when future learning cites only an explicitly disclosed unverified-gap candidate fact plus vacancy evidence, and response-cardinality recognition for imperative counts of resources/approaches. Verified skills, unsupported impact, durations, percentages, salary, experience numbers and outcomes remain hard failures. The RU/EN prompts are tightened accordingly, and the Alice Final run #2 regression methods are restored to ordinary unittest discovery. No production application behavior changes.
@@ -39,7 +45,7 @@ The `reference` provider reads versioned expected outputs. It validates the runn
 
 The historical three-provider Yandex comparison remains available through `evals/config/yandex-live.json` and the manual `run_ai_bench_live=true` workflow input. It is retained for regression and investigative comparison, not as the next release gate.
 
-The current release gate is the Alice AI LLM-only verification in `evals/config/yandex-alice-final.json`. It runs only on `workflow_dispatch` when `run_ai_bench_alice_final=true`, after ordinary tests and the deterministic AI-BENCH package gate have passed. The job requires exactly one live provider (`yandex-alice-ai-llm`) and its final result checker requires 8/8 machine cases, zero provider errors, and zero hard-safety counters. A named human writing-quality review remains mandatory after the machine gate.
+The Alice AI LLM-only verification in `evals/config/yandex-alice-final.json` runs only on `workflow_dispatch` when `run_ai_bench_alice_final=true`, after ordinary tests and the deterministic AI-BENCH package gate have passed. Run `ai-bench-20260828T111023Z-62a5cc1a` has now satisfied the required 8/8 machine cases, zero provider errors and zero hard-safety counters. Artifact-sanitization hotfix r1 must pass ordinary CI; after that, the remaining external gate is the named human writing-quality review.
 
 Credentials are read only from `AI_BENCH_YANDEX_API_KEY` / `AI_BENCH_YANDEX_FOLDER_ID`. Runtime artifacts stay outside Git. The comparison job writes to `/tmp/ai-bench-yandex-live`; the Alice final job writes to `/tmp/ai-bench-yandex-alice-final`. The visible `evals/artifacts/README.md` scaffold is intentionally used instead of required dotfiles.
 
@@ -84,10 +90,10 @@ Each run writes:
 - `report.md` - human-readable comparison;
 - `responses/<provider>/<case>.json` - sanitized raw structured provider output retained unchanged for audit;
 - `machine/<provider>/<case>.json` - machine-scored copy after only deterministic, one-to-one scenario-provenance normalization;
-- `presentation/<provider>/<case>.json` - presentation-safe copy after machine normalization plus removal of simple decorated known evidence markers;
+- `presentation/<provider>/<case>.json` - presentation-safe copy after machine normalization plus audited removal of decorated known evidence markers, including groups made only of known IDs;
 - `manual_review_template.json` - pending named human-writing rubric, separate from machine safety gates.
 
-No provider may be selected from the deterministic reference run. Comparative runs #1-#4 established Alice AI LLM as the final candidate; the remaining external gates are the dedicated Alice-only 8/8 machine verification and the named human writing-quality rubric.
+No provider may be selected from the deterministic reference run. Comparative runs #1-#4 established Alice AI LLM as the final candidate, and Alice Final run #4 satisfied the dedicated 8/8 machine gate. After artifact-sanitization hotfix r1 is green in ordinary CI, the remaining external gate is the named human writing-quality rubric.
 
 ## Package version 1.5.0 - Alice Final v2 provenance normalization
 

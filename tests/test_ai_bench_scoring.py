@@ -48,6 +48,7 @@ class ScoringTests(unittest.TestCase):
         cls.regressions_alice_final_1 = json.loads((ROOT / "evals/regressions/alice-final-run-1.json").read_text(encoding="utf-8"))
         cls.regressions_alice_final_2 = json.loads((ROOT / "evals/regressions/alice-final-run-2.json").read_text(encoding="utf-8"))
         cls.regressions_alice_final_3 = json.loads((ROOT / "evals/regressions/alice-final-run-3.json").read_text(encoding="utf-8"))
+        cls.regressions_alice_final_4 = json.loads((ROOT / "evals/regressions/alice-final-run-4.json").read_text(encoding="utf-8"))
 
     def _reference(self, case_id: str) -> dict:
         return json.loads((ROOT / "evals/expected/reference" / f"{case_id}.json").read_text(encoding="utf-8"))
@@ -294,6 +295,30 @@ class ScoringTests(unittest.TestCase):
             normalized, audit = normalize_user_facing_evidence_markers(case, content)
             self.assertEqual(normalized["questions"][0]["question"], sample["expected"])
             self.assertEqual(audit["user_facing_marker_cleanup_count"], 1)
+
+    def test_grouped_known_evidence_markers_are_removed_before_user_display(self) -> None:
+        for sample in self.regressions_alice_final_4["patterns"]["grouped_known_marker_cleanup"]:
+            case = self.by_id[sample["case_id"]]
+            with self.subTest(text=sample["input"]):
+                content = self._reference(case.case_id)
+                content["questions"][0]["purpose"] = sample["input"]
+                normalized, audit = normalize_user_facing_evidence_markers(case, content)
+                self.assertEqual(normalized["questions"][0]["purpose"], sample["expected"] )
+                expected_removed = 4 if "v1, v2" in sample["input"] else 3
+                self.assertEqual(audit["user_facing_marker_cleanup_count"], expected_removed)
+
+    def test_grouped_marker_with_unknown_id_is_not_silently_cleaned(self) -> None:
+        sample = self.regressions_alice_final_4["patterns"]["unknown_group_must_not_be_cleaned"]
+        case = self.by_id[sample["case_id"]]
+        content = self._reference(case.case_id)
+        content["questions"][0]["purpose"] = sample["input"]
+        normalized, audit = normalize_user_facing_evidence_markers(case, content)
+        self.assertEqual(normalized["questions"][0]["purpose"], sample["input"] )
+        self.assertEqual(audit["user_facing_marker_cleanup_count"], 0)
+        score = score_case(case, normalized, {"max_user_facing_technical_tokens": 0})
+        self.assertFalse(score["passed"], score)
+        self.assertTrue(any(item["token"] == sample["unknown_id"] for item in score["user_facing_technical_tokens"]), score)
+        self.assertIn("user_facing_technical_tokens", score["gate_failures"])
 
     def test_marker_cleanup_does_not_substitute_structured_scenario_provenance(self) -> None:
         case = self.by_id["interview-ru-01"]

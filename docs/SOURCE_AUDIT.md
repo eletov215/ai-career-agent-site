@@ -1,4 +1,4 @@
-# AI Career Agent - аудит источников v1.4.44
+# AI Career Agent - аудит источников v1.4.45
 
 **Дата:** 28.08.2026  
 **Production revision:** `20260819_0014`
@@ -7,12 +7,12 @@
 |---|---|
 | Проверяемая кодовая основа | `ai-career-agent-site-main (28).zip` |
 | ZIP comment | `fd2c544f687109a42299421be8ec6030a6d5567f` |
-| Проверяемый пакет | AI-BENCH-001 Alice Final v4 / grounded-v2.5 contract corrections |
-| Evals | `1.5.2` |
+| Проверяемый пакет | AI-BENCH-001 Alice Final run #4 / artifact-sanitization hotfix r1 |
+| Evals | `1.5.3` |
 | Benchmark contract | `1.4` |
 | Dataset | `ai-career-agent-golden-v1` v`1.3.4`, `contract=grounded-v2.5` |
-| External evidence | Alice Final run #3 artifact `33163009779`; run ID `ai-bench-20260828T102540Z-bcf4c2ed` |
-| Результат | grounded-v2.5 local hotfix + replay 8/8 готовы; нужен ordinary GitHub CI + fresh Alice-only 8/8 machine run + named manual rubric |
+| External evidence | Alice Final run #4 artifact `33165683757`; run ID `ai-bench-20260828T111023Z-62a5cc1a` |
+| Результат | fresh Alice-only live machine gate 8/8 COMPLETE; sanitizer hotfix r1 нужен ordinary GitHub CI, затем named human rubric |
 
 ## 1. Source precedence
 
@@ -20,7 +20,36 @@
 
 Историческая проверка `main (26)` относилась к Alice Final run #1 и сохранена ниже только как provenance предыдущего шага. Текущая рабочая база этой версии — `main (28)`; run #3 относится к `grounded-v2.4` state перед настоящим hotfix `grounded-v2.5`.
 
-## 2. Alice Final run #3 audit
+
+## 2. Alice Final run #4 audit
+
+Artifact `ai-bench-001-yandex-alice-final-33165683757.zip` / run `ai-bench-20260828T111023Z-62a5cc1a` содержит 8 raw responses, 8 machine responses, 8 presentation responses, `run.json`, `report.md` и pending manual-review template.
+
+| Метрика | Значение |
+|---|---:|
+| API calls | 8/8 |
+| Provider errors | 0 |
+| Retries | 0 |
+| Machine pass | **8/8** |
+| Mean quality | 0.999479 |
+| Mean grounding | 0.994792 |
+| Language consistency | 1.000 |
+| Match consistency | 1.000 |
+| p50 | 3734.228 ms |
+| p95 | 8872.01 ms |
+| Estimated cost | USD 0.052416386 |
+
+Все hard-safety counters равны нулю. Live machine gate закрыт.
+
+Raw/machine/presentation audit выявил один deterministic presentation defect: в `interview-en-01` два user-facing `purpose` содержали grouped known evidence markers `(c1, c2)` / `(v1, v2)` и `(c1, c2, v2)`. Grounded-v2.5 sanitizer удалил 13 одиночных markers, но не умел очищать несколько known IDs внутри одной пары скобок. Так как `purpose` входит в declared user-facing paths, manual rubric нельзя начинать на таком presentation artifact.
+
+Artifact-sanitization hotfix r1 расширяет только presentation cleanup: полностью known-ID groups через comma/semicolon удаляются и каждый ID аудируется; mixed/unknown groups остаются нетронутыми и hard-fail metadata gate. Retained raw responses replay 8/8, scenario repairs 3, marker cleanups 20, residual user-facing evidence IDs 0. Evidence: `docs/evidence/ai-bench-001/alice-final-run-4-presentation-replay.json`.
+
+Local bounded repository verification после hotfix: **358 passed, 14 environment-dependent skipped, 19 subtests passed**; AI-BENCH package gate PASS; repository hygiene PASS.
+
+Повторный billable Alice call не требуется: prompts, provider input/output, raw responses, machine safety semantics и thresholds не меняются. Следующий gate - ordinary GitHub CI/package gate для sanitizer hotfix, затем named human writing-quality rubric.
+
+## 3. Alice Final run #3 audit
 
 Artifact `ai-bench-001-yandex-alice-final-33163009779.zip` / run `ai-bench-20260828T102540Z-bcf4c2ed` содержит 8 raw responses, 8 machine responses, 8 presentation responses, `run.json`, `report.md` и pending manual-review template.
 

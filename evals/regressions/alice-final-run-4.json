@@ -1,0 +1,30 @@
+{
+  "source_run_id": "ai-bench-20260828T111023Z-62a5cc1a",
+  "source_artifact": "ai-bench-001-yandex-alice-final-33165683757.zip",
+  "source_contract": "grounded-v2.5 / benchmark 1.4 / dataset 1.3.4",
+  "observed_status": "8/8 machine pass; artifact audit found grouped known evidence markers in two interview-en purpose strings",
+  "patterns": {
+    "grouped_known_marker_cleanup": [
+      {
+        "case_id": "interview-en-01",
+        "input": "Assess the candidate’s practical experience in forecasting (c1, c2) and its relevance to the FP&A analyst role (v1, v2).",
+        "expected": "Assess the candidate’s practical experience in forecasting and its relevance to the FP&A analyst role."
+      },
+      {
+        "case_id": "interview-en-01",
+        "input": "Assess communication and collaboration skills in the forecasting process (c1, c2, v2), ensuring alignment between financial plans and business needs.",
+        "expected": "Assess communication and collaboration skills in the forecasting process, ensuring alignment between financial plans and business needs."
+      }
+    ],
+    "unknown_group_must_not_be_cleaned": {
+      "case_id": "interview-en-01",
+      "input": "Assess forecasting evidence (c1, z9).",
+      "unknown_id": "z9"
+    }
+  },
+  "policy": {
+    "presentation_cleanup": "A parenthesized or bracketed group is presentation-repairable only when the entire group consists exclusively of known source IDs separated by commas or semicolons. Every removed ID is audited. Mixed or unknown groups remain untouched and are hard metadata failures.",
+    "machine_boundary": "The live provider result remains 8/8. This correction changes deterministic presentation sanitation and regression coverage only; raw provider output, machine evidence semantics, thresholds, prompts, production routes and database schema are unchanged.",
+    "manual_review_boundary": "Named human writing-quality review begins only after the presentation artifact is confirmed free of technical source-ID leakage."
+  }
+}

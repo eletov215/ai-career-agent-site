@@ -3,13 +3,45 @@
 | Поле | Значение |
 |---|---|
 | Документ | AI_BENCH_VERIFICATION_STATUS |
-| Версия | 1.12 |
+| Версия | 1.13 |
 | Дата | 28 августа 2026 |
-| Пакет | AI-BENCH-001 Alice Final v4 / grounded-v2.5 contract corrections |
-| Статус | ЛОКАЛЬНЫЙ HOTFIX ГОТОВ; НУЖНА ПРОВЕРКА GITHUB ACTIONS + FRESH ALICE-ONLY 8/8 MACHINE RUN + NAMED MANUAL RUBRIC |
+| Пакет | AI-BENCH-001 Alice Final run #4 / artifact-sanitization hotfix r1 |
+| Статус | LIVE MACHINE 8/8 COMPLETE; НУЖНА ПРОВЕРКА ORDINARY CI ДЛЯ SANITIZER HOTFIX + NAMED HUMAN RUBRIC |
 | Production revision | `20260819_0014` |
 
-## 1. Подтверждённый Alice Final run #3
+## 1. Подтверждённый Alice Final run #4
+
+Sanitized artifact `ai-bench-001-yandex-alice-final-33165683757.zip` разобран полностью.
+
+- run ID: `ai-bench-20260828T111023Z-62a5cc1a`;
+- benchmark `1.4`, dataset `1.3.4`, contract `grounded-v2.5`;
+- provider: `yandex-alice-ai-llm`;
+- 8/8 API calls завершены; provider errors 0; retries 0;
+- **machine result: 8/8 PASS**;
+- mean quality `0.999479`; mean grounding `0.994792`; language `1.000`; match consistency `1.000`;
+- p50 `3734.228 ms`; p95 `8872.01 ms`; estimated cost `USD 0.052416386`;
+- invalid evidence IDs 0; unsupported numbers 0; unsupported impact claims 0; scenario provenance violations 0; user-facing technical-token hard failures 0.
+
+The dedicated live machine gate is complete.
+
+### Artifact audit finding
+
+`interview-en-01` presentation retained two grouped known-ID decorations in user-facing `purpose` strings: `(c1, c2)` / `(v1, v2)` and `(c1, c2, v2)`. Existing grounded-v2.5 cleanup removed 13 simple one-ID markers but did not match a comma-separated group. This is a deterministic presentation sanitizer defect, not a provider grounding/safety failure.
+
+### Artifact-sanitization hotfix r1 / evals 1.5.3
+
+- grouped parenthesized/bracketed markers are cleaned only when the whole group contains known IDs separated by commas/semicolons;
+- every removed ID is audited;
+- mixed or unknown groups are never silently cleaned and remain hard metadata failures;
+- prompts, provider I/O, machine evidence semantics, thresholds, production routes and schema are unchanged.
+
+Retained raw run #4 responses replay: **8/8 PASS**, 3 scenario repairs, 20 marker cleanups, 0 residual evidence IDs in declared user-facing paths. Evidence: `docs/evidence/ai-bench-001/alice-final-run-4-presentation-replay.json`.
+
+Local bounded repository verification: **358 passed, 14 environment-dependent skipped, 19 subtests passed**; AI-BENCH package gate PASS; repository hygiene PASS.
+
+A second billable Alice run is not required for this presentation-only deterministic correction.
+
+## 2. Подтверждённый Alice Final run #3
 
 Sanitized artifact `ai-bench-001-yandex-alice-final-33163009779.zip` разобран полностью.
 
@@ -136,19 +168,17 @@ Replay machine-readable evidence: `docs/evidence/ai-bench-001/alice-final-run-1-
 
 ## 7. Remaining external gate
 
-1. Upload v1.4.44 through the normal GitHub PR/CI path.
-2. Require green `Python tests`, `AI-BENCH-001 package gate` and all historical gates.
-3. On ordinary push the billable Alice job must remain skipped.
-4. Run `Actions -> CI -> Run workflow -> run_ai_bench_alice_final=true` on `main`.
-5. Require benchmark `1.4`, dataset `1.3.4`, exactly one provider `yandex-alice-ai-llm`, 8/8 machine PASS, zero provider errors and zero unresolved hard-safety counters.
-6. Scenario provenance repair count may be non-zero only when every repair is the audited unique exact-number mapping defined by grounded-v2.3; the count remains visible in report/run evidence.
-7. Download the sanitized artifact and review raw/machine/presentation differences.
-8. Only after machine 8/8 complete the named human writing-quality rubric.
-9. Record AI-BENCH-001 closure decision; only then unblock `AI-PROVIDER-001`.
+1. Upload v1.4.45 / evals 1.5.3 through the normal GitHub PR/CI path.
+2. Require green `Python tests`, `AI-BENCH-001 package gate`, repository hygiene and all historical gates.
+3. The paid Alice workflow should remain skipped on ordinary push; **do not rerun it solely for this sanitizer-only fix**.
+4. Confirm the versioned run #4 presentation replay remains 8/8 with zero residual user-facing evidence IDs.
+5. Complete the named **human** writing-quality rubric for all eight Alice presentation outputs.
+6. Record AI-BENCH-001 closure decision; only then unblock `AI-PROVIDER-001`.
 
 ## 8. Status decision
 
-`AI-BENCH-001` remains **НУЖДАЕТСЯ ВО ВНЕШНЕЙ ПРОВЕРКЕ**.  
+`AI-BENCH-001` remains **НУЖДАЕТСЯ В ПРОВЕРКЕ** only for ordinary CI of the artifact sanitizer and the named human rubric.  
+The dedicated Alice live machine gate is **COMPLETE: 8/8**.  
 Alice AI LLM remains the **PRIMARY CANDIDATE**, not yet a production provider.  
 `AI-PROVIDER-001` remains **BLOCKED**.  
 No production AI provider is connected.
@@ -176,3 +206,4 @@ Run `ai-bench-20260827T112440Z-243eaaeb` completed 8/8 calls with zero errors/re
 Artifact `33163009779` / run `ai-bench-20260828T102540Z-bcf4c2ed` completed 8/8 calls with zero provider errors/retries and machine result 6/8. Grounded-v2.5 addresses only the confirmed paragraph-kind/intent and response-cardinality mismatches, restores run #2 regression test discovery, and replays the retained raw responses 8/8. Fresh Alice-only 8/8 live verification plus named human writing review remain mandatory.
 
 | 1.12 | 28.08.2026 | Alice Final run #3 reviewed; grounded-v2.5 hotfix/replay 8/8 prepared; fresh live gate still pending. |
+| 1.13 | 28.08.2026 | Alice Final run #4 artifact `33165683757`: 8/8 live machine PASS, 0 errors/retries. Artifact audit found grouped known evidence markers in two user-facing EN interview purpose strings. Evals 1.5.3 adds deterministic grouped-marker sanitation; retained raw replay remains 8/8 with 20 cleanups and 0 residual user-facing IDs. Remaining gate: ordinary CI + named human rubric. |
