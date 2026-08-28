@@ -5,7 +5,7 @@
 | Документ | AI_BENCH_VERIFICATION_STATUS |
 | Версия | 1.10 |
 | Дата | 27 августа 2026 |
-| Пакет | AI-BENCH-001 Alice Final v2 / grounded-v2.3 provenance normalization |
+| Пакет | AI-BENCH-001 Alice Final v3 / grounded-v2.4 contract corrections |
 | Статус | НУЖНА ПРОВЕРКА GITHUB ACTIONS + FRESH ALICE-ONLY MACHINE RUN + NAMED MANUAL RUBRIC |
 | Production revision | `20260819_0014` |
 
@@ -121,3 +121,11 @@ No production AI provider is connected.
 | 1.8 | 26.08.2026 | Live run #3 reviewed; grounded-v2.2 added source-matched impact safety and presentation-only marker repair. |
 | 1.9 | 27.08.2026 | Comparative live run #4 reviewed; Alice selected as final candidate and dedicated Alice-only 8/8 gate added. |
 | 1.10 | 27.08.2026 | Alice Final run #1 artifact `33061758538` reviewed: 8/8 transport, 6/8 raw machine. Grounded-v2.3 adds auditable unique scenario-provenance normalization, narrow response-cardinality classification and requires a fresh Alice-only verification before human review. |
+
+## 2026-08-28 - Alice Final v3 / grounded-v2.4
+
+Artifact `ai-bench-20260827T112440Z-243eaaeb` completed 8/8 calls with zero provider errors/retries and machine result 6/8. The two confirmed contract issues are addressed without weakening hard safety gates: Unicode dash variants are normalized for lexical grounding; vacancy-only explicit future-intent `candidate_fit` paragraphs may be audibly reclassified to `motivation`; interview prompts explicitly require complete role-evidence coverage. Fresh Alice-only 8/8 live verification and named human writing review remain mandatory before closing AI-BENCH-001.
+## Alice Final run #2 and grounded-v2.4
+
+Run `ai-bench-20260827T112440Z-243eaaeb` completed 8/8 calls with zero errors/retries and scored 6/8. `cover-letter-ru-01` failed because a vacancy-only explicit future-intent paragraph was mislabeled `candidate_fit`; `interview-ru-01` failed partly because Unicode non-breaking hyphens prevented lexical grounding of `тест‑кейсы` and because v1/v2 were absent from structured evidence. Grounded-v2.4 fixes those contract mismatches narrowly and audibly; existing-skill claims, missing evidence, invalid IDs and unsupported impact remain hard failures. Fresh 8/8 Alice-only verification is required before named human review.
+

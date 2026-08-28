@@ -1,3 +1,12 @@
+## 2026-08-28 - AI-BENCH-001 Alice Final v3 / grounded-v2.4 / evals 1.5.1
+
+- Reviewed Alice Final run `ai-bench-20260827T112440Z-243eaaeb` (artifact 33066898884): 8/8 calls, 0 provider errors/retries, machine result 6/8.
+- Fixed lexical grounding false-negative for Unicode non-breaking hyphen/dash variants such as `тест‑кейсы`.
+- Added narrow audited reclassification of vacancy-only explicit future-intent `candidate_fit` paragraphs to `motivation`; existing-skill claims are never repaired.
+- Strengthened RU/EN interview prompts to cover c1-c4 and v1-v4 evidence, including v1/v2 for manual-testing questions.
+- Added `evals/regressions/alice-final-run-2.json`.
+- Production application boundary and DB revision remain unchanged.
+
 ## 2026-08-27 - AI-BENCH-001 Alice Final v2 / grounded-v2.3 / evals 1.5.0
 
 - Reviewed Alice Final run #1 artifact `33061758538`: 8/8 calls, 0 provider errors, 0 retries, source machine result 6/8.

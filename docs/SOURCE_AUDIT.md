@@ -1,4 +1,4 @@
-# AI Career Agent - аудит источников v1.4.42
+# AI Career Agent - аудит источников v1.4.43
 
 **Дата:** 27.08.2026  
 **Production revision:** `20260819_0014`
@@ -7,10 +7,10 @@
 |---|---|
 | Проверяемая кодовая основа | `ai-career-agent-site-main (26).zip` |
 | ZIP comment | `49b648cd304479d55fc23ef243c6b9c0abdeaaec` |
-| Проверяемый пакет | AI-BENCH-001 Alice Final v2 / grounded-v2.3 provenance normalization |
-| Evals | `1.5.0` |
+| Проверяемый пакет | AI-BENCH-001 Alice Final v3 / grounded-v2.4 contract corrections |
+| Evals | `1.5.1` |
 | Benchmark contract | `1.4` |
-| Dataset | `ai-career-agent-golden-v1` v`1.3.2`, `contract=grounded-v2.3` |
+| Dataset | `ai-career-agent-golden-v1` v`1.3.3`, `contract=grounded-v2.4` |
 | External evidence | Alice Final run #1 artifact `33061758538`; run ID `ai-bench-20260827T101353Z-bd9809d6` |
 | Результат | локальный candidate готов; нужен ordinary GitHub CI + fresh Alice-only 8/8 machine run + named manual rubric |
 
@@ -121,3 +121,11 @@ Production schema остаётся `20260819_0014`. GitHub/Yandex secret values 
 | 1.4.40 | 26.08.2026 | Live run #3 reviewed; grounded-v2.2 comparative safety hardening prepared. |
 | 1.4.41 | 27.08.2026 | Comparative live run #4 reviewed; Alice chosen as final candidate and dedicated Alice-only gate added. |
 | 1.4.42 | 27.08.2026 | Alice Final run #1 reviewed: 8/8 transport, 6/8 source machine. Grounded-v2.3 adds auditable unique scenario-provenance normalization and narrow answer-cardinality classification; retained responses replay 8/8, fresh Alice-only live verification still required. |
+
+## 2026-08-28 - Alice Final v3 / grounded-v2.4
+
+Artifact `ai-bench-20260827T112440Z-243eaaeb` completed 8/8 calls with zero provider errors/retries and machine result 6/8. The two confirmed contract issues are addressed without weakening hard safety gates: Unicode dash variants are normalized for lexical grounding; vacancy-only explicit future-intent `candidate_fit` paragraphs may be audibly reclassified to `motivation`; interview prompts explicitly require complete role-evidence coverage. Fresh Alice-only 8/8 live verification and named human writing review remain mandatory before closing AI-BENCH-001.
+## v1.4.43 source delta
+
+Source basis: current `main (27)` plus Alice Final artifact `33066898884`. The implementation delta is limited to AI-BENCH scoring/normalization, runner/reporting, interview fixtures/prompts, versioned regressions/tests/package checks, CI labels and canonical documentation. Production application files and database revision are unchanged.
+

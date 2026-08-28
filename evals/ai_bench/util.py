@@ -97,6 +97,11 @@ def flatten_text(value: Any) -> str:
 
 def normalize_text(value: str) -> str:
     value = value.casefold().replace("ё", "е")
+    # Treat common Unicode hyphen/dash characters as the same token separator as
+    # ASCII hyphen. Provider prose frequently emits non-breaking hyphen U+2011
+    # (for example ``тест‑кейсы``), while dataset terms use ``-``. Grounding
+    # matching must not fail only because typography differs.
+    value = re.sub(r"[\u2010\u2011\u2012\u2013\u2014\u2212]", "-", value)
     value = re.sub(r"[^\w%+.#/-]+", " ", value, flags=re.UNICODE)
     return re.sub(r"\s+", " ", value).strip()
 
