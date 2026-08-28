@@ -13,6 +13,7 @@ from .errors import BenchmarkError
 from .providers import create_provider
 from .reporting import write_markdown_report
 from .scoring import (
+    normalize_cover_letter_motivation_kind,
     normalize_structured_scenario_provenance,
     normalize_user_facing_evidence_markers,
     score_case,
@@ -105,10 +106,11 @@ class BenchmarkRunner:
                 }
                 try:
                     response = provider.invoke(case, schema)
-                    machine_content, scenario_normalization = normalize_structured_scenario_provenance(case, response.content)
+                    scenario_content, scenario_normalization = normalize_structured_scenario_provenance(case, response.content)
+                    machine_content, kind_normalization = normalize_cover_letter_motivation_kind(case, scenario_content)
                     score = score_case(case, machine_content, self.thresholds)
                     presentation_content, marker_normalization = normalize_user_facing_evidence_markers(case, machine_content)
-                    normalization = {**scenario_normalization, **marker_normalization}
+                    normalization = {**scenario_normalization, **kind_normalization, **marker_normalization}
                     cost = _estimate_cost(response.input_tokens, response.output_tokens, pricing)
                     result.update(
                         {
@@ -161,6 +163,8 @@ class BenchmarkRunner:
                             "normalization": {
                                 "scenario_provenance_repair_count": 0,
                                 "scenario_provenance_repairs": [],
+                                "cover_letter_kind_repair_count": 0,
+                                "cover_letter_kind_repairs": [],
                                 "user_facing_marker_cleanup_count": 0,
                                 "user_facing_marker_cleanups": [],
                             },
@@ -200,7 +204,7 @@ class BenchmarkRunner:
             "The included dataset is synthetic and intentionally excludes production user PII.",
             "Human writing-quality rubrics remain pending until a named reviewer records scores.",
             "Vacancy numeric match scores are derived deterministically from requirement classifications; models do not author the score field.",
-            "Grounded-v2.3 adds deterministic marker cleanup, uniquely inferable scenario-evidence repair, and expanded impact-safety gates; its quality scores are not directly comparable to earlier contracts.",
+            "Grounded-v2.4 retains deterministic marker cleanup and uniquely inferable scenario-evidence repair, adds Unicode dash normalization, auditable motivation-kind repair, and stronger interview role-evidence prompts; its quality scores are not directly comparable to earlier contracts.",
             "Language consistency and unresolved scenario-number provenance are machine-gated before manual writing review; exact one-to-one scenario evidence repairs are recorded separately.",
             "Live OpenAI-compatible adapters may perform at most one explicitly configured bounded retry; retry evidence is retained in safe diagnostics.",
         ]
@@ -344,6 +348,10 @@ def _summarize_provider(results: list[dict[str, Any]]) -> dict[str, Any]:
         "scenario_provenance_violation_count": sum(score.get("scenario_provenance_violation_count", 0) for score in scores),
         "scenario_provenance_repair_count": sum(
             int((result.get("normalization") or {}).get("scenario_provenance_repair_count") or 0)
+            for result in results
+        ),
+        "cover_letter_kind_repair_count": sum(
+            int((result.get("normalization") or {}).get("cover_letter_kind_repair_count") or 0)
             for result in results
         ),
         "match_consistency_violation_count": sum(len(score.get("match_evaluation", {}).get("violations", [])) for score in scores),

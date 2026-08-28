@@ -10,6 +10,7 @@ from evals.ai_bench.dataset import load_dataset
 from evals.ai_bench.models import SourceFact
 from evals.ai_bench.schema import validate_instance
 from evals.ai_bench.scoring import (
+    normalize_cover_letter_motivation_kind,
     normalize_structured_scenario_provenance,
     normalize_user_facing_evidence_markers,
     score_case,
@@ -45,6 +46,7 @@ class ScoringTests(unittest.TestCase):
         cls.regressions_v3 = json.loads((ROOT / "evals/regressions/live-run-3.json").read_text(encoding="utf-8"))
         cls.regressions_v4 = json.loads((ROOT / "evals/regressions/live-run-4.json").read_text(encoding="utf-8"))
         cls.regressions_alice_final_1 = json.loads((ROOT / "evals/regressions/alice-final-run-1.json").read_text(encoding="utf-8"))
+        cls.regressions_alice_final_2 = json.loads((ROOT / "evals/regressions/alice-final-run-2.json").read_text(encoding="utf-8"))
 
     def _reference(self, case_id: str) -> dict:
         return json.loads((ROOT / "evals/expected/reference" / f"{case_id}.json").read_text(encoding="utf-8"))
@@ -448,3 +450,49 @@ class ScoringTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+    def test_alice_final_run_2_vacancy_only_future_intent_repairs_to_motivation(self) -> None:
+        sample = self.regressions_alice_final_2["patterns"]["vacancy_only_future_intent"]
+        case = self.by_id[sample["case_id"]]
+        content = self._reference(case.case_id)
+        content["paragraphs"][2]["kind"] = sample["kind_before"]
+        content["paragraphs"][2]["text"] = sample["text"]
+        content["paragraphs"][2]["evidence_ids"] = sample["evidence_ids"]
+        raw_score = score_case(case, content, {"max_claim_evidence_violations": 0})
+        self.assertIn("claim_evidence", raw_score["gate_failures"], raw_score)
+        normalized, audit = normalize_cover_letter_motivation_kind(case, content)
+        self.assertEqual(audit["cover_letter_kind_repair_count"], 1)
+        self.assertEqual(normalized["paragraphs"][2]["kind"], sample["expected_kind_after"])
+        repaired_score = score_case(case, normalized, {"max_claim_evidence_violations": 0})
+        self.assertNotIn("claim_evidence", repaired_score["gate_failures"], repaired_score)
+
+    def test_alice_final_run_2_existing_skill_claim_is_not_reclassified(self) -> None:
+        sample = self.regressions_alice_final_2["patterns"]["vacancy_only_existing_skill_must_not_repair"]
+        case = self.by_id[sample["case_id"]]
+        content = self._reference(case.case_id)
+        content["paragraphs"][2]["kind"] = sample["kind_before"]
+        content["paragraphs"][2]["text"] = sample["text"]
+        content["paragraphs"][2]["evidence_ids"] = sample["evidence_ids"]
+        normalized, audit = normalize_cover_letter_motivation_kind(case, content)
+        self.assertEqual(audit["cover_letter_kind_repair_count"], 0)
+        self.assertEqual(normalized["paragraphs"][2]["kind"], "candidate_fit")
+        score = score_case(case, normalized, {"max_claim_evidence_violations": 0})
+        self.assertIn("claim_evidence", score["gate_failures"], score)
+
+    def test_alice_final_run_2_unicode_nonbreaking_hyphen_matches_grounding_term(self) -> None:
+        sample = self.regressions_alice_final_2["patterns"]["unicode_nonbreaking_hyphen_grounding"]
+        case = self.by_id[sample["case_id"]]
+        content = self._reference(case.case_id)
+        content["questions"][0]["question"] = sample["text"]
+        score = score_case(case, content, {"min_grounding_score": 0.0})
+        self.assertNotIn(sample["required_grounding_id"], score["missing_grounding_requirements"], score)
+
+    def test_interview_prompt_requires_role_evidence_coverage(self) -> None:
+        for case_id in ("interview-ru-01", "interview-en-01"):
+            case = self.by_id[case_id]
+            system_prompt = case.messages[0]["content"]
+            with self.subTest(case=case_id):
+                self.assertIn("v1", system_prompt)
+                self.assertIn("v2", system_prompt)
+                self.assertIn("c1", system_prompt)
+                self.assertIn("c4", system_prompt)
+

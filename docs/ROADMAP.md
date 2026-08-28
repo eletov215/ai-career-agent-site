@@ -47,3 +47,4 @@ AI-BENCH-001 grounded-v2.3 Alice Final v2 -> green ordinary CI
 ## AI-BENCH-001 current boundary
 
 No provider is selected and no production AI route/schema is added. The integrated manual job is an evaluation-only transport and cannot run until the complete ordinary CI matrix succeeds.
+- `AI-BENCH-001 Alice Final v3 / evals 1.5.1 / grounded-v2.4` - **НУЖНА ПРОВЕРКА**: fresh Alice-only 8/8 machine gate, then named human rubric.

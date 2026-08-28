@@ -30,8 +30,8 @@ def render_markdown_report(run: dict[str, Any]) -> str:
         "",
         "## Provider summary",
         "",
-        "| Provider | Cases | Passed | Errors | Retries | Quality | Grounding | Language | Scenario provenance | Scenario repairs | Marker cleanup | Clean text | Match consistency | Safety violations | p50 ms | p95 ms | Est. cost USD |",
-        "|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|",
+        "| Provider | Cases | Passed | Errors | Retries | Quality | Grounding | Language | Scenario provenance | Scenario repairs | Kind repairs | Marker cleanup | Clean text | Match consistency | Safety violations | p50 ms | p95 ms | Est. cost USD |",
+        "|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|",
     ]
     for provider in safe["providers"]:
         summary = provider["summary"]
@@ -46,7 +46,7 @@ def render_markdown_report(run: dict[str, Any]) -> str:
             + int(summary.get("match_consistency_violation_count") or 0)
         )
         lines.append(
-            "| {id} | {cases} | {passed} | {errors} | {retries} | {quality} | {grounding} | {language} | {scenario} | {scenario_repairs} | {cleanup} | {clean} | {match} | {safety} | {p50} | {p95} | {cost} |".format(
+            "| {id} | {cases} | {passed} | {errors} | {retries} | {quality} | {grounding} | {language} | {scenario} | {scenario_repairs} | {kind_repairs} | {cleanup} | {clean} | {match} | {safety} | {p50} | {p95} | {cost} |".format(
                 id=provider["id"],
                 cases=summary["case_count"],
                 passed=summary["passed_count"],
@@ -57,6 +57,7 @@ def render_markdown_report(run: dict[str, Any]) -> str:
                 language=_fmt(1.0 if not summary.get("language_consistency_violation_count") else 0.0),
                 scenario=_fmt(1.0 if not summary.get("scenario_provenance_violation_count") else 0.0),
                 scenario_repairs=summary.get("scenario_provenance_repair_count", 0),
+                kind_repairs=summary.get("cover_letter_kind_repair_count", 0),
                 cleanup=summary.get("user_facing_marker_cleanup_count", 0),
                 clean=_fmt(summary.get("mean_user_facing_cleanliness")),
                 match=_fmt(summary.get("mean_match_consistency_score")),
@@ -71,14 +72,14 @@ def render_markdown_report(run: dict[str, Any]) -> str:
         "",
         "## Case results",
         "",
-        "| Provider | Case | Result | Retries | Quality | Grounding | Language | Scenario | Scenario repairs | Marker cleanup | Clean text | Invalid evidence | Impact | Match violations | Derived match | Latency ms |",
-        "|---|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|",
+        "| Provider | Case | Result | Retries | Quality | Grounding | Language | Scenario | Scenario repairs | Kind repairs | Marker cleanup | Clean text | Invalid evidence | Impact | Match violations | Derived match | Latency ms |",
+        "|---|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|",
     ])
     for result in safe["results"]:
         score = result.get("score") or {}
         match = score.get("match_evaluation") or {}
         lines.append(
-            "| {provider} | {case} | {status} | {retries} | {quality} | {grounding} | {language} | {scenario} | {scenario_repairs} | {cleanup} | {clean} | {invalid} | {impact} | {match_v} | {derived} | {latency} |".format(
+            "| {provider} | {case} | {status} | {retries} | {quality} | {grounding} | {language} | {scenario} | {scenario_repairs} | {kind_repairs} | {cleanup} | {clean} | {invalid} | {impact} | {match_v} | {derived} | {latency} |".format(
                 provider=result["provider_id"],
                 case=result["case_id"],
                 status="PASS" if result.get("passed") else "FAIL",
@@ -88,6 +89,7 @@ def render_markdown_report(run: dict[str, Any]) -> str:
                 language=_fmt(score.get("language_consistency_score")),
                 scenario=_fmt(score.get("scenario_provenance_score")),
                 scenario_repairs=int((result.get("normalization") or {}).get("scenario_provenance_repair_count") or 0),
+                kind_repairs=int((result.get("normalization") or {}).get("cover_letter_kind_repair_count") or 0),
                 cleanup=int((result.get("normalization") or {}).get("user_facing_marker_cleanup_count") or 0),
                 clean=_fmt(score.get("user_facing_cleanliness")),
                 invalid=len(score.get("invalid_evidence_ids") or []),
@@ -100,7 +102,7 @@ def render_markdown_report(run: dict[str, Any]) -> str:
 
     lines.extend([
         "",
-        "## Grounded-v2.3 contract interpretation",
+        "## Grounded-v2.4 contract interpretation",
         "",
         "- Evidence identifiers must be exact raw IDs. Simple decorated markers such as `(s1)`/`[s1]` are removed by deterministic display normalization; serialized metadata labels remain hard failures.",
         "- Resume `facts_not_verified` and cover-letter `caveats` are structured objects with their own evidence references.",
@@ -112,6 +114,8 @@ def render_markdown_report(run: dict[str, Any]) -> str:
         "- Percent formatting is Unicode-normalized, so 20%, 20 % and 20\u202f% represent the same grounded number.",
         "- RU/EN user-facing language consistency is a separate hard gate.",
         "- Cover letters distinguish candidate_fit from vacancy-grounded motivation paragraphs.",
+        "- Unicode hyphen/dash variants are normalized for lexical grounding only; evidence semantics are unchanged.",
+        "- Vacancy-only candidate_fit paragraphs are reclassified to motivation only for explicit future-intent/motivation wording, with an audit record.",
         "- Live provider diagnostics record only safe envelope shape/status metadata; raw provider bodies and refusal text are never persisted.",
         "- Human writing-quality rubrics remain pending; the runner never fabricates manual-review scores.",
         "",

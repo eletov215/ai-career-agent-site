@@ -459,6 +459,59 @@ def _evidence_kind_map(case: BenchmarkCase) -> dict[str, str]:
     return {fact.fact_id: fact.kind for fact in case.source_facts}
 
 
+_MOTIVATION_INTENT_RE = re.compile(
+    r"(?iu)(?:\bготов(?:а|ы)?\b|\bхоч(?:у|ет|ется)\b|\bинтерес(?:ен|на|но|ует|уюсь)\b|"
+    r"\bстрем(?:люсь|ится|имся|иться)\b|\bразвива(?:ться|юсь|емся)\b|\bмотивирован(?:а|ы)?\b|"
+    r"\bбуду\s+рад(?:а)?\b|\binterested\b|\bexcited\b|\bkeen\b|\beager\b|"
+    r"\bmotivated\b|\blook\s+forward\b|\bwould\s+welcome\b|\bgrow\b|\bdevelop\b)"
+)
+
+
+def normalize_cover_letter_motivation_kind(case: BenchmarkCase, content: Any) -> tuple[Any, dict[str, Any]]:
+    """Repair a narrowly provable cover-letter paragraph-kind mismatch.
+
+    Alice may occasionally label a vacancy-grounded future-intent paragraph as
+    ``candidate_fit``. Reclassification to ``motivation`` is allowed only when:
+    - the task is cover_letter;
+    - the paragraph currently has kind=candidate_fit;
+    - it cites at least one vacancy fact and zero candidate facts; and
+    - its user-facing text contains an explicit motivation/future-intent cue.
+
+    Existing-skill claims are never repaired. Any vacancy-only candidate_fit
+    paragraph without the explicit cue remains a hard claim-evidence failure.
+    """
+    normalized = copy.deepcopy(content)
+    repairs: list[dict[str, str]] = []
+    if case.task != "cover_letter" or not isinstance(normalized, dict):
+        return normalized, {"cover_letter_kind_repair_count": 0, "cover_letter_kind_repairs": repairs}
+    kinds = _evidence_kind_map(case)
+    paragraphs = normalized.get("paragraphs")
+    if not isinstance(paragraphs, list):
+        return normalized, {"cover_letter_kind_repair_count": 0, "cover_letter_kind_repairs": repairs}
+    for index, paragraph in enumerate(paragraphs):
+        if not isinstance(paragraph, dict) or paragraph.get("kind") != "candidate_fit":
+            continue
+        evidence = paragraph.get("evidence_ids")
+        text = paragraph.get("text")
+        if not isinstance(evidence, list) or not isinstance(text, str):
+            continue
+        candidate_ids = [str(item) for item in evidence if kinds.get(str(item)) == "candidate"]
+        vacancy_ids = [str(item) for item in evidence if kinds.get(str(item)) == "vacancy"]
+        if candidate_ids or not vacancy_ids or not _MOTIVATION_INTENT_RE.search(text):
+            continue
+        paragraph["kind"] = "motivation"
+        repairs.append({
+            "path": f"$.paragraphs[{index}].kind",
+            "from": "candidate_fit",
+            "to": "motivation",
+            "reason": "vacancy_only_explicit_motivation_intent",
+        })
+    return normalized, {
+        "cover_letter_kind_repair_count": len(repairs),
+        "cover_letter_kind_repairs": repairs,
+    }
+
+
 def _claim_evidence_violations(case: BenchmarkCase, content: Any) -> list[dict[str, str]]:
     if case.task != "cover_letter" or not isinstance(content, dict):
         return []

@@ -6,7 +6,7 @@
 <!-- ACA-CANONICAL-STATUS:START -->
 ## Канонический статус плана
 
-**Документ:** AI Career Agent PLAN_CURRENT `v1.4.42`  
+**Документ:** AI Career Agent PLAN_CURRENT `v1.4.43`  
 **Дата:** 2026-08-27  
 **Production revision:** `20260819_0014`  
 **Текущий пакет:** `AI-BENCH-001 - ALICE FINAL V2 / GROUNDED-V2.3; НУЖНА ПРОВЕРКА GITHUB ACTIONS + FRESH ALICE-ONLY 8/8 MACHINE RUN + NAMED MANUAL RUBRIC`
@@ -16,12 +16,12 @@
 - Alice Final run #1 artifact `33061758538` проверен: 8/8 provider calls, 0 provider errors, 0 retries, source machine result 6/8;
 - оба FAIL относятся к interview structured provenance: разрешённые scenario numbers использовались без matching `sN` в тех же question objects; RU-кейс дополнительно дал false positive на инструкцию `2-3 примера`;
 - resume analysis RU/EN, vacancy match RU/EN и cover letter RU/EN прошли source machine gate;
-- offline replay тех же raw responses под grounded-v2.3 даёт 8/8 после 6 однозначных audited scenario-evidence repairs и narrow answer-cardinality classification; replay не является новым provider result;
+- Alice Final run #2 (`ai-bench-20260827T112440Z-243eaaeb`) дал 6/8 при 8/8 transport; grounded-v2.4 исправляет подтвержденные contract issues без ослабления hard safety gates;
 - Alice AI LLM остаётся primary candidate, но production provider ещё не выбран.
 
 ### Alice Final v2 hardening
 
-- `evals 1.5.0`, benchmark `1.4`, dataset `1.3.2`, `contract=grounded-v2.3`;
+- `evals 1.5.1`, benchmark `1.4`, dataset `1.3.3`, `contract=grounded-v2.4`;
 - raw provider response сохраняется без изменений в `responses/`; отдельный `machine/` слой допускает только однозначное exact-number -> single-scenario `sN` provenance repair перед scoring;
 - ambiguous/unknown scenario mapping не исправляется и остаётся hard failure; все repairs фиксируются с path/number/evidence ID и выводятся в summary/report;
 - `presentation/` строится после machine scoring и удаляет только простые decorated known markers, не меняя safety result;
@@ -31,7 +31,7 @@
 
 ### Текущий gate
 
-Upload v1.4.42 -> green ordinary GitHub CI -> `Actions -> CI -> Run workflow -> run_ai_bench_alice_final=true` -> fresh Alice benchmark 1.4 / dataset 1.3.2 -> 8/8 machine PASS with zero unresolved safety violations -> named human writing-quality rubric. Only then may `AI-BENCH-001` close and `AI-PROVIDER-001` start.
+Upload v1.4.43 -> green ordinary GitHub CI -> `Actions -> CI -> Run workflow -> run_ai_bench_alice_final=true` -> fresh Alice benchmark 1.4 / dataset 1.3.3 -> 8/8 machine PASS with zero unresolved safety violations -> named human writing-quality rubric. Only then may `AI-BENCH-001` close and `AI-PROVIDER-001` start.
 
 ### Очередь
 
@@ -45,7 +45,7 @@ Upload v1.4.42 -> green ordinary GitHub CI -> `Actions -> CI -> Run workflow -> 
 | Дата | 27 августа 2026 |
 | Статус | ДЕЙСТВУЮЩИЙ |
 | Основа кода | пользовательский ZIP `ai-career-agent-site-main (26).zip`, актуальный `main` после Alice Final run #1 |
-| Текущий пакет | AI-BENCH-001 Alice Final v2 / grounded-v2.3 - НУЖНА ПРОВЕРКА ordinary CI, fresh Alice-only 8/8 live machine gate и named manual rubric |
+| Текущий пакет | AI-BENCH-001 Alice Final v3 / grounded-v2.4 - НУЖНА ПРОВЕРКА ordinary CI, fresh Alice-only 8/8 live machine gate и named manual rubric |
 
 > ОБЯЗАТЕЛЬНО ДЛЯ КАЖДОГО НОВОГО ЧАТА: прочитать этот план, новый паспорт и актуальный архив. После завершения любого пункта вернуть обновлённые DOCX/PDF/Markdown, новый ZIP, доказательства проверки и запись в журнале версий.
 
@@ -61,7 +61,7 @@ Upload v1.4.42 -> green ordinary GitHub CI -> `Actions -> CI -> Run workflow -> 
 - Версия 1.4.39 фиксирует grounded-v2.1 hardening после live run #2 artifact 32972783843: Unicode percent normalization, scenario provenance, RU/EN language gate, cover-letter motivation semantics, safe provider diagnostics and one bounded retry prepared for live run #3.
 - Версия 1.4.40 фиксирует grounded-v2.2 final safety hardening после live run #3 artifact 32978362483: source-matched impact families, regressions на реальные Alice outcome-inferences и post-score presentation sanitizer prepared for live run #4.
 - Версия 1.4.41 фиксирует comparative live run #4 artifact 33050972910 и Alice-final candidate: prompt-level literal fact discipline, independent causal-impact safety, live-run-4 regressions and a dedicated Alice-only 8/8 machine verification job.
-- Версия 1.4.42 фиксирует Alice Final run #1 artifact 33061758538: 8/8 transport, 6/8 raw machine; grounded-v2.3 вводит raw/machine/presentation evidence layers, audited unique scenario-provenance repair, narrow answer-cardinality numeric classification and требует fresh Alice-only verification.
+- Версия 1.4.43 фиксирует Alice Final run #2 artifact 33066898884: 8/8 transport, 6/8 machine. Grounded-v2.4 добавляет Unicode dash normalization, узкий audited candidate_fit->motivation repair для vacancy-only future intent и более строгий interview evidence coverage prompt; fresh Alice-only verification обязателен.
 - Версия 1.4.34 фиксирует live Yandex candidate: manual-only workflow, Alice AI LLM/Flash/YandexGPT Pro 5.1, structured JSON Schema output, current pricing snapshot and GitHub-secret-only credentials.
 - Версия 1.4.35 фиксирует CI-stability hotfix r2: SYNC worker cache assertions отвязаны от календарного 7-дневного search filter; AI-BENCH package contract использует browser-upload-safe visible scaffold и не зависит от dotfiles.
 - Версия 1.4.36 фиксирует workflow-layout hotfix r3: live Yandex job встроен в существующий `ci.yml`, отдельный `.yml` больше не нужен, а manual API run зависит от полного green CI.
@@ -1727,3 +1727,13 @@ GitHub/production/API: <подтверждено или требуется>
 | Версия | Дата | Пакет | Изменение |
 |---|---|---|---|
 | 1.4.42 | 27.08.2026 | AI-BENCH-001-ALICE-FINAL-V2 | Alice Final run #1 artifact `33061758538` reviewed: 8/8 calls, 0 errors/retries, source machine 6/8. Both FAILs are interview provenance/number-classification issues. Evals 1.5.0 / benchmark 1.4 / dataset 1.3.2 / grounded-v2.3 adds raw/machine/presentation separation, audited unique scenario-evidence repair, narrow answer-cardinality classification and tighter scenario-use prompts. Offline replay of retained raw responses is 8/8; fresh Alice-only live verification and named human rubric remain mandatory. |
+
+## 2026-08-28 - Alice Final v3 / grounded-v2.4
+
+Artifact `ai-bench-20260827T112440Z-243eaaeb` completed 8/8 calls with zero provider errors/retries and machine result 6/8. The two confirmed contract issues are addressed without weakening hard safety gates: Unicode dash variants are normalized for lexical grounding; vacancy-only explicit future-intent `candidate_fit` paragraphs may be audibly reclassified to `motivation`; interview prompts explicitly require complete role-evidence coverage. Fresh Alice-only 8/8 live verification and named human writing review remain mandatory before closing AI-BENCH-001.
+### PLAN_CURRENT v1.4.43 update
+
+| Версия | Дата | Пакет | Изменение |
+|---|---|---|---|
+| 1.4.43 | 28.08.2026 | AI-BENCH-001-ALICE-FINAL-V3 | Artifact `33066898884` reviewed: 8/8 calls, 0 errors/retries, 6/8 machine. Grounded-v2.4 adds Unicode dash normalization for lexical grounding, a narrow audited vacancy-only future-intent `candidate_fit` -> `motivation` repair, stronger interview evidence coverage, and regression coverage for both observed failures. Production revision remains `20260819_0014`. |
+

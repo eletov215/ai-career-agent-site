@@ -66,7 +66,7 @@ class PackageLayoutTests(unittest.TestCase):
         self.assertIn("AI_BENCH_ALICE_FINAL_OUTPUT_DIR: /tmp/ai-bench-yandex-alice-final", workflow)
         self.assertIn("--config evals/config/yandex-alice-final.json", workflow)
         self.assertIn("scripts/check_ai_bench_alice_final_result.py", workflow)
-        self.assertIn("grounded-v2.3", workflow)
+        self.assertIn("grounded-v2.4", workflow)
         self.assertIn("scenario_provenance_repair_count", workflow)
         config = __import__("json").loads((ROOT / "evals/config/yandex-alice-final.json").read_text(encoding="utf-8"))
         self.assertEqual([item["id"] for item in config["providers"]], ["yandex-alice-ai-llm"])
@@ -104,7 +104,7 @@ class PackageLayoutTests(unittest.TestCase):
 
     def test_grounded_v23_contract_is_package_gated(self) -> None:
         version = (ROOT / "evals/VERSION").read_text(encoding="utf-8").strip()
-        self.assertEqual(version, "1.5.0")
+        self.assertEqual(version, "1.5.1")
         vacancy_schema = (ROOT / "evals/schemas/vacancy_match.schema.json").read_text(encoding="utf-8")
         self.assertNotIn('"match_score"', vacancy_schema)
         for schema in (ROOT / "evals/schemas").glob("*.json"):

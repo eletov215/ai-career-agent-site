@@ -1,3 +1,7 @@
+## Package version 1.5.1 - Alice Final v3 contract corrections
+
+Version 1.5.1 advances the dataset to `1.3.3` / `grounded-v2.4`. It keeps all grounded-v2.3 safety gates and adds: Unicode hyphen/dash normalization for lexical grounding; an audited, narrow vacancy-only future-intent paragraph reclassification from `candidate_fit` to `motivation`; stronger RU/EN interview role-evidence coverage instructions; and regressions from Alice Final run `ai-bench-20260827T112440Z-243eaaeb`. No production application behavior changes.
+
 # AI-BENCH-001
 
 `evals/` is an isolated, provider-agnostic evaluation package for AI Career Agent. It does not import the Flask application, does not register production routes, does not read production user data, and does not require a database migration.

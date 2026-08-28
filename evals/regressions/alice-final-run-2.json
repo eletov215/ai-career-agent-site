@@ -1,0 +1,34 @@
+{
+  "source_run_id": "ai-bench-20260827T112440Z-243eaaeb",
+  "source_contract": "grounded-v2.3 / benchmark 1.4 / dataset 1.3.2",
+  "observed_status": "6/8 machine pass",
+  "patterns": {
+    "vacancy_only_future_intent": {
+      "case_id": "cover-letter-ru-01",
+      "kind_before": "candidate_fit",
+      "evidence_ids": ["v2"],
+      "text": "Готов развиваться в направлении системной работы с обращениями и совершенствовать коммуникационные навыки.",
+      "expected_kind_after": "motivation"
+    },
+    "vacancy_only_existing_skill_must_not_repair": {
+      "case_id": "cover-letter-ru-01",
+      "kind_before": "candidate_fit",
+      "evidence_ids": ["v2"],
+      "text": "У меня сильные коммуникационные навыки и большой опыт системной работы с обращениями."
+    },
+    "unicode_nonbreaking_hyphen_grounding": {
+      "case_id": "interview-ru-01",
+      "text": "Опишите процесс составления тест‑кейсов и баг‑репортов.",
+      "required_grounding_id": "testcases"
+    },
+    "required_interview_role_evidence": {
+      "case_id": "interview-ru-01",
+      "required_ids": ["v1", "v2"]
+    }
+  },
+  "policy": {
+    "motivation_repair": "Only vacancy-only candidate_fit paragraphs with an explicit future-intent/motivation cue may be reclassified to motivation. Existing-skill claims are never repaired.",
+    "dash_normalization": "Unicode hyphen/dash variants are normalized to ASCII hyphen for lexical grounding comparisons only.",
+    "evidence_coverage": "Generation prompts explicitly require role-evidence coverage; missing required IDs remain a hard grounding failure."
+  }
+}

@@ -11,10 +11,10 @@
 | Alice Final run #1 | artifact `33061758538`: 8/8 calls, 0 errors/retries; source machine result 6/8; оба FAIL локализованы в interview provenance/number-classification |
 | Regression replay | те же raw responses под `grounded-v2.3`: 8/8 PASS, 6 однозначных scenario-evidence repairs, 0 unresolved provenance, 0 unsupported numbers |
 | Candidate decision | Alice AI LLM остаётся primary candidate; provider decision не финализирован до machine 8/8 + named human rubric |
-| Hardening | `evals 1.5.0`, benchmark `1.4`, dataset `1.3.2` / `grounded-v2.3`: auditable unique scenario-provenance repair + narrow answer-cardinality numeric exception + prompt de-duplication |
+| Hardening | `evals 1.5.1`, benchmark `1.4`, dataset `1.3.3` / `grounded-v2.4`: auditable unique scenario-provenance repair + narrow answer-cardinality numeric exception + prompt de-duplication |
 | Следующий gate | green ordinary CI -> manual `run_ai_bench_alice_final=true` -> fresh Alice 8/8 machine artifact -> named human writing rubric -> benchmark closure decision |
 | Следующий пакет | `AI-PROVIDER-001`, заблокирован до закрытия AI-BENCH-001 |
-| Канонические документы | PLAN `v1.4.42`, PROJECT PASSPORT `v2.56`, SOURCE AUDIT `v1.4.42`, AI-BENCH verification `v1.10` |
+| Канонические документы | PLAN `v1.4.43`, PROJECT PASSPORT `v2.57`, SOURCE AUDIT `v1.4.43`, AI-BENCH verification `v1.11` |
 
 Production Flask routes, dependencies, models, migrations, Render runtime and database schema are unchanged. Benchmark fixtures remain synthetic and credentials remain GitHub-secret-only.
 <!-- ACA-CANONICAL-STATUS:END -->
@@ -78,3 +78,7 @@ Repository/release ZIP не должен содержать `.env`, реальн
 ## 6. Hosting roadmap
 
 Render остаётся staging/резервной площадкой. Реальная аренда и полевой тест VPS выполняются в `INFRA-001` перед beta; далее следуют HOST-001, OPS-002, DOMAIN-001, MIG-001 и REL-001.
+## Alice Final v3 - grounded-v2.4
+
+The latest Alice Final artifact (`ai-bench-20260827T112440Z-243eaaeb`) completed 8/8 provider calls with zero errors/retries but scored 6/8. Grounded-v2.4 fixes only the confirmed benchmark-contract issues: Unicode dash normalization for grounding, a narrow audited `candidate_fit` -> `motivation` repair for explicit vacancy-grounded future intent, and stronger interview role-evidence coverage prompts. Existing-skill claims and missing evidence remain hard failures. A fresh Alice-only live verification is still required.
+
