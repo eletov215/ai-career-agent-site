@@ -25,6 +25,7 @@ REQUIRED_VISIBLE = [
     "evals/regressions/live-run-4.json",
     "evals/regressions/alice-final-run-1.json",
     "evals/regressions/alice-final-run-2.json",
+    "evals/regressions/alice-final-run-3.json",
     "evals/fixtures/manifest.json",
     "evals/schemas/resume_analysis.schema.json",
     "evals/schemas/vacancy_match.schema.json",
@@ -135,7 +136,7 @@ def main() -> int:
         fail(f"missing required files: {missing}")
 
     version = (ROOT / "evals/VERSION").read_text(encoding="utf-8").strip()
-    if version != "1.5.1":
+    if version != "1.5.2":
         fail(f"unexpected evals version: {version}")
 
     workflow_path = ROOT / ".github/workflows/ci.yml"
@@ -164,7 +165,7 @@ def main() -> int:
         "AI_BENCH_ALICE_FINAL_OUTPUT_DIR: /tmp/ai-bench-yandex-alice-final",
         "--config evals/config/yandex-alice-final.json",
         "scripts/check_ai_bench_alice_final_result.py",
-        "grounded-v2.4",
+        "grounded-v2.5",
         "scenario_provenance_repair_count",
     ]
     missing_workflow_fragments = [
@@ -182,8 +183,8 @@ def main() -> int:
         fail("Alice final config must enable exactly yandex-alice-ai-llm")
     if float((alice_final.get("thresholds") or {}).get("max_error_rate", 1.0)) != 0.0:
         fail("Alice final config must require max_error_rate=0.0")
-    if alice_final.get("verification_scope") != "alice_ai_llm_final_candidate_v2":
-        fail("Alice final config must use verification_scope=alice_ai_llm_final_candidate_v2")
+    if alice_final.get("verification_scope") != "alice_ai_llm_final_candidate_v3":
+        fail("Alice final config must use verification_scope=alice_ai_llm_final_candidate_v3")
 
     legacy_workflow = ROOT / ".github/workflows/ai-bench-live"
     if legacy_workflow.is_file():
@@ -196,8 +197,8 @@ def main() -> int:
     manifest = json.loads((ROOT / "evals/fixtures/manifest.json").read_text(encoding="utf-8"))
     if manifest.get("synthetic") is not True:
         fail("manifest must declare synthetic=true")
-    if manifest.get("version") != "1.3.3" or manifest.get("contract") != "grounded-v2.4":
-        fail("manifest must declare version=1.3.3 and contract=grounded-v2.4")
+    if manifest.get("version") != "1.3.4" or manifest.get("contract") != "grounded-v2.5":
+        fail("manifest must declare version=1.3.4 and contract=grounded-v2.5")
     cases = manifest.get("cases") or []
     if len(cases) < 8:
         fail("golden dataset must contain at least eight bilingual/task-diverse cases")
@@ -245,6 +246,14 @@ def main() -> int:
     alice_final_regression_2 = json.loads((ROOT / "evals/regressions/alice-final-run-2.json").read_text(encoding="utf-8"))
     if alice_final_regression_2.get("source_run_id") != "ai-bench-20260827T112440Z-243eaaeb":
         fail("Alice Final run #2 regression provenance is missing")
+    alice_final_regression_3 = json.loads((ROOT / "evals/regressions/alice-final-run-3.json").read_text(encoding="utf-8"))
+    if alice_final_regression_3.get("source_run_id") != "ai-bench-20260828T102540Z-bcf4c2ed":
+        fail("Alice Final run #3 regression provenance is missing")
+    alice3_patterns = alice_final_regression_3.get("patterns") or {}
+    if not (alice3_patterns.get("unverified_gap_future_intent") or {}).get("expected_kind_after"):
+        fail("Alice Final run #3 motivation regression is missing")
+    if not (alice3_patterns.get("safe_response_cardinality_resources_approaches") or {}).get("text"):
+        fail("Alice Final run #3 response-cardinality regression is missing")
     alice_patterns = alice_final_regression.get("patterns") or {}
     if len(alice_patterns.get("repairable_scenario_provenance") or []) < 3:
         fail("Alice final run-1 scenario-provenance regressions are incomplete")
@@ -286,7 +295,7 @@ def main() -> int:
         if run.get("execution_mode") != "deterministic_reference":
             fail("reference run must be labeled deterministic_reference")
         if run.get("schema_version") != "1.4" or run.get("benchmark_version") != "1.4":
-            fail("reference run must use grounded-v2.4 benchmark/run schema version 1.4")
+            fail("reference run must use grounded-v2.5 benchmark/run schema version 1.4")
         if run.get("quality_gate", {}).get("passed_count") != len(cases):
             fail("not all reference cases passed")
         machine_dir = out / "machine" / "reference"
@@ -304,7 +313,7 @@ def main() -> int:
             fail("cover-letter schema must support vacancy-grounded motivation paragraphs")
         required_thresholds = {"max_language_consistency_violations", "max_scenario_provenance_violations"}
         if not required_thresholds.issubset(set((run.get("quality_gate", {}).get("thresholds") or {}).keys())):
-            fail("grounded-v2.4 language/scenario thresholds are missing")
+            fail("grounded-v2.5 language/scenario thresholds are missing")
         for schema_name in (
             "resume_analysis.schema.json",
             "vacancy_match.schema.json",

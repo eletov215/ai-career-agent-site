@@ -1,3 +1,16 @@
+## 2026-08-28 - AI-BENCH-001 Alice Final v4 / grounded-v2.5 / evals 1.5.2
+
+- Reviewed Alice Final run #3 artifact `33163009779` / run `ai-bench-20260828T102540Z-bcf4c2ed`: 8/8 calls, 0 provider errors/retries, machine result 6/8, mean quality 0.975, grounding 1.000, p95 11855.16 ms, estimated cost USD 0.051498352.
+- Localized `cover-letter-en-01` to a paragraph-kind mismatch: an explicitly disclosed unverified experimentation gap plus future-learning intent was labeled `candidate_fit`; the word `grow` was therefore read as unsupported `growth_increase` even though no candidate achievement was claimed.
+- Localized `interview-ru-01` to a response-cardinality false positive: `2–3 resources or approaches` is answer formatting, not a factual duration/percentage/experience/result claim.
+- Added a narrow audited motivation-kind repair only for vacancy-backed future intent with either no candidate evidence or exclusively explicit unverified-gap candidate evidence that the paragraph itself discloses. Verified skills, achievements and impact remain hard failures.
+- Extended the narrow interview response-cardinality exception to resources/approaches while keeping unsourced durations, percentages, salary, experience numbers and outcomes hard-gated.
+- Tightened RU/EN prompts for disclosed-gap motivation and non-numeric response counts.
+- Fixed a test-structure defect that left the Alice Final run #2 regression methods below `unittest.main()` and therefore outside ordinary unittest discovery.
+- Added `evals/regressions/alice-final-run-3.json`, `alice-final-run-3-review.md`, and grounded-v2.5 offline replay evidence. Retained raw run #3 responses replay 8/8 with 3 scenario repairs, 2 motivation-kind repairs and zero unresolved number/impact failures.
+- Production routes, services, models, dependencies, Render runtime, migrations and revision `20260819_0014` remain unchanged.
+- Next gate: green ordinary CI -> fresh manual Alice-only 8/8 machine run -> artifact audit -> named human writing-quality rubric.
+
 ## 2026-08-28 - AI-BENCH-001 Alice Final v3 / grounded-v2.4 / evals 1.5.1
 
 - Reviewed Alice Final run `ai-bench-20260827T112440Z-243eaaeb` (artifact 33066898884): 8/8 calls, 0 provider errors/retries, machine result 6/8.

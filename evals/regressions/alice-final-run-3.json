@@ -1,0 +1,35 @@
+{
+  "source_run_id": "ai-bench-20260828T102540Z-bcf4c2ed",
+  "source_artifact": "ai-bench-001-yandex-alice-final-33163009779.zip",
+  "source_contract": "grounded-v2.4 / benchmark 1.4 / dataset 1.3.3",
+  "observed_status": "6/8 machine pass",
+  "patterns": {
+    "unverified_gap_future_intent": {
+      "case_id": "cover-letter-en-01",
+      "kind_before": "candidate_fit",
+      "evidence_ids": ["c5", "v3"],
+      "text": "While I don’t have verified experimentation experience, I am eager to grow in this area and contribute to the team’s goals.",
+      "expected_kind_after": "motivation"
+    },
+    "verified_candidate_growth_must_not_repair": {
+      "case_id": "cover-letter-en-01",
+      "kind_before": "candidate_fit",
+      "evidence_ids": ["c1", "v3"],
+      "text": "I am eager to grow conversion and improve outcomes for the team."
+    },
+    "safe_response_cardinality_resources_approaches": {
+      "case_id": "interview-ru-01",
+      "text": "Назовите 2–3 ресурса или подхода, которые вы бы использовали для быстрого изучения основ автоматизации тестирования в рамках периода адаптации."
+    },
+    "unsafe_unsourced_duration": {
+      "case_id": "interview-ru-01",
+      "text": "Опишите, как вы освоите основы автоматизации за 2–3 дня.",
+      "numbers": ["2", "3"]
+    }
+  },
+  "policy": {
+    "motivation_repair": "A candidate_fit paragraph may be reclassified to motivation only when it has explicit future intent, vacancy evidence, and either no candidate evidence or candidate evidence consisting exclusively of explicit unverified-gap facts that the paragraph itself discloses. Verified skills, achievements and impact are never repaired.",
+    "response_cardinality": "Imperative interview requests for a count of examples/options/steps/reasons/resources/approaches are answer-format instructions, not factual claims. Durations, percentages, salaries, experience numbers and outcomes remain hard-gated.",
+    "production_boundary": "The hotfix changes only the isolated AI-BENCH harness, prompts, regressions, tests and documentation. No production AI route, provider service, model or database migration is introduced."
+  }
+}

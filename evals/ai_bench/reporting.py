@@ -102,7 +102,7 @@ def render_markdown_report(run: dict[str, Any]) -> str:
 
     lines.extend([
         "",
-        "## Grounded-v2.4 contract interpretation",
+        "## Grounded-v2.5 contract interpretation",
         "",
         "- Evidence identifiers must be exact raw IDs. Simple decorated markers such as `(s1)`/`[s1]` are removed by deterministic display normalization; serialized metadata labels remain hard failures.",
         "- Resume `facts_not_verified` and cover-letter `caveats` are structured objects with their own evidence references.",

@@ -1,26 +1,59 @@
-# AI Career Agent - аудит источников v1.4.43
+# AI Career Agent - аудит источников v1.4.44
 
-**Дата:** 27.08.2026  
+**Дата:** 28.08.2026  
 **Production revision:** `20260819_0014`
 
 | Поле | Значение |
 |---|---|
-| Проверяемая кодовая основа | `ai-career-agent-site-main (26).zip` |
-| ZIP comment | `49b648cd304479d55fc23ef243c6b9c0abdeaaec` |
-| Проверяемый пакет | AI-BENCH-001 Alice Final v3 / grounded-v2.4 contract corrections |
-| Evals | `1.5.1` |
+| Проверяемая кодовая основа | `ai-career-agent-site-main (28).zip` |
+| ZIP comment | `fd2c544f687109a42299421be8ec6030a6d5567f` |
+| Проверяемый пакет | AI-BENCH-001 Alice Final v4 / grounded-v2.5 contract corrections |
+| Evals | `1.5.2` |
 | Benchmark contract | `1.4` |
-| Dataset | `ai-career-agent-golden-v1` v`1.3.3`, `contract=grounded-v2.4` |
-| External evidence | Alice Final run #1 artifact `33061758538`; run ID `ai-bench-20260827T101353Z-bd9809d6` |
-| Результат | локальный candidate готов; нужен ordinary GitHub CI + fresh Alice-only 8/8 machine run + named manual rubric |
+| Dataset | `ai-career-agent-golden-v1` v`1.3.4`, `contract=grounded-v2.5` |
+| External evidence | Alice Final run #3 artifact `33163009779`; run ID `ai-bench-20260828T102540Z-bcf4c2ed` |
+| Результат | grounded-v2.5 local hotfix + replay 8/8 готовы; нужен ordinary GitHub CI + fresh Alice-only 8/8 machine run + named manual rubric |
 
 ## 1. Source precedence
 
-Пользователь предоставил `ai-career-agent-site-main (26).zip` как актуальный snapshot GitHub `main`. Для этой поставки он имеет приоритет над всеми предыдущими архивами. Sanitized artifact `ai-bench-001-yandex-alice-final-33061758538.zip` используется только как внешнее benchmark evidence. Secret values и production user data в репозиторий не копируются.
+Пользователь предоставил `ai-career-agent-site-main (28).zip` как актуальный snapshot GitHub `main`. Для этой поставки он имеет приоритет над всеми предыдущими архивами. ZIP comment: `fd2c544f687109a42299421be8ec6030a6d5567f`. Sanitized artifact `ai-bench-001-yandex-alice-final-33163009779.zip` используется только как внешнее benchmark evidence. Secret values и production user data в репозиторий не копируются.
 
-Сравнение `main (26)` с ранее выданным v1.4.41 full delivery показало одинаковый набор из 392 файлов и отсутствие byte-level различий; следовательно, run #1 действительно относится к текущей кодовой основе перед v1.4.42.
+Историческая проверка `main (26)` относилась к Alice Final run #1 и сохранена ниже только как provenance предыдущего шага. Текущая рабочая база этой версии — `main (28)`; run #3 относится к `grounded-v2.4` state перед настоящим hotfix `grounded-v2.5`.
 
-## 2. Alice Final run #1 audit
+## 2. Alice Final run #3 audit
+
+Artifact `ai-bench-001-yandex-alice-final-33163009779.zip` / run `ai-bench-20260828T102540Z-bcf4c2ed` содержит 8 raw responses, 8 machine responses, 8 presentation responses, `run.json`, `report.md` и pending manual-review template.
+
+| Метрика | Значение |
+|---|---:|
+| API calls | 8/8 |
+| Provider errors | 0 |
+| Retries | 0 |
+| Source machine pass | 6/8 |
+| Mean quality | 0.975 |
+| Mean grounding | 1.000 |
+| p50 | 4796.74 ms |
+| p95 | 11855.16 ms |
+| Estimated cost | USD 0.051498352 |
+
+Confirmed failures:
+
+- `cover-letter-en-01`: no schema/evidence/language failure; an explicit unverified experimentation gap (`c5`) plus vacancy preference (`v3`) was followed by future-learning intent but labeled `candidate_fit`. The phrase `grow in this area` was therefore classified as unsupported `growth_increase`. This is a paragraph-kind/intent mismatch, not an invented candidate achievement.
+- `interview-ru-01`: no provenance/language/schema failure remained; only `2–3` in `Назовите 2–3 ресурса или подхода...` was treated as unsupported factual number. It is answer cardinality, not duration/experience/percentage/achievement.
+
+### Grounded-v2.5 implementation audit
+
+- motivation normalization now allows a second narrow branch only when future intent has vacancy evidence and every candidate fact is an explicit unverified-gap fact that the paragraph itself discloses;
+- verified skills, achievements, impact claims and mixed positive candidate evidence are never reclassified;
+- interview answer-cardinality exception now recognizes resources/approaches in addition to examples/options/steps/reasons;
+- factual durations, percentages, salaries, experience years and outcomes remain hard failures;
+- RU/EN prompts are tightened to request `motivation` for disclosed-gap future learning and to prefer non-numeric response counts;
+- Alice Final run #2 regression methods that were accidentally placed below `unittest.main()` are restored inside the test class;
+- `evals/regressions/alice-final-run-3.json` captures exact run #3 failure patterns.
+
+Offline replay of the retained run #3 raw responses under grounded-v2.5 is **8/8 PASS**, with 3 audited scenario repairs, 2 audited motivation-kind repairs, 0 unsupported numbers and 0 unsupported impact claims. Replay evidence: `docs/evidence/ai-bench-001/alice-final-run-3-grounded-v2.5-replay.json`. Replay is not a fresh provider result.
+
+## 3. Historical Alice Final run #1 audit
 
 Artifact содержит 8 raw responses, 8 presentation responses, `run.json`, `report.md` и pending manual-review template.
 
@@ -100,7 +133,7 @@ Production schema остаётся `20260819_0014`. GitHub/Yandex secret values 
 1. Green ordinary GitHub CI на v1.4.42.
 2. При ordinary push billable Alice job должен быть skipped.
 3. Manual `run_ai_bench_alice_final=true` на `main`.
-4. Fresh run должен быть benchmark `1.4`, dataset `1.3.2`, provider `yandex-alice-ai-llm` и дать 8/8 machine PASS.
+4. Fresh run должен быть benchmark `1.4`, dataset `1.3.4`, provider `yandex-alice-ai-llm` и дать 8/8 machine PASS.
 5. Scenario repairs допускаются только как audited one-to-one repairs; unresolved safety counters должны оставаться zero.
 6. Скачать artifact и проверить raw/machine/presentation evidence.
 7. Завершить named human writing-quality rubric.
@@ -108,7 +141,7 @@ Production schema остаётся `20260819_0014`. GitHub/Yandex secret values 
 
 ## 8. Status decision
 
-`AI-BENCH-001 Alice Final v2` - **НУЖНА ПРОВЕРКА**.  
+`AI-BENCH-001 Alice Final v4` - **НУЖНА ПРОВЕРКА**.  
 Ранее завершённые production-пакеты остаются **ВЫПОЛНЕНО**.  
 `AI-PROVIDER-001` остаётся **ЗАБЛОКИРОВАНО**.
 
@@ -128,4 +161,8 @@ Artifact `ai-bench-20260827T112440Z-243eaaeb` completed 8/8 calls with zero prov
 ## v1.4.43 source delta
 
 Source basis: current `main (27)` plus Alice Final artifact `33066898884`. The implementation delta is limited to AI-BENCH scoring/normalization, runner/reporting, interview fixtures/prompts, versioned regressions/tests/package checks, CI labels and canonical documentation. Production application files and database revision are unchanged.
+## 2026-08-28 - Alice Final v4 / grounded-v2.5
 
+### v1.4.44 source delta
+
+Source basis: current `main (28)` plus Alice Final artifact `33163009779`. The implementation delta is limited to AI-BENCH scoring/normalization, RU/EN benchmark prompts, versioned regression/tests/package checks, workflow labels, replay evidence and canonical documentation. Production application files and database revision remain unchanged.

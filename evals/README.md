@@ -1,6 +1,6 @@
-## Package version 1.5.1 - Alice Final v3 contract corrections
+## Package version 1.5.2 - Alice Final v4 contract corrections
 
-Version 1.5.1 advances the dataset to `1.3.3` / `grounded-v2.4`. It keeps all grounded-v2.3 safety gates and adds: Unicode hyphen/dash normalization for lexical grounding; an audited, narrow vacancy-only future-intent paragraph reclassification from `candidate_fit` to `motivation`; stronger RU/EN interview role-evidence coverage instructions; and regressions from Alice Final run `ai-bench-20260827T112440Z-243eaaeb`. No production application behavior changes.
+Version 1.5.2 advances the dataset to `1.3.4` / `grounded-v2.5`. It keeps all grounded-v2.4 hard safety gates and adds two narrow corrections from Alice Final run `ai-bench-20260828T102540Z-bcf4c2ed`: an audited `candidate_fit` -> `motivation` repair when future learning cites only an explicitly disclosed unverified-gap candidate fact plus vacancy evidence, and response-cardinality recognition for imperative counts of resources/approaches. Verified skills, unsupported impact, durations, percentages, salary, experience numbers and outcomes remain hard failures. The RU/EN prompts are tightened accordingly, and the Alice Final run #2 regression methods are restored to ordinary unittest discovery. No production application behavior changes.
 
 # AI-BENCH-001
 

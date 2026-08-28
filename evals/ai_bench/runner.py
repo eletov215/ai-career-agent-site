@@ -204,7 +204,7 @@ class BenchmarkRunner:
             "The included dataset is synthetic and intentionally excludes production user PII.",
             "Human writing-quality rubrics remain pending until a named reviewer records scores.",
             "Vacancy numeric match scores are derived deterministically from requirement classifications; models do not author the score field.",
-            "Grounded-v2.4 retains deterministic marker cleanup and uniquely inferable scenario-evidence repair, adds Unicode dash normalization, auditable motivation-kind repair, and stronger interview role-evidence prompts; its quality scores are not directly comparable to earlier contracts.",
+            "Grounded-v2.5 retains deterministic marker cleanup and uniquely inferable scenario-evidence repair, adds Unicode dash normalization, auditable motivation-kind repair, and stronger interview role-evidence prompts; its quality scores are not directly comparable to earlier contracts.",
             "Language consistency and unresolved scenario-number provenance are machine-gated before manual writing review; exact one-to-one scenario evidence repairs are recorded separately.",
             "Live OpenAI-compatible adapters may perform at most one explicitly configured bounded retry; retry evidence is retained in safe diagnostics.",
         ]

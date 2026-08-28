@@ -1,0 +1,167 @@
+{
+  "source_artifact": "ai-bench-001-yandex-alice-final-33163009779.zip",
+  "source_run_id": "ai-bench-20260828T102540Z-bcf4c2ed",
+  "provider_id": "yandex-alice-ai-llm",
+  "source_benchmark_version": "1.4",
+  "source_dataset_version": "1.3.3",
+  "source_contract": "grounded-v2.4",
+  "original_passed_count": 6,
+  "replay_benchmark_version": "1.4",
+  "replay_dataset_version": "1.3.4",
+  "replay_contract": "grounded-v2.5",
+  "replay_dataset_fingerprint": "310d74de3a55d4936bda6289e423f3cea3bd3c2c73f383b5ef7028e5904a9fcf",
+  "replay_passed_count": 8,
+  "scenario_provenance_repair_count": 3,
+  "cover_letter_kind_repair_count": 2,
+  "unsupported_number_count": 0,
+  "unsupported_impact_claim_count": 0,
+  "results": [
+    {
+      "case_id": "cover-letter-en-01",
+      "original_passed": false,
+      "replay_passed": true,
+      "gate_failures": [],
+      "quality_score": 1.0,
+      "grounding_score": 1.0,
+      "scenario_provenance_repair_count": 0,
+      "scenario_provenance_repairs": [],
+      "cover_letter_kind_repair_count": 1,
+      "cover_letter_kind_repairs": [
+        {
+          "path": "$.paragraphs[3].kind",
+          "from": "candidate_fit",
+          "to": "motivation",
+          "reason": "unverified_gap_plus_vacancy_explicit_motivation_intent"
+        }
+      ],
+      "unsupported_number_count": 0,
+      "unsupported_impact_claim_count": 0
+    },
+    {
+      "case_id": "cover-letter-ru-01",
+      "original_passed": true,
+      "replay_passed": true,
+      "gate_failures": [],
+      "quality_score": 1.0,
+      "grounding_score": 1.0,
+      "scenario_provenance_repair_count": 0,
+      "scenario_provenance_repairs": [],
+      "cover_letter_kind_repair_count": 1,
+      "cover_letter_kind_repairs": [
+        {
+          "path": "$.paragraphs[2].kind",
+          "from": "candidate_fit",
+          "to": "motivation",
+          "reason": "vacancy_only_explicit_motivation_intent"
+        }
+      ],
+      "unsupported_number_count": 0,
+      "unsupported_impact_claim_count": 0
+    },
+    {
+      "case_id": "interview-en-01",
+      "original_passed": true,
+      "replay_passed": true,
+      "gate_failures": [],
+      "quality_score": 1.0,
+      "grounding_score": 1.0,
+      "scenario_provenance_repair_count": 2,
+      "scenario_provenance_repairs": [
+        {
+          "path": "$.questions[0].evidence_ids",
+          "number": "15%",
+          "evidence_id": "s1",
+          "reason": "unique_exact_scenario_number_match"
+        },
+        {
+          "path": "$.questions[2].evidence_ids",
+          "number": "90",
+          "evidence_id": "s2",
+          "reason": "unique_exact_scenario_number_match"
+        }
+      ],
+      "cover_letter_kind_repair_count": 0,
+      "cover_letter_kind_repairs": [],
+      "unsupported_number_count": 0,
+      "unsupported_impact_claim_count": 0
+    },
+    {
+      "case_id": "interview-ru-01",
+      "original_passed": false,
+      "replay_passed": true,
+      "gate_failures": [],
+      "quality_score": 1.0,
+      "grounding_score": 1.0,
+      "scenario_provenance_repair_count": 1,
+      "scenario_provenance_repairs": [
+        {
+          "path": "$.questions[2].evidence_ids",
+          "number": "20%",
+          "evidence_id": "s1",
+          "reason": "unique_exact_scenario_number_match"
+        }
+      ],
+      "cover_letter_kind_repair_count": 0,
+      "cover_letter_kind_repairs": [],
+      "unsupported_number_count": 0,
+      "unsupported_impact_claim_count": 0
+    },
+    {
+      "case_id": "resume-analysis-en-01",
+      "original_passed": true,
+      "replay_passed": true,
+      "gate_failures": [],
+      "quality_score": 1.0,
+      "grounding_score": 1.0,
+      "scenario_provenance_repair_count": 0,
+      "scenario_provenance_repairs": [],
+      "cover_letter_kind_repair_count": 0,
+      "cover_letter_kind_repairs": [],
+      "unsupported_number_count": 0,
+      "unsupported_impact_claim_count": 0
+    },
+    {
+      "case_id": "resume-analysis-ru-01",
+      "original_passed": true,
+      "replay_passed": true,
+      "gate_failures": [],
+      "quality_score": 1.0,
+      "grounding_score": 1.0,
+      "scenario_provenance_repair_count": 0,
+      "scenario_provenance_repairs": [],
+      "cover_letter_kind_repair_count": 0,
+      "cover_letter_kind_repairs": [],
+      "unsupported_number_count": 0,
+      "unsupported_impact_claim_count": 0
+    },
+    {
+      "case_id": "vacancy-match-en-01",
+      "original_passed": true,
+      "replay_passed": true,
+      "gate_failures": [],
+      "quality_score": 1.0,
+      "grounding_score": 1.0,
+      "scenario_provenance_repair_count": 0,
+      "scenario_provenance_repairs": [],
+      "cover_letter_kind_repair_count": 0,
+      "cover_letter_kind_repairs": [],
+      "unsupported_number_count": 0,
+      "unsupported_impact_claim_count": 0
+    },
+    {
+      "case_id": "vacancy-match-ru-01",
+      "original_passed": true,
+      "replay_passed": true,
+      "gate_failures": [],
+      "quality_score": 1.0,
+      "grounding_score": 1.0,
+      "scenario_provenance_repair_count": 0,
+      "scenario_provenance_repairs": [],
+      "cover_letter_kind_repair_count": 0,
+      "cover_letter_kind_repairs": [],
+      "unsupported_number_count": 0,
+      "unsupported_impact_claim_count": 0
+    }
+  ],
+  "decision_note": "Offline regression replay only. It validates deterministic grounded-v2.5 normalization/scoring against the retained Alice Final run #3 raw responses; it is not a new provider call and does not validate the updated prompt wording. A fresh Alice-only live verification and named human writing-quality review remain mandatory before AI-BENCH-001 closure."
+}

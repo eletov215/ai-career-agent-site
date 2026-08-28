@@ -3,13 +3,54 @@
 | Поле | Значение |
 |---|---|
 | Документ | AI_BENCH_VERIFICATION_STATUS |
-| Версия | 1.10 |
-| Дата | 27 августа 2026 |
-| Пакет | AI-BENCH-001 Alice Final v3 / grounded-v2.4 contract corrections |
-| Статус | НУЖНА ПРОВЕРКА GITHUB ACTIONS + FRESH ALICE-ONLY MACHINE RUN + NAMED MANUAL RUBRIC |
+| Версия | 1.12 |
+| Дата | 28 августа 2026 |
+| Пакет | AI-BENCH-001 Alice Final v4 / grounded-v2.5 contract corrections |
+| Статус | ЛОКАЛЬНЫЙ HOTFIX ГОТОВ; НУЖНА ПРОВЕРКА GITHUB ACTIONS + FRESH ALICE-ONLY 8/8 MACHINE RUN + NAMED MANUAL RUBRIC |
 | Production revision | `20260819_0014` |
 
-## 1. Подтверждённый Alice Final run #1
+## 1. Подтверждённый Alice Final run #3
+
+Sanitized artifact `ai-bench-001-yandex-alice-final-33163009779.zip` разобран полностью.
+
+- run ID: `ai-bench-20260828T102540Z-bcf4c2ed`;
+- benchmark `1.4`, dataset `1.3.3`, contract `grounded-v2.4`;
+- provider: `yandex-alice-ai-llm`;
+- 8/8 API calls завершены; provider errors 0; retries 0;
+- source machine result: **6/8 PASS**;
+- mean quality `0.975`; mean grounding `1.000`; clean text `1.000`;
+- p50 `4796.74 ms`; p95 `11855.16 ms`; estimated cost `USD 0.051498352`.
+
+FAIL #1 — `cover-letter-en-01`: paragraph with `c5` + `v3` correctly disclosed that experimentation is not verified, then expressed future learning (`eager to grow in this area`) but was labeled `candidate_fit`. The impact detector therefore saw unsupported `growth_increase`. There is no invented past achievement; this is a narrow paragraph-kind/intent mismatch.
+
+FAIL #2 — `interview-ru-01`: phrase `Назовите 2–3 ресурса или подхода...` triggered unsupported numbers `2` and `3`. This is answer cardinality, not a factual duration, percentage, experience, salary or result.
+
+## 2. Grounded-v2.5 / Alice Final v4
+
+`evals 1.5.2`, benchmark `1.4`, dataset `1.3.4`, contract `grounded-v2.5` introduces only two narrow corrections plus one test-discovery fix:
+
+1. `candidate_fit -> motivation` may be repaired only for explicit future intent with vacancy evidence and either zero candidate evidence or candidate evidence consisting exclusively of explicit unverified-gap facts disclosed in the same paragraph. Verified skills/achievements/impact remain hard failures.
+2. Interview response-cardinality recognizes counts of resources/approaches in the same narrow imperative class as examples/options/steps/reasons. Unsourced factual numbers remain hard failures.
+3. Alice Final run #2 regression methods are moved back inside the unittest class; ordinary CI now executes them instead of silently skipping them.
+
+RU/EN benchmark prompts are tightened consistently. No production AI integration is added.
+
+## 3. Offline replay Alice Final run #3
+
+The retained raw responses were replayed without a provider call:
+
+- source: 6/8;
+- grounded-v2.5 replay: **8/8**;
+- scenario-provenance repairs: 3;
+- motivation-kind repairs: 2;
+- unsupported numbers: 0;
+- unsupported impact claims: 0.
+
+Evidence: `docs/evidence/ai-bench-001/alice-final-run-3-grounded-v2.5-replay.json`. This replay does not validate the updated prompt and cannot close AI-BENCH-001.
+
+## 4. Historical evidence
+
+### Alice Final run #1
 
 Sanitized artifact `ai-bench-001-yandex-alice-final-33061758538.zip` разобран полностью.
 
@@ -95,11 +136,11 @@ Replay machine-readable evidence: `docs/evidence/ai-bench-001/alice-final-run-1-
 
 ## 7. Remaining external gate
 
-1. Upload v1.4.42 through the normal GitHub PR/CI path.
+1. Upload v1.4.44 through the normal GitHub PR/CI path.
 2. Require green `Python tests`, `AI-BENCH-001 package gate` and all historical gates.
 3. On ordinary push the billable Alice job must remain skipped.
 4. Run `Actions -> CI -> Run workflow -> run_ai_bench_alice_final=true` on `main`.
-5. Require benchmark `1.4`, dataset `1.3.2`, exactly one provider `yandex-alice-ai-llm`, 8/8 machine PASS, zero provider errors and zero unresolved hard-safety counters.
+5. Require benchmark `1.4`, dataset `1.3.4`, exactly one provider `yandex-alice-ai-llm`, 8/8 machine PASS, zero provider errors and zero unresolved hard-safety counters.
 6. Scenario provenance repair count may be non-zero only when every repair is the audited unique exact-number mapping defined by grounded-v2.3; the count remains visible in report/run evidence.
 7. Download the sanitized artifact and review raw/machine/presentation differences.
 8. Only after machine 8/8 complete the named human writing-quality rubric.
@@ -129,3 +170,9 @@ Artifact `ai-bench-20260827T112440Z-243eaaeb` completed 8/8 calls with zero prov
 
 Run `ai-bench-20260827T112440Z-243eaaeb` completed 8/8 calls with zero errors/retries and scored 6/8. `cover-letter-ru-01` failed because a vacancy-only explicit future-intent paragraph was mislabeled `candidate_fit`; `interview-ru-01` failed partly because Unicode non-breaking hyphens prevented lexical grounding of `тест‑кейсы` and because v1/v2 were absent from structured evidence. Grounded-v2.4 fixes those contract mismatches narrowly and audibly; existing-skill claims, missing evidence, invalid IDs and unsupported impact remain hard failures. Fresh 8/8 Alice-only verification is required before named human review.
 
+
+## 2026-08-28 - Alice Final v4 / grounded-v2.5
+
+Artifact `33163009779` / run `ai-bench-20260828T102540Z-bcf4c2ed` completed 8/8 calls with zero provider errors/retries and machine result 6/8. Grounded-v2.5 addresses only the confirmed paragraph-kind/intent and response-cardinality mismatches, restores run #2 regression test discovery, and replays the retained raw responses 8/8. Fresh Alice-only 8/8 live verification plus named human writing review remain mandatory.
+
+| 1.12 | 28.08.2026 | Alice Final run #3 reviewed; grounded-v2.5 hotfix/replay 8/8 prepared; fresh live gate still pending. |
