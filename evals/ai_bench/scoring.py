@@ -45,13 +45,13 @@ _INTERVIEW_RESPONSE_COUNT_PATTERNS = (
         r"(?iu)\b(?:приведите|назовите|перечислите|укажите)\s+"
         r"(?:до\s+|не\s+менее\s+|не\s+более\s+)?"
         r"\d+(?:\s*[\-–—]\s*\d+)?\s+"
-        r"(?:конкретн\w+\s+)?(?:пример\w*|вариант\w*|шаг\w*|причин\w*)\b"
+        r"(?:конкретн\w+\s+)?(?:пример\w*|вариант\w*|шаг\w*|причин\w*|ресурс\w*|подход\w*)\b"
     ),
     re.compile(
         r"(?iu)\b(?:give|provide|name|list)\s+"
         r"(?:up\s+to\s+|at\s+least\s+|no\s+more\s+than\s+)?"
         r"\d+(?:\s*(?:[\-–—]|to)\s*\d+)?\s+"
-        r"(?:specific\s+)?(?:examples?|options?|steps?|reasons?)\b"
+        r"(?:specific\s+)?(?:examples?|options?|steps?|reasons?|resources?|approaches?)\b"
     ),
 )
 
@@ -465,26 +465,45 @@ _MOTIVATION_INTENT_RE = re.compile(
     r"\bбуду\s+рад(?:а)?\b|\binterested\b|\bexcited\b|\bkeen\b|\beager\b|"
     r"\bmotivated\b|\blook\s+forward\b|\bwould\s+welcome\b|\bgrow\b|\bdevelop\b)"
 )
+_UNVERIFIED_GAP_FACT_RE = re.compile(
+    r"(?iu)(?:\bnot\s+(?:verified|confirmed)\b|\bunverified\b|"
+    r"\bне\s+подтвержд(?:ен|ена|ено|ены|ён|ёна|ёно|ёны)\w*\b|"
+    r"\bнет\s+подтвержд(?:ен|ена|ено|ены|ён|ёна|ёно|ёны)\w*\b)"
+)
+_GAP_DISCLOSURE_RE = re.compile(
+    r"(?iu)(?:\b(?:do\s+not|don['’]t|dont)\s+have\b|\bnot\s+(?:verified|confirmed)\b|"
+    r"\bwithout\s+(?:verified|confirmed)\b|\bне\s+(?:имею|подтвержден|подтверждён)\w*\b|"
+    r"\bнет\s+подтвержд\w*\b)"
+)
+
+
+def _is_unverified_gap_fact(text: str) -> bool:
+    return bool(_UNVERIFIED_GAP_FACT_RE.search(text))
 
 
 def normalize_cover_letter_motivation_kind(case: BenchmarkCase, content: Any) -> tuple[Any, dict[str, Any]]:
     """Repair a narrowly provable cover-letter paragraph-kind mismatch.
 
-    Alice may occasionally label a vacancy-grounded future-intent paragraph as
-    ``candidate_fit``. Reclassification to ``motivation`` is allowed only when:
+    Alice may occasionally label a future-intent paragraph as ``candidate_fit``.
+    Reclassification to ``motivation`` is allowed only when:
     - the task is cover_letter;
     - the paragraph currently has kind=candidate_fit;
-    - it cites at least one vacancy fact and zero candidate facts; and
-    - its user-facing text contains an explicit motivation/future-intent cue.
+    - it cites at least one vacancy fact;
+    - its user-facing text contains an explicit motivation/future-intent cue; and
+    - it either cites no candidate facts, or every cited candidate fact is an
+      explicit unverified-gap fact and the paragraph itself discloses that gap.
 
-    Existing-skill claims are never repaired. Any vacancy-only candidate_fit
-    paragraph without the explicit cue remains a hard claim-evidence failure.
+    This second narrow branch handles phrases such as “I do not have verified
+    experimentation experience, but I am eager to develop it.” It does not
+    reclassify verified skills, achievements, impact claims, or mixed positive
+    candidate evidence. Those remain subject to the normal hard safety gates.
     """
     normalized = copy.deepcopy(content)
     repairs: list[dict[str, str]] = []
     if case.task != "cover_letter" or not isinstance(normalized, dict):
         return normalized, {"cover_letter_kind_repair_count": 0, "cover_letter_kind_repairs": repairs}
     kinds = _evidence_kind_map(case)
+    fact_map = {fact.fact_id: fact for fact in case.source_facts}
     paragraphs = normalized.get("paragraphs")
     if not isinstance(paragraphs, list):
         return normalized, {"cover_letter_kind_repair_count": 0, "cover_letter_kind_repairs": repairs}
@@ -497,14 +516,27 @@ def normalize_cover_letter_motivation_kind(case: BenchmarkCase, content: Any) ->
             continue
         candidate_ids = [str(item) for item in evidence if kinds.get(str(item)) == "candidate"]
         vacancy_ids = [str(item) for item in evidence if kinds.get(str(item)) == "vacancy"]
-        if candidate_ids or not vacancy_ids or not _MOTIVATION_INTENT_RE.search(text):
+        if not vacancy_ids or not _MOTIVATION_INTENT_RE.search(text):
             continue
+
+        gap_only_candidate_evidence = bool(candidate_ids) and all(
+            (fact := fact_map.get(identifier)) is not None and _is_unverified_gap_fact(fact.text)
+            for identifier in candidate_ids
+        )
+        if candidate_ids and not (gap_only_candidate_evidence and _GAP_DISCLOSURE_RE.search(text)):
+            continue
+
         paragraph["kind"] = "motivation"
+        reason = (
+            "unverified_gap_plus_vacancy_explicit_motivation_intent"
+            if candidate_ids
+            else "vacancy_only_explicit_motivation_intent"
+        )
         repairs.append({
             "path": f"$.paragraphs[{index}].kind",
             "from": "candidate_fit",
             "to": "motivation",
-            "reason": "vacancy_only_explicit_motivation_intent",
+            "reason": reason,
         })
     return normalized, {
         "cover_letter_kind_repair_count": len(repairs),

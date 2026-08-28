@@ -25,7 +25,7 @@
     "max_language_consistency_violations": 0,
     "max_scenario_provenance_violations": 0
   },
-  "verification_scope": "alice_ai_llm_final_candidate_v2",
+  "verification_scope": "alice_ai_llm_final_candidate_v3",
   "providers": [
     {
       "id": "yandex-alice-ai-llm",

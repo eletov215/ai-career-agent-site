@@ -47,6 +47,7 @@ class ScoringTests(unittest.TestCase):
         cls.regressions_v4 = json.loads((ROOT / "evals/regressions/live-run-4.json").read_text(encoding="utf-8"))
         cls.regressions_alice_final_1 = json.loads((ROOT / "evals/regressions/alice-final-run-1.json").read_text(encoding="utf-8"))
         cls.regressions_alice_final_2 = json.loads((ROOT / "evals/regressions/alice-final-run-2.json").read_text(encoding="utf-8"))
+        cls.regressions_alice_final_3 = json.loads((ROOT / "evals/regressions/alice-final-run-3.json").read_text(encoding="utf-8"))
 
     def _reference(self, case_id: str) -> dict:
         return json.loads((ROOT / "evals/expected/reference" / f"{case_id}.json").read_text(encoding="utf-8"))
@@ -448,8 +449,6 @@ class ScoringTests(unittest.TestCase):
         self.assertTrue(any("additional property" in error for error in errors))
 
 
-if __name__ == "__main__":
-    unittest.main()
     def test_alice_final_run_2_vacancy_only_future_intent_repairs_to_motivation(self) -> None:
         sample = self.regressions_alice_final_2["patterns"]["vacancy_only_future_intent"]
         case = self.by_id[sample["case_id"]]
@@ -495,4 +494,57 @@ if __name__ == "__main__":
                 self.assertIn("v2", system_prompt)
                 self.assertIn("c1", system_prompt)
                 self.assertIn("c4", system_prompt)
+    def test_alice_final_run_3_unverified_gap_future_intent_repairs_to_motivation(self) -> None:
+        sample = self.regressions_alice_final_3["patterns"]["unverified_gap_future_intent"]
+        case = self.by_id[sample["case_id"]]
+        content = self._reference(case.case_id)
+        content["paragraphs"][3]["kind"] = sample["kind_before"]
+        content["paragraphs"][3]["text"] = sample["text"]
+        content["paragraphs"][3]["evidence_ids"] = sample["evidence_ids"]
+        raw_score = score_case(case, content, {"max_unsupported_impact_claims": 0})
+        self.assertIn("unsupported_impact_claims", raw_score["gate_failures"], raw_score)
+        normalized, audit = normalize_cover_letter_motivation_kind(case, content)
+        self.assertEqual(audit["cover_letter_kind_repair_count"], 1)
+        self.assertEqual(normalized["paragraphs"][3]["kind"], sample["expected_kind_after"])
+        self.assertEqual(
+            audit["cover_letter_kind_repairs"][0]["reason"],
+            "unverified_gap_plus_vacancy_explicit_motivation_intent",
+        )
+        repaired_score = score_case(case, normalized, {"max_unsupported_impact_claims": 0})
+        self.assertNotIn("unsupported_impact_claims", repaired_score["gate_failures"], repaired_score)
 
+    def test_alice_final_run_3_verified_growth_claim_is_not_reclassified(self) -> None:
+        sample = self.regressions_alice_final_3["patterns"]["verified_candidate_growth_must_not_repair"]
+        case = self.by_id[sample["case_id"]]
+        content = self._reference(case.case_id)
+        content["paragraphs"][1]["kind"] = sample["kind_before"]
+        content["paragraphs"][1]["text"] = sample["text"]
+        content["paragraphs"][1]["evidence_ids"] = sample["evidence_ids"]
+        normalized, audit = normalize_cover_letter_motivation_kind(case, content)
+        self.assertEqual(audit["cover_letter_kind_repair_count"], 0)
+        self.assertEqual(normalized["paragraphs"][1]["kind"], "candidate_fit")
+        score = score_case(case, normalized, {"max_unsupported_impact_claims": 0})
+        self.assertIn("unsupported_impact_claims", score["gate_failures"], score)
+
+    def test_alice_final_run_3_resource_count_is_safe_answer_cardinality(self) -> None:
+        sample = self.regressions_alice_final_3["patterns"]["safe_response_cardinality_resources_approaches"]
+        case = self.by_id[sample["case_id"]]
+        content = self._reference(case.case_id)
+        content["questions"][3]["follow_up_if_weak"] = sample["text"]
+        score = score_case(case, content, {"max_unsupported_numbers": 0})
+        self.assertEqual(score["unsupported_numbers"], [], score)
+        self.assertNotIn("unsupported_numbers", score["gate_failures"], score)
+
+    def test_alice_final_run_3_unsourced_duration_remains_hard_failure(self) -> None:
+        sample = self.regressions_alice_final_3["patterns"]["unsafe_unsourced_duration"]
+        case = self.by_id[sample["case_id"]]
+        content = self._reference(case.case_id)
+        content["questions"][3]["follow_up_if_weak"] = sample["text"]
+        score = score_case(case, content, {"max_unsupported_numbers": 0})
+        observed = {item["value"] for item in score["unsupported_numbers"]}
+        self.assertTrue(set(sample["numbers"]).issubset(observed), score)
+        self.assertIn("unsupported_numbers", score["gate_failures"], score)
+
+
+if __name__ == "__main__":
+    unittest.main()

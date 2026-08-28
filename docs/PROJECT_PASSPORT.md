@@ -6,36 +6,36 @@
 <!-- ACA-CANONICAL-STATUS:START -->
 ## Канонический срез проекта
 
-**Документ:** AI Career Agent PROJECT_PASSPORT `v2.57`  
-**Дата:** 2026-08-27  
+**Документ:** AI Career Agent PROJECT_PASSPORT `v2.58`  
+**Дата:** 2026-08-28  
 **Production revision:** `20260819_0014`
 
 | Контур | Состояние |
 |---|---|
-| Web | Flask + Gunicorn, WSGI `app:app`; Alice Final v2 package production code не меняет |
+| Web | Flask + Gunicorn, WSGI `app:app`; Alice Final v4 package production code не меняет |
 | Data | PostgreSQL production, SQLite local/test fallback, Alembic `20260819_0014` |
-| Identity/career/search/privacy | ранее завершённые пакеты остаются ВЫПОЛНЕНО; regression matrix локально без confirmed failures |
-| AI benchmark | `evals 1.5.1`, benchmark `1.4`, dataset `1.3.3`, `grounded-v2.4`; Alice Final run #2 reviewed; fresh Alice-only verification pending |
-| Alice Final run #1 | artifact `33061758538`: 8/8 calls, 0 errors/retries, source 6/8; failures isolated to interview scenario provenance plus one response-count numeric false positive |
-| Regression replay | same raw responses under grounded-v2.3: 8/8 PASS, 6 audited unique scenario repairs, 0 unresolved provenance, 0 unsupported numbers |
+| Identity/career/search/privacy | ранее завершённые пакеты остаются ВЫПОЛНЕНО |
+| AI benchmark | `evals 1.5.2`, benchmark `1.4`, dataset `1.3.4`, `grounded-v2.5`; Alice Final run #3 reviewed; fresh Alice-only verification pending |
+| Alice Final run #3 | artifact `33163009779`: 8/8 calls, 0 errors/retries, source 6/8; failures are disclosed-gap motivation classification and response-cardinality false positive |
+| Regression replay | same raw responses under grounded-v2.5: 8/8 PASS, 3 audited scenario repairs, 2 audited motivation-kind repairs, 0 unresolved numeric/impact failures |
 | Candidate | Alice AI LLM remains primary candidate; no production provider is connected |
-| Safety boundary | synthetic dataset; exact evidence; deterministic match; impact/language/metadata gates; unique one-to-one scenario repair only; ambiguous/unsupported facts remain hard failures |
-| Final verification | manual-only `run_ai_bench_alice_final`; benchmark 1.4/dataset 1.3.2; 8/8 machine gate before named human rubric |
+| Safety boundary | synthetic dataset; exact evidence; deterministic match; impact/language/metadata gates; only narrow audited repairs; verified skills and factual numbers remain hard-gated |
+| Final verification | manual-only `run_ai_bench_alice_final`; benchmark 1.4/dataset 1.3.4; 8/8 machine gate before named human rubric |
 | Production AI | отсутствует; final provider decision ещё не принят |
 
 ### Decision boundary
 
-The comparative provider ranking is complete enough to keep Alice AI LLM as the final candidate. Alice Final run #1 did not reveal a transport or new semantic-safety regression; it exposed structured scenario provenance omissions and an overly broad response-count numeric classifier. Grounded-v2.3 addresses only those deterministic layers and still requires a fresh Alice-only 8/8 live artifact plus a named human writing-quality rubric. Only then may `AI-PROVIDER-001` record the production-provider decision.
+Alice AI LLM remains the final candidate. Run #3 again showed no transport/schema/language failure; the two FAILs are narrow benchmark-contract classification issues. Grounded-v2.5 corrects only those deterministic boundaries and replays the retained run 8/8, but this does not validate updated generation prompts. A fresh Alice-only 8/8 live artifact plus named human writing-quality rubric remain mandatory before `AI-PROVIDER-001`.
 <!-- ACA-CANONICAL-STATUS:END -->
 
 | Поле | Значение |
 |---|---|
 | Документ        | PROJECT_PASSPORT                                                                              |
-| Версия паспорта | 2.56 |
-| Дата            | 27 августа 2026                                                                               |
+| Версия паспорта | 2.58 |
+| Дата            | 28 августа 2026                                                                               |
 | Статус          | ДЕЙСТВУЮЩИЙ                                                                                   |
-| Связанный план | `AI_Career_Agent_PLAN_CURRENT v1.4.43` |
-| Основа кода | GitHub `main` archive `ai-career-agent-site-main (26).zip` after Alice Final run #1 |
+| Связанный план | `AI_Career_Agent_PLAN_CURRENT v1.4.44` |
+| Основа кода | GitHub `main` archive `ai-career-agent-site-main (28).zip`; ZIP comment `fd2c544f687109a42299421be8ec6030a6d5567f` |
 
 > Контрольные статусы: FND/DATA/SEC/OPS/INFRA-PREP/SYNC/SEARCH-001..005/AUTH/PROF/PRIV - ВЫПОЛНЕНО; AI-BENCH-001 - НУЖНА ПРОВЕРКА; AI-PROVIDER-001 - ЗАБЛОКИРОВАНО; DOC-001 - В РАБОТЕ; INFRA-001 - ОТЛОЖЕНО.
 
@@ -613,4 +613,8 @@ Artifact `ai-bench-20260827T112440Z-243eaaeb` completed 8/8 calls with zero prov
 | Версия | Дата | Изменение |
 |---|---|---|
 | 2.57 | 28.08.2026 | Alice Final run #2 artifact `33066898884`: 8/8 calls, 0 provider errors/retries, 6/8 machine. Grounded-v2.4 addresses the confirmed contract mismatches with Unicode dash lexical normalization, narrow audited future-intent motivation repair and stronger interview evidence coverage. Production architecture/revision unchanged. |
+### PROJECT_PASSPORT v2.58 update
 
+| Версия | Дата | Изменение |
+|---|---|---|
+| 2.58 | 28.08.2026 | Alice Final run #3 artifact `33163009779`: 8/8 calls, 0 provider errors/retries, 6/8 machine. Grounded-v2.5 fixes only disclosed-gap future-intent motivation classification and response-cardinality resources/approaches, restores run #2 regression discovery, and replays retained responses 8/8. Production architecture/revision unchanged; fresh live 8/8 + named manual rubric pending. |
