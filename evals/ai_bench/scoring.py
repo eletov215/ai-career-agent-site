@@ -219,11 +219,16 @@ def _clean_decorated_evidence_markers(text: str, fact_ids: tuple[str, ...]) -> t
     if not fact_ids or not text:
         return text, []
     alternatives = "|".join(re.escape(identifier) for identifier in sorted(fact_ids, key=len, reverse=True))
-    marker_re = re.compile(rf"(?<![\w])(?:\(\s*({alternatives})\s*\)|\[\s*({alternatives})\s*\])(?![\w])")
+    marker_list = rf"(?:{alternatives})(?:\s*[,;]\s*(?:{alternatives}))*"
+    marker_re = re.compile(
+        rf"(?<![\w])(?:\(\s*(?P<paren>{marker_list})\s*\)|\[\s*(?P<bracket>{marker_list})\s*\])(?![\w])"
+    )
+    identifier_re = re.compile(rf"(?:{alternatives})")
     removed: list[str] = []
 
     def repl(match: re.Match[str]) -> str:
-        removed.append(match.group(1) or match.group(2))
+        body = match.group("paren") or match.group("bracket") or ""
+        removed.extend(identifier_re.findall(body))
         return ""
 
     cleaned = marker_re.sub(repl, text)
@@ -434,7 +439,10 @@ def _find_user_facing_technical_tokens(case: BenchmarkCase, content: Any) -> lis
     """
     violations: list[dict[str, str]] = []
     known_fact_ids = {fact.fact_id for fact in case.source_facts}
-    generic_decorated = re.compile(r"[\[(]\s*([a-z][0-9]+)\s*[\])]", re.IGNORECASE)
+    generic_decorated = re.compile(
+        r"[\[(]\s*([a-z][0-9]+(?:\s*[,;]\s*[a-z][0-9]+)*)\s*[\])]",
+        re.IGNORECASE,
+    )
     for pattern in _USER_FACING_PATHS.get(case.task, ()):
         for path, value in iter_path_pattern(content, pattern):
             if not isinstance(value, str):
@@ -442,9 +450,10 @@ def _find_user_facing_technical_tokens(case: BenchmarkCase, content: Any) -> lis
             if _TECH_LABEL_RE.search(value):
                 violations.append({"path": path, "token": "evidence_id"})
             for match in generic_decorated.finditer(value):
-                identifier = match.group(1)
-                if identifier not in known_fact_ids:
-                    violations.append({"path": path, "token": identifier})
+                identifiers = [item.strip() for item in re.split(r"[,;]", match.group(1)) if item.strip()]
+                for identifier in identifiers:
+                    if identifier not in known_fact_ids:
+                        violations.append({"path": path, "token": identifier})
     seen: set[tuple[str, str]] = set()
     unique: list[dict[str, str]] = []
     for item in violations:

@@ -1,3 +1,16 @@
+## 2026-08-28 - AI-BENCH-001 Alice Final run #4 / artifact-sanitization hotfix r1 / evals 1.5.3
+
+- Reviewed artifact `33165683757` / run `ai-bench-20260828T111023Z-62a5cc1a`: **8/8 machine PASS**, 8/8 provider calls, 0 provider errors, 0 retries, zero hard-safety counters.
+- Mean quality `0.999479`, mean grounding `0.994792`, language/match consistency `1.000`, p50 `3734.228 ms`, p95 `8872.01 ms`, estimated cost `USD 0.052416386`.
+- Raw/machine/presentation audit found two `interview-en-01` `purpose` strings where grouped known evidence markers `(c1, c2)` / `(v1, v2)` / `(c1, c2, v2)` survived presentation cleanup. `purpose` is explicitly user-facing.
+- Root cause: the deterministic marker sanitizer accepted only one known ID per pair of brackets; the hard metadata detector intentionally treated known decorated IDs as repairable noise, so grouped forms were neither removed nor rejected.
+- Extended presentation cleanup only for groups composed entirely of known IDs separated by commas/semicolons; every removed ID is audited. Unknown/mixed groups remain untouched and hard-fail metadata detection.
+- Added exact run #4 regressions and package-gate provenance checks.
+- Retained live raw responses replay **8/8**, with 3 scenario repairs, 20 marker removals and **0 residual user-facing evidence IDs**. No new provider call was made.
+- Local bounded repository verification after the hotfix: **358 passed, 14 environment-dependent skipped, 19 subtests passed**; AI-BENCH package gate PASS; repository hygiene PASS.
+- Prompts, provider I/O, machine evidence semantics, thresholds, production routes/services/models/dependencies/migrations and revision `20260819_0014` remain unchanged.
+- Next gate: green ordinary CI/package gate -> named human writing-quality rubric -> AI-BENCH-001 closure decision. A second billable Alice run is not required for this sanitizer-only correction.
+
 ## 2026-08-28 - AI-BENCH-001 Alice Final v4 / grounded-v2.5 / evals 1.5.2
 
 - Reviewed Alice Final run #3 artifact `33163009779` / run `ai-bench-20260828T102540Z-bcf4c2ed`: 8/8 calls, 0 provider errors/retries, machine result 6/8, mean quality 0.975, grounding 1.000, p95 11855.16 ms, estimated cost USD 0.051498352.

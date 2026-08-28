@@ -1,0 +1,98 @@
+{
+  "source_artifact": "ai-bench-001-yandex-alice-final-33165683757.zip",
+  "source_run_id": "ai-bench-20260828T111023Z-62a5cc1a",
+  "source_benchmark": "1.4",
+  "source_dataset": "1.3.4",
+  "source_machine_pass": "8/8",
+  "purpose": "Deterministic artifact-sanitization replay after grouped-known-evidence-marker cleanup fix. No provider call; raw responses are unchanged.",
+  "result_count": 8,
+  "passed_count": 8,
+  "scenario_provenance_repair_count": 3,
+  "cover_letter_kind_repair_count": 0,
+  "user_facing_marker_cleanup_count": 20,
+  "residual_user_facing_evidence_id_count": 0,
+  "results": [
+    {
+      "case_id": "resume-analysis-ru-01",
+      "passed": true,
+      "quality_score": 1.0,
+      "grounding_score": 1.0,
+      "scenario_repairs": 0,
+      "kind_repairs": 0,
+      "marker_cleanups": 0,
+      "residual_user_facing_ids": 0
+    },
+    {
+      "case_id": "resume-analysis-en-01",
+      "passed": true,
+      "quality_score": 1.0,
+      "grounding_score": 1.0,
+      "scenario_repairs": 0,
+      "kind_repairs": 0,
+      "marker_cleanups": 0,
+      "residual_user_facing_ids": 0
+    },
+    {
+      "case_id": "vacancy-match-ru-01",
+      "passed": true,
+      "quality_score": 1.0,
+      "grounding_score": 1.0,
+      "scenario_repairs": 0,
+      "kind_repairs": 0,
+      "marker_cleanups": 0,
+      "residual_user_facing_ids": 0
+    },
+    {
+      "case_id": "vacancy-match-en-01",
+      "passed": true,
+      "quality_score": 1.0,
+      "grounding_score": 1.0,
+      "scenario_repairs": 0,
+      "kind_repairs": 0,
+      "marker_cleanups": 0,
+      "residual_user_facing_ids": 0
+    },
+    {
+      "case_id": "cover-letter-ru-01",
+      "passed": true,
+      "quality_score": 0.995833,
+      "grounding_score": 0.958333,
+      "scenario_repairs": 0,
+      "kind_repairs": 0,
+      "marker_cleanups": 0,
+      "residual_user_facing_ids": 0
+    },
+    {
+      "case_id": "cover-letter-en-01",
+      "passed": true,
+      "quality_score": 1.0,
+      "grounding_score": 1.0,
+      "scenario_repairs": 0,
+      "kind_repairs": 0,
+      "marker_cleanups": 0,
+      "residual_user_facing_ids": 0
+    },
+    {
+      "case_id": "interview-ru-01",
+      "passed": true,
+      "quality_score": 1.0,
+      "grounding_score": 1.0,
+      "scenario_repairs": 0,
+      "kind_repairs": 0,
+      "marker_cleanups": 0,
+      "residual_user_facing_ids": 0
+    },
+    {
+      "case_id": "interview-en-01",
+      "passed": true,
+      "quality_score": 1.0,
+      "grounding_score": 1.0,
+      "scenario_repairs": 3,
+      "kind_repairs": 0,
+      "marker_cleanups": 20,
+      "residual_user_facing_ids": 0
+    }
+  ],
+  "residuals": [],
+  "decision_note": "The live machine gate remains satisfied. This replay validates only deterministic presentation sanitation against retained raw responses; named human writing-quality review remains mandatory before AI-BENCH-001 closure."
+}

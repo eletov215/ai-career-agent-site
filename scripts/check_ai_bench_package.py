@@ -254,6 +254,14 @@ def main() -> int:
         fail("Alice Final run #3 motivation regression is missing")
     if not (alice3_patterns.get("safe_response_cardinality_resources_approaches") or {}).get("text"):
         fail("Alice Final run #3 response-cardinality regression is missing")
+    alice_final_regression_4 = json.loads((ROOT / "evals/regressions/alice-final-run-4.json").read_text(encoding="utf-8"))
+    if alice_final_regression_4.get("source_run_id") != "ai-bench-20260828T111023Z-62a5cc1a":
+        fail("Alice Final run #4 regression provenance is missing")
+    alice4_patterns = alice_final_regression_4.get("patterns") or {}
+    if len(alice4_patterns.get("grouped_known_marker_cleanup") or []) < 2:
+        fail("Alice Final run #4 grouped-marker cleanup regressions are incomplete")
+    if not (alice4_patterns.get("unknown_group_must_not_be_cleaned") or {}).get("unknown_id"):
+        fail("Alice Final run #4 unknown grouped-marker hard-failure regression is missing")
     alice_patterns = alice_final_regression.get("patterns") or {}
     if len(alice_patterns.get("repairable_scenario_provenance") or []) < 3:
         fail("Alice final run-1 scenario-provenance regressions are incomplete")
