@@ -1,0 +1,184 @@
+{
+  "source_artifact": "ai-bench-001-yandex-alice-final-33168005097.zip",
+  "source_run_id": "ai-bench-20260828T114615Z-5b0d7a99",
+  "replay_contract": "grounded-v2.6",
+  "dataset_version": "1.3.5",
+  "passed_count": 6,
+  "case_count": 8,
+  "results": [
+    {
+      "case_id": "cover-letter-en-01",
+      "passed": false,
+      "gate_failures": [
+        "cover_letter_presentation"
+      ],
+      "cover_letter_presentation_violations": [
+        {
+          "path": "$.paragraphs[4].evidence_ids",
+          "reason": "unverified_candidate_gap_must_remain_internal"
+        }
+      ],
+      "normalization": {
+        "scenario_provenance_repair_count": 0,
+        "scenario_provenance_repairs": [],
+        "cover_letter_kind_repair_count": 0,
+        "cover_letter_kind_repairs": [],
+        "user_facing_marker_cleanup_count": 0,
+        "user_facing_marker_cleanups": [],
+        "presentation_internal_field_omission_count": 1,
+        "presentation_internal_field_omissions": [
+          "$.caveats"
+        ]
+      }
+    },
+    {
+      "case_id": "cover-letter-ru-01",
+      "passed": false,
+      "gate_failures": [
+        "cover_letter_presentation"
+      ],
+      "cover_letter_presentation_violations": [
+        {
+          "path": "$.paragraphs[3].evidence_ids",
+          "reason": "unverified_candidate_gap_must_remain_internal"
+        }
+      ],
+      "normalization": {
+        "scenario_provenance_repair_count": 0,
+        "scenario_provenance_repairs": [],
+        "cover_letter_kind_repair_count": 1,
+        "cover_letter_kind_repairs": [
+          {
+            "path": "$.paragraphs[2].kind",
+            "from": "candidate_fit",
+            "to": "motivation",
+            "reason": "vacancy_only_explicit_motivation_intent"
+          }
+        ],
+        "user_facing_marker_cleanup_count": 0,
+        "user_facing_marker_cleanups": [],
+        "presentation_internal_field_omission_count": 1,
+        "presentation_internal_field_omissions": [
+          "$.caveats"
+        ]
+      }
+    },
+    {
+      "case_id": "interview-en-01",
+      "passed": true,
+      "gate_failures": [],
+      "cover_letter_presentation_violations": [],
+      "normalization": {
+        "scenario_provenance_repair_count": 1,
+        "scenario_provenance_repairs": [
+          {
+            "path": "$.questions[3].evidence_ids",
+            "number": "90",
+            "evidence_id": "s2",
+            "reason": "unique_exact_scenario_number_match"
+          }
+        ],
+        "cover_letter_kind_repair_count": 0,
+        "cover_letter_kind_repairs": [],
+        "user_facing_marker_cleanup_count": 0,
+        "user_facing_marker_cleanups": [],
+        "presentation_internal_field_omission_count": 0,
+        "presentation_internal_field_omissions": []
+      }
+    },
+    {
+      "case_id": "interview-ru-01",
+      "passed": true,
+      "gate_failures": [],
+      "cover_letter_presentation_violations": [],
+      "normalization": {
+        "scenario_provenance_repair_count": 2,
+        "scenario_provenance_repairs": [
+          {
+            "path": "$.questions[2].evidence_ids",
+            "number": "20%",
+            "evidence_id": "s1",
+            "reason": "unique_exact_scenario_number_match"
+          },
+          {
+            "path": "$.questions[3].evidence_ids",
+            "number": "30",
+            "evidence_id": "s2",
+            "reason": "unique_exact_scenario_number_match"
+          }
+        ],
+        "cover_letter_kind_repair_count": 0,
+        "cover_letter_kind_repairs": [],
+        "user_facing_marker_cleanup_count": 0,
+        "user_facing_marker_cleanups": [],
+        "presentation_internal_field_omission_count": 0,
+        "presentation_internal_field_omissions": []
+      }
+    },
+    {
+      "case_id": "resume-analysis-en-01",
+      "passed": true,
+      "gate_failures": [],
+      "cover_letter_presentation_violations": [],
+      "normalization": {
+        "scenario_provenance_repair_count": 0,
+        "scenario_provenance_repairs": [],
+        "cover_letter_kind_repair_count": 0,
+        "cover_letter_kind_repairs": [],
+        "user_facing_marker_cleanup_count": 0,
+        "user_facing_marker_cleanups": [],
+        "presentation_internal_field_omission_count": 0,
+        "presentation_internal_field_omissions": []
+      }
+    },
+    {
+      "case_id": "resume-analysis-ru-01",
+      "passed": true,
+      "gate_failures": [],
+      "cover_letter_presentation_violations": [],
+      "normalization": {
+        "scenario_provenance_repair_count": 0,
+        "scenario_provenance_repairs": [],
+        "cover_letter_kind_repair_count": 0,
+        "cover_letter_kind_repairs": [],
+        "user_facing_marker_cleanup_count": 0,
+        "user_facing_marker_cleanups": [],
+        "presentation_internal_field_omission_count": 0,
+        "presentation_internal_field_omissions": []
+      }
+    },
+    {
+      "case_id": "vacancy-match-en-01",
+      "passed": true,
+      "gate_failures": [],
+      "cover_letter_presentation_violations": [],
+      "normalization": {
+        "scenario_provenance_repair_count": 0,
+        "scenario_provenance_repairs": [],
+        "cover_letter_kind_repair_count": 0,
+        "cover_letter_kind_repairs": [],
+        "user_facing_marker_cleanup_count": 0,
+        "user_facing_marker_cleanups": [],
+        "presentation_internal_field_omission_count": 0,
+        "presentation_internal_field_omissions": []
+      }
+    },
+    {
+      "case_id": "vacancy-match-ru-01",
+      "passed": true,
+      "gate_failures": [],
+      "cover_letter_presentation_violations": [],
+      "normalization": {
+        "scenario_provenance_repair_count": 0,
+        "scenario_provenance_repairs": [],
+        "cover_letter_kind_repair_count": 0,
+        "cover_letter_kind_repairs": [],
+        "user_facing_marker_cleanup_count": 0,
+        "user_facing_marker_cleanups": [],
+        "presentation_internal_field_omission_count": 0,
+        "presentation_internal_field_omissions": []
+      }
+    }
+  ],
+  "note": "Offline replay only; updated prompts require a fresh Alice live run."
+}

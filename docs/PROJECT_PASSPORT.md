@@ -6,37 +6,37 @@
 <!-- ACA-CANONICAL-STATUS:START -->
 ## Канонический срез проекта
 
-**Документ:** AI Career Agent PROJECT_PASSPORT `v2.59`  
-**Дата:** 2026-08-28  
+**Документ:** AI Career Agent PROJECT_PASSPORT `v2.60`  
+**Дата:** 2026-09-13  
 **Production revision:** `20260819_0014`
 
 | Контур | Состояние |
 |---|---|
-| Web | Flask + Gunicorn, WSGI `app:app`; AI-BENCH artifact hotfix production code не меняет |
+| Web | Flask + Gunicorn, WSGI `app:app`; AI-BENCH changes production code не затрагивают |
 | Data | PostgreSQL production, SQLite local/test fallback, Alembic `20260819_0014` |
 | Identity/career/search/privacy | ранее завершённые пакеты остаются ВЫПОЛНЕНО |
-| AI benchmark | benchmark `1.4`, dataset `1.3.4`, `grounded-v2.5`; Alice Final run #4 live machine gate **8/8 COMPLETE** |
-| Alice Final run #4 | artifact `33165683757`: 8/8 calls, 0 errors/retries, 8/8 machine PASS; mean quality `0.999479`, grounding `0.994792` |
-| Artifact audit | grouped known evidence markers survived in two `interview-en-01` user-facing purpose strings; deterministic presentation sanitizer defect only |
-| Hotfix | `evals 1.5.3`; grouped all-known marker cleanup, unknown/mixed groups remain hard failures |
-| Replay | retained live raw responses: 8/8, 3 scenario repairs, 20 marker cleanups, 0 residual user-facing evidence IDs |
-| Candidate | Alice AI LLM remains primary candidate; no production provider is connected |
-| Final verification | ordinary CI for sanitizer hotfix -> named human writing-quality rubric -> closure decision |
-| Production AI | отсутствует; final provider decision ещё не принят |
+| AI benchmark | benchmark `1.4`, dataset candidate `1.3.5`, `grounded-v2.6`, evals `1.6.0` |
+| Last live evidence | artifact `33168005097`, run `ai-bench-20260828T114615Z-5b0d7a99`: 8/8 machine PASS, quality/grounding `1.000`, 0 errors/retries |
+| Human review | named reviewer **Шекунов Д.С.**; revision required in RU resume tone, RU vacancy recommendation, RU/EN cover letters |
+| Cover-letter boundary | internal caveats stay machine/audit-only; presentation hides them; visible letter is first-person and cannot disclose explicit unverified candidate gaps |
+| Replay | retained run #5 raw outputs under grounded-v2.6: 6/8; both old cover-letter outputs are intentionally rejected |
+| Candidate | Alice AI LLM remains primary benchmark candidate; no production provider is connected |
+| Final verification | ordinary CI -> fresh Alice Final 8/8 -> focused named human re-review -> closure decision |
+| Production AI | отсутствует; provider strategy remains blocked until AI-BENCH-001 closes |
 
 ### Decision boundary
 
-The dedicated Alice-only live machine gate is now satisfied. AI-BENCH-001 still cannot close until artifact-sanitization hotfix r1 is green in ordinary CI and a named human reviewer completes the writing-quality rubric for all eight outputs. A second live Alice call is not required because prompts/provider I/O and machine semantics are unchanged by this deterministic presentation-only fix.
+The previous live machine result remains valid as historical evidence but cannot close AI-BENCH-001 because the named human review required product-writing revisions. Grounded-v2.6 changes prompts and visible cover-letter semantics, so a fresh Alice Final live run is mandatory after ordinary CI. Production application architecture and database revision are unchanged.
 <!-- ACA-CANONICAL-STATUS:END -->
 
 | Поле | Значение |
 |---|---|
 | Документ        | PROJECT_PASSPORT                                                                              |
-| Версия паспорта | 2.59 |
-| Дата            | 28 августа 2026                                                                               |
+| Версия паспорта | 2.60 |
+| Дата            | 13 сентября 2026                                                                               |
 | Статус          | ДЕЙСТВУЮЩИЙ                                                                                   |
-| Связанный план | `AI_Career_Agent_PLAN_CURRENT v1.4.45` |
-| Основа кода | GitHub `main` after grounded-v2.5 package, evidenced by Alice Final live artifact `33165683757`; artifact-sanitization hotfix r1 prepared on top |
+| Связанный план | `AI_Career_Agent_PLAN_CURRENT v1.4.46` |
+| Основа кода | GitHub `main` snapshot `ai-career-agent-site-main (1).zip` от 13.09.2026; grounded-v2.6 candidate prepared on top |
 
 > Контрольные статусы: FND/DATA/SEC/OPS/INFRA-PREP/SYNC/SEARCH-001..005/AUTH/PROF/PRIV - ВЫПОЛНЕНО; AI-BENCH-001 - НУЖНА ПРОВЕРКА; AI-PROVIDER-001 - ЗАБЛОКИРОВАНО; DOC-001 - В РАБОТЕ; INFRA-001 - ОТЛОЖЕНО.
 
@@ -621,3 +621,10 @@ Artifact `ai-bench-20260827T112440Z-243eaaeb` completed 8/8 calls with zero prov
 | 2.58 | 28.08.2026 | Alice Final run #3 artifact `33163009779`: 8/8 calls, 0 provider errors/retries, 6/8 machine. Grounded-v2.5 fixes only disclosed-gap future-intent motivation classification and response-cardinality resources/approaches, restores run #2 regression discovery, and replays retained responses 8/8. Production architecture/revision unchanged; fresh live 8/8 + named manual rubric pending. |
 
 | 2.59 | 28.08.2026 | Alice Final run #4 artifact `33165683757` achieved the required live 8/8 machine pass with zero errors/retries. Artifact audit found grouped known evidence markers left in two user-facing interview-purpose strings. Evals 1.5.3 fixes deterministic presentation sanitation only; retained raw replay stays 8/8 with 0 residual user-facing IDs. Next: ordinary CI + named human rubric; production architecture/revision unchanged. |
+
+
+### PROJECT_PASSPORT v2.60 update
+
+| Версия | Дата | Изменение |
+|---|---|---|
+| 2.60 | 13.09.2026 | Current GitHub-main snapshot adopted. Historical Alice run #5 remains 8/8 machine PASS, but named reviewer Шекунов Д.С. required revisions. Grounded-v2.6 / evals 1.6.0 hardens RU coaching, vacancy-gap actionability and first-person cover-letter presentation; fresh Alice 8/8 plus focused human re-review remain required. Production revision remains `20260819_0014`. |

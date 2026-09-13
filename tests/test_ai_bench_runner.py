@@ -41,6 +41,14 @@ class RunnerTests(unittest.TestCase):
             self.assertTrue(all(item["score"] is None for entry in review["entries"] for item in entry["criteria"]))
             self.assertTrue(all((result.get("normalization") or {}).get("scenario_provenance_repair_count") == 0 for result in run["results"]))
             self.assertTrue(all((result.get("normalization") or {}).get("user_facing_marker_cleanup_count") == 0 for result in run["results"]))
+            cover_presentations = [
+                json.loads(path.read_text(encoding="utf-8"))
+                for path in (output / "presentation/reference").glob("cover-letter-*.json")
+            ]
+            self.assertEqual(len(cover_presentations), 2)
+            self.assertTrue(all("caveats" not in item for item in cover_presentations))
+            cover_results = [result for result in run["results"] if result["task"] == "cover_letter"]
+            self.assertTrue(all((result.get("normalization") or {}).get("presentation_internal_field_omission_count") == 1 for result in cover_results))
 
     def test_report_redacts_secret_like_values(self) -> None:
         sample = {

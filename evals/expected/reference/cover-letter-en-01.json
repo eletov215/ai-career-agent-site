@@ -10,7 +10,7 @@
     },
     {
       "kind": "candidate_fit",
-      "text": "I have three years of product-design experience and have worked with Figma design systems, which aligns with the role's design-system requirement.",
+      "text": "I have three years of product-design experience and have worked with Figma design systems, which aligns with the role’s design-system requirement.",
       "evidence_ids": [
         "c1",
         "c2",
@@ -27,7 +27,7 @@
     },
     {
       "kind": "motivation",
-      "text": "The role's focus on B2B product design and design systems is especially relevant to the kind of product work I want to continue developing.",
+      "text": "I am especially interested in the role’s B2B product-design focus and the opportunity to continue working with design systems.",
       "evidence_ids": [
         "v1",
         "v2"
@@ -35,7 +35,7 @@
     },
     {
       "kind": "closing",
-      "text": "I would welcome the opportunity to discuss how this confirmed experience could support your B2B product-design work.",
+      "text": "I would welcome the opportunity to discuss the role and my relevant product-design experience in more detail.",
       "evidence_ids": [
         "v1"
       ]

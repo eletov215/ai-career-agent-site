@@ -89,7 +89,6 @@ _USER_FACING_PATHS: dict[str, tuple[str, ...]] = {
     "cover_letter": (
         "$.subject",
         "$.paragraphs[*].text",
-        "$.caveats[*].text",
     ),
     "interview_questions": (
         "$.opening",
@@ -271,16 +270,20 @@ def _transform_path_pattern(value: Any, pattern: str, transform) -> None:
 
 
 def normalize_user_facing_evidence_markers(case: BenchmarkCase, content: Any) -> tuple[Any, dict[str, Any]]:
-    """Remove only simple decorated source IDs from user-facing text.
+    """Build a sanitized presentation copy without changing machine evidence.
 
     Structured ``evidence_ids`` remain untouched and authoritative. Labels such
     as ``evidence_ids:`` or serialized metadata are deliberately *not* cleaned
-    so the existing technical-metadata gate still rejects them. The returned
-    audit record contains only paths/IDs, never the original text.
+    so the existing technical-metadata gate still rejects them. Cover-letter
+    ``caveats`` are machine/audit metadata under grounded-v2.6 and are omitted
+    from the presentation copy so the visible letter does not advertise
+    unverified candidate gaps to an employer. The returned audit record
+    contains only paths/IDs and omitted field names, never the original text.
     """
     normalized = copy.deepcopy(content)
     fact_ids = tuple(fact.fact_id for fact in case.source_facts)
     removals: list[dict[str, str]] = []
+    omitted_fields: list[str] = []
 
     def transform(value: Any, path: str) -> Any:
         if not isinstance(value, str):
@@ -291,9 +294,14 @@ def normalize_user_facing_evidence_markers(case: BenchmarkCase, content: Any) ->
 
     for pattern in _USER_FACING_PATHS.get(case.task, ()):
         _transform_path_pattern(normalized, pattern, transform)
+    if case.task == "cover_letter" and isinstance(normalized, dict) and "caveats" in normalized:
+        normalized.pop("caveats", None)
+        omitted_fields.append("$.caveats")
     return normalized, {
         "user_facing_marker_cleanup_count": len(removals),
         "user_facing_marker_cleanups": removals,
+        "presentation_internal_field_omission_count": len(omitted_fields),
+        "presentation_internal_field_omissions": omitted_fields,
     }
 
 
@@ -475,14 +483,24 @@ _MOTIVATION_INTENT_RE = re.compile(
     r"\bmotivated\b|\blook\s+forward\b|\bwould\s+welcome\b|\bgrow\b|\bdevelop\b)"
 )
 _UNVERIFIED_GAP_FACT_RE = re.compile(
-    r"(?iu)(?:\bnot\s+(?:verified|confirmed)\b|\bunverified\b|"
+    r"(?iu)(?:\bnot\s+(?:verified|confirmed|specified|provided)\b|\bunverified\b|"
     r"\bне\s+подтвержд(?:ен|ена|ено|ены|ён|ёна|ёно|ёны)\w*\b|"
-    r"\bнет\s+подтвержд(?:ен|ена|ено|ены|ён|ёна|ёно|ёны)\w*\b)"
+    r"\bнет\s+подтвержд(?:ен|ена|ено|ены|ён|ёна|ёно|ёны)\w*\b|"
+    r"\bне\s+указан\w*\b)"
 )
 _GAP_DISCLOSURE_RE = re.compile(
     r"(?iu)(?:\b(?:do\s+not|don['’]t|dont)\s+have\b|\bnot\s+(?:verified|confirmed)\b|"
     r"\bwithout\s+(?:verified|confirmed)\b|\bне\s+(?:имею|подтвержден|подтверждён)\w*\b|"
-    r"\bнет\s+подтвержд\w*\b)"
+    r"\bнет\s+подтвержд\w*\b|\bне\s+указан\w*\b)"
+)
+_COVER_LETTER_THIRD_PERSON_RE = re.compile(
+    r"(?iu)(?:\bкандидат\w*\b|\bсоискател\w*\b|\bthe\s+candidate\b|\bthe\s+applicant\b)"
+)
+_COVER_LETTER_FIRST_PERSON_RU_RE = re.compile(
+    r"(?iu)(?:\bя\b|\bмне\b|\bменя\b|\bмой\w*\b|\bмо[еёюи]\w*\b|\bимею\b|\bработал(?:а)?\b|\bзанимал(?:ся|ась)\b|\bхочу\b|\bготов(?:а)?\b|\bбуду\b)"
+)
+_COVER_LETTER_FIRST_PERSON_EN_RE = re.compile(
+    r"(?iu)(?:\bI\b|\bmy\b|\bme\b|\bI['’]m\b|\bI['’]ve\b|\bI['’]d\b|\bI\s+have\b|\bI\s+would\b)"
 )
 
 
@@ -491,28 +509,21 @@ def _is_unverified_gap_fact(text: str) -> bool:
 
 
 def normalize_cover_letter_motivation_kind(case: BenchmarkCase, content: Any) -> tuple[Any, dict[str, Any]]:
-    """Repair a narrowly provable cover-letter paragraph-kind mismatch.
+    """Repair only vacancy-grounded future intent mislabeled as candidate fit.
 
-    Alice may occasionally label a future-intent paragraph as ``candidate_fit``.
-    Reclassification to ``motivation`` is allowed only when:
-    - the task is cover_letter;
-    - the paragraph currently has kind=candidate_fit;
-    - it cites at least one vacancy fact;
-    - its user-facing text contains an explicit motivation/future-intent cue; and
-    - it either cites no candidate facts, or every cited candidate fact is an
-      explicit unverified-gap fact and the paragraph itself discloses that gap.
-
-    This second narrow branch handles phrases such as “I do not have verified
-    experimentation experience, but I am eager to develop it.” It does not
-    reclassify verified skills, achievements, impact claims, or mixed positive
-    candidate evidence. Those remain subject to the normal hard safety gates.
+    Under grounded-v2.6, a visible cover letter must not disclose an unverified
+    candidate gap. Therefore a ``candidate_fit`` paragraph can be reclassified
+    to ``motivation`` only when it cites vacancy evidence and *no* candidate
+    evidence, and its text contains an explicit motivation/future-intent cue.
+    Paragraphs that cite an unverified candidate fact are never repaired into
+    user-visible motivation; they are rejected by the cover-letter presentation
+    gate and must remain only in internal ``caveats``.
     """
     normalized = copy.deepcopy(content)
     repairs: list[dict[str, str]] = []
     if case.task != "cover_letter" or not isinstance(normalized, dict):
         return normalized, {"cover_letter_kind_repair_count": 0, "cover_letter_kind_repairs": repairs}
     kinds = _evidence_kind_map(case)
-    fact_map = {fact.fact_id: fact for fact in case.source_facts}
     paragraphs = normalized.get("paragraphs")
     if not isinstance(paragraphs, list):
         return normalized, {"cover_letter_kind_repair_count": 0, "cover_letter_kind_repairs": repairs}
@@ -520,38 +531,77 @@ def normalize_cover_letter_motivation_kind(case: BenchmarkCase, content: Any) ->
         if not isinstance(paragraph, dict) or paragraph.get("kind") != "candidate_fit":
             continue
         evidence = paragraph.get("evidence_ids")
-        text = paragraph.get("text")
-        if not isinstance(evidence, list) or not isinstance(text, str):
+        text_value = paragraph.get("text")
+        if not isinstance(evidence, list) or not isinstance(text_value, str):
             continue
         candidate_ids = [str(item) for item in evidence if kinds.get(str(item)) == "candidate"]
         vacancy_ids = [str(item) for item in evidence if kinds.get(str(item)) == "vacancy"]
-        if not vacancy_ids or not _MOTIVATION_INTENT_RE.search(text):
+        if candidate_ids or not vacancy_ids or not _MOTIVATION_INTENT_RE.search(text_value):
             continue
-
-        gap_only_candidate_evidence = bool(candidate_ids) and all(
-            (fact := fact_map.get(identifier)) is not None and _is_unverified_gap_fact(fact.text)
-            for identifier in candidate_ids
-        )
-        if candidate_ids and not (gap_only_candidate_evidence and _GAP_DISCLOSURE_RE.search(text)):
-            continue
-
         paragraph["kind"] = "motivation"
-        reason = (
-            "unverified_gap_plus_vacancy_explicit_motivation_intent"
-            if candidate_ids
-            else "vacancy_only_explicit_motivation_intent"
-        )
         repairs.append({
             "path": f"$.paragraphs[{index}].kind",
             "from": "candidate_fit",
             "to": "motivation",
-            "reason": reason,
+            "reason": "vacancy_only_explicit_motivation_intent",
         })
     return normalized, {
         "cover_letter_kind_repair_count": len(repairs),
         "cover_letter_kind_repairs": repairs,
     }
 
+
+def _cover_letter_presentation_violations(case: BenchmarkCase, content: Any) -> list[dict[str, str]]:
+    """Reject weaknesses/third-person narration in the visible cover letter.
+
+    Internal ``caveats`` remain required for audit coverage. The visible
+    ``subject``/``paragraphs`` must read like a human-authored application and
+    must not disclose unverified candidate gaps or describe the writer as a
+    candidate/applicant in the third person.
+    """
+    if case.task != "cover_letter" or not isinstance(content, dict):
+        return []
+    fact_map = {fact.fact_id: fact for fact in case.source_facts}
+    violations: list[dict[str, str]] = []
+    paragraphs = content.get("paragraphs")
+    if not isinstance(paragraphs, list):
+        return violations
+    for index, paragraph in enumerate(paragraphs):
+        if not isinstance(paragraph, dict):
+            continue
+        text_value = paragraph.get("text")
+        evidence = paragraph.get("evidence_ids") if isinstance(paragraph.get("evidence_ids"), list) else []
+        for identifier in evidence:
+            fact = fact_map.get(str(identifier))
+            if fact and fact.kind == "candidate" and _is_unverified_gap_fact(fact.text):
+                violations.append({
+                    "path": f"$.paragraphs[{index}].evidence_ids",
+                    "reason": "unverified_candidate_gap_must_remain_internal",
+                })
+                break
+        if isinstance(text_value, str):
+            if _GAP_DISCLOSURE_RE.search(text_value):
+                violations.append({
+                    "path": f"$.paragraphs[{index}].text",
+                    "reason": "explicit_gap_disclosure_in_visible_letter",
+                })
+            if _COVER_LETTER_THIRD_PERSON_RE.search(text_value):
+                violations.append({
+                    "path": f"$.paragraphs[{index}].text",
+                    "reason": "third_person_writer_reference",
+                })
+    subject = content.get("subject")
+    if isinstance(subject, str) and _COVER_LETTER_THIRD_PERSON_RE.search(subject):
+        violations.append({"path": "$.subject", "reason": "third_person_writer_reference"})
+    visible_text = "\n".join(
+        str(paragraph.get("text") or "")
+        for paragraph in paragraphs
+        if isinstance(paragraph, dict)
+    )
+    first_person_re = _COVER_LETTER_FIRST_PERSON_RU_RE if case.language == "ru" else _COVER_LETTER_FIRST_PERSON_EN_RE
+    if visible_text.strip() and not first_person_re.search(visible_text):
+        violations.append({"path": "$.paragraphs", "reason": "missing_first_person_voice"})
+    return violations
 
 def _claim_evidence_violations(case: BenchmarkCase, content: Any) -> list[dict[str, str]]:
     if case.task != "cover_letter" or not isinstance(content, dict):
@@ -791,6 +841,7 @@ def score_case(case: BenchmarkCase, content: Any, thresholds: dict[str, Any]) ->
     user_facing_technical_tokens = _find_user_facing_technical_tokens(case, content)
     claim_evidence_violations = _claim_evidence_violations(case, content)
     unsupported_impact_claims = _unsupported_impact_claims(case, content)
+    cover_letter_presentation_violations = _cover_letter_presentation_violations(case, content)
     language_consistency = _language_consistency(case, content)
     scenario_provenance_violations = _scenario_number_evidence_violations(case, content)
     unverified_coverage, missing_unverified_evidence_ids = _coverage_for_structured_evidence(
@@ -807,7 +858,7 @@ def score_case(case: BenchmarkCase, content: Any, thresholds: dict[str, Any]) ->
 
     schema_compliance = 1.0 if not schema_errors else 0.0
     grounding_score = round((evidence_precision + evidence_recall + grounding_term_coverage) / 3.0, 6)
-    user_cleanliness = 1.0 if not user_facing_technical_tokens else 0.0
+    user_cleanliness = 1.0 if not (user_facing_technical_tokens or cover_letter_presentation_violations) else 0.0
     evidence_semantics = 1.0 if not claim_evidence_violations else 0.0
     safety_score = 1.0 if not (forbidden_claims or unsupported_numbers or unsupported_impact_claims) else 0.0
     verification_score = (unverified_coverage + caveat_coverage) / 2.0
@@ -853,6 +904,7 @@ def score_case(case: BenchmarkCase, content: Any, thresholds: dict[str, Any]) ->
     max_user_facing_technical_tokens = int(thresholds.get("max_user_facing_technical_tokens", 0))
     max_claim_evidence_violations = int(thresholds.get("max_claim_evidence_violations", 0))
     max_unsupported_impact_claims = int(thresholds.get("max_unsupported_impact_claims", 0))
+    max_cover_letter_presentation_violations = int(thresholds.get("max_cover_letter_presentation_violations", 0))
     min_required_unverified_coverage = float(thresholds.get("min_required_unverified_coverage", 1.0))
     min_required_caveat_coverage = float(thresholds.get("min_required_caveat_coverage", 1.0))
     max_language_consistency_violations = int(thresholds.get("max_language_consistency_violations", 0))
@@ -880,6 +932,8 @@ def score_case(case: BenchmarkCase, content: Any, thresholds: dict[str, Any]) ->
         gate_failures.append("claim_evidence")
     if len(unsupported_impact_claims) > max_unsupported_impact_claims:
         gate_failures.append("unsupported_impact_claims")
+    if len(cover_letter_presentation_violations) > max_cover_letter_presentation_violations:
+        gate_failures.append("cover_letter_presentation")
     if unverified_coverage < min_required_unverified_coverage:
         gate_failures.append("unverified_coverage")
     if caveat_coverage < min_required_caveat_coverage:
@@ -913,6 +967,7 @@ def score_case(case: BenchmarkCase, content: Any, thresholds: dict[str, Any]) ->
         "user_facing_technical_token_count": len(user_facing_technical_tokens),
         "claim_evidence_violation_count": len(claim_evidence_violations),
         "unsupported_impact_claim_count": len(unsupported_impact_claims),
+        "cover_letter_presentation_violation_count": len(cover_letter_presentation_violations),
         "language_consistency_violation_count": len(language_consistency["violations"]),
         "scenario_provenance_violation_count": len(scenario_provenance_violations),
         "schema_errors": schema_errors,
@@ -927,6 +982,7 @@ def score_case(case: BenchmarkCase, content: Any, thresholds: dict[str, Any]) ->
         "user_facing_technical_tokens": user_facing_technical_tokens,
         "claim_evidence_violations": claim_evidence_violations,
         "unsupported_impact_claims": unsupported_impact_claims,
+        "cover_letter_presentation_violations": cover_letter_presentation_violations,
         "language_consistency": language_consistency,
         "scenario_provenance_violations": scenario_provenance_violations,
         "match_evaluation": match_evaluation,

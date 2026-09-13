@@ -28,6 +28,7 @@ STRICT_THRESHOLDS = {
     "max_user_facing_technical_tokens": 0,
     "max_claim_evidence_violations": 0,
     "max_unsupported_impact_claims": 0,
+    "max_cover_letter_presentation_violations": 0,
     "min_required_unverified_coverage": 1.0,
     "min_required_caveat_coverage": 1.0,
     "max_language_consistency_violations": 0,
@@ -49,6 +50,7 @@ class ScoringTests(unittest.TestCase):
         cls.regressions_alice_final_2 = json.loads((ROOT / "evals/regressions/alice-final-run-2.json").read_text(encoding="utf-8"))
         cls.regressions_alice_final_3 = json.loads((ROOT / "evals/regressions/alice-final-run-3.json").read_text(encoding="utf-8"))
         cls.regressions_alice_final_4 = json.loads((ROOT / "evals/regressions/alice-final-run-4.json").read_text(encoding="utf-8"))
+        cls.regressions_alice_final_5 = json.loads((ROOT / "evals/regressions/alice-final-run-5-human-review.json").read_text(encoding="utf-8"))
 
     def _reference(self, case_id: str) -> dict:
         return json.loads((ROOT / "evals/expected/reference" / f"{case_id}.json").read_text(encoding="utf-8"))
@@ -519,24 +521,82 @@ class ScoringTests(unittest.TestCase):
                 self.assertIn("v2", system_prompt)
                 self.assertIn("c1", system_prompt)
                 self.assertIn("c4", system_prompt)
-    def test_alice_final_run_3_unverified_gap_future_intent_repairs_to_motivation(self) -> None:
+    def test_grounded_v26_unverified_gap_future_intent_is_not_repaired_into_visible_letter(self) -> None:
         sample = self.regressions_alice_final_3["patterns"]["unverified_gap_future_intent"]
         case = self.by_id[sample["case_id"]]
         content = self._reference(case.case_id)
         content["paragraphs"][3]["kind"] = sample["kind_before"]
         content["paragraphs"][3]["text"] = sample["text"]
         content["paragraphs"][3]["evidence_ids"] = sample["evidence_ids"]
-        raw_score = score_case(case, content, {"max_unsupported_impact_claims": 0})
-        self.assertIn("unsupported_impact_claims", raw_score["gate_failures"], raw_score)
         normalized, audit = normalize_cover_letter_motivation_kind(case, content)
-        self.assertEqual(audit["cover_letter_kind_repair_count"], 1)
-        self.assertEqual(normalized["paragraphs"][3]["kind"], sample["expected_kind_after"])
+        self.assertEqual(audit["cover_letter_kind_repair_count"], 0)
+        self.assertEqual(normalized["paragraphs"][3]["kind"], sample["kind_before"])
+        score = score_case(case, normalized, {
+            "max_cover_letter_presentation_violations": 0,
+            "max_unsupported_impact_claims": 0,
+        })
+        self.assertIn("cover_letter_presentation", score["gate_failures"], score)
+        reasons = {item["reason"] for item in score["cover_letter_presentation_violations"]}
+        self.assertIn("unverified_candidate_gap_must_remain_internal", reasons)
+        self.assertIn("explicit_gap_disclosure_in_visible_letter", reasons)
+
+
+    def test_cover_letter_presentation_omits_internal_caveats(self) -> None:
+        for case_id in ("cover-letter-ru-01", "cover-letter-en-01"):
+            case = self.by_id[case_id]
+            content = self._reference(case_id)
+            self.assertTrue(content.get("caveats"))
+            presentation, audit = normalize_user_facing_evidence_markers(case, content)
+            with self.subTest(case=case_id):
+                self.assertNotIn("caveats", presentation)
+                self.assertEqual(audit["presentation_internal_field_omission_count"], 1)
+                self.assertEqual(audit["presentation_internal_field_omissions"], ["$.caveats"])
+
+    def test_cover_letter_gap_disclosure_in_visible_paragraph_is_hard_failure(self) -> None:
+        case = self.by_id["cover-letter-en-01"]
+        content = self._reference(case.case_id)
+        content["paragraphs"][3] = {
+            "kind": "motivation",
+            "text": "While I do not have verified experimentation experience, I am eager to develop it.",
+            "evidence_ids": ["c5", "v3"],
+        }
+        score = score_case(case, content, {"max_cover_letter_presentation_violations": 0})
+        self.assertFalse(score["passed"], score)
+        self.assertIn("cover_letter_presentation", score["gate_failures"], score)
+        reasons = {item["reason"] for item in score["cover_letter_presentation_violations"]}
+        self.assertIn("unverified_candidate_gap_must_remain_internal", reasons)
+        self.assertIn("explicit_gap_disclosure_in_visible_letter", reasons)
+
+    def test_cover_letter_third_person_writer_reference_is_hard_failure(self) -> None:
+        case = self.by_id["cover-letter-ru-01"]
+        content = self._reference(case.case_id)
+        content["paragraphs"][0]["text"] = "Кандидат заинтересован в вакансии Customer Success Specialist и хотел бы обсудить роль."
+        score = score_case(case, content, {"max_cover_letter_presentation_violations": 0})
+        self.assertFalse(score["passed"], score)
+        self.assertIn("cover_letter_presentation", score["gate_failures"], score)
+        self.assertTrue(any(item["reason"] == "third_person_writer_reference" for item in score["cover_letter_presentation_violations"]))
+
+    def test_cover_letter_missing_first_person_voice_is_hard_failure(self) -> None:
+        case = self.by_id["cover-letter-en-01"]
+        content = self._reference(case.case_id)
+        for paragraph in content["paragraphs"]:
+            paragraph["text"] = "Relevant product design experience is presented for the B2B Product Designer role."
+        score = score_case(case, content, {"max_cover_letter_presentation_violations": 0})
+        self.assertFalse(score["passed"], score)
+        self.assertTrue(any(item["reason"] == "missing_first_person_voice" for item in score["cover_letter_presentation_violations"]))
+
+    def test_human_review_regression_provenance_is_versioned(self) -> None:
+        self.assertEqual(self.regressions_alice_final_5["reviewer"], "Шекунов Д.С.")
+        self.assertEqual(self.regressions_alice_final_5["decision"], "revision_required")
         self.assertEqual(
-            audit["cover_letter_kind_repairs"][0]["reason"],
-            "unverified_gap_plus_vacancy_explicit_motivation_intent",
+            set(self.regressions_alice_final_5["patterns"]),
+            {
+                "resume_ru_soft_coaching",
+                "vacancy_ru_actionable_gap",
+                "cover_letter_ru_internal_gap_only",
+                "cover_letter_en_internal_gap_only",
+            },
         )
-        repaired_score = score_case(case, normalized, {"max_unsupported_impact_claims": 0})
-        self.assertNotIn("unsupported_impact_claims", repaired_score["gate_failures"], repaired_score)
 
     def test_alice_final_run_3_verified_growth_claim_is_not_reclassified(self) -> None:
         sample = self.regressions_alice_final_3["patterns"]["verified_candidate_growth_must_not_repair"]

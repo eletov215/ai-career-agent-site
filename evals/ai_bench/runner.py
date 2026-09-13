@@ -167,6 +167,8 @@ class BenchmarkRunner:
                                 "cover_letter_kind_repairs": [],
                                 "user_facing_marker_cleanup_count": 0,
                                 "user_facing_marker_cleanups": [],
+                                "presentation_internal_field_omission_count": 0,
+                                "presentation_internal_field_omissions": [],
                             },
                             "score": None,
                             "error": {
@@ -204,7 +206,7 @@ class BenchmarkRunner:
             "The included dataset is synthetic and intentionally excludes production user PII.",
             "Human writing-quality rubrics remain pending until a named reviewer records scores.",
             "Vacancy numeric match scores are derived deterministically from requirement classifications; models do not author the score field.",
-            "Grounded-v2.5 retains deterministic marker cleanup and uniquely inferable scenario-evidence repair, adds Unicode dash normalization, auditable motivation-kind repair, and stronger interview role-evidence prompts; its quality scores are not directly comparable to earlier contracts.",
+            "Grounded-v2.6 retains the prior evidence, numeric, impact, language, scenario and match hard gates, adds a first-person cover-letter presentation gate that keeps unverified candidate gaps internal, and tightens coaching/actionability prompts; its quality scores are not directly comparable to earlier contracts.",
             "Language consistency and unresolved scenario-number provenance are machine-gated before manual writing review; exact one-to-one scenario evidence repairs are recorded separately.",
             "Live OpenAI-compatible adapters may perform at most one explicitly configured bounded retry; retry evidence is retained in safe diagnostics.",
         ]
@@ -344,6 +346,7 @@ def _summarize_provider(results: list[dict[str, Any]]) -> dict[str, Any]:
         "user_facing_technical_token_count": sum(score["user_facing_technical_token_count"] for score in scores),
         "claim_evidence_violation_count": sum(score["claim_evidence_violation_count"] for score in scores),
         "unsupported_impact_claim_count": sum(score["unsupported_impact_claim_count"] for score in scores),
+        "cover_letter_presentation_violation_count": sum(score.get("cover_letter_presentation_violation_count", 0) for score in scores),
         "language_consistency_violation_count": sum(score.get("language_consistency_violation_count", 0) for score in scores),
         "scenario_provenance_violation_count": sum(score.get("scenario_provenance_violation_count", 0) for score in scores),
         "scenario_provenance_repair_count": sum(
@@ -356,6 +359,7 @@ def _summarize_provider(results: list[dict[str, Any]]) -> dict[str, Any]:
         ),
         "match_consistency_violation_count": sum(len(score.get("match_evaluation", {}).get("violations", [])) for score in scores),
         "user_facing_marker_cleanup_count": sum(int((result.get("normalization") or {}).get("user_facing_marker_cleanup_count") or 0) for result in results),
+        "presentation_internal_field_omission_count": sum(int((result.get("normalization") or {}).get("presentation_internal_field_omission_count") or 0) for result in results),
         "retry_count": sum(int((result.get("metadata") or {}).get("provider_diagnostics", {}).get("retry_count") or 0) for result in results),
         "retried_case_count": sum(1 for result in results if int((result.get("metadata") or {}).get("provider_diagnostics", {}).get("retry_count") or 0) > 0),
         "mean_deterministic_match_score": round(statistics.fmean(deterministic_match_scores), 3) if deterministic_match_scores else None,

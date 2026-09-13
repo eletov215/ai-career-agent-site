@@ -1,16 +1,14 @@
 # AI Career Agent — ROADMAP
 
 <!-- ACA-CANONICAL-STATUS:START -->
-## Актуальная точка дорожной карты - 2026-08-28
+## Актуальная точка дорожной карты - 2026-09-13
 
 - `SEARCH-005` и все более ранние product packages - **ВЫПОЛНЕНО**.
-- comparative Yandex benchmark completed; Alice AI LLM remains the primary final candidate.
-- Alice Final run #4 artifact `33165683757` / run `ai-bench-20260828T111023Z-62a5cc1a` - **8/8 MACHINE PASS**: 8/8 calls, 0 errors/retries, zero hard-safety counters.
-- Artifact audit found one deterministic presentation-sanitizer gap: grouped known markers `(c1, c2)` / `(v1, v2)` survived in two `interview-en-01` purpose strings although `purpose` is user-facing.
-- `AI-BENCH-001 artifact-sanitization hotfix r1 / evals 1.5.3 / grounded-v2.5` - **НУЖНА ПРОВЕРКА**; prompts/provider inputs and production code unchanged.
-- Retained live raw responses replay **8/8** with 3 audited scenario repairs, 20 audited marker removals and **0 residual evidence IDs** in declared user-facing paths.
-- Next: green ordinary CI/package gate -> named human writing-quality rubric -> AI-BENCH-001 closure decision.
-- A second billable Alice call is not required for this sanitizer-only correction because the successful live raw evidence and machine semantics are unchanged.
+- Alice Final run #5 artifact `33168005097` / run `ai-bench-20260828T114615Z-5b0d7a99` - **8/8 MACHINE PASS** under grounded-v2.5, with 0 errors/retries and quality/grounding 1.000.
+- Named human reviewer **Шекунов Д.С.** marked AI-BENCH writing **REVISION REQUIRED** for cases 1, 3, 5 and 6.
+- `AI-BENCH-001 grounded-v2.6 / evals 1.6.0` - **НУЖНА ПРОВЕРКА**: softer RU coaching, actionable vacancy-gap guidance, first-person cover letters, internal-only caveats, hard presentation gate.
+- Retained run #5 raw replay under grounded-v2.6 is **6/8**, deliberately rejecting both old cover letters.
+- Next: green ordinary CI/package gate -> fresh Alice Final 8/8 -> focused named human re-review -> AI-BENCH-001 closure decision.
 - `AI-PROVIDER-001` - **ЗАБЛОКИРОВАН ДО ЗАВЕРШЕНИЯ AI-BENCH-001**.
 - Production schema remains `20260819_0014`; production routes and migrations are unchanged.
 <!-- ACA-CANONICAL-STATUS:END -->
@@ -18,10 +16,10 @@
 ## Текущая очередь
 
 ```text
-AI-BENCH-001 live Alice 8/8 machine gate COMPLETE
--> artifact-sanitization hotfix r1 / evals 1.5.3
+AI-BENCH-001 grounded-v2.6 / evals 1.6.0
 -> green ordinary CI/package gate
--> named manual writing-quality rubric
+-> fresh Alice Final 8/8
+-> focused named human re-review (1, 3, 5, 6)
 -> AI-BENCH-001 closure decision
 -> AI-PROVIDER-001
 -> LEGAL-001
@@ -37,7 +35,7 @@ AI-BENCH-001 live Alice 8/8 machine gate COMPLETE
 | SYNC-001/002, SEARCH-001..005 | ВЫПОЛНЕНО | regression only |
 | AUTH-001/002 | ВЫПОЛНЕНО | regression only |
 | PROF-001/002/003, PRIV-001 | ВЫПОЛНЕНО | regression only |
-| AI-BENCH-001 | НУЖНА ПРОВЕРКА | live 8/8 complete; sanitizer hotfix ordinary CI -> named manual rubric |
+| AI-BENCH-001 | НУЖНА ПРОВЕРКА | grounded-v2.6 ordinary CI -> fresh Alice Final 8/8 -> focused named human re-review |
 | AI-PROVIDER-001 | ЗАБЛОКИРОВАНО | AI-BENCH-001 complete |
 | LEGAL-001, AI-001..006 | ЗАПЛАНИРОВАНО | provider strategy and legal gate |
 | JOB-001..004 | ЗАПЛАНИРОВАНО | AI core and account integration |
@@ -47,4 +45,4 @@ AI-BENCH-001 live Alice 8/8 machine gate COMPLETE
 ## AI-BENCH-001 current boundary
 
 No provider is selected and no production AI route/schema is added. The integrated manual job is an evaluation-only transport and cannot run until the complete ordinary CI matrix succeeds.
-- `AI-BENCH-001 artifact-sanitization hotfix r1 / evals 1.5.3 / grounded-v2.5` - **НУЖНА ПРОВЕРКА**: live 8/8 machine gate complete; ordinary CI for deterministic sanitizer, then named human rubric.
+- `AI-BENCH-001 grounded-v2.6 / evals 1.6.0` - **НУЖНА ПРОВЕРКА**: human-writing corrections implemented; ordinary CI, fresh Alice Final live verification and focused named human re-review remain.

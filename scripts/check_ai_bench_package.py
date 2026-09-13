@@ -26,6 +26,8 @@ REQUIRED_VISIBLE = [
     "evals/regressions/alice-final-run-1.json",
     "evals/regressions/alice-final-run-2.json",
     "evals/regressions/alice-final-run-3.json",
+    "evals/regressions/alice-final-run-4.json",
+    "evals/regressions/alice-final-run-5-human-review.json",
     "evals/fixtures/manifest.json",
     "evals/schemas/resume_analysis.schema.json",
     "evals/schemas/vacancy_match.schema.json",
@@ -136,7 +138,7 @@ def main() -> int:
         fail(f"missing required files: {missing}")
 
     version = (ROOT / "evals/VERSION").read_text(encoding="utf-8").strip()
-    if version != "1.5.2":
+    if version != "1.6.0":
         fail(f"unexpected evals version: {version}")
 
     workflow_path = ROOT / ".github/workflows/ci.yml"
@@ -165,7 +167,7 @@ def main() -> int:
         "AI_BENCH_ALICE_FINAL_OUTPUT_DIR: /tmp/ai-bench-yandex-alice-final",
         "--config evals/config/yandex-alice-final.json",
         "scripts/check_ai_bench_alice_final_result.py",
-        "grounded-v2.5",
+        "grounded-v2.6",
         "scenario_provenance_repair_count",
     ]
     missing_workflow_fragments = [
@@ -183,8 +185,8 @@ def main() -> int:
         fail("Alice final config must enable exactly yandex-alice-ai-llm")
     if float((alice_final.get("thresholds") or {}).get("max_error_rate", 1.0)) != 0.0:
         fail("Alice final config must require max_error_rate=0.0")
-    if alice_final.get("verification_scope") != "alice_ai_llm_final_candidate_v3":
-        fail("Alice final config must use verification_scope=alice_ai_llm_final_candidate_v3")
+    if alice_final.get("verification_scope") != "alice_ai_llm_final_candidate_v4":
+        fail("Alice final config must use verification_scope=alice_ai_llm_final_candidate_v4")
 
     legacy_workflow = ROOT / ".github/workflows/ai-bench-live"
     if legacy_workflow.is_file():
@@ -197,8 +199,8 @@ def main() -> int:
     manifest = json.loads((ROOT / "evals/fixtures/manifest.json").read_text(encoding="utf-8"))
     if manifest.get("synthetic") is not True:
         fail("manifest must declare synthetic=true")
-    if manifest.get("version") != "1.3.4" or manifest.get("contract") != "grounded-v2.5":
-        fail("manifest must declare version=1.3.4 and contract=grounded-v2.5")
+    if manifest.get("version") != "1.3.5" or manifest.get("contract") != "grounded-v2.6":
+        fail("manifest must declare version=1.3.5 and contract=grounded-v2.6")
     cases = manifest.get("cases") or []
     if len(cases) < 8:
         fail("golden dataset must contain at least eight bilingual/task-diverse cases")
@@ -262,6 +264,20 @@ def main() -> int:
         fail("Alice Final run #4 grouped-marker cleanup regressions are incomplete")
     if not (alice4_patterns.get("unknown_group_must_not_be_cleaned") or {}).get("unknown_id"):
         fail("Alice Final run #4 unknown grouped-marker hard-failure regression is missing")
+    alice_final_regression_5 = json.loads((ROOT / "evals/regressions/alice-final-run-5-human-review.json").read_text(encoding="utf-8"))
+    if alice_final_regression_5.get("source_artifact") != "ai-bench-001-yandex-alice-final-33168005097.zip":
+        fail("Alice Final run #5 human-review provenance is missing")
+    if alice_final_regression_5.get("reviewer") != "Шекунов Д.С." or alice_final_regression_5.get("decision") != "revision_required":
+        fail("Alice Final run #5 named human-review decision is incomplete")
+    human_patterns = alice_final_regression_5.get("patterns") or {}
+    required_human_patterns = {
+        "resume_ru_soft_coaching",
+        "vacancy_ru_actionable_gap",
+        "cover_letter_ru_internal_gap_only",
+        "cover_letter_en_internal_gap_only",
+    }
+    if not required_human_patterns.issubset(set(human_patterns)):
+        fail("Alice Final run #5 human-review regression patterns are incomplete")
     alice_patterns = alice_final_regression.get("patterns") or {}
     if len(alice_patterns.get("repairable_scenario_provenance") or []) < 3:
         fail("Alice final run-1 scenario-provenance regressions are incomplete")
@@ -303,7 +319,7 @@ def main() -> int:
         if run.get("execution_mode") != "deterministic_reference":
             fail("reference run must be labeled deterministic_reference")
         if run.get("schema_version") != "1.4" or run.get("benchmark_version") != "1.4":
-            fail("reference run must use grounded-v2.5 benchmark/run schema version 1.4")
+            fail("reference run must use grounded-v2.6 benchmark/run schema version 1.4")
         if run.get("quality_gate", {}).get("passed_count") != len(cases):
             fail("not all reference cases passed")
         machine_dir = out / "machine" / "reference"
@@ -319,9 +335,20 @@ def main() -> int:
         paragraph_kinds = cover_schema.get("properties", {}).get("paragraphs", {}).get("items", {}).get("properties", {}).get("kind", {}).get("enum", [])
         if "motivation" not in paragraph_kinds:
             fail("cover-letter schema must support vacancy-grounded motivation paragraphs")
-        required_thresholds = {"max_language_consistency_violations", "max_scenario_provenance_violations"}
+        presentation_cover_paths = sorted((out / "presentation" / "reference").glob("cover-letter-*.json"))
+        if len(presentation_cover_paths) != 2:
+            fail("deterministic presentation must contain both cover-letter cases")
+        for presentation_cover_path in presentation_cover_paths:
+            presentation_cover = json.loads(presentation_cover_path.read_text(encoding="utf-8"))
+            if "caveats" in presentation_cover:
+                fail("cover-letter internal caveats must not appear in presentation output")
+        required_thresholds = {
+            "max_language_consistency_violations",
+            "max_scenario_provenance_violations",
+            "max_cover_letter_presentation_violations",
+        }
         if not required_thresholds.issubset(set((run.get("quality_gate", {}).get("thresholds") or {}).keys())):
-            fail("grounded-v2.5 language/scenario thresholds are missing")
+            fail("grounded-v2.6 language/scenario/presentation thresholds are missing")
         for schema_name in (
             "resume_analysis.schema.json",
             "vacancy_match.schema.json",

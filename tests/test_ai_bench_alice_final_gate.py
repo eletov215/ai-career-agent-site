@@ -17,7 +17,7 @@ def sample_run(passed=8, errors=0, status="passed", provider_id="yandex-alice-ai
         "benchmark_version": "1.4",
         "execution_mode": "live_or_mixed",
         "status": status,
-        "dataset": {"case_count": 8, "version": "1.3.4"},
+        "dataset": {"case_count": 8, "version": "1.3.5"},
         "providers": [
             {
                 "id": provider_id,
@@ -32,6 +32,7 @@ def sample_run(passed=8, errors=0, status="passed", provider_id="yandex-alice-ai
                     "user_facing_technical_token_count": 0,
                     "claim_evidence_violation_count": 0,
                     "unsupported_impact_claim_count": 0,
+                    "cover_letter_presentation_violation_count": 0,
                     "language_consistency_violation_count": 0,
                     "scenario_provenance_violation_count": 0,
                     "match_consistency_violation_count": 0,
@@ -83,11 +84,18 @@ class AliceFinalGateTests(unittest.TestCase):
         self.assertNotEqual(completed.returncode, 0)
         self.assertIn("non-zero safety counters", completed.stderr)
 
+    def test_cover_letter_presentation_counter_rejected(self):
+        payload = sample_run()
+        payload["providers"][0]["summary"]["cover_letter_presentation_violation_count"] = 1
+        completed = self._run(payload)
+        self.assertNotEqual(completed.returncode, 0)
+        self.assertIn("non-zero safety counters", completed.stderr)
+
     def test_old_contract_is_rejected(self):
         payload = sample_run()
         payload["schema_version"] = "1.3"
         payload["benchmark_version"] = "1.3"
-        payload["dataset"]["version"] = "1.3.1"
+        payload["dataset"]["version"] = "1.3.4"
         completed = self._run(payload)
         self.assertNotEqual(completed.returncode, 0)
         self.assertIn("unexpected benchmark contract", completed.stderr)

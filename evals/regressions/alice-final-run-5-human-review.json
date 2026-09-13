@@ -1,0 +1,25 @@
+{
+  "source_artifact": "ai-bench-001-yandex-alice-final-33168005097.zip",
+  "reviewer": "Шекунов Д.С.",
+  "review_date": "2026-08-28",
+  "source_machine_result": "8/8 PASS",
+  "decision": "revision_required",
+  "patterns": {
+    "resume_ru_soft_coaching": {
+      "case_id": "resume-analysis-ru-01",
+      "finding": "Recommendations were useful but too directive; use conditional coaching language."
+    },
+    "vacancy_ru_actionable_gap": {
+      "case_id": "vacancy-match-ru-01",
+      "finding": "Recommendation should explain that genuinely existing but unrecorded Docker can be confirmed/added and then the deterministic match recalculated without inventing a percentage."
+    },
+    "cover_letter_ru_internal_gap_only": {
+      "case_id": "cover-letter-ru-01",
+      "finding": "Visible letter must be first-person and must not advertise unverified English or other weaknesses; caveat remains internal only."
+    },
+    "cover_letter_en_internal_gap_only": {
+      "case_id": "cover-letter-en-01",
+      "finding": "Visible letter must not disclose unverified experimentation as a weakness; caveat remains internal only."
+    }
+  }
+}

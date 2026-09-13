@@ -1,3 +1,16 @@
+## 2026-09-13 - AI-BENCH-001 named-human writing hardening / grounded-v2.6 / evals 1.6.0
+
+- Restored current GitHub-main snapshot from user-provided `ai-career-agent-site-main (1).zip`; production application baseline remains revision `20260819_0014`.
+- Recorded Alice Final run #5 artifact `33168005097` / run `ai-bench-20260828T114615Z-5b0d7a99`: 8/8 machine PASS, 0 errors/retries, quality/grounding 1.000, p50 3447.243 ms, p95 5500.041 ms, cost USD 0.0504295.
+- Recorded named human review by **Шекунов Д.С.**: revision required for RU resume tone, RU vacancy-match next-step guidance, and RU/EN cover-letter voice/weakness disclosure; cases 2/4/7/8 accepted.
+- Advanced evals to `1.6.0`, dataset to `1.3.5`, contract to `grounded-v2.6`; benchmark/run schema stays `1.4`.
+- Softened RU resume recommendations to conditional coaching language and tightened RU/EN vacancy recommendations around `confirm/update profile -> deterministic recalculation`, without LLM-authored future percentages.
+- Made cover-letter `caveats` internal audit-only in the presentation layer; visible letters hard-fail unverified candidate-gap evidence/disclosure, third-person writer labels and missing first-person voice.
+- Removed the old gap-bearing `candidate_fit -> motivation` repair branch; only vacancy-only future intent may be reclassified.
+- Added exact human-review regression provenance, focused unit/package checks and retained-run #5 grounded-v2.6 replay evidence. Replay is 6/8 because both historical cover letters are now intentionally rejected.
+- Production routes/services/models/dependencies/migrations are unchanged; no Render redeploy is needed for the benchmark-only package.
+- Next gate: green ordinary CI -> fresh Alice Final 8/8 -> focused named human re-review of cases 1/3/5/6 -> AI-BENCH-001 closure decision.
+
 ## 2026-08-28 - AI-BENCH-001 Alice Final run #4 / artifact-sanitization hotfix r1 / evals 1.5.3
 
 - Reviewed artifact `33165683757` / run `ai-bench-20260828T111023Z-62a5cc1a`: **8/8 machine PASS**, 8/8 provider calls, 0 provider errors, 0 retries, zero hard-safety counters.

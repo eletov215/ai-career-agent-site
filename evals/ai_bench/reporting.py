@@ -41,6 +41,7 @@ def render_markdown_report(run: dict[str, Any]) -> str:
             + int(summary.get("user_facing_technical_token_count") or 0)
             + int(summary.get("claim_evidence_violation_count") or 0)
             + int(summary.get("unsupported_impact_claim_count") or 0)
+            + int(summary.get("cover_letter_presentation_violation_count") or 0)
             + int(summary.get("language_consistency_violation_count") or 0)
             + int(summary.get("scenario_provenance_violation_count") or 0)
             + int(summary.get("match_consistency_violation_count") or 0)
@@ -102,10 +103,10 @@ def render_markdown_report(run: dict[str, Any]) -> str:
 
     lines.extend([
         "",
-        "## Grounded-v2.5 contract interpretation",
+        "## Grounded-v2.6 contract interpretation",
         "",
         "- Evidence identifiers must be exact raw IDs. Simple decorated markers such as `(s1)`/`[s1]` are removed by deterministic display normalization; serialized metadata labels remain hard failures.",
-        "- Resume `facts_not_verified` and cover-letter `caveats` are structured objects with their own evidence references.",
+        "- Resume `facts_not_verified` and cover-letter `caveats` are structured machine/audit objects with their own evidence references; cover-letter caveats are omitted from the presentation copy.",
         "- Cover-letter candidate-fit paragraphs must cite candidate facts; causal/outcome language is allowed only when a cited candidate fact explicitly contains the corresponding impact.",
         "- Vacancy requirements are classified exactly once by requirement ID. Duplicate, missing, contradictory, or weakly evidenced classifications are hard failures.",
         "- Vacancy numeric match scores are derived deterministically from weighted requirement classifications; the LLM no longer authors a percentage.",
@@ -113,9 +114,9 @@ def render_markdown_report(run: dict[str, Any]) -> str:
         "- When an interview question uses an exact scenario number that maps to exactly one scenario fact, the machine layer may deterministically append that scenario ID to the structured `evidence_ids`. Repairs are audited and unresolved or ambiguous provenance remains a hard failure.",
         "- Percent formatting is Unicode-normalized, so 20%, 20 % and 20\u202f% represent the same grounded number.",
         "- RU/EN user-facing language consistency is a separate hard gate.",
-        "- Cover letters distinguish candidate_fit from vacancy-grounded motivation paragraphs.",
+        "- Cover letters distinguish candidate_fit from vacancy-grounded motivation paragraphs; unverified candidate gaps must remain internal caveats and may not be disclosed in visible paragraphs.",
         "- Unicode hyphen/dash variants are normalized for lexical grounding only; evidence semantics are unchanged.",
-        "- Vacancy-only candidate_fit paragraphs are reclassified to motivation only for explicit future-intent/motivation wording, with an audit record.",
+        "- Vacancy-only candidate_fit paragraphs are reclassified to motivation only for explicit future-intent/motivation wording, with an audit record; gap-bearing candidate evidence is never repaired into visible motivation.",
         "- Live provider diagnostics record only safe envelope shape/status metadata; raw provider bodies and refusal text are never persisted.",
         "- Human writing-quality rubrics remain pending; the runner never fabricates manual-review scores.",
         "",

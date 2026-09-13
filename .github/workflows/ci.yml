@@ -429,7 +429,7 @@ jobs:
           print("# AI-BENCH-001 Yandex live result")
           print()
           print(f"Machine status: **{run.get('status')}**")
-          print(f"Benchmark contract: **{run.get('benchmark_version')} / grounded-v2.5**")
+          print(f"Benchmark contract: **{run.get('benchmark_version')} / grounded-v2.6**")
           print()
           print("| Provider | Passed | Errors | Retries | Quality | Grounding | Language violations | Scenario violations | Scenario repairs | Marker cleanup | Clean text | Match consistency | Safety violations | Avg derived match | p50 ms | p95 ms | Est. cost USD |")
           print("|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|")
@@ -441,6 +441,7 @@ jobs:
                   "user_facing_technical_token_count",
                   "claim_evidence_violation_count",
                   "unsupported_impact_claim_count",
+                  "cover_letter_presentation_violation_count",
                   "language_consistency_violation_count",
                   "scenario_provenance_violation_count",
                   "match_consistency_violation_count",
@@ -533,20 +534,20 @@ jobs:
           print("# AI-BENCH-001 Alice final verification")
           print()
           print(f"Machine status: **{run.get('status')}**")
-          print(f"Dataset: **{(run.get('dataset') or {}).get('version')} / grounded-v2.5**")
+          print(f"Dataset: **{(run.get('dataset') or {}).get('version')} / grounded-v2.6**")
           print()
           provider = (run.get("providers") or [{}])[0]
           s = provider.get("summary") or {}
-          print("| Provider | Passed | Errors | Retries | Quality | Grounding | Impact | Scenario | Scenario repairs | Clean text | p50 ms | p95 ms | Est. cost USD |")
-          print("|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|")
+          print("| Provider | Passed | Errors | Retries | Quality | Grounding | Impact | Letter presentation | Scenario | Scenario repairs | Clean text | p50 ms | p95 ms | Est. cost USD |")
+          print("|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|")
           print(
               f"| {provider.get('id')} | {s.get('passed_count')}/{s.get('case_count')} | {s.get('error_count')} | {s.get('retry_count')} | "
               f"{s.get('mean_quality_score')} | {s.get('mean_grounding_score')} | {s.get('unsupported_impact_claim_count')} | "
-              f"{s.get('scenario_provenance_violation_count')} | {s.get('scenario_provenance_repair_count')} | {s.get('mean_user_facing_cleanliness')} | "
+              f"{s.get('cover_letter_presentation_violation_count')} | {s.get('scenario_provenance_violation_count')} | {s.get('scenario_provenance_repair_count')} | {s.get('mean_user_facing_cleanliness')} | "
               f"{s.get('p50_latency_ms')} | {s.get('p95_latency_ms')} | {s.get('estimated_cost_usd')} |"
           )
           print()
-          print("This job verifies Alice AI LLM machine safety only. A named human writing-quality review is still mandatory before AI-BENCH-001 closure.")
+          print("This job verifies Alice AI LLM machine safety and visible cover-letter presentation constraints. A named human writing-quality review is still mandatory before AI-BENCH-001 closure.")
           PY
           else
             echo "# AI-BENCH-001 Alice final verification" >> "$GITHUB_STEP_SUMMARY"

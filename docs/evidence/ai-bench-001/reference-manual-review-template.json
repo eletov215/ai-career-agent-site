@@ -9,17 +9,17 @@
           "score": null
         },
         {
-          "criterion": "Неподтвержденный лидерский опыт явно отражен",
+          "criterion": "Неподтвержденный лидерский опыт отражен корректно",
           "notes": null,
           "score": null
         },
         {
-          "criterion": "Рекомендации конкретны и не маскируются под текущие навыки",
+          "criterion": "Рекомендации полезны и не маскируются под текущие навыки",
           "notes": null,
           "score": null
         },
         {
-          "criterion": "Тон нейтральный и профессиональный",
+          "criterion": "Рекомендации сформулированы мягко, как варианты, а не как приказы",
           "notes": null,
           "score": null
         }
@@ -79,7 +79,7 @@
           "score": null
         },
         {
-          "criterion": "Рекомендация объяснима без LLM-generated процента",
+          "criterion": "Рекомендация объясняет, как подтверждение реально имеющегося, но не отраженного навыка повлияет на следующий пересчет match без выдуманного процента",
           "notes": null,
           "score": null
         }
@@ -94,22 +94,22 @@
       "case_id": "vacancy-match-en-01",
       "criteria": [
         {
-          "criterion": "Every requirement is classified exactly once",
+          "criterion": "Requirements are classified clearly and exactly once",
           "notes": null,
           "score": null
         },
         {
-          "criterion": "Mandatory Next.js gap stays explicit",
+          "criterion": "Mandatory and preferred requirements are not conflated",
           "notes": null,
           "score": null
         },
         {
-          "criterion": "Testing evidence is treated as a preferred match, not a gap",
+          "criterion": "The Next.js gap is not hidden or converted into a candidate skill",
           "notes": null,
           "score": null
         },
         {
-          "criterion": "Recommendation is useful without an LLM-generated percentage",
+          "criterion": "The recommendation gives a practical verification/updating next step without inventing a future percentage",
           "notes": null,
           "score": null
         }
@@ -134,17 +134,17 @@
           "score": null
         },
         {
-          "criterion": "Требование коммуникации не превращено в неподтвержденный навык кандидата",
+          "criterion": "Письмо написано от первого лица и не описывает автора как «кандидата/соискателя»",
           "notes": null,
           "score": null
         },
         {
-          "criterion": "Пробел по английскому явно отражен в caveats",
+          "criterion": "Неподтвержденные требования не рекламируются работодателю как слабые стороны; они остаются только во внутреннем caveat",
           "notes": null,
           "score": null
         },
         {
-          "criterion": "Технические evidence IDs не видны пользователю",
+          "criterion": "Текст естественный и похож на реальный человеческий отклик",
           "notes": null,
           "score": null
         }
@@ -169,17 +169,17 @@
           "score": null
         },
         {
-          "criterion": "Experimentation gap remains explicit",
+          "criterion": "The visible letter is first-person and never describes the writer as “the candidate/applicant”",
           "notes": null,
           "score": null
         },
         {
-          "criterion": "Technical evidence IDs are absent from user-facing text",
+          "criterion": "Unverified requirements remain internal caveats and are not advertised as weaknesses in the letter",
           "notes": null,
           "score": null
         },
         {
-          "criterion": "Concise and credible",
+          "criterion": "Concise, natural and credible as a human-written application",
           "notes": null,
           "score": null
         }
@@ -262,7 +262,7 @@
     }
   ],
   "instructions": "A named human reviewer scores only writing quality, clarity and usefulness on the 1-5 scale. Machine safety/grounding gates remain authoritative and cannot be overridden by manual scores.",
-  "run_id": "ai-bench-20260827T104236Z-08fce3bb",
+  "run_id": "ai-bench-20260913T144143Z-da496e5e",
   "schema_version": "1.4",
   "score_scale": {
     "anchors": {

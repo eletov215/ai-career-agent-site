@@ -1,27 +1,45 @@
-# AI Career Agent - аудит источников v1.4.45
+# AI Career Agent - аудит источников v1.4.46
 
-**Дата:** 28.08.2026  
+**Дата:** 13.09.2026  
 **Production revision:** `20260819_0014`
 
 | Поле | Значение |
 |---|---|
-| Проверяемая кодовая основа | `ai-career-agent-site-main (28).zip` |
-| ZIP comment | `fd2c544f687109a42299421be8ec6030a6d5567f` |
-| Проверяемый пакет | AI-BENCH-001 Alice Final run #4 / artifact-sanitization hotfix r1 |
-| Evals | `1.5.3` |
+| Проверяемая кодовая основа | `ai-career-agent-site-main (1).zip`, предоставленный 13.09.2026 как актуальный GitHub `main` snapshot |
+| SHA-256 исходного ZIP | `a8f4d00d747dd20b5cc4b9fc6e49f9ec00148607445add447751592f347210a1` |
+| Проверяемый пакет | AI-BENCH-001 grounded-v2.6 human-writing hardening |
+| Evals | `1.6.0` |
 | Benchmark contract | `1.4` |
-| Dataset | `ai-career-agent-golden-v1` v`1.3.4`, `contract=grounded-v2.5` |
-| External evidence | Alice Final run #4 artifact `33165683757`; run ID `ai-bench-20260828T111023Z-62a5cc1a` |
-| Результат | fresh Alice-only live machine gate 8/8 COMPLETE; sanitizer hotfix r1 нужен ordinary GitHub CI, затем named human rubric |
+| Dataset | `ai-career-agent-golden-v1` v`1.3.5`, `contract=grounded-v2.6` |
+| External evidence | Alice Final run #5 artifact `33168005097`; run ID `ai-bench-20260828T114615Z-5b0d7a99`; named human reviewer Шекунов Д.С. |
+| Результат | historical live machine gate 8/8 COMPLETE; named human gate = REVISION REQUIRED; grounded-v2.6 candidate needs ordinary CI -> fresh Alice Final -> focused human re-review |
 
 ## 1. Source precedence
 
-Пользователь предоставил `ai-career-agent-site-main (28).zip` как актуальный snapshot GitHub `main`. Для этой поставки он имеет приоритет над всеми предыдущими архивами. ZIP comment: `fd2c544f687109a42299421be8ec6030a6d5567f`. Sanitized artifact `ai-bench-001-yandex-alice-final-33163009779.zip` используется только как внешнее benchmark evidence. Secret values и production user data в репозиторий не копируются.
+Пользователь предоставил `ai-career-agent-site-main (1).zip` 13.09.2026 как актуальный snapshot GitHub `main`. Для этой поставки он имеет приоритет над предыдущими архивами. SHA-256 исходного ZIP: `a8f4d00d747dd20b5cc4b9fc6e49f9ec00148607445add447751592f347210a1`. Sanitized Alice artifacts используются только как external benchmark evidence; secret values и production user data в репозиторий не копируются.
 
-Историческая проверка `main (26)` относилась к Alice Final run #1 и сохранена ниже только как provenance предыдущего шага. Текущая рабочая база этой версии — `main (28)`; run #3 относится к `grounded-v2.4` state перед настоящим hotfix `grounded-v2.5`.
+Последнее внешнее evidence перед этой правкой — artifact `33168005097`, который прошёл 8/8 machine gate под `grounded-v2.5`, но named human reviewer **Шекунов Д.С.** потребовал writing revisions. Поэтому текущий кодовый delta — не provider selection, а `grounded-v2.6` human-writing hardening.
 
 
-## 2. Alice Final run #4 audit
+## 2. Current run #5 + named human audit
+
+Artifact `ai-bench-001-yandex-alice-final-33168005097.zip` / run `ai-bench-20260828T114615Z-5b0d7a99` completed 8/8 provider calls with 0 errors, 0 retries and **8/8 machine PASS**. Mean quality and grounding were `1.000`; p50 `3447.243 ms`, p95 `5500.041 ms`, estimated cost `USD 0.0504295`; all machine hard counters were zero.
+
+Named reviewer **Шекунов Д.С.** then required revisions in four areas: softer RU resume recommendations; actionable RU vacancy-match guidance; and RU/EN cover letters that read as first-person human applications without advertising unverified gaps. Cases 2, 4, 7 and 8 were accepted. Exact review evidence is `docs/evidence/ai-bench-001/alice-final-run-5-human-review.md`; numeric scores are recorded only where the reviewer explicitly supplied them.
+
+Grounded-v2.6 / evals 1.6.0 applies only to the benchmark layer:
+
+- dataset `1.3.5`, contract `grounded-v2.6`;
+- softer conditional RU coaching prompt;
+- vacancy recommendation prompt explains `confirm/update -> deterministic recalculation` and forbids invented future percentages;
+- cover-letter caveats remain required internal audit metadata but are excluded from `presentation/`;
+- visible cover letters hard-fail explicit unverified candidate-gap evidence/disclosure, third-person writer labels, or missing first-person voice;
+- gap-bearing paragraphs are no longer auto-repaired into visible motivation;
+- production routes/services/models/migrations and revision `20260819_0014` are unchanged.
+
+Retained run #5 raw responses replay under grounded-v2.6 is **6/8**: both historical cover-letter outputs are now intentionally rejected. Evidence: `docs/evidence/ai-bench-001/alice-final-run-5-grounded-v2.6-replay.json`. Because the prompts changed, replay cannot close the package; a fresh Alice Final live run is mandatory after ordinary CI.
+
+## 3. Alice Final run #4 audit
 
 Artifact `ai-bench-001-yandex-alice-final-33165683757.zip` / run `ai-bench-20260828T111023Z-62a5cc1a` содержит 8 raw responses, 8 machine responses, 8 presentation responses, `run.json`, `report.md` и pending manual-review template.
 
@@ -49,7 +67,7 @@ Local bounded repository verification после hotfix: **358 passed, 14 enviro
 
 Повторный billable Alice call не требуется: prompts, provider input/output, raw responses, machine safety semantics и thresholds не меняются. Следующий gate - ordinary GitHub CI/package gate для sanitizer hotfix, затем named human writing-quality rubric.
 
-## 3. Alice Final run #3 audit
+## 4. Alice Final run #3 audit
 
 Artifact `ai-bench-001-yandex-alice-final-33163009779.zip` / run `ai-bench-20260828T102540Z-bcf4c2ed` содержит 8 raw responses, 8 machine responses, 8 presentation responses, `run.json`, `report.md` и pending manual-review template.
 
@@ -141,36 +159,36 @@ Replay не заменяет fresh live verification, потому что обн
 | Check | Result |
 |---|---|
 | AI-BENCH package gate | PASS |
-| AI-BENCH unit/package suite | 70 PASS |
-| Deterministic reference | 8/8 PASS |
-| Dataset fingerprint | `c0d6946af29356f8e19abdb1178beac3428752f7985d33d78f2ab01b9edc7b2f` |
-| Repository regression groups | 348 PASS, 14 environment-dependent skips, 15 subtests PASS |
+| Focused AI-BENCH unittest/package suite | 74 PASS |
+| Deterministic grounded-v2.6 reference | 8/8 PASS |
+| Dataset fingerprint | `126e3ea078b5d6456491056e6c055610012cb0e64fbdacc1a1dc9d09fccbf631` |
+| Cover-letter presentation violations in reference | 0 |
+| Repository regression groups | 364 PASS, 14 environment-dependent skips, 21 subtests PASS |
 | Repository hygiene | PASS after generated caches removed |
-| Infrastructure manifest | PASS |
-| SQLite migrations | `0001 -> 0014` PASS; current/check `20260819_0014` |
 
 14 local skips require complete GitHub CI Flask/Psycopg/PostgreSQL dependencies and are not claimed as locally passed.
 
 ## 6. Production boundary
 
-Изменения ограничены AI-BENCH runner/scoring/config/fixtures/regressions/tests/scripts, benchmark evidence и документацией. Production application files - `app.py`, runtime `config.py`, models, repositories, routes, production services, templates, static assets, migrations, requirements and Render manifests - не требуют изменения для grounded-v2.3.
+Изменения ограничены AI-BENCH runner/scoring/config/fixtures/regressions/tests/scripts, benchmark evidence и документацией. Production application files - `app.py`, runtime `config.py`, models, repositories, routes, production services, templates, static assets, migrations, requirements and Render manifests - не меняются для grounded-v2.6.
 
 Production schema остаётся `20260819_0014`. GitHub/Yandex secret values отсутствуют в source и generated benchmark evidence.
 
 ## 7. Current gate
 
-1. Green ordinary GitHub CI на v1.4.42.
+1. Green ordinary GitHub CI на v1.4.46 / evals 1.6.0.
 2. При ordinary push billable Alice job должен быть skipped.
-3. Manual `run_ai_bench_alice_final=true` на `main`.
-4. Fresh run должен быть benchmark `1.4`, dataset `1.3.4`, provider `yandex-alice-ai-llm` и дать 8/8 machine PASS.
-5. Scenario repairs допускаются только как audited one-to-one repairs; unresolved safety counters должны оставаться zero.
+3. После green ordinary CI - manual `run_ai_bench_alice_final=true` на `main`.
+4. Fresh run должен быть benchmark `1.4`, dataset `1.3.5`, contract `grounded-v2.6`, provider `yandex-alice-ai-llm` и дать **8/8 machine PASS**.
+5. Все hard-safety/presentation counters должны оставаться zero; любые допустимые deterministic repairs должны быть audited.
 6. Скачать artifact и проверить raw/machine/presentation evidence.
-7. Завершить named human writing-quality rubric.
+7. Провести focused named human re-review прежде всего cases 1, 3, 5 и 6 и проверить отсутствие regression в 2, 4, 7 и 8.
 8. Только после этого закрывать `AI-BENCH-001` и разблокировать `AI-PROVIDER-001`.
 
 ## 8. Status decision
 
-`AI-BENCH-001 Alice Final v4` - **НУЖНА ПРОВЕРКА**.  
+Historical run #5 machine gate - **8/8 COMPLETE**, named human gate - **REVISION REQUIRED**.  
+`AI-BENCH-001 grounded-v2.6` - **НУЖНА ПРОВЕРКА** ordinary CI -> fresh Alice Final -> focused named human re-review.  
 Ранее завершённые production-пакеты остаются **ВЫПОЛНЕНО**.  
 `AI-PROVIDER-001` остаётся **ЗАБЛОКИРОВАНО**.
 
@@ -183,6 +201,7 @@ Production schema остаётся `20260819_0014`. GitHub/Yandex secret values 
 | 1.4.40 | 26.08.2026 | Live run #3 reviewed; grounded-v2.2 comparative safety hardening prepared. |
 | 1.4.41 | 27.08.2026 | Comparative live run #4 reviewed; Alice chosen as final candidate and dedicated Alice-only gate added. |
 | 1.4.42 | 27.08.2026 | Alice Final run #1 reviewed: 8/8 transport, 6/8 source machine. Grounded-v2.3 adds auditable unique scenario-provenance normalization and narrow answer-cardinality classification; retained responses replay 8/8, fresh Alice-only live verification still required. |
+| 1.4.46 | 13.09.2026 | Run #5 8/8 machine evidence + named human REVISION REQUIRED recorded; grounded-v2.6/evals 1.6.0 writing hardening prepared; ordinary CI -> fresh Alice Final -> focused named human re-review required. |
 
 ## 2026-08-28 - Alice Final v3 / grounded-v2.4
 

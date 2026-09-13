@@ -29,7 +29,7 @@ def main() -> int:
             f"benchmark={run.get('benchmark_version')!r}"
         )
     dataset = run.get("dataset") or {}
-    if dataset.get("version") != "1.3.4":
+    if dataset.get("version") != "1.3.5":
         return fail(f"unexpected dataset version={dataset.get('version')!r}")
     providers = run.get("providers") or []
     if len(providers) != 1 or providers[0].get("id") != EXPECTED_PROVIDER:
@@ -51,6 +51,7 @@ def main() -> int:
         "user_facing_technical_token_count",
         "claim_evidence_violation_count",
         "unsupported_impact_claim_count",
+        "cover_letter_presentation_violation_count",
         "language_consistency_violation_count",
         "scenario_provenance_violation_count",
         "match_consistency_violation_count",

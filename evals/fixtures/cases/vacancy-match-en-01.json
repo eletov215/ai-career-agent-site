@@ -7,11 +7,11 @@
   "messages": [
     {
       "role": "system",
-      "content": "You are running the offline AI Career Agent benchmark. Use only the listed facts with identifiers from the input. In evidence_ids use exact raw input IDs such as c1 or v2 only: no brackets, prefixes, explanations, or invented IDs. Do not put evidence IDs, schema field names, or other technical metadata into user-facing text. Do not turn vacancy requirements into candidate skills. Do not invent employers, roles, dates, education, skills, achievements, impact, or numbers. If a candidate fact is not verified, do not state it as present. Return only JSON matching the requested schema. For vacancy_match classify every vacancy requirement v* exactly once into either matched_requirements or gaps. requirement_id must be the exact v-ID. Each item's evidence_ids must include its own v-ID and the relevant candidate fact when one is provided. Do not generate a numeric match score; AI Career Agent computes it deterministically. Write all user-facing text in English."
+      "content": "You are running the offline AI Career Agent benchmark. Use only the listed facts with identifiers from the input. In evidence_ids use exact raw input IDs such as c1 or v2 only: no brackets, prefixes, explanations, or invented IDs. Do not put evidence IDs, schema field names, or other technical metadata into user-facing text. Do not turn vacancy requirements into candidate skills. Do not invent employers, roles, dates, education, skills, achievements, impact, or numbers. If a candidate fact is not verified, do not state it as present. Return only JSON matching the requested schema. For vacancy_match classify every vacancy requirement v* exactly once into either matched_requirements or gaps. requirement_id must be the exact v-ID. Each item's evidence_ids must include its own v-ID and the relevant candidate fact when one is provided. Do not generate a numeric match score; AI Career Agent computes it deterministically. Write all user-facing text in English. In the final recommendation, give a safe next step for any important unverified requirement: if the user truly has the skill but it is missing from the profile/resume, suggest confirming or adding it so AI Career Agent can deterministically recalculate the match. Do not promise a specific new percentage and do not claim the skill exists."
     },
     {
       "role": "user",
-      "content": "Assess fit. Resume facts: [c1] React for 2 years; [c2] TypeScript; [c3] component testing with Jest; [c4] no verified Next.js. Vacancy facts: [v1] React required; [v2] TypeScript required; [v3] Next.js required; [v4] automated frontend testing preferred. Classify v1-v4 exactly once and explain matches and gaps."
+      "content": "Assess fit. Resume facts: [c1] React for 2 years; [c2] TypeScript; [c3] component testing with Jest; [c4] no verified Next.js. Vacancy facts: [v1] React required; [v2] TypeScript required; [v3] Next.js required; [v4] automated frontend testing preferred. Classify v1-v4 exactly once and explain matches and gaps. If discussing the Next.js gap, explain that genuinely existing but unrecorded experience can be added/confirmed and then the deterministic match can be recalculated; do not invent a new percentage."
     }
   ],
   "source_facts": [
@@ -158,10 +158,10 @@
     }
   ],
   "manual_rubric": [
-    "Every requirement is classified exactly once",
-    "Mandatory Next.js gap stays explicit",
-    "Testing evidence is treated as a preferred match, not a gap",
-    "Recommendation is useful without an LLM-generated percentage"
+    "Requirements are classified clearly and exactly once",
+    "Mandatory and preferred requirements are not conflated",
+    "The Next.js gap is not hidden or converted into a candidate skill",
+    "The recommendation gives a practical verification/updating next step without inventing a future percentage"
   ],
   "tags": [
     "match",
