@@ -1,0 +1,138 @@
+{
+  "artifact": "ai-bench-001-yandex-alice-final-34830877796.zip",
+  "artifact_sha256": "d1c237ed27708f62c07f852f6e8c157afe3ca18391b199f20b53e42c161e109d",
+  "run_id": "ai-bench-20260914T100639Z-222dfc87",
+  "dataset": {
+    "case_count": 8,
+    "fingerprint": "4828033223fabd10a9442289708bbae0731054ce92595f63f1954940caad3e2f",
+    "id": "ai-career-agent-golden-v1",
+    "synthetic": true,
+    "version": "1.3.6"
+  },
+  "summary": {
+    "case_count": 8,
+    "claim_evidence_violation_count": 0,
+    "cover_letter_kind_repair_count": 0,
+    "cover_letter_presentation_violation_count": 0,
+    "error_count": 0,
+    "error_rate": 0.0,
+    "estimated_cost_usd": 0.055999992,
+    "forbidden_claim_count": 0,
+    "language_consistency_violation_count": 0,
+    "match_consistency_violation_count": 0,
+    "mean_deterministic_match_score": 69.0,
+    "mean_grounding_score": 0.984375,
+    "mean_match_consistency_score": 1.0,
+    "mean_quality_score": 0.998437,
+    "mean_user_facing_cleanliness": 1.0,
+    "p50_latency_ms": 5605.601,
+    "p95_latency_ms": 10913.996,
+    "passed_count": 8,
+    "presentation_internal_field_omission_count": 2,
+    "retried_case_count": 0,
+    "retry_count": 0,
+    "scenario_provenance_repair_count": 2,
+    "scenario_provenance_violation_count": 0,
+    "schema_pass_rate": 1.0,
+    "unsupported_impact_claim_count": 0,
+    "unsupported_number_count": 0,
+    "user_facing_marker_cleanup_count": 14,
+    "user_facing_technical_token_count": 0
+  },
+  "review": {
+    "reviewer": "Шекунов Д.С.",
+    "status": "PASS",
+    "numeric_scores": null,
+    "evidence": "docs/evidence/ai-bench-001/alice-final-run-7-human-review.md"
+  },
+  "cases": [
+    {
+      "case_id": "resume-analysis-ru-01",
+      "task": "resume_analysis",
+      "language": "ru",
+      "passed": true,
+      "usage": {
+        "estimated_cost_usd": 0.006650819,
+        "input_tokens": 346,
+        "output_tokens": 532
+      }
+    },
+    {
+      "case_id": "resume-analysis-en-01",
+      "task": "resume_analysis",
+      "language": "en",
+      "passed": true,
+      "usage": {
+        "estimated_cost_usd": 0.005981147,
+        "input_tokens": 257,
+        "output_tokens": 501
+      }
+    },
+    {
+      "case_id": "vacancy-match-ru-01",
+      "task": "vacancy_match",
+      "language": "ru",
+      "passed": true,
+      "usage": {
+        "estimated_cost_usd": 0.004888524,
+        "input_tokens": 444,
+        "output_tokens": 312
+      }
+    },
+    {
+      "case_id": "vacancy-match-en-01",
+      "task": "vacancy_match",
+      "language": "en",
+      "passed": true,
+      "usage": {
+        "estimated_cost_usd": 0.004483606,
+        "input_tokens": 422,
+        "output_tokens": 280
+      }
+    },
+    {
+      "case_id": "cover-letter-ru-01",
+      "task": "cover_letter",
+      "language": "ru",
+      "passed": true,
+      "usage": {
+        "estimated_cost_usd": 0.00564754,
+        "input_tokens": 922,
+        "output_tokens": 190
+      }
+    },
+    {
+      "case_id": "cover-letter-en-01",
+      "task": "cover_letter",
+      "language": "en",
+      "passed": true,
+      "usage": {
+        "estimated_cost_usd": 0.007341802,
+        "input_tokens": 1285,
+        "output_tokens": 211
+      }
+    },
+    {
+      "case_id": "interview-ru-01",
+      "task": "interview_questions",
+      "language": "ru",
+      "passed": true,
+      "usage": {
+        "estimated_cost_usd": 0.010291802,
+        "input_tokens": 740,
+        "output_tokens": 738
+      }
+    },
+    {
+      "case_id": "interview-en-01",
+      "task": "interview_questions",
+      "language": "en",
+      "passed": true,
+      "usage": {
+        "estimated_cost_usd": 0.010714752,
+        "input_tokens": 704,
+        "output_tokens": 796
+      }
+    }
+  ]
+}

@@ -10,6 +10,11 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 
 DOCUMENTS = {
+    "docs/AI_PROVIDER001_DECISION.md": ["| \u041f\u043e\u043b\u0435 | \u0417\u043d\u0430\u0447\u0435\u043d\u0438\u0435 |", "## 1.", "## 2."],
+    "docs/AI_PROVIDER001_DATA_AND_FAILURE_POLICY.md": ["| \u041f\u043e\u043b\u0435 | \u0417\u043d\u0430\u0447\u0435\u043d\u0438\u0435 |", "## 1.", "## 2."],
+    "docs/AI_PROVIDER001_COSTS.md": ["| \u041f\u043e\u043b\u0435 | \u0417\u043d\u0430\u0447\u0435\u043d\u0438\u0435 |", "## 1.", "## 2."],
+    "docs/AI_PROVIDER001_SOURCES.md": ["| \u041f\u043e\u043b\u0435 | \u0417\u043d\u0430\u0447\u0435\u043d\u0438\u0435 |", "## 1.", "## 2."],
+    "docs/AI_PROVIDER001_VERIFICATION_STATUS.md": ["| \u041f\u043e\u043b\u0435 | \u0417\u043d\u0430\u0447\u0435\u043d\u0438\u0435 |", "## 1.", "## 2."],
     "README.md": ["## 1.", "## 2.", "INFRA-001"],
     "docs/PLAN_CURRENT.md": ["| Поле | Значение |", "## 1.", "INFRA-001", "OPS-001"],
     "docs/PROJECT_PASSPORT.md": ["| Поле | Значение |", "## 1.", "INFRA-001"],

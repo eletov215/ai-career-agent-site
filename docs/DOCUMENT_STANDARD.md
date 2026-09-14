@@ -4,8 +4,8 @@
 |---|---|
 | Документ | DOCUMENT_STANDARD |
 | Идентификатор | DOC-STD-001 |
-| Версия | 1.1 |
-| Дата | 08 августа 2026 |
+| Версия | 1.2 |
+| Дата | 14 сентября 2026 |
 | Статус | ДЕЙСТВУЮЩИЙ |
 | Область | PLAN_CURRENT, паспорт, package reports, runbooks, contract references, source audit |
 
@@ -40,7 +40,7 @@
 | Элемент | Правило |
 |---|---|
 | Формат | A4, поля 19 мм со всех сторон |
-| Основной шрифт | Aptos 10.5 pt, межстрочный интервал 1.08 |
+| Основной шрифт | Aptos 10.5 pt (Carlito fallback when Aptos is unavailable), межстрочный интервал 1.08 |
 | H1 | 19 pt, centered, navy `#173B63` |
 | H2 | 15 pt, blue `#2F6FA3`, keep-with-next |
 | H3 | 12.5 pt, navy |
@@ -92,7 +92,7 @@ ai-career-agent-site-main-<stage>-<package>-v<version>.zip
 
 ## 9. Следующее действие
 
-Применять DOC-STD-001 v1.1 ко всем документам SEARCH-001 и последующим пакетам. Исторические SYNC/INFRA материалы остаются архивом и не определяют новый стиль.
+Применять DOC-STD-001 v1.2 ко всем документам SEARCH-001 и последующим пакетам. Исторические SYNC/INFRA материалы остаются архивом и не определяют новый стиль.
 
 ## 10. Журнал версий
 
@@ -100,3 +100,8 @@ ai-career-agent-site-main-<stage>-<package>-v<version>.zip
 |---|---|---|
 | 1.0 | 06.08.2026 | Введён базовый единый шаблон |
 | 1.1 | 08.08.2026 | Зафиксированы единый generator, палитра, header/footer, стабильная структура и запрет выборочного style drift |
+
+
+## 11. Renderer fallback clarification / v1.2
+
+2026-09-14: When Aptos is not installed in the renderer, use Carlito consistently for all newly rendered documents. Preserve A4/19 mm, type sizes, navy/blue palette, tables, header/footer and code typography. Do not distribute font files. Previously accepted, unmodified document editions retain their original rendering. This clarification changes presentation only, not package status or project architecture.

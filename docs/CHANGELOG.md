@@ -1,3 +1,21 @@
+# AI Career Agent - CHANGELOG
+
+## 2026-09-14 - AI-PROVIDER-001 strategy candidate / plan 1.4.49
+
+- Audited latest user-supplied main (30): 407 files, content identical to the prior grounded-v2.6.1 implementation; canonical inputs match FILE_INDEX.
+- Synchronized accepted AI-BENCH closure (artifact 34830877796 and named human PASS) into repository docs; did not invent numeric review scores.
+- Corrected active plan schema 0013 -> 0014, current SEARCH-005 card/gate/sequence and labelled dated pending records as history.
+- Added Alice-primary/manual-reserve ADR, task/market routing specification, scoped data/secret/failure/kill-switch requirements and a dated official-source register.
+- Added exact Decimal cost planning and proposed budget caps; no payment authorization or runtime enforcement is implied.
+- Added closed offline policy validation, negative tests and a dedicated ordinary-CI verification step; no billable calls or secrets.
+- Kept runtime application, all accepted evals and database revision unchanged. External CI and owner decision approval remain required.
+
+## 2026-09-14 - AI-BENCH-001 accepted closure synchronized
+
+- Final live artifact 34830877796: 8/8 PASS, zero unresolved hard counters; qualitative owner acceptance by Shekunov D.S.
+- Historical pending records below remain evidence of their original versions, not the current gate.
+
+
 ## 2026-09-14 - AI-BENCH-001 Alice Final run #6 hardening / grounded-v2.6.1 / evals 1.6.1
 
 - Reviewed artifact `34766480932` / run `ai-bench-20260913T154901Z-44d67112`: 8/8 calls, 0 errors/retries, **7/8 machine**.

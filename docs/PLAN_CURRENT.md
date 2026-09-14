@@ -4,64 +4,45 @@
 
 
 <!-- ACA-CANONICAL-STATUS:START -->
-## Канонический статус плана
+## Каноническое состояние / 2026-09-14
 
-**Документ:** AI Career Agent PLAN_CURRENT `v1.4.47`  
-**Дата:** 2026-09-14  
-**Production revision:** `20260819_0014`  
-**Текущий пакет:** `AI-BENCH-001 - GROUNDED-v2.6.1 ATOMIC EN COVER-LETTER HARDENING / EVALS 1.6.1; НУЖНА ПРОВЕРКА ORDINARY CI -> FRESH ALICE FINAL -> FOCUSED NAMED HUMAN RE-REVIEW`
+| Поле | Значение |
+|---|---|
+| Current package | AI-PROVIDER-001 - НУЖНА ПРОВЕРКА |
+| Source code | Latest uploaded GitHub snapshot `ai-career-agent-site-main (30).zip`; 407 files |
+| Canonical versions | PLAN 1.4.49; PASSPORT 2.63; SOURCE_AUDIT 1.4.49; AI-BENCH verification 1.16; provider ADR 1.0 |
+| AI-BENCH-001 | ВЫПОЛНЕНО; accepted artifact `34830877796`, eight cases PASS and named human acceptance |
+| Provider decision | Alice primary; manual reserve without generation; proposed limits/data policy; owner approval pending |
+| Production AI | Not implemented or activated; policy JSON is an offline specification |
+| Staging | Render web + clean Neon PostgreSQL (Oregon); previous readiness/site/search smoke confirmed |
+| Database schema | `20260819_0014`; unchanged |
+| Current verification | Local results in AI_PROVIDER001_VERIFICATION_STATUS; new external CI not yet run |
+| Next package | LEGAL-001 after owner strategy approval and ordinary CI; AI-001 remains later |
 
-### Подтверждённое внешнее evidence
+The supplied canonical 1.4.48/2.62/1.16 files are authentic current inputs, but repository docs still contained the pre-closure status. This release reconciles them explicitly. Older dated evidence below remains historical and is not today's gate. No benchmark rerun or Render secret change is required for this architecture-only package.
 
-- Alice Final run #6 artifact `34766480932`, run `ai-bench-20260913T154901Z-44d67112`: 8/8 provider calls, 0 provider errors, 0 retries, **7/8 machine PASS** under dataset `1.3.5` / `grounded-v2.6`;
-- mean quality `0.986458`, mean grounding `0.989583`, user-facing cleanliness `1.000`; p50 `3550.43 ms`, p95 `5611.53 ms`, estimated cost `USD 0.053826221`;
-- единственный machine FAIL - `cover-letter-en-01`, где sparse candidate facts были расширены до 3 неподтвержденных эффектов: consistency/visual-language, decision/user-need/product-direction и implementation/delivery;
-- hard scorer сработал корректно: `unsupported_impact_claim_count=3`; safety threshold не ослабляется;
-- opening дополнительно содержал неподтвержденное prior-familiarity утверждение `long admired...`; grounded-v2.6.1 теперь явно запрещает такую историческую familiarization без source evidence;
-- named human feedback from reviewer **Шекунов Д.С.** remains the final quality gate after a fresh 8/8 machine run.
-
-### Grounded-v2.6.1 candidate
-
-- `evals 1.6.1`; benchmark stays `1.4`; dataset `1.3.6`; contract `grounded-v2.6.1`;
-- все grounded-v2.6 evidence/numeric/impact/language/scenario/match/presentation hard gates сохранены;
-- English cover-letter candidate-fit generation теперь использует short atomic first-person restatements verified facts и запрещает purpose/benefit/result tails без explicit candidate evidence;
-- motivation may express present interest, but may not invent prior employer/team familiarity;
-- exact run #6 failure patterns and safe atomic rewrites versioned in `evals/regressions/alice-final-run-6.json`;
-- deterministic reference on dataset 1.3.6 remains **8/8 PASS**;
-- production Flask routes/services/models, dependencies, migrations and production revision `20260819_0014` remain unchanged.
-
-### Staging database recovery
-
-Render Free PostgreSQL expired and was suspended. The Render web-service was re-pointed through `DATABASE_URL` to a new Neon PostgreSQL Free database in AWS US West 2 (Oregon). Render deploy succeeded and `/health/ready` confirmed `status=ok`, `database.backend=postgresql`, `persistent=true`, `database.revision=20260819_0014`, `migrations.current_revision=expected_revision=20260819_0014`, `migrations.ok=true`. This is an operational staging change only; application/schema code is unchanged and the old Render DB data was not migrated.
-
-### Текущий gate
-
-Upload v1.4.47 / evals 1.6.1 -> green ordinary GitHub CI/package gate -> manual `run_ai_bench_alice_final=true` -> require fresh 8/8 machine PASS under dataset 1.3.6 / grounded-v2.6.1 -> artifact audit -> focused named human re-review of cases 1, 3, 5 and 6 while confirming no regressions in 2, 4, 7 and 8 -> AI-BENCH-001 closure decision.
-
-### Очередь
-
-`AI-BENCH-001 grounded-v2.6.1 CI -> fresh Alice Final 8/8 -> focused named human re-review -> AI-BENCH-001 closure -> AI-PROVIDER-001 -> LEGAL-001 -> AI-001 -> AI-002 -> AI-003 -> AI-004 -> AI-005 -> AI-006 -> JOB-001 -> JOB-002 -> JOB-003/JOB-004`
 <!-- ACA-CANONICAL-STATUS:END -->
 
 | Поле | Значение |
 |---|---|
 | Документ | PLAN_CURRENT |
-| Версия | 1.4.47 |
+| Версия | 1.4.49 |
 | Дата | 14 сентября 2026 |
 | Статус | ДЕЙСТВУЮЩИЙ |
-| Основа кода | GitHub `main` после grounded-v2.6 commit `b1d54b5` + Alice Final run #6 artifact `34766480932`; grounded-v2.6.1 candidate подготовлен поверх этого состояния |
-| Текущий пакет | AI-BENCH-001 - grounded-v2.6.1 atomic EN cover-letter hardening; НУЖНА ПРОВЕРКА ordinary CI -> fresh Alice Final -> focused named human re-review |
+| Основа кода | GitHub `main` с grounded-v2.6.1/evals 1.6.1; ordinary CI green; final Alice artifact `34830877796` + named human acceptance |
+| Текущий пакет | AI-PROVIDER-001 - стратегия AI-провайдеров; НУЖНА ПРОВЕРКА |
 
 > ОБЯЗАТЕЛЬНО ДЛЯ КАЖДОГО НОВОГО ЧАТА: прочитать этот план, новый паспорт и актуальный архив. После завершения любого пункта вернуть обновлённые DOCX/PDF/Markdown, новый ZIP, доказательства проверки и запись в журнале версий.
 
-> КОНТРОЛЬНЫЕ СТАТУСЫ ЭТОЙ ВЕРСИИ: FND-001/FND-002/DATA-001/DATA-002/SEC-001/OPS-001/INFRA-PREP-001/SYNC-001/SYNC-002/SEARCH-001..005/AUTH-001/AUTH-002/PROF-001/PROF-002/PROF-003/PRIV-001 - **ВЫПОЛНЕНО**; `AI-BENCH-001` - **НУЖНА ПРОВЕРКА**; `AI-PROVIDER-001` - **ЗАБЛОКИРОВАНО** до завершения benchmark; `DOC-001` - **В РАБОТЕ**; `INFRA-001` - **ОТЛОЖЕНО ДО ПРЕДРЕЛИЗНОГО ЭТАПА**. Документы ниже `1.4.47` устарели для определения текущего gate.
+> КОНТРОЛЬНЫЕ СТАТУСЫ ЭТОЙ ВЕРСИИ: FND-001/FND-002/DATA-001/DATA-002/SEC-001/OPS-001/INFRA-PREP-001/SYNC-001/SYNC-002/SEARCH-001..005/AUTH-001/AUTH-002/PROF-001/PROF-002/PROF-003/PRIV-001/AI-BENCH-001 - **ВЫПОЛНЕНО**; `AI-PROVIDER-001` - **НУЖНА ПРОВЕРКА**; `DOC-001` - **В РАБОТЕ**; `INFRA-001` - **ОТЛОЖЕНО ДО ПРЕДРЕЛИЗНОГО ЭТАПА**. Документы ниже `1.4.49` устарели для определения текущего gate.
+
 
 ## 1. Источник истины и аудит источников
 
 - GitHub является главным источником актуального кода.
 - Если в текущем чате загружен более новый ZIP, он является рабочей основой этого чата.
 - Канонический план определяется наибольшей версией и датой; старые дубликаты не должны оставаться действующими.
-- Актуальная рабочая база для этой версии: `ai-career-agent-site-main (1).zip`, предоставленный пользователем 13.09.2026 как актуальный archive GitHub `main`.
+- Current work uses `ai-career-agent-site-main (30).zip`, supplied by the owner for this task. Earlier `(1).zip` and the grounded-v2.6.1 full ZIP are historical provenance; byte-level comparison confirms the current 407-file content equals the accepted implementation.
 - Версия 1.4.38 фиксирует grounded-v2 hardening после первого live run: ordinary CI r4 green; manual run artifact 32958938365 completed 24/24 API calls with zero transport errors; stricter evidence/safety/match contract prepared for live run #2.
 - Версия 1.4.39 фиксирует grounded-v2.1 hardening после live run #2 artifact 32972783843: Unicode percent normalization, scenario provenance, RU/EN language gate, cover-letter motivation semantics, safe provider diagnostics and one bounded retry prepared for live run #3.
 - Версия 1.4.40 фиксирует grounded-v2.2 final safety hardening после live run #3 artifact 32978362483: source-matched impact families, regressions на реальные Alice outcome-inferences и post-score presentation sanitizer prepared for live run #4.
@@ -70,6 +51,7 @@ Upload v1.4.47 / evals 1.6.1 -> green ordinary GitHub CI/package gate -> manual 
 - Версия 1.4.45 фиксирует Alice Final run #4 artifact 33165683757: 8/8 transport и **8/8 machine PASS**. Artifact audit выявил только grouped known evidence-marker leakage в двух user-facing `interview-en-01` purpose strings. Evals 1.5.3 расширяет только deterministic presentation cleanup для полностью known-ID groups; replay retained raw responses остаётся 8/8 и даёт 0 residual user-facing IDs. Следующий gate - ordinary CI + named human rubric; повторный Alice API run не требуется.
 - Версия 1.4.46 фиксирует named human review Alice Final run #5 artifact 33168005097: machine 8/8 PASS, но reviewer Шекунов Д.С. потребовал revisions в cases 1/3/5/6. Grounded-v2.6 / evals 1.6.0 усиливает writing contract; fresh Alice Final run обязателен.
 - Версия 1.4.47 фиксирует Alice Final run #6 artifact 34766480932: 8/8 transport, 7/8 machine, only `cover-letter-en-01` FAIL with 3 unsupported inferred impacts. Grounded-v2.6.1 / evals 1.6.1 introduces atomic EN candidate-fit generation, unsupported employer-familiarity regression and requires another fresh Alice Final 8/8 before focused human review. Render staging DB was also recovered on Neon PostgreSQL with `/health/ready` revision 0014.
+- Версия 1.4.48 закрывает AI-BENCH-001: ordinary CI green; Alice Final artifact `34830877796` дал 8/8 machine PASS на dataset `1.3.6` / grounded-v2.6.1 с нулевыми hard counters; named reviewer Шекунов Д.С. принял focused re-review; AI-PROVIDER-001 становится следующим пакетом.
 - Версия 1.4.43 фиксирует Alice Final run #2 artifact 33066898884: 8/8 transport, 6/8 machine. Grounded-v2.4 добавляет Unicode dash normalization, узкий audited candidate_fit->motivation repair для vacancy-only future intent и более строгий interview evidence coverage prompt; fresh Alice-only verification обязателен.
 - Версия 1.4.34 фиксирует live Yandex candidate: manual-only workflow, Alice AI LLM/Flash/YandexGPT Pro 5.1, structured JSON Schema output, current pricing snapshot and GitHub-secret-only credentials.
 - Версия 1.4.35 фиксирует CI-stability hotfix r2: SYNC worker cache assertions отвязаны от календарного 7-дневного search filter; AI-BENCH package contract использует browser-upload-safe visible scaffold и не зависит от dotfiles.
@@ -103,10 +85,10 @@ Upload v1.4.47 / evals 1.6.1 -> green ordinary GitHub CI/package gate -> manual 
 
 - Версия 1.4.28 усиливает PRIV-001 после повторного privacy/security audit: re-authenticated export, consistent snapshot, bounded/spooled ZIP, provider-profile sanitization, fail-closed asset ownership, password-hash recheck under lock, orphan asset cleanup, worker lock/heartbeat и migration/index `20260813_0013`. Внешний gate остаётся Pull Request CI -> Render 0013 -> production E2E.
 
-- Версия 1.4.32 закрывает PRIV-001 как ВЫПОЛНЕНО. После CI hotfix r1 весь GitHub workflow green, включая dedicated PRIV-001 gate, PostgreSQL migration/integration, AUTH/PROF regressions, encrypted backup/restore и Docker/runtime smoke. Render `/health/ready` подтвердил persistent PostgreSQL, current/expected `20260813_0013`, `migrations.ok=true`, `privacy_cleanup.enabled=true`, `worker_alive=true`, `last_status=ok`. Production E2E подтвердил re-authenticated export, secret exclusions, корректное отсутствие `assets/` для аккаунта без изображений и inclusion logo asset для аккаунта с изображением, negative delete checks, destructive delete throwaway account, невозможность повторного входа, owner isolation, restart persistence, final `/profile`/PROF-002/`/resumes`/AUTH/OAuth/`/vacancies` regression и Render Logs без новых 500/Traceback/IntegrityError/migration/privacy cleanup errors или sensitive payload. Time-bound 7/30/180-day retention semantics остаются CI-controlled; реальные дни вручную не ожидались. Текущий пакет — AI-BENCH-001 (внешний прогон).
+- Версия 1.4.29 закрывает PRIV-001 как ВЫПОЛНЕНО. После CI hotfix r1 весь GitHub workflow green, включая dedicated PRIV-001 gate, PostgreSQL migration/integration, AUTH/PROF regressions, encrypted backup/restore и Docker/runtime smoke. Render `/health/ready` подтвердил persistent PostgreSQL, current/expected `20260813_0013`, `migrations.ok=true`, `privacy_cleanup.enabled=true`, `worker_alive=true`, `last_status=ok`. Production E2E подтвердил re-authenticated export, secret exclusions, корректное отсутствие `assets/` для аккаунта без изображений и inclusion logo asset для аккаунта с изображением, negative delete checks, destructive delete throwaway account, невозможность повторного входа, owner isolation, restart persistence, final `/profile`/PROF-002/`/resumes`/AUTH/OAuth/`/vacancies` regression и Render Logs без новых 500/Traceback/IntegrityError/migration/privacy cleanup errors или sensitive payload. Time-bound 7/30/180-day retention semantics остаются CI-controlled; реальные дни вручную не ожидались. Текущий пакет — AI-BENCH-001 (внешний прогон). [Version-label correction in 1.4.49; historical PRIV closure, not current AI gate.]
 
 
-- Версия 1.4.32 реализует SEARCH-005 candidate поверх завершённого PRIV-001. Добавлены explicit verified first-party administrator allowlist `SEARCH_ADMIN_EMAILS`, persistent `source_health_states`, migration `20260819_0014`, read-only `/admin/sources` и `/api/admin/sources`, безопасная provider telemetry instrumentation, cache/sync freshness aggregation, mobile UI и dedicated CI gate. Панель не выполняет внешние probes и не показывает credentials, response bodies, пользовательские поисковые запросы или PII. Пакет остаётся НУЖНА ПРОВЕРКА до green Pull Request CI, Render 0014, admin/non-admin/restart/telemetry E2E и log review.
+- Версия 1.4.30 реализует SEARCH-005 candidate поверх завершённого PRIV-001. Добавлены explicit verified first-party administrator allowlist `SEARCH_ADMIN_EMAILS`, persistent `source_health_states`, migration `20260819_0014`, read-only `/admin/sources` и `/api/admin/sources`, безопасная provider telemetry instrumentation, cache/sync freshness aggregation, mobile UI и dedicated CI gate. Панель не выполняет внешние probes и не показывает credentials, response bodies, пользовательские поисковые запросы или PII. Пакет остаётся НУЖНА ПРОВЕРКА до green Pull Request CI, Render 0014, admin/non-admin/restart/telemetry E2E и log review. [Historical SEARCH-005 candidate; completion is recorded in verification v1.1.]
 
 ## 2. Обязательный протокол работы
 
@@ -155,7 +137,7 @@ Upload v1.4.47 / evals 1.6.1 -> green ordinary GitHub CI/package gate -> manual 
 | Резюме | PDF extraction на pypdf и browser resume builder; LLM пока нет. |
 | Тесты | GitHub Actions, unit/provider/route/config/database/migration/security/observability/backup tests. |
 | Hosting | Render временно используется как staging/резервная площадка. Для production требуется проверенный VPS с доступностью из РФ/РБ, собственный домен и план миграции. |
-| Текущая схема | Production `20260813_0013`. PRIV-001 применил `privacy_audit_events` и `idx_resume_assets_created`; PROF-003 data model и PROF-001 canonical profile schema не меняются. |
+| Текущая схема | Current staging schema `20260819_0014` on Neon PostgreSQL; SEARCH-005 added `source_health_states`. Previous PRIV-001 revision `0013` is historical. |
 
 ### 5.1 Выполнено/частично
 
@@ -181,7 +163,7 @@ Upload v1.4.47 / evals 1.6.1 -> green ordinary GitHub CI/package gate -> manual 
 | R-06 | Средний | Большие assets и inline JS усложняют performance/support. |
 | R-07 | Снижен стратегией 1.4.0 | VPS не арендуется до предрелизного окна; portability проверяется через INFRA-PREP-001 и CI. |
 | R-08 | Критический | Render/Cloudflare недоступен из части сетей РФ: DNS работает, но TCP 443 до edge IP не устанавливается, запросы не доходят до Render Logs. |
-| R-09 | Высокий | OpenAI API не является базовым провайдером для пользователей РФ/РБ; Yandex AI Studio/Alice AI требует benchmark, а Reed — проверку с точного VPS и договорное подтверждение. |
+| R-09 | Active risk, narrowed | Alice passed AI-BENCH-001; actual production billing, source-IP transport, opt-out, data location and legal/runtime controls remain activation gates. |
 | R-10 | Средний | Отложенный реальный VPS test может поздно выявить сетевую несовместимость; поэтому probe tooling готов заранее, Reed имеет graceful degradation, а INFRA-001 проводится до beta, не в день релиза. |
 
 ## 6. Целевой пользовательский путь MVP 1.0
@@ -236,8 +218,8 @@ MVP не готов, если работает только отдельная �
 
 | ID | Приоритет | Статус | Пункт |
 |---|---|---|---|
-| AI-BENCH-001 | P0 | НУЖНА ПРОВЕРКА | Comparative live run #4 reviewed; Alice AI LLM primary candidate; требуются green CI, Alice-only 8/8 machine artifact и named manual rubric |
-| AI-PROVIDER-001 | P0 | ЗАПЛАНИРОВАНО | Стратегия AI-провайдеров, география, стоимость, fallback и privacy |
+| AI-BENCH-001 | P0 | ВЫПОЛНЕНО | Alice Final `34830877796`: 8/8 machine PASS, zero provider errors/retries/hard safety counters; named human re-review accepted |
+| AI-PROVIDER-001 | P0 | НУЖНА ПРОВЕРКА | ADR/policy/cost/privacy prepared; new ordinary CI + owner approval pending |
 | AI-001 | P1 | ЗАПЛАНИРОВАНО | Независимый слой AI-провайдера и контроль стоимости |
 | AI-002 | P1 | ЗАПЛАНИРОВАНО | Настоящий анализ резюме |
 | AI-003 | P1 | ЗАПЛАНИРОВАНО | Адаптивное AI-интервью в конструкторе |
@@ -410,7 +392,7 @@ MVP не готов, если работает только отдельная �
 
 **Реализация:** Канонические PLAN_CURRENT и паспорт обновляются после каждого архитектурного решения; README/ROADMAP/CHANGELOG и package-specific docs синхронизируются вместе с ближайшим кодовым пакетом, чтобы документация и код проходили один CI/merge cycle.
 
-**Текущее состояние:** PLAN_CURRENT 1.4.22 и паспорт 2.36 фиксируют SEARCH-001/002/003/004, AUTH-001, AUTH-002 и PROF-001 как ВЫПОЛНЕНО; PROF-002 — следующий пакет. Production PostgreSQL остаётся на `20260811_0010`. Gmail API staging contract сохраняется.
+**Текущее состояние:** PLAN_CURRENT 1.4.49; PROJECT_PASSPORT 2.63. AI-BENCH-001 ВЫПОЛНЕНО; AI-PROVIDER-001 НУЖНА ПРОВЕРКА (ordinary CI + owner approval pending). Staging: Render web + clean Neon PostgreSQL, revision `20260819_0014`. Previous 1.4.22/2.36/0010 details are historical. Gmail API staging delivery remains separate operational work.
 
 **Влияние на сайт:** Нет.
 
@@ -660,12 +642,12 @@ MVP не готов, если работает только отдельная �
 
 **Финальные доказательства:** GitHub Actions полностью зелёный, включая отдельный `Verify SEARCH-004 canonical route and source-state controls` и все regression/infrastructure gates. Production `/health/ready` на Render подтвердил PostgreSQL `persistent=true`, `current_revision=expected_revision=20260809_0007`, `migrations.ok=true`, `status=ok`. Мобильный production-smoke подтвердил штатный поиск на canonical `/vacancies` с SEARCH-003 snapshot и page=0. Старый `/vacancies/internal?search=1&keyword=Бухгалтер&source=hh&source=superjob` корректно перенаправился на `/vacancies` с сохранением `keyword` и обоих repeated `source`; новый snapshot/page были сформированы уже canonical route. Database migration не добавлялась. SEARCH-004 закрыт как ВЫПОЛНЕНО.
 
-**Зависимости:** SEARCH-001/002/003/004, AUTH-001, OPS-001, SYNC-001 и PRIV-001 выполнены; SEARCH-005 теперь следующий обязательный пакет.
+**Dependencies:** SEARCH-001..004, AUTH-001, OPS-001, SYNC-001 and PRIV-001 completed; SEARCH-005 is also completed (verification v1.1).
 
-#### SEARCH-005 - Центр состояния источников для администратора
+#### SEARCH-005 (historical implementation, closure confirmed) - Центр состояния источников для администратора
 
 **Приоритет:** P1
-**Статус:** ГОТОВО К СТАРТУ
+**Статус:** ВЫПОЛНЕНО
 
 **Цель:** Показывать доступность API, latency, импорт и срок интеграций.
 
@@ -678,6 +660,9 @@ MVP не готов, если работает только отдельная �
 **Критерии готовности:** Недоступно без admin role; metrics обновляются; PII/credentials отсутствуют.
 
 **Зависимости:** AUTH-001, OPS-001, SYNC-001 — ВЫПОЛНЕНО; account/profile/privacy foundation завершён PRIV-001.
+
+
+**Closure evidence:** SEARCH005_VERIFICATION_STATUS v1.1 confirms CI, revision 0014 and production E2E on 21.08.2026. This is not a new verification of all flows after the clean Neon database.
 
 ### Этап 3. Собственный аккаунт и карьерный профиль
 
@@ -810,11 +795,11 @@ MVP не готов, если работает только отдельная �
 #### AI-BENCH-001 - Сравнительное тестирование Yandex AI Studio/Alice AI
 
 **Приоритет:** P0
-**Статус:** НУЖНА ПРОВЕРКА
+**Статус:** ВЫПОЛНЕНО
 
 **Цель:** Выбрать модель на воспроизводимых RU/EN функциях AI Career Agent, отделив качество/grounding/safety от transport и стоимости до production-интеграции.
 
-**Реализация:** `evals 1.5.0` / benchmark `1.4` / dataset `1.3.2` uses grounded-v2.3 machine scoring: 8 synthetic RU/EN fixtures, 4 versioned schemas, exact evidence IDs, structured unverified facts/caveats, claim-evidence/language/scenario gates, deterministic weighted vacancy match score, Unicode-normalized source numbers, vacancy-grounded `motivation`, safe provider-envelope diagnostics and one bounded retry. After Alice Final run #1, the runner preserves raw responses, creates an auditable machine copy with only unique exact-number-to-scenario provenance repair, then creates presentation output with simple marker cleanup. Ambiguous/unknown provenance remains hard failure; answer-cardinality phrases such as `2-3 examples` are narrowly treated as response-format instructions rather than factual claims. Historical live runs remain evaluation evidence, not production traffic.
+**Реализация:** Финальный benchmark layer - `evals 1.6.1`, benchmark `1.4`, dataset `1.3.6`, contract `grounded-v2.6.1`: 8 synthetic RU/EN fixtures, versioned structured schemas, exact evidence IDs, structured unverified facts/caveats, claim-evidence/language/scenario/presentation gates, deterministic weighted vacancy match score, audited scenario provenance repair, bounded marker cleanup, strict cover-letter first-person/grounding rules and one bounded provider retry. Production routes/models/schema не менялись. Historical live runs сохранены как audit evidence; final accepted live evidence - artifact `34830877796`.
 
 **Влияние на код:** только `evals/`, benchmark tests/scripts, CI summary and docs/evidence. Production routes, models, services, dependencies and database schema do not change.
 
@@ -825,7 +810,7 @@ MVP не готов, если работает только отдельная �
 #### AI-PROVIDER-001 - Стратегия AI-провайдеров
 
 **Приоритет:** P0
-**Статус:** ЗАПЛАНИРОВАНО
+**Статус:** НУЖНА ПРОВЕРКА
 
 **Цель:** Зафиксировать основной и резервный AI-контур с учётом РФ/РБ, privacy, стоимости и отказоустойчивости.
 
@@ -836,6 +821,10 @@ MVP не готов, если работает только отдельная �
 **Критерии готовности:** Decision record утверждён; география и условия провайдеров проверены; стоимость рассчитана; privacy/retention описаны.
 
 **Зависимости:** AI-BENCH-001.
+
+**Candidate implementation (1.4.49):** `docs/AI_PROVIDER001_DECISION.md`, data/failure policy, dated official sources, reproducible Decimal costs, `docs/policies/ai_provider_policy.v1.json`, offline validator/negative tests and dedicated CI verification step. No production AI adapter, route, env change or migration.
+
+**Remaining package gates:** new ordinary GitHub CI and owner approval of primary/manual reserve/data/limits. Actual production activation additionally requires LEGAL-001, AI-001 and deployment checks. Approval has not been inferred from the earlier benchmark acceptance.
 
 #### AI-001 - Независимый слой AI-провайдера и контроль стоимости
 
@@ -1528,26 +1517,15 @@ Render остаётся staging/резервной площадкой на пе�
 ### 15.1 Функциональная разработка без аренды VPS
 
 ```text
-DOC-001 (постоянная синхронизация, не блокирует код)
--> PROF-001
--> PROF-002
--> PROF-003
--> PRIV-001
--> SEARCH-005
--> AI-BENCH-001
--> AI-PROVIDER-001
+DOC-001 (continuous)
+AI-PROVIDER-001 (candidate: CI + approval pending)
 -> LEGAL-001
--> AI-001
--> AI-002
--> AI-003
--> AI-004
--> AI-005
--> AI-006
--> JOB-001
--> JOB-002
--> JOB-003 / JOB-004
--> PERF-001 / A11Y-001 / ANL-001 по готовности
+-> AI-001..006
+-> JOB-001..004
+-> PERF-001 / A11Y-001 / ANL-001 when ready
 ```
+
+Previous FND/DATA/SEC/OPS/INFRA-PREP/SYNC/SEARCH/AUTH/PROF/PRIV/AI-BENCH stages are completed within their accepted scope.
 
 ### 15.2 Предрелизный инфраструктурный блок
 
@@ -1565,23 +1543,11 @@ INFRA-001 real VPS test
 
 `AI-BENCH-001` не зависит от VPS. Финальная доступность Yandex AI с production source IP повторно подтверждается в `INFRA-001`. Порядок снова меняется только новой MINOR-версией PLAN_CURRENT с объяснением зависимостей.
 
-## 16. Текущий gate SEARCH-005
+## 16. Current gate / AI-PROVIDER-001
 
-`PRIV-001` — **ВЫПОЛНЕНО** на production `20260813_0013`. Подтверждены green GitHub Actions, dedicated PRIV gate, Render readiness/privacy worker, owner-readable export с secret exclusions, asset inclusion, negative и destructive account deletion, owner isolation, restart persistence, regression и Render log privacy/error review.
+AI-BENCH-001: **ВЫПОЛНЕНО**. AI-PROVIDER-001: **НУЖНА ПРОВЕРКА**. Current schema is `20260819_0014`.
 
-Следующий пакет:
-
-```text
-SEARCH-005 — ВЫПОЛНЕНО
--> цель: защищённый центр состояния источников
--> ProviderHealth/SyncRun-derived availability, latency, freshness/import age
--> admin-only detailed page; public/user status остаётся sanitised
--> no tokens, credentials, resume/profile PII in telemetry
--> зависимости AUTH-001 / OPS-001 / SYNC-001 выполнены
--> перед изменениями: аудит текущих source-state/metrics/ops/admin boundaries
-```
-
-Database schema перед стартом SEARCH-005: `20260813_0013`. Код SEARCH-005 этой документационной редакцией не изменяется.
+The provider decision candidate is ready for ordinary CI and owner approval. No production model activation, payment, secret update, database migration or repeat paid benchmark is required now. After approval, continue with LEGAL-001. Earlier SEARCH-005/PRIV-001 gates remain historical completion evidence, not current blockers.
 
 ## 17. Обязательный отчёт после каждого пакета
 
@@ -1600,6 +1566,9 @@ GitHub/production/API: <подтверждено или требуется>
 ```
 
 ## 18. Журнал версий
+
+> Historical version log. Past "pending" and "next" statements below describe their original dates, not the active gate in sections 7, 8 and 16. Version-label inconsistencies discovered during this audit are listed in SOURCE_AUDIT.
+
 
 - **1.0.0 — 03.08.2026 — PLAN:** Первичный единый план.
 - **1.0.1 — 03.08.2026 — FND-001:** Тесты/CI подготовлены, требовалась verification.
@@ -1625,7 +1594,7 @@ GitHub/production/API: <подтверждено или требуется>
 - **1.4.1 — 07.08.2026 — SYNC-001:** Удалён daemon thread из Gunicorn; добавлены durable queue, external worker/CLI, cross-process locks, worker heartbeat, stale recovery, migration 20260807_0003, Render/Compose integration, tests и verification runbook. Статус - НУЖНА ПРОВЕРКА.
 - **1.4.2 — 07.08.2026 — SYNC-001-COMPLETE:** GitHub CI и Render production verification пройдены; исправлен script import-path, подтверждены внешний worker, provider batches, persisted run lifecycle, revision 20260807_0003 и cache persistence после реального restart. SYNC-002 готов к старту.
 - **1.4.3 — 07.08.2026 — SYNC-002:** Добавлены migration 20260807_0004, persistent watermark/cursor, bounded modified windows, idempotent lifecycle upsert, retry/backoff, TTL closure и retention purge; пакет ожидает GitHub/Render verification.
-- **1.4.4 — 08.08.2026 — SYNC-002-COMPLETE / SEARCH-001-PREP:** GitHub CI и Render revision 0004 подтверждены; production доказал checkpoint/retry/backoff/cache/restart persistence на реальных Trudvsem timeouts. Остаточный successful provider-smoke принят и перенесён в INFRA-001/OPS-002; SEARCH-001 подготовлен и переведён в ГОТОВО К СТАРТУ.
+- **1.4.4 — 08.08.2026 — SYNC-002-COMPLETE / SEARCH-001-PREP:** GitHub CI и Render revision 0004 подтверждены; production доказал checkpoint/retry/backoff/cache/restart persistence на реальных Trudvsem timeouts. Остаточный successful provider-smoke принят и перенесён в INFRA-001/OPS-002; SEARCH-001 подготовлен и переведён в НУЖНА ПРОВЕРКА.
 - **1.4.5 — 08.08.2026 — SEARCH-001:** Добавлены typed `NormalizedVacancy`, central provider normalization, canonical vacancy codes и migration `20260808_0005`, exact-code filters, compatibility fallback, contract tests и единый документный шаблон v1.1. Статус — НУЖНА ПРОВЕРКА.
 - **1.4.6 — 08.08.2026 — SEARCH-001-COMPLETE:** Подтверждены зелёный CI, Render revision `20260808_0005` и production canonical filter smoke; SEARCH-002 готов к старту.
 - **1.4.7 — 09.08.2026 — SEARCH-002:** Добавлены conservative cross-source fingerprint/similarity, complete-link grouping, explainability, multi-source card/persistence integration и отдельный CI gate. Additive migration `20260809_0006` добавляет dedup metadata и reversible grouping; статус — НУЖНА ПРОВЕРКА.
@@ -1638,14 +1607,14 @@ GitHub/production/API: <подтверждено или требуется>
 - **1.4.14 — 10.08.2026 — AUTH-001-SAFARI-CSRF-HOTFIX:** Render `0008` и SMTP readiness подтверждены; Safari register POST выявил missing Referer из-за auth `no-referrer`; policy изменена на `strict-origin`, strict CSRF сохранён; требуется CI/Render E2E.
 - **1.4.15 — 11.08.2026 — AUTH-001-MAILRU-SMTP-SSL:** Safari hotfix production-pass подтверждён; Yandex external anti-spam blocker локализован; добавлен Mail.ru-compatible implicit SSL/TLS; GitHub Actions green, Render readiness green.
 - **1.4.16 — 11.08.2026 — AUTH-001-GMAIL-API-STAGING:** Render Free SMTP egress blocker подтверждён `OSError`; добавлен Gmail API HTTPS backend с OAuth refresh-token flow, mocked tests и обязательным future domain sender gate.
-- **1.4.17 — 11.08.2026 — AUTH-001-COMPLETE / AUTH-002-PREP:** Green CI, Gmail API delivery и полный production E2E подтверждены; AUTH-001 ВЫПОЛНЕНО, AUTH-002 ГОТОВО К СТАРТУ. Gmail API staging-only; domain sender + SPF/DKIM/DMARC — pre-release gate.
+- **1.4.17 — 11.08.2026 — AUTH-001-COMPLETE / AUTH-002-PREP:** Green CI, Gmail API delivery и полный production E2E подтверждены; AUTH-001 ВЫПОЛНЕНО, AUTH-002 НУЖНА ПРОВЕРКА. Gmail API staging-only; domain sender + SPF/DKIM/DMARC — pre-release gate.
 - **1.4.18 — 11.08.2026 — AUTH-002-CANDIDATE:** Owner-bound HH/SuperJob identities, state tied to first-party session, migration `20260811_0009`, owner-scoped refresh/disconnect, safe conflicts and dedicated tests/CI gate; требуется GitHub/Render/real provider E2E.
 - **1.4.19 — 11.08.2026 — AUTH-002-COMPLETE / PROF-001-PREP:** Green GitHub Actions, Render `0009`, полный HH/SuperJob production ownership E2E и regression smoke подтверждены; AUTH-002 ВЫПОЛНЕНО, следующий пакет — PROF-001.
 - **1.4.20 — 11.08.2026 — PROF-001-CANDIDATE:** Owner-scoped structured profile, immutable versions, migration `20260811_0010`, edit/view/history UI, validation, backup inventory and dedicated CI gate; требуется Pull Request/Render/production E2E.
 - **1.4.21 — 12.08.2026 — PROF-001-PARTIAL-PROFILE-HOTFIX:** После green CI и Render `0010` production E2E выявил false-required validation из-за default values пустых repeatable rows. Исправлено игнорирование default-only rows, добавлены regression tests; schema без изменений.
-- **1.4.22 — 12.08.2026 — PROF-001-COMPLETE / PROF-002-PREP:** Hotfix CI green; Render redeploy сохранил `0010`; partial save, versions/history/no-op, owner isolation, stale conflict, restart persistence, mobile and final regression confirmed. PROF-001 ВЫПОЛНЕНО; PROF-002 ГОТОВО К СТАРТУ.
+- **1.4.22 — 12.08.2026 — PROF-001-COMPLETE / PROF-002-PREP:** Hotfix CI green; Render redeploy сохранил `0010`; partial save, versions/history/no-op, owner isolation, stale conflict, restart persistence, mobile and final regression confirmed. PROF-001 ВЫПОЛНЕНО; PROF-002 НУЖНА ПРОВЕРКА.
 - **1.4.23 — 12.08.2026 — PROF-002-CANDIDATE:** Text-PDF extraction proposal, editable review, explicit confirmation, metadata-only owner/version-bound token, migration `20260812_0011` source/provenance audit fields, upload/privacy controls and dedicated tests; external CI/Render/E2E pending.
-- **1.4.24 — 12.08.2026 — PROF-002-COMPLETE / PROF-003-PREP:** CI and Render `0011` green; upload-limit defect fixed by hotfix r2; confirmation/privacy/stale/restart/mobile/regression E2E passed. PROF-002 ВЫПОЛНЕНО; PROF-003 ГОТОВО К СТАРТУ.
+- **1.4.24 — 12.08.2026 — PROF-002-COMPLETE / PROF-003-PREP:** CI and Render `0011` green; upload-limit defect fixed by hotfix r2; confirmation/privacy/stale/restart/mobile/regression E2E passed. PROF-002 ВЫПОЛНЕНО; PROF-003 НУЖНА ПРОВЕРКА.
 - **1.4.25 — 13.08.2026 — PROF-003-CANDIDATE:** Server-side resume drafts, optimistic autosave, immutable checkpoint/export/restore versions, durable assets, migration `20260812_0012`, UI/tests/backup/CI gate implemented; external GitHub/Render/E2E verification pending.
 - **1.4.26 — 13.08.2026 — PROF-003-PRODUCTION-EVIDENCE:** Green CI и Render `0012`; production E2E подтвердил drafts/autosave/cross-device, versions/no-op/read-only/restore, stale `409`, direct edit, iPhone photo, university logo, PDF parity, owner isolation и restart persistence. Hotfix r1-r4 зафиксированы; пакет остаётся НУЖНА ПРОВЕРКА только до final regression/log review.
 - **1.4.27 — 13.08.2026 — PROF-003-COMPLETE / PRIV-001-CANDIDATE:** Final regression и Render log privacy/error review подтверждены; PROF-003 ВЫПОЛНЕНО. Реализованы readable privacy export, confirmed account deletion, local integration/token cleanup, identifier-free audit, retention worker и migration `20260813_0013`; PRIV-001 ожидает CI/Render/E2E.
@@ -1659,7 +1628,7 @@ GitHub/production/API: <подтверждено или требуется>
 ### SEARCH-005 — Центр состояния источников для администратора
 
 **Приоритет:** P1  
-**Статус:** НУЖНА ПРОВЕРКА
+**Статус:** ВЫПОЛНЕНО
 
 **Цель:** дать ограниченному администратору безопасный, устойчивый после restart обзор состояния HH, SuperJob, Reed и Trudvsem без раскрытия секретов или пользовательских данных.
 
@@ -1676,8 +1645,11 @@ GitHub/production/API: <подтверждено или требуется>
 **Зависимости:** SEARCH-001..004, SYNC-001/002, AUTH-001, OPS-001, PRIV-001 complete.
 
 
-**Текущий gate:** green ordinary CI -> `CI` workflow_dispatch с `run_ai_bench_alice_final=true` -> Alice 8/8 machine artifact -> named manual rubric. AI-PROVIDER-001 остаётся заблокирован.
+**Текущий gate:** AI-BENCH-001 ВЫПОЛНЕНО. AI-PROVIDER-001 НУЖНА ПРОВЕРКА; следующий deliverable - provider decision record без production AI integration до его утверждения.
 
+
+
+Closure status reconciled against SEARCH005_VERIFICATION_STATUS v1.1; no new application changes.
 
 ### PLAN_CURRENT v1.4.34 update
 
@@ -1753,6 +1725,10 @@ Artifact `ai-bench-20260827T112440Z-243eaaeb` completed 8/8 calls with zero prov
 |---|---|---|---|
 | 1.4.44 | 28.08.2026 | AI-BENCH-001-ALICE-FINAL-V4 | Artifact `33163009779` reviewed: 8/8 calls, 0 errors/retries, 6/8 machine. Grounded-v2.5 narrowly fixes disclosed-gap future-intent paragraph classification and resource/approach response-cardinality, restores run #2 regression test discovery, and replays retained raw responses 8/8. Production revision remains `20260819_0014`; fresh Alice-only 8/8 + named manual rubric are still required. |
 
+### PLAN_CURRENT v1.4.45 update
+
+| Версия | Дата | Пакет | Изменение |
+|---|---|---|---|
 | 1.4.45 | 28.08.2026 | AI-BENCH-001-ALICE-FINAL-ARTIFACT-R1 | Alice Final run #4 artifact `33165683757` reviewed: 8/8 calls, 0 errors/retries, 8/8 machine PASS. Artifact audit found grouped known evidence markers surviving presentation cleanup in two `interview-en-01` purpose strings. Evals 1.5.3 adds audited grouped-marker sanitation only for all-known ID groups; retained raw replay stays 8/8 with 20 marker removals and 0 residual user-facing IDs. Next gate: ordinary CI + named human rubric; no new billable Alice call required. |
 
 
@@ -1768,3 +1744,23 @@ Artifact `ai-bench-20260827T112440Z-243eaaeb` completed 8/8 calls with zero prov
 | Версия | Дата | Изменение |
 |---|---|---|
 | 1.4.47 | 14.09.2026 | AI-BENCH-001-GROUNDED-V2.6.1: Alice Final run #6 artifact `34766480932` completed 8/8 calls with 0 errors/retries but 7/8 machine; only EN cover letter failed on 3 unsupported inferred effects. Evals 1.6.1 / dataset 1.3.6 hardens atomic EN candidate-fit writing and blocks unsupported prior employer familiarity. Render staging database moved to Neon after Render Free Postgres expiry; readiness confirms revision 0014. Fresh Alice Final 8/8 + focused human review remain required. |
+
+
+## 14.09.2026 addendum - AI-BENCH-001 COMPLETE
+
+- Ordinary GitHub CI for grounded-v2.6.1 confirmed green.
+- Alice Final artifact `34830877796` / run `ai-bench-20260914T100639Z-222dfc87`: 8/8 PASS, 0 errors, 0 retries, zero unresolved hard counters.
+- Named reviewer **Шекунов Д.С.** accepted the focused human re-review and explicitly approved package closure.
+- AI-BENCH-001 -> ВЫПОЛНЕНО; AI-PROVIDER-001 -> ГОТОВО К СТАРТУ.
+
+### PLAN_CURRENT v1.4.48 update
+
+| Версия | Дата | Пакет | Изменение |
+|---|---|---|---|
+| 1.4.48 | 14.09.2026 | AI-BENCH-001-COMPLETE | Final Alice 8/8 + named human acceptance; AI-BENCH-001 complete, AI-PROVIDER-001 unblocked and ready. |
+
+## PLAN_CURRENT v1.4.49 update
+
+| Version | Date | Package | Change |
+|---|---|---|---|
+| 1.4.49 | 2026-09-14 | AI-PROVIDER-001 | Candidate strategy and offline controls; current source main (30); closure docs synchronized; schema/search gate drift corrected; CI + owner approval pending |

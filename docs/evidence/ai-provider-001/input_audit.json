@@ -1,0 +1,163 @@
+{
+  "audit_date": "2026-09-14",
+  "source_zip": "ai-career-agent-site-main (30).zip",
+  "source_zip_sha256": "98d7d63bb76bc310ee0b27f29e6f252e275cb40ece7c3cd9905551924a14b10b",
+  "archive_comment": "426d9f940b72ade680d75147c6b3cccdc1d3c88c",
+  "archive_comment_is_not_independently_fetched_git_commit": true,
+  "source_file_count": 407,
+  "content_comparison_to_previous_v261": {
+    "changed": 0,
+    "added": 0,
+    "removed": 0
+  },
+  "canonical_files": [
+    {
+      "file": "AI_Career_Agent_ROADMAP_2026-09-14.md",
+      "uploaded_at_root": false,
+      "available_from_prior_canonical_bundle": true,
+      "sha256": "46810221231b965948fd29b665eac839c5686022ba3d88eefa506f0bea78304d",
+      "expected_sha256": "46810221231b965948fd29b665eac839c5686022ba3d88eefa506f0bea78304d",
+      "match": true
+    },
+    {
+      "file": "AI_Career_Agent_AI_BENCH_VERIFICATION_STATUS_v1.16_2026-09-14.pdf",
+      "uploaded_at_root": true,
+      "available_from_prior_canonical_bundle": false,
+      "sha256": "564b3141a480c2b1ee58eda0bd19670558e841e8f91c25f69a6769888e8b5cc1",
+      "expected_sha256": "564b3141a480c2b1ee58eda0bd19670558e841e8f91c25f69a6769888e8b5cc1",
+      "match": true
+    },
+    {
+      "file": "AI_Career_Agent_SOURCE_AUDIT_v1.4.48_2026-09-14.md",
+      "uploaded_at_root": false,
+      "available_from_prior_canonical_bundle": true,
+      "sha256": "5da09392009208a896cde3c2d67f44c1934e2dfa58a27639088f78bbd22e81a8",
+      "expected_sha256": "5da09392009208a896cde3c2d67f44c1934e2dfa58a27639088f78bbd22e81a8",
+      "match": true
+    },
+    {
+      "file": "alice-final-run-7-human-review.md",
+      "uploaded_at_root": false,
+      "available_from_prior_canonical_bundle": true,
+      "sha256": "64d5776a75fd5a7ff5997d0e88344ec4055e81163f5f6c470dda9fa105cbf199",
+      "expected_sha256": "64d5776a75fd5a7ff5997d0e88344ec4055e81163f5f6c470dda9fa105cbf199",
+      "match": true
+    },
+    {
+      "file": "AI_Career_Agent_CANONICAL_DOCUMENTS_2026-09-14.md",
+      "uploaded_at_root": true,
+      "available_from_prior_canonical_bundle": false,
+      "sha256": "6bc5281ca89f6718f02d6629b40624c3a41fe538f4480ec04a305a47439d1327",
+      "expected_sha256": "6bc5281ca89f6718f02d6629b40624c3a41fe538f4480ec04a305a47439d1327",
+      "match": true
+    },
+    {
+      "file": "AI_Career_Agent_AI_BENCH_VERIFICATION_STATUS_v1.16_2026-09-14.md",
+      "uploaded_at_root": false,
+      "available_from_prior_canonical_bundle": true,
+      "sha256": "6d052ff9c10290dab6fca58aa406f76b0b00e4d4eec6eb27254d69dc320c0a56",
+      "expected_sha256": "6d052ff9c10290dab6fca58aa406f76b0b00e4d4eec6eb27254d69dc320c0a56",
+      "match": true
+    },
+    {
+      "file": "AI_Career_Agent_AI_BENCH_VERIFICATION_STATUS_v1.16_2026-09-14.docx",
+      "uploaded_at_root": false,
+      "available_from_prior_canonical_bundle": true,
+      "sha256": "7bea39d4fc591732d01d9077610108061461c3c12eaebebcc14c48c0eaee3c2c",
+      "expected_sha256": "7bea39d4fc591732d01d9077610108061461c3c12eaebebcc14c48c0eaee3c2c",
+      "match": true
+    },
+    {
+      "file": "AI_Career_Agent_PLAN_CURRENT_v1.4.48_2026-09-14.docx",
+      "uploaded_at_root": true,
+      "available_from_prior_canonical_bundle": false,
+      "sha256": "8065c2c39c195d79c72c02ab76372124d87dee593e9351b3fe0f3c0d4e911b30",
+      "expected_sha256": "8065c2c39c195d79c72c02ab76372124d87dee593e9351b3fe0f3c0d4e911b30",
+      "match": true
+    },
+    {
+      "file": "AI_Career_Agent_PROJECT_PASSPORT_v2.62_2026-09-14.pdf",
+      "uploaded_at_root": true,
+      "available_from_prior_canonical_bundle": false,
+      "sha256": "82eb4c79949e38ecd52fbb5f0d7efc56181b86f304dddf3a4ace8e49447c58d5",
+      "expected_sha256": "82eb4c79949e38ecd52fbb5f0d7efc56181b86f304dddf3a4ace8e49447c58d5",
+      "match": true
+    },
+    {
+      "file": "AI_Career_Agent_SOURCE_AUDIT_v1.4.48_2026-09-14.pdf",
+      "uploaded_at_root": true,
+      "available_from_prior_canonical_bundle": false,
+      "sha256": "89e9c1c94a166fbf9774e37c816757fc92134fae30c1aa4843ec2af3d2586d29",
+      "expected_sha256": "89e9c1c94a166fbf9774e37c816757fc92134fae30c1aa4843ec2af3d2586d29",
+      "match": true
+    },
+    {
+      "file": "AI_Career_Agent_PLAN_CURRENT_v1.4.48_2026-09-14.md",
+      "uploaded_at_root": true,
+      "available_from_prior_canonical_bundle": false,
+      "sha256": "a65bd1772cde85846a626089cc6a58000f9481854bcf0bf6da02102dc455aca8",
+      "expected_sha256": "a65bd1772cde85846a626089cc6a58000f9481854bcf0bf6da02102dc455aca8",
+      "match": true
+    },
+    {
+      "file": "AI_Career_Agent_PLAN_CURRENT_v1.4.48_2026-09-14.pdf",
+      "uploaded_at_root": true,
+      "available_from_prior_canonical_bundle": false,
+      "sha256": "c0a7ff356eca52babe2f3cc60d755ca9c3e2477d852ea5513e7b4fbe87359e20",
+      "expected_sha256": "c0a7ff356eca52babe2f3cc60d755ca9c3e2477d852ea5513e7b4fbe87359e20",
+      "match": true
+    },
+    {
+      "file": "AI_Career_Agent_PROJECT_PASSPORT_v2.62_2026-09-14.docx",
+      "uploaded_at_root": false,
+      "available_from_prior_canonical_bundle": true,
+      "sha256": "c1dc6a0866b4156395a5bc0765ddcbd7194b82ed02aec4adbf4d78e266b7be3b",
+      "expected_sha256": "c1dc6a0866b4156395a5bc0765ddcbd7194b82ed02aec4adbf4d78e266b7be3b",
+      "match": true
+    },
+    {
+      "file": "alice-final-run-7-review.md",
+      "uploaded_at_root": false,
+      "available_from_prior_canonical_bundle": true,
+      "sha256": "c573b02f08e75c0011b4c0a9b90abfdd7e975b00eef5e8c233e4a2beaf2771e7",
+      "expected_sha256": "c573b02f08e75c0011b4c0a9b90abfdd7e975b00eef5e8c233e4a2beaf2771e7",
+      "match": true
+    },
+    {
+      "file": "AI_Career_Agent_SOURCE_AUDIT_v1.4.48_2026-09-14.docx",
+      "uploaded_at_root": false,
+      "available_from_prior_canonical_bundle": true,
+      "sha256": "dbf923dbb9794197ccac65149a0cd115b2ca5c66e007ce8ea9c625f990eef987",
+      "expected_sha256": "dbf923dbb9794197ccac65149a0cd115b2ca5c66e007ce8ea9c625f990eef987",
+      "match": true
+    },
+    {
+      "file": "AI_Career_Agent_PROJECT_PASSPORT_v2.62_2026-09-14.md",
+      "uploaded_at_root": false,
+      "available_from_prior_canonical_bundle": true,
+      "sha256": "ebf89633ca25a69c342469e069e0e7f803b2db4f239be0d5c6e88373b9ff4af0",
+      "expected_sha256": "ebf89633ca25a69c342469e069e0e7f803b2db4f239be0d5c6e88373b9ff4af0",
+      "match": true
+    }
+  ],
+  "repository_docs_before_update": {
+    "plan": "1.4.47",
+    "passport": "2.61",
+    "bench_verification": "1.15"
+  },
+  "canonical_accepted": {
+    "plan": "1.4.48",
+    "passport": "2.62",
+    "bench_verification": "1.16"
+  },
+  "findings": [
+    "Repository documentation predates final AI-BENCH closure; separate canonical documents take precedence for status.",
+    "Current schema row in PLAN_CURRENT retained 0013 despite confirmed 0014.",
+    "Duplicate SEARCH-005 card retained NEEDS_VERIFICATION despite confirmed completion.",
+    "Older source archive names and past pending gates are historical evidence, not the active source or gate.",
+    "No current production AI integration exists."
+  ],
+  "additional_document_findings": [
+    "DOC-001 active card still named plan 1.4.22/passport 2.36/schema 0010; corrected active inventory to plan 1.4.49/passport 2.63/schema 0014. Older evidence remains historical."
+  ]
+}

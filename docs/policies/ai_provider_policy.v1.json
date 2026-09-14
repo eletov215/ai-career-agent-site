@@ -1,0 +1,159 @@
+{
+  "schema_version": "1.0",
+  "package": "AI-PROVIDER-001",
+  "policy_version": "1.0.0",
+  "checked_on": "2026-09-14",
+  "scope": "offline_architecture_specification",
+  "owner_approval": "pending",
+  "runtime_activation": false,
+  "primary": {
+    "provider_id": "yandex-alice-ai-llm",
+    "model_family": "aliceai-llm",
+    "observed_model_alias": "aliceai-llm/latest",
+    "immutable_model_revision": null,
+    "endpoint": "https://ai.api.cloud.yandex.net/v1/chat/completions",
+    "transport": "synchronous_json_schema",
+    "api_key_env": "AI_YANDEX_API_KEY",
+    "folder_id_env": "AI_YANDEX_FOLDER_ID",
+    "model_uri_env": "AI_YANDEX_MODEL_URI",
+    "required_headers": {
+      "x-data-logging-enabled": "false"
+    },
+    "qualification_artifact": "34830877796",
+    "qualification_dataset": "1.3.6",
+    "qualification_contract": "grounded-v2.6.1"
+  },
+  "routing": {
+    "planned_markets": [
+      "RU",
+      "BY"
+    ],
+    "enabled_markets": [],
+    "languages": [
+      "ru",
+      "en"
+    ],
+    "tasks": {
+      "resume_analysis": "yandex-alice-ai-llm",
+      "vacancy_match": "yandex-alice-ai-llm",
+      "cover_letter": "yandex-alice-ai-llm",
+      "interview_questions": "yandex-alice-ai-llm"
+    },
+    "unknown_route": "deny",
+    "cross_provider_fallback": false,
+    "fallback": "manual_without_generation",
+    "candidate_models_pending_qualification": [
+      "aliceai-llm-flash",
+      "yandexgpt-pro-5.1"
+    ],
+    "local_model": null
+  },
+  "privacy": {
+    "request_body_logging": false,
+    "response_body_logging": false,
+    "cross_user_cache": false,
+    "provider_tools": false,
+    "provider_files": false,
+    "provider_async": false,
+    "content_retention_days": 0,
+    "content_retention_scope": "application_diagnostic_copies_only_not_user_owned_saved_documents",
+    "usage_metadata_retention_days": 30,
+    "provider_metadata_retention": "unconfirmed",
+    "no_logging_min_wait_hours": 24,
+    "no_logging_effective_at": null,
+    "real_personal_data_allowed_now": false,
+    "allowed_input": [
+      "confirmed_relevant_profile_facts",
+      "bounded_public_vacancy_facts",
+      "explicit_user_task",
+      "task_local_evidence_ids"
+    ],
+    "excluded_input": [
+      "credentials",
+      "contact_identifiers",
+      "address",
+      "birth_date",
+      "photos",
+      "protected_secrets",
+      "special_category_data",
+      "biometric_data",
+      "raw_pdf",
+      "unconfirmed_profile_facts",
+      "provider_oauth_payloads"
+    ],
+    "save_generated_document": "explicit_owner_action_no_profile_fact_promotion"
+  },
+  "limits": {
+    "max_input_tokens": 8000,
+    "max_output_tokens": 1600,
+    "max_attempts": 2,
+    "max_global_concurrency": 2,
+    "max_user_concurrency": 1,
+    "per_attempt_timeout_seconds": 25,
+    "total_timeout_seconds": 55,
+    "max_retry_delay_seconds": 2,
+    "user_daily_requests": 10,
+    "global_daily_requests": 100,
+    "user_daily_budget_rub": "20.00",
+    "global_daily_budget_rub": "100.00",
+    "global_monthly_budget_rub": "1000.00",
+    "budget_status": "proposal_not_runtime_enforced_not_payment_authorization"
+  },
+  "failure_policy": {
+    "retry_http_statuses": [
+      429,
+      502,
+      503,
+      504
+    ],
+    "no_retry_reasons": [
+      "auth_failure",
+      "permission_denied",
+      "model_retired",
+      "invalid_request",
+      "safety_refusal",
+      "schema_failure",
+      "grounding_failure",
+      "read_timeout_unknown_outcome"
+    ],
+    "unknown_usage": "retain_reservation_until_reconciled",
+    "ledger_unavailable": "deny",
+    "budget_exhausted": "deny",
+    "circuit_breaker_consecutive_failures": 3,
+    "circuit_breaker_cooldown_seconds": 60,
+    "circuit_half_open_max_calls": 1
+  },
+  "pricing": {
+    "checked_on": "2026-09-14",
+    "valid_for_days": 30,
+    "unit_tokens": 1000,
+    "mode": "synchronous_no_tools",
+    "RUB": {
+      "input": "0.5",
+      "output": "1.2",
+      "vat": "included"
+    },
+    "USD": {
+      "input": "0.00409836",
+      "output": "0.009836064",
+      "vat": "excluded"
+    },
+    "cache_discount_assumed": false,
+    "source_id": "S1"
+  },
+  "activation_gates": [
+    "owner_strategy_approval",
+    "legal001_consent_and_processing",
+    "ai001_runtime_controls_and_tests",
+    "production_source_ip_transport",
+    "billing_account_and_quotas_verified",
+    "model_uri_recorded_and_evaluation_compatible",
+    "no_logging_confirmed_after_wait",
+    "data_location_and_backups_approved"
+  ],
+  "future_environment": {
+    "AI_ENABLED": "0",
+    "AI_KILL_SWITCH": "1",
+    "AI_PRIMARY_PROVIDER": "yandex-alice-ai-llm"
+  }
+}

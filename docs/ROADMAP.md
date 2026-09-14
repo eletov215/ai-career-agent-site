@@ -1,27 +1,29 @@
 # AI Career Agent — ROADMAP
 
 <!-- ACA-CANONICAL-STATUS:START -->
-## Актуальная точка дорожной карты - 2026-09-14
+## Каноническое состояние / 2026-09-14
 
-- `SEARCH-005` и все более ранние product packages - **ВЫПОЛНЕНО**.
-- Alice Final run #6 artifact `34766480932` / run `ai-bench-20260913T154901Z-44d67112` - 8/8 calls, 0 errors/retries, **7/8 MACHINE** under grounded-v2.6.
-- Единственный FAIL: `cover-letter-en-01` с 3 unsupported impact claims; дополнительно выявлено неподтвержденное `long admired...` в motivation.
-- `AI-BENCH-001 grounded-v2.6.1 / evals 1.6.1` - **НУЖНА ПРОВЕРКА**: atomic EN candidate-fit prompt, unsupported employer-familiarity gate, run #6 regressions; hard thresholds unchanged.
-- Next: green ordinary CI/package gate -> fresh Alice Final 8/8 -> focused named human re-review -> AI-BENCH-001 closure decision.
-- `AI-PROVIDER-001` - **ЗАБЛОКИРОВАН ДО ЗАВЕРШЕНИЯ AI-BENCH-001**.
-- Render staging web uses Neon PostgreSQL (Oregon); `/health/ready` confirmed revision/migrations `20260819_0014` and healthy persistent database.
-- Production schema remains `20260819_0014`; production routes and migrations are unchanged.
+| Поле | Значение |
+|---|---|
+| Current package | AI-PROVIDER-001 - НУЖНА ПРОВЕРКА |
+| Source code | Latest uploaded GitHub snapshot `ai-career-agent-site-main (30).zip`; 407 files |
+| Canonical versions | PLAN 1.4.49; PASSPORT 2.63; SOURCE_AUDIT 1.4.49; AI-BENCH verification 1.16; provider ADR 1.0 |
+| AI-BENCH-001 | ВЫПОЛНЕНО; accepted artifact `34830877796`, eight cases PASS and named human acceptance |
+| Provider decision | Alice primary; manual reserve without generation; proposed limits/data policy; owner approval pending |
+| Production AI | Not implemented or activated; policy JSON is an offline specification |
+| Staging | Render web + clean Neon PostgreSQL (Oregon); previous readiness/site/search smoke confirmed |
+| Database schema | `20260819_0014`; unchanged |
+| Current verification | Local results in AI_PROVIDER001_VERIFICATION_STATUS; new external CI not yet run |
+| Next package | LEGAL-001 after owner strategy approval and ordinary CI; AI-001 remains later |
+
+The supplied canonical 1.4.48/2.62/1.16 files are authentic current inputs, but repository docs still contained the pre-closure status. This release reconciles them explicitly. Older dated evidence below remains historical and is not today's gate. No benchmark rerun or Render secret change is required for this architecture-only package.
+
 <!-- ACA-CANONICAL-STATUS:END -->
 
 ## Текущая очередь
 
 ```text
-AI-BENCH-001 grounded-v2.6.1 / evals 1.6.1
--> green ordinary CI/package gate
--> fresh Alice Final 8/8
--> focused named human re-review (1, 3, 5, 6)
--> AI-BENCH-001 closure decision
--> AI-PROVIDER-001
+AI-PROVIDER-001
 -> LEGAL-001
 -> AI-001..006
 -> JOB-001..004
@@ -35,14 +37,17 @@ AI-BENCH-001 grounded-v2.6.1 / evals 1.6.1
 | SYNC-001/002, SEARCH-001..005 | ВЫПОЛНЕНО | regression only |
 | AUTH-001/002 | ВЫПОЛНЕНО | regression only |
 | PROF-001/002/003, PRIV-001 | ВЫПОЛНЕНО | regression only |
-| AI-BENCH-001 | НУЖНА ПРОВЕРКА | grounded-v2.6.1 ordinary CI -> fresh Alice Final 8/8 -> focused named human re-review |
-| AI-PROVIDER-001 | ЗАБЛОКИРОВАНО | AI-BENCH-001 complete |
+| AI-BENCH-001 | ВЫПОЛНЕНО | final Alice 8/8 + named human PASS |
+| AI-PROVIDER-001 | НУЖНА ПРОВЕРКА | candidate ADR; ordinary CI + owner approval |
 | LEGAL-001, AI-001..006 | ЗАПЛАНИРОВАНО | provider strategy and legal gate |
 | JOB-001..004 | ЗАПЛАНИРОВАНО | AI core and account integration |
 | INFRA-001 | ОТЛОЖЕНО | pre-release VPS field test |
 | HOST/OPS-002/DOMAIN/MIG/REL | ЗАПЛАНИРОВАНО | pre-release infrastructure window |
 
-## AI-BENCH-001 current boundary
+## AI-BENCH-001 closure boundary
 
-No provider is selected and no production AI route/schema is added. The integrated manual job is an evaluation-only transport and cannot run until the complete ordinary CI matrix succeeds.
-- `AI-BENCH-001 grounded-v2.6.1 / evals 1.6.1` - **НУЖНА ПРОВЕРКА**: Alice run #6 impact-extension regressions and atomic EN cover-letter hardening implemented; ordinary CI, fresh Alice Final live verification and focused named human re-review remain.
+AI-BENCH-001 is complete on the synthetic grounded-v2.6.1 contract. This does not enable production AI calls. AI-PROVIDER-001 must now define provider routing, fallback, privacy/retention, cost/quotas, geography, failure policy and kill switch before AI-001 production integration.
+
+## AI-PROVIDER-001 boundary
+
+The strategy package is prepared but not yet approved. It does not activate AI or authorize spending. After ordinary CI and owner approval, continue to LEGAL-001; production implementation belongs to AI-001.

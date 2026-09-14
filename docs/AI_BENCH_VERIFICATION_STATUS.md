@@ -3,11 +3,44 @@
 | Поле | Значение |
 |---|---|
 | Документ | AI_BENCH_VERIFICATION_STATUS |
-| Версия | 1.15 |
+| Версия | 1.16 |
 | Дата | 14 сентября 2026 |
-| Пакет | AI-BENCH-001 grounded-v2.6.1 atomic EN cover-letter hardening |
-| Статус | ALICE FINAL RUN #6 = 7/8 MACHINE; GROUNDED-v2.6.1 НУЖНА ПРОВЕРКА CI + FRESH ALICE 8/8 + FOCUSED HUMAN RE-REVIEW |
+| Пакет | AI-BENCH-001 final closure / grounded-v2.6.1 |
+| Статус | **ВЫПОЛНЕНО** - FINAL ALICE 8/8 + NAMED HUMAN PASS |
 | Production revision | `20260819_0014` |
+
+## 0. Final Alice run #7 + named human closure
+
+Sanitized artifact `ai-bench-001-yandex-alice-final-34830877796.zip`:
+
+| Метрика | Значение |
+|---|---:|
+| Run ID | `ai-bench-20260914T100639Z-222dfc87` |
+| Benchmark / dataset / contract | `1.4` / `1.3.6` / `grounded-v2.6.1` |
+| Provider | `yandex-alice-ai-llm` |
+| API cases | **8/8 PASS** |
+| Provider errors / retries | **0 / 0** |
+| Mean quality | `0.998437` |
+| Mean grounding | `0.984375` |
+| Language / clean text / match consistency | `1.000 / 1.000 / 1.000` |
+| Unsupported numbers | `0` |
+| Unsupported impact claims | `0` |
+| Forbidden claims | `0` |
+| Cover-letter presentation violations | `0` |
+| User-facing technical tokens | `0` |
+| Scenario provenance violations | `0` |
+| Audited scenario repairs / marker cleanup | `2 / 14` |
+| p50 / p95 | `5605.601 ms / 10913.996 ms` |
+| Estimated cost | `USD 0.055999992` |
+
+Ordinary GitHub CI for grounded-v2.6.1 was confirmed green. The fresh live machine gate therefore satisfies the benchmark closure criteria without weakening any hard threshold.
+
+Named reviewer **Шекунов Д.С.** completed the focused human re-review of the revised writing cases. The reviewer explicitly stated that the results are satisfactory and the package can be considered completed. A clarification was accepted that sparse benchmark source facts intentionally produce a shorter cover letter; richer confirmed profile/vacancy evidence may produce a more substantive letter, while the model must not invent details merely to increase length. No new numeric re-review scores were supplied, so none are recorded.
+
+### Final decision
+
+`AI-BENCH-001` - **ВЫПОЛНЕНО**.  
+Alice AI LLM passes the accepted benchmark and human-writing gate and remains the primary candidate entering `AI-PROVIDER-001`. This is a benchmark decision, not production-provider activation. `AI-PROVIDER-001` is now **ГОТОВО К СТАРТУ**.
 
 ## 1. Alice Final run #6 + grounded-v2.6.1
 
@@ -199,33 +232,37 @@ Replay machine-readable evidence: `docs/evidence/ai-bench-001/alice-final-run-1-
 
 14 local skips require the full GitHub CI Flask/Psycopg/PostgreSQL environment and are not claimed as locally passed.
 
-## 7. Remaining external gate
+## 7. Closure gate
 
-1. Upload v1.4.47 / evals 1.6.1 through the normal GitHub PR/CI path.
-2. Require green ordinary `Python tests`, `AI-BENCH-001 package gate`, repository hygiene and all historical gates.
-3. On ordinary push the billable Alice job remains skipped.
-4. After ordinary CI is green, manually run `run_ai_bench_alice_final=true` on `main`. This fresh provider call is required because grounded-v2.6.1 changes the EN cover-letter generation prompt.
-5. Fresh artifact must use benchmark `1.4`, dataset `1.3.6`, contract `grounded-v2.6.1`, provider `yandex-alice-ai-llm`, pass **8/8**, and keep all hard counters at zero.
-6. Audit raw/machine/presentation evidence, then repeat named human review primarily for cases 1, 3, 5 and 6 while confirming no regressions in 2, 4, 7 and 8.
-7. Record AI-BENCH-001 closure decision; only then unblock `AI-PROVIDER-001`.
+1. Ordinary GitHub CI for grounded-v2.6.1 - **PASS**.
+2. Fresh Alice Final run on dataset `1.3.6` / `grounded-v2.6.1` - **8/8 PASS**.
+3. Artifact audit - **PASS**, zero unresolved hard counters.
+4. Focused named human re-review by **Шекунов Д.С.** - **PASS**.
+5. Owner closure decision - **APPROVED**.
+
+The package has no remaining verification gate. Next package: `AI-PROVIDER-001`.
 
 ## 8. Status decision
 
-Alice Final run #6 transport is complete but machine result is **7/8**, so AI-BENCH-001 remains open.  
-The grounded-v2.6.1 candidate is **НУЖДАЕТСЯ В ПРОВЕРКЕ** until ordinary CI, a fresh Alice Final 8/8 run and focused named human re-review complete.  
-Alice AI LLM remains the **PRIMARY CANDIDATE**, not yet a production provider.  
-`AI-PROVIDER-001` remains **BLOCKED**.  
-No production AI provider is connected.
+`AI-BENCH-001` - **ВЫПОЛНЕНО**.  
+Final machine gate - **8/8 PASS**.  
+Named human writing gate - **PASS**.  
+`AI-PROVIDER-001` - **ГОТОВО К СТАРТУ**.
 
 ## 9. Version log
 
 | Версия | Дата | Изменение |
 |---|---|---|
+| 1.16 | 14.09.2026 | Final Alice artifact `34830877796`: 8/8 PASS, zero hard counters; named reviewer Шекунов Д.С. accepted focused re-review; AI-BENCH-001 COMPLETE, AI-PROVIDER-001 READY. |
 | 1.6 | 26.08.2026 | Green CI + live run #1 reviewed; grounded-v2 prepared. |
 | 1.7 | 26.08.2026 | Live run #2 reviewed; grounded-v2.1 added language/scenario/motivation/diagnostic/retry hardening. |
 | 1.8 | 26.08.2026 | Live run #3 reviewed; grounded-v2.2 added source-matched impact safety and presentation-only marker repair. |
 | 1.9 | 27.08.2026 | Comparative live run #4 reviewed; Alice selected as final candidate and dedicated Alice-only 8/8 gate added. |
 | 1.10 | 27.08.2026 | Alice Final run #1 artifact `33061758538` reviewed: 8/8 transport, 6/8 raw machine. Grounded-v2.3 adds auditable unique scenario-provenance normalization, narrow response-cardinality classification and requires a fresh Alice-only verification before human review. |
+| 1.12 | 28.08.2026 | Alice Final run #3 reviewed; grounded-v2.5 hotfix/replay 8/8 prepared; fresh live gate still pending. |
+| 1.13 | 28.08.2026 | Alice Final run #4 artifact `33165683757`: 8/8 live machine PASS, 0 errors/retries. Artifact audit found grouped known evidence markers in two user-facing EN interview purpose strings. Evals 1.5.3 adds deterministic grouped-marker sanitation; retained raw replay remains 8/8 with 20 cleanups and 0 residual user-facing IDs. Remaining gate: ordinary CI + named human rubric. |
+| 1.14 | 13.09.2026 | Run #5 8/8 machine evidence + named human REVISION REQUIRED recorded; grounded-v2.6/evals 1.6.0 writing hardening candidate prepared; fresh Alice + focused human re-review required. |
+| 1.15 | 14.09.2026 | Alice Final run #6 artifact `34766480932`: 8/8 transport, 7/8 machine; EN cover letter failed on 3 unsupported inferred effects. Grounded-v2.6.1/evals 1.6.1 atomic candidate-fit and employer-familiarity hardening prepared; fresh Alice 8/8 + focused human re-review required. |
 
 ## 2026-08-28 - Alice Final v3 / grounded-v2.4
 
@@ -239,9 +276,9 @@ Run `ai-bench-20260827T112440Z-243eaaeb` completed 8/8 calls with zero errors/re
 
 Artifact `33163009779` / run `ai-bench-20260828T102540Z-bcf4c2ed` completed 8/8 calls with zero provider errors/retries and machine result 6/8. Grounded-v2.5 addresses only the confirmed paragraph-kind/intent and response-cardinality mismatches, restores run #2 regression test discovery, and replays the retained raw responses 8/8. Fresh Alice-only 8/8 live verification plus named human writing review remain mandatory.
 
-| 1.12 | 28.08.2026 | Alice Final run #3 reviewed; grounded-v2.5 hotfix/replay 8/8 prepared; fresh live gate still pending. |
-| 1.13 | 28.08.2026 | Alice Final run #4 artifact `33165683757`: 8/8 live machine PASS, 0 errors/retries. Artifact audit found grouped known evidence markers in two user-facing EN interview purpose strings. Evals 1.5.3 adds deterministic grouped-marker sanitation; retained raw replay remains 8/8 with 20 cleanups and 0 residual user-facing IDs. Remaining gate: ordinary CI + named human rubric. |
 
-| 1.14 | 13.09.2026 | Run #5 8/8 machine evidence + named human REVISION REQUIRED recorded; grounded-v2.6/evals 1.6.0 writing hardening candidate prepared; fresh Alice + focused human re-review required. |
 
-| 1.15 | 14.09.2026 | Alice Final run #6 artifact `34766480932`: 8/8 transport, 7/8 machine; EN cover letter failed on 3 unsupported inferred effects. Grounded-v2.6.1/evals 1.6.1 atomic candidate-fit and employer-familiarity hardening prepared; fresh Alice 8/8 + focused human re-review required. |
+
+
+
+

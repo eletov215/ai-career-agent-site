@@ -1,0 +1,34 @@
+{
+  "checked_on": "2026-09-14",
+  "python_runtime": "3.13 (local); repository CI uses 3.11/3.12",
+  "full_pytest": {
+    "passed": 412,
+    "skipped": 14,
+    "subtests_passed": 81,
+    "failed": 0
+  },
+  "focused_provider_unittest": {
+    "passed": 44,
+    "failed": 0
+  },
+  "focused_benchmark_unittest": {
+    "passed": 90,
+    "failed": 0
+  },
+  "focused_counts_are_subsets": true,
+  "provider_package_gate": "PASS",
+  "benchmark_package_gate": "PASS including deterministic reference 8/8",
+  "document_structure": "PASS",
+  "infra_manifest": "PASS",
+  "external_ci": "PENDING",
+  "owner_strategy_approval": "PENDING",
+  "live_model_calls": 0,
+  "production_deployment_changes": 0,
+  "skip_reason": "Flask/Psycopg dependencies and PostgreSQL service are not available in this container; skipped scenarios are not locally passed.",
+  "log_sha256": {
+    "full_pytest.log": "2c2b30059a2a56f5139b1745bc550e50a460ae7ba427572042272005141c6743",
+    "provider_tests.log": "09e19cbcb479425d6f138c165471690f8f82c9b01ec9513b485b0c1e482c9fd0",
+    "bench_tests.log": "97fe1fac1dea8e183394722f2fe7fc2180ae4e2f5cea8563926fdd1ad60bf2ec",
+    "bench_gate.log": "d9da3dfb6f2e4705764fad224949800c79076f6a634a1f2db2867efbb5c8b850"
+  }
+}

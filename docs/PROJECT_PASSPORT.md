@@ -4,45 +4,35 @@
 
 
 <!-- ACA-CANONICAL-STATUS:START -->
-## Канонический срез проекта
+## Канонический срез / 2026-09-14
 
-**Документ:** AI Career Agent PROJECT_PASSPORT `v2.61`  
-**Дата:** 2026-09-14  
-**Production revision:** `20260819_0014`
-
-| Контур | Состояние |
+| Поле | Значение |
 |---|---|
-| Web | Flask + Gunicorn, WSGI `app:app`; AI-BENCH changes production code не затрагивают |
-| Data | PostgreSQL through SQLAlchemy/Alembic; Render staging web now points to Neon PostgreSQL (Oregon); SQLite local/test fallback; schema `20260819_0014` |
-| Identity/career/search/privacy | ранее завершённые пакеты остаются ВЫПОЛНЕНО |
-| AI benchmark | benchmark `1.4`, dataset candidate `1.3.6`, `grounded-v2.6.1`, evals `1.6.1` |
-| Last live evidence | artifact `34766480932`, run `ai-bench-20260913T154901Z-44d67112`: 8/8 calls, 0 errors/retries, **7/8 machine** |
-| Current failure | only `cover-letter-en-01`: 3 unsupported inferred impacts; hard scorer correctly blocked them |
-| EN writing hardening | candidate-fit must be atomic first-person restatement of verified facts; no inferred purpose/benefit/result tails; unsupported prior employer familiarity is forbidden |
-| Human review | named reviewer **Шекунов Д.С.** remains required after the next fresh machine 8/8 |
-| Candidate | Alice AI LLM remains primary benchmark candidate; no production provider is connected |
-| Final verification | ordinary CI -> fresh Alice Final 8/8 -> focused named human re-review -> closure decision |
-| Production AI | отсутствует; provider strategy remains blocked until AI-BENCH-001 closes |
+| Current package | AI-PROVIDER-001 - НУЖНА ПРОВЕРКА |
+| Source code | Latest uploaded GitHub snapshot `ai-career-agent-site-main (30).zip`; 407 files |
+| Canonical versions | PLAN 1.4.49; PASSPORT 2.63; SOURCE_AUDIT 1.4.49; AI-BENCH verification 1.16; provider ADR 1.0 |
+| AI-BENCH-001 | ВЫПОЛНЕНО; accepted artifact `34830877796`, eight cases PASS and named human acceptance |
+| Provider decision | Alice primary; manual reserve without generation; proposed limits/data policy; owner approval pending |
+| Production AI | Not implemented or activated; policy JSON is an offline specification |
+| Staging | Render web + clean Neon PostgreSQL (Oregon); previous readiness/site/search smoke confirmed |
+| Database schema | `20260819_0014`; unchanged |
+| Current verification | Local results in AI_PROVIDER001_VERIFICATION_STATUS; new external CI not yet run |
+| Next package | LEGAL-001 after owner strategy approval and ordinary CI; AI-001 remains later |
 
-### Operational staging note
+The supplied canonical 1.4.48/2.62/1.16 files are authentic current inputs, but repository docs still contained the pre-closure status. This release reconciles them explicitly. Older dated evidence below remains historical and is not today's gate. No benchmark rerun or Render secret change is required for this architecture-only package.
 
-Render Free PostgreSQL expired and was suspended. The web-service `DATABASE_URL` was moved to a new Neon PostgreSQL Free database in AWS US West 2 (Oregon). Render deploy succeeded; `/health/ready` confirmed persistent PostgreSQL, revision `20260819_0014` and migration parity. The new database is clean; data from the expired Render database was not migrated. This changes staging infrastructure only, not application code/schema.
-
-### Decision boundary
-
-Alice Final run #6 cannot close AI-BENCH-001 because the machine gate is 7/8. Grounded-v2.6.1 tightens generation without weakening hard gates. A fresh Alice Final 8/8 run and focused named human re-review remain mandatory. Production application architecture and database revision are unchanged.
 <!-- ACA-CANONICAL-STATUS:END -->
 
 | Поле | Значение |
 |---|---|
 | Документ        | PROJECT_PASSPORT                                                                              |
-| Версия паспорта | 2.61 |
+| Версия паспорта | 2.63 |
 | Дата            | 14 сентября 2026                                                                               |
 | Статус          | ДЕЙСТВУЮЩИЙ                                                                                   |
-| Связанный план | `AI_Career_Agent_PLAN_CURRENT v1.4.47` |
-| Основа кода | GitHub `main` after grounded-v2.6 commit `b1d54b5` + Alice Final run #6 artifact `34766480932`; grounded-v2.6.1 candidate prepared on top |
+| Связанный план | `AI_Career_Agent_PLAN_CURRENT v1.4.49` |
+| Основа кода | GitHub `main` with grounded-v2.6.1/evals 1.6.1, green ordinary CI, final artifact `34830877796`, named human acceptance |
 
-> Контрольные статусы: FND/DATA/SEC/OPS/INFRA-PREP/SYNC/SEARCH-001..005/AUTH/PROF/PRIV - ВЫПОЛНЕНО; AI-BENCH-001 - НУЖНА ПРОВЕРКА; AI-PROVIDER-001 - ЗАБЛОКИРОВАНО; DOC-001 - В РАБОТЕ; INFRA-001 - ОТЛОЖЕНО.
+> Контрольные статусы: FND/DATA/SEC/OPS/INFRA-PREP/SYNC/SEARCH-001..005/AUTH/PROF/PRIV/AI-BENCH-001 - ВЫПОЛНЕНО; AI-PROVIDER-001 - НУЖНА ПРОВЕРКА; DOC-001 - В РАБОТЕ; INFRA-001 - ОТЛОЖЕНО.
 
 ## 1. Назначение
 
@@ -74,7 +64,7 @@ AI Career Agent — коммерческий веб-сервис карьерн�
 - Render временно как staging/резервная площадка;
 - production VPS арендуется и тестируется только в предрелизном
   `INFRA-001`;
-- основной AI-кандидат — Yandex AI Studio/Alice AI после `AI-BENCH-001`.
+- основной AI-кандидат по завершённому `AI-BENCH-001` — Yandex AI Studio/Alice AI; production activation ещё не выполнена.
 
 >     app.py                     Flask routes, app:app
 >     config.py                  production/development/test/ops settings
@@ -435,12 +425,13 @@ DNS/OAuth callback URL не переключаются.
 ## 19. Текущее функциональное состояние
 
 - Главная/AI Career/resume builder работают.
-- Search: canonical `/vacancies`; Trudvsem, HH, Reed и public SuperJob; SEARCH-001/002/003/004 подтверждены GitHub CI и production smoke.
+- Search: canonical `/vacancies`; Trudvsem, HH, Reed и public SuperJob; SEARCH-001/002/003/004/005 подтверждены GitHub CI и production smoke.
 - OAuth HH/SJ: AUTH-002 owner-bound и подтверждён production E2E; tokens encrypted, cross-user claim блокируется.
 - Trudvsem cache остаётся PostgreSQL-backed; внешний worker и SYNC-002 checkpoint/retry/lifecycle подтверждены.
 - SEARCH-001 canonical contract и SEARCH-002 conservative dedup подтверждены; multi-source grouping сохраняет все исходные публикации.
 - PDF parser эвристический, не LLM.
 - Saved jobs пока localStorage.
+- AI-BENCH-001 закрыт на grounded-v2.6.1: final Alice live 8/8 machine PASS + named human acceptance; production AI provider пока не подключён.
 - First-party account AUTH-001, OAuth ownership AUTH-002, structured profile PROF-001 и resume import PROF-002 подтверждены production E2E. PROF-002 сохраняет confirmation-first boundary; real AI/match/letters/tracker впереди.
 
 ## 20. Новая обязательная очередь разработки
@@ -448,8 +439,9 @@ DNS/OAuth callback URL не переключаются.
 ### Сейчас — функциональный MVP без аренды VPS
 
 >     PRIV-001 COMPLETE
->     -> SEARCH-005 READY
->     -> AI-BENCH-001 -> AI-PROVIDER-001 -> LEGAL-001
+>     -> SEARCH-005 COMPLETE
+>     -> AI-BENCH-001 COMPLETE
+>     -> AI-PROVIDER-001 NEEDS_VERIFICATION -> LEGAL-001
 >     -> AI-001 -> AI-002 -> AI-003 -> AI-004 -> AI-005 -> AI-006
 >     -> JOB-001 -> JOB-002 -> JOB-003/JOB-004
 >     -> PERF/A11Y/ANL по готовности
@@ -483,9 +475,7 @@ Render не считается гарантированным production для 
 
 ## 22. AI и Reed
 
-- `AI-BENCH-001` можно выполнять без реального VPS: качество Yandex AI
-  Studio/Alice AI проверяется на golden dataset, а transport с будущего
-  source IP повторяется в `INFRA-001`.
+- `AI-BENCH-001` завершён: Yandex Alice AI LLM прошёл final synthetic golden benchmark и named human quality gate. Transport с будущего production source IP всё равно повторяется в `INFRA-001`.
 - Бизнес-логика должна использовать независимый `AIProvider`; OpenAI не
   является обязательным baseline для РФ/РБ.
 - API keys хранятся только на сервере.
@@ -493,9 +483,11 @@ Render не считается гарантированным production для 
   сразу после `INFRA-001`.
 - Reed должен иметь feature flag и graceful degradation.
 
-## 23. Текущий gate
+## 23. Current gate / AI-PROVIDER-001
 
-SEARCH-005 — ВЫПОЛНЕНО. Comparative AI-BENCH live run #4 was reviewed; Alice AI LLM is the primary candidate. Final gate is green ordinary CI, Alice-only 8/8 machine verification and named human rubric. Production PostgreSQL remains `20260819_0014`; no production AI provider is connected.
+`AI-BENCH-001` is ВЫПОЛНЕНО; final artifact and named acceptance remain unchanged. `AI-PROVIDER-001` is НУЖНА ПРОВЕРКА: strategy, offline policy and cost model prepared, awaiting owner approval and new CI. See `AI_PROVIDER001_DECISION.md`.
+
+No runtime AI transport, budget ledger or kill-switch implementation is added. Render + clean Neon is staging; current schema `20260819_0014`. Old Render data was not migrated. No claim of post-move registration/mail/OAuth end-to-end revalidation is made. LEGAL-001 precedes AI-001.
 
 ## 24. Правила рабочего чата
 
@@ -510,8 +502,15 @@ SEARCH-005 — ВЫПОЛНЕНО. Comparative AI-BENCH live run #4 was reviewed
   package.
 - Для новых документов применять единый документный стандарт проекта.
 
+
 ## 25. Журнал версий
 
+> Historical version records and addenda below describe their original dates. Their past pending statements do not override the current state above.
+
+
+- 2.63 / 2026-09-14: AI-PROVIDER-001 candidate; docs aligned with main (30), dated source/cost/data decisions and offline tests; runtime/evals unchanged; CI + approval pending.
+
+- **2.62 — 14.09.2026:** AI-BENCH-001 closed after grounded-v2.6.1 ordinary CI, Alice Final artifact `34830877796` 8/8 machine PASS with zero unresolved hard counters, and named human acceptance by Шекунов Д.С.; AI-PROVIDER-001 becomes READY. Neon staging DB remains healthy at revision `20260819_0014`.
 - **2.20 — 08.08.2026:** SEARCH-001 закрыт после CI, Render revision `0005` и production filter smoke.
 - **2.21 — 09.08.2026:** SEARCH-002 реализован как conservative reversible cross-source dedup candidate с additive migration `20260809_0006`; требуется GitHub/Render verification.
 - **2.22 — 09.08.2026:** SEARCH-002 complete; SEARCH-003 ready.
@@ -624,6 +623,10 @@ Artifact `ai-bench-20260827T112440Z-243eaaeb` completed 8/8 calls with zero prov
 |---|---|---|
 | 2.58 | 28.08.2026 | Alice Final run #3 artifact `33163009779`: 8/8 calls, 0 provider errors/retries, 6/8 machine. Grounded-v2.5 fixes only disclosed-gap future-intent motivation classification and response-cardinality resources/approaches, restores run #2 regression discovery, and replays retained responses 8/8. Production architecture/revision unchanged; fresh live 8/8 + named manual rubric pending. |
 
+### PROJECT_PASSPORT v2.59 update
+
+| Version | Date | Change |
+|---|---|---|
 | 2.59 | 28.08.2026 | Alice Final run #4 artifact `33165683757` achieved the required live 8/8 machine pass with zero errors/retries. Artifact audit found grouped known evidence markers left in two user-facing interview-purpose strings. Evals 1.5.3 fixes deterministic presentation sanitation only; retained raw replay stays 8/8 with 0 residual user-facing IDs. Next: ordinary CI + named human rubric; production architecture/revision unchanged. |
 
 

@@ -1,0 +1,66 @@
+{
+  "checked_on": "2026-09-14",
+  "method": "Public official documentation only; no customer console, billing or live API was accessed.",
+  "sources": [
+    {
+      "id": "S1",
+      "title": "AI Studio pricing",
+      "url": "https://aistudio.yandex.ru/ru/docs/ai-studio/pricing",
+      "finding": "Synchronous Alice prices: RUB 0.5 input / 1.2 output per 1000 tokens, VAT included; USD 0.00409836 / 0.009836064 per 1000, VAT excluded. These are separate tariff columns, not an exchange-rate conversion."
+    },
+    {
+      "id": "S2",
+      "title": "AI Studio model lifecycle",
+      "url": "https://aistudio.yandex.ru/ru/docs/ai-studio/concepts/generation/models",
+      "finding": "Alice is available as a model family. Model identifiers and retirement policy must be checked before activation. Benchmark metadata identifies an alias, not a verified immutable model revision."
+    },
+    {
+      "id": "S3",
+      "title": "AI Studio quotas and limits",
+      "url": "https://aistudio.yandex.ru/ru/docs/ai-studio/concepts/limits",
+      "finding": "The documented default synchronous generation concurrency is 10. Actual account quotas can differ. Asynchronous text results are retained for three days; this design excludes that mode."
+    },
+    {
+      "id": "S4",
+      "title": "Disable request logging",
+      "url": "https://aistudio.yandex.ru/ru/docs/ai-studio/operations/disable-logging",
+      "finding": "Request logging is on by default. The documented per-request control is x-data-logging-enabled: false. This technical instruction must be read with the contractual timing in S5."
+    },
+    {
+      "id": "S5",
+      "title": "AI Studio service terms",
+      "url": "https://yandex.ru/legal/cloud_terms_yandex_ai_studio/ru/",
+      "finding": "Version effective 2026-04-28. Sections 1.2.2 and 3.15 distinguish product integration from simple API resale. Sections 3.3, 3.11.4 and 3.14 address output review, restricted human-authorship claims and provider mentions. Sections 5.4.1-5.6 address data restrictions, opting out of training/debugging, a 24-hour disablement period and necessary transient processing."
+    },
+    {
+      "id": "S6",
+      "title": "Cloud data processing agreement",
+      "url": "https://yandex.ru/legal/cloud_dpa/ru/",
+      "finding": "Version effective 2025-12-05. Sections 2.1.1-2.1.2 require appropriate legal grounds and purpose-limited data. Section 2.2.5 specifies Russian database location except when the customer chooses infrastructure outside Russia. This is not a compliance certificate for our entire application."
+    },
+    {
+      "id": "S7",
+      "title": "Cloud platform terms",
+      "url": "https://yandex.ru/legal/cloud_termsofuse/ru/",
+      "finding": "Version effective 2026-09-07. Customer obligations and platform conditions apply in addition to service-specific rules. Account eligibility and the actual deployment contract must be checked, not inferred from UI country selection."
+    },
+    {
+      "id": "S8",
+      "title": "Cloud payment methods",
+      "url": "https://yandex.cloud/ru/docs/billing/qa/payment",
+      "finding": "The payment FAQ describes RUB payment for Russian tax residents with supported Russian-issued cards or SBP. For Belarus tax residents it describes RUB payment with Belarus-issued Belkart or Russian-issued Mir. Actual owner billing configuration was not inspected."
+    },
+    {
+      "id": "S9",
+      "title": "Service-account API keys",
+      "url": "https://yandex.cloud/en/docs/iam/concepts/authorization/api-key",
+      "finding": "API keys can be scoped and time-limited. The proposed production key uses the language-model execution scope instead of unrestricted application credentials."
+    },
+    {
+      "id": "S10",
+      "title": "AI Studio access management",
+      "url": "https://aistudio.yandex.ru/docs/en/ai-studio/security/index.html",
+      "finding": "The language-model user role exists for model use. Least privilege is required; broad editor permissions are not part of the proposed production configuration."
+    }
+  ]
+}
