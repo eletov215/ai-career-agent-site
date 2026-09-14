@@ -429,7 +429,7 @@ jobs:
           print("# AI-BENCH-001 Yandex live result")
           print()
           print(f"Machine status: **{run.get('status')}**")
-          print(f"Benchmark contract: **{run.get('benchmark_version')} / grounded-v2.6**")
+          print(f"Benchmark contract: **{run.get('benchmark_version')} / grounded-v2.6.1**")
           print()
           print("| Provider | Passed | Errors | Retries | Quality | Grounding | Language violations | Scenario violations | Scenario repairs | Marker cleanup | Clean text | Match consistency | Safety violations | Avg derived match | p50 ms | p95 ms | Est. cost USD |")
           print("|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|")
@@ -534,7 +534,7 @@ jobs:
           print("# AI-BENCH-001 Alice final verification")
           print()
           print(f"Machine status: **{run.get('status')}**")
-          print(f"Dataset: **{(run.get('dataset') or {}).get('version')} / grounded-v2.6**")
+          print(f"Dataset: **{(run.get('dataset') or {}).get('version')} / grounded-v2.6.1**")
           print()
           provider = (run.get("providers") or [{}])[0]
           s = provider.get("summary") or {}
