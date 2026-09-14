@@ -333,6 +333,11 @@ jobs:
           && python scripts/infra_manifest_check.py
           && python scripts/check_document_structure.py
 
+      - name: Verify AI-PROVIDER-001 strategy, privacy and cost controls
+        run: |
+          python scripts/check_ai_provider_package.py
+          python -m unittest discover -s tests -p 'test_ai_provider*.py' -v
+
       - name: Validate INFRA-001 Docker Compose configuration
         run: docker compose --env-file infra/vps/compose.test.env config --quiet
 
