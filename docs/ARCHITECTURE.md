@@ -1,6 +1,11 @@
 # AI Career Agent — architecture reference
 
-> Current package: SEARCH-005, status ГОТОВО К СТАРТУ. PROF-003/PRIV-001 закрыты; production `20260813_0013`.
+> Current package: AI-BENCH-001 grounded-v2.6.1 / evals 1.6.1, status НУЖНА ПРОВЕРКА. SEARCH-005 and prior product packages are complete; schema `20260819_0014`.
+
+
+## Current staging database
+
+Render remains the staging web runtime, but its expired Free PostgreSQL was replaced operationally by Neon PostgreSQL in AWS US West 2 (Oregon) through the existing `DATABASE_URL` boundary. No application code or Alembic migration changed. `/health/ready` confirmed persistent PostgreSQL and current/expected revision `20260819_0014`. The Neon database is a clean staging database; old expired Render-DB data was not migrated.
 
 ## Runtime boundaries
 

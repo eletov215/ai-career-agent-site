@@ -1,23 +1,24 @@
 # AI Career Agent
 
 <!-- ACA-CANONICAL-STATUS:START -->
-## Каноническое состояние - 2026-08-28
+## Каноническое состояние - 2026-09-14
 
 | Поле | Значение |
 |---|---|
 | Production schema | `20260819_0014` |
 | Последний завершённый production-пакет | `SEARCH-005` |
-| Текущий пакет | `AI-BENCH-001` - Alice Final v4 / `grounded-v2.5`; локальный hotfix готов, НУЖНА ПРОВЕРКА GITHUB ACTIONS + FRESH ALICE-ONLY LIVE + NAMED MANUAL RUBRIC |
-| Alice Final run #3 | artifact `33163009779`, run `ai-bench-20260828T102540Z-bcf4c2ed`: 8/8 calls, 0 errors/retries; source machine result 6/8 |
-| Подтверждённые FAIL | `cover-letter-en-01`: future-learning gap paragraph mislabeled `candidate_fit`; `interview-ru-01`: harmless `2–3 resources/approaches` answer-cardinality false positive |
-| Regression replay | те же raw responses под `grounded-v2.5`: 8/8 PASS, 3 scenario repairs, 2 motivation-kind repairs, 0 unsupported numbers/impact |
-| Candidate decision | Alice AI LLM остаётся primary candidate; provider decision не финализирован до fresh machine 8/8 + named human rubric |
-| Hardening | `evals 1.5.2`, benchmark `1.4`, dataset `1.3.4` / `grounded-v2.5`; narrow unverified-gap motivation repair + broader safe response-cardinality + restored run #2 unittest discovery |
-| Следующий gate | green ordinary CI -> manual `run_ai_bench_alice_final=true` -> fresh Alice 8/8 machine artifact -> named human writing rubric -> benchmark closure decision |
+| Текущий пакет | `AI-BENCH-001` - Alice Final v4 / `grounded-v2.6.1`; НУЖНА ПРОВЕРКА ordinary CI + fresh Alice-only live 8/8 + focused named human re-review |
+| Alice Final run #6 | artifact `34766480932`, run `ai-bench-20260913T154901Z-44d67112`: 8/8 calls, 0 errors/retries; machine result **7/8** |
+| Подтверждённый FAIL | только `cover-letter-en-01`: 3 unsupported impact claims from inferred consistency/decision/implementation effects |
+| Additional writing issue | opening invented prior employer familiarity (`long admired...`); grounded-v2.6.1 blocks that pattern unless source evidence supports it |
+| Hardening | `evals 1.6.1`, benchmark `1.4`, dataset `1.3.6` / `grounded-v2.6.1`; atomic EN candidate-fit prompt + run #6 regressions; hard safety thresholds unchanged |
+| Staging database | Render web-service now uses Neon PostgreSQL (Oregon) after Render Free Postgres expiry; `/health/ready` confirmed `status=ok`, persistent PostgreSQL, revision/migrations `20260819_0014` |
+| Candidate decision | Alice AI LLM remains primary candidate; provider decision is not final until fresh machine 8/8 + named human rubric |
+| Следующий gate | green ordinary CI -> manual `run_ai_bench_alice_final=true` -> fresh Alice 8/8 machine artifact -> focused human review of cases 1/3/5/6 -> benchmark closure decision |
 | Следующий пакет | `AI-PROVIDER-001`, заблокирован до закрытия AI-BENCH-001 |
-| Канонические документы | PLAN `v1.4.44`, PROJECT PASSPORT `v2.58`, SOURCE AUDIT `v1.4.44`, AI-BENCH verification `v1.12` |
+| Канонические документы | PLAN `v1.4.47`, PROJECT PASSPORT `v2.61`, SOURCE AUDIT `v1.4.47`, AI-BENCH verification `v1.15` |
 
-Production Flask routes, dependencies, models, migrations, Render runtime and database schema are unchanged. Benchmark fixtures remain synthetic and credentials remain GitHub-secret-only.
+Production Flask routes, dependencies, models, migrations and database schema are unchanged. Benchmark fixtures remain synthetic and credentials remain secret-store-only.
 <!-- ACA-CANONICAL-STATUS:END -->
 
 ## 1. Назначение
@@ -42,17 +43,16 @@ AI Career Agent — Flask/Gunicorn web-service карьерного сопров
 
 ## 3. AI-BENCH-001 Alice final verification
 
-`evals 1.5.2` uses benchmark `1.4` / dataset `1.3.4` / `grounded-v2.5`. It is the local hotfix after Alice Final run #3 (`33163009779`) completed all 8 provider calls with zero errors/retries but passed 6/8 machine cases.
+`evals 1.6.1` uses benchmark `1.4` / dataset `1.3.6` / `grounded-v2.6.1`. It is the regression-driven hotfix after Alice Final run #6 (`34766480932`) completed all 8 provider calls with zero errors/retries but passed 7/8 machine cases.
 
-- `cover-letter-en-01` exposed a paragraph-kind mismatch: the model disclosed the unverified experimentation gap and expressed future learning, but labeled the paragraph `candidate_fit`; grounded-v2.5 may reclassify it to `motivation` only when vacancy evidence exists and every candidate fact is an explicit unverified-gap fact disclosed in the paragraph;
-- verified skills, achievements, mixed positive candidate evidence and unsupported impact are never repaired;
-- `interview-ru-01` exposed a narrow answer-cardinality false positive on `2–3 resources or approaches`; imperative counts of resources/approaches now share the same non-factual response-format exception as examples/options/steps/reasons;
-- unsourced durations, percentages, salaries, experience years, achievements and outcomes remain hard failures;
-- the retained raw run #3 responses replay 8/8 under grounded-v2.5 with 3 audited scenario repairs and 2 audited motivation-kind repairs; replay is not a new provider result;
-- the run #2 regression tests are now inside the unittest class and are executed by ordinary CI;
+- `cover-letter-en-01` was the only FAIL: the model converted verified Figma/design-system, interview and collaboration activities into unsupported consistency, decision/user-need and implementation outcomes;
+- the existing hard scorer correctly blocked all three inferred effects; thresholds are not weakened and output is not auto-repaired;
+- the opening also invented prior employer familiarity (`long admired...`), so the EN cover-letter case now explicitly forbids unsupported familiarity history;
+- grounded-v2.6.1 tightens English candidate-fit generation to short atomic first-person restatements of cited candidate facts and prohibits purpose/benefit/result tails unless explicitly stated in evidence;
+- deterministic reference remains 8/8 under the new dataset; exact run #6 patterns are versioned in `evals/regressions/alice-final-run-6.json`;
 - ordinary CI remains non-billable. `AI-BENCH-001 Alice Final` runs only on manual `workflow_dispatch` with `run_ai_bench_alice_final=true`;
-- the final checker requires benchmark/schema `1.4`, dataset `1.3.4`, exactly one `yandex-alice-ai-llm` provider, zero provider errors, 8/8 machine PASS and zero unresolved hard-safety counters;
-- machine pass still does not close AI-BENCH-001: a named human writing-quality rubric remains mandatory.
+- the final checker now requires dataset `1.3.6`, exactly one `yandex-alice-ai-llm` provider, zero provider errors, 8/8 machine PASS and zero unresolved hard-safety counters;
+- machine pass still does not close AI-BENCH-001: focused named human writing review remains mandatory.
 
 Before upload:
 
@@ -61,7 +61,7 @@ python scripts/check_ai_bench_package.py
 python -m unittest discover -s tests -p 'test_ai_bench*.py' -v
 ```
 
-After green ordinary CI, run `Actions -> CI -> Run workflow -> run_ai_bench_alice_final=true`. The retained 6/8 run #3 artifact is regression evidence only and must not be reused as the final live result.
+After green ordinary CI, run `Actions -> CI -> Run workflow -> run_ai_bench_alice_final=true`. The 7/8 run #6 artifact is regression evidence only and must not be reused as the final live result.
 
 ## 4. Документация
 

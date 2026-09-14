@@ -29,7 +29,7 @@ def main() -> int:
             f"benchmark={run.get('benchmark_version')!r}"
         )
     dataset = run.get("dataset") or {}
-    if dataset.get("version") != "1.3.5":
+    if dataset.get("version") != "1.3.6":
         return fail(f"unexpected dataset version={dataset.get('version')!r}")
     providers = run.get("providers") or []
     if len(providers) != 1 or providers[0].get("id") != EXPECTED_PROVIDER:

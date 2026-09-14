@@ -6,37 +6,41 @@
 <!-- ACA-CANONICAL-STATUS:START -->
 ## Канонический срез проекта
 
-**Документ:** AI Career Agent PROJECT_PASSPORT `v2.60`  
-**Дата:** 2026-09-13  
+**Документ:** AI Career Agent PROJECT_PASSPORT `v2.61`  
+**Дата:** 2026-09-14  
 **Production revision:** `20260819_0014`
 
 | Контур | Состояние |
 |---|---|
 | Web | Flask + Gunicorn, WSGI `app:app`; AI-BENCH changes production code не затрагивают |
-| Data | PostgreSQL production, SQLite local/test fallback, Alembic `20260819_0014` |
+| Data | PostgreSQL through SQLAlchemy/Alembic; Render staging web now points to Neon PostgreSQL (Oregon); SQLite local/test fallback; schema `20260819_0014` |
 | Identity/career/search/privacy | ранее завершённые пакеты остаются ВЫПОЛНЕНО |
-| AI benchmark | benchmark `1.4`, dataset candidate `1.3.5`, `grounded-v2.6`, evals `1.6.0` |
-| Last live evidence | artifact `33168005097`, run `ai-bench-20260828T114615Z-5b0d7a99`: 8/8 machine PASS, quality/grounding `1.000`, 0 errors/retries |
-| Human review | named reviewer **Шекунов Д.С.**; revision required in RU resume tone, RU vacancy recommendation, RU/EN cover letters |
-| Cover-letter boundary | internal caveats stay machine/audit-only; presentation hides them; visible letter is first-person and cannot disclose explicit unverified candidate gaps |
-| Replay | retained run #5 raw outputs under grounded-v2.6: 6/8; both old cover-letter outputs are intentionally rejected |
+| AI benchmark | benchmark `1.4`, dataset candidate `1.3.6`, `grounded-v2.6.1`, evals `1.6.1` |
+| Last live evidence | artifact `34766480932`, run `ai-bench-20260913T154901Z-44d67112`: 8/8 calls, 0 errors/retries, **7/8 machine** |
+| Current failure | only `cover-letter-en-01`: 3 unsupported inferred impacts; hard scorer correctly blocked them |
+| EN writing hardening | candidate-fit must be atomic first-person restatement of verified facts; no inferred purpose/benefit/result tails; unsupported prior employer familiarity is forbidden |
+| Human review | named reviewer **Шекунов Д.С.** remains required after the next fresh machine 8/8 |
 | Candidate | Alice AI LLM remains primary benchmark candidate; no production provider is connected |
 | Final verification | ordinary CI -> fresh Alice Final 8/8 -> focused named human re-review -> closure decision |
 | Production AI | отсутствует; provider strategy remains blocked until AI-BENCH-001 closes |
 
+### Operational staging note
+
+Render Free PostgreSQL expired and was suspended. The web-service `DATABASE_URL` was moved to a new Neon PostgreSQL Free database in AWS US West 2 (Oregon). Render deploy succeeded; `/health/ready` confirmed persistent PostgreSQL, revision `20260819_0014` and migration parity. The new database is clean; data from the expired Render database was not migrated. This changes staging infrastructure only, not application code/schema.
+
 ### Decision boundary
 
-The previous live machine result remains valid as historical evidence but cannot close AI-BENCH-001 because the named human review required product-writing revisions. Grounded-v2.6 changes prompts and visible cover-letter semantics, so a fresh Alice Final live run is mandatory after ordinary CI. Production application architecture and database revision are unchanged.
+Alice Final run #6 cannot close AI-BENCH-001 because the machine gate is 7/8. Grounded-v2.6.1 tightens generation without weakening hard gates. A fresh Alice Final 8/8 run and focused named human re-review remain mandatory. Production application architecture and database revision are unchanged.
 <!-- ACA-CANONICAL-STATUS:END -->
 
 | Поле | Значение |
 |---|---|
 | Документ        | PROJECT_PASSPORT                                                                              |
-| Версия паспорта | 2.60 |
-| Дата            | 13 сентября 2026                                                                               |
+| Версия паспорта | 2.61 |
+| Дата            | 14 сентября 2026                                                                               |
 | Статус          | ДЕЙСТВУЮЩИЙ                                                                                   |
-| Связанный план | `AI_Career_Agent_PLAN_CURRENT v1.4.46` |
-| Основа кода | GitHub `main` snapshot `ai-career-agent-site-main (1).zip` от 13.09.2026; grounded-v2.6 candidate prepared on top |
+| Связанный план | `AI_Career_Agent_PLAN_CURRENT v1.4.47` |
+| Основа кода | GitHub `main` after grounded-v2.6 commit `b1d54b5` + Alice Final run #6 artifact `34766480932`; grounded-v2.6.1 candidate prepared on top |
 
 > Контрольные статусы: FND/DATA/SEC/OPS/INFRA-PREP/SYNC/SEARCH-001..005/AUTH/PROF/PRIV - ВЫПОЛНЕНО; AI-BENCH-001 - НУЖНА ПРОВЕРКА; AI-PROVIDER-001 - ЗАБЛОКИРОВАНО; DOC-001 - В РАБОТЕ; INFRA-001 - ОТЛОЖЕНО.
 
@@ -628,3 +632,10 @@ Artifact `ai-bench-20260827T112440Z-243eaaeb` completed 8/8 calls with zero prov
 | Версия | Дата | Изменение |
 |---|---|---|
 | 2.60 | 13.09.2026 | Current GitHub-main snapshot adopted. Historical Alice run #5 remains 8/8 machine PASS, but named reviewer Шекунов Д.С. required revisions. Grounded-v2.6 / evals 1.6.0 hardens RU coaching, vacancy-gap actionability and first-person cover-letter presentation; fresh Alice 8/8 plus focused human re-review remain required. Production revision remains `20260819_0014`. |
+
+
+### PROJECT_PASSPORT v2.61 update
+
+| Версия | Дата | Изменение |
+|---|---|---|
+| 2.61 | 14.09.2026 | Alice Final run #6 artifact `34766480932`: 8/8 calls, 0 errors/retries, 7/8 machine; EN cover letter failed on 3 unsupported inferred effects. Grounded-v2.6.1 / evals 1.6.1 tightens atomic EN candidate-fit generation and employer-familiarity grounding. Render staging web recovered on Neon PostgreSQL (Oregon), readiness revision 0014; application/schema code unchanged. |

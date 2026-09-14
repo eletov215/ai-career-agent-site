@@ -1,3 +1,14 @@
+## 2026-09-14 - AI-BENCH-001 Alice Final run #6 hardening / grounded-v2.6.1 / evals 1.6.1
+
+- Reviewed artifact `34766480932` / run `ai-bench-20260913T154901Z-44d67112`: 8/8 calls, 0 errors/retries, **7/8 machine**.
+- Localized the only FAIL to `cover-letter-en-01`: 3 unsupported impact claims inferred from Figma/design systems, qualitative interviews and product/engineering collaboration.
+- Preserved all hard safety thresholds; no unsupported provider prose is auto-repaired.
+- Tightened English cover-letter generation to atomic first-person restatements of verified facts and prohibited inferred purpose/benefit/result clauses.
+- Added a case-level hard forbidden familiarity regression for unsupported historical claims such as `long admired...`.
+- Added `alice-final-run-6.json`, focused tests and updated package gate; dataset `1.3.6`, contract `grounded-v2.6.1`, evals `1.6.1`.
+- Refreshed deterministic reference evidence; reference remains 8/8 PASS.
+- Operational note: Render staging web now uses Neon PostgreSQL in Oregon after Render Free Postgres expiry; readiness confirmed persistent PostgreSQL and revision/migrations `20260819_0014`. No application/schema code change was required.
+
 ## 2026-09-13 - AI-BENCH-001 named-human writing hardening / grounded-v2.6 / evals 1.6.0
 
 - Restored current GitHub-main snapshot from user-provided `ai-career-agent-site-main (1).zip`; production application baseline remains revision `20260819_0014`.

@@ -6,52 +6,55 @@
 <!-- ACA-CANONICAL-STATUS:START -->
 ## Канонический статус плана
 
-**Документ:** AI Career Agent PLAN_CURRENT `v1.4.46`  
-**Дата:** 2026-09-13  
+**Документ:** AI Career Agent PLAN_CURRENT `v1.4.47`  
+**Дата:** 2026-09-14  
 **Production revision:** `20260819_0014`  
-**Текущий пакет:** `AI-BENCH-001 - GROUNDED-v2.6 HUMAN-WRITING HARDENING / EVALS 1.6.0; НУЖНА ПРОВЕРКА ORDINARY CI -> FRESH ALICE FINAL -> FOCUSED NAMED HUMAN RE-REVIEW`
+**Текущий пакет:** `AI-BENCH-001 - GROUNDED-v2.6.1 ATOMIC EN COVER-LETTER HARDENING / EVALS 1.6.1; НУЖНА ПРОВЕРКА ORDINARY CI -> FRESH ALICE FINAL -> FOCUSED NAMED HUMAN RE-REVIEW`
 
 ### Подтверждённое внешнее evidence
 
-- Alice Final run #5 artifact `33168005097`, run `ai-bench-20260828T114615Z-5b0d7a99`: 8/8 provider calls, 0 provider errors, 0 retries, **8/8 machine PASS** under dataset `1.3.4` / `grounded-v2.5`;
-- mean quality `1.000`, mean grounding `1.000`, language/match consistency `1.000`; p50 `3447.243 ms`, p95 `5500.041 ms`, estimated cost `USD 0.0504295`;
-- all machine hard-safety counters were zero and presentation technical-marker cleanup count was zero;
-- named human reviewer **Шекунов Д.С.** completed the writing review and required revision in cases 1, 3, 5 and 6: softer RU resume recommendations, actionable RU match guidance, and RU/EN cover letters that read as first-person human applications without advertising unverified weaknesses;
-- cases 2, 4, 7 and 8 were accepted; missing numeric vectors for 4/6/7/8 were not fabricated;
-- AI-BENCH-001 therefore remains **НУЖНА ПРОВЕРКА** despite the successful machine run.
+- Alice Final run #6 artifact `34766480932`, run `ai-bench-20260913T154901Z-44d67112`: 8/8 provider calls, 0 provider errors, 0 retries, **7/8 machine PASS** under dataset `1.3.5` / `grounded-v2.6`;
+- mean quality `0.986458`, mean grounding `0.989583`, user-facing cleanliness `1.000`; p50 `3550.43 ms`, p95 `5611.53 ms`, estimated cost `USD 0.053826221`;
+- единственный machine FAIL - `cover-letter-en-01`, где sparse candidate facts были расширены до 3 неподтвержденных эффектов: consistency/visual-language, decision/user-need/product-direction и implementation/delivery;
+- hard scorer сработал корректно: `unsupported_impact_claim_count=3`; safety threshold не ослабляется;
+- opening дополнительно содержал неподтвержденное prior-familiarity утверждение `long admired...`; grounded-v2.6.1 теперь явно запрещает такую историческую familiarization без source evidence;
+- named human feedback from reviewer **Шекунов Д.С.** remains the final quality gate after a fresh 8/8 machine run.
 
-### Grounded-v2.6 candidate
+### Grounded-v2.6.1 candidate
 
-- `evals 1.6.0`; benchmark remains `1.4`; dataset advances to `1.3.5`; contract advances to `grounded-v2.6`;
-- RU resume coaching prompt is softened and conditional;
-- RU/EN vacancy recommendations explain the safe `confirm/update profile -> deterministic recalculation` path without an LLM-authored future percentage;
-- cover-letter `caveats` remain mandatory machine/audit metadata but are omitted from `presentation/`;
-- visible cover-letter paragraphs hard-fail when they cite explicit unverified candidate-gap facts, explicitly disclose those gaps, describe the writer as `candidate/applicant`, or contain no first-person voice at letter level;
-- unverified-gap paragraphs are no longer auto-repaired into visible `motivation`; only vacancy-only future intent may be reclassified;
-- retained run #5 raw responses replay under grounded-v2.6 is **6/8**: both historical cover-letter outputs are now correctly rejected by the new presentation gate; prompt changes therefore require a fresh live Alice run;
+- `evals 1.6.1`; benchmark stays `1.4`; dataset `1.3.6`; contract `grounded-v2.6.1`;
+- все grounded-v2.6 evidence/numeric/impact/language/scenario/match/presentation hard gates сохранены;
+- English cover-letter candidate-fit generation теперь использует short atomic first-person restatements verified facts и запрещает purpose/benefit/result tails без explicit candidate evidence;
+- motivation may express present interest, but may not invent prior employer/team familiarity;
+- exact run #6 failure patterns and safe atomic rewrites versioned in `evals/regressions/alice-final-run-6.json`;
+- deterministic reference on dataset 1.3.6 remains **8/8 PASS**;
 - production Flask routes/services/models, dependencies, migrations and production revision `20260819_0014` remain unchanged.
+
+### Staging database recovery
+
+Render Free PostgreSQL expired and was suspended. The Render web-service was re-pointed through `DATABASE_URL` to a new Neon PostgreSQL Free database in AWS US West 2 (Oregon). Render deploy succeeded and `/health/ready` confirmed `status=ok`, `database.backend=postgresql`, `persistent=true`, `database.revision=20260819_0014`, `migrations.current_revision=expected_revision=20260819_0014`, `migrations.ok=true`. This is an operational staging change only; application/schema code is unchanged and the old Render DB data was not migrated.
 
 ### Текущий gate
 
-Upload v1.4.46 / evals 1.6.0 -> green ordinary GitHub CI/package gate -> manual `run_ai_bench_alice_final=true` -> require fresh 8/8 machine PASS under dataset 1.3.5 / grounded-v2.6 -> artifact audit -> focused named human re-review of cases 1, 3, 5 and 6 while confirming regressions for 2, 4, 7 and 8 -> AI-BENCH-001 closure decision.
+Upload v1.4.47 / evals 1.6.1 -> green ordinary GitHub CI/package gate -> manual `run_ai_bench_alice_final=true` -> require fresh 8/8 machine PASS under dataset 1.3.6 / grounded-v2.6.1 -> artifact audit -> focused named human re-review of cases 1, 3, 5 and 6 while confirming no regressions in 2, 4, 7 and 8 -> AI-BENCH-001 closure decision.
 
 ### Очередь
 
-`AI-BENCH-001 grounded-v2.6 CI -> fresh Alice Final 8/8 -> focused named human re-review -> AI-BENCH-001 closure -> AI-PROVIDER-001 -> LEGAL-001 -> AI-001 -> AI-002 -> AI-003 -> AI-004 -> AI-005 -> AI-006 -> JOB-001 -> JOB-002 -> JOB-003/JOB-004`
+`AI-BENCH-001 grounded-v2.6.1 CI -> fresh Alice Final 8/8 -> focused named human re-review -> AI-BENCH-001 closure -> AI-PROVIDER-001 -> LEGAL-001 -> AI-001 -> AI-002 -> AI-003 -> AI-004 -> AI-005 -> AI-006 -> JOB-001 -> JOB-002 -> JOB-003/JOB-004`
 <!-- ACA-CANONICAL-STATUS:END -->
 
 | Поле | Значение |
 |---|---|
 | Документ | PLAN_CURRENT |
-| Версия | 1.4.46 |
-| Дата | 13 сентября 2026 |
+| Версия | 1.4.47 |
+| Дата | 14 сентября 2026 |
 | Статус | ДЕЙСТВУЮЩИЙ |
-| Основа кода | GitHub `main` snapshot `ai-career-agent-site-main (1).zip`, предоставленный 13.09.2026; grounded-v2.6 candidate подготовлен поверх него |
-| Текущий пакет | AI-BENCH-001 - grounded-v2.6 human-writing hardening; НУЖНА ПРОВЕРКА ordinary CI -> fresh Alice Final -> focused named human re-review |
+| Основа кода | GitHub `main` после grounded-v2.6 commit `b1d54b5` + Alice Final run #6 artifact `34766480932`; grounded-v2.6.1 candidate подготовлен поверх этого состояния |
+| Текущий пакет | AI-BENCH-001 - grounded-v2.6.1 atomic EN cover-letter hardening; НУЖНА ПРОВЕРКА ordinary CI -> fresh Alice Final -> focused named human re-review |
 
 > ОБЯЗАТЕЛЬНО ДЛЯ КАЖДОГО НОВОГО ЧАТА: прочитать этот план, новый паспорт и актуальный архив. После завершения любого пункта вернуть обновлённые DOCX/PDF/Markdown, новый ZIP, доказательства проверки и запись в журнале версий.
 
-> КОНТРОЛЬНЫЕ СТАТУСЫ ЭТОЙ ВЕРСИИ: FND-001/FND-002/DATA-001/DATA-002/SEC-001/OPS-001/INFRA-PREP-001/SYNC-001/SYNC-002/SEARCH-001..005/AUTH-001/AUTH-002/PROF-001/PROF-002/PROF-003/PRIV-001 - **ВЫПОЛНЕНО**; `AI-BENCH-001` - **НУЖНА ПРОВЕРКА**; `AI-PROVIDER-001` - **ЗАБЛОКИРОВАНО** до завершения benchmark; `DOC-001` - **В РАБОТЕ**; `INFRA-001` - **ОТЛОЖЕНО ДО ПРЕДРЕЛИЗНОГО ЭТАПА**. Документы ниже `1.4.46` устарели для определения текущего gate.
+> КОНТРОЛЬНЫЕ СТАТУСЫ ЭТОЙ ВЕРСИИ: FND-001/FND-002/DATA-001/DATA-002/SEC-001/OPS-001/INFRA-PREP-001/SYNC-001/SYNC-002/SEARCH-001..005/AUTH-001/AUTH-002/PROF-001/PROF-002/PROF-003/PRIV-001 - **ВЫПОЛНЕНО**; `AI-BENCH-001` - **НУЖНА ПРОВЕРКА**; `AI-PROVIDER-001` - **ЗАБЛОКИРОВАНО** до завершения benchmark; `DOC-001` - **В РАБОТЕ**; `INFRA-001` - **ОТЛОЖЕНО ДО ПРЕДРЕЛИЗНОГО ЭТАПА**. Документы ниже `1.4.47` устарели для определения текущего gate.
 
 ## 1. Источник истины и аудит источников
 
@@ -66,6 +69,7 @@ Upload v1.4.46 / evals 1.6.0 -> green ordinary GitHub CI/package gate -> manual 
 - Версия 1.4.44 фиксирует Alice Final run #3 artifact 33163009779: 8/8 transport, 6/8 machine. Grounded-v2.5 добавляет узкий unverified-gap + vacancy future-intent motivation repair, response-cardinality для resources/approaches и исправляет discovery run #2 regression tests; retained raw responses replay 8/8, fresh live verification обязателен.
 - Версия 1.4.45 фиксирует Alice Final run #4 artifact 33165683757: 8/8 transport и **8/8 machine PASS**. Artifact audit выявил только grouped known evidence-marker leakage в двух user-facing `interview-en-01` purpose strings. Evals 1.5.3 расширяет только deterministic presentation cleanup для полностью known-ID groups; replay retained raw responses остаётся 8/8 и даёт 0 residual user-facing IDs. Следующий gate - ordinary CI + named human rubric; повторный Alice API run не требуется.
 - Версия 1.4.46 фиксирует named human review Alice Final run #5 artifact 33168005097: machine 8/8 PASS, но reviewer Шекунов Д.С. потребовал revisions в cases 1/3/5/6. Grounded-v2.6 / evals 1.6.0 усиливает writing contract; fresh Alice Final run обязателен.
+- Версия 1.4.47 фиксирует Alice Final run #6 artifact 34766480932: 8/8 transport, 7/8 machine, only `cover-letter-en-01` FAIL with 3 unsupported inferred impacts. Grounded-v2.6.1 / evals 1.6.1 introduces atomic EN candidate-fit generation, unsupported employer-familiarity regression and requires another fresh Alice Final 8/8 before focused human review. Render staging DB was also recovered on Neon PostgreSQL with `/health/ready` revision 0014.
 - Версия 1.4.43 фиксирует Alice Final run #2 artifact 33066898884: 8/8 transport, 6/8 machine. Grounded-v2.4 добавляет Unicode dash normalization, узкий audited candidate_fit->motivation repair для vacancy-only future intent и более строгий interview evidence coverage prompt; fresh Alice-only verification обязателен.
 - Версия 1.4.34 фиксирует live Yandex candidate: manual-only workflow, Alice AI LLM/Flash/YandexGPT Pro 5.1, structured JSON Schema output, current pricing snapshot and GitHub-secret-only credentials.
 - Версия 1.4.35 фиксирует CI-stability hotfix r2: SYNC worker cache assertions отвязаны от календарного 7-дневного search filter; AI-BENCH package contract использует browser-upload-safe visible scaffold и не зависит от dotfiles.
@@ -1757,3 +1761,10 @@ Artifact `ai-bench-20260827T112440Z-243eaaeb` completed 8/8 calls with zero prov
 | Версия | Дата | Пакет | Изменение |
 |---|---|---|---|
 | 1.4.46 | 13.09.2026 | AI-BENCH-001-GROUNDED-V2.6-HUMAN-WRITING | Historical run #5 artifact `33168005097` stays 8/8 machine PASS, while named reviewer Шекунов Д.С. required revisions in cases 1/3/5/6. Evals 1.6.0 / dataset 1.3.5 adds softer RU coaching, actionable vacancy-gap guidance, internal-only cover-letter caveats and a first-person/no-visible-gap presentation hard gate. Next: ordinary CI -> fresh Alice Final 8/8 -> focused named human re-review. Production revision remains `20260819_0014`. |
+
+
+### PLAN_CURRENT v1.4.47 update
+
+| Версия | Дата | Изменение |
+|---|---|---|
+| 1.4.47 | 14.09.2026 | AI-BENCH-001-GROUNDED-V2.6.1: Alice Final run #6 artifact `34766480932` completed 8/8 calls with 0 errors/retries but 7/8 machine; only EN cover letter failed on 3 unsupported inferred effects. Evals 1.6.1 / dataset 1.3.6 hardens atomic EN candidate-fit writing and blocks unsupported prior employer familiarity. Render staging database moved to Neon after Render Free Postgres expiry; readiness confirms revision 0014. Fresh Alice Final 8/8 + focused human review remain required. |

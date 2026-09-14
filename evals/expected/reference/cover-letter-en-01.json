@@ -3,23 +3,22 @@
   "paragraphs": [
     {
       "kind": "opening",
-      "text": "Dear Hiring Team, I am applying for the B2B Product Designer role and would like to highlight the experience that directly matches the position.",
+      "text": "Dear Hiring Team, I am applying for the B2B Product Designer role.",
       "evidence_ids": [
         "v1"
       ]
     },
     {
       "kind": "candidate_fit",
-      "text": "I have three years of product-design experience and have worked with Figma design systems, which aligns with the role’s design-system requirement.",
+      "text": "I have three years of experience as a product designer. I work with Figma and design systems.",
       "evidence_ids": [
         "c1",
-        "c2",
-        "v2"
+        "c2"
       ]
     },
     {
       "kind": "candidate_fit",
-      "text": "My background also includes qualitative user interviews and collaboration with product and engineering teams.",
+      "text": "I conduct qualitative user interviews. I collaborate with product and engineering teams.",
       "evidence_ids": [
         "c3",
         "c4"
@@ -27,7 +26,7 @@
     },
     {
       "kind": "motivation",
-      "text": "I am especially interested in the role’s B2B product-design focus and the opportunity to continue working with design systems.",
+      "text": "I am interested in the B2B product-design focus and the role’s design-systems requirement.",
       "evidence_ids": [
         "v1",
         "v2"
@@ -35,8 +34,9 @@
     },
     {
       "kind": "closing",
-      "text": "I would welcome the opportunity to discuss the role and my relevant product-design experience in more detail.",
+      "text": "I would welcome the opportunity to discuss my relevant product-design experience in more detail.",
       "evidence_ids": [
+        "c1",
         "v1"
       ]
     }

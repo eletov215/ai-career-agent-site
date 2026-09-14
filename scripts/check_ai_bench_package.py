@@ -28,6 +28,7 @@ REQUIRED_VISIBLE = [
     "evals/regressions/alice-final-run-3.json",
     "evals/regressions/alice-final-run-4.json",
     "evals/regressions/alice-final-run-5-human-review.json",
+    "evals/regressions/alice-final-run-6.json",
     "evals/fixtures/manifest.json",
     "evals/schemas/resume_analysis.schema.json",
     "evals/schemas/vacancy_match.schema.json",
@@ -138,7 +139,7 @@ def main() -> int:
         fail(f"missing required files: {missing}")
 
     version = (ROOT / "evals/VERSION").read_text(encoding="utf-8").strip()
-    if version != "1.6.0":
+    if version != "1.6.1":
         fail(f"unexpected evals version: {version}")
 
     workflow_path = ROOT / ".github/workflows/ci.yml"
@@ -167,7 +168,7 @@ def main() -> int:
         "AI_BENCH_ALICE_FINAL_OUTPUT_DIR: /tmp/ai-bench-yandex-alice-final",
         "--config evals/config/yandex-alice-final.json",
         "scripts/check_ai_bench_alice_final_result.py",
-        "grounded-v2.6",
+        "grounded-v2.6.1",
         "scenario_provenance_repair_count",
     ]
     missing_workflow_fragments = [
@@ -199,8 +200,8 @@ def main() -> int:
     manifest = json.loads((ROOT / "evals/fixtures/manifest.json").read_text(encoding="utf-8"))
     if manifest.get("synthetic") is not True:
         fail("manifest must declare synthetic=true")
-    if manifest.get("version") != "1.3.5" or manifest.get("contract") != "grounded-v2.6":
-        fail("manifest must declare version=1.3.5 and contract=grounded-v2.6")
+    if manifest.get("version") != "1.3.6" or manifest.get("contract") != "grounded-v2.6.1":
+        fail("manifest must declare version=1.3.6 and contract=grounded-v2.6.1")
     cases = manifest.get("cases") or []
     if len(cases) < 8:
         fail("golden dataset must contain at least eight bilingual/task-diverse cases")
@@ -269,6 +270,19 @@ def main() -> int:
         fail("Alice Final run #5 human-review provenance is missing")
     if alice_final_regression_5.get("reviewer") != "Шекунов Д.С." or alice_final_regression_5.get("decision") != "revision_required":
         fail("Alice Final run #5 named human-review decision is incomplete")
+    alice_final_regression_6 = json.loads((ROOT / "evals/regressions/alice-final-run-6.json").read_text(encoding="utf-8"))
+    if alice_final_regression_6.get("source_run_id") != "ai-bench-20260913T154901Z-44d67112":
+        fail("Alice Final run #6 regression provenance is missing")
+    if alice_final_regression_6.get("source_artifact") != "ai-bench-001-yandex-alice-final-34766480932.zip":
+        fail("Alice Final run #6 artifact provenance is missing")
+    alice6_patterns = alice_final_regression_6.get("patterns") or {}
+    if len(alice6_patterns.get("unsupported_candidate_fit_extensions") or []) < 3:
+        fail("Alice Final run #6 impact-extension regressions are incomplete")
+    if not (alice6_patterns.get("unsupported_employer_familiarity") or {}).get("text"):
+        fail("Alice Final run #6 employer-familiarity regression is missing")
+    if len(alice6_patterns.get("safe_atomic_rewrites") or []) < 4:
+        fail("Alice Final run #6 atomic rewrite regressions are incomplete")
+
     human_patterns = alice_final_regression_5.get("patterns") or {}
     required_human_patterns = {
         "resume_ru_soft_coaching",
@@ -319,7 +333,7 @@ def main() -> int:
         if run.get("execution_mode") != "deterministic_reference":
             fail("reference run must be labeled deterministic_reference")
         if run.get("schema_version") != "1.4" or run.get("benchmark_version") != "1.4":
-            fail("reference run must use grounded-v2.6 benchmark/run schema version 1.4")
+            fail("reference run must use grounded-v2.6.1 benchmark/run schema version 1.4")
         if run.get("quality_gate", {}).get("passed_count") != len(cases):
             fail("not all reference cases passed")
         machine_dir = out / "machine" / "reference"
@@ -348,7 +362,7 @@ def main() -> int:
             "max_cover_letter_presentation_violations",
         }
         if not required_thresholds.issubset(set((run.get("quality_gate", {}).get("thresholds") or {}).keys())):
-            fail("grounded-v2.6 language/scenario/presentation thresholds are missing")
+            fail("grounded-v2.6.1 language/scenario/presentation thresholds are missing")
         for schema_name in (
             "resume_analysis.schema.json",
             "vacancy_match.schema.json",

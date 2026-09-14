@@ -17,7 +17,7 @@ def sample_run(passed=8, errors=0, status="passed", provider_id="yandex-alice-ai
         "benchmark_version": "1.4",
         "execution_mode": "live_or_mixed",
         "status": status,
-        "dataset": {"case_count": 8, "version": "1.3.5"},
+        "dataset": {"case_count": 8, "version": "1.3.6"},
         "providers": [
             {
                 "id": provider_id,

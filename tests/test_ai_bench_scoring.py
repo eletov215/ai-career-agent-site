@@ -51,6 +51,7 @@ class ScoringTests(unittest.TestCase):
         cls.regressions_alice_final_3 = json.loads((ROOT / "evals/regressions/alice-final-run-3.json").read_text(encoding="utf-8"))
         cls.regressions_alice_final_4 = json.loads((ROOT / "evals/regressions/alice-final-run-4.json").read_text(encoding="utf-8"))
         cls.regressions_alice_final_5 = json.loads((ROOT / "evals/regressions/alice-final-run-5-human-review.json").read_text(encoding="utf-8"))
+        cls.regressions_alice_final_6 = json.loads((ROOT / "evals/regressions/alice-final-run-6.json").read_text(encoding="utf-8"))
 
     def _reference(self, case_id: str) -> dict:
         return json.loads((ROOT / "evals/expected/reference" / f"{case_id}.json").read_text(encoding="utf-8"))
@@ -629,6 +630,49 @@ class ScoringTests(unittest.TestCase):
         observed = {item["value"] for item in score["unsupported_numbers"]}
         self.assertTrue(set(sample["numbers"]).issubset(observed), score)
         self.assertIn("unsupported_numbers", score["gate_failures"], score)
+
+    def test_alice_final_run_6_unsupported_extensions_remain_hard_failures(self) -> None:
+        case = self.by_id["cover-letter-en-01"]
+        for sample in self.regressions_alice_final_6["patterns"]["unsupported_candidate_fit_extensions"]:
+            with self.subTest(text=sample["text"]):
+                content = self._reference(case.case_id)
+                content["paragraphs"][1]["kind"] = "candidate_fit"
+                content["paragraphs"][1]["text"] = sample["text"]
+                content["paragraphs"][1]["evidence_ids"] = sample["evidence_ids"]
+                score = score_case(case, content, {"max_unsupported_impact_claims": 0})
+                self.assertFalse(score["passed"], score)
+                self.assertIn("unsupported_impact_claims", score["gate_failures"], score)
+
+    def test_alice_final_run_6_invented_employer_familiarity_is_forbidden(self) -> None:
+        case = self.by_id["cover-letter-en-01"]
+        sample = self.regressions_alice_final_6["patterns"]["unsupported_employer_familiarity"]
+        content = self._reference(case.case_id)
+        content["paragraphs"][0]["text"] = "I’m excited to apply. " + sample["text"]
+        score = score_case(case, content, {"max_forbidden_claims": 0})
+        self.assertFalse(score["passed"], score)
+        self.assertIn("invented_employer_familiarity", score["forbidden_claims"], score)
+
+    def test_alice_final_run_6_atomic_rewrites_are_safe(self) -> None:
+        case = self.by_id["cover-letter-en-01"]
+        content = self._reference(case.case_id)
+        rewrites = self.regressions_alice_final_6["patterns"]["safe_atomic_rewrites"]
+        content["paragraphs"][1]["text"] = " ".join(rewrites[:2])
+        content["paragraphs"][1]["evidence_ids"] = ["c1", "c2"]
+        content["paragraphs"][2]["text"] = " ".join(rewrites[2:])
+        content["paragraphs"][2]["evidence_ids"] = ["c3", "c4"]
+        score = score_case(case, content, STRICT_THRESHOLDS)
+        self.assertTrue(score["passed"], score)
+        self.assertEqual(score["unsupported_impact_claim_count"], 0)
+
+    def test_grounded_v261_cover_letter_prompt_requires_atomic_literal_fit(self) -> None:
+        case = self.by_id["cover-letter-en-01"]
+        system_prompt = case.messages[0]["content"]
+        user_prompt = case.messages[1]["content"]
+        self.assertIn("Use atomic candidate-fit writing", system_prompt)
+        self.assertIn("atomicity audit", system_prompt)
+        self.assertIn("Do not invent a prior relationship or familiarity", system_prompt)
+        self.assertIn("Use short atomic sentences", user_prompt)
+        self.assertIn("I conduct qualitative user interviews", user_prompt)
 
 
 if __name__ == "__main__":

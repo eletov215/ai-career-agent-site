@@ -1,3 +1,11 @@
+## Package version 1.6.1 - Alice Final run #6 atomic EN cover-letter hardening / grounded-v2.6.1
+
+Alice Final run `ai-bench-20260913T154901Z-44d67112` (artifact `34766480932`) completed 8/8 provider calls with zero errors/retries and scored **7/8** under grounded-v2.6. The only failing case was `cover-letter-en-01`: Alice expanded sparse verified facts into three unsupported effects (consistency/visual-language, decision/user-need/product-direction, and implementation/delivery). The opening also claimed prior employer familiarity (`long admired...`) without source evidence.
+
+Version 1.6.1 advances the dataset to `1.3.6` / `grounded-v2.6.1` while keeping benchmark/run schema `1.4`. It does not weaken any hard gate and does not auto-repair provider prose. The English cover-letter prompt now requires atomic first-person fact restatements, forbids inferred purpose/benefit/result tails, and forbids unsupported prior employer/team familiarity. The exact run #6 failure patterns and safe atomic rewrites are versioned in `evals/regressions/alice-final-run-6.json`. Production Flask routes, models, migrations and revision `20260819_0014` are unchanged.
+
+Next gate: ordinary CI/package gate -> fresh Alice Final 8/8 under dataset 1.3.6 / grounded-v2.6.1 -> focused named human re-review of cases 1, 3, 5 and 6 -> AI-BENCH-001 closure decision.
+
 ## Package version 1.6.0 - named-human writing-quality hardening / grounded-v2.6
 
 Alice Final run `ai-bench-20260828T114615Z-5b0d7a99` (artifact `33168005097`) passed the grounded-v2.5 machine gate **8/8** with zero provider errors/retries and all machine quality/grounding counters at 1.000. Named human reviewer **Шекунов Д.С.** then required writing revisions in four areas: softer RU resume coaching, a more actionable RU vacancy-gap recommendation, and RU/EN cover letters that read as first-person human applications without advertising unverified weaknesses.

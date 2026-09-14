@@ -3,37 +3,46 @@
 | Поле | Значение |
 |---|---|
 | Документ | AI_BENCH_VERIFICATION_STATUS |
-| Версия | 1.14 |
-| Дата | 13 сентября 2026 |
-| Пакет | AI-BENCH-001 grounded-v2.6 human-writing hardening |
-| Статус | HISTORICAL LIVE MACHINE 8/8 COMPLETE; NAMED HUMAN = REVISION REQUIRED; GROUNDED-v2.6 НУЖНА ПРОВЕРКА CI + FRESH ALICE + FOCUSED HUMAN RE-REVIEW |
+| Версия | 1.15 |
+| Дата | 14 сентября 2026 |
+| Пакет | AI-BENCH-001 grounded-v2.6.1 atomic EN cover-letter hardening |
+| Статус | ALICE FINAL RUN #6 = 7/8 MACHINE; GROUNDED-v2.6.1 НУЖНА ПРОВЕРКА CI + FRESH ALICE 8/8 + FOCUSED HUMAN RE-REVIEW |
 | Production revision | `20260819_0014` |
 
-## 1. Alice Final run #5 + named human review
+## 1. Alice Final run #6 + grounded-v2.6.1
 
-Sanitized artifact `ai-bench-001-yandex-alice-final-33168005097.zip`:
+Sanitized artifact `ai-bench-001-yandex-alice-final-34766480932.zip`:
 
-- run ID `ai-bench-20260828T114615Z-5b0d7a99`;
-- benchmark `1.4`, dataset `1.3.4`, contract `grounded-v2.5`;
+- run ID `ai-bench-20260913T154901Z-44d67112`;
+- benchmark `1.4`, dataset `1.3.5`, contract `grounded-v2.6`;
 - provider `yandex-alice-ai-llm`;
-- 8/8 API calls; provider errors 0; retries 0; **machine result 8/8 PASS**;
-- mean quality `1.000`; mean grounding `1.000`; language/match consistency `1.000`;
-- p50 `3447.243 ms`; p95 `5500.041 ms`; estimated cost `USD 0.0504295`;
-- all hard-safety counters 0; marker cleanup 0.
+- 8/8 API calls; provider errors 0; retries 0; **machine result 7/8**;
+- mean quality `0.986458`; mean grounding `0.989583`; clean text `1.000`;
+- p50 `3550.43 ms`; p95 `5611.53 ms`; estimated cost `USD 0.053826221`;
+- all cases pass except `cover-letter-en-01`;
+- `unsupported_impact_claim_count=3`; all other unresolved hard counters remain zero.
 
-Named human reviewer **Шекунов Д.С.** did not close the package. Review result: **REVISION REQUIRED**. Required changes: softer RU resume recommendations; explicit safe next step for RU Docker-gap verification/recalculation; RU/EN cover letters written as first-person human applications without surfacing unverified weaknesses. Cases 2/4/7/8 were accepted. Evidence: `docs/evidence/ai-bench-001/alice-final-run-5-human-review.md`.
+### Confirmed failure
 
-### Grounded-v2.6 / evals 1.6.0
+The EN cover letter expanded sparse verified facts into unsupported propositions:
 
-- dataset advances to `1.3.5`, contract to `grounded-v2.6`; benchmark/run schema stays `1.4`;
-- cover-letter caveats stay required in machine/audit output but are omitted from presentation;
-- visible cover-letter hard gate rejects explicit unverified candidate-gap evidence/disclosure, writer labels `candidate/applicant`, and missing first-person voice;
-- unverified-gap paragraphs are no longer repaired into visible motivation;
-- RU resume and RU/EN vacancy prompts implement the named human feedback;
-- old run #5 raw replay is 6/8 under v2.6 because both historical cover letters are now rejected;
-- production application and DB revision `20260819_0014` remain unchanged.
+1. Figma/design systems -> `ensuring a cohesive visual language across products`;
+2. qualitative interviews -> inferred design-decision/user-needs/product-direction effects;
+3. product/engineering collaboration -> inferred implementation/delivery effects.
 
-Next gate: ordinary GitHub CI/package gate -> fresh manual `run_ai_bench_alice_final=true` -> require 8/8 under dataset 1.3.5 / grounded-v2.6 -> focused named human re-review -> closure decision.
+The hard scorer correctly rejected these claims. No threshold is weakened. The opening also included `I’ve long admired how your team approaches product design`, which invents prior employer familiarity not present in source facts; grounded-v2.6.1 adds a dedicated forbidden familiarity regression for that pattern.
+
+### Grounded-v2.6.1 / evals 1.6.1
+
+- dataset advances to `1.3.6`, contract to `grounded-v2.6.1`; benchmark/run schema stays `1.4`;
+- English cover-letter candidate-fit prompt now requires short atomic first-person restatements of verified facts;
+- purpose/benefit/result tails (`to...`, `which...`, `ensuring...`, `helping...`, `informing...`, `aligning...`, `bringing...`) are prohibited unless that proposition is explicitly in cited candidate evidence;
+- invented context such as user needs, business goals, technical requirements, product direction, consistency, scalability and implementation quality is prohibited unless explicitly sourced;
+- motivation can express present interest but cannot invent prior employer/team familiarity;
+- exact run #6 failure patterns and safe literal rewrites are versioned in `evals/regressions/alice-final-run-6.json`;
+- deterministic reference is 8/8 under dataset 1.3.6; production application and DB schema revision `20260819_0014` remain unchanged.
+
+Next gate: ordinary GitHub CI/package gate -> fresh manual `run_ai_bench_alice_final=true` -> require 8/8 under dataset 1.3.6 / grounded-v2.6.1 -> focused named human re-review -> closure decision.
 
 ## 2. Подтверждённый Alice Final run #4
 
@@ -179,10 +188,10 @@ Replay machine-readable evidence: `docs/evidence/ai-bench-001/alice-final-run-1-
 
 ## 6. Local verification package
 
-- focused AI-BENCH unittest/package suite: **74 PASS**;
-- repository test modules in three bounded groups: **364 PASS**, **14 environment-dependent SKIP**, **21 subtests PASS**, 0 confirmed failures;
-- deterministic grounded-v2.6 reference: **8/8 PASS**;
-- reference dataset fingerprint: `126e3ea078b5d6456491056e6c055610012cb0e64fbdacc1a1dc9d09fccbf631`;
+- focused AI-BENCH unittest suite: **90 PASS**;
+- repository test modules in three bounded groups: **368 PASS**, **14 environment-dependent SKIP**, **24 subtests PASS**, 0 confirmed failures;
+- deterministic grounded-v2.6.1 reference: **8/8 PASS**;
+- reference dataset fingerprint: `4828033223fabd10a9442289708bbae0731054ce92595f63f1954940caad3e2f`;
 - cover-letter presentation violations in deterministic reference: **0**;
 - AI-BENCH package gate: PASS;
 - repository hygiene: PASS after generated caches removed;
@@ -192,18 +201,18 @@ Replay machine-readable evidence: `docs/evidence/ai-bench-001/alice-final-run-1-
 
 ## 7. Remaining external gate
 
-1. Upload v1.4.46 / evals 1.6.0 through the normal GitHub PR/CI path.
+1. Upload v1.4.47 / evals 1.6.1 through the normal GitHub PR/CI path.
 2. Require green ordinary `Python tests`, `AI-BENCH-001 package gate`, repository hygiene and all historical gates.
 3. On ordinary push the billable Alice job remains skipped.
-4. After ordinary CI is green, manually run `run_ai_bench_alice_final=true` on `main`. This fresh provider call is required because grounded-v2.6 changes prompts and visible writing semantics.
-5. Fresh artifact must use benchmark `1.4`, dataset `1.3.5`, contract `grounded-v2.6`, provider `yandex-alice-ai-llm`, pass **8/8**, and keep all hard counters at zero.
+4. After ordinary CI is green, manually run `run_ai_bench_alice_final=true` on `main`. This fresh provider call is required because grounded-v2.6.1 changes the EN cover-letter generation prompt.
+5. Fresh artifact must use benchmark `1.4`, dataset `1.3.6`, contract `grounded-v2.6.1`, provider `yandex-alice-ai-llm`, pass **8/8**, and keep all hard counters at zero.
 6. Audit raw/machine/presentation evidence, then repeat named human review primarily for cases 1, 3, 5 and 6 while confirming no regressions in 2, 4, 7 and 8.
 7. Record AI-BENCH-001 closure decision; only then unblock `AI-PROVIDER-001`.
 
 ## 8. Status decision
 
-Historical Alice Final run #5 machine evidence remains **COMPLETE: 8/8**, but the named human gate was **REVISION REQUIRED**.  
-The grounded-v2.6 candidate is therefore **НУЖДАЕТСЯ В ПРОВЕРКЕ** until ordinary CI, a fresh Alice Final 8/8 run and focused named human re-review complete.  
+Alice Final run #6 transport is complete but machine result is **7/8**, so AI-BENCH-001 remains open.  
+The grounded-v2.6.1 candidate is **НУЖДАЕТСЯ В ПРОВЕРКЕ** until ordinary CI, a fresh Alice Final 8/8 run and focused named human re-review complete.  
 Alice AI LLM remains the **PRIMARY CANDIDATE**, not yet a production provider.  
 `AI-PROVIDER-001` remains **BLOCKED**.  
 No production AI provider is connected.
@@ -234,3 +243,5 @@ Artifact `33163009779` / run `ai-bench-20260828T102540Z-bcf4c2ed` completed 8/8 
 | 1.13 | 28.08.2026 | Alice Final run #4 artifact `33165683757`: 8/8 live machine PASS, 0 errors/retries. Artifact audit found grouped known evidence markers in two user-facing EN interview purpose strings. Evals 1.5.3 adds deterministic grouped-marker sanitation; retained raw replay remains 8/8 with 20 cleanups and 0 residual user-facing IDs. Remaining gate: ordinary CI + named human rubric. |
 
 | 1.14 | 13.09.2026 | Run #5 8/8 machine evidence + named human REVISION REQUIRED recorded; grounded-v2.6/evals 1.6.0 writing hardening candidate prepared; fresh Alice + focused human re-review required. |
+
+| 1.15 | 14.09.2026 | Alice Final run #6 artifact `34766480932`: 8/8 transport, 7/8 machine; EN cover letter failed on 3 unsupported inferred effects. Grounded-v2.6.1/evals 1.6.1 atomic candidate-fit and employer-familiarity hardening prepared; fresh Alice 8/8 + focused human re-review required. |

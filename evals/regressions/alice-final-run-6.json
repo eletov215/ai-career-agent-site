@@ -1,0 +1,50 @@
+{
+  "source_run_id": "ai-bench-20260913T154901Z-44d67112",
+  "source_artifact": "ai-bench-001-yandex-alice-final-34766480932.zip",
+  "source_contract": "grounded-v2.6 / benchmark 1.4 / dataset 1.3.5",
+  "observed_status": "8/8 provider calls, 0 errors/retries, 7/8 machine; only cover-letter-en-01 failed with 3 unsupported impact claims",
+  "patterns": {
+    "unsupported_candidate_fit_extensions": [
+      {
+        "case_id": "cover-letter-en-01",
+        "text": "I’ve worked extensively with Figma to develop and maintain design systems, ensuring a cohesive visual language across products.",
+        "evidence_ids": [
+          "c2"
+        ],
+        "expected": "hard failure: inferred consistency/outcome is not present in candidate evidence"
+      },
+      {
+        "case_id": "cover-letter-en-01",
+        "text": "A key part of my process involves conducting qualitative user interviews to gather insights that inform design decisions. This helps me better understand user needs and shape the direction of the product.",
+        "evidence_ids": [
+          "c3"
+        ],
+        "expected": "hard failure: inferred decision impact is not present in candidate evidence"
+      },
+      {
+        "case_id": "cover-letter-en-01",
+        "text": "This cross-functional work has been essential in bringing designs to life and ensuring smooth implementation.",
+        "evidence_ids": [
+          "c4"
+        ],
+        "expected": "hard failure: inferred delivery/quality outcome is not present in candidate evidence"
+      }
+    ],
+    "unsupported_employer_familiarity": {
+      "case_id": "cover-letter-en-01",
+      "text": "I’ve long admired how your team approaches product design.",
+      "expected": "forbidden unless source evidence explicitly establishes prior familiarity with the employer/team"
+    },
+    "safe_atomic_rewrites": [
+      "I have three years of experience as a product designer.",
+      "I work with Figma and design systems.",
+      "I conduct qualitative user interviews.",
+      "I collaborate with product and engineering teams."
+    ]
+  },
+  "policy": {
+    "generation": "English cover-letter candidate-fit text must use short atomic first-person restatements of verified candidate facts. Do not append purpose, benefit, causal, implementation, alignment, decision, consistency, user-needs or other inferred clauses unless the cited candidate evidence explicitly contains that proposition.",
+    "motivation": "Motivation may express present interest in the role/vacancy, but must not invent prior familiarity such as having long admired or followed the employer/team unless source evidence supports it.",
+    "safety": "Existing unsupported-impact scoring remains hard; this patch tightens prompts and regression coverage rather than weakening thresholds or repairing model output."
+  }
+}

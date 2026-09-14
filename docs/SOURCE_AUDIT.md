@@ -1,35 +1,35 @@
-# AI Career Agent - аудит источников v1.4.46
+# AI Career Agent - аудит источников v1.4.47
 
-**Дата:** 13.09.2026  
+**Дата:** 14.09.2026  
 **Production revision:** `20260819_0014`
 
 | Поле | Значение |
 |---|---|
-| Проверяемая кодовая основа | `ai-career-agent-site-main (1).zip`, предоставленный 13.09.2026 как актуальный GitHub `main` snapshot |
+| Проверяемая кодовая основа | GitHub `main` after grounded-v2.6 commit `b1d54b5`; current delta is grounded-v2.6.1 prepared from that state |
 | SHA-256 исходного ZIP | `a8f4d00d747dd20b5cc4b9fc6e49f9ec00148607445add447751592f347210a1` |
-| Проверяемый пакет | AI-BENCH-001 grounded-v2.6 human-writing hardening |
-| Evals | `1.6.0` |
+| Проверяемый пакет | AI-BENCH-001 grounded-v2.6.1 atomic EN cover-letter hardening |
+| Evals | `1.6.1` |
 | Benchmark contract | `1.4` |
-| Dataset | `ai-career-agent-golden-v1` v`1.3.5`, `contract=grounded-v2.6` |
-| External evidence | Alice Final run #5 artifact `33168005097`; run ID `ai-bench-20260828T114615Z-5b0d7a99`; named human reviewer Шекунов Д.С. |
-| Результат | historical live machine gate 8/8 COMPLETE; named human gate = REVISION REQUIRED; grounded-v2.6 candidate needs ordinary CI -> fresh Alice Final -> focused human re-review |
+| Dataset | `ai-career-agent-golden-v1` v`1.3.6`, `contract=grounded-v2.6.1` |
+| External evidence | Alice Final run #6 artifact `34766480932`; run ID `ai-bench-20260913T154901Z-44d67112`; prior named human reviewer Шекунов Д.С. |
+| Результат | run #6 transport 8/8 / machine 7/8; only EN cover-letter impact FAIL; grounded-v2.6.1 candidate needs ordinary CI -> fresh Alice Final 8/8 -> focused human re-review |
 
 ## 1. Source precedence
 
 Пользователь предоставил `ai-career-agent-site-main (1).zip` 13.09.2026 как актуальный snapshot GitHub `main`. Для этой поставки он имеет приоритет над предыдущими архивами. SHA-256 исходного ZIP: `a8f4d00d747dd20b5cc4b9fc6e49f9ec00148607445add447751592f347210a1`. Sanitized Alice artifacts используются только как external benchmark evidence; secret values и production user data в репозиторий не копируются.
 
-Последнее внешнее evidence перед этой правкой — artifact `33168005097`, который прошёл 8/8 machine gate под `grounded-v2.5`, но named human reviewer **Шекунов Д.С.** потребовал writing revisions. Поэтому текущий кодовый delta — не provider selection, а `grounded-v2.6` human-writing hardening.
+Последнее внешнее evidence — artifact `34766480932`, run `ai-bench-20260913T154901Z-44d67112`, выполненный на GitHub `main` с grounded-v2.6. Transport чистый: 8/8 calls, 0 errors/retries. Machine gate = **7/8**; единственный FAIL — `cover-letter-en-01` with 3 unsupported inferred impact claims. Поэтому текущий delta — `grounded-v2.6.1` atomic EN cover-letter hardening, а не provider selection.
 
 
-## 2. Current run #5 + named human audit
+## 2. Prior run #5 + named human audit
 
 Artifact `ai-bench-001-yandex-alice-final-33168005097.zip` / run `ai-bench-20260828T114615Z-5b0d7a99` completed 8/8 provider calls with 0 errors, 0 retries and **8/8 machine PASS**. Mean quality and grounding were `1.000`; p50 `3447.243 ms`, p95 `5500.041 ms`, estimated cost `USD 0.0504295`; all machine hard counters were zero.
 
 Named reviewer **Шекунов Д.С.** then required revisions in four areas: softer RU resume recommendations; actionable RU vacancy-match guidance; and RU/EN cover letters that read as first-person human applications without advertising unverified gaps. Cases 2, 4, 7 and 8 were accepted. Exact review evidence is `docs/evidence/ai-bench-001/alice-final-run-5-human-review.md`; numeric scores are recorded only where the reviewer explicitly supplied them.
 
-Grounded-v2.6 / evals 1.6.0 applies only to the benchmark layer:
+Grounded-v2.6.1 / evals 1.6.1 applies only to the benchmark layer:
 
-- dataset `1.3.5`, contract `grounded-v2.6`;
+- dataset `1.3.6`, contract `grounded-v2.6.1`;
 - softer conditional RU coaching prompt;
 - vacancy recommendation prompt explains `confirm/update -> deterministic recalculation` and forbids invented future percentages;
 - cover-letter caveats remain required internal audit metadata but are excluded from `presentation/`;
@@ -159,27 +159,27 @@ Replay не заменяет fresh live verification, потому что обн
 | Check | Result |
 |---|---|
 | AI-BENCH package gate | PASS |
-| Focused AI-BENCH unittest/package suite | 74 PASS |
-| Deterministic grounded-v2.6 reference | 8/8 PASS |
-| Dataset fingerprint | `126e3ea078b5d6456491056e6c055610012cb0e64fbdacc1a1dc9d09fccbf631` |
+| Focused AI-BENCH unittest suite | 90 PASS |
+| Deterministic grounded-v2.6.1 reference | 8/8 PASS |
+| Dataset fingerprint | `4828033223fabd10a9442289708bbae0731054ce92595f63f1954940caad3e2f` |
 | Cover-letter presentation violations in reference | 0 |
-| Repository regression groups | 364 PASS, 14 environment-dependent skips, 21 subtests PASS |
+| Repository regression groups | 368 PASS, 14 environment-dependent skips, 24 subtests PASS |
 | Repository hygiene | PASS after generated caches removed |
 
 14 local skips require complete GitHub CI Flask/Psycopg/PostgreSQL dependencies and are not claimed as locally passed.
 
 ## 6. Production boundary
 
-Изменения ограничены AI-BENCH runner/scoring/config/fixtures/regressions/tests/scripts, benchmark evidence и документацией. Production application files - `app.py`, runtime `config.py`, models, repositories, routes, production services, templates, static assets, migrations, requirements and Render manifests - не меняются для grounded-v2.6.
+Изменения ограничены AI-BENCH runner/scoring/config/fixtures/regressions/tests/scripts, benchmark evidence и документацией. Production application files - `app.py`, runtime `config.py`, models, repositories, routes, production services, templates, static assets, migrations, requirements and Render manifests - не меняются для grounded-v2.6.1.
 
 Production schema остаётся `20260819_0014`. GitHub/Yandex secret values отсутствуют в source и generated benchmark evidence.
 
 ## 7. Current gate
 
-1. Green ordinary GitHub CI на v1.4.46 / evals 1.6.0.
+1. Green ordinary GitHub CI на v1.4.47 / evals 1.6.1.
 2. При ordinary push billable Alice job должен быть skipped.
 3. После green ordinary CI - manual `run_ai_bench_alice_final=true` на `main`.
-4. Fresh run должен быть benchmark `1.4`, dataset `1.3.5`, contract `grounded-v2.6`, provider `yandex-alice-ai-llm` и дать **8/8 machine PASS**.
+4. Fresh run должен быть benchmark `1.4`, dataset `1.3.6`, contract `grounded-v2.6.1`, provider `yandex-alice-ai-llm` и дать **8/8 machine PASS**.
 5. Все hard-safety/presentation counters должны оставаться zero; любые допустимые deterministic repairs должны быть audited.
 6. Скачать artifact и проверить raw/machine/presentation evidence.
 7. Провести focused named human re-review прежде всего cases 1, 3, 5 и 6 и проверить отсутствие regression в 2, 4, 7 и 8.
@@ -188,7 +188,7 @@ Production schema остаётся `20260819_0014`. GitHub/Yandex secret values 
 ## 8. Status decision
 
 Historical run #5 machine gate - **8/8 COMPLETE**, named human gate - **REVISION REQUIRED**.  
-`AI-BENCH-001 grounded-v2.6` - **НУЖНА ПРОВЕРКА** ordinary CI -> fresh Alice Final -> focused named human re-review.  
+`AI-BENCH-001 grounded-v2.6.1` - **НУЖНА ПРОВЕРКА** ordinary CI -> fresh Alice Final 8/8 -> focused named human re-review.  
 Ранее завершённые production-пакеты остаются **ВЫПОЛНЕНО**.  
 `AI-PROVIDER-001` остаётся **ЗАБЛОКИРОВАНО**.
 
@@ -214,3 +214,13 @@ Source basis: current `main (27)` plus Alice Final artifact `33066898884`. The i
 ### v1.4.44 source delta
 
 Source basis: current `main (28)` plus Alice Final artifact `33163009779`. The implementation delta is limited to AI-BENCH scoring/normalization, RU/EN benchmark prompts, versioned regression/tests/package checks, workflow labels, replay evidence and canonical documentation. Production application files and database revision remain unchanged.
+
+
+## 14.09.2026 addendum — run #6 / Neon staging recovery
+
+- Alice Final run #6 artifact `34766480932`: 8/8 calls, 0 errors/retries, 7/8 machine; only `cover-letter-en-01` failed with 3 unsupported inferred impacts.
+- Grounded-v2.6.1 keeps hard safety gates unchanged and tightens only English cover-letter generation plus regression coverage.
+- Render Free PostgreSQL expired/suspended; Render web staging was re-pointed to Neon PostgreSQL in Oregon. `/health/ready` confirmed `status=ok`, persistent PostgreSQL and migration/revision `20260819_0014`. Old Render DB data was not migrated.
+- No production application route/model/migration changes are introduced by this package.
+
+| 1.4.47 | 14.09.2026 | Run #6 7/8 reviewed; grounded-v2.6.1/evals 1.6.1 atomic EN cover-letter hardening + Neon staging DB recovery documented; fresh Alice 8/8 and focused human re-review remain required. |
