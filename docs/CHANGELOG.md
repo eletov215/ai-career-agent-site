@@ -1,3 +1,15 @@
+# 1.4.50 - AI-PROVIDER-001 owner-approved tier/limit architecture - 14.09.2026
+
+- Recorded owner approval by Шекунов Д.С. after green candidate r1 GitHub CI #261.
+- Kept Yandex Alice AI LLM as primary provider; no automatic unqualified generative fallback.
+- Required explicit user notice when AI is unavailable while vacancy search, career profile and manual resume editing remain available.
+- Separated internal technical safety guards from commercial plan entitlements.
+- Set initial non-commercial beta guards: 100 requests/user/day, 1000 global/day, RUB 200/user/day, RUB 1000/global/day, RUB 20000/global/month.
+- Added reproducible owner workload scenario: three resumes + 30 AI matches + 12-15 letters = RUB 85.92-92.04 base, RUB 103.104-110.448 with 20% planning buffer.
+- Defined commercial launch intent as Free + Standard; Max remains architecture-reserved; exact quotas deferred to BILL-001 after usage evidence.
+- Required AI-001 to use a central mutable quota/entitlement layer; provider adapter must not hard-code tariff numbers.
+- No production routes/models/migrations/secrets/provider calls changed. Final r2 ordinary CI remains the closure gate.
+
 # AI Career Agent - CHANGELOG
 
 ## 2026-09-14 - AI-PROVIDER-001 strategy candidate / plan 1.4.49

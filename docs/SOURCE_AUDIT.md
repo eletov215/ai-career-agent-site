@@ -1,15 +1,15 @@
-# AI Career Agent - source audit v1.4.49
+# AI Career Agent - source audit v1.4.50
 
 | Поле | Значение |
 |---|---|
 | Document | SOURCE_AUDIT |
-| Version | 1.4.49 |
+| Version | 1.4.50 |
 | Date | 2026-09-14 |
 | Package | AI-PROVIDER-001 |
 | Input | ai-career-agent-site-main (30).zip |
 | Input ZIP SHA-256 | 98d7d63bb76bc310ee0b27f29e6f252e275cb40ece7c3cd9905551924a14b10b |
 | Source file count | 407 |
-| Canonical plan / passport | 1.4.49 / 2.63 |
+| Canonical plan / passport | 1.4.50 / 2.64 |
 | Package status | НУЖНА ПРОВЕРКА |
 | Production revision | 20260819_0014; unchanged |
 
@@ -52,6 +52,11 @@ The offline specification rejects runtime activation, fake approval, unsafe logg
 
 Production AI integration remains disabled. The benchmark adapter lacks a production no-logging header; AI-001 must implement the agreed transport instead of blindly importing it. Legal review, actual account checks, opt-out confirmation and production-IP transport are later activation gates, not falsely reported as passed.
 
+
+## 4.1 Owner-approved commercial-access revision
+
+After candidate r1 CI passed, the owner approved the strategy with these refinements: explicit manual-mode warning; internal technical cost guards only at this stage; Free + Standard launch intent; Max reserved in architecture; exact commercial quotas deferred until real usage/BILL-001. The accepted planning scenario is reproduced by the policy cost report. These changes do not alter provider qualification, prompts, production runtime or database schema.
+
 ## 5. Code and deployment boundary
 
 No production route, service, model, schema, dependency, template, static asset, Render manifest or accepted evals file changes. The manifest protects 223 runtime/benchmark files. New execution is restricted to offline scripts/tests and a CI verification step. The package checker accepts LF/CRLF equivalence for text checkout; release packing additionally checks exact original bytes.
@@ -63,18 +68,19 @@ Staging is Render web + clean Neon PostgreSQL in Oregon, with earlier readiness/
 <!-- LOCAL-RESULTS:START -->
 | Local check | Measured result |
 |---|---|
-| Full available pytest | 412 passed, 14 skipped, 81 subtests passed; 0 failed |
-| Focused AI-PROVIDER unittest | 44 passed; subset of full suite |
+| Full available pytest | 415 passed, 14 skipped, 81 subtests passed; 0 failed |
+| Focused AI-PROVIDER unittest | 47 passed; subset of full suite |
 | Focused accepted AI-BENCH unittest | 90 passed; subset of full suite |
 | Provider policy/package gate | PASS |
 | Accepted benchmark package gate | PASS, including deterministic reference 8/8 |
 | Document structure / infra manifests | PASS / PASS |
-| Runtime and evals byte boundary | 223 preserved files unchanged |
+| Repository hygiene | PASS after local cache cleanup |
+| Production/evals protected boundary | PASS through preserved-file manifest |
 
-Local Python is 3.13; GitHub still checks the repository's declared environment. Fourteen skips require unavailable Flask/Psycopg/PostgreSQL components. They are not claimed as passed. Focused totals must not be added to the full-suite count. Exact evidence: `docs/evidence/ai-provider-001/local_verification.json`.
+Fourteen local skips require Flask/Psycopg/PostgreSQL components unavailable in this container and are not counted as passed. Candidate r1 GitHub CI run #261 is already green; r2 still requires its own ordinary CI after upload. Exact machine evidence: `docs/evidence/ai-provider-001/local_verification.json`.
 <!-- LOCAL-RESULTS:END -->
 
-New GitHub CI and owner strategy approval remain external gates. Paid Alice calls are unnecessary because its accepted prompts, fixtures and scorer are unchanged. No external account, billing or production settings were changed.
+Candidate r1 GitHub CI run #261 is green and owner strategy approval is explicit. Final r2 GitHub CI remains the only package-level external gate. Paid Alice calls are unnecessary because its accepted prompts, fixtures and scorer are unchanged. No external account, billing or production settings were changed.
 
 ## 7. Limitations and rollback
 
@@ -90,5 +96,6 @@ Ordinary CI + explicit owner strategy approval -> close AI-PROVIDER-001 -> LEGAL
 
 | Version | Date | Change |
 |---|---|---|
+| 1.4.50 | 2026-09-14 | Owner-approved tier/limit revision; r1 CI green; final r2 CI pending |
 | 1.4.49 | 2026-09-14 | Latest-source audit; canonical drift reconciliation; provider strategy candidate, price/data rules and offline tests |
 | 1.4.48 | 2026-09-14 | Accepted final Alice8/8 + qualitative named human closure; preserved as historical evidence |

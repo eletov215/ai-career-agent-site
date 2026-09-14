@@ -56,9 +56,34 @@ class ProviderPolicyTests(unittest.TestCase):
         self.assertTrue(validate_policy(self.policy))
         with self.assertRaises(PolicyError):route_preview(self.policy,'cover_letter','ru','RU')
 
-    def test_cannot_fabricate_owner_approval(self):
-        self.policy['owner_approval']='approved'
+    def test_owner_approval_is_explicit_and_cannot_revert(self):
+        self.assertEqual('approved', self.policy['owner_approval'])
+        self.policy['owner_approval']='pending'
         self.assertTrue(validate_policy(self.policy))
+
+    def test_manual_fallback_requires_user_notice(self):
+        self.assertTrue(self.policy['routing']['fallback_user_notice_required'])
+        self.assertEqual('manual_without_generation', self.policy['routing']['fallback'])
+        self.assertEqual(['vacancy_search','career_profile','resume_editor'], self.policy['routing']['manual_mode_features'])
+        p=deepcopy(self.policy);p['routing']['fallback_user_notice_required']=False
+        self.assertTrue(validate_policy(p))
+
+    def test_commercial_tier_architecture_is_reserved_without_quota_values(self):
+        c=self.policy['commercial_access']
+        self.assertEqual(['free','standard'],c['launch_tiers'])
+        self.assertEqual(['max'],c['reserved_tiers'])
+        self.assertIsNone(c['commercial_quota_values'])
+        self.assertFalse(c['tokens_user_visible'])
+        self.assertEqual('feature_actions_not_tokens',c['user_visible_meter'])
+        self.assertFalse(c['failed_generation_consumes_user_entitlement'])
+
+    def test_internal_guards_are_not_commercial_entitlements(self):
+        limits=self.policy['limits']
+        self.assertEqual('200.00',limits['user_daily_budget_rub'])
+        self.assertEqual('1000.00',limits['global_daily_budget_rub'])
+        self.assertEqual('20000.00',limits['global_monthly_budget_rub'])
+        self.assertIn('not_commercial_entitlement',limits['budget_status'])
+        self.assertTrue(limits['provider_adapter_must_not_embed_commercial_limits'])
 
     def test_missing_field_rejected(self):
         del self.policy['primary']['required_headers']
@@ -143,7 +168,7 @@ class ProviderPolicyTests(unittest.TestCase):
         self.assertTrue(validate_policy(self.policy))
 
     def test_budget_ordering(self):
-        self.policy['limits']['user_daily_budget_rub']='101.00'
+        self.policy['limits']['user_daily_budget_rub']='1001.00'
         self.assertTrue(validate_policy(self.policy))
 
     def test_invalid_monetary_values(self):
@@ -192,6 +217,12 @@ class ProviderPolicyTests(unittest.TestCase):
         self.assertEqual(Decimal('0.055999991040'),Decimal(report['totals']['usd_excluding_vat']))
         self.assertLess(abs(Decimal('0.055999992')-Decimal(report['totals']['usd_excluding_vat'])),Decimal('0.000000001'))
         self.assertFalse(report['provider_call_allowed'])
+        heavy=report['heavy_user_scenario']['rub']
+        self.assertEqual(Decimal('85.92'),Decimal(heavy['base_min']))
+        self.assertEqual(Decimal('92.04'),Decimal(heavy['base_max']))
+        self.assertEqual(Decimal('103.1040'),Decimal(heavy['with_buffer_min']))
+        self.assertEqual(Decimal('110.4480'),Decimal(heavy['with_buffer_max']))
+        self.assertGreater(Decimal(self.policy['limits']['user_daily_budget_rub']), Decimal(heavy['with_buffer_max']))
 
     def test_wrong_run_cannot_be_cost_evidence(self):
         with self.assertRaises(PolicyError):cost_report(self.policy,{'run_id':'not-the-accepted-run'})
@@ -224,7 +255,7 @@ class ProviderPolicyTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             self.assertTrue(validate_package(Path(tmp)))
 
-    def test_active_canonical_status_is_pending(self):
+    def test_active_canonical_status_is_pending_final_ci(self):
         root = POLICY_PATH.parents[2]
         plan = (root / 'docs/PLAN_CURRENT.md').read_text(encoding='utf-8')
         passport = (root / 'docs/PROJECT_PASSPORT.md').read_text(encoding='utf-8')
@@ -239,7 +270,7 @@ class ProviderPolicyTests(unittest.TestCase):
         pending = "\u041d\u0423\u0416\u041d\u0410 \u041f\u0420\u041e\u0412\u0415\u0420\u041a\u0410"
         for bad_plan in (
             plan[:start] + plan[start:end].replace(pending, "\u0412\u042b\u041f\u041e\u041b\u041d\u0415\u041d\u041e") + plan[end:],
-            plan.replace('PLAN_CURRENT 1.4.49;', 'PLAN_CURRENT 1.4.22;'),
+            plan.replace('PLAN_CURRENT 1.4.50;', 'PLAN_CURRENT 1.4.22;'),
             plan.replace('| AI-PROVIDER-001 |', '| deleted-provider-card |'),
         ):
             with self.subTest(case=bad_plan[:30]):

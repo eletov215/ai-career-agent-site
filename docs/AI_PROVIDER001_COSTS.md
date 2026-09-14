@@ -4,83 +4,93 @@
 |---|---|
 | Document | AI_PROVIDER001_COSTS |
 | Package | AI-PROVIDER-001 |
-| Version | 1.0 |
+| Version | 1.1 |
 | Date | 2026-09-14 |
-| Status | НУЖНА ПРОВЕРКА; owner decision and external CI pending |
-| Scope | Architecture and offline validation only; no production AI activation |
+| Status | Owner-approved model; final ordinary CI pending |
+| Scope | Planning and offline validation only; no billing or production AI activation |
 | Schema revision | 20260819_0014 (unchanged) |
 
-## 1. Price basis and scope
+## 1. Price basis
 
-Prices checked on 2026-09-14 [S1]: synchronous Alice input RUB 0.5 / output RUB 1.2 per 1000 tokens, including VAT. Separate USD tariffs exclude VAT. This report does not convert currencies. No cache discount, grant, tool call or asynchronous discount is assumed.
+Price snapshot checked on 2026-09-14 [S1]: synchronous Alice input RUB 0.5 / output RUB 1.2 per 1000 tokens, VAT included. Formula: `cost = (input_tokens * input_rate + output_tokens * output_rate) / 1000`. The provider invoice remains authoritative.
 
-Formula: `cost = (input_tokens * input_rate + output_tokens * output_rate) / 1000`.
-`reserve = maximum_per_attempt_cost * permitted_attempts`.
+The accepted eight-case benchmark reprices to **5120 input + 3560 output tokens = RUB 6.832**. This is synthetic evidence, not a production workload average.
 
-Calculations use `Decimal`, not binary floating-point. API usage fields from the accepted synthetic artifact are the empirical input; the prices are a dated external snapshot. This is neither an invoice nor a representative commercial workload forecast.
+## 2. Planning examples
 
-## 2. Repriced accepted synthetic run
+| Input / output tokens | One attempt, RUB | Two-attempt reserve, RUB |
+|---|---:|---:|
+| 1000 / 300 | 0.86 | 1.72 |
+| 4000 / 700 | 2.84 | 5.68 |
+| 8000 / 1600 | 5.92 | 11.84 |
 
-| Case | Input tokens | Output tokens | RUB incl. VAT |
-|---|---|---|---|
-| resume-analysis-ru-01 | 346 | 532 | 0.8114 |
-| resume-analysis-en-01 | 257 | 501 | 0.7297 |
-| vacancy-match-ru-01 | 444 | 312 | 0.5964 |
-| vacancy-match-en-01 | 422 | 280 | 0.547 |
-| cover-letter-ru-01 | 922 | 190 | 0.689 |
-| cover-letter-en-01 | 1285 | 211 | 0.8957 |
-| interview-ru-01 | 740 | 738 | 1.2556 |
-| interview-en-01 | 704 | 796 | 1.3072 |
+These examples exclude hosting, database, payment processing and future storage.
 
-Total: **5120 input + 3560 output tokens; RUB 6.832** for eight cases at the checked RUB tariff. The same counts evaluated using the USD tariff give approximately USD 0.056 excluding VAT, consistent with the artifact's rounded USD 0.055999992. These are two tariff-based calculations, not a currency exchange.
+## 3. Owner heavy-use scenario
 
-Mean repriced synthetic cost by task (two languages each): resume analysis RUB 0.77055; vacancy match RUB 0.57170; cover letter RUB 0.79235; interview questions RUB 1.28140. Two examples per task cannot establish a production mean.
+Planning assumptions (not measured averages):
 
-## 3. Planning scenarios, not measured requests
+- 3 resumes;
+- 2 AI calls per resume (initial + one refinement), each assumed 4000 input / 1200 output tokens;
+- 10 AI-reviewed shortlisted vacancies per resume = 30 match calls, each 2000 / 300 tokens;
+- 4-5 cover letters per resume = 12-15 letters, each 3000 / 450 tokens.
 
-| Assumption | Input / output | One attempt, RUB | Two-attempt reserve, RUB | 1000 one-attempt jobs, RUB |
-|---|---|---|---|---|
-| Sparse profile illustration | 1000 / 300 | 0.86 | 1.72 | 860 |
-| Richer profile illustration | 4000 / 700 | 2.84 | 5.68 | 2840 |
-| Proposed token ceilings | 8000 / 1600 | 5.92 | 11.84 | 5920 |
+| Component | Estimated RUB |
+|---|---:|
+| 6 resume calls | 20.64 |
+| 30 vacancy-match calls | 40.80 |
+| 12-15 cover letters | 24.48-30.60 |
+| **Base total** | **85.92-92.04** |
+| **With 20% operational buffer** | **103.104-110.448** |
 
-These values exclude hosting, PostgreSQL, future file storage, taxes not covered by the chosen tariff and other product costs. Output length is not forced to reach the ceiling; richer input does not guarantee useful longer prose. A billable retry or a larger system prompt increases usage.
+The buffer covers longer payloads, bounded retries and variance. It is not a forecast of average customer cost.
 
-The 1600-output-token cap matches the accepted benchmark configuration. The 8000-input cap and workload examples are new proposals, not existing production behavior. Changes require review and appropriate evaluation.
+## 4. Approved technical safety guards
 
-## 4. Proposed conservative development caps
+| Control | Initial beta guard | Meaning |
+|---|---:|---|
+| User logical requests | 100/day | Anti-loop/abuse guard; not a tariff quota |
+| Global logical requests | 1000/day | Service safety guard; operator-adjustable |
+| User provider-cost ceiling | RUB 200/day | Emergency spend ceiling; hidden from commercial packaging |
+| Global provider-cost ceiling | RUB 1000/day | Initial beta service ceiling |
+| Global provider-cost ceiling | RUB 20000/month | Initial beta monthly ceiling |
+| Concurrent calls | 2 global / 1 per user | Technical concurrency bound |
+| Attempts | max 2 | Only eligible transient failures |
+| Input/output | 8000 / 1600 tokens | Planning payload ceiling |
 
-| Control | Proposal | Status |
-|---|---|---|
-| Concurrent provider calls | 2 globally, 1 per user | Not runtime-enforced yet |
-| Attempts per logical request | At most 2, only eligible errors | Not a success guarantee |
-| User request count | 10 per UTC day | Budget cap can stop earlier |
-| Global request count | 100 per UTC day | Budget cap can stop earlier |
-| User budget | RUB 20 per UTC day | Proposal, not a tariff to charge users |
-| Global budget | RUB 100 per UTC day, RUB 1000 per UTC calendar month | Proposal, not permission to spend |
-| Input / output caps | 8000 / 1600 tokens | Full payload must be counted |
+These values must live in a central server-side quota policy, not inside the Alice adapter. They can be adjusted as active-user count changes. A future admin control may edit them; AI-001 must at minimum make them centralized and testable.
 
-At maximum reservation (RUB 11.84), a user budget of RUB 20 permits only one simultaneously reserved maximum-cost operation until settlement. Daily monetary caps are not automatically multiplied into a payment authorization. The monthly cap wins even if daily limits remain available.
+## 5. Commercial tiers are deliberately not priced here
 
-The provider's documented concurrency quota [S3] is not the application's own budget or rate limit. Actual account quotas must be checked before enabling calls. Cloud budget alerts are not assumed to be hard cost cut-offs.
+Commercial access is separate from technical guards:
 
-## 5. Reproduction and verification
+- launch intent: **Free + Standard**;
+- **Max** is architecture-reserved, not launched;
+- exact Free/Standard monthly action quotas are `unset` until usage data exists;
+- user-facing limits should be expressed as actions (analysis, match, letters, interviews), not tokens;
+- BILL-001 owns subscription price, payment provider and commercial quota values.
 
-Run offline from the repository root:
+Free should demonstrate a complete small value loop while preserving a reason to upgrade. Standard should cover normal active job search without constant token accounting. Max is introduced only if real demand justifies it.
+
+## 6. Accounting contract for AI-001
+
+AI-001 must record operation/task, input/output tokens, provider/model alias, estimated/reserved/settled cost and outcome. Reserve the maximum allowed cost atomically before dispatch; settle from returned usage; keep uncertain reservation when the upstream outcome is unknown. A failed generation should not consume a user's future commercial entitlement, even if provider-side spend must still be reconciled.
+
+The stricter technical cap wins. Commercial entitlements are checked separately and must not be encoded in the provider adapter.
+
+## 7. Reproduction
 
 ```bash
-python scripts/ai_provider_policy.py
 python scripts/ai_provider_policy.py --cost-report
 python scripts/check_ai_provider_package.py
 python -m unittest discover -s tests -p 'test_ai_provider*.py' -v
 ```
 
-`docs/evidence/ai-provider-001/cost_snapshot.json` is reproducible from the checked policy and immutable accepted summary. The checker fails when recorded costs drift. No secrets, API calls or production records are used.
+`docs/evidence/ai-provider-001/cost_snapshot.json` is reproducible from the policy and accepted benchmark summary.
 
-## 6. Rollback, next action and version log
-
-Reverting the offline report has no billing effect. Actual budget enforcement is an AI-001 deliverable. Owner approval is needed for the proposed caps; commercial pricing and subscriptions remain BILL-001, not this package.
+## 8. Version log
 
 | Version | Date | Change |
 |---|---|---|
-| 1.0 | 2026-09-14 | Source-priced cost model and conservative proposal; no live spending authorized |
+| 1.0 | 2026-09-14 | Candidate cost model and conservative proposal |
+| 1.1 | 2026-09-14 | Owner scenario, RUB 200 technical user guard, central mutable limits, Free+Standard/Max separation |

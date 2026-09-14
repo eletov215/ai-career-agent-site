@@ -6,17 +6,17 @@
 | Поле | Значение |
 |---|---|
 | Current package | AI-PROVIDER-001 - НУЖНА ПРОВЕРКА |
-| Source code | Latest uploaded GitHub snapshot `ai-career-agent-site-main (30).zip`; 407 files |
-| Canonical versions | PLAN 1.4.49; PASSPORT 2.63; SOURCE_AUDIT 1.4.49; AI-BENCH verification 1.16; provider ADR 1.0 |
-| AI-BENCH-001 | ВЫПОЛНЕНО; accepted artifact `34830877796`, eight cases PASS and named human acceptance |
-| Provider decision | Alice primary; manual reserve without generation; proposed limits/data policy; owner approval pending |
-| Production AI | Not implemented or activated; policy JSON is an offline specification |
-| Staging | Render web + clean Neon PostgreSQL (Oregon); previous readiness/site/search smoke confirmed |
-| Database schema | `20260819_0014`; unchanged |
-| Current verification | Local results in AI_PROVIDER001_VERIFICATION_STATUS; new external CI not yet run |
-| Next package | LEGAL-001 after owner strategy approval and ordinary CI; AI-001 remains later |
+| Source code | GitHub `main` after AI-PROVIDER-001 candidate r1; ordinary CI #261 green; this r2 records owner-approved strategy and awaits final CI |
+| Canonical versions | PLAN 1.4.50; PASSPORT 2.64; SOURCE_AUDIT 1.4.50; AI-BENCH verification 1.16; provider ADR 1.1 |
+| AI-BENCH-001 | ВЫПОЛНЕНО; accepted artifact `34830877796`, 8/8 machine PASS and named human acceptance |
+| Provider decision | APPROVED by Шекунов Д.С.: Alice primary; manual mode with explicit warning; internal technical guards only; Free + Standard launch intent; Max architecture reserved |
+| Commercial quotas | Exact Free/Standard action quotas intentionally unset until usage evidence and BILL-001; users see feature actions, not tokens |
+| Production AI | Not implemented or activated; policy JSON remains an offline architecture specification |
+| Staging | Render web + clean Neon PostgreSQL (Oregon); schema `20260819_0014` |
+| Current verification | Previous r1 ordinary CI green; r2 local checks recorded in AI_PROVIDER001_VERIFICATION_STATUS; final ordinary CI pending |
+| Next package | LEGAL-001 after final ordinary CI; AI-001 remains the later runtime integration package |
 
-The supplied canonical 1.4.48/2.62/1.16 files are authentic current inputs, but repository docs still contained the pre-closure status. This release reconciles them explicitly. Older dated evidence below remains historical and is not today's gate. No benchmark rerun or Render secret change is required for this architecture-only package.
+This revision separates technical cost guards from commercial entitlements. Internal caps protect the service during development/beta; tariff quotas belong to BILL-001 and must not be hard-coded in the provider adapter.
 
 <!-- ACA-CANONICAL-STATUS:END -->
 
@@ -26,7 +26,7 @@ Career-support web service: account -> confirmed career profile -> resume -> rea
 
 ## 2. Current work and checks
 
-AI-BENCH-001 is complete on synthetic grounded-v2.6.1 / dataset 1.3.6 / evals 1.6.1. AI-PROVIDER-001 is an offline architecture candidate; the application still has no production AI provider.
+AI-BENCH-001 is complete on synthetic grounded-v2.6.1 / dataset 1.3.6 / evals 1.6.1. AI-PROVIDER-001 is an owner-approved offline architecture revision awaiting final CI; the application still has no production AI provider.
 
 ```bash
 python scripts/check_ai_provider_package.py
@@ -48,7 +48,7 @@ Read `docs/AI_PROVIDER001_DECISION.md`, `docs/AI_PROVIDER001_COSTS.md`, `docs/AI
 
 Existing Render web uses clean Neon PostgreSQL staging at revision `20260819_0014`. No environment variables or schema changes are needed for this package. INFRA-001 remains the pre-release VPS field test. Actual data-location, backup, mail-delivery and production AI activation gates are not bypassed by healthy staging.
 
-After owner strategy approval and green ordinary CI: LEGAL-001 -> AI-001. Do not enable production AI or change billing settings as part of this patch.
+Owner strategy approval is recorded. After final green ordinary CI: LEGAL-001 -> AI-001. Do not enable production AI or change billing settings as part of this patch.
 
 ## 5. Upload and security
 

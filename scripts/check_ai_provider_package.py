@@ -31,7 +31,7 @@ def validate_canonical_status(plan: str, passport: str) -> list[str]:
     status = "**\u0421\u0442\u0430\u0442\u0443\u0441:**"
     card = re.search(r"^#### AI-PROVIDER-001[^\n]*\n(.*?)(?=^#### |\Z)", plan, re.M | re.S)
     if card is None or status + " " + pending not in card.group(1):
-        errors.append("AI-PROVIDER-001 card must remain pending owner approval and CI")
+        errors.append("AI-PROVIDER-001 card must remain pending final CI")
     roadmap = next((line for line in plan.splitlines() if line.startswith("| AI-PROVIDER-001 |")), "")
     if pending not in roadmap:
         errors.append("AI-PROVIDER-001 roadmap must remain pending")
@@ -40,7 +40,7 @@ def validate_canonical_status(plan: str, passport: str) -> list[str]:
         if "AI-PROVIDER-001" not in current or pending not in current:
             errors.append(label + " active status is inconsistent")
     doc = re.search(r"^#### DOC-001[^\n]*\n(.*?)(?=^### |\Z)", plan, re.M | re.S)
-    if doc is None or not all(v in doc.group(1) for v in ("1.4.49", "2.63", "20260819_0014", pending)):
+    if doc is None or not all(v in doc.group(1) for v in ("1.4.50", "2.64", "20260819_0014", pending)):
         errors.append("DOC-001 active version inventory is stale")
     return errors
 
@@ -91,7 +91,7 @@ def validate(root: Path = ROOT) -> list[str]:
         plan = (root / "docs/PLAN_CURRENT.md").read_text(encoding="utf-8")
         passport = (root / "docs/PROJECT_PASSPORT.md").read_text(encoding="utf-8")
         errors.extend(validate_canonical_status(plan, passport))
-        if "1.4.49" not in plan or "2.63" not in passport:
+        if "1.4.50" not in plan or "2.64" not in passport:
             errors.append("current canonical versions are not synchronized")
         workflow = (root / ".github/workflows/ci.yml").read_text(encoding="utf-8")
         if "python scripts/check_ai_provider_package.py" not in workflow:
@@ -108,7 +108,7 @@ def validate(root: Path = ROOT) -> list[str]:
 def main() -> int:
     errors = validate()
     print(json.dumps({"ok":not errors,"package":"AI-PROVIDER-001","scope":"offline only",
-                      "owner_approval":"pending","external_ci":"not_attested_by_local_check","errors":errors},ensure_ascii=False,indent=2))
+                      "owner_approval":"approved","external_ci":"not_attested_by_local_check","errors":errors},ensure_ascii=False,indent=2))
     return int(bool(errors))
 
 

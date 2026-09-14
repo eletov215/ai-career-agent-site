@@ -4,9 +4,9 @@
 |---|---|
 | Document | AI_PROVIDER001_DATA_AND_FAILURE_POLICY |
 | Package | AI-PROVIDER-001 |
-| Version | 1.0 |
+| Version | 1.1 |
 | Date | 2026-09-14 |
-| Status | НУЖНА ПРОВЕРКА; owner decision and external CI pending |
+| Status | УТВЕРЖДЕНО ВЛАДЕЛЬЦЕМ; final ordinary CI pending |
 | Scope | Architecture and offline validation only; no production AI activation |
 | Schema revision | 20260819_0014 (unchanged) |
 
@@ -59,11 +59,11 @@ These environment names are not read by the current application. No Render envir
 
 Proposed wall-clock limits: 25 seconds per attempt, at most two attempts, delay at most two seconds, whole operation at most 55 seconds. These are design choices, not measured SLA values. Connect/read timeouts alone do not guarantee a wall-clock deadline; AI-001 must enforce cancellation/deadlines across layers.
 
-Fallback wording must say AI is unavailable or the draft needs revision; never imply another generation succeeded. No automatic resume changes, job applications or employer messages.
+Manual fallback is mandatory when generation is unavailable. The user-facing UI must explicitly say that AI is temporarily unavailable and that manual functions remain available; it must never imply another model succeeded. Vacancy search, career profile and manual resume editing remain usable. A failed generation does not consume a future commercial entitlement, although uncertain provider cost remains reserved until reconciled. No automatic resume changes, job applications or employer messages.
 
 ## 5. Cost accounting and idempotency contract for AI-001
 
-Compute input size including system instructions, schema, history, evidence and user input. When oversized, select relevant confirmed facts transparently or ask for narrower scope; do not silently drop a material job requirement. Reserve the maximum possible cost of all permitted attempts atomically against user/day, global/day and month caps. The stricter cap wins.
+Compute input size including system instructions, schema, history, evidence and user input. When oversized, select relevant confirmed facts transparently or ask for narrower scope; do not silently drop a material job requirement. Reserve the maximum possible cost of all permitted attempts atomically against technical user/day, global/day and month caps. The stricter guard wins. Commercial plan entitlements are a separate check: AI-001 must read them from a central quota layer, while BILL-001 later supplies Free/Standard values. The provider adapter must not contain tariff numbers.
 
 Use a durable request identifier plus owner/task/profile-version/vacancy-version/prompt-version context to prevent double-clicks and queue redeliveries from silently charging twice. Do not hold database locks during network I/O. Record dispatch/settlement state and each billable attempt. Unknown usage keeps its reservation until reconciled; negative or missing usage is not zero. The provider invoice remains authoritative. Usage rounding must never under-reserve the budget.
 
@@ -86,3 +86,4 @@ Owner review plus ordinary CI, then LEGAL-001; no paid live benchmark or new sec
 | Version | Date | Change |
 |---|---|---|
 | 1.0 | 2026-09-14 | Proposed data, consent, secrets, failure, accounting and activation boundaries |
+| 1.1 | 2026-09-14 | Owner-approved manual-mode warning and separation of technical cost guards from future commercial entitlements |

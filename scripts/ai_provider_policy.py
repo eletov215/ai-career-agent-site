@@ -71,9 +71,9 @@ def _iso_date(value: Any) -> bool:
 # Deliberately closed specification: changes to capabilities require review/tests.
 SCHEMA: dict[str, Any] = {
     "schema_version": _exact("1.0"), "package": _exact("AI-PROVIDER-001"),
-    "policy_version": _exact("1.0.0"), "checked_on": _iso_date,
+    "policy_version": _exact("1.1.0"), "checked_on": _iso_date,
     "scope": _exact("offline_architecture_specification"),
-    "owner_approval": _exact("pending"), "runtime_activation": _exact(False),
+    "owner_approval": _exact("approved"), "runtime_activation": _exact(False),
     "primary": {
         "provider_id": _exact(PROVIDER), "model_family": _exact("aliceai-llm"),
         "observed_model_alias": _exact("aliceai-llm/latest"),
@@ -94,6 +94,9 @@ SCHEMA: dict[str, Any] = {
         "tasks": {task: _exact(PROVIDER) for task in TASKS},
         "unknown_route": _exact("deny"), "cross_provider_fallback": _exact(False),
         "fallback": _exact("manual_without_generation"),
+        "fallback_user_notice_required": _exact(True),
+        "fallback_user_notice_key": _exact("ai_temporarily_unavailable_manual_mode"),
+        "manual_mode_features": _exact(["vacancy_search", "career_profile", "resume_editor"]),
         "candidate_models_pending_qualification": _exact(["aliceai-llm-flash", "yandexgpt-pro-5.1"]),
         "local_model": _exact(None),
     },
@@ -116,10 +119,26 @@ SCHEMA: dict[str, Any] = {
         "max_attempts": _integer(1, 2), "max_global_concurrency": _integer(1, 2),
         "max_user_concurrency": _exact(1), "per_attempt_timeout_seconds": _integer(1, 25),
         "total_timeout_seconds": _integer(1, 55), "max_retry_delay_seconds": _integer(0, 2),
-        "user_daily_requests": _integer(1, 10), "global_daily_requests": _integer(1, 100),
+        "user_daily_requests": _integer(1, 100), "global_daily_requests": _integer(1, 1000),
         "user_daily_budget_rub": _decimal, "global_daily_budget_rub": _decimal,
         "global_monthly_budget_rub": _decimal,
-        "budget_status": _exact("proposal_not_runtime_enforced_not_payment_authorization"),
+        "budget_status": _exact("internal_beta_safety_guard_not_commercial_entitlement_not_runtime_enforced"),
+        "configuration_target": _exact("central_server_side_quota_policy"),
+        "provider_adapter_must_not_embed_commercial_limits": _exact(True),
+    },
+    "commercial_access": {
+        "status": _exact("architecture_reserved_not_runtime_enforced"),
+        "launch_tiers": _exact(["free", "standard"]),
+        "reserved_tiers": _exact(["max"]),
+        "commercial_quota_values": _exact(None),
+        "user_visible_meter": _exact("feature_actions_not_tokens"),
+        "tokens_user_visible": _exact(False),
+        "free_goal": _exact("complete_small_value_loop_then_conversion"),
+        "standard_goal": _exact("normal_active_job_search_without_micro_metering"),
+        "max_goal": _exact("reserved_for_heavy_usage_after_observed_demand"),
+        "runtime_entitlement_architecture_package": _exact("AI-001"),
+        "commercial_quota_definition_package": _exact("BILL-001"),
+        "failed_generation_consumes_user_entitlement": _exact(False),
     },
     "failure_policy": {
         "retry_http_statuses": _exact([429, 502, 503, 504]),
@@ -230,7 +249,9 @@ def route_preview(policy: dict[str, Any], task: str, language: str, market: str)
              and market in policy["routing"]["planned_markets"])
     return {"planned_provider": PROVIDER if known else None, "provider_call_allowed": False,
             "reason": "runtime_not_implemented_or_approved" if known else "unsupported_route",
-            "fallback": "manual_without_generation"}
+            "fallback": "manual_without_generation",
+            "fallback_user_notice_required": True,
+            "fallback_user_notice_key": policy["routing"]["fallback_user_notice_key"]}
 
 
 def cost_report(policy: dict[str, Any], evidence: dict[str, Any]) -> dict[str, Any]:
@@ -256,10 +277,35 @@ def cost_report(policy: dict[str, Any], evidence: dict[str, Any]) -> dict[str, A
                           "one_attempt_rub":str(quote_cost(policy,i,o)),
                           "max_attempts_reserve_rub":str(quote_cost(policy,i,o,attempts=limits["max_attempts"])),
                           "1000_one_attempt_jobs_rub":str(quote_cost(policy,i,o)*1000)})
-    return {"schema_version":"1.0","basis":"provider-reported synthetic usage; prices checked 2026-09-14; not production workload or an invoice",
+    # Owner planning scenario: three resumes, ten AI-reviewed vacancies per resume,
+    # and four-to-five letters per resume. Assumptions are planning inputs, not measured averages.
+    resume_calls = 6  # 3 resumes x initial generation + one refinement
+    match_calls = 30  # 3 resumes x 10 shortlisted vacancies
+    letter_calls_low, letter_calls_high = 12, 15
+    resume_one = quote_cost(policy, 4000, 1200)
+    match_one = quote_cost(policy, 2000, 300)
+    letter_one = quote_cost(policy, 3000, 450)
+    base_low = resume_one * resume_calls + match_one * match_calls + letter_one * letter_calls_low
+    base_high = resume_one * resume_calls + match_one * match_calls + letter_one * letter_calls_high
+    buffer = Decimal("1.20")
+    heavy_user_scenario = {
+        "label":"three_resumes_30_matches_12_to_15_letters",
+        "assumptions":{"resume_calls":resume_calls,"resume_tokens_each":{"input":4000,"output":1200},
+                       "match_calls":match_calls,"match_tokens_each":{"input":2000,"output":300},
+                       "letter_calls":{"min":letter_calls_low,"max":letter_calls_high},
+                       "letter_tokens_each":{"input":3000,"output":450},"operational_buffer_percent":20},
+        "rub":{"base_min":str(base_low),"base_max":str(base_high),
+               "with_buffer_min":str(base_low*buffer),"with_buffer_max":str(base_high*buffer)},
+        "interpretation":"planning illustration only; commercial quotas remain unset"
+    }
+    return {"schema_version":"1.1","basis":"provider-reported synthetic usage; prices checked 2026-09-14; not production workload or an invoice",
             "artifact":"34830877796","cases":rows,"totals":{"input_tokens":sum(r["input_tokens"] for r in rows),
             "output_tokens":sum(r["output_tokens"] for r in rows),"rub_including_vat":str(total_rub),
-            "usd_excluding_vat":str(total_usd)},"scenarios":scenarios,
+            "usd_excluding_vat":str(total_usd)},"scenarios":scenarios,"heavy_user_scenario":heavy_user_scenario,
+            "technical_guards":{"user_daily_budget_rub":limits["user_daily_budget_rub"],
+                                "global_daily_budget_rub":limits["global_daily_budget_rub"],
+                                "global_monthly_budget_rub":limits["global_monthly_budget_rub"],
+                                "commercial_entitlement":False},
             "excluded_costs":["hosting","database","tools","future storage","payment processing","additional taxes where applicable"],
             "provider_call_allowed":False}
 

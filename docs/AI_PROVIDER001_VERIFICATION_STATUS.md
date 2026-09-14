@@ -3,62 +3,66 @@
 | Поле | Значение |
 |---|---|
 | Document | AI_PROVIDER001_VERIFICATION_STATUS |
-| Version | 1.0 |
+| Version | 1.1 |
 | Date | 2026-09-14 |
 | Package | AI-PROVIDER-001 |
-| Status | НУЖНА ПРОВЕРКА; owner approval and external CI pending |
+| Status | НУЖНА ПРОВЕРКА; owner approved, final ordinary CI pending |
+| Owner approval | Шекунов Д.С., approved 2026-09-14 |
 | Production revision | 20260819_0014 |
 
-## 1. Package scope
+## 1. Scope
 
-An architectural decision candidate, closed offline policy, reproducible cost report and CI tests are supplied. The actual AIProvider adapter, production consent/budget/kill-switch implementation and public AI calls remain AI-001 and later. No migration or deployment setting is changed.
+The strategy is approved: Alice primary, no automatic unqualified generative fallback, manual mode with explicit user warning, technical cost guards separated from commercial entitlements, launch intent Free + Standard, Max architecture reserved. Runtime AI integration remains AI-001; commercial prices/plan quotas remain BILL-001.
 
-## 2. Source audit
+## 2. External evidence already available
 
-Latest user ZIP main (30) contains 407 files and is byte-identical in file content to the accepted grounded-v2.6.1 implementation. Seven individually supplied canonical content files match the uploaded FILE_INDEX. Nine companion files were recovered from the previously delivered canonical bundle and also match; missing duplicate formats do not block development.
+Candidate r1 was committed to GitHub and ordinary CI run #261 completed successfully. This proves the r1 strategy/package gate in the repository environment. The owner then approved a revised limit/tier decision, so this r2 must receive one new ordinary CI before package completion.
 
-Repository documentation remained pre-closure (plan1.4.47/passport2.61/bench1.15), while active uploaded documents correctly close AI-BENCH (plan1.4.48/passport2.62/bench1.16). These states are reconciled without changing accepted benchmark code or raw results. Current schema/SEARCH-005/sequence drift is explicitly corrected in the new plan/audit.
+No paid Alice rerun is required: provider qualification, benchmark prompts/evals and accepted artifact `34830877796` are unchanged.
 
-## 3. Verification matrix
+## 3. Local verification
 
 <!-- LOCAL-RESULTS:START -->
 | Local check | Measured result |
 |---|---|
-| Full available pytest | 412 passed, 14 skipped, 81 subtests passed; 0 failed |
-| Focused AI-PROVIDER unittest | 44 passed; subset of full suite |
+| Full available pytest | 415 passed, 14 skipped, 81 subtests passed; 0 failed |
+| Focused AI-PROVIDER unittest | 47 passed; subset of full suite |
 | Focused accepted AI-BENCH unittest | 90 passed; subset of full suite |
 | Provider policy/package gate | PASS |
 | Accepted benchmark package gate | PASS, including deterministic reference 8/8 |
 | Document structure / infra manifests | PASS / PASS |
-| Runtime and evals byte boundary | 223 preserved files unchanged |
+| Repository hygiene | PASS after local cache cleanup |
+| Production/evals protected boundary | PASS through preserved-file manifest |
 
-Local Python is 3.13; GitHub still checks the repository's declared environment. Fourteen skips require unavailable Flask/Psycopg/PostgreSQL components. They are not claimed as passed. Focused totals must not be added to the full-suite count. Exact evidence: `docs/evidence/ai-provider-001/local_verification.json`.
+Fourteen local skips require Flask/Psycopg/PostgreSQL components unavailable in this container and are not counted as passed. Candidate r1 GitHub CI run #261 is already green; r2 still requires its own ordinary CI after upload. Exact machine evidence: `docs/evidence/ai-provider-001/local_verification.json`.
 <!-- LOCAL-RESULTS:END -->
 
-| External check | State | Closure requirement |
+## 4. Closure matrix
+
+| Gate | State | Requirement |
 |---|---|---|
-| New GitHub Actions for this package | NOT RUN HERE | Ordinary CI must be green after patch upload |
-| Owner strategy decision | PENDING | Approve or revise primary/manual reserve/privacy/proposed limits |
-| Paid Alice benchmark | NOT RUN; NOT REQUIRED | Accepted evals/prompts unchanged |
-| Production model activation | NOT ATTEMPTED | LEGAL-001, AI-001 and deployment prerequisites remain |
-| Provider-account geography/billing/no-logging | NOT INSPECTED | Required before activation, not invented from public docs |
+| AI-BENCH provider qualification | PASS | Existing 8/8 + named human acceptance |
+| Candidate r1 ordinary GitHub CI | PASS | Run #261 green |
+| Owner strategy approval | PASS | Шекунов Д.С. approved revised plan |
+| r2 local policy/package tests | PASS | 415 passed, 14 skipped; provider/package/document/hygiene gates PASS |
+| r2 ordinary GitHub CI | PENDING | Final external gate after patch upload |
+| Production AI activation | NOT ATTEMPTED | LEGAL-001 + AI-001 + deployment prerequisites |
 
-## 4. Test meaning and limits
+## 5. Meaning of approval
 
-An offline PASS proves internal consistency, bounded costs and denial of unsafe policy configurations. It does not prove deployed enforcement, provider retention behavior, legal compliance, an actual account quota or output quality on arbitrary profiles. A closed policy and an environment example are not a runtime kill switch.
+Approval does not activate billing or AI. RUB 200/user/day, RUB 1000/global/day and RUB 20000/global/month are technical beta guards only. Exact Free/Standard customer allowances remain deliberately unset. The provider adapter must not hard-code plan quotas.
 
-The prior final Alice 8/8 + named human approval still close AI-BENCH-001. No human numeric scores were generated. The new provider strategy is a separate decision awaiting approval.
+## 6. Rollback
 
-## 5. Rollback
+Revert the r2 policy/docs/tests commit. No schema rollback, credential rotation or provider-side deletion is required because this package sends no production traffic and changes no secrets.
 
-Revert the package commit. No database rollback, credential rotation or provider-side deletion is needed because this package sends no traffic and changes no secrets. Future runtime incidents require the AI-001 implementation.
+## 7. Next action
 
-## 6. Next action
+Apply r2 PATCH, run ordinary GitHub Actions with both paid benchmark inputs disabled. If green, AI-PROVIDER-001 can be marked `ВЫПОЛНЕНО` and LEGAL-001 becomes the next package.
 
-Apply the PATCH over clean main, commit/push and inspect ordinary GitHub Actions. Do not enable either live benchmark input. Review AI_PROVIDER001_DECISION.md and the proposed caps. Only after green CI and owner approval may this package be marked complete; then continue with LEGAL-001.
-
-## 7. Version log
+## 8. Version log
 
 | Version | Date | Change |
 |---|---|---|
-| 1.0 | 2026-09-14 | Provider strategy candidate and offline verification; external CI/owner gates pending |
+| 1.0 | 2026-09-14 | Candidate verification; owner/CI pending |
+| 1.1 | 2026-09-14 | r1 CI green, owner approved revised tiers/limits, r2 final CI remains |

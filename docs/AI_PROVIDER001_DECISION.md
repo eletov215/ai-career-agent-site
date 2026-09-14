@@ -1,90 +1,78 @@
-# AI Career Agent - AI-PROVIDER-001 / Provider decision record
+# AI Career Agent - AI-PROVIDER-001 / Provider decision
 
 | Поле | Значение |
 |---|---|
 | Document | AI_PROVIDER001_DECISION |
 | Package | AI-PROVIDER-001 |
-| Version | 1.0 |
+| Version | 1.1 |
 | Date | 2026-09-14 |
-| Status | НУЖНА ПРОВЕРКА; owner decision and external CI pending |
+| Status | УТВЕРЖДЕНО ВЛАДЕЛЬЦЕМ; final ordinary CI pending |
+| Owner approval | Шекунов Д.С., 2026-09-14 |
 | Scope | Architecture and offline validation only; no production AI activation |
 | Schema revision | 20260819_0014 (unchanged) |
 
-## 1. Decision proposed for owner approval
+## 1. Decision
 
-Use **Yandex AI Studio / Alice AI LLM** as the first production integration candidate for the four evaluated tasks in Russian and English. Treat this as an approved-model shortlist of one, not as an always-available or universally accurate service. Until LEGAL-001 and AI-001 are complete, public AI traffic stays off.
+The primary provider for the planned RU/EN AI functions is **Yandex Alice AI LLM**, qualified by AI-BENCH-001 on grounded-v2.6.1. Unknown routes remain denied. No unqualified provider, local model or cross-provider automatic fallback is enabled.
 
-The reserve mode is **manual work without generation**, not an automatic switch to an unqualified model. Search, profile editing and resume editing must remain available when AI is unavailable. Do not present keyword heuristics or a static template as a successful AI response.
+If Alice is unavailable, the product falls back to **manual mode without generation**. The user must receive an explicit notice that AI is temporarily unavailable; vacancy search, career profile and manual resume editing remain available. The interface must not pretend another model succeeded. A failed generation must not consume a future user-visible commercial entitlement, although provider-side cost reservations may still need settlement when upstream usage is uncertain.
 
-This ADR is a candidate, not a recorded owner acceptance. The existing acceptance by reviewer Shekunov D.S. closes AI-BENCH-001 only. It does not approve the new budgets, contractual interpretation or production activation in this document.
+## 2. Cost guard versus commercial tariff
 
-## 2. Evidence and alternatives
+Two different limit layers are mandatory and must not be mixed:
 
-The accepted artifact `34830877796` / run `ai-bench-20260914T100639Z-222dfc87` has eight passing synthetic RU/EN cases, zero API errors/retries and zero unresolved hard counters. Audited normalization remains visible: two scenario-provenance repairs and fourteen known-marker cleanups. The owner accepted writing quality separately. See `docs/evidence/ai-bench-001/alice-final-run-7-summary.json` and the named human review.
+1. **Technical safety guards** protect the service from loops, abuse and unexpected provider spend. Initial beta planning values are 100 logical AI requests per user/day, 1000 globally/day, RUB 200 per user/day, RUB 1000 globally/day and RUB 20000 globally/month. These are operator safety ceilings, not a customer plan, not a price and not permission to spend.
+2. **Commercial entitlements** define what Free/Standard/Max customers receive. Exact action quotas are intentionally unset in AI-PROVIDER-001. AI-001 must create a central quota architecture; BILL-001 later assigns commercial values from observed usage and unit economics.
 
-Eight sparse cases establish a useful baseline, not robustness on every real CV, a production SLA or a universal absence of hallucinations. Rich-input, adversarial, load and production UI tests remain gates of AI-001..006. The English letter is short partly because the prompt deliberately restricts claims; extra source facts may help, but the benchmark did not prove automatic adaptation to rich profiles.
+The provider adapter must never contain tariff numbers. Limits must be read from a central server-side quota policy so they can be changed without rewriting provider integration.
 
-| Option | Current evidence | Decision |
-|---|---|---|
-| Alice AI LLM | Current dataset 1.3.6 / grounded-v2.6.1 accepted | Primary integration target, activation blocked |
-| Alice Flash | Older comparative run, not qualified on current contract | No automatic fallback; future evaluation only |
-| YandexGPT Pro 5.1 | Older comparative run, not qualified on current contract | No automatic fallback; future evaluation only |
-| Local/open-weight model | No approved model, license audit, hardware or current benchmark | Deferred; do not assume a CPU VPS is sufficient |
-| Other external API | No current project qualification or market/privacy decision | Disabled, no cross-provider data transfer |
+## 3. Commercial access strategy
 
-OpenAI is not a mandatory RU/BY baseline, as already decided in the project. This package does not create a new claim about every other vendor's current eligibility. No more model-shopping or paid benchmark is needed to review this ADR.
+The launch intent is **Free + Standard**. A third **Max** tier is reserved in the architecture but not launched until real usage demonstrates a distinct heavy-user segment.
 
-## 3. Geography, commercial use and service conditions
+- **Free** must deliver one complete small value loop (for example, experience enough AI analysis/match/letter capability to understand the product) but must not satisfy an active job seeker's recurring needs indefinitely.
+- **Standard** is the main paid tier and should support normal active job search without micro-metering every token.
+- **Max** remains architecture-ready for heavy usage or additional premium capabilities after demand and unit economics are observed.
+- Users should see feature actions/allowances, not raw token counts. Tokens and RUB remain internal accounting dimensions.
 
-Public contractual and billing sources were checked on 2026-09-14; details and URLs are in `AI_PROVIDER001_SOURCES.md`. Product integration is the chosen model, not API resale [S5]. Planned markets are RU and BY; both use the same qualified Alice route. English language is not a reason to send data to a different vendor or legal region.
+Exact monthly Free/Standard allowances, subscription price, payment provider, upgrades/downgrades and paid overage belong to BILL-001. Nothing in this package activates billing.
 
-Public payment routes for RU/BY exist [S8], but the owner's tax residency, billing account status, limits and production-source-IP connectivity were not verified. These remain activation checklist items. A past successful synthetic call from GitHub is evidence of that route at that time, not a guarantee for a future VPS or every user network.
+## 4. Planning workload and headroom
 
-Render web + Neon Oregon remains a temporary development/staging topology confirmed in the prior chat. No production data-locality conclusion is drawn from its healthy PostgreSQL status. Real personal-data AI use on that topology is not approved by this ADR. LEGAL-001 must map the whole data flow and hosting region; INFRA-001 retains the future production-IP check. The old Render DB contents were not migrated.
+The owner scenario used for planning is: three resumes, one generation plus one refinement each; 10 AI-reviewed shortlisted vacancies per resume; 4-5 cover letters per resume. Under the explicit token assumptions in `AI_PROVIDER001_COSTS.md`, the estimated provider cost is RUB 85.92-92.04, or RUB 103.104-110.448 with a 20% operational buffer. The RUB 200 per-user daily technical guard therefore has headroom for this scenario but is not a future Standard-plan quota.
 
-## 4. Routing and output contract
+## 5. Routing and output contract
 
-| Task | Language | Planned provider | Required product boundary |
+| Task | Language | Planned provider | Product boundary |
 |---|---|---|---|
 | resume_analysis | ru / en | Alice AI LLM | Grounded findings; suggestions are not confirmed facts |
-| vacancy_match | ru / en | Alice AI LLM | Evidence-based requirement assessment; numeric score computed by code |
-| cover_letter | ru / en | Alice AI LLM | First person; only verified relevant facts; caveats excluded from letter |
+| vacancy_match | ru / en | Alice AI LLM | Evidence-based requirements; numeric score computed by code |
+| cover_letter | ru / en | Alice AI LLM | First person; only verified relevant facts; caveats excluded from the letter |
 | interview_questions | ru / en | Alice AI LLM | Explicit hypothetical scenarios; no invented candidate history |
 
-The machine-readable architecture specification is `docs/policies/ai_provider_policy.v1.json`. Unknown tasks, languages or markets are denied. All enabled-market lists are empty now; a route preview never authorizes an API call.
+The machine-readable specification is `docs/policies/ai_provider_policy.v1.json`. All enabled-market lists remain empty; this package cannot authorize an API call.
 
-For AI-001, the transport target is synchronous JSON-schema output over the endpoint already exercised by the benchmark. The exact deployment model URI must be stored in a server secret/config store and recorded without credential values. `aliceai-llm/latest` is observed metadata, not an immutable version proof. Changing provider/model, major prompts or safety semantics requires a fresh qualified evaluation and an explicit decision [S2].
+## 6. Privacy and activation boundary
 
-Production must use a new `services/ai/` boundary, not import the benchmark adapter directly. Separate authentication, normalization, schema validation, semantic grounding and presentation from route handlers. Retain raw/machine/presentation separation only for synthetic evaluation; do not enable real-user prompt dumps for debugging. A rejected answer is not silently rewritten or treated as success.
+Real personal data remains blocked until LEGAL-001 and AI-001 complete their gates. Production requests must use the documented no-logging control, confirm the account/provider opt-out procedure and wait at least 24 hours after the required disablement action before real personal-data requests. Minimize payloads to confirmed relevant profile facts and bounded vacancy facts; never log prompt/response bodies.
 
-## 5. Privacy, failure handling and limits
+The exact production model URI, billing account/quota state, production source-IP transport and data-location/backup decision must be verified before activation. Render + Neon remains development/staging only.
 
-`AI_PROVIDER001_DATA_AND_FAILURE_POLICY.md` specifies data minimization, opt-out prerequisites, future secrets and failure semantics. In particular, the accepted synthetic adapter lacks the proposed production no-logging header; copying it into the live application would be insufficient.
+## 7. Runtime architecture reserved for AI-001
 
-`AI_PROVIDER001_COSTS.md` separates observed usage, published prices and proposed caps. The proposed caps are not active software limits and do not authorize a payment. Runtime admission, token estimation, atomic reservations, billing reconciliation and kill switches still need implementation and tests in AI-001.
+AI-001 must implement a provider-neutral `services/ai/` boundary, structured schemas, versioned prompts, durable usage accounting, atomic cost reservations, idempotency, central quota/entitlement lookup, kill switch, deadline/retry policy and user-facing availability/limit states. The quota layer must be independent from Alice so Free/Standard/Max values can change without provider rewrites.
 
-No automatic fallback is allowed after provider refusal, grounding failure or missing permissions. Such failures cannot be solved by quietly sending a user's profile to another model. The user's editable data must remain intact.
+No production route, SQLAlchemy model, migration, template, Render secret or provider call is added by AI-PROVIDER-001.
 
-## 6. Implementation and application impact
+## 8. Verification and next action
 
-This package adds an offline policy validator, deterministic Decimal cost report, negative tests, a dedicated CI verification step, source audit and canonical documentation. It synchronizes the final AI-BENCH closure into repository docs and corrects stale active schema/status rows explicitly listed in SOURCE_AUDIT.
+Candidate r1 ordinary GitHub CI is green. Owner approval is now explicit. Because this revision changes the policy contract/tests/docs, one final ordinary GitHub CI run is required before marking AI-PROVIDER-001 `ВЫПОЛНЕНО`. Paid Alice benchmark repetition is not required because prompts/evals/provider qualification are unchanged.
 
-The preserved-file check is scoped to this candidate; AI-001 must deliberately revise that check when runtime implementation is approved, rather than silently bypassing it.
-
-No routes, production services, SQLAlchemy models, migrations, dependencies, templates, static resources, Render variables or benchmark prompts are changed. Database revision stays `20260819_0014`. The preserved-file manifest verifies this boundary. The website will not gain AI buttons or new charges from this package.
-
-## 7. Verification, limitations and rollback
-
-Local results are recorded in `AI_PROVIDER001_VERIFICATION_STATUS.md`. New external GitHub CI and owner approval have not yet occurred. No credentials, real-user input or billable APIs were used to produce these deliverables.
-
-Rollback is reverting this package's documents, policy and validation scripts/CI step. No database rollback is required. Later incident handling must use runtime controls from AI-001, not edits to this offline JSON.
-
-## 8. Approval and next action
-
-Approve or revise: Alice as primary; no generative fallback until qualification; privacy gates; proposed caps; no real-user activation before legal/runtime/infrastructure requirements. After ordinary CI and owner approval, AI-PROVIDER-001 can be closed and **LEGAL-001** becomes next. AI-001 is not started in this package.
+After the final green CI, close AI-PROVIDER-001 and continue with **LEGAL-001**. AI-001 follows the legal gate.
 
 ## 9. Version log
 
 | Version | Date | Change |
 |---|---|---|
-| 1.0 | 2026-09-14 | Candidate strategy; current sources, cost model, closed offline policy and CI checks; approval pending |
+| 1.0 | 2026-09-14 | Candidate strategy and offline controls; approval pending |
+| 1.1 | 2026-09-14 | Owner-approved fallback warning, technical-vs-commercial split, Free+Standard launch intent, Max reserved, configurable quota architecture |

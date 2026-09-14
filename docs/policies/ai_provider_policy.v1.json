@@ -1,10 +1,10 @@
 {
   "schema_version": "1.0",
   "package": "AI-PROVIDER-001",
-  "policy_version": "1.0.0",
+  "policy_version": "1.1.0",
   "checked_on": "2026-09-14",
   "scope": "offline_architecture_specification",
-  "owner_approval": "pending",
+  "owner_approval": "approved",
   "runtime_activation": false,
   "primary": {
     "provider_id": "yandex-alice-ai-llm",
@@ -46,7 +46,14 @@
       "aliceai-llm-flash",
       "yandexgpt-pro-5.1"
     ],
-    "local_model": null
+    "local_model": null,
+    "fallback_user_notice_required": true,
+    "fallback_user_notice_key": "ai_temporarily_unavailable_manual_mode",
+    "manual_mode_features": [
+      "vacancy_search",
+      "career_profile",
+      "resume_editor"
+    ]
   },
   "privacy": {
     "request_body_logging": false,
@@ -92,12 +99,33 @@
     "per_attempt_timeout_seconds": 25,
     "total_timeout_seconds": 55,
     "max_retry_delay_seconds": 2,
-    "user_daily_requests": 10,
-    "global_daily_requests": 100,
-    "user_daily_budget_rub": "20.00",
-    "global_daily_budget_rub": "100.00",
-    "global_monthly_budget_rub": "1000.00",
-    "budget_status": "proposal_not_runtime_enforced_not_payment_authorization"
+    "user_daily_requests": 100,
+    "global_daily_requests": 1000,
+    "user_daily_budget_rub": "200.00",
+    "global_daily_budget_rub": "1000.00",
+    "global_monthly_budget_rub": "20000.00",
+    "budget_status": "internal_beta_safety_guard_not_commercial_entitlement_not_runtime_enforced",
+    "configuration_target": "central_server_side_quota_policy",
+    "provider_adapter_must_not_embed_commercial_limits": true
+  },
+  "commercial_access": {
+    "status": "architecture_reserved_not_runtime_enforced",
+    "launch_tiers": [
+      "free",
+      "standard"
+    ],
+    "reserved_tiers": [
+      "max"
+    ],
+    "commercial_quota_values": null,
+    "user_visible_meter": "feature_actions_not_tokens",
+    "tokens_user_visible": false,
+    "free_goal": "complete_small_value_loop_then_conversion",
+    "standard_goal": "normal_active_job_search_without_micro_metering",
+    "max_goal": "reserved_for_heavy_usage_after_observed_demand",
+    "runtime_entitlement_architecture_package": "AI-001",
+    "commercial_quota_definition_package": "BILL-001",
+    "failed_generation_consumes_user_entitlement": false
   },
   "failure_policy": {
     "retry_http_statuses": [

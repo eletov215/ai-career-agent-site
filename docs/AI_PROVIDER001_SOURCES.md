@@ -6,7 +6,7 @@
 | Package | AI-PROVIDER-001 |
 | Version | 1.0 |
 | Date | 2026-09-14 |
-| Status | НУЖНА ПРОВЕРКА; owner decision and external CI pending |
+| Status | External sources unchanged; owner strategy approved; final ordinary CI pending |
 | Scope | Architecture and offline validation only; no production AI activation |
 | Schema revision | 20260819_0014 (unchanged) |
 

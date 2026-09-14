@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.0",
+  "schema_version": "1.1",
   "basis": "provider-reported synthetic usage; prices checked 2026-09-14; not production workload or an invoice",
   "artifact": "34830877796",
   "cases": [
@@ -100,6 +100,43 @@
       "1000_one_attempt_jobs_rub": "5920.00"
     }
   ],
+  "heavy_user_scenario": {
+    "label": "three_resumes_30_matches_12_to_15_letters",
+    "assumptions": {
+      "resume_calls": 6,
+      "resume_tokens_each": {
+        "input": 4000,
+        "output": 1200
+      },
+      "match_calls": 30,
+      "match_tokens_each": {
+        "input": 2000,
+        "output": 300
+      },
+      "letter_calls": {
+        "min": 12,
+        "max": 15
+      },
+      "letter_tokens_each": {
+        "input": 3000,
+        "output": 450
+      },
+      "operational_buffer_percent": 20
+    },
+    "rub": {
+      "base_min": "85.92",
+      "base_max": "92.04",
+      "with_buffer_min": "103.1040",
+      "with_buffer_max": "110.4480"
+    },
+    "interpretation": "planning illustration only; commercial quotas remain unset"
+  },
+  "technical_guards": {
+    "user_daily_budget_rub": "200.00",
+    "global_daily_budget_rub": "1000.00",
+    "global_monthly_budget_rub": "20000.00",
+    "commercial_entitlement": false
+  },
   "excluded_costs": [
     "hosting",
     "database",

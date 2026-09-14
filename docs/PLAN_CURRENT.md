@@ -9,32 +9,32 @@
 | Поле | Значение |
 |---|---|
 | Current package | AI-PROVIDER-001 - НУЖНА ПРОВЕРКА |
-| Source code | Latest uploaded GitHub snapshot `ai-career-agent-site-main (30).zip`; 407 files |
-| Canonical versions | PLAN 1.4.49; PASSPORT 2.63; SOURCE_AUDIT 1.4.49; AI-BENCH verification 1.16; provider ADR 1.0 |
-| AI-BENCH-001 | ВЫПОЛНЕНО; accepted artifact `34830877796`, eight cases PASS and named human acceptance |
-| Provider decision | Alice primary; manual reserve without generation; proposed limits/data policy; owner approval pending |
-| Production AI | Not implemented or activated; policy JSON is an offline specification |
-| Staging | Render web + clean Neon PostgreSQL (Oregon); previous readiness/site/search smoke confirmed |
-| Database schema | `20260819_0014`; unchanged |
-| Current verification | Local results in AI_PROVIDER001_VERIFICATION_STATUS; new external CI not yet run |
-| Next package | LEGAL-001 after owner strategy approval and ordinary CI; AI-001 remains later |
+| Source code | GitHub `main` after AI-PROVIDER-001 candidate r1; ordinary CI #261 green; this r2 records owner-approved strategy and awaits final CI |
+| Canonical versions | PLAN 1.4.50; PASSPORT 2.64; SOURCE_AUDIT 1.4.50; AI-BENCH verification 1.16; provider ADR 1.1 |
+| AI-BENCH-001 | ВЫПОЛНЕНО; accepted artifact `34830877796`, 8/8 machine PASS and named human acceptance |
+| Provider decision | APPROVED by Шекунов Д.С.: Alice primary; manual mode with explicit warning; internal technical guards only; Free + Standard launch intent; Max architecture reserved |
+| Commercial quotas | Exact Free/Standard action quotas intentionally unset until usage evidence and BILL-001; users see feature actions, not tokens |
+| Production AI | Not implemented or activated; policy JSON remains an offline architecture specification |
+| Staging | Render web + clean Neon PostgreSQL (Oregon); schema `20260819_0014` |
+| Current verification | Previous r1 ordinary CI green; r2 local checks recorded in AI_PROVIDER001_VERIFICATION_STATUS; final ordinary CI pending |
+| Next package | LEGAL-001 after final ordinary CI; AI-001 remains the later runtime integration package |
 
-The supplied canonical 1.4.48/2.62/1.16 files are authentic current inputs, but repository docs still contained the pre-closure status. This release reconciles them explicitly. Older dated evidence below remains historical and is not today's gate. No benchmark rerun or Render secret change is required for this architecture-only package.
+This revision separates technical cost guards from commercial entitlements. Internal caps protect the service during development/beta; tariff quotas belong to BILL-001 and must not be hard-coded in the provider adapter.
 
 <!-- ACA-CANONICAL-STATUS:END -->
 
 | Поле | Значение |
 |---|---|
 | Документ | PLAN_CURRENT |
-| Версия | 1.4.49 |
+| Версия | 1.4.50 |
 | Дата | 14 сентября 2026 |
 | Статус | ДЕЙСТВУЮЩИЙ |
 | Основа кода | GitHub `main` с grounded-v2.6.1/evals 1.6.1; ordinary CI green; final Alice artifact `34830877796` + named human acceptance |
-| Текущий пакет | AI-PROVIDER-001 - стратегия AI-провайдеров; НУЖНА ПРОВЕРКА |
+| Текущий пакет | AI-PROVIDER-001 - стратегия утверждена владельцем; НУЖНА ПРОВЕРКА только final ordinary CI |
 
 > ОБЯЗАТЕЛЬНО ДЛЯ КАЖДОГО НОВОГО ЧАТА: прочитать этот план, новый паспорт и актуальный архив. После завершения любого пункта вернуть обновлённые DOCX/PDF/Markdown, новый ZIP, доказательства проверки и запись в журнале версий.
 
-> КОНТРОЛЬНЫЕ СТАТУСЫ ЭТОЙ ВЕРСИИ: FND-001/FND-002/DATA-001/DATA-002/SEC-001/OPS-001/INFRA-PREP-001/SYNC-001/SYNC-002/SEARCH-001..005/AUTH-001/AUTH-002/PROF-001/PROF-002/PROF-003/PRIV-001/AI-BENCH-001 - **ВЫПОЛНЕНО**; `AI-PROVIDER-001` - **НУЖНА ПРОВЕРКА**; `DOC-001` - **В РАБОТЕ**; `INFRA-001` - **ОТЛОЖЕНО ДО ПРЕДРЕЛИЗНОГО ЭТАПА**. Документы ниже `1.4.49` устарели для определения текущего gate.
+> КОНТРОЛЬНЫЕ СТАТУСЫ ЭТОЙ ВЕРСИИ: FND-001/FND-002/DATA-001/DATA-002/SEC-001/OPS-001/INFRA-PREP-001/SYNC-001/SYNC-002/SEARCH-001..005/AUTH-001/AUTH-002/PROF-001/PROF-002/PROF-003/PRIV-001/AI-BENCH-001 - **ВЫПОЛНЕНО**; `AI-PROVIDER-001` - **НУЖНА ПРОВЕРКА**; `DOC-001` - **В РАБОТЕ**; `INFRA-001` - **ОТЛОЖЕНО ДО ПРЕДРЕЛИЗНОГО ЭТАПА**. Документы ниже `1.4.50` устарели для определения текущего gate.
 
 
 ## 1. Источник истины и аудит источников
@@ -52,6 +52,8 @@ The supplied canonical 1.4.48/2.62/1.16 files are authentic current inputs, but 
 - Версия 1.4.46 фиксирует named human review Alice Final run #5 artifact 33168005097: machine 8/8 PASS, но reviewer Шекунов Д.С. потребовал revisions в cases 1/3/5/6. Grounded-v2.6 / evals 1.6.0 усиливает writing contract; fresh Alice Final run обязателен.
 - Версия 1.4.47 фиксирует Alice Final run #6 artifact 34766480932: 8/8 transport, 7/8 machine, only `cover-letter-en-01` FAIL with 3 unsupported inferred impacts. Grounded-v2.6.1 / evals 1.6.1 introduces atomic EN candidate-fit generation, unsupported employer-familiarity regression and requires another fresh Alice Final 8/8 before focused human review. Render staging DB was also recovered on Neon PostgreSQL with `/health/ready` revision 0014.
 - Версия 1.4.48 закрывает AI-BENCH-001: ordinary CI green; Alice Final artifact `34830877796` дал 8/8 machine PASS на dataset `1.3.6` / grounded-v2.6.1 с нулевыми hard counters; named reviewer Шекунов Д.С. принял focused re-review; AI-PROVIDER-001 становится следующим пакетом.
+- Версия 1.4.49 подготовила AI-PROVIDER-001 candidate r1: provider ADR/policy/cost/privacy, offline validator/tests and ordinary CI gate; GitHub Actions run #261 прошёл зелёным.
+- Версия 1.4.50 фиксирует решение владельца Шекунова Д.С.: Alice primary; manual mode with explicit user notice; technical cost guards separated from commercial entitlements; Free + Standard launch intent; Max architecture reserved; exact commercial quotas deferred to BILL-001. Final r2 ordinary CI remains the only package gate.
 - Версия 1.4.43 фиксирует Alice Final run #2 artifact 33066898884: 8/8 transport, 6/8 machine. Grounded-v2.4 добавляет Unicode dash normalization, узкий audited candidate_fit->motivation repair для vacancy-only future intent и более строгий interview evidence coverage prompt; fresh Alice-only verification обязателен.
 - Версия 1.4.34 фиксирует live Yandex candidate: manual-only workflow, Alice AI LLM/Flash/YandexGPT Pro 5.1, structured JSON Schema output, current pricing snapshot and GitHub-secret-only credentials.
 - Версия 1.4.35 фиксирует CI-stability hotfix r2: SYNC worker cache assertions отвязаны от календарного 7-дневного search filter; AI-BENCH package contract использует browser-upload-safe visible scaffold и не зависит от dotfiles.
@@ -219,7 +221,7 @@ MVP не готов, если работает только отдельная �
 | ID | Приоритет | Статус | Пункт |
 |---|---|---|---|
 | AI-BENCH-001 | P0 | ВЫПОЛНЕНО | Alice Final `34830877796`: 8/8 machine PASS, zero provider errors/retries/hard safety counters; named human re-review accepted |
-| AI-PROVIDER-001 | P0 | НУЖНА ПРОВЕРКА | ADR/policy/cost/privacy prepared; new ordinary CI + owner approval pending |
+| AI-PROVIDER-001 | P0 | НУЖНА ПРОВЕРКА | Owner-approved strategy; r1 CI green; final r2 ordinary CI pending |
 | AI-001 | P1 | ЗАПЛАНИРОВАНО | Независимый слой AI-провайдера и контроль стоимости |
 | AI-002 | P1 | ЗАПЛАНИРОВАНО | Настоящий анализ резюме |
 | AI-003 | P1 | ЗАПЛАНИРОВАНО | Адаптивное AI-интервью в конструкторе |
@@ -392,7 +394,7 @@ MVP не готов, если работает только отдельная �
 
 **Реализация:** Канонические PLAN_CURRENT и паспорт обновляются после каждого архитектурного решения; README/ROADMAP/CHANGELOG и package-specific docs синхронизируются вместе с ближайшим кодовым пакетом, чтобы документация и код проходили один CI/merge cycle.
 
-**Текущее состояние:** PLAN_CURRENT 1.4.49; PROJECT_PASSPORT 2.63. AI-BENCH-001 ВЫПОЛНЕНО; AI-PROVIDER-001 НУЖНА ПРОВЕРКА (ordinary CI + owner approval pending). Staging: Render web + clean Neon PostgreSQL, revision `20260819_0014`. Previous 1.4.22/2.36/0010 details are historical. Gmail API staging delivery remains separate operational work.
+**Текущее состояние:** PLAN_CURRENT 1.4.50; PROJECT_PASSPORT 2.64. AI-BENCH-001 ВЫПОЛНЕНО; AI-PROVIDER-001 НУЖНА ПРОВЕРКА (owner approved; final r2 ordinary CI pending). Staging: Render web + clean Neon PostgreSQL, revision `20260819_0014`. Previous 1.4.22/2.36/0010 details are historical. Gmail API staging delivery remains separate operational work.
 
 **Влияние на сайт:** Нет.
 
@@ -822,9 +824,9 @@ MVP не готов, если работает только отдельная �
 
 **Зависимости:** AI-BENCH-001.
 
-**Candidate implementation (1.4.49):** `docs/AI_PROVIDER001_DECISION.md`, data/failure policy, dated official sources, reproducible Decimal costs, `docs/policies/ai_provider_policy.v1.json`, offline validator/negative tests and dedicated CI verification step. No production AI adapter, route, env change or migration.
+**Approved implementation (1.4.50):** `docs/AI_PROVIDER001_DECISION.md` v1.1, policy v1.1.0, data/failure policy, dated official sources, reproducible Decimal costs and dedicated CI verification. Alice is primary. Manual mode is the only fallback and must explicitly warn the user while vacancy search/profile/resume editing remain available. Technical guards start at 100 logical requests/user/day, 1000 global/day, RUB 200/user/day, RUB 1000/global/day and RUB 20000/global/month; they are operator safety ceilings, not tariff quotas. Launch intent is Free + Standard; Max is architecture-reserved. Commercial action quotas remain unset until usage evidence/BILL-001. No production AI adapter, route, env change or migration.
 
-**Remaining package gates:** new ordinary GitHub CI and owner approval of primary/manual reserve/data/limits. Actual production activation additionally requires LEGAL-001, AI-001 and deployment checks. Approval has not been inferred from the earlier benchmark acceptance.
+**Remaining package gate:** final ordinary GitHub CI for r2. Candidate r1 CI run #261 is green and owner approval is explicit. Production activation additionally requires LEGAL-001, AI-001 and deployment checks.
 
 #### AI-001 - Независимый слой AI-провайдера и контроль стоимости
 
@@ -833,13 +835,13 @@ MVP не готов, если работает только отдельная �
 
 **Цель:** Не привязывать бизнес-логику к одной модели.
 
-**Реализация:** Provider interface, structured schemas, versioned prompts, timeout/retry, usage, limits, fallback.
+**Реализация:** Provider interface, structured schemas, versioned prompts, timeout/retry, durable usage/cost ledger, central mutable technical guards, separate plan-entitlement lookup, explicit manual-mode warning and provider-independent fallback state. Free/Standard/Max numbers are not hard-coded in the Alice adapter.
 
-**Влияние на код:** services/ai/, schemas/, prompts/, config, usage models, mock tests.
+**Влияние на код:** services/ai/, schemas/, prompts/, config, usage/cost models, central quota/entitlement service, mock tests.
 
 **Влияние на сайт:** Понятные loading/error/limit states; модель можно сменить без переписывания продукта.
 
-**Критерии готовности:** Все calls идут через interface; JSON валидируется; платные API не вызываются в tests.
+**Критерии готовности:** Все calls идут через interface; JSON валидируется; платные API не вызываются в tests; limits come from central server-side policy; technical guards and commercial entitlements are separate; unavailable AI shows an explicit manual-mode notice without charging a user-visible entitlement.
 
 **Зависимости:** DATA-002, PROF-001, PRIV-001.
 
@@ -1158,13 +1160,13 @@ MVP не готов, если работает только отдельная �
 
 **Цель:** Монетизировать только после доказуемо полезного полного пути.
 
-**Реализация:** Entitlements, quotas, cost accounting, payment webhooks, invoices/cancel/support.
+**Реализация:** Launch packaging Free + Standard; exact monthly feature-action quotas derived from observed usage/unit economics; Max tier remains reserved until demand justifies it. Entitlements, quotas, cost accounting, payment webhooks, invoices/cancel/support. Token counts stay internal; customers see feature allowances.
 
 **Влияние на код:** billing models/service/webhooks/pricing/tests.
 
 **Влияние на сайт:** Тарифная страница и subscription management.
 
-**Критерии готовности:** Idempotent webhooks; access matches payment; cancellation/refund supported.
+**Критерии готовности:** Idempotent webhooks; access matches payment; cancellation/refund supported; Free demonstrates a complete small value loop without replacing the paid plan; Standard covers normal active job search; Max is launched only with evidence of a distinct heavy-user segment.
 
 **Зависимости:** Рабочие AI/JOB функции, LEGAL, OPS.
 
@@ -1518,7 +1520,7 @@ Render остаётся staging/резервной площадкой на пе�
 
 ```text
 DOC-001 (continuous)
-AI-PROVIDER-001 (candidate: CI + approval pending)
+AI-PROVIDER-001 (owner approved; final r2 CI pending)
 -> LEGAL-001
 -> AI-001..006
 -> JOB-001..004
@@ -1547,7 +1549,7 @@ INFRA-001 real VPS test
 
 AI-BENCH-001: **ВЫПОЛНЕНО**. AI-PROVIDER-001: **НУЖНА ПРОВЕРКА**. Current schema is `20260819_0014`.
 
-The provider decision candidate is ready for ordinary CI and owner approval. No production model activation, payment, secret update, database migration or repeat paid benchmark is required now. After approval, continue with LEGAL-001. Earlier SEARCH-005/PRIV-001 gates remain historical completion evidence, not current blockers.
+The provider strategy is owner-approved and candidate r1 ordinary CI is green. This r2 records the approved fallback/tier/guard architecture and requires one final ordinary CI. No production model activation, payment, secret update, database migration or repeat paid benchmark is required now. After final green CI, close AI-PROVIDER-001 and continue with LEGAL-001. Earlier SEARCH-005/PRIV-001 gates remain historical completion evidence, not current blockers.
 
 ## 17. Обязательный отчёт после каждого пакета
 
@@ -1764,3 +1766,4 @@ Artifact `ai-bench-20260827T112440Z-243eaaeb` completed 8/8 calls with zero prov
 | Version | Date | Package | Change |
 |---|---|---|---|
 | 1.4.49 | 2026-09-14 | AI-PROVIDER-001 | Candidate strategy and offline controls; current source main (30); closure docs synchronized; schema/search gate drift corrected; CI + owner approval pending |
+| 1.4.50 | 2026-09-14 | AI-PROVIDER-001-R2 | Owner-approved manual fallback warning; technical guards separated from commercial tiers; Free + Standard launch intent; Max reserved; r1 CI #261 green; final r2 CI pending |

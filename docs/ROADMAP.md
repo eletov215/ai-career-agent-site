@@ -6,24 +6,24 @@
 | Поле | Значение |
 |---|---|
 | Current package | AI-PROVIDER-001 - НУЖНА ПРОВЕРКА |
-| Source code | Latest uploaded GitHub snapshot `ai-career-agent-site-main (30).zip`; 407 files |
-| Canonical versions | PLAN 1.4.49; PASSPORT 2.63; SOURCE_AUDIT 1.4.49; AI-BENCH verification 1.16; provider ADR 1.0 |
-| AI-BENCH-001 | ВЫПОЛНЕНО; accepted artifact `34830877796`, eight cases PASS and named human acceptance |
-| Provider decision | Alice primary; manual reserve without generation; proposed limits/data policy; owner approval pending |
-| Production AI | Not implemented or activated; policy JSON is an offline specification |
-| Staging | Render web + clean Neon PostgreSQL (Oregon); previous readiness/site/search smoke confirmed |
-| Database schema | `20260819_0014`; unchanged |
-| Current verification | Local results in AI_PROVIDER001_VERIFICATION_STATUS; new external CI not yet run |
-| Next package | LEGAL-001 after owner strategy approval and ordinary CI; AI-001 remains later |
+| Source code | GitHub `main` after AI-PROVIDER-001 candidate r1; ordinary CI #261 green; this r2 records owner-approved strategy and awaits final CI |
+| Canonical versions | PLAN 1.4.50; PASSPORT 2.64; SOURCE_AUDIT 1.4.50; AI-BENCH verification 1.16; provider ADR 1.1 |
+| AI-BENCH-001 | ВЫПОЛНЕНО; accepted artifact `34830877796`, 8/8 machine PASS and named human acceptance |
+| Provider decision | APPROVED by Шекунов Д.С.: Alice primary; manual mode with explicit warning; internal technical guards only; Free + Standard launch intent; Max architecture reserved |
+| Commercial quotas | Exact Free/Standard action quotas intentionally unset until usage evidence and BILL-001; users see feature actions, not tokens |
+| Production AI | Not implemented or activated; policy JSON remains an offline architecture specification |
+| Staging | Render web + clean Neon PostgreSQL (Oregon); schema `20260819_0014` |
+| Current verification | Previous r1 ordinary CI green; r2 local checks recorded in AI_PROVIDER001_VERIFICATION_STATUS; final ordinary CI pending |
+| Next package | LEGAL-001 after final ordinary CI; AI-001 remains the later runtime integration package |
 
-The supplied canonical 1.4.48/2.62/1.16 files are authentic current inputs, but repository docs still contained the pre-closure status. This release reconciles them explicitly. Older dated evidence below remains historical and is not today's gate. No benchmark rerun or Render secret change is required for this architecture-only package.
+This revision separates technical cost guards from commercial entitlements. Internal caps protect the service during development/beta; tariff quotas belong to BILL-001 and must not be hard-coded in the provider adapter.
 
 <!-- ACA-CANONICAL-STATUS:END -->
 
 ## Текущая очередь
 
 ```text
-AI-PROVIDER-001
+AI-PROVIDER-001 (owner approved; final CI)
 -> LEGAL-001
 -> AI-001..006
 -> JOB-001..004
@@ -38,7 +38,7 @@ AI-PROVIDER-001
 | AUTH-001/002 | ВЫПОЛНЕНО | regression only |
 | PROF-001/002/003, PRIV-001 | ВЫПОЛНЕНО | regression only |
 | AI-BENCH-001 | ВЫПОЛНЕНО | final Alice 8/8 + named human PASS |
-| AI-PROVIDER-001 | НУЖНА ПРОВЕРКА | candidate ADR; ordinary CI + owner approval |
+| AI-PROVIDER-001 | НУЖНА ПРОВЕРКА | owner-approved ADR; r1 CI green; final r2 ordinary CI |
 | LEGAL-001, AI-001..006 | ЗАПЛАНИРОВАНО | provider strategy and legal gate |
 | JOB-001..004 | ЗАПЛАНИРОВАНО | AI core and account integration |
 | INFRA-001 | ОТЛОЖЕНО | pre-release VPS field test |
@@ -50,4 +50,4 @@ AI-BENCH-001 is complete on the synthetic grounded-v2.6.1 contract. This does no
 
 ## AI-PROVIDER-001 boundary
 
-The strategy package is prepared but not yet approved. It does not activate AI or authorize spending. After ordinary CI and owner approval, continue to LEGAL-001; production implementation belongs to AI-001.
+The strategy is approved by the owner but does not activate AI or authorize spending. Technical cost guards are separate from commercial Free/Standard entitlements; Max is reserved. After final r2 ordinary CI, continue to LEGAL-001; production implementation belongs to AI-001.
