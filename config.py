@@ -484,6 +484,7 @@ class AppSettings:
     port: int
     flask_debug: bool
     ai: AISettings
+    ai_analysis_review_enabled: bool = False
 
     @property
     def is_test(self) -> bool:
@@ -723,6 +724,7 @@ def load_settings(environ: Mapping[str, str] | None = None) -> AppSettings:
 
     return AppSettings(
         ai=AISettings.from_environ(source),
+        ai_analysis_review_enabled=_bool(source, "AI_ANALYSIS_REVIEW_ENABLED", False),
         environment=environment,
         flask_secret_key=_required(source, "FLASK_SECRET_KEY"),
         token_encryption_key=token_encryption_key,

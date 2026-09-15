@@ -119,3 +119,8 @@ Owner-independent current operational state for one canonical vacancy provider. 
 ## AI-001 delta / 1.5.0 / 2026-09-14
 
 New AIRuntimePolicy, AIUsageEvent, AIBudgetBucket, AIRequestLease, AIProviderState, AIPlanEntitlement and AIUserPlan. User-owned records cascade on deletion. Global budget aggregates and opaque short-lived capacity leases intentionally have no user link after deletion.
+
+
+## AI-002 synthetic analysis domain / 2026-09-15
+
+ResumeAnalysisReport stores immutable synthetic source facts and a checked report with owner, fixture, source hash/version, analysis version and explicit origin (reference/provider). Reference reports are not new Alice results. ResumeAnalysisDecision stores a separate accepted/rejected/pending state and optimistic revision for each recommendation. ResumeAnalysisReviewEvent is append-only transition history. None of these entities promote advice to CareerProfile facts. Owned report deletion and account deletion cascade to decisions/history; usage metadata may expire independently.

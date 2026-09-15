@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}{{ ui.title }}{% endblock %}
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='resume_analysis.css') }}">
+<main class="analysis-page">
+  <h1>{{ ui.title }}</h1>
+  <p class="analysis-notice" role="status">{{ ui.notice }}</p>
+  <div class="analysis-grid">
+    {% for choice in choices %}
+    <form class="analysis-card" method="post" action="{{ url_for('resume_analysis.reference') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="fixture_id" value="{{ choice.id }}">
+      <input type="hidden" name="source_hash" value="{{ choice.source_hash }}">
+      <input type="hidden" name="operation_key" value="{{ operation_key }}-{{ choice.language }}">
+      <h2>{{ 'Python backend / RU' if choice.language == 'ru' else 'Data analyst / EN' }}</h2>
+      <button type="submit">{{ ui.create }}</button>
+    </form>
+    {% endfor %}
+  </div>
+  <section><h2>{{ ui.history }}</h2>
+    {% for item in reports %}
+    <p class="analysis-card"><a href="{{ url_for('resume_analysis.detail', report_id=item.id) }}">{{ item.language|upper }} &middot; {{ ui.version }} {{ item.version }}</a> &mdash; {{ ui[item.origin] }}</p>
+    {% else %}<p>{{ ui.empty }}</p>{% endfor %}
+  </section>
+</main>
+{% endblock %}

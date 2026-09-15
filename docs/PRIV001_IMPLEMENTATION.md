@@ -97,3 +97,8 @@ Application revert may keep additive `0013`. Controlled downgrade removes privac
 ## AI-001 delta / 1.5.0 / 2026-09-14
 
 AI export adds bounded owner-only usage metadata; no prompt/output contents. Account deletion removes owned AI ledger/plan/bucket rows; global aggregate costs and anonymous unexpired leases remain for safety. Existing privacy worker invokes bounded AI metadata cleanup after the original cleanup.
+
+
+## AI-002 rebuild privacy integration / 2026-09-15
+
+Owner export now includes bounded synthetic analysis reports, source facts, decisions and review events, not private operation HMAC keys. At most 100 reports per owner and 500 review events per report are stored. Account deletion cascades all three report tables; cross-owner reads/exports remain forbidden. New local verification is recorded in docs/evidence/ai-002/rebuild_verification.json; the historical PRIV-001 production acceptance is not presented as a new AI-002 run.

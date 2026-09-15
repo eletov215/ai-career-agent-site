@@ -10,6 +10,9 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 
 DOCUMENTS = {
+    "docs/AI002_IMPLEMENTATION.md": ["## 1.", "## 2."],
+    "docs/AI002_RUNBOOK.md": ["## 1.", "## 2."],
+    "docs/AI002_VERIFICATION_STATUS.md": ["## 1.", "## 2."],
     "docs/AI001_IMPLEMENTATION.md": ["## 1.", "## 2.", "2026-09-14"],
     "docs/AI001_RUNTIME_REFERENCE.md": ["## 1.", "## 2.", "2026-09-14"],
     "docs/AI001_RUNBOOK.md": ["## 1.", "## 2.", "2026-09-14"],

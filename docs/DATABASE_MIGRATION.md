@@ -92,3 +92,8 @@ Adds `source_health_states` and indexes. Additive; downgrade drops only operatio
 ## AI-001 delta / 1.5.0 / 2026-09-14
 
 Candidate migration20260914_0015 follows deployed0014; it adds seven AI tables and closed policy/provider seeds. No abandoned legal migration is assumed. Existing schemas/data are preserved. Prior build expects0014: rollback requires verified backup, stopping writers and controlled downgrade, not an unqualified additive-schema promise.
+
+
+## AI-002 rebuild / 2026-09-15
+
+The accepted source main (32) expects 20260914_0015. The reconstructed candidate expects 20260915_0016 and adds only resume_analysis_reports, resume_analysis_decisions, resume_analysis_review_events. Back up Neon before deploying. Downgrade deletes these three tables and is allowed only after an explicit recovery decision and preservation of their data. Do not revert to code expecting 0015 while assuming 0016 remains compatible. New Neon migration evidence is pending; local SQLite cycle is not a substitute for it. See AI002_RUNBOOK.md.

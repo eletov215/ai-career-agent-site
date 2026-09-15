@@ -3,11 +3,11 @@
 | Поле | Значение |
 |---|---|
 | Document | AI001_IMPLEMENTATION |
-| Version | 1.1 |
-| Date | 2026-09-14 |
+| Version | 1.2 |
+| Date | 2026-09-15 |
 | Package | AI-001 |
-| Status | НУЖНА ПРОВЕРКА; public AI disabled |
-| Candidate schema | 20260914_0015; verified staging remains0014 |
+| Status | **ВЫПОЛНЕНО** within synthetic-only boundary; public AI disabled |
+| Verified schema | 20260914_0015 on Render/Neon staging |
 
 ## 1. Purpose and scope
 
@@ -69,14 +69,16 @@ Owner export includes bounded metadata. Deletion cascades user events/plans/buck
 
 Migration0015 adds `ai_runtime_policies`, `ai_usage_events`, `ai_budget_buckets`, `ai_request_leases`, `ai_provider_states`, `ai_plan_entitlements`, `ai_user_plans`. Existing tables/data are not rewritten. Backup inventory includes all seven.
 
-There is no deployment claim in this candidate. Ordinary CI, PostgreSQL integration and Render/Neon migration/smoke must pass. Follow AI001_RUNBOOK; do not change DATABASE_URL or add provider secrets for this acceptance.
+Deployment acceptance is now recorded: GitHub CI #266 passed and Render/Neon staging reports current=expected `20260914_0015`, `migrations.ok=true`, deployed version `bc177dd6b970750f556f48f34dbd022a30e80a34`. `/api/ai/status` remains fail-closed (`generation_available=false`, `mode=manual`). Follow AI001_RUNBOOK for rollback; do not enable provider secrets or real-data entry points as part of this closure.
 
 ## 8. Limitations and next step
 
 Input admission uses a character-based estimate on the fixed synthetic payloads, not an exact vendor tokenizer. A full cap is reserved and actual overrun stops further admissions, but the preflight estimate is not a guaranteed upstream token cap. Idempotent duplicate results return metadata, not cached response text. Reconciliation of uncertain provider charges and real-data result persistence are future operational/feature work.
 
-Policy serialization is intentionally conservative for a small beta; multi-region/high-throughput scaling is not claimed. New PostgreSQL/Flask execution is an external gate where dependencies are unavailable locally. AI-001 is not complete until the candidate is accepted; LEGAL-001 remains mandatory before public AI.
+Policy serialization is intentionally conservative for a small beta; multi-region/high-throughput scaling is not claimed. New PostgreSQL/Flask execution is an external gate where dependencies are unavailable locally. AI-001 is complete only for this synthetic-only technical foundation; LEGAL-001 remains mandatory before public real-data AI, subscriptions or release.
 
 ## 9. Version log
+
+1.2 / 2026-09-15: external acceptance recorded from CI #266 + staging0015/manual/core smoke; public AI remains disabled.
 
 1.1 / 2026-09-14: verified synthetic-only candidate and measured seven-table implementation; unpublished earlier drafts superseded.

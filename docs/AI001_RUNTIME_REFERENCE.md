@@ -3,11 +3,11 @@
 | Поле | Значение |
 |---|---|
 | Document | AI001_RUNTIME_REFERENCE |
-| Version | 1.1 |
-| Date | 2026-09-14 |
+| Version | 1.2 |
+| Date | 2026-09-15 |
 | Package | AI-001 |
-| Status | НУЖНА ПРОВЕРКА; public AI disabled |
-| Candidate schema | 20260914_0015; verified staging remains0014 |
+| Status | AI-001 ВЫПОЛНЕНО; public AI disabled |
+| Verified schema | 20260914_0015 on staging |
 
 ## 1. Central policy defaults
 
@@ -74,6 +74,14 @@ python scripts/manage_ai_runtime.py cleanup
 
 Recovery marks stale reserved events unknown; it does not invent zero cost. Cleanup is also called by the existing privacy worker. User deletion removes owned metadata but not identifier-free global spend or unexpired opaque capacity leases. These measures protect against deletion/re-registration bypass of global ceilings, not a complete anti-abuse system.
 
-## 7. Version log
+## 7. Verified staging state / 2026-09-15
+
+GitHub CI #266 and Render/Neon smoke accepted this runtime with schema `20260914_0015`. Public state remains intentionally closed: `generation_available=false`, `mode=manual`, `reason=runtime_not_activated`. The manual notice is visible in the UI and vacancy search remains unaffected.
+
+These technical caps remain safety controls, not subscription promises. AI-002 may build on them after the current GitHub ZIP is inspected.
+
+## 8. Version log
+
+1.2 / 2026-09-15: staging0015/manual-mode acceptance recorded; limits unchanged.
 
 1.1 / 2026-09-14: actual defaults, CLI version checks, token-estimate limitation and separate future entitlement accounting.

@@ -42,10 +42,10 @@ def validate_canonical_status(plan: str, passport: str) -> list[str]:
         errors.append("LEGAL-001 must preserve the recorded owner deferral")
     for label, text in (("plan", plan), ("passport", passport)):
         current = next((line for line in text.splitlines() if line.startswith("| Current package |")), "")
-        if "AI-001" not in current or ready not in current:
+        if "AI-002" not in current or ready not in current:
             errors.append(label + " active package is inconsistent")
     doc = re.search(r"^#### DOC-001[^\n]*\n(.*?)(?=^### |\Z)", plan, re.M | re.S)
-    if doc is None or not all(v in doc.group(1) for v in ("1.5.0", "2.67", "20260819_0014", complete, ready, deferred)):
+    if doc is None or not all(v in doc.group(1) for v in ("1.5.2", "2.69", "20260914_0015", complete, ready, deferred)):
         errors.append("DOC-001 active version inventory is stale")
     return errors
 
@@ -100,7 +100,7 @@ def validate(root: Path = ROOT) -> list[str]:
         plan = (root / "docs/PLAN_CURRENT.md").read_text(encoding="utf-8")
         passport = (root / "docs/PROJECT_PASSPORT.md").read_text(encoding="utf-8")
         errors.extend(validate_canonical_status(plan, passport))
-        if "1.5.0" not in plan or "2.67" not in passport:
+        if "1.5.2" not in plan or "2.69" not in passport:
             errors.append("current canonical versions are not synchronized")
         workflow = (root / ".github/workflows/ci.yml").read_text(encoding="utf-8")
         if "python scripts/check_ai_provider_package.py" not in workflow:

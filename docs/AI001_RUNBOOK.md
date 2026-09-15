@@ -3,11 +3,11 @@
 | Поле | Значение |
 |---|---|
 | Document | AI001_RUNBOOK |
-| Version | 1.1 |
-| Date | 2026-09-14 |
+| Version | 1.2 |
+| Date | 2026-09-15 |
 | Package | AI-001 |
-| Status | НУЖНА ПРОВЕРКА; public AI disabled |
-| Candidate schema | 20260914_0015; verified staging remains0014 |
+| Status | AI-001 ВЫПОЛНЕНО; operational rollback reference; public AI disabled |
+| Verified schema | 20260914_0015 on staging |
 
 ## 1. Source and local checks
 
@@ -30,13 +30,13 @@ Preserve a verified backup of existing staging data using the existing backup/re
 
 No provider keys or payment are needed. Keep AI_ENABLED=0, AI_KILL_SWITCH=1 and AI_SYNTHETIC_ACCESS_ENABLED=0 (absent values also resolve to these defaults). Leave the current Neon DATABASE_URL unchanged. Existing Render start command performs migrations before starting web/workers.
 
-## 3. External acceptance
+## 3. External acceptance - completed 2026-09-15
 
-After green ordinary CI deploy the exact candidate. Expected readiness: PostgreSQL, persistent=true, status=ok, current_revision=expected_revision=20260914_0015. Last previously verified deployment is0014, not0015.
+GitHub CI #266 passed. Staging readiness confirms PostgreSQL persistent=true, status=ok, `current_revision=expected_revision=20260914_0015`, `migrations.ok=true`, privacy worker alive/ok and deployed version `bc177dd6b970750f556f48f34dbd022a30e80a34`.
 
-Open `/api/ai/status`: generation_available=false and mode=manual. On `/ai-career` and the authenticated resume builder the manual-mode notice is visible and no generation request is sent. Check home, one vacancy search and owned profile/draft save. Existing email/OAuth operational limitations must be reported separately, not bypassed.
+`/api/ai/status` confirms `generation_available=false`, `mode=manual`, `reason=runtime_not_activated`. The owner confirmed the manual-mode notice is visible and vacancy search plus the remaining checked site functions work normally. No paid provider call was part of this acceptance.
 
-Restart the web service and verify0015/manual state again. Confirm logs have no new migration/worker error, prompt, response body, token or database secret. No paid provider call is part of this acceptance. Share safe readiness/status and CI evidence only.
+Keep these checks as the baseline for future AI-002 regressions. A future feature package must not silently enable public generation.
 
 ## 4. Operator policy test
 
@@ -52,8 +52,10 @@ Only after the above preparation and an explicit rollback decision run a control
 
 ## 6. Next gate
 
-AI-001 stays NEEDS_VERIFICATION until exact CI, staging migration/restart and closed-state smoke are accepted. Then continue AI-002 technical work. LEGAL-001 must be completed before real-user AI or commercial release; deployment success is not legal approval.
+AI-001 is accepted. Continue AI-002 only after a fresh current GitHub ZIP is supplied and inspected. LEGAL-001 must be completed before real-user AI, paid subscriptions or commercial release; deployment success is not legal approval.
 
 ## 7. Version log
+
+1.2 / 2026-09-15: CI #266 and staging0015/manual-mode acceptance recorded; runbook retained for rollback and AI-002 regression baseline.
 
 1.1 / 2026-09-14: synthetic-only deploy acceptance and exact-revision rollback procedure.

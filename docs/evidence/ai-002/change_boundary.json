@@ -1,0 +1,48 @@
+{
+  "package": "AI-002",
+  "public_real_data_enabled": false,
+  "source": "main (32).zip",
+  "source_sha256": "161d52efebf1762a5dd73f0be890b7afb204d2a26e34f9237341eaf832075de9",
+  "reviewed_runtime_changes": {
+    "app.py": {
+      "previous_sha256": "8355fa0bc503836b6a0db558b3b730fd3da2f8f100d0def4086df462bb512e3f",
+      "current_sha256": "bce51f2587a81133773c071c2db8f17b0c0befe6ebcb4dbf4d7e5bdc2616313b"
+    },
+    "config.py": {
+      "previous_sha256": "2baa91e2a0d0e5cbcf75fb4eb027278d9fb770010f1e5813599e5b3d790e7723",
+      "current_sha256": "eacd3358a7315b535e5fd0623d60f35160bad427d32b8ad35d34c539248ebdd2"
+    },
+    "database.py": {
+      "previous_sha256": "3ce02a2053ceda62dfc1df94408574b9fac19c9d6c41594338183ac183f7dfb8",
+      "current_sha256": "a327edd4e5bb9f9f5cf859b4c47c8d2a92614023d725277b9306ff8deebae24e"
+    },
+    "infra/vps/.env.example": {
+      "previous_sha256": "3c1983effa402581d58f4353cb6143b4f241b6937ebf56ece670873bb642112e",
+      "current_sha256": "48be51f6d66b024cdaae7b1b72b4ea368d5f4dbe549431a1ab6c83d7785cdbc1"
+    },
+    "models/__init__.py": {
+      "previous_sha256": "fbba7d222c4ac6111d93a1fceee9aae44105abe7a0049d7231e8e3e1f18c8480",
+      "current_sha256": "f31f1b9a687d9fa301d5e8219ba29e85a5f9a9019a447aa64b9054c6a307b805"
+    },
+    "operations/backup.py": {
+      "previous_sha256": "9fc0726183cfa08c352dc4d136f57d0e4b9ae43f6cbf81975b8fd32b163165b4",
+      "current_sha256": "8f7b584355afe3d7b1e665f6c174fa7b76c1538428d97dac9cd8bdaf9aea288b"
+    },
+    "repositories/privacy.py": {
+      "previous_sha256": "7b4926b26aa80a2e9c1a38518035ce33b036da177b371caf5bdee79b375cf701",
+      "current_sha256": "2e23b1146bffb7632e0b37a3ad95ebf2acd4215e468a518677c2f839416ff680"
+    },
+    "services/ai/service.py": {
+      "previous_sha256": "4635f20f317c0b772434a4b7a4a9e83d0f2a34a6da2c1099c7a1094bc2e61e89",
+      "current_sha256": "c611abcfea045950bde66cd1eb01b8aeace585fd85aa68364196f80acfb4a838"
+    },
+    "services/privacy.py": {
+      "previous_sha256": "e15d390c629bf47e1dec92fed43a10ef9c8bdaa869db2305e9f32f38e9d5ccd1",
+      "current_sha256": "8df2adf9473f2423c86db4974ca79206cffda41d14f0fbe4361ed3fdc27feec2"
+    },
+    "services/storage.py": {
+      "previous_sha256": "fb09e0c93b2b22f14cf6df4b71f9b54d74223c9c526eec4fca6a6376aa0672b3",
+      "current_sha256": "7136a8403ae779b06fb7ebc0d23274bd05829ceaed94dce40c90ff58257b0361"
+    }
+  }
+}

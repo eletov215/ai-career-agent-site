@@ -30,7 +30,7 @@ os.environ["RATE_LIMIT_ENABLED"] = "1"
 # Remove accidental developer or CI credentials so the route tests prove that
 # test mode is self-contained.
 for variable in (
-    "AI_ENABLED", "AI_KILL_SWITCH", "AI_SYNTHETIC_ACCESS_ENABLED",
+    "AI_ANALYSIS_REVIEW_ENABLED", "AI_ENABLED", "AI_KILL_SWITCH", "AI_SYNTHETIC_ACCESS_ENABLED",
     "AI_YANDEX_API_KEY", "AI_YANDEX_FOLDER_ID", "AI_YANDEX_MODEL_URI", "AI_NO_LOGGING_DISABLED_AT",
     "FLASK_SECRET_KEY",
     "TOKEN_ENCRYPTION_KEY",

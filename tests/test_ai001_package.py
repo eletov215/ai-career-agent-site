@@ -16,6 +16,11 @@ def test_protected_runtime_changes_require_current_hash(tmp_path):
     rows=json.loads((tmp_path/'docs/evidence/ai-001/change_boundary.json').read_text())['reviewed_runtime_changes']
     for rel in rows:
         (tmp_path/rel).parent.mkdir(parents=True,exist_ok=True);shutil.copy2(ROOT/rel,tmp_path/rel)
+    rel='docs/evidence/ai-002/change_boundary.json'
+    (tmp_path/rel).parent.mkdir(parents=True,exist_ok=True);shutil.copy2(ROOT/rel,tmp_path/rel)
+    extra=json.loads((ROOT/rel).read_text())['reviewed_runtime_changes']
+    for name in extra:
+        (tmp_path/name).parent.mkdir(parents=True,exist_ok=True);shutil.copy2(ROOT/name,tmp_path/name)
     assert load_boundary(tmp_path)
     (tmp_path/'app.py').write_text('unreviewed runtime replacement')
     with pytest.raises(ValueError):load_boundary(tmp_path)

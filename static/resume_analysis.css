@@ -1,0 +1,18 @@
+/* AI-002 private review UI; does not change shared search/editor styles. */
+.analysis-page { max-width: 1040px; margin: 2rem auto; padding: 0 1.25rem 3rem; line-height: 1.65; overflow-wrap: anywhere; }
+.analysis-page h1 { font-size: clamp(1.5rem, 3vw, 2.1rem); line-height: 1.25; }
+.analysis-page h2 { margin-top: 2rem; font-size: 1.35rem; }
+.analysis-page h3 { margin: 0 0 .65rem; font-size: 1.08rem; }
+.analysis-page p { margin: .6rem 0; }
+.analysis-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 1rem; }
+.analysis-card { padding: 1.15rem 1.3rem; border: 1px solid #d9e1ea; border-radius: .7rem; background: #fff; color: #1e293b; margin-bottom: 1rem; }
+.analysis-card h2 { margin-top: 0; }
+.analysis-notice { padding: 1rem 1.2rem; border-left: 3px solid #37709c; background: #f0f6fb; color: #223f58; border-radius: .3rem; }
+.analysis-summary { font-size: 1.12rem; padding: 1rem 0; }
+.analysis-evidence, .analysis-actions { display: flex; flex-wrap: wrap; gap: .6rem; margin-top: .8rem; }
+.analysis-evidence a { font-size: .9rem; color: #245f87; text-decoration: underline; }
+.analysis-actions button, .analysis-page button { font: inherit; padding: .55rem .85rem; border: 1px solid #64748b; border-radius: .4rem; cursor: pointer; color: #172d41; background: #f8fafc; }
+.analysis-page button:focus-visible, .analysis-page a:focus-visible, .analysis-page summary:focus-visible { outline: 3px solid #37709c; outline-offset: 3px; }
+.analysis-delete { margin-top: 2rem; }
+.analysis-page [id] { scroll-margin-top: 2rem; }
+@media (max-width: 540px) { .analysis-page { margin: 1.2rem auto; padding: 0 .8rem 2rem; } .analysis-card { padding: 1rem; } .analysis-actions button { flex: 1 1 auto; } }

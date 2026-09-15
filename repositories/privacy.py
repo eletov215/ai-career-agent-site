@@ -10,6 +10,8 @@ from typing import Any
 
 from sqlalchemy import delete, func, or_, select, text
 from models.ai import AIUsageEvent, AIUserPlan, AIBudgetBucket
+from models.resume_analysis import ResumeAnalysisReport, ResumeAnalysisDecision, ResumeAnalysisReviewEvent
+from repositories.resume_analysis import report_view
 from repositories.ai import public_usage
 
 from models import (
@@ -205,7 +207,18 @@ class PrivacyRepository(RepositoryBase):
                                       .order_by(AIUsageEvent.created_at.asc()).limit(5001)).all()
             if len(ai_rows) > 5000:
                 raise PrivacySnapshotConflictError("ai_export_limit")
+            analysis_rows = session.scalars(select(ResumeAnalysisReport).where(ResumeAnalysisReport.user_id == user.id)
+                .order_by(ResumeAnalysisReport.created_at, ResumeAnalysisReport.id).limit(101)).all()
+            if len(analysis_rows) > 100:
+                raise PrivacySnapshotConflictError("analysis_export_limit")
+            analysis_export = []
+            for row in analysis_rows:
+                decisions = session.scalars(select(ResumeAnalysisDecision).where(ResumeAnalysisDecision.report_id == row.id)).all()
+                review_events = session.scalars(select(ResumeAnalysisReviewEvent).where(ResumeAnalysisReviewEvent.report_id == row.id)
+                    .order_by(ResumeAnalysisReviewEvent.created_at, ResumeAnalysisReviewEvent.revision)).all()
+                analysis_export.append(report_view(row, decisions, review_events))
             snapshot: dict[str, Any] = {
+                "resume_analyses": analysis_export,
                 "ai_usage": [public_usage(row) for row in ai_rows],
                 "schema_version": 1,
                 "account": {
@@ -419,6 +432,7 @@ class PrivacyRepository(RepositoryBase):
             "resume_versions": 0,
             "resume_assets": 0,
             "resume_exports": 0,
+            "resume_analysis_reports": self._count(session, ResumeAnalysisReport, ResumeAnalysisReport.user_id == user_id),
         }
         if profile is not None:
             counts["career_profile_versions"] = self._count(

@@ -1,4 +1,9 @@
-# 1.4.50 - AI-PROVIDER-001 owner-approved tier/limit architecture - 14.09.2026
+# AI Career Agent - CHANGELOG
+
+## AI-002 v1.5.2 rebuild-r2 / 2026-09-15
+
+Rebuilt missing AI-002 delivery on main (32). Three additive analysis/review tables at 0016; synthetic evidence checks before settlement; idempotent immutable report persistence; private reference-only UI; scoped review history; privacy export/deletion; regression and package gates. New external CI/staging required; public AI stays off.
+
 
 ## 1.5.0 / 2026-09-14 / AI-001 candidate
 

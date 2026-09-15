@@ -221,6 +221,7 @@ class PrivacyService:
             "resume_versions": len(snapshot["resume_versions"]),
             "resume_assets": len(snapshot["resume_assets"]),
             "resume_exports": len(snapshot["resume_exports"]),
+            "resume_analysis_reports": len(snapshot.get("resume_analyses", [])),
             "auth_sessions": len(snapshot["authentication"]["sessions"]),
             "auth_tokens": len(snapshot["authentication"]["one_time_tokens"]),
         }

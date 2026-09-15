@@ -15,15 +15,15 @@ TABLES={'ai_runtime_policies','ai_usage_events','ai_budget_buckets','ai_request_
 def test_sqlite_migration_round_trip(tmp_path):
     url=f'sqlite:///{tmp_path}/roundtrip.db';upgrade_database(url,'20260819_0014');db=create_database(url)
     before=set(inspect(db.engine).get_table_names())
-    upgrade_database(url);assert current_revision(db.engine)=='20260914_0015'
+    upgrade_database(url,"20260914_0015");assert current_revision(db.engine)=='20260914_0015'
     after=set(inspect(db.engine).get_table_names());assert after-before==TABLES
     with db.session() as s:
         assert json.loads(s.get(AIRuntimePolicy,1).policy_json)==DEFAULT_POLICY
         assert s.get(AIProviderState,PROVIDER).open_until==0
         assert s.scalar(select(func.count()).select_from(AIPlanEntitlement))==0
-    upgrade_database(url);downgrade_database(url,'20260819_0014')
+    upgrade_database(url,"20260914_0015");downgrade_database(url,'20260819_0014')
     assert set(inspect(db.engine).get_table_names())==before
-    upgrade_database(url);assert current_revision(db.engine)=='20260914_0015';db.dispose()
+    upgrade_database(url,"20260914_0015");assert current_revision(db.engine)=='20260914_0015';db.dispose()
 
 def test_sqlite_alembic_no_model_drift(tmp_path):
     from alembic import command

@@ -35,7 +35,7 @@ class AIService:
     def _digest(self,items:list)->str:
         return hmac.new(self.fingerprint_key,json.dumps(items,ensure_ascii=True,separators=(',',':')).encode(),hashlib.sha256).hexdigest()
 
-    def generate(self,request:AIRequest)->AIResult:
+    def generate(self,request:AIRequest, *, result_validator=None)->AIResult:
         if not isinstance(request,AIRequest):return AIResult('manual','invalid_request')
         if not re.fullmatch(r'[A-Za-z0-9:_-]{8,128}',request.idempotency_key) or not re.fullmatch(r'[a-fA-F0-9-]{36}',request.user_id):
             return AIResult('manual','invalid_request')
@@ -95,6 +95,11 @@ class AIService:
                     reason='refusal' if response.finish_reason=='refusal' else 'incomplete_output';break
                 try:result=validate_output(response.content,schema)
                 except ContractError:reason='schema_failure';break
+                if result_validator is not None:
+                    try:
+                        result_validator(result,fixture,schema)
+                    except Exception:
+                        result=None;reason='feature_validation_failure';break
                 status='succeeded';reason='ok';provider_failed=False;break
         except Exception:
             # Database failure after a reservation: keep the full pre-counted reservation.

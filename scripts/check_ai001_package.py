@@ -54,10 +54,17 @@ def load_boundary(root:Path)->dict:
     rows=data['reviewed_runtime_changes']
     if data['package']!='AI-001' or data['public_real_data_enabled'] is not False or set(rows)!=SUPERSEDED_RUNTIME:
         raise ValueError('Invalid AI-001 boundary scope')
+    successor={}
+    if (root/'docs/evidence/ai-002/change_boundary.json').is_file():
+        from scripts.check_ai002_package import load_boundary as load_ai002_boundary
+        successor=load_ai002_boundary(root)
+    effective={}
     for rel,item in rows.items():
-        if item['previous_sha256']!=old.get(rel) or not hash_matches((root/rel).read_bytes(),item['current_sha256']):
+        current=successor.get(rel,item)['current_sha256']
+        if item['previous_sha256']!=old.get(rel) or not hash_matches((root/rel).read_bytes(),current):
             raise ValueError('Runtime boundary checksum mismatch')
-    return rows
+        effective[rel]={**item,'current_sha256':current}
+    return effective
 
 def validate(root:Path=ROOT)->list[str]:
     errors=[]
@@ -80,7 +87,12 @@ def validate(root:Path=ROOT)->list[str]:
             if p.read_bytes().replace(b'\r\n',b'\n')!=original.read_bytes().replace(b'\r\n',b'\n'):
                 errors.append('Accepted schema changed: '+p.name)
         db=(root/'database.py').read_text()
-        if 'CURRENT_REVISION = "20260914_0015"' not in db:errors.append('Candidate head is not 0015')
+        successor=(root/'docs/evidence/ai-002/change_boundary.json').is_file()
+        expected_head='20260915_0016' if successor else '20260914_0015'
+        if f'CURRENT_REVISION = "{expected_head}"' not in db:errors.append('Unexpected schema head')
+        if successor:
+            from scripts.check_ai002_package import validate as validate_ai002
+            errors.extend(validate_ai002(root))
         migration=(root/'migrations/versions/20260914_0015_ai_runtime.py').read_text()
         if "down_revision = '20260819_0014'" not in migration and 'down_revision = "20260819_0014"' not in migration:
             errors.append('Migration must follow deployed 0014')
@@ -96,7 +108,8 @@ def validate(root:Path=ROOT)->list[str]:
             text=(root/'docs'/f'{name}.md').read_text()
             if not all(s in text for s in ('# ','## 1.','## 2.','2026-09-14')):errors.append('Document incomplete: '+name)
         status=(root/'docs/AI001_VERIFICATION_STATUS.md').read_text()
-        if 'NEEDS_VERIFICATION' not in status or 'PENDING' not in status:errors.append('Candidate must not claim external completion')
+        if not all(token in status for token in ('CI #266','20260914_0015','synthetic-only','bc177dd')):
+            errors.append('Accepted AI-001 evidence is missing')
         legal=(root/'docs/LEGAL001_DEFERRED_DECISION.md').read_text()
         if '\u041e\u0422\u041b\u041e\u0416\u0415\u041d\u041e \u0414\u041e \u0420\u0415\u0428\u0415\u041d\u0418\u042f \u0412\u041b\u0410\u0414\u0415\u041b\u042c\u0426\u0410' not in legal:
             errors.append('Owner legal deferral is missing')

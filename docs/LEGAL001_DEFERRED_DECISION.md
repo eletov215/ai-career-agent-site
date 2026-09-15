@@ -3,8 +3,8 @@
 | Поле | Значение |
 |---|---|
 | Документ | LEGAL001_DEFERRED_DECISION |
-| Версия | 1.1 |
-| Дата | 2026-09-14 |
+| Версия | 1.2 |
+| Дата | 2026-09-15 |
 | Статус | ОТЛОЖЕНО ДО РЕШЕНИЯ ВЛАДЕЛЬЦА |
 | Блокирует | публичное включение AI, финальную публикацию юридических текстов и коммерческий релиз |
 | Не блокирует | техническую разработку AI-001..AI-006 в fail-closed режиме |
@@ -56,7 +56,7 @@ AI-001 может реализовывать provider interface, structured-outp
 
 ## 4. Следующее действие
 
-LEGAL-001 остаётся в статусе `ОТЛОЖЕНО ДО РЕШЕНИЯ ВЛАДЕЛЬЦА`. Следующий текущий технический пакет — AI-001. Возврат к LEGAL-001 обязателен до публичного AI и коммерческого релиза.
+LEGAL-001 остаётся в статусе `ОТЛОЖЕНО ДО РЕШЕНИЯ ВЛАДЕЛЬЦА`. AI-001 технически завершён; следующий пакет - AI-002 после загрузки свежего GitHub ZIP. Возврат к LEGAL-001 обязателен до public/real-data AI, платных подписок или коммерческого релиза.
 
 
 ## 5. Scope of this deferral / 1.5.0
@@ -73,4 +73,5 @@ Return trigger: before public AI activation, paid subscriptions or commercial re
 
 | Version | Date | Change |
 |---|---|---|
+| 1.2 | 2026-09-15 | AI-001 closure recorded; unresolved operator/jurisdiction questions unchanged; return trigger preserved before public AI/subscriptions/release |
 | 1.1 | 2026-09-14 | Verified deferral; no boolean legal bypass; technical-only AI-001 and mandatory return trigger |

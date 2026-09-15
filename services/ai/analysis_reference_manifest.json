@@ -1,0 +1,8 @@
+{
+  "version": 1,
+  "origin": "reference_not_live_ai",
+  "files": {
+    "prompts/analysis/reference/resume-analysis-ru-01.json": "95b989ea16da444fdc986171323c08aed45858ada756ae389caf39581f41ef6e",
+    "prompts/analysis/reference/resume-analysis-en-01.json": "ce9b0fb2e63adb752a1b223fefbd21bb13a66ef534d8f5caf32db8c6161a2cd7"
+  }
+}

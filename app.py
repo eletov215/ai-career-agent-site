@@ -28,6 +28,8 @@ from database import CURRENT_REVISION, create_database, database_health
 from services.storage import StorageServices
 from services.ai.service import AIService
 from routes.ai_status import create_ai_status_blueprint
+from services.resume_analysis import ResumeAnalysisService
+from routes.resume_analysis import create_resume_analysis_blueprint
 from services.source_health import configure_source_health
 from services.source_health_instrumentation import install_source_health_instrumentation
 from services.auth import AuthService
@@ -117,6 +119,8 @@ def ai_availability_context():
 AUTH_EMAIL_SENDER = build_auth_email_sender(SETTINGS)
 AUTH_SERVICE = AuthService(STORAGE.auth, AUTH_EMAIL_SENDER, SETTINGS)
 app.register_blueprint(create_auth_blueprint(AUTH_SERVICE, SETTINGS))
+ANALYSIS_SERVICE = ResumeAnalysisService(STORAGE.analyses, AI_SERVICE, fingerprint_key=SETTINGS.flask_secret_key)
+app.register_blueprint(create_resume_analysis_blueprint(ANALYSIS_SERVICE, SETTINGS))
 PROFILE_SERVICE = CareerProfileService(STORAGE.profiles)
 RESUME_IMPORT_SERVICE = ResumeImportService(
     max_pages=SETTINGS.max_resume_pages,

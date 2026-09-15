@@ -3,11 +3,11 @@
 | Поле | Значение |
 |---|---|
 | Document | AI001_SOURCES |
-| Version | 1.1 |
-| Date | 2026-09-14 |
+| Version | 1.2 |
+| Date | 2026-09-15 |
 | Package | AI-001 |
-| Status | НУЖНА ПРОВЕРКА; public AI disabled |
-| Candidate schema | 20260914_0015; verified staging remains0014 |
+| Status | AI-001 ВЫПОЛНЕНО; public AI disabled |
+| Verified schema | 20260914_0015 on staging |
 
 ## 1. Project evidence
 
@@ -37,3 +37,12 @@ The beta uses one central policy row to serialize admissions. This favors predic
 ## 5. Version log
 
 1.1 / 2026-09-14: dated sources and explicit distinction between measured evidence, policy and assumptions.
+
+
+## 6. External acceptance evidence / 2026-09-15
+
+The owner supplied GitHub CI #266 and live Render endpoint screenshots. They support only the claims recorded in AI001_VERIFICATION_STATUS v1.2: CI success, staging revision `20260914_0015`, manual runtime state and normal vacancy/core smoke. They do not provide a file-by-file copy of current GitHub `main`; a fresh ZIP is still required before AI-002 changes.
+
+## 7. Version log update
+
+1.2 / 2026-09-15: external CI/staging evidence added; source-archive gap explicitly recorded.

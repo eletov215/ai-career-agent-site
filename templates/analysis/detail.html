@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}{{ ui.title }}{% endblock %}
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='resume_analysis.css') }}">
+{% macro evidence(ids) %}<nav class="analysis-evidence" aria-label="{{ ui.source }}">{% for id in ids %}<a href="#source-{{ id }}">{{ ui.fact }} {{ id[1:] }}</a>{% endfor %}</nav>{% endmacro %}
+<main class="analysis-page">
+<a href="{{ url_for('resume_analysis.index') }}">&larr; {{ ui.back }}</a>
+<h1>{{ ui.title }}</h1>
+<p>{{ ui.version }} {{ report.version }} &middot; {{ ui[report.origin] }} &middot; {{ report.language|upper }}</p>
+{% if report.origin == 'reference' %}<p class="analysis-notice" role="status">{{ ui.notice }}</p>{% endif %}
+<p class="analysis-summary" lang="{{ report.language }}">{{ report.result.summary }}</p>
+{% for section in ['strengths','gaps'] %}
+<section><h2>{{ ui[section] }}</h2>{% if section == 'gaps' %}<p>{{ ui.gap_note }}</p>{% endif %}
+<div class="analysis-grid">{% for finding in report.result[section] %}
+<article class="analysis-card" lang="{{ report.language }}"><h3>{{ finding.title }}</h3><p>{{ finding.explanation }}</p>{{ evidence(finding.evidence_ids) }}</article>
+{% endfor %}</div></section>
+{% endfor %}
+<section><h2>{{ ui.recommendations }}</h2><p class="analysis-notice">{{ ui.review_note }}</p>
+{% for rec in report.result.recommendations %}
+{% set rec_id='rec-' ~ loop.index %}{% set decision=report.decisions[rec_id] %}
+<article class="analysis-card">
+<h3 lang="{{ report.language }}">{{ rec.action }}</h3><p lang="{{ report.language }}">{{ rec.rationale }}</p>{{ evidence(rec.evidence_ids) }}
+<p><strong>{{ ui[decision.decision] }}</strong></p>
+<form method="post" action="{{ url_for('resume_analysis.review', report_id=report.id) }}">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+<input type="hidden" name="recommendation_id" value="{{ rec_id }}">
+<input type="hidden" name="source_hash" value="{{ report.source_hash }}">
+<input type="hidden" name="expected_revision" value="{{ decision.revision }}">
+<div class="analysis-actions"><button type="submit" name="decision" value="accepted">{{ ui.accept }}</button><button type="submit" name="decision" value="rejected">{{ ui.reject }}</button><button type="submit" name="decision" value="pending">{{ ui.reset }}</button></div>
+</form></article>{% endfor %}
+</section>
+<section><h2>{{ ui.unverified }}</h2>{% for f in report.result.facts_not_verified %}<p lang="{{ report.language }}">{{ f.fact }}</p>{{ evidence(f.evidence_ids) }}{% endfor %}</section>
+<section><h2>{{ ui.source }}</h2>{% for f in report.source_facts %}<p id="source-{{ f.id }}" class="analysis-card" lang="{{ report.language }}"><strong>{{ ui.fact }} {{ f.id[1:] }}.</strong> {{ f.text }}</p>{% endfor %}</section>
+{% if report.review_events %}<details><summary>{{ ui.review_history }}</summary>{% for event in report.review_events %}<p>{{ ui.recommendations }} {{ event.recommendation_id[4:] }} &middot; {{ ui[event.decision] }} &middot; {{ ui.version }} {{ event.revision }}</p>{% endfor %}</details>{% endif %}
+<form class="analysis-delete" method="post" action="{{ url_for('resume_analysis.delete_report', report_id=report.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="source_hash" value="{{ report.source_hash }}"><button type="submit">{{ ui.delete }}</button></form>
+</main>
+{% endblock %}

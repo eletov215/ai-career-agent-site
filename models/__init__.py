@@ -3,6 +3,7 @@
 from .accounts import HeadHunterAccount, SuperJobAccount
 from .auth import AuthSession, AuthToken
 from .base import Base
+from .resume_analysis import ResumeAnalysisReport, ResumeAnalysisDecision, ResumeAnalysisReviewEvent
 from .oauth_connection import OAuthConnection
 from .profile import CareerProfile, CareerProfileVersion
 from .privacy import PrivacyAuditEvent

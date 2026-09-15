@@ -1,0 +1,183 @@
+{
+  "package": "AI-002",
+  "version": "1.5.2",
+  "build": "rebuild-r2",
+  "status": "NEEDS_VERIFICATION",
+  "date": "2026-09-15",
+  "source_zip": "ai-career-agent-site-main (32).zip",
+  "source_zip_sha256": "161d52efebf1762a5dd73f0be890b7afb204d2a26e34f9237341eaf832075de9",
+  "source_commit_in_zip_comment": "bc177dd6b970750f556f48f34dbd022a30e80a34",
+  "original_candidate_r1_recovered": false,
+  "source_scope": "Freshly reconstructed patch. Earlier unavailable r1 checks are not reused.",
+  "schema": {
+    "verified_staging": "20260914_0015",
+    "candidate": "20260915_0016"
+  },
+  "local_regression": {
+    "mode": "four complete non-overlapping module groups",
+    "passed": 544,
+    "skipped": 19,
+    "subtests_passed": 82,
+    "failed": 0,
+    "groups": [
+      {
+        "modules": [
+          "tests/test_ai001_migration.py",
+          "tests/test_ai001_package.py",
+          "tests/test_ai001_routes.py",
+          "tests/test_ai001_runtime.py",
+          "tests/test_ai002_migration.py",
+          "tests/test_ai002_package.py",
+          "tests/test_ai002_routes.py",
+          "tests/test_ai002_service.py",
+          "tests/test_ai_bench_alice_final_gate.py",
+          "tests/test_ai_bench_dataset.py",
+          "tests/test_ai_bench_package_layout.py",
+          "tests/test_ai_bench_providers.py",
+          "tests/test_ai_bench_runner.py",
+          "tests/test_ai_bench_scoring.py",
+          "tests/test_ai_provider_policy.py",
+          "tests/test_app_startup_modes.py",
+          "tests/test_architecture_boundaries.py",
+          "tests/test_auth002_migration.py"
+        ],
+        "passed": 272,
+        "skipped": 6,
+        "subtests_passed": 82,
+        "log_sha256": "2b281daad8cac93c6eea055cfdc7f787cc93000d3fe167c50eebe7e682b2bcf1"
+      },
+      {
+        "modules": [
+          "tests/test_auth002_routes.py",
+          "tests/test_auth_migration.py",
+          "tests/test_auth_routes.py",
+          "tests/test_auth_service.py",
+          "tests/test_backup_restore.py",
+          "tests/test_config.py",
+          "tests/test_database.py",
+          "tests/test_document_structure.py",
+          "tests/test_email_delivery.py",
+          "tests/test_infra_manifests.py",
+          "tests/test_infra_probe.py",
+          "tests/test_legacy_import.py",
+          "tests/test_oauth_identity_service.py",
+          "tests/test_observability.py",
+          "tests/test_passwords.py",
+          "tests/test_postgresql_integration.py",
+          "tests/test_priv001_migration.py",
+          "tests/test_privacy_routes.py"
+        ],
+        "passed": 121,
+        "skipped": 6,
+        "subtests_passed": 0,
+        "log_sha256": "15ab978c26a83a08276f1cb908c3e9b8f49ae54c8539b2828208182448ef44cf"
+      },
+      {
+        "modules": [
+          "tests/test_privacy_service.py",
+          "tests/test_prof001_migration.py",
+          "tests/test_prof002_migration.py",
+          "tests/test_prof003_frontend_contract.py",
+          "tests/test_prof003_migration.py",
+          "tests/test_profile_routes.py",
+          "tests/test_profile_service.py",
+          "tests/test_providers.py",
+          "tests/test_rate_limit_proxy.py",
+          "tests/test_repositories.py",
+          "tests/test_repository_hygiene.py",
+          "tests/test_resume_draft_routes.py",
+          "tests/test_resume_draft_service.py",
+          "tests/test_resume_import_routes.py",
+          "tests/test_resume_import_service.py",
+          "tests/test_resume_parser.py",
+          "tests/test_routes.py",
+          "tests/test_search005_migration.py"
+        ],
+        "passed": 54,
+        "skipped": 5,
+        "subtests_passed": 0,
+        "log_sha256": "d4c1856ff2ba496e637e7cff120bd08f05c5c7cf2b28702426713f977dd3947d"
+      },
+      {
+        "modules": [
+          "tests/test_search005_route_registration.py",
+          "tests/test_search005_routes.py",
+          "tests/test_search005_security.py",
+          "tests/test_search_deduplication.py",
+          "tests/test_search_filters.py",
+          "tests/test_search_normalization.py",
+          "tests/test_search_pagination.py",
+          "tests/test_source_health_service.py",
+          "tests/test_source_status.py",
+          "tests/test_sync_incremental.py",
+          "tests/test_sync_worker.py",
+          "tests/test_template_security.py",
+          "tests/test_university_logo_security.py",
+          "tests/test_vacancy_presenter.py",
+          "tests/test_vacancy_store.py"
+        ],
+        "passed": 97,
+        "skipped": 2,
+        "subtests_passed": 0,
+        "log_sha256": "7b69ad94eb6401b3d1a227adf9592a49fcfb03cb14febd01879fc865287e4d93"
+      }
+    ],
+    "single_process_full_run": "A monolithic run did not complete before the local timeout; its incomplete result is not counted. All 69 modules subsequently passed in four bounded groups.",
+    "initial_failure_fixed": "Historical test_priv001_migration current revision assertion was updated from 0015 to the new 0016 head, without weakening its old migration checks.",
+    "skip_boundary": "Flask/Psycopg and disposable PostgreSQL are unavailable locally. Skips are not counted as passes."
+  },
+  "final_changed_subset": {
+    "passed": 105,
+    "skipped": 2,
+    "subtests_passed": 58,
+    "failed": 0,
+    "included_in_total_not_additional": true,
+    "log_sha256": "258a9ee1311ede08b10441e72291eea4ba19992bba89bc7a7a5dda168a0ed748"
+  },
+  "static_checks": {
+    "python_ast_files": 223,
+    "jinja_templates": "parsed only; not browser render QA"
+  },
+  "package_checks": [
+    {
+      "command": "python -S scripts/check_ai002_package.py",
+      "exit_code": 0,
+      "output": "{\n  \"package\": \"AI-002\",\n  \"scope\": \"synthetic_only\",\n  \"ok\": true,\n  \"errors\": []\n}"
+    },
+    {
+      "command": "python -S scripts/check_ai001_package.py",
+      "exit_code": 0,
+      "output": "{\n  \"ok\": true,\n  \"package\": \"AI-001\",\n  \"scope\": \"synthetic_only\",\n  \"external_ci\": \"pending\",\n  \"errors\": []\n}"
+    },
+    {
+      "command": "python -S scripts/check_ai_provider_package.py",
+      "exit_code": 0,
+      "output": "{\n  \"ok\": true,\n  \"package\": \"AI-PROVIDER-001\",\n  \"scope\": \"offline only\",\n  \"owner_approval\": \"approved\",\n  \"external_ci\": \"not_attested_by_local_check\",\n  \"errors\": []\n}"
+    },
+    {
+      "command": "python -S scripts/check_ai_bench_package.py",
+      "exit_code": 0,
+      "output": "AI-BENCH-001 package gate passed"
+    },
+    {
+      "command": "python scripts/check_document_structure.py",
+      "exit_code": 0,
+      "output": "{\n  \"ok\": true,\n  \"errors\": []\n}"
+    },
+    {
+      "command": "python scripts/infra_manifest_check.py",
+      "exit_code": 0,
+      "output": "{\n  \"ok\": true,\n  \"errors\": []\n}"
+    }
+  ],
+  "external": {
+    "github_ci": "pending",
+    "neon_migration": "pending",
+    "private_ui_smoke": "pending",
+    "postgresql_integration": "pending CI",
+    "docker_runtime": "not executed locally"
+  },
+  "paid_calls": 0,
+  "real_personal_data_dispatch": false,
+  "public_generation_enabled": false
+}
