@@ -1,4 +1,6 @@
 from pathlib import Path
+import ast
+import os
 import json
 import subprocess
 import sys
@@ -54,3 +56,69 @@ def test_analysis_config_is_closed_by_default_and_not_aliased_to_ai_enabled():
     assert not s.ai_analysis_review_enabled
     s=load_settings({'APP_ENV':'test','DATA_DIR':'/tmp/ai002-config-only','AI_ANALYSIS_REVIEW_ENABLED':'1'})
     assert s.ai_analysis_review_enabled and not s.ai.enabled and s.ai.kill_switch and not s.ai.synthetic_access_enabled
+
+
+def test_route_fixture_import_resolves_from_repository_root():
+    """Regress the actual fixture import, even when Flask route tests are skipped.
+
+    Run only the import statement from the shipped route test in a fresh Python
+    process. This is not a replacement for running the Flask route suite in CI.
+    """
+    tree = ast.parse((ROOT / 'tests/test_ai002_routes.py').read_text())
+    imports = [
+        node for node in tree.body
+        if isinstance(node, ast.ImportFrom)
+        and (node.module or '').endswith('test_ai002_service')
+        and any(alias.name == 'env' for alias in node.names)
+    ]
+    assert len(imports) == 1, 'Expected exactly one shared AI-002 fixture import'
+    code = (
+        "__package__ = 'tests'\n"
+        + ast.unparse(imports[0])
+        + "\nassert callable(env)\nprint('fixture import: PASS')\n"
+    )
+    environment = os.environ.copy()
+    environment.pop('PYTHONPATH', None)
+    result = subprocess.run(
+        [sys.executable, '-c', code], cwd=ROOT, env=environment,
+        text=True, capture_output=True, timeout=30,
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert 'fixture import: PASS' in result.stdout
+
+
+@pytest.mark.parametrize('statement', [
+    'from test_ai002_service import env',
+    'import test_ai002_service',
+])
+def test_static_gate_rejects_bare_sibling_test_imports(tmp_path, statement):
+    from scripts.check_ai002_package import validate_test_imports as check_imports
+    folder = tmp_path / 'tests'
+    folder.mkdir()
+    (folder / '__init__.py').write_text('')
+    (folder / 'test_ai002_service.py').write_text('# AST inspection only\n')
+    (folder / 'test_ai002_routes.py').write_text(statement + '\n')
+    errors = check_imports(tmp_path)
+    assert len(errors) == 1 and 'must be package-qualified' in errors[0]
+
+
+@pytest.mark.parametrize('statement', [
+    'from tests.test_ai002_service import env',
+    'from .test_ai002_service import env',
+    'import tests.test_ai002_service',
+])
+def test_static_gate_accepts_package_sibling_imports(tmp_path, statement):
+    from scripts.check_ai002_package import validate_test_imports as check_imports
+    folder = tmp_path / 'tests'
+    folder.mkdir()
+    (folder / '__init__.py').write_text('')
+    (folder / 'test_ai002_service.py').write_text('# AST inspection only\n')
+    (folder / 'test_ai002_routes.py').write_text(statement + '\n')
+    assert check_imports(tmp_path) == []
+
+
+def test_static_gate_requires_tests_package_marker(tmp_path):
+    from scripts.check_ai002_package import validate_test_imports as check_imports
+    folder = tmp_path / 'tests'
+    folder.mkdir()
+    assert check_imports(tmp_path) == ['Missing tests package marker: tests/__init__.py']

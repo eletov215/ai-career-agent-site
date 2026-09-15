@@ -36,10 +36,35 @@ def load_boundary(root=ROOT):
             raise ValueError('AI-002 runtime hash mismatch')
     return d['reviewed_runtime_changes']
 
+def validate_test_imports(root=ROOT):
+    """Catch sibling test imports without importing Flask or executing test code."""
+    directory = root / 'tests'
+    errors = []
+    if not (directory / '__init__.py').is_file():
+        errors.append('Missing tests package marker: tests/__init__.py')
+    for path in sorted(directory.glob('test_ai002*.py')):
+        tree = ast.parse(path.read_text(encoding='utf-8'), filename=str(path))
+        for node in ast.walk(tree):
+            if isinstance(node, ast.ImportFrom) and node.level == 0:
+                modules = [node.module or '']
+            elif isinstance(node, ast.Import):
+                modules = [alias.name for alias in node.names]
+            else:
+                continue
+            for module in modules:
+                top_level = module.split('.')[0]
+                if top_level.startswith('test_') and (directory / (top_level + '.py')).is_file():
+                    errors.append(
+                        f'{path.name}:{node.lineno}: sibling test import {module!r} '
+                        'must be package-qualified (tests.) or relative'
+                    )
+    return errors
+
 def validate(root=ROOT):
     errors=[]
     try:
         load_boundary(root)
+        errors.extend(validate_test_imports(root))
         for rel in REQUIRED:
             if not (root/rel).is_file():errors.append('Missing: '+rel)
         if 'CURRENT_REVISION = "20260915_0016"' not in (root/'database.py').read_text():errors.append('Expected head 0016')

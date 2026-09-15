@@ -8,7 +8,8 @@ pytest.importorskip('flask')
 from flask import Flask,g
 from flask_wtf import CSRFProtect
 from routes.resume_analysis import create_resume_analysis_blueprint
-from test_ai002_service import env
+# tests is a package; do not depend on tests/ being added to sys.path.
+from tests.test_ai002_service import env
 
 @pytest.fixture
 def web(env):

@@ -1,0 +1,72 @@
+{
+  "package": "AI-002",
+  "release": "1.5.2-rebuild-r2-ci-import-hotfix-r1",
+  "date": "2026-09-15",
+  "status": "NEEDS_VERIFICATION",
+  "baseline_archives_sha256": {
+    "ai-career-agent-site-main (32).zip": "161d52efebf1762a5dd73f0be890b7afb204d2a26e34f9237341eaf832075de9",
+    "ACA_AI002_v1.5.2_rebuild_r2_PATCH.zip": "c08a2cfe3961d7d116095ac804e491c838414a1e6722e54d523ebc8732a35eaf"
+  },
+  "remote_main_snapshot_after_r2": "not supplied; failure statement matches delivered r2 source",
+  "reported_failure": {
+    "source": "owner-supplied GitHub Actions screenshot",
+    "step": "Verify AI-002 synthetic analysis and review controls",
+    "error": "ModuleNotFoundError: No module named 'test_ai002_service'",
+    "file": "tests/test_ai002_routes.py",
+    "line": 11
+  },
+  "root_cause": "Bare sibling-test import inside the existing tests package; missing Flask caused earlier local route collection to skip before that import.",
+  "runtime_changes": false,
+  "database_migration_changes": false,
+  "expected_schema_unchanged": "20260915_0016",
+  "live_calls_performed": false,
+  "public_ai_enabled": false,
+  "legal_001": "DEFERRED",
+  "local_environment": {
+    "python": "3.13.5",
+    "packages": {
+      "pytest": "9.0.2",
+      "SQLAlchemy": "2.0.50",
+      "alembic": "1.18.4",
+      "Flask": null,
+      "Flask-WTF": null,
+      "Flask-Limiter": null,
+      "psycopg": null
+    },
+    "dependency_install_succeeded": false,
+    "postgresql_test_server_available": false
+  },
+  "verification": [
+    {
+      "name": "AI-002 exact CI test command",
+      "command": "python -m pytest -q tests/test_ai002_service.py tests/test_ai002_routes.py tests/test_ai002_migration.py tests/test_ai002_package.py",
+      "passed": 55,
+      "skipped": 2,
+      "log": "ai002-tests.log",
+      "log_sha256": "e5775ce5cf96368c50b808a085dc06c095e39b200c921cd62abacce8d00c88ad"
+    },
+    {
+      "name": "AI-001 focused regression",
+      "passed": 81,
+      "skipped": 3,
+      "log": "ai001-tests.log",
+      "log_sha256": "9193b9c03a416f4ddd25478b24e10cfa0c6146384606e5ed61566e3b3f0f7201"
+    },
+    {
+      "name": "accepted AI-BENCH",
+      "passed": 90,
+      "skipped": 0,
+      "subtests_passed": 24,
+      "log": "bench-tests.log",
+      "log_sha256": "c25fda2185e3bad3968bdbf91cdd505b7b4a1634e69f4e036932318062bed128"
+    }
+  ],
+  "mutation_checks": {
+    "old_import_fails_fresh_process_fixture_regression": true,
+    "old_import_fails_dependency_free_package_gate": true,
+    "original_mutation_reverted_before_delivery": true
+  },
+  "external_ci": "PENDING",
+  "owner_staging": "PENDING",
+  "technical_reference": "https://docs.pytest.org/en/stable/explanation/pythonpath.html"
+}

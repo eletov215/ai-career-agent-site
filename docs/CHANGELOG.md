@@ -1,5 +1,14 @@
 # AI Career Agent - CHANGELOG
 
+## AI-002 v1.5.2 rebuild-r2 / ci-import-hotfix-r1 / 2026-09-15
+
+Fix the collection error reported by the owner: `tests/test_ai002_routes.py` now imports the shared fixture from `tests.test_ai002_service`, respecting the existing `tests/__init__.py` package. Keep the CI command, test discovery settings and runtime dependencies unchanged.
+
+Add a dependency-free AST check for bare sibling-test imports and a fresh-process fixture-import regression that runs even when Flask-dependent route tests are skipped locally. Verify the original import fails both guards, then restore the fix. Focused local evidence: AI-002 55 passed / 2 skipped, AI-001 subset 81 passed / 3 skipped, accepted AI-BENCH 90 passed / 24 subtests. Details and local environment limitations are in `AI002_VERIFICATION_STATUS.md` and `docs/evidence/ai-002/ci_import_hotfix_r1.json`.
+
+No application/migration/prompt/configuration changes and no paid calls. Current code head stays 0016; ordinary GitHub CI and AI-002 staging acceptance remain pending.
+
+
 ## AI-002 v1.5.2 rebuild-r2 / 2026-09-15
 
 Rebuilt missing AI-002 delivery on main (32). Three additive analysis/review tables at 0016; synthetic evidence checks before settlement; idempotent immutable report persistence; private reference-only UI; scoped review history; privacy export/deletion; regression and package gates. New external CI/staging required; public AI stays off.
