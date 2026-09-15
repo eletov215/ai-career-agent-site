@@ -4,13 +4,34 @@ from __future__ import annotations
 import ast
 import hashlib
 import json
+import importlib.util
 from pathlib import Path
 import sys
 ROOT=Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:sys.path.insert(0,str(ROOT))
 from domain.ai import REAL_DATA_SUPPORTED, CONTRACT
-from services.ai.policy import DEFAULT_POLICY, validate_policy
-from services.ai.registry import ContractRegistry
+
+def _load_source_module(name: str, path: Path):
+    """Load an AI-001 source module without importing the parent services package.
+
+    The standalone AI-BENCH package gate intentionally runs before third-party
+    dependencies are installed. Importing ``services.ai.*`` normally executes
+    ``services/__init__.py``, which pulls the OAuth repository layer and
+    SQLAlchemy into that isolated gate. Loading these dependency-free checker
+    modules directly preserves the original stdlib-only gate boundary.
+    """
+    spec = importlib.util.spec_from_file_location(name, path)
+    if spec is None or spec.loader is None:
+        raise RuntimeError(f"Unable to load checker module: {path.name}")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+_policy = _load_source_module("_ai001_policy_for_package_check", ROOT / "services/ai/policy.py")
+DEFAULT_POLICY = _policy.DEFAULT_POLICY
+validate_policy = _policy.validate_policy
+_registry = _load_source_module("_ai001_registry_for_package_check", ROOT / "services/ai/registry.py")
+ContractRegistry = _registry.ContractRegistry
 
 # This is an explicit successor scope, NOT permission to change accepted evals.
 SUPERSEDED_RUNTIME={

@@ -1,5 +1,6 @@
 from pathlib import Path
 import json,shutil
+import subprocess,sys
 import pytest
 from scripts.check_ai001_package import validate,load_boundary,ROOT
 
@@ -36,3 +37,21 @@ def test_benchmark_rejects_unqualified_runtime(tmp_path):
     from scripts.check_ai_bench_package import validate_runtime_separation
     (tmp_path/'services/ai').mkdir(parents=True)
     with pytest.raises(SystemExit):validate_runtime_separation(tmp_path)
+
+
+def test_ai001_checker_stays_dependency_free_for_isolated_benchmark_gate():
+    code = r"""
+import builtins
+real_import = builtins.__import__
+def guarded(name, globals=None, locals=None, fromlist=(), level=0):
+    if name.split('.', 1)[0] in {'sqlalchemy', 'flask', 'alembic', 'psycopg'}:
+        raise RuntimeError('forbidden runtime dependency import: ' + name)
+    return real_import(name, globals, locals, fromlist, level)
+builtins.__import__ = guarded
+from scripts.check_ai001_package import validate
+assert validate() == []
+"""
+    completed = subprocess.run(
+        [sys.executable, '-c', code], cwd=ROOT, text=True, capture_output=True, check=False
+    )
+    assert completed.returncode == 0, completed.stdout + completed.stderr
