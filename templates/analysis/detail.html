@@ -26,7 +26,13 @@
 <input type="hidden" name="recommendation_id" value="{{ rec_id }}">
 <input type="hidden" name="source_hash" value="{{ report.source_hash }}">
 <input type="hidden" name="expected_revision" value="{{ decision.revision }}">
-<div class="analysis-actions"><button type="submit" name="decision" value="accepted">{{ ui.accept }}</button><button type="submit" name="decision" value="rejected">{{ ui.reject }}</button><button type="submit" name="decision" value="pending">{{ ui.reset }}</button></div>
+<div class="analysis-actions">
+{% if decision.decision == 'pending' %}
+<button type="submit" name="decision" value="accepted">{{ ui.accept }}</button><button type="submit" name="decision" value="rejected">{{ ui.reject }}</button>
+{% else %}
+<button type="submit" name="decision" value="pending">{{ ui.reset }}</button>
+{% endif %}
+</div>
 </form></article>{% endfor %}
 </section>
 <section><h2>{{ ui.unverified }}</h2>{% for f in report.result.facts_not_verified %}<p lang="{{ report.language }}">{{ f.fact }}</p>{{ evidence(f.evidence_ids) }}{% endfor %}</section>

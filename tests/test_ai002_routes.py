@@ -75,3 +75,59 @@ def test_cross_owner_direct_link_is_404_and_user_text_is_escaped(web):
     with svc.repository.session() as s,s.begin():s.execute(update(ResumeAnalysisReport).where(ResumeAnalysisReport.id==r['id']).values(result_json=json.dumps(body)))
     html=client.get('/ai-analysis/'+r['id']).get_data(as_text=True)
     assert '<script>doBadThing()</script>' not in html and '&lt;script&gt;' in html
+
+def test_review_actions_match_current_decision(web):
+    client,settings,owner,svc=web
+    fid='resume-analysis-ru-01'
+    index=client.get('/ai-analysis')
+    created=client.post('/ai-analysis/reference',data={
+        'csrf_token':csrf(index),
+        'fixture_id':fid,
+        'source_hash':svc.source(fid)[2],
+        'operation_key':str(uuid4()),
+    })
+    assert created.status_code==303
+
+    detail=client.get(created.location)
+    html=detail.get_data(as_text=True)
+    assert 'name="decision" value="accepted"' in html
+    assert 'name="decision" value="rejected"' in html
+    assert 'name="decision" value="pending"' not in html
+
+    report=svc.history(owner.id)[0]
+    full=svc.get(owner.id,report['id'])
+    accepted=client.post(created.location+'/review',data={
+        'csrf_token':csrf(detail),
+        'recommendation_id':'rec-1',
+        'decision':'accepted',
+        'expected_revision':str(full['decisions']['rec-1']['revision']),
+        'source_hash':full['source_hash'],
+    })
+    assert accepted.status_code==303
+
+    accepted_detail=client.get(created.location)
+    accepted_html=accepted_detail.get_data(as_text=True)
+    assert 'name="decision" value="pending"' in accepted_html
+    # Other untouched recommendations still expose accept/reject controls,
+    # so inspect the form for rec-1 specifically.
+    first_form=re.search(r'<form method="post"[^>]*>.*?name="recommendation_id" value="rec-1".*?</form>',accepted_html,re.S).group(0)
+    assert 'name="decision" value="accepted"' not in first_form
+    assert 'name="decision" value="rejected"' not in first_form
+    assert 'name="decision" value="pending"' in first_form
+
+    refreshed=svc.get(owner.id,report['id'])
+    reset=client.post(created.location+'/review',data={
+        'csrf_token':csrf(accepted_detail),
+        'recommendation_id':'rec-1',
+        'decision':'pending',
+        'expected_revision':str(refreshed['decisions']['rec-1']['revision']),
+        'source_hash':refreshed['source_hash'],
+    })
+    assert reset.status_code==303
+
+    reset_detail=client.get(created.location)
+    reset_html=reset_detail.get_data(as_text=True)
+    first_form=re.search(r'<form method="post"[^>]*>.*?name="recommendation_id" value="rec-1".*?</form>',reset_html,re.S).group(0)
+    assert 'name="decision" value="accepted"' in first_form
+    assert 'name="decision" value="rejected"' in first_form
+    assert 'name="decision" value="pending"' not in first_form

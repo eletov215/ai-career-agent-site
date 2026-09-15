@@ -122,3 +122,43 @@ def test_static_gate_requires_tests_package_marker(tmp_path):
     folder = tmp_path / 'tests'
     folder.mkdir()
     assert check_imports(tmp_path) == ['Missing tests package marker: tests/__init__.py']
+
+
+def test_review_template_shows_only_valid_actions_for_current_state():
+    from jinja2 import DictLoader, Environment, FileSystemLoader, ChoiceLoader
+    env = Environment(loader=ChoiceLoader([
+        DictLoader({'base.html':'{% block content %}{% endblock %}'}),
+        FileSystemLoader(str(ROOT / 'templates')),
+    ]), autoescape=True)
+    env.globals.update(url_for=lambda *a, **k: '/test', csrf_token=lambda: 'token')
+    ui = {
+        'title':'title','version':'version','reference':'reference','provider':'provider',
+        'notice':'notice','strengths':'strengths','gaps':'gaps','gap_note':'gap_note',
+        'recommendations':'recommendations','review_note':'review_note','source':'source',
+        'fact':'fact','unverified':'unverified','review_history':'review_history',
+        'delete':'delete','back':'back','accept':'accept','reject':'reject','reset':'reset',
+        'pending':'pending','accepted':'accepted','rejected':'rejected',
+    }
+    base_report = {
+        'id':'00000000-0000-0000-0000-000000000001','version':'1','origin':'reference','language':'ru',
+        'source_hash':'hash','result':{
+            'summary':'summary','strengths':[],'gaps':[],
+            'recommendations':[{'action':'action','rationale':'rationale','evidence_ids':[]}],
+            'facts_not_verified':[],
+        },
+        'source_facts':[],'review_events':[],
+    }
+    template = env.get_template('analysis/detail.html')
+    for state, expected, forbidden in (
+        ('pending', ('value="accepted"','value="rejected"'), ('value="pending"',)),
+        ('accepted', ('value="pending"',), ('value="accepted"','value="rejected"')),
+        ('rejected', ('value="pending"',), ('value="accepted"','value="rejected"')),
+    ):
+        report = dict(base_report)
+        report['decisions'] = {'rec-1': {'decision':state,'revision':0}}
+        html = template.render(ui=ui, report=report)
+        form = html.split('<form method="post"', 1)[1].split('</form>', 1)[0]
+        for marker in expected:
+            assert marker in form
+        for marker in forbidden:
+            assert marker not in form
