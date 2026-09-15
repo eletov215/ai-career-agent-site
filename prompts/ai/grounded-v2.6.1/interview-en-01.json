@@ -1,0 +1,152 @@
+{
+  "case_id": "interview-en-01",
+  "task": "interview_questions",
+  "language": "en",
+  "synthetic": true,
+  "schema": "../../schemas/interview_questions.schema.json",
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are running the offline AI Career Agent benchmark. Use only the listed facts with identifiers from the input. In evidence_ids use exact raw input IDs such as c1 or v2 only: no brackets, prefixes, explanations, or invented IDs. Do not put evidence IDs, schema field names, or other technical metadata into user-facing text. Do not turn vacancy requirements into candidate skills. Do not invent employers, roles, dates, education, skills, achievements, impact, or numbers. If a candidate fact is not verified, do not state it as present. Return only JSON matching the requested schema. For interview_questions numbers are allowed only when they already appear in the input facts. Facts with kind=scenario are hypothetical question parameters, not candidate experience or achievements; use them only as scenarios. Write all user-facing text in English. If a question, purpose, or follow-up uses a number from a kind=scenario fact, that same question object must include the corresponding scenario fact ID in evidence_ids. Do not print scenario/evidence IDs in question text even in brackets; provenance belongs only in evidence_ids. Before returning JSON, perform a final audit of every questions object: scan question, purpose, and follow_up_if_weak for every number originating from scenario facts. For each scenario number used anywhere in that object, include the matching sN in the same evidence_ids array, even when the number appears only in follow_up_if_weak. Example: if follow_up_if_weak contains 15%, evidence_ids must include s1. Do not compensate by printing “(s1)” in user-facing text; the ID belongs only in evidence_ids. Use each scenario fact at most once across the whole interview and only when it materially deepens the assessment. Do not repeat 15% or 90 days across multiple questions. If you cannot guarantee the correct sN in evidence_ids, omit the scenario number entirely. Do not introduce new numeric answer-format requirements: write 'give several specific examples' instead of 'give 2–3 examples'. Apply the same rule to resources, approaches, options, steps, and reasons: ask for 'several' rather than introducing a new numeric count. Before returning JSON, also audit role-evidence coverage: the manual-testing question must cite c1, v1 and v2; the test-case/bug-report question must cite c2; the API question must cite c3 and v3; the automation-gap question must cite c4 and v4. Every required evidence ID c1-c4 and v1-v4 must appear at least once across question evidence_ids. Do not add an evidence ID when its topic is not actually addressed by that question."
+    },
+    {
+      "role": "user",
+      "content": "Create adaptive interview questions. Candidate facts: [c1] 2 years in financial planning; [c2] monthly forecasting; [c3] Excel financial models; [c4] no verified SQL. Vacancy facts: [v1] FP&A analyst; [v2] forecasting required; [v3] scenario modelling required; [v4] SQL is preferred. Allowed hypothetical scenario parameters: [s1] forecast variance 15%; [s2] onboarding horizon 90 days. Do not present s1/s2 as past candidate achievements."
+    }
+  ],
+  "source_facts": [
+    {
+      "id": "c1",
+      "text": "2 years in financial planning",
+      "kind": "candidate"
+    },
+    {
+      "id": "c2",
+      "text": "monthly forecasting",
+      "kind": "candidate"
+    },
+    {
+      "id": "c3",
+      "text": "Excel financial models",
+      "kind": "candidate"
+    },
+    {
+      "id": "c4",
+      "text": "no verified SQL",
+      "kind": "candidate"
+    },
+    {
+      "id": "v1",
+      "text": "FP&A analyst",
+      "kind": "vacancy"
+    },
+    {
+      "id": "v2",
+      "text": "forecasting required",
+      "kind": "vacancy"
+    },
+    {
+      "id": "v3",
+      "text": "scenario modelling required",
+      "kind": "vacancy"
+    },
+    {
+      "id": "v4",
+      "text": "SQL is preferred",
+      "kind": "vacancy"
+    },
+    {
+      "id": "s1",
+      "text": "hypothetical forecast variance 15%",
+      "kind": "scenario"
+    },
+    {
+      "id": "s2",
+      "text": "hypothetical onboarding horizon 90 days",
+      "kind": "scenario"
+    }
+  ],
+  "required_paths": [
+    "opening",
+    "questions",
+    "closing"
+  ],
+  "required_evidence_ids": [
+    "c1",
+    "c2",
+    "c3",
+    "c4",
+    "v1",
+    "v2",
+    "v3",
+    "v4"
+  ],
+  "required_unverified_evidence_ids": [],
+  "required_caveat_evidence_ids": [],
+  "grounding_requirements": [
+    {
+      "id": "planning",
+      "any_of": [
+        "financial planning",
+        "FP&A"
+      ]
+    },
+    {
+      "id": "forecasting",
+      "any_of": [
+        "forecast"
+      ]
+    },
+    {
+      "id": "excel",
+      "any_of": [
+        "Excel"
+      ]
+    },
+    {
+      "id": "scenario",
+      "any_of": [
+        "scenario"
+      ]
+    },
+    {
+      "id": "sql_gap",
+      "any_of": [
+        "SQL"
+      ]
+    }
+  ],
+  "forbidden_claims": [
+    {
+      "id": "fake_sql",
+      "terms": [
+        "your SQL projects",
+        "when you used SQL in production"
+      ]
+    },
+    {
+      "id": "fake_years",
+      "terms": [
+        "5 years",
+        "five years"
+      ]
+    }
+  ],
+  "generated_numeric_paths": [],
+  "match_requirements": [],
+  "manual_rubric": [
+    "Questions are role-specific",
+    "SQL gap is explored without false assumptions",
+    "Hypothetical numbers remain hypothetical rather than candidate achievements",
+    "Follow-ups are actionable",
+    "Technical IDs are hidden"
+  ],
+  "tags": [
+    "interview",
+    "en",
+    "adaptive",
+    "scenario-numbers",
+    "contract-v2.3",
+    "alice-final-provenance-repair"
+  ]
+}

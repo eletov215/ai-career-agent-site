@@ -46,3 +46,6 @@ __all__ = [
     "Vacancy",
     "VacancySourceRecord",
 ]
+
+# AI-001 metadata registration (additive migration 0015).
+from .ai import (AIRuntimePolicy, AIUsageEvent, AIBudgetBucket, AIRequestLease, AIProviderState, AIPlanEntitlement, AIUserPlan)

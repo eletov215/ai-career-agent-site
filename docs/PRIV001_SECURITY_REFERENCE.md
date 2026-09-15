@@ -82,3 +82,8 @@ Schema/app rollback does not resurrect deleted account. Recovery only from verif
 | 1.0 | 13.08.2026 | Initial export/delete/audit/retention security boundary. |
 | 1.1 | 19.08.2026 | Hardened re-auth/snapshot/concurrency/sanitizer/orphan asset controls. |
 | 1.2 | 19.08.2026 | External CI/Render/E2E/log evidence confirmed; COMPLETE. |
+
+
+## AI-001 delta / 1.5.0 / 2026-09-14
+
+AI accounting hashes/counters are not raw resume data. No raw provider content enters export. Global aggregates and ephemeral opaque lease IDs intentionally outlive owner deletion for budget/concurrency safety; they contain no user FK. New consent/legal publication is not provided by AI-001.

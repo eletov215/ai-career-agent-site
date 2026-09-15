@@ -1,0 +1,129 @@
+{
+  "case_id": "resume-analysis-en-01",
+  "task": "resume_analysis",
+  "language": "en",
+  "synthetic": true,
+  "schema": "../../schemas/resume_analysis.schema.json",
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are running the offline AI Career Agent benchmark. Use only the listed facts with identifiers from the input. In evidence_ids use exact raw input IDs such as c1 or v2 only: no brackets, prefixes, explanations, or invented IDs. Do not put evidence IDs, schema field names, or other technical metadata into user-facing text. Do not turn vacancy requirements into candidate skills. Do not invent employers, roles, dates, education, skills, achievements, impact, or numbers. If a candidate fact is not verified, do not state it as present. Return only JSON matching the requested schema. Fill facts_not_verified with fact + evidence_ids objects and explicitly include every input fact that is stated as unverified. Write all user-facing text in English."
+    },
+    {
+      "role": "user",
+      "content": "Analyze this synthetic resume. Facts: [e1] 2 years as a data analyst; [e2] advanced SQL; [e3] Power BI dashboards; [e4] Excel automation; [e5] no verified production Python experience. Return strengths, gaps, actions, and the explicitly unverified fact. Recommendations may suggest learning, but must not present new tools or achievements as existing experience."
+    }
+  ],
+  "source_facts": [
+    {
+      "id": "e1",
+      "text": "2 years as a data analyst",
+      "kind": "candidate"
+    },
+    {
+      "id": "e2",
+      "text": "advanced SQL",
+      "kind": "candidate"
+    },
+    {
+      "id": "e3",
+      "text": "Power BI dashboards",
+      "kind": "candidate"
+    },
+    {
+      "id": "e4",
+      "text": "Excel automation",
+      "kind": "candidate"
+    },
+    {
+      "id": "e5",
+      "text": "no verified production Python experience",
+      "kind": "candidate"
+    }
+  ],
+  "required_paths": [
+    "summary",
+    "strengths",
+    "gaps",
+    "recommendations",
+    "facts_not_verified"
+  ],
+  "required_evidence_ids": [
+    "e1",
+    "e2",
+    "e3",
+    "e4",
+    "e5"
+  ],
+  "required_unverified_evidence_ids": [
+    "e5"
+  ],
+  "required_caveat_evidence_ids": [],
+  "grounding_requirements": [
+    {
+      "id": "analytics",
+      "any_of": [
+        "data analyst"
+      ]
+    },
+    {
+      "id": "sql",
+      "any_of": [
+        "SQL"
+      ]
+    },
+    {
+      "id": "powerbi",
+      "any_of": [
+        "Power BI"
+      ]
+    },
+    {
+      "id": "excel",
+      "any_of": [
+        "Excel"
+      ]
+    },
+    {
+      "id": "python_gap",
+      "any_of": [
+        "Python"
+      ]
+    }
+  ],
+  "forbidden_claims": [
+    {
+      "id": "fake_years",
+      "terms": [
+        "5 years",
+        "five years"
+      ]
+    },
+    {
+      "id": "fake_tableau",
+      "terms": [
+        "Tableau"
+      ]
+    },
+    {
+      "id": "fake_ml_role",
+      "terms": [
+        "machine learning engineer"
+      ]
+    }
+  ],
+  "generated_numeric_paths": [],
+  "match_requirements": [],
+  "manual_rubric": [
+    "No unsupported achievements",
+    "Unverified production Python is explicit",
+    "Actionable recommendations do not masquerade as existing skills",
+    "Clear professional English"
+  ],
+  "tags": [
+    "resume",
+    "en",
+    "grounding",
+    "contract-v2"
+  ]
+}

@@ -276,3 +276,8 @@ Operational state хранится в `sync_checkpoints`:
 
 ## SEARCH-005 operations
 Configure `SEARCH_ADMIN_EMAILS`; monitor persistent provider states through `/admin/sources`. The page performs no external probe. Telemetry persistence is non-gating. Application rollback may retain migration 0014.
+
+
+## AI-001 delta / 1.5.0 / 2026-09-14
+
+Central technical caps are changed through scripts/manage_ai_runtime.py with expected-version, without provider rewrites or web redeploy. Keep AI environment and DB gates closed. Admission/settlement locks never surround HTTP. Unknown outcomes retain conservative costs and global caps survive deleted users.

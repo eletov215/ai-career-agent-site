@@ -8,6 +8,8 @@ that the test suite can import the Flask application without real API keys.
 
 from __future__ import annotations
 
+from services.ai.settings import AISettings
+
 import os
 import re
 from dataclasses import dataclass
@@ -481,6 +483,7 @@ class AppSettings:
     render_region: str
     port: int
     flask_debug: bool
+    ai: AISettings
 
     @property
     def is_test(self) -> bool:
@@ -719,6 +722,7 @@ def load_settings(environ: Mapping[str, str] | None = None) -> AppSettings:
         )
 
     return AppSettings(
+        ai=AISettings.from_environ(source),
         environment=environment,
         flask_secret_key=_required(source, "FLASK_SECRET_KEY"),
         token_encryption_key=token_encryption_key,

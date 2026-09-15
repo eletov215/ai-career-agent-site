@@ -96,3 +96,7 @@ Draft `revision` is an optimistic concurrency counter and may change frequently.
 ## Privacy export/audit schema versions
 
 PRIV-001 owner export uses an explicit `export_schema_version` in `manifest.json`; future incompatible export shape changes require a new schema version rather than silent field reinterpretation. `privacy_audit_events` is an operational aggregate record and is not a substitute for owner data history.
+
+## Canonical sequence change / 1.5.0
+
+The document/release version moves from1.4.51 to1.5.0 because the owner explicitly postponed LEGAL-001 decisions and authorized technical AI work first. This is a MINOR sequencing change, not proof of commercial maturity. The older0.x example ladder above is historical guidance. Unpublished1.4.52 drafts are superseded; actual database migrations follow the deployed0014 chain.

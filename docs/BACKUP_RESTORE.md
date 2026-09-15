@@ -37,3 +37,8 @@ Encrypted backup inventory includes `resume_drafts`, `resume_versions`, `resume_
 Encrypted backup inventory includes `privacy_audit_events` in addition to the existing auth/profile/resume/search/sync tables. The table contains only event type, bounded aggregate counts and timestamp; it intentionally cannot reconstruct the deleted account identity.
 
 A privacy export ZIP is generated in memory and is not stored as a server artifact. A successful account deletion removes the owner-scoped database subtree and local legacy provider credential mirrors before the identifier-free deletion audit row is written. Restoring a deleted account therefore requires restoring a verified database backup; it is not an application undo operation.
+
+
+## AI-001 delta / 1.5.0 / 2026-09-14
+
+Backup inventory includes the seven AI tables introduced by0015. No production/staging restore drill was performed in this task. Do not claim CI recovery equals a real deployment backup. Preserve AI accounting data before controlled downgrade.

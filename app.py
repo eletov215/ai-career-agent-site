@@ -26,6 +26,8 @@ from services.university_logo import find_university_logo
 from config import AppSettings, load_settings
 from database import CURRENT_REVISION, create_database, database_health
 from services.storage import StorageServices
+from services.ai.service import AIService
+from routes.ai_status import create_ai_status_blueprint
 from services.source_health import configure_source_health
 from services.source_health_instrumentation import install_source_health_instrumentation
 from services.auth import AuthService
@@ -105,6 +107,13 @@ OAUTH_STATE_TTL_SECONDS = 10 * 60
 
 
 STORAGE = StorageServices.from_database(DATABASE)
+AI_SERVICE = AIService(STORAGE.ai, SETTINGS.ai, fingerprint_key=SETTINGS.flask_secret_key)
+app.register_blueprint(create_ai_status_blueprint(AI_SERVICE))
+
+@app.context_processor
+def ai_availability_context():
+    return {"ai_availability": AI_SERVICE.public_status()}
+
 AUTH_EMAIL_SENDER = build_auth_email_sender(SETTINGS)
 AUTH_SERVICE = AuthService(STORAGE.auth, AUTH_EMAIL_SENDER, SETTINGS)
 app.register_blueprint(create_auth_blueprint(AUTH_SERVICE, SETTINGS))

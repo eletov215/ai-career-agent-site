@@ -4,9 +4,9 @@
 |---|---|
 | Document | AI_PROVIDER001_SOURCES |
 | Package | AI-PROVIDER-001 |
-| Version | 1.0 |
+| Version | 1.1 |
 | Date | 2026-09-14 |
-| Status | External sources unchanged; owner strategy approved; final ordinary CI pending |
+| Status | External sources unchanged; owner strategy approved; ordinary CI #262 green; package complete |
 | Scope | Architecture and offline validation only; no production AI activation |
 | Schema revision | 20260819_0014 (unchanged) |
 
@@ -90,8 +90,9 @@ This source register makes no API or account changes. Reverting it cannot change
 
 ## 5. Next action and version log
 
-Review the ADR and ordinary CI, then carry the unresolved activation checklist into LEGAL-001 and AI-001.
+Carry the unresolved activation checklist into LEGAL-001 and AI-001. Provider strategy verification is complete.
 
 | Version | Date | Change |
 |---|---|---|
+| 1.1 | 2026-09-14 | Source facts unchanged; owner strategy approved and ordinary CI #262 green |
 | 1.0 | 2026-09-14 | Official pricing, terms, data policy, geography/payment and access sources checked |

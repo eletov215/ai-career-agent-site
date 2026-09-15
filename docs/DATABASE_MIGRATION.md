@@ -87,3 +87,8 @@ After deploy Render readiness must show `database.revision=current_revision=expe
 
 ## 20260819_0014_source_health_admin
 Adds `source_health_states` and indexes. Additive; downgrade drops only operational provider health state.
+
+
+## AI-001 delta / 1.5.0 / 2026-09-14
+
+Candidate migration20260914_0015 follows deployed0014; it adds seven AI tables and closed policy/provider seeds. No abandoned legal migration is assumed. Existing schemas/data are preserved. Prior build expects0014: rollback requires verified backup, stopping writers and controlled downgrade, not an unqualified additive-schema promise.

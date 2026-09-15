@@ -314,7 +314,7 @@ class PrivacyService:
     def run_retention_cleanup(self, *, now: int | None = None) -> dict[str, int]:
         timestamp = int(time.time() if now is None else now)
         day = 24 * 60 * 60
-        return self.repository.cleanup_retention(
+        counts = self.repository.cleanup_retention(
             pending_account_cutoff=(
                 timestamp - self.settings.privacy_pending_account_retention_days * day
             ),
@@ -328,3 +328,7 @@ class PrivacyService:
             batch_size=self.settings.privacy_cleanup_batch_size,
             now=timestamp,
         )
+        from repositories.ai import AIRepository
+        ai_counts = AIRepository(self.repository.engine).cleanup(now=timestamp, limit=self.settings.privacy_cleanup_batch_size)
+        counts.update({"ai_"+key: value for key,value in ai_counts.items()})
+        return counts

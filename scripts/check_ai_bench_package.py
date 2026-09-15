@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import ast
 import os
 import re
 import subprocess
@@ -121,6 +122,25 @@ def validate_job_level_env_contexts(workflow_path: Path) -> None:
 
     if violations:
         fail("invalid job-level env context usage: " + "; ".join(violations))
+
+
+def validate_runtime_separation(root: Path) -> None:
+    """Successor AI-001 may exist, but accepted evals remain an independent layer."""
+    if (root / "routes/ai.py").exists():
+        fail("Unreviewed public AI route is forbidden")
+    if (root / "services/ai").exists():
+        if str(root) not in sys.path:
+            sys.path.insert(0,str(root))
+        from scripts.check_ai001_package import validate as validate_successor
+        if validate_successor(root):
+            fail("AI-001 successor boundary is not verified")
+    for path in (root / "evals").rglob("*.py"):
+        for node in ast.walk(ast.parse(path.read_text(encoding="utf-8"))):
+            modules=[]
+            if isinstance(node,ast.Import):modules=[alias.name for alias in node.names]
+            elif isinstance(node,ast.ImportFrom):modules=[node.module or ""]
+            if any(m.startswith(("services.ai","repositories.ai","models.ai","domain.ai")) for m in modules):
+                fail("Accepted evals must not import runtime AI")
 
 
 def main() -> int:
@@ -377,12 +397,11 @@ def main() -> int:
             if pattern.search(combined):
                 fail(f"possible secret leaked into evidence: {pattern.pattern}")
 
-    # This package must not create a new migration or production AI route.
+    # Historical benchmark baseline remains; successor runtime is checked independently.
     migration_paths = sorted((ROOT / "migrations/versions").glob("*.py")) if (ROOT / "migrations/versions").exists() else []
     if migration_paths and not any("20260819_0014" in path.name for path in migration_paths):
         fail("expected production schema baseline 20260819_0014 is missing")
-    if (ROOT / "services/ai").exists() or (ROOT / "routes/ai.py").exists():
-        fail("AI-BENCH-001 must remain isolated from production AI integration")
+    validate_runtime_separation(ROOT)
 
     print("AI-BENCH-001 package gate passed")
     return 0

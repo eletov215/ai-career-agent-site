@@ -4,7 +4,7 @@
 |---|---|
 | Документ | DOCUMENT_STANDARD |
 | Идентификатор | DOC-STD-001 |
-| Версия | 1.2 |
+| Версия | 1.3 |
 | Дата | 14 сентября 2026 |
 | Статус | ДЕЙСТВУЮЩИЙ |
 | Область | PLAN_CURRENT, паспорт, package reports, runbooks, contract references, source audit |
@@ -40,17 +40,30 @@
 | Элемент | Правило |
 |---|---|
 | Формат | A4, поля 19 мм со всех сторон |
-| Основной шрифт | Aptos 10.5 pt (Carlito fallback when Aptos is unavailable), межстрочный интервал 1.08 |
-| H1 | 19 pt, centered, navy `#173B63` |
-| H2 | 15 pt, blue `#2F6FA3`, keep-with-next |
-| H3 | 12.5 pt, navy |
+| Основной шрифт | Carlito 10.5 pt (Aptos equivalent), межстрочный интервал 1.15; абзац 4 pt after |
+| H1 | 22 pt, left aligned, navy `#173B63`; 18 pt before / 8 pt after |
+| H2 | 15 pt, navy `#173B63`, keep-with-next; 14 pt before / 6 pt after |
+| H3 | 12.5 pt, blue `#2F6FA3`, keep-with-next |
 | Таблица metadata | Navy header, light-blue body, adaptive column widths |
 | Status cells | Green completed, amber verification/in progress, grey postponed, red blocked |
 | Code blocks | Monospace 8.5 pt, light grey-blue background |
-| Header | `AI CAREER AGENT / <DOCUMENT_ID>` |
-| Footer | `AI Career Agent / <DOCUMENT_ID> / v<version> / <page>` |
+| Header | compact `AI CAREER AGENT / <DOCUMENT_ID>` from page 2 onward |
+| Footer | document/version at left; page number at right |
 
 Табличные строки не имеют фиксированной высоты; header row повторяется на новой странице; длинные таблицы могут переноситься, но не обрезаться.
+
+
+## 4.1 Readability and page-flow rules / v1.3
+
+- No dense title bands or oversized cover pages for operational documents: first page starts with a compact brand label, title, subtitle/status and metadata card.
+- Documents longer than 10 pages include a compact navigation block listing H2 sections; Word/PDF heading hierarchy remains usable for navigation.
+- Headings never remain alone at a page bottom; heading + first following paragraph/table are kept together.
+- Widow/orphan control is enabled for body paragraphs; short lists and status callouts are kept visually together where practical.
+- Metadata tables use a narrow label column and a wide value column; narrative tables use content-aware widths instead of equal columns.
+- Tables use 8.8-9.2 pt type, generous cell padding, repeated header rows and semantic status fills. Fixed row height is forbidden.
+- Long code/route blocks use a soft grey background and are allowed to wrap; they must never force horizontal clipping.
+- The first page may use a status badge and short summary callout, but decorative elements must not compete with content.
+- PDF output is accepted only after DOCX and PDF page renders show no clipping, overlap, orphan headings, broken glyphs or unintended blank pages.
 
 ## 5. Правила содержания
 
@@ -92,13 +105,15 @@ ai-career-agent-site-main-<stage>-<package>-v<version>.zip
 
 ## 9. Следующее действие
 
-Применять DOC-STD-001 v1.2 ко всем документам SEARCH-001 и последующим пакетам. Исторические SYNC/INFRA материалы остаются архивом и не определяют новый стиль.
+Применять DOC-STD-001 v1.3 ко всем документам SEARCH-001 и последующим пакетам. Исторические SYNC/INFRA материалы остаются архивом и не определяют новый стиль.
 
 ## 10. Журнал версий
 
 | Версия | Дата | Изменение |
 |---|---|---|
 | 1.0 | 06.08.2026 | Введён базовый единый шаблон |
+| 1.3 | 14.09.2026 | Readability overhaul: compact first page, stronger hierarchy, content-aware tables, widow/orphan control, stable page flow and render QA |
+| 1.2 | 14.09.2026 | Carlito fallback clarification |
 | 1.1 | 08.08.2026 | Зафиксированы единый generator, палитра, header/footer, стабильная структура и запрет выборочного style drift |
 
 

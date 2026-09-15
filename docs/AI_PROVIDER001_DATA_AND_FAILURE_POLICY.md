@@ -4,9 +4,9 @@
 |---|---|
 | Document | AI_PROVIDER001_DATA_AND_FAILURE_POLICY |
 | Package | AI-PROVIDER-001 |
-| Version | 1.1 |
+| Version | 1.2 |
 | Date | 2026-09-14 |
-| Status | УТВЕРЖДЕНО ВЛАДЕЛЬЦЕМ; final ordinary CI pending |
+| Status | УТВЕРЖДЕНО ВЛАДЕЛЬЦЕМ; ordinary GitHub CI #262 green; package complete |
 | Scope | Architecture and offline validation only; no production AI activation |
 | Schema revision | 20260819_0014 (unchanged) |
 
@@ -81,9 +81,10 @@ Offline tests assert that unsafe policy settings are rejected, but do not prove 
 
 ## 8. Next action and version log
 
-Owner review plus ordinary CI, then LEGAL-001; no paid live benchmark or new secret needed for this package.
+Owner review and ordinary CI #262 are complete. Continue to LEGAL-001; no paid live benchmark or new secret is needed for this package.
 
 | Version | Date | Change |
 |---|---|---|
+| 1.2 | 2026-09-14 | Approved manual fallback warning and activation boundaries; ordinary CI #262 green; package closed |
 | 1.0 | 2026-09-14 | Proposed data, consent, secrets, failure, accounting and activation boundaries |
 | 1.1 | 2026-09-14 | Owner-approved manual-mode warning and separation of technical cost guards from future commercial entitlements |

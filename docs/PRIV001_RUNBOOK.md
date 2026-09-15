@@ -70,3 +70,8 @@ SEARCH-005 begins from production `0013`. Audit current source-status/observabil
 | 1.0 | 13.08.2026 | Candidate deploy/E2E runbook. |
 | 1.1 | 19.08.2026 | Hardened privacy/security deployment controls. |
 | 1.2 | 19.08.2026 | Production gate completed; runbook converted to completed operational reference. |
+
+
+## AI-001 delta / 1.5.0 / 2026-09-14
+
+Verify owner-only AI metadata in export and cascade deletion on disposable accounts. Unknown reservations stay counted globally. Metadata default30days is technical, not a legal retention policy. Current-month budgets cannot be purged mid-period.

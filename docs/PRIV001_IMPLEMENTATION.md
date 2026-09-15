@@ -92,3 +92,8 @@ Application revert may keep additive `0013`. Controlled downgrade removes privac
 | 1.0 | 13.08.2026 | Initial export/delete/retention candidate. |
 | 1.1 | 19.08.2026 | Hardened candidate: re-auth snapshot export, bounds/sanitizer/concurrency/orphan-asset controls. |
 | 1.2 | 19.08.2026 | Green CI/Render `0013` and full production E2E/restart/log evidence; package COMPLETE. |
+
+
+## AI-001 delta / 1.5.0 / 2026-09-14
+
+AI export adds bounded owner-only usage metadata; no prompt/output contents. Account deletion removes owned AI ledger/plan/bucket rows; global aggregate costs and anonymous unexpired leases remain for safety. Existing privacy worker invokes bounded AI metadata cleanup after the original cleanup.

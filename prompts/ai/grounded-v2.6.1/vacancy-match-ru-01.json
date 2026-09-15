@@ -1,0 +1,199 @@
+{
+  "case_id": "vacancy-match-ru-01",
+  "task": "vacancy_match",
+  "language": "ru",
+  "synthetic": true,
+  "schema": "../../schemas/vacancy_match.schema.json",
+  "messages": [
+    {
+      "role": "system",
+      "content": "Ты выполняешь офлайн-бенчмарк AI Career Agent. Используй только перечисленные факты с идентификаторами из входа. В evidence_ids используй только точные raw ID из входа, например c1 или v2: без квадратных/круглых скобок, префиксов, пояснений и выдуманных ID. Не вставляй evidence IDs, названия полей схемы или другие технические метаданные в пользовательский текст. Не превращай требования вакансии в навыки кандидата. Не придумывай работодателей, должности, сроки, образование, навыки, достижения, результаты или числа. Если факт о кандидате не подтвержден, не утверждай его как существующий. Верни только JSON по переданной схеме. Для vacancy_match классифицируй каждое требование вакансии v* ровно один раз: либо matched_requirements, либо gaps. requirement_id должен быть точным v-ID. В evidence_ids каждого элемента обязательно включай сам v-ID и относящийся к нему факт кандидата, если такой факт дан. Числовой match score не создавай: его вычисляет детерминированный код AI Career Agent. Весь пользовательский текст пиши на русском языке. В итоговой рекомендации для каждого важного неподтвержденного требования объясни следующий безопасный шаг: если навык у пользователя действительно есть, но не отражен в профиле/резюме, предложи подтвердить или добавить его, после чего AI Career Agent сможет детерминированно пересчитать соответствие. Не обещай конкретный новый процент и не утверждай, что навык существует."
+    },
+    {
+      "role": "user",
+      "content": "Оцени соответствие. Резюме: [c1] Python backend 3 года; [c2] FastAPI; [c3] PostgreSQL; [c4] нет подтвержденного Docker; [c5] нет подтвержденного Kubernetes. Вакансия: [v1] Python обязателен; [v2] Django или FastAPI; [v3] PostgreSQL; [v4] Docker обязателен; [v5] Kubernetes будет плюсом. Классифицируй все v1-v5 ровно один раз и объясни совпадения и пробелы. В рекомендации объясни, что подтверждение реально имеющегося, но не отраженного Docker позволит пересчитать соответствие и может повысить итоговый match; не придумывай новый процент."
+    }
+  ],
+  "source_facts": [
+    {
+      "id": "c1",
+      "text": "Python backend 3 года",
+      "kind": "candidate"
+    },
+    {
+      "id": "c2",
+      "text": "FastAPI",
+      "kind": "candidate"
+    },
+    {
+      "id": "c3",
+      "text": "PostgreSQL",
+      "kind": "candidate"
+    },
+    {
+      "id": "c4",
+      "text": "нет подтвержденного Docker",
+      "kind": "candidate"
+    },
+    {
+      "id": "c5",
+      "text": "нет подтвержденного Kubernetes",
+      "kind": "candidate"
+    },
+    {
+      "id": "v1",
+      "text": "Python обязателен",
+      "kind": "vacancy"
+    },
+    {
+      "id": "v2",
+      "text": "Django или FastAPI",
+      "kind": "vacancy"
+    },
+    {
+      "id": "v3",
+      "text": "PostgreSQL",
+      "kind": "vacancy"
+    },
+    {
+      "id": "v4",
+      "text": "Docker обязателен",
+      "kind": "vacancy"
+    },
+    {
+      "id": "v5",
+      "text": "Kubernetes будет плюсом",
+      "kind": "vacancy"
+    }
+  ],
+  "required_paths": [
+    "verdict",
+    "matched_requirements",
+    "gaps",
+    "recommendation",
+    "caveats"
+  ],
+  "required_evidence_ids": [
+    "c1",
+    "c2",
+    "c3",
+    "c4",
+    "c5",
+    "v1",
+    "v2",
+    "v3",
+    "v4",
+    "v5"
+  ],
+  "required_unverified_evidence_ids": [],
+  "required_caveat_evidence_ids": [],
+  "grounding_requirements": [
+    {
+      "id": "python",
+      "any_of": [
+        "Python"
+      ]
+    },
+    {
+      "id": "framework",
+      "any_of": [
+        "FastAPI"
+      ]
+    },
+    {
+      "id": "database",
+      "any_of": [
+        "PostgreSQL"
+      ]
+    },
+    {
+      "id": "docker_gap",
+      "any_of": [
+        "Docker"
+      ]
+    },
+    {
+      "id": "kubernetes_gap",
+      "any_of": [
+        "Kubernetes"
+      ]
+    }
+  ],
+  "forbidden_claims": [
+    {
+      "id": "fake_docker",
+      "terms": [
+        "есть опыт Docker",
+        "работал с Docker"
+      ]
+    },
+    {
+      "id": "fake_kubernetes",
+      "terms": [
+        "есть опыт Kubernetes",
+        "работал с Kubernetes"
+      ]
+    }
+  ],
+  "generated_numeric_paths": [],
+  "match_requirements": [
+    {
+      "requirement_id": "v1",
+      "importance": "mandatory",
+      "weight": 2,
+      "expected_status": "matched",
+      "candidate_evidence_ids": [
+        "c1"
+      ]
+    },
+    {
+      "requirement_id": "v2",
+      "importance": "mandatory",
+      "weight": 2,
+      "expected_status": "matched",
+      "candidate_evidence_ids": [
+        "c2"
+      ]
+    },
+    {
+      "requirement_id": "v3",
+      "importance": "mandatory",
+      "weight": 2,
+      "expected_status": "matched",
+      "candidate_evidence_ids": [
+        "c3"
+      ]
+    },
+    {
+      "requirement_id": "v4",
+      "importance": "mandatory",
+      "weight": 2,
+      "expected_status": "gap",
+      "candidate_evidence_ids": [
+        "c4"
+      ]
+    },
+    {
+      "requirement_id": "v5",
+      "importance": "preferred",
+      "weight": 1,
+      "expected_status": "gap",
+      "candidate_evidence_ids": [
+        "c5"
+      ]
+    }
+  ],
+  "manual_rubric": [
+    "Каждое требование классифицировано ровно один раз",
+    "Обязательные требования отделены от предпочтительных",
+    "Нет ложного Docker/Kubernetes опыта",
+    "Рекомендация объясняет, как подтверждение реально имеющегося, но не отраженного навыка повлияет на следующий пересчет match без выдуманного процента"
+  ],
+  "tags": [
+    "match",
+    "ru",
+    "explainability",
+    "deterministic-score",
+    "contract-v2"
+  ]
+}

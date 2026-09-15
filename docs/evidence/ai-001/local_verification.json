@@ -1,0 +1,81 @@
+{
+  "package": "AI-001",
+  "release": "1.5.0",
+  "status": "NEEDS_VERIFICATION",
+  "date": "2026-09-14",
+  "python": "3.13.5",
+  "installed_dependencies": {
+    "flask": "not installed",
+    "sqlalchemy": "2.0.50",
+    "alembic": "1.18.4",
+    "psycopg": "not installed",
+    "pytest": "9.0.2",
+    "jsonschema": "4.26.0",
+    "requests": "2.32.5",
+    "pypdf": "5.9.0",
+    "flask-wtf": "not installed",
+    "flask-limiter": "not installed"
+  },
+  "local_checks": {
+    "full_pytest": {
+      "passed": 495,
+      "skipped": 17,
+      "subtests_passed": 82,
+      "failed": 0
+    },
+    "ai001_pytest": {
+      "passed": 80,
+      "skipped": 3,
+      "subset_of_full": true
+    },
+    "provider_unittest": {
+      "passed": 47,
+      "subset_of_full": true
+    },
+    "benchmark_unittest": {
+      "passed": 90,
+      "subset_of_full": true
+    },
+    "sqlite_migration_round_trip_and_alembic_check": "PASS",
+    "ai001_package": "PASS",
+    "ai_provider_package": "PASS",
+    "accepted_benchmark_package": "PASS; deterministic reference 8/8",
+    "infra_manifest": "PASS",
+    "python_ast_and_jinja": "PASS",
+    "repository_hygiene": "PASS"
+  },
+  "external": {
+    "github_ci": "pending",
+    "postgresql_integration": "pending",
+    "flask_route_execution": "pending",
+    "render_neon_migration": "pending",
+    "staging_smoke_restart_logs": "pending",
+    "billable_provider_calls_in_this_task": 0,
+    "legal_operator_approval": "not decided",
+    "public_real_data_activation": false
+  },
+  "local_limitations": [
+    "Flask and Psycopg are not installed; a disposable PostgreSQL service is unavailable.",
+    "Some installed dependency versions differ from repository pins. CI must install requirements.",
+    "17 skips include module-level skips, not proof that only17 scenarios remain untested.",
+    "Initial local tests exposed checker/head-reference drift; corrected. One aggregate tool invocation timed out during a repeated focused run; a standalone rerun passed."
+  ],
+  "log_sha256": {
+    "provider_tests_final.log": "77ab2d4db5922e57d3e1d63a4ecf97592d1da66e11b284841d08c10086f68c73",
+    "all_tests_final.log": "075d9c250207730b039b997d121961159b687e5ddd14cd95242bfabe1b2e8f76",
+    "ai001_tests_final.log": "e08765a12bc0645bca6df50d5cf722150ae032be877e8bbd393c6dcb7d522921",
+    "bench_tests_final.log": "70efd95c171efa47e8f3b871020b0429fadd85598750cc58f8dff58d16855aeb",
+    "all_tests_release.log": "c8d8c8b9ec084f73f22fcea3a45708b81e510cd6186acbf926b134cc29d1a55d",
+    "provider_gate_release.log": "311360c8bf901bfb754337d5e1818d9b5d60b2c43e1737062489c73cd06f9f9c",
+    "bench_gate_release.log": "d9da3dfb6f2e4705764fad224949800c79076f6a634a1f2db2867efbb5c8b850"
+  },
+  "document_verification": {
+    "new_docx_count": 9,
+    "rendered_pdf_count": 9,
+    "page_count": 84,
+    "visual_review": "all pages reviewed in rendered sheets; critical pages reviewed full size",
+    "normalized_body_and_table_coverage": "PASS; no missing segments",
+    "scope": "new AI-001/current documents; accepted historical companions copied byte-for-byte",
+    "format_fix": "Acceptance matrix was moved to a new page after renderer loss was detected; rerendered content coverage passed."
+  }
+}

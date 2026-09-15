@@ -10,6 +10,12 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 
 DOCUMENTS = {
+    "docs/AI001_IMPLEMENTATION.md": ["## 1.", "## 2.", "2026-09-14"],
+    "docs/AI001_RUNTIME_REFERENCE.md": ["## 1.", "## 2.", "2026-09-14"],
+    "docs/AI001_RUNBOOK.md": ["## 1.", "## 2.", "2026-09-14"],
+    "docs/AI001_VERIFICATION_STATUS.md": ["## 1.", "## 2.", "2026-09-14"],
+    "docs/AI001_SOURCES.md": ["## 1.", "## 2.", "2026-09-14"],
+    "docs/LEGAL001_DEFERRED_DECISION.md": ["## 1.", "## 2.", "2026-09-14"],
     "docs/AI_PROVIDER001_DECISION.md": ["| \u041f\u043e\u043b\u0435 | \u0417\u043d\u0430\u0447\u0435\u043d\u0438\u0435 |", "## 1.", "## 2."],
     "docs/AI_PROVIDER001_DATA_AND_FAILURE_POLICY.md": ["| \u041f\u043e\u043b\u0435 | \u0417\u043d\u0430\u0447\u0435\u043d\u0438\u0435 |", "## 1.", "## 2."],
     "docs/AI_PROVIDER001_COSTS.md": ["| \u041f\u043e\u043b\u0435 | \u0417\u043d\u0430\u0447\u0435\u043d\u0438\u0435 |", "## 1.", "## 2."],

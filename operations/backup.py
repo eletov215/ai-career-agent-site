@@ -46,6 +46,8 @@ _INVENTORY_TABLES = (
     "resume_exports",
     "privacy_audit_events",
     "source_health_states",
+    "ai_runtime_policies", "ai_usage_events", "ai_budget_buckets", "ai_request_leases",
+    "ai_provider_states", "ai_plan_entitlements", "ai_user_plans",
     "vacancies",
     "vacancy_source_records",
     "sync_runs",

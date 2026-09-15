@@ -8,33 +8,34 @@
 
 | Поле | Значение |
 |---|---|
-| Current package | AI-PROVIDER-001 - НУЖНА ПРОВЕРКА |
-| Source code | GitHub `main` after AI-PROVIDER-001 candidate r1; ordinary CI #261 green; this r2 records owner-approved strategy and awaits final CI |
-| Canonical versions | PLAN 1.4.50; PASSPORT 2.64; SOURCE_AUDIT 1.4.50; AI-BENCH verification 1.16; provider ADR 1.1 |
-| AI-BENCH-001 | ВЫПОЛНЕНО; accepted artifact `34830877796`, 8/8 machine PASS and named human acceptance |
-| Provider decision | APPROVED by Шекунов Д.С.: Alice primary; manual mode with explicit warning; internal technical guards only; Free + Standard launch intent; Max architecture reserved |
-| Commercial quotas | Exact Free/Standard action quotas intentionally unset until usage evidence and BILL-001; users see feature actions, not tokens |
-| Production AI | Not implemented or activated; policy JSON remains an offline architecture specification |
-| Staging | Render web + clean Neon PostgreSQL (Oregon); schema `20260819_0014` |
-| Current verification | Previous r1 ordinary CI green; r2 local checks recorded in AI_PROVIDER001_VERIFICATION_STATUS; final ordinary CI pending |
-| Next package | LEGAL-001 after final ordinary CI; AI-001 remains the later runtime integration package |
+| Current package | AI-001 - НУЖНА ПРОВЕРКА; synthetic-only technical foundation |
+| Source code | Owner-supplied `main (31).zip`; documented closure overlay and AI-001 changes; remote GitHub not queried |
+| Canonical versions | PLAN 1.5.0; PASSPORT 2.67; SOURCE_AUDIT 1.5.0 |
+| Completed AI foundation | AI-BENCH-001 and AI-PROVIDER-001 - ВЫПОЛНЕНО; accepted evidence remains unchanged |
+| LEGAL-001 | ОТЛОЖЕНО ДО РЕШЕНИЯ ВЛАДЕЛЬЦА; operator, jurisdiction and launch countries not selected |
+| Public AI / real data | Disabled in code; no generation POST route or real-data payload API |
+| Technical candidate | Central policy, usage ledger, reservations, idempotency, Alice adapter, structured output, manual notice |
+| Schema | Last verified staging: `20260819_0014`; candidate target: `20260914_0015` |
+| Staging | Render web + clean Neon PostgreSQL; previous data not migrated |
+| Verification | Local evidence only for AI-001; new ordinary GitHub CI, migration and staging smoke still required |
+| Next action | Verify AI-001; then AI-002 technical development. LEGAL-001 must return before public AI/release |
 
-This revision separates technical cost guards from commercial entitlements. Internal caps protect the service during development/beta; tariff quotas belong to BILL-001 and must not be hard-coded in the provider adapter.
+Решение владельца: юридические вопросы отложены, но не отменены. Техническая разработка продолжается без передачи реальных резюме провайдеру.
 
 <!-- ACA-CANONICAL-STATUS:END -->
 
 | Поле | Значение |
 |---|---|
 | Документ | PLAN_CURRENT |
-| Версия | 1.4.50 |
+| Версия | 1.5.0 |
 | Дата | 14 сентября 2026 |
 | Статус | ДЕЙСТВУЮЩИЙ |
-| Основа кода | GitHub `main` с grounded-v2.6.1/evals 1.6.1; ordinary CI green; final Alice artifact `34830877796` + named human acceptance |
-| Текущий пакет | AI-PROVIDER-001 - стратегия утверждена владельцем; НУЖНА ПРОВЕРКА только final ordinary CI |
+| Основа кода | Owner main(31) + explicit closure overlay + AI-001 candidate; candidate CI pending |
+| Текущий пакет | AI-001 - НУЖНА ПРОВЕРКА; LEGAL-001 - ОТЛОЖЕНО ДО РЕШЕНИЯ ВЛАДЕЛЬЦА |
 
 > ОБЯЗАТЕЛЬНО ДЛЯ КАЖДОГО НОВОГО ЧАТА: прочитать этот план, новый паспорт и актуальный архив. После завершения любого пункта вернуть обновлённые DOCX/PDF/Markdown, новый ZIP, доказательства проверки и запись в журнале версий.
 
-> КОНТРОЛЬНЫЕ СТАТУСЫ ЭТОЙ ВЕРСИИ: FND-001/FND-002/DATA-001/DATA-002/SEC-001/OPS-001/INFRA-PREP-001/SYNC-001/SYNC-002/SEARCH-001..005/AUTH-001/AUTH-002/PROF-001/PROF-002/PROF-003/PRIV-001/AI-BENCH-001 - **ВЫПОЛНЕНО**; `AI-PROVIDER-001` - **НУЖНА ПРОВЕРКА**; `DOC-001` - **В РАБОТЕ**; `INFRA-001` - **ОТЛОЖЕНО ДО ПРЕДРЕЛИЗНОГО ЭТАПА**. Документы ниже `1.4.50` устарели для определения текущего gate.
+> КОНТРОЛЬНЫЕ СТАТУСЫ ЭТОЙ ВЕРСИИ: FND-001/FND-002/DATA-001/DATA-002/SEC-001/OPS-001/INFRA-PREP-001/SYNC-001/SYNC-002/SEARCH-001..005/AUTH-001/AUTH-002/PROF-001/PROF-002/PROF-003/PRIV-001/AI-BENCH-001 - **ВЫПОЛНЕНО**; `AI-PROVIDER-001` - **ВЫПОЛНЕНО**; `LEGAL-001` - **ОТЛОЖЕНО ДО РЕШЕНИЯ ВЛАДЕЛЬЦА**; `AI-001` - **НУЖНА ПРОВЕРКА**; `DOC-001` - **В РАБОТЕ**; `INFRA-001` - **ОТЛОЖЕНО ДО ПРЕДРЕЛИЗНОГО ЭТАПА**. Документы ниже `1.5.0` устарели для определения текущего gate.
 
 
 ## 1. Источник истины и аудит источников
@@ -42,7 +43,7 @@ This revision separates technical cost guards from commercial entitlements. Inte
 - GitHub является главным источником актуального кода.
 - Если в текущем чате загружен более новый ZIP, он является рабочей основой этого чата.
 - Канонический план определяется наибольшей версией и датой; старые дубликаты не должны оставаться действующими.
-- Current work uses `ai-career-agent-site-main (30).zip`, supplied by the owner for this task. Earlier `(1).zip` and the grounded-v2.6.1 full ZIP are historical provenance; byte-level comparison confirms the current 407-file content equals the accepted implementation.
+- Current work uses `ai-career-agent-site-main (31).zip`. The exact input, documentary closure overlay and scoped AI-001 changes are recorded in SOURCE_AUDIT 1.5.0. Earlier archives are historical only.
 - Версия 1.4.38 фиксирует grounded-v2 hardening после первого live run: ordinary CI r4 green; manual run artifact 32958938365 completed 24/24 API calls with zero transport errors; stricter evidence/safety/match contract prepared for live run #2.
 - Версия 1.4.39 фиксирует grounded-v2.1 hardening после live run #2 artifact 32972783843: Unicode percent normalization, scenario provenance, RU/EN language gate, cover-letter motivation semantics, safe provider diagnostics and one bounded retry prepared for live run #3.
 - Версия 1.4.40 фиксирует grounded-v2.2 final safety hardening после live run #3 artifact 32978362483: source-matched impact families, regressions на реальные Alice outcome-inferences и post-score presentation sanitizer prepared for live run #4.
@@ -54,6 +55,7 @@ This revision separates technical cost guards from commercial entitlements. Inte
 - Версия 1.4.48 закрывает AI-BENCH-001: ordinary CI green; Alice Final artifact `34830877796` дал 8/8 machine PASS на dataset `1.3.6` / grounded-v2.6.1 с нулевыми hard counters; named reviewer Шекунов Д.С. принял focused re-review; AI-PROVIDER-001 становится следующим пакетом.
 - Версия 1.4.49 подготовила AI-PROVIDER-001 candidate r1: provider ADR/policy/cost/privacy, offline validator/tests and ordinary CI gate; GitHub Actions run #261 прошёл зелёным.
 - Версия 1.4.50 фиксирует решение владельца Шекунова Д.С.: Alice primary; manual mode with explicit user notice; technical cost guards separated from commercial entitlements; Free + Standard launch intent; Max architecture reserved; exact commercial quotas deferred to BILL-001. Final r2 ordinary CI remains the only package gate.
+- Версия 1.4.51 закрывает AI-PROVIDER-001: стратегия владельцем утверждена, ordinary GitHub CI run #262 прошёл green; Alice остаётся primary, manual mode с явным предупреждением - fallback; technical guards отделены от коммерческих entitlement, Free + Standard планируются к запуску, Max зарезервирован архитектурно. Следующий пакет - LEGAL-001.
 - Версия 1.4.43 фиксирует Alice Final run #2 artifact 33066898884: 8/8 transport, 6/8 machine. Grounded-v2.4 добавляет Unicode dash normalization, узкий audited candidate_fit->motivation repair для vacancy-only future intent и более строгий interview evidence coverage prompt; fresh Alice-only verification обязателен.
 - Версия 1.4.34 фиксирует live Yandex candidate: manual-only workflow, Alice AI LLM/Flash/YandexGPT Pro 5.1, structured JSON Schema output, current pricing snapshot and GitHub-secret-only credentials.
 - Версия 1.4.35 фиксирует CI-stability hotfix r2: SYNC worker cache assertions отвязаны от календарного 7-дневного search filter; AI-BENCH package contract использует browser-upload-safe visible scaffold и не зависит от dotfiles.
@@ -139,7 +141,7 @@ This revision separates technical cost guards from commercial entitlements. Inte
 | Резюме | PDF extraction на pypdf и browser resume builder; LLM пока нет. |
 | Тесты | GitHub Actions, unit/provider/route/config/database/migration/security/observability/backup tests. |
 | Hosting | Render временно используется как staging/резервная площадка. Для production требуется проверенный VPS с доступностью из РФ/РБ, собственный домен и план миграции. |
-| Текущая схема | Current staging schema `20260819_0014` on Neon PostgreSQL; SEARCH-005 added `source_health_states`. Previous PRIV-001 revision `0013` is historical. |
+| Текущая схема | Last externally verified staging schema `20260819_0014`; AI-001 candidate target `20260914_0015` on Neon PostgreSQL; SEARCH-005 added `source_health_states`. Previous PRIV-001 revision `0013` is historical. |
 
 ### 5.1 Выполнено/частично
 
@@ -221,8 +223,8 @@ MVP не готов, если работает только отдельная �
 | ID | Приоритет | Статус | Пункт |
 |---|---|---|---|
 | AI-BENCH-001 | P0 | ВЫПОЛНЕНО | Alice Final `34830877796`: 8/8 machine PASS, zero provider errors/retries/hard safety counters; named human re-review accepted |
-| AI-PROVIDER-001 | P0 | НУЖНА ПРОВЕРКА | Owner-approved strategy; r1 CI green; final r2 ordinary CI pending |
-| AI-001 | P1 | ЗАПЛАНИРОВАНО | Независимый слой AI-провайдера и контроль стоимости |
+| AI-PROVIDER-001 | P0 | ВЫПОЛНЕНО | Owner-approved strategy; ordinary GitHub CI #262 green; runtime AI still disabled pending LEGAL-001 + AI-001 |
+| AI-001 | P1 | НУЖНА ПРОВЕРКА | Независимый слой AI-провайдера и контроль стоимости |
 | AI-002 | P1 | ЗАПЛАНИРОВАНО | Настоящий анализ резюме |
 | AI-003 | P1 | ЗАПЛАНИРОВАНО | Адаптивное AI-интервью в конструкторе |
 | AI-004 | P1 | ЗАПЛАНИРОВАНО | Объяснимая оценка соответствия вакансии |
@@ -250,7 +252,7 @@ MVP не готов, если работает только отдельная �
 | MIG-001 | P0 | ЗАПЛАНИРОВАНО | Перенос PostgreSQL и production с Render на VPS с rollback |
 | PERF-001 | P2 | ЗАПЛАНИРОВАНО | Оптимизация frontend и статических ресурсов |
 | A11Y-001 | P2 | ЗАПЛАНИРОВАНО | Доступность интерфейса |
-| LEGAL-001 | P0 до публичного AI | ЗАПЛАНИРОВАНО | Юридические документы и согласия |
+| LEGAL-001 | P0 до публичного AI | ОТЛОЖЕНО ДО РЕШЕНИЯ ВЛАДЕЛЬЦА | Юридические документы, согласия и data-processing gate перед публичным AI |
 | ANL-001 | P2 | ЗАПЛАНИРОВАНО | Продуктовая аналитика без содержимого резюме |
 | BILL-001 | P3 | ОТЛОЖЕНО | Тарифы, платежи и лимиты использования |
 | SRC-001 | P3 | ОТЛОЖЕНО | Подключение новых источников вакансий |
@@ -394,7 +396,7 @@ MVP не готов, если работает только отдельная �
 
 **Реализация:** Канонические PLAN_CURRENT и паспорт обновляются после каждого архитектурного решения; README/ROADMAP/CHANGELOG и package-specific docs синхронизируются вместе с ближайшим кодовым пакетом, чтобы документация и код проходили один CI/merge cycle.
 
-**Текущее состояние:** PLAN_CURRENT 1.4.50; PROJECT_PASSPORT 2.64. AI-BENCH-001 ВЫПОЛНЕНО; AI-PROVIDER-001 НУЖНА ПРОВЕРКА (owner approved; final r2 ordinary CI pending). Staging: Render web + clean Neon PostgreSQL, revision `20260819_0014`. Previous 1.4.22/2.36/0010 details are historical. Gmail API staging delivery remains separate operational work.
+**Текущее состояние:** PLAN_CURRENT 1.5.0; PROJECT_PASSPORT 2.67. AI-BENCH-001 и AI-PROVIDER-001 ВЫПОЛНЕНО; LEGAL-001 ОТЛОЖЕНО ДО РЕШЕНИЯ ВЛАДЕЛЬЦА. AI-001 НУЖНА ПРОВЕРКА. Staging: Render web + clean Neon PostgreSQL, revision `20260819_0014`. Previous 1.4.22/2.36/0010 details are historical. Gmail API staging delivery remains separate operational work.
 
 **Влияние на сайт:** Нет.
 
@@ -812,7 +814,7 @@ MVP не готов, если работает только отдельная �
 #### AI-PROVIDER-001 - Стратегия AI-провайдеров
 
 **Приоритет:** P0
-**Статус:** НУЖНА ПРОВЕРКА
+**Статус:** ВЫПОЛНЕНО
 
 **Цель:** Зафиксировать основной и резервный AI-контур с учётом РФ/РБ, privacy, стоимости и отказоустойчивости.
 
@@ -824,26 +826,27 @@ MVP не готов, если работает только отдельная �
 
 **Зависимости:** AI-BENCH-001.
 
-**Approved implementation (1.4.50):** `docs/AI_PROVIDER001_DECISION.md` v1.1, policy v1.1.0, data/failure policy, dated official sources, reproducible Decimal costs and dedicated CI verification. Alice is primary. Manual mode is the only fallback and must explicitly warn the user while vacancy search/profile/resume editing remain available. Technical guards start at 100 logical requests/user/day, 1000 global/day, RUB 200/user/day, RUB 1000/global/day and RUB 20000/global/month; they are operator safety ceilings, not tariff quotas. Launch intent is Free + Standard; Max is architecture-reserved. Commercial action quotas remain unset until usage evidence/BILL-001. No production AI adapter, route, env change or migration.
+**Approved implementation (1.4.51):** `docs/AI_PROVIDER001_DECISION.md` v1.2, policy v1.1.0, data/failure policy, dated official sources, reproducible Decimal costs and dedicated CI verification. Alice is primary. Manual mode is the only fallback and must explicitly warn the user while vacancy search/profile/resume editing remain available. Technical guards start at 100 logical requests/user/day, 1000 global/day, RUB 200/user/day, RUB 1000/global/day and RUB 20000/global/month; they are operator safety ceilings, not tariff quotas. Launch intent is Free + Standard; Max is architecture-reserved. Commercial action quotas remain unset until usage evidence/BILL-001. No production AI adapter, route, env change or migration.
 
-**Remaining package gate:** final ordinary GitHub CI for r2. Candidate r1 CI run #261 is green and owner approval is explicit. Production activation additionally requires LEGAL-001, AI-001 and deployment checks.
+**Closure evidence:** owner approval is explicit; candidate r1 CI #261 and final r2 ordinary GitHub CI #262 are green. Production activation still requires LEGAL-001, AI-001 and deployment checks.
 
 #### AI-001 - Независимый слой AI-провайдера и контроль стоимости
 
-**Приоритет:** P1
-**Статус:** ЗАПЛАНИРОВАНО
+**Приоритет:** P1  **Статус:** НУЖНА ПРОВЕРКА
 
-**Цель:** Не привязывать бизнес-логику к одной модели.
+**Scope:** provider-neutral technical runtime, not public resume analysis. `AIRequest` accepts a pinned synthetic fixture ID only. Alice adapter uses a bounded one-shot child process, structured JSON output and no-logging header. No paid call is made by ordinary tests.
 
-**Реализация:** Provider interface, structured schemas, versioned prompts, timeout/retry, durable usage/cost ledger, central mutable technical guards, separate plan-entitlement lookup, explicit manual-mode warning and provider-independent fallback state. Free/Standard/Max numbers are not hard-coded in the Alice adapter.
+**Implementation:** seven additive AI tables in migration `20260914_0015`; atomic technical reservations and versioned operator policy; persisted circuit and idempotency; separate, unseeded commercial entitlements. Known provider usage is settled; uncertain usage stays conservatively counted. User-visible failed actions are not consumed.
 
-**Влияние на код:** services/ai/, schemas/, prompts/, config, usage/cost models, central quota/entitlement service, mock tests.
+**Site:** read-only `/api/ai/status` and explicit manual-mode notice on AI Career / resume builder; no generation POST route. Real profiles and uploaded resumes cannot enter the new provider service. `AI_ENABLED=0`, `AI_KILL_SWITCH=1`, `AI_SYNTHETIC_ACCESS_ENABLED=0` remain defaults.
 
-**Влияние на сайт:** Понятные loading/error/limit states; модель можно сменить без переписывания продукта.
+**Evidence:** measured local results in `AI001_VERIFICATION_STATUS.md` and `docs/evidence/ai-001/local_verification.json`. New GitHub CI, PostgreSQL migration and Render/Neon smoke are NOT claimed yet.
 
-**Критерии готовности:** Все calls идут через interface; JSON валидируется; платные API не вызываются в tests; limits come from central server-side policy; technical guards and commercial entitlements are separate; unavailable AI shows an explicit manual-mode notice without charging a user-visible entitlement.
+**Exit:** exact-candidate ordinary CI; staging `current=expected=20260914_0015`; manual status; preserved site/search/profile; privacy-safe logs; no paid Alice call during acceptance. Output-schema checks are not a full semantic grounding guarantee; real-data feature validation remains AI-002..006.
 
-**Зависимости:** DATA-002, PROF-001, PRIV-001.
+**Dependencies:** DATA-002, PROF-001, PRIV-001, completed AI-PROVIDER-001. Owner deferred LEGAL-001 on 2026-09-14, permitting technical-only work. LEGAL-001 remains mandatory before public AI.
+
+**Rollback:** verify backup first; to return to the previous exact-revision application, stop writers and perform a controlled downgrade to 0014 only after preserving any AI accounting metadata. Do not assume the old readiness accepts 0015.
 
 #### AI-002 - Настоящий анализ резюме
 
@@ -1121,20 +1124,11 @@ MVP не готов, если работает только отдельная �
 
 #### LEGAL-001 - Юридические документы и согласия
 
-**Приоритет:** P0 до публичного AI
-**Статус:** ЗАПЛАНИРОВАНО
+**Приоритет:** P0 до публичного AI  **Статус:** ОТЛОЖЕНО ДО РЕШЕНИЯ ВЛАДЕЛЬЦА
 
-**Цель:** Честно описать резюме, OAuth tokens, AI providers, retention и права.
+The owner has not selected the operator country, legal form, legal contact/requisites, first launch markets or final production data-location scheme. These values remain unknown. Detailed open questions and the mandatory return trigger are in `LEGAL001_DEFERRED_DECISION.md` v1.1.
 
-**Реализация:** Privacy, terms, AI consent, versioned acceptance, export/delete, disclaimer/support.
-
-**Влияние на код:** templates/routes/consent models/tests.
-
-**Влияние на сайт:** Полноценные документы и явное согласие перед AI.
-
-**Критерии готовности:** Текст соответствует фактической архитектуре; legal review владельцем.
-
-**Зависимости:** AUTH/PROF/AI architecture определена.
+Terms, Privacy, AI consent, owner-bound versioned acceptance and legal review remain required before public AI. The earlier unpublished technical prototype is not in this release. No account receives invented consent and no real-data activation is authorized. AI-001..006 may progress technically using synthetic data and closed activation gates.
 
 #### ANL-001 - Продуктовая аналитика без содержимого резюме
 
@@ -1516,18 +1510,16 @@ Render остаётся staging/резервной площадкой на пе�
 
 ## 15. Обязательная ближайшая последовательность
 
-### 15.1 Функциональная разработка без аренды VPS
+### 15.1 Техническая разработка без публичного AI
 
 ```text
-DOC-001 (continuous)
-AI-PROVIDER-001 (owner approved; final r2 CI pending)
--> LEGAL-001
--> AI-001..006
+AI-PROVIDER-001 COMPLETE
+-> AI-001 CANDIDATE (synthetic only)
+-> AI-002..006 technical development with public AI blocked
 -> JOB-001..004
--> PERF-001 / A11Y-001 / ANL-001 when ready
 ```
 
-Previous FND/DATA/SEC/OPS/INFRA-PREP/SYNC/SEARCH/AUTH/PROF/PRIV/AI-BENCH stages are completed within their accepted scope.
+LEGAL-001 is deferred by the owner, not completed or removed. Return to it before public AI activation, paid subscriptions or commercial release. MINOR version 1.5.0 records this explicit dependency/sequence change. INFRA-001 remains pre-release work; the prior package evidence remains historical.
 
 ### 15.2 Предрелизный инфраструктурный блок
 
@@ -1545,11 +1537,11 @@ INFRA-001 real VPS test
 
 `AI-BENCH-001` не зависит от VPS. Финальная доступность Yandex AI с production source IP повторно подтверждается в `INFRA-001`. Порядок снова меняется только новой MINOR-версией PLAN_CURRENT с объяснением зависимостей.
 
-## 16. Current gate / AI-PROVIDER-001
+## 16. Current gate / AI-001
 
-AI-BENCH-001: **ВЫПОЛНЕНО**. AI-PROVIDER-001: **НУЖНА ПРОВЕРКА**. Current schema is `20260819_0014`.
+AI-BENCH-001 and AI-PROVIDER-001: ВЫПОЛНЕНО. AI-001: НУЖНА ПРОВЕРКА. LEGAL-001: ОТЛОЖЕНО ДО РЕШЕНИЯ ВЛАДЕЛЬЦА.
 
-The provider strategy is owner-approved and candidate r1 ordinary CI is green. This r2 records the approved fallback/tier/guard architecture and requires one final ordinary CI. No production model activation, payment, secret update, database migration or repeat paid benchmark is required now. After final green CI, close AI-PROVIDER-001 and continue with LEGAL-001. Earlier SEARCH-005/PRIV-001 gates remain historical completion evidence, not current blockers.
+Last verified staging remains 0014. This candidate adds 0015 and needs fresh ordinary CI, staging migrations, manual status, core smoke and log review. Keep provider keys out of GitHub and leave all AI activation controls disabled. No paid benchmark repetition is required. After technical acceptance, AI-002 is next; it must not bypass unresolved LEGAL-001.
 
 ## 17. Обязательный отчёт после каждого пакета
 
@@ -1568,6 +1560,9 @@ GitHub/production/API: <подтверждено или требуется>
 ```
 
 ## 18. Журнал версий
+
+- 1.5.0 / 2026-09-14: owner defers unresolved LEGAL-001 decisions; technical-only AI-001 candidate adds migration0015 with public/real-data activation still blocked. New CI/staging gate pending. Earlier unpublished 1.4.52 drafts are not active releases.
+
 
 > Historical version log. Past "pending" and "next" statements below describe their original dates, not the active gate in sections 7, 8 and 16. Version-label inconsistencies discovered during this audit are listed in SOURCE_AUDIT.
 
@@ -1647,7 +1642,7 @@ GitHub/production/API: <подтверждено или требуется>
 **Зависимости:** SEARCH-001..004, SYNC-001/002, AUTH-001, OPS-001, PRIV-001 complete.
 
 
-**Текущий gate:** AI-BENCH-001 ВЫПОЛНЕНО. AI-PROVIDER-001 НУЖНА ПРОВЕРКА; следующий deliverable - provider decision record без production AI integration до его утверждения.
+**Текущий gate:** AI-BENCH-001 и AI-PROVIDER-001 ВЫПОЛНЕНО. Текущий deliverable - AI-001 technical candidate; LEGAL-001 deferred; production AI integration не включается до legal/data-processing gate и AI-001.
 
 
 
@@ -1766,4 +1761,5 @@ Artifact `ai-bench-20260827T112440Z-243eaaeb` completed 8/8 calls with zero prov
 | Version | Date | Package | Change |
 |---|---|---|---|
 | 1.4.49 | 2026-09-14 | AI-PROVIDER-001 | Candidate strategy and offline controls; current source main (30); closure docs synchronized; schema/search gate drift corrected; CI + owner approval pending |
+| 1.4.51 | 2026-09-14 | AI-PROVIDER-001 closure | Owner approval + ordinary CI #262 green; provider strategy complete; LEGAL-001 becomes READY |
 | 1.4.50 | 2026-09-14 | AI-PROVIDER-001-R2 | Owner-approved manual fallback warning; technical guards separated from commercial tiers; Free + Standard launch intent; Max reserved; r1 CI #261 green; final r2 CI pending |

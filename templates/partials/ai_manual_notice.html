@@ -1,0 +1,6 @@
+{% if ai_availability and not ai_availability.generation_available %}
+<div class="ai-manual-notice" role="status" aria-live="polite">
+  <strong>Ручной режим</strong>
+  <span>{{ ai_availability.notice }}</span>
+</div>
+{% endif %}

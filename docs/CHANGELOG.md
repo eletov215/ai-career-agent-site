@@ -1,5 +1,18 @@
 # 1.4.50 - AI-PROVIDER-001 owner-approved tier/limit architecture - 14.09.2026
 
+## 1.5.0 / 2026-09-14 / AI-001 candidate
+
+Owner-directed legal deferral and technical sequencing change; last source main(31), closure docs synchronized. Provider-neutral synthetic-only runtime, pinned schemas/prompts, central policy, atomic usage reservations, idempotency, deadlines, circuit, separate future entitlements, safe manual status/UI, privacy/backup integration and migration0015. No legal prototype shipped, no public/real-data calls, no paid provider call. Local evidence and external gates in AI001_VERIFICATION_STATUS. Previous unpublished1.4.52 drafts are not releases.
+
+
+## 2026-09-14 - AI-PROVIDER-001 closure / canonical formatting refresh
+
+- Owner-approved provider strategy retained: Alice primary, manual fallback with explicit warning, technical guards separate from commercial tiers.
+- Ordinary GitHub CI run #262 is green; AI-PROVIDER-001 marked COMPLETE and LEGAL-001 becomes READY.
+- Canonical versions: PLAN 1.4.51, PASSPORT 2.65, SOURCE_AUDIT 1.4.51, provider verification 1.2.
+- Document presentation regenerated under DOC-STD-001 v1.3 for stable hierarchy, tables, spacing and page flow. No application code, schema or runtime behavior changed.
+
+
 - Recorded owner approval by Шекунов Д.С. after green candidate r1 GitHub CI #261.
 - Kept Yandex Alice AI LLM as primary provider; no automatic unqualified generative fallback.
 - Required explicit user notice when AI is unavailable while vacancy search, career profile and manual resume editing remain available.

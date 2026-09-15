@@ -3,10 +3,10 @@
 | Поле | Значение |
 |---|---|
 | Document | AI_PROVIDER001_VERIFICATION_STATUS |
-| Version | 1.1 |
+| Version | 1.2 |
 | Date | 2026-09-14 |
 | Package | AI-PROVIDER-001 |
-| Status | НУЖНА ПРОВЕРКА; owner approved, final ordinary CI pending |
+| Status | **ВЫПОЛНЕНО** - owner approval + ordinary GitHub CI #262 PASS |
 | Owner approval | Шекунов Д.С., approved 2026-09-14 |
 | Production revision | 20260819_0014 |
 
@@ -16,7 +16,7 @@ The strategy is approved: Alice primary, no automatic unqualified generative fal
 
 ## 2. External evidence already available
 
-Candidate r1 was committed to GitHub and ordinary CI run #261 completed successfully. This proves the r1 strategy/package gate in the repository environment. The owner then approved a revised limit/tier decision, so this r2 must receive one new ordinary CI before package completion.
+Candidate r1 ordinary CI run #261 completed successfully. After the owner approved the revised limit/tier decision, r2 was committed and ordinary GitHub CI run #262 also completed successfully. This closes the final package-level external gate.
 
 No paid Alice rerun is required: provider qualification, benchmark prompts/evals and accepted artifact `34830877796` are unchanged.
 
@@ -34,7 +34,7 @@ No paid Alice rerun is required: provider qualification, benchmark prompts/evals
 | Repository hygiene | PASS after local cache cleanup |
 | Production/evals protected boundary | PASS through preserved-file manifest |
 
-Fourteen local skips require Flask/Psycopg/PostgreSQL components unavailable in this container and are not counted as passed. Candidate r1 GitHub CI run #261 is already green; r2 still requires its own ordinary CI after upload. Exact machine evidence: `docs/evidence/ai-provider-001/local_verification.json`.
+Fourteen local skips require Flask/Psycopg/PostgreSQL components unavailable in this container and are not counted as passed. Candidate r1 CI #261 and final r2 CI #262 are both green. Exact machine evidence: `docs/evidence/ai-provider-001/local_verification.json`.
 <!-- LOCAL-RESULTS:END -->
 
 ## 4. Closure matrix
@@ -45,7 +45,7 @@ Fourteen local skips require Flask/Psycopg/PostgreSQL components unavailable in 
 | Candidate r1 ordinary GitHub CI | PASS | Run #261 green |
 | Owner strategy approval | PASS | Шекунов Д.С. approved revised plan |
 | r2 local policy/package tests | PASS | 415 passed, 14 skipped; provider/package/document/hygiene gates PASS |
-| r2 ordinary GitHub CI | PENDING | Final external gate after patch upload |
+| r2 ordinary GitHub CI | PASS | Run #262 green (owner-supplied GitHub Actions evidence) |
 | Production AI activation | NOT ATTEMPTED | LEGAL-001 + AI-001 + deployment prerequisites |
 
 ## 5. Meaning of approval
@@ -58,11 +58,12 @@ Revert the r2 policy/docs/tests commit. No schema rollback, credential rotation 
 
 ## 7. Next action
 
-Apply r2 PATCH, run ordinary GitHub Actions with both paid benchmark inputs disabled. If green, AI-PROVIDER-001 can be marked `ВЫПОЛНЕНО` and LEGAL-001 becomes the next package.
+AI-PROVIDER-001 is **ВЫПОЛНЕНО**. Proceed to `LEGAL-001`. Production AI remains disabled until LEGAL-001 and AI-001 activation prerequisites are satisfied.
 
 ## 8. Version log
 
 | Version | Date | Change |
 |---|---|---|
 | 1.0 | 2026-09-14 | Candidate verification; owner/CI pending |
+| 1.2 | 2026-09-14 | Final r2 ordinary CI #262 green; AI-PROVIDER-001 closed; LEGAL-001 next |
 | 1.1 | 2026-09-14 | r1 CI green, owner approved revised tiers/limits, r2 final CI remains |

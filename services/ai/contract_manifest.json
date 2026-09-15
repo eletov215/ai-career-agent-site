@@ -1,0 +1,19 @@
+{
+  "contract": "grounded-v2.6.1",
+  "dataset": "1.3.6",
+  "mode": "synthetic_only",
+  "files": {
+    "prompts/ai/grounded-v2.6.1/vacancy-match-ru-01.json": "efd24f73426833bb55648264e5fc2cdd03ee0eaad728fe9afbf7ef16bfe753cb",
+    "prompts/ai/grounded-v2.6.1/interview-ru-01.json": "8e0512cb3833f837eee289a998dcdee42820d84e67435eafef64bcafd35fbed4",
+    "prompts/ai/grounded-v2.6.1/resume-analysis-ru-01.json": "848db478ed3b315966204c51e02710a2c02e35f4694a60ef9a11dd11456c7fb5",
+    "prompts/ai/grounded-v2.6.1/interview-en-01.json": "b61923c1cd2ec363d652e4a35159b2ee54ebdee3d74bd12d0abdc3ecf5d72965",
+    "prompts/ai/grounded-v2.6.1/cover-letter-en-01.json": "2182c282b7a250c0e69fb0f6cbe82f0c36c5e0425e306ae40559ce579b9b772e",
+    "prompts/ai/grounded-v2.6.1/resume-analysis-en-01.json": "3c1e189b682848a32dc7c6d2d6dfcd9d4d4e4bac8b2a560607354d83d19e94e3",
+    "prompts/ai/grounded-v2.6.1/cover-letter-ru-01.json": "19d26355cf9ef3991b990b0e955d83d6e570042605eb30576d7f90d27c6c7b6c",
+    "prompts/ai/grounded-v2.6.1/vacancy-match-en-01.json": "7097e3e40dcb16d5eeeb801a1117338295b8b57fe18f51374f4a551bd8260de4",
+    "schemas/ai/grounded-v2.6.1/interview_questions.schema.json": "cad85a057a8d90d2a777d3fcae69aead23511959c3283bde0a13f80d3c2c93a9",
+    "schemas/ai/grounded-v2.6.1/cover_letter.schema.json": "e07d591f47da72243e1bc681044a239b74ca5a9883420ac1b48130c909e072fa",
+    "schemas/ai/grounded-v2.6.1/vacancy_match.schema.json": "4a7dd6645a122f538d2bda90f3791da6f4c3a61033a659180d32dc6168267536",
+    "schemas/ai/grounded-v2.6.1/resume_analysis.schema.json": "5a669dbd6d09355d0b3c6c658b5d1cbd2961d1c0ae858fd568bf318b3933002a"
+  }
+}

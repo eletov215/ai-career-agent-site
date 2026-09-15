@@ -342,3 +342,8 @@ Resume draft routes require first-party session, CSRF and owner-scoped repositor
 
 ## SEARCH-005 security
 Admin authorization is verified first-party session plus explicit deployment allowlist. Ordinary users receive 404. Tokens, response bodies, user queries and PII are forbidden in source-health DB/UI/API/logs.
+
+
+## AI-001 delta / 1.5.0 / 2026-09-14
+
+No public AI POST route; only pinned synthetic fixture IDs reach the service. Fixed HTTPS transport, disabled redirects/proxy inheritance, no logging header, child deadline/watchdog, bounded responses, strict JSON schema. Provider secrets use server environment/stdin, never URLs or subprocess argv. Legal/real-data activation remains unavailable.

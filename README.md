@@ -5,18 +5,19 @@
 
 | Поле | Значение |
 |---|---|
-| Current package | AI-PROVIDER-001 - НУЖНА ПРОВЕРКА |
-| Source code | GitHub `main` after AI-PROVIDER-001 candidate r1; ordinary CI #261 green; this r2 records owner-approved strategy and awaits final CI |
-| Canonical versions | PLAN 1.4.50; PASSPORT 2.64; SOURCE_AUDIT 1.4.50; AI-BENCH verification 1.16; provider ADR 1.1 |
-| AI-BENCH-001 | ВЫПОЛНЕНО; accepted artifact `34830877796`, 8/8 machine PASS and named human acceptance |
-| Provider decision | APPROVED by Шекунов Д.С.: Alice primary; manual mode with explicit warning; internal technical guards only; Free + Standard launch intent; Max architecture reserved |
-| Commercial quotas | Exact Free/Standard action quotas intentionally unset until usage evidence and BILL-001; users see feature actions, not tokens |
-| Production AI | Not implemented or activated; policy JSON remains an offline architecture specification |
-| Staging | Render web + clean Neon PostgreSQL (Oregon); schema `20260819_0014` |
-| Current verification | Previous r1 ordinary CI green; r2 local checks recorded in AI_PROVIDER001_VERIFICATION_STATUS; final ordinary CI pending |
-| Next package | LEGAL-001 after final ordinary CI; AI-001 remains the later runtime integration package |
+| Current package | AI-001 - НУЖНА ПРОВЕРКА; synthetic-only technical foundation |
+| Source code | Owner-supplied `main (31).zip`; documented closure overlay and AI-001 changes; remote GitHub not queried |
+| Canonical versions | PLAN 1.5.0; PASSPORT 2.67; SOURCE_AUDIT 1.5.0 |
+| Completed AI foundation | AI-BENCH-001 and AI-PROVIDER-001 - ВЫПОЛНЕНО; accepted evidence remains unchanged |
+| LEGAL-001 | ОТЛОЖЕНО ДО РЕШЕНИЯ ВЛАДЕЛЬЦА; operator, jurisdiction and launch countries not selected |
+| Public AI / real data | Disabled in code; no generation POST route or real-data payload API |
+| Technical candidate | Central policy, usage ledger, reservations, idempotency, Alice adapter, structured output, manual notice |
+| Schema | Last verified staging: `20260819_0014`; candidate target: `20260914_0015` |
+| Staging | Render web + clean Neon PostgreSQL; previous data not migrated |
+| Verification | Local evidence only for AI-001; new ordinary GitHub CI, migration and staging smoke still required |
+| Next action | Verify AI-001; then AI-002 technical development. LEGAL-001 must return before public AI/release |
 
-This revision separates technical cost guards from commercial entitlements. Internal caps protect the service during development/beta; tariff quotas belong to BILL-001 and must not be hard-coded in the provider adapter.
+Решение владельца: юридические вопросы отложены, но не отменены. Техническая разработка продолжается без передачи реальных резюме провайдеру.
 
 <!-- ACA-CANONICAL-STATUS:END -->
 
@@ -26,17 +27,18 @@ Career-support web service: account -> confirmed career profile -> resume -> rea
 
 ## 2. Current work and checks
 
-AI-BENCH-001 is complete on synthetic grounded-v2.6.1 / dataset 1.3.6 / evals 1.6.1. AI-PROVIDER-001 is an owner-approved offline architecture revision awaiting final CI; the application still has no production AI provider.
+AI-001 is a synthetic-only technical candidate. AI-BENCH and AI-PROVIDER are complete; LEGAL-001 is deferred by the owner, not waived. No real-data generation endpoint exists. Keep deployment activation flags disabled.
 
 ```bash
 python scripts/check_ai_provider_package.py
-python -m unittest discover -s tests -p 'test_ai_provider*.py' -v
 python scripts/check_ai_bench_package.py
+python scripts/check_ai001_package.py
+python -m pytest -q tests/test_ai001_*.py
 python scripts/check_document_structure.py
 python scripts/check_repository_hygiene.py
 ```
 
-Ordinary CI does not make paid calls. Keep both live benchmark inputs false for this package. Updating an offline policy file does not enforce budgets or no-logging at runtime.
+Candidate schema is `20260914_0015`; last externally verified staging was `20260819_0014`. Ordinary CI and staging smoke are still required. Both paid benchmark workflow inputs remain false. No provider secret is needed for acceptance.
 
 ## 3. Source of truth and documentation
 

@@ -4,9 +4,9 @@
 |---|---|
 | Document | AI_PROVIDER001_COSTS |
 | Package | AI-PROVIDER-001 |
-| Version | 1.1 |
+| Version | 1.2 |
 | Date | 2026-09-14 |
-| Status | Owner-approved model; final ordinary CI pending |
+| Status | Owner-approved model; ordinary GitHub CI #262 green; package complete |
 | Scope | Planning and offline validation only; no billing or production AI activation |
 | Schema revision | 20260819_0014 (unchanged) |
 
@@ -92,5 +92,6 @@ python -m unittest discover -s tests -p 'test_ai_provider*.py' -v
 
 | Version | Date | Change |
 |---|---|---|
+| 1.2 | 2026-09-14 | Technical guard model finalized; ordinary CI #262 green; commercial quotas remain deferred to BILL-001 |
 | 1.0 | 2026-09-14 | Candidate cost model and conservative proposal |
 | 1.1 | 2026-09-14 | Owner scenario, RUB 200 technical user guard, central mutable limits, Free+Standard/Max separation |

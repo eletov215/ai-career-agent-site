@@ -4,9 +4,9 @@
 |---|---|
 | Document | AI_PROVIDER001_DECISION |
 | Package | AI-PROVIDER-001 |
-| Version | 1.1 |
+| Version | 1.2 |
 | Date | 2026-09-14 |
-| Status | УТВЕРЖДЕНО ВЛАДЕЛЬЦЕМ; final ordinary CI pending |
+| Status | УТВЕРЖДЕНО ВЛАДЕЛЬЦЕМ; ordinary GitHub CI #262 green; package complete |
 | Owner approval | Шекунов Д.С., 2026-09-14 |
 | Scope | Architecture and offline validation only; no production AI activation |
 | Schema revision | 20260819_0014 (unchanged) |
@@ -66,13 +66,14 @@ No production route, SQLAlchemy model, migration, template, Render secret or pro
 
 ## 8. Verification and next action
 
-Candidate r1 ordinary GitHub CI is green. Owner approval is now explicit. Because this revision changes the policy contract/tests/docs, one final ordinary GitHub CI run is required before marking AI-PROVIDER-001 `ВЫПОЛНЕНО`. Paid Alice benchmark repetition is not required because prompts/evals/provider qualification are unchanged.
+Candidate r1 ordinary GitHub CI is green. Owner approval is now explicit. Because this revision changes the policy contract/tests/docs, ordinary GitHub CI run #262 is green; AI-PROVIDER-001 is `ВЫПОЛНЕНО`. Paid Alice benchmark repetition is not required because prompts/evals/provider qualification are unchanged.
 
-After the final green CI, close AI-PROVIDER-001 and continue with **LEGAL-001**. AI-001 follows the legal gate.
+AI-PROVIDER-001 is closed. Continue with **LEGAL-001**. AI-001 follows the legal gate.
 
 ## 9. Version log
 
 | Version | Date | Change |
 |---|---|---|
+| 1.2 | 2026-09-14 | Owner approval + ordinary CI #262 green; package closed; LEGAL-001 next |
 | 1.0 | 2026-09-14 | Candidate strategy and offline controls; approval pending |
 | 1.1 | 2026-09-14 | Owner-approved fallback warning, technical-vs-commercial split, Free+Standard launch intent, Max reserved, configurable quota architecture |

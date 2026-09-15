@@ -114,3 +114,8 @@ The absence of `user_id`, email, filename, asset ID and content is a data-minimi
 
 ## SourceHealthState
 Owner-independent current operational state for one canonical vacancy provider. No User/OAuth relation; no secret or PII columns.
+
+
+## AI-001 delta / 1.5.0 / 2026-09-14
+
+New AIRuntimePolicy, AIUsageEvent, AIBudgetBucket, AIRequestLease, AIProviderState, AIPlanEntitlement and AIUserPlan. User-owned records cascade on deletion. Global budget aggregates and opaque short-lived capacity leases intentionally have no user link after deletion.

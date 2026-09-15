@@ -1,0 +1,59 @@
+{
+  "package": "AI-001",
+  "public_real_data_enabled": false,
+  "source": "main (31).zip",
+  "reviewed_runtime_changes": {
+    "app.py": {
+      "previous_sha256": "e08ba46916f36882350d5f1266e2e47f6630e6731ab2e6902b18c240e3463ce9",
+      "current_sha256": "8355fa0bc503836b6a0db558b3b730fd3da2f8f100d0def4086df462bb512e3f"
+    },
+    "config.py": {
+      "previous_sha256": "0b2fd8a2e92d1a78fcba606ef849c8e05a94cca6309877b200942f340164a66d",
+      "current_sha256": "2baa91e2a0d0e5cbcf75fb4eb027278d9fb770010f1e5813599e5b3d790e7723"
+    },
+    "database.py": {
+      "previous_sha256": "0ef810ba823df998fba5ecb598efabd2c678271e6a75719a99633cb50a4f5a51",
+      "current_sha256": "3ce02a2053ceda62dfc1df94408574b9fac19c9d6c41594338183ac183f7dfb8"
+    },
+    "infra/vps/.env.example": {
+      "previous_sha256": "d50d93aac8f2ad04bf027166a091aab90761d1a272a2efb04a76c2094092a5a9",
+      "current_sha256": "3c1983effa402581d58f4353cb6143b4f241b6937ebf56ece670873bb642112e"
+    },
+    "models/__init__.py": {
+      "previous_sha256": "f9fd979a7733d2f3e9df20ef448013e5970e9aa673d16cd840a7aaa802c3e970",
+      "current_sha256": "fbba7d222c4ac6111d93a1fceee9aae44105abe7a0049d7231e8e3e1f18c8480"
+    },
+    "operations/backup.py": {
+      "previous_sha256": "cb89a7df0e9fddb3384722c05c8f1bbadce5e687711b4df4742703ea6750e510",
+      "current_sha256": "9fc0726183cfa08c352dc4d136f57d0e4b9ae43f6cbf81975b8fd32b163165b4"
+    },
+    "repositories/privacy.py": {
+      "previous_sha256": "e5e8ba5fc725cbca62a6346bd32704cbf267bc311928d78ee8ac99c73ecf059e",
+      "current_sha256": "7b4926b26aa80a2e9c1a38518035ce33b036da177b371caf5bdee79b375cf701"
+    },
+    "requirements.txt": {
+      "previous_sha256": "a73cee7d4384a7d4eda0b735604d929cfc2cab782fa3e15690e755838af886b8",
+      "current_sha256": "74ffe565bf166ba870500181913424f6f5a2342459dd5d1d389797380a41036f"
+    },
+    "services/privacy.py": {
+      "previous_sha256": "e4eebf771b2bf302f8683f53fbc2a192c69e8afe96e8981a1874ba3512c9068c",
+      "current_sha256": "e15d390c629bf47e1dec92fed43a10ef9c8bdaa869db2305e9f32f38e9d5ccd1"
+    },
+    "services/storage.py": {
+      "previous_sha256": "dbf880efb5abf6a4e834f469dcfaceab83a5aca744fa27a9d406661bf48eafb4",
+      "current_sha256": "fb09e0c93b2b22f14cf6df4b71f9b54d74223c9c526eec4fca6a6376aa0672b3"
+    },
+    "static/theme.css": {
+      "previous_sha256": "d9c34d1286c53717918ae136a6e1f4add549e35b654218dbaeb51c2415d70035",
+      "current_sha256": "65cf1da138197b312811505b871511c6c556ca5511247c7d6fef016a4804ce92"
+    },
+    "templates/ai_career.html": {
+      "previous_sha256": "f5b1a40ec133591caec5055d13a20eeaea07317f0c4d6fa3eed8a8581e1b12be",
+      "current_sha256": "1e4e433c201b00bb10a3f64c8865a537ca02d5420f32b54139dca8e312ef1b55"
+    },
+    "templates/resume_builder.html": {
+      "previous_sha256": "70303bd75762d1d20efa14309bffadbecd4cbfd134aae3e58674e60fce7c63a6",
+      "current_sha256": "12fa97ca305c0c5e5f31ca4c5ae7f5313ef0ccfc2478cafd8d6b81f7b5c53590"
+    }
+  }
+}

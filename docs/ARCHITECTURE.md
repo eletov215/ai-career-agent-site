@@ -105,3 +105,8 @@ Migration `20260813_0013` adds only `privacy_audit_events(event_type, counts_jso
 
 ## SEARCH-005 admin/source-health boundary
 Verified first-party session plus explicit email allowlist protects read-only admin routes. `source_health_states` has no user relation and stores only bounded safe operational aggregates. Existing OPS provider events feed a non-gating persistence adapter; Trudvsem additionally uses persistent sync/worker state.
+
+
+## AI-001 delta / 1.5.0 / 2026-09-14
+
+AIService is provider-neutral and synthetic-only. Seven AI control tables and read-only /api/ai/status are added. Public generation and real-data entry points remain absent. LEGAL deferral is not an activation bypass.

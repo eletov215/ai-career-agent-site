@@ -1,101 +1,78 @@
-# AI Career Agent - source audit v1.4.50
+# AI Career Agent - Source audit / AI-001
 
 | Поле | Значение |
 |---|---|
 | Document | SOURCE_AUDIT |
-| Version | 1.4.50 |
+| Version | 1.5.0 |
 | Date | 2026-09-14 |
-| Package | AI-PROVIDER-001 |
-| Input | ai-career-agent-site-main (30).zip |
-| Input ZIP SHA-256 | 98d7d63bb76bc310ee0b27f29e6f252e275cb40ece7c3cd9905551924a14b10b |
-| Source file count | 407 |
-| Canonical plan / passport | 1.4.50 / 2.64 |
-| Package status | НУЖНА ПРОВЕРКА |
-| Production revision | 20260819_0014; unchanged |
+| Code input | `ai-career-agent-site-main (31).zip` |
+| Input files | 426 |
+| Input SHA-256 | `d47fc3dfd1590dc1e351797513e59dcc2f627d77e10343741a2aca509d435b66` |
+| Archive comment | `a3f8b1a816d5d130085ed89e7f1bbb1e46270761`; not independently verified Git commit |
+| Canonical plan / passport | 1.5.0 / 2.67 |
+| Current candidate | AI-001 - НУЖНА ПРОВЕРКА |
+| Last verified staging / candidate target | 20260819_0014 / 20260914_0015 |
 
-## 1. Source precedence and freshness
+## 1. Source precedence
 
-The owner's latest ZIP is the code basis. Its archive comment is `426d9f940b72ade680d75147c6b3cccdc1d3c88c`; this was read from the ZIP and not independently queried from GitHub. All 407 paths match the previously delivered grounded-v2.6.1 file contents exactly (zero changed/added/removed). Different ZIP hashes are explained by packaging, not a source diff.
+The last owner-supplied main(31) ZIP is the code baseline. No earlier full project, partial working directory or unseen GitHub revision is treated as newer code. The archive comment is provenance only, not evidence of a remote read.
 
-The supplied plan1.4.48 (MD/DOCX/PDF), passport2.62 (PDF), audit1.4.48 (PDF), AI-BENCH verification1.16 (PDF) and canonical-index MD are the correct active versions at input. All seven hashes match FILE_INDEX. The index lists 16 companion files; nine were not uploaded separately at root but were recovered and hash-verified from the earlier canonical ZIP. Complete per-file results are in `docs/evidence/ai-provider-001/input_audit.json`.
+Separate canonical PLAN1.4.51/PASSPORT2.65 and owner CI262 evidence establish AI-PROVIDER closure. The ZIP still contains r2-era1.4.50 documents/status checks. The previously delivered documentary closure patch was explicitly carried into this release before AI-001 changes. This is recorded reconciliation, not a claim that the owner uploaded the wrong archive.
 
-Previous loose working copies of some canonical companions were not byte-identical to the release bundle; only hash-matching bundle files were used. This is not a defect in the seven files the user uploaded. No earlier main (19)/(28) archive is used as code.
+The earlier LEGAL prototype and AI0011.4.52 working drafts were never delivered/accepted. Their claimed checks, API flags or migration state are not evidence for this release. Candidate0015 follows the actual deployed0014; no legal migration or consent schema is silently imported.
 
-## 2. Confirmed discrepancies and explicit reconciliation
+## 2. Owner decision and sequencing
 
-| Finding | Source of correction | Action in this package |
+The owner has not selected the legal operator country, form, contact/requisites or launch countries and explicitly requested postponement. LEGAL-001 is deferred, not complete. `LEGAL001_DEFERRED_DECISION.md` records all open questions and the required return before public AI, paid subscriptions or release. The human-review signature does not supply legal operator identity.
+
+The plan moves to MINOR1.5.0 because technical AI work now precedes LEGAL completion. Passport2.67 supersedes the unpublished2.66 draft. Runtime remains synthetic-only and no environment boolean can activate arbitrary real-data input.
+
+## 3. Implemented change boundary
+
+Thirteen previously protected runtime paths are deliberately changed: application/config/database integration, storage/privacy/backup inventory, optional environment example, JSON Schema dependency, two templates and the shared style. Their prior and new hashes are in `change_boundary.json`. The other210previously protected files remain unchanged, including accepted benchmark content.
+
+New files provide domain/service/provider/registry/policy code, seven-table persistence, migration0015, operator CLI, read-only status, manual notice, pinned fixture/schema copies, tests and documentation. No existing account/profile/search functionality is replaced. The benchmark package checker now verifies an independent AI-001 successor instead of forbidding any services/ai directory forever; no benchmark prompt, score or safety threshold is weakened.
+
+## 4. Safety decisions verified locally
+
+Admission serializes policy/budget/circuit updates, reserves all bounded attempts before dispatch and records integer-micro-RUB costs. Ambiguous outcomes remain counted. Deleted owners cannot erase global spend or in-flight global capacity. Commercial quotas are unseeded and independent; failed results do not consume successful feature actions. Strict schema validation is distinct from full semantic grounding.
+
+Provider requests use one bounded child, a parent deadline, orphan watchdog, fixed HTTPS endpoint, no redirects and no raw content logging. The runtime only accepts known synthetic fixture IDs. All deployment and DB defaults are closed. No real-user calls were made.
+
+## 5. Verification
+
+| Check | Measured result | Boundary |
 |---|---|---|
-| Repository docs still wait for Alice run #7 | Canonical1.4.48 + final artifact34830877796 + owner acceptance | Synchronize benchmark closure; no retest or invented scores |
-| PLAN section5 claims active schema0013 | Header, readiness evidence and database.py expect0014 | Set active schema0014; retain0013 in historical PRIV evidence |
-| DOC-001 card still names plan 1.4.22 / passport 2.36 / schema 0010 as current | Accepted canonical 1.4.48 closure and current package | Replace the active card with 1.4.49 / 2.63 / 0014; keep older scope as history |
-| SEARCH-005 card says READY and duplicate says NEEDS_VERIFICATION | SEARCH005_VERIFICATION_STATUS v1.1 | Mark active SEARCH-005 complete; label historic candidate records |
-| Section16 and immediate sequence still start with completed packages | Canonical current queue | Set current gate AI-PROVIDER-001; LEGAL-001 next after approval |
-| Two early version labels say1.4.32 for PRIV closure/SEARCH candidate | Previously supplied21.08.2026 canonical evidence | Correct those labels to1.4.29/1.4.30; retain historic evidence and flag legacy log inconsistencies |
-| Prior code ZIP names treated as current | New main (30) supplied now | Record new input hash; preserve older names as history |
-| Passport active search list stops at004 | SEARCH-005 closure evidence | Include005 in current functional inventory |
+| Full available pytest | 495 passed;17 skipped;82 subtests passed;0 failed | Installed local dependencies, not full CI |
+| AI-001 focused tests | 80 passed;3 skipped | Subset of full suite |
+| Provider policy tests | 47 passed | Subset of full suite |
+| Accepted benchmark tests | 90 passed | Subset of full suite |
+| SQLite migration0014->0015->0014->0015 | PASS | Seven additive tables, seed/defaults and schema drift checked |
+| AI-001 / provider / benchmark package gates | PASS | Benchmark reference8/8; no live API |
+| Python AST / Jinja parse / infra manifest | PASS | Static checks; container execution still CI |
 
-No historical "pending" statement is allowed to override the active status block. Historical run details are retained instead of silently being rewritten as successful.
+Local Python3.13 has SQLAlchemy2.0.50, Alembic1.18.4, pytest9.0.2 and jsonschema4.26.0. Flask/Flask-WTF/Flask-Limiter/Psycopg are unavailable; dependency installation could not reach the package index. The17skips include module-level route skips and PostgreSQL integration: they are NOT counted as successful tests or a full production check. Repository-pinned dependencies and all external gates must run in GitHub.
 
-Repository `SEARCH005_VERIFICATION_STATUS` was also still v1.0. It is synchronized as v1.2 against the accepted August v1.1 report, without claiming fresh Neon admin E2E. The former candidate document is retained as dated evidence.
-
-## 3. Accepted benchmark basis
-
-Artifact `34830877796`, run `ai-bench-20260914T100639Z-222dfc87`: benchmark1.4, dataset1.3.6, grounded-v2.6.1, Alice8/8, zero errors/retries/unresolved hard counters. Two scenario repairs and fourteen marker cleanups are explicit. Named human acceptance is qualitative; no numerical scores were supplied.
-
-A sanitized summary and the accepted human review were added to repository evidence. Raw artifact placeholders were not modified. The complete preceding source audit remains `docs/evidence/ai-provider-001/source-audit-before-v1.4.48.md` for historical traceability.
-
-## 4. New provider-strategy work
-
-Primary target Alice AI LLM; manual non-generative reserve; no unqualified auto-fallback. Four tasks in RU/EN, planned marketsRU/BY, enabled marketsempty. Dated official pricing/terms/access/payment sources are separated from proposed caps and unknown account-specific facts.
-
-The offline specification rejects runtime activation, fake approval, unsafe logging, missing contractual waiting prerequisites, unqualified routing, unsafe retries and malformed/negative monetary settings. Canonical-status checks additionally reject false completion of the provider candidate and stale active DOC-001 versions. Decimal cost output is reproducible from recorded usage. These checks do not implement production enforcement.
-
-Production AI integration remains disabled. The benchmark adapter lacks a production no-logging header; AI-001 must implement the agreed transport instead of blindly importing it. Legal review, actual account checks, opt-out confirmation and production-IP transport are later activation gates, not falsely reported as passed.
+No paid provider calls, deployment, database-secret changes or real personal-data requests occurred. Exact command summaries and log hashes: `docs/evidence/ai-001/local_verification.json`.
 
 
-## 4.1 Owner-approved commercial-access revision
+Initial local verification found old package guards that prohibited legitimate later AI integration and a historical test referring to the latest revision0014. These were updated with explicit successor boundaries and new negative tests; historical migration assertions remain intact. A technical-success counter was separated from future commercial success accounting, and input preflight moved under atomic admission. Final results above were measured after these corrections.
 
-After candidate r1 CI passed, the owner approved the strategy with these refinements: explicit manual-mode warning; internal technical cost guards only at this stage; Free + Standard launch intent; Max reserved in architecture; exact commercial quotas deferred until real usage/BILL-001. The accepted planning scenario is reproduced by the policy cost report. These changes do not alter provider qualification, prompts, production runtime or database schema.
+## 6. Unverified and deferred work
 
-## 5. Code and deployment boundary
+AI-001 ordinary GitHub CI, real PostgreSQL concurrency/Flask route execution, Render/Neon migration0015 and staging restart/smoke/log review remain pending. The earlier providerCI262 and earlier readiness0014 do not close these gates. No real paid transport test or production backup/restore drill is claimed.
 
-No production route, service, model, schema, dependency, template, static asset, Render manifest or accepted evals file changes. The manifest protects 223 runtime/benchmark files. New execution is restricted to offline scripts/tests and a CI verification step. The package checker accepts LF/CRLF equivalence for text checkout; release packing additionally checks exact original bytes.
+Gmail delivery after the clean Neon move, future operator/legal/consent review, production data placement, actual no-logging action, production-IP access and real-feature evaluations remain separate work. Public activation and billing are blocked.
 
-Staging is Render web + clean Neon PostgreSQL in Oregon, with earlier readiness/site/search smoke accepted by the owner. Old Render data was not migrated. No new live readiness, registration delivery, account/OAuth persistence or production backup restore was run in this task. Existing Gmail-token and OPS-002/INFRA-001/LEGAL-001 release work remains open.
+## 7. Rollback and next action
 
-## 6. Verification
+See AI001_RUNBOOK. The old application expects0014 exactly; leaving0015 while reverting an old build may fail readiness. Preserve verified backup and accounting metadata before any controlled downgrade. No database reset or credential exposure is needed for normal verification.
 
-<!-- LOCAL-RESULTS:START -->
-| Local check | Measured result |
-|---|---|
-| Full available pytest | 415 passed, 14 skipped, 81 subtests passed; 0 failed |
-| Focused AI-PROVIDER unittest | 47 passed; subset of full suite |
-| Focused accepted AI-BENCH unittest | 90 passed; subset of full suite |
-| Provider policy/package gate | PASS |
-| Accepted benchmark package gate | PASS, including deterministic reference 8/8 |
-| Document structure / infra manifests | PASS / PASS |
-| Repository hygiene | PASS after local cache cleanup |
-| Production/evals protected boundary | PASS through preserved-file manifest |
+Upload the code PATCH, run ordinary CI with paid jobs disabled, then verify staging0015/manual/core functions. AI-001 remains a candidate. AI-002 technical work follows acceptance; LEGAL must return before real-user AI.
 
-Fourteen local skips require Flask/Psycopg/PostgreSQL components unavailable in this container and are not counted as passed. Candidate r1 GitHub CI run #261 is already green; r2 still requires its own ordinary CI after upload. Exact machine evidence: `docs/evidence/ai-provider-001/local_verification.json`.
-<!-- LOCAL-RESULTS:END -->
-
-Candidate r1 GitHub CI run #261 is green and owner strategy approval is explicit. Final r2 GitHub CI remains the only package-level external gate. Paid Alice calls are unnecessary because its accepted prompts, fixtures and scorer are unchanged. No external account, billing or production settings were changed.
-
-## 7. Limitations and rollback
-
-The official provider sources were checked on2026-09-14; actual eligibility, account quota, metadata retention, precise model revision and no-logging effective time are not verified. Proposed budgets are not payment authorization. The strategy does not itself authorize real personal-data processing on US staging infrastructure.
-
-Rollback: revert this package; schema remains0014. Existing benchmark closure is a prior accepted decision, not invalidated by reverting the new strategy candidate.
-
-New document rendering uses DOC-STD-001 v1.2: the existing palette/layout is preserved with an explicit Carlito fallback where Aptos is unavailable. The accepted benchmark verification edition is reused unchanged.
-
-## 8. Next action and version log
-
-Ordinary CI + explicit owner strategy approval -> close AI-PROVIDER-001 -> LEGAL-001. Do not skip directly to production AI calls.
+## 8. Version log
 
 | Version | Date | Change |
 |---|---|---|
-| 1.4.50 | 2026-09-14 | Owner-approved tier/limit revision; r1 CI green; final r2 CI pending |
-| 1.4.49 | 2026-09-14 | Latest-source audit; canonical drift reconciliation; provider strategy candidate, price/data rules and offline tests |
-| 1.4.48 | 2026-09-14 | Accepted final Alice8/8 + qualitative named human closure; preserved as historical evidence |
+| 1.5.0 | 2026-09-14 | Owner legal deferral; actual main31 basis; synthetic-only AI-001 candidate and pending external gates |
+| 1.4.51 | 2026-09-14 | Historical AI-PROVIDER closure after owner approval/CI262 |

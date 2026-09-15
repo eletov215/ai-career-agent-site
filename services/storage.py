@@ -10,6 +10,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from database import DatabaseRuntime
+from repositories.ai import AIRepository
 from repositories import (
     AuthRepository,
     CareerProfileRepository,
@@ -30,6 +31,7 @@ from services.vacancy_store import VacancyStore
 class StorageServices:
     """Repository-backed persistence entry points for application services."""
 
+    ai: AIRepository
     auth: AuthRepository
     profiles: CareerProfileRepository
     resume_drafts: ResumeDraftRepository
@@ -46,6 +48,7 @@ class StorageServices:
     @classmethod
     def from_database(cls, database: DatabaseRuntime) -> "StorageServices":
         return cls(
+            ai=AIRepository(database),
             auth=AuthRepository(database),
             profiles=CareerProfileRepository(database),
             resume_drafts=ResumeDraftRepository(database),

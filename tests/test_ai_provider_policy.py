@@ -255,23 +255,25 @@ class ProviderPolicyTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             self.assertTrue(validate_package(Path(tmp)))
 
-    def test_active_canonical_status_is_pending_final_ci(self):
+    def test_active_canonical_status_is_complete_after_final_ci(self):
         root = POLICY_PATH.parents[2]
         plan = (root / 'docs/PLAN_CURRENT.md').read_text(encoding='utf-8')
         passport = (root / 'docs/PROJECT_PASSPORT.md').read_text(encoding='utf-8')
         self.assertEqual([], validate_canonical_status(plan, passport))
 
-    def test_false_completion_and_stale_active_docs_rejected(self):
+    def test_status_regression_and_stale_active_docs_rejected(self):
         root = POLICY_PATH.parents[2]
         plan = (root / 'docs/PLAN_CURRENT.md').read_text(encoding='utf-8')
         passport = (root / 'docs/PROJECT_PASSPORT.md').read_text(encoding='utf-8')
         start = plan.index('#### AI-PROVIDER-001')
         end = plan.index('#### AI-001', start)
+        complete = "\u0412\u042b\u041f\u041e\u041b\u041d\u0415\u041d\u041e"
         pending = "\u041d\u0423\u0416\u041d\u0410 \u041f\u0420\u041e\u0412\u0415\u0420\u041a\u0410"
         for bad_plan in (
-            plan[:start] + plan[start:end].replace(pending, "\u0412\u042b\u041f\u041e\u041b\u041d\u0415\u041d\u041e") + plan[end:],
-            plan.replace('PLAN_CURRENT 1.4.50;', 'PLAN_CURRENT 1.4.22;'),
+            plan[:start] + plan[start:end].replace(complete, pending) + plan[end:],
+            plan.replace('PLAN_CURRENT 1.5.0;', 'PLAN_CURRENT 1.4.22;'),
             plan.replace('| AI-PROVIDER-001 |', '| deleted-provider-card |'),
+            plan.replace('| LEGAL-001 | P0 до публичного AI | ОТЛОЖЕНО ДО РЕШЕНИЯ ВЛАДЕЛЬЦА |', '| LEGAL-001 | P0 до публичного AI | ЗАПЛАНИРОВАНО |'),
         ):
             with self.subTest(case=bad_plan[:30]):
                 self.assertTrue(validate_canonical_status(bad_plan, passport))

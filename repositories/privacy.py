@@ -9,6 +9,8 @@ from dataclasses import dataclass
 from typing import Any
 
 from sqlalchemy import delete, func, or_, select, text
+from models.ai import AIUsageEvent, AIUserPlan, AIBudgetBucket
+from repositories.ai import public_usage
 
 from models import (
     AuthSession,
@@ -199,7 +201,12 @@ class PrivacyRepository(RepositoryBase):
                     .order_by(ResumeAsset.draft_id.asc(), ResumeAsset.created_at.asc())
                 ).all()
 
+            ai_rows = session.scalars(select(AIUsageEvent).where(AIUsageEvent.user_id == user.id)
+                                      .order_by(AIUsageEvent.created_at.asc()).limit(5001)).all()
+            if len(ai_rows) > 5000:
+                raise PrivacySnapshotConflictError("ai_export_limit")
             snapshot: dict[str, Any] = {
+                "ai_usage": [public_usage(row) for row in ai_rows],
                 "schema_version": 1,
                 "account": {
                     "id": user.id,
@@ -461,6 +468,9 @@ class PrivacyRepository(RepositoryBase):
                     session.scalars(lock_stmt).all()
 
                 counts = self._deletion_counts(session, user.id)
+                counts["ai_usage_events"] = self._count(session, AIUsageEvent, AIUsageEvent.user_id == user.id)
+                counts["ai_user_plans"] = self._count(session, AIUserPlan, AIUserPlan.user_id == user.id)
+                counts["ai_user_buckets"] = self._count(session, AIBudgetBucket, AIBudgetBucket.user_id == user.id)
                 oauth_stmt = select(OAuthConnection).where(OAuthConnection.user_id == user.id)
                 if self.engine.dialect.name == "postgresql":
                     oauth_stmt = oauth_stmt.with_for_update()

@@ -3119,3 +3119,8 @@ input:focus,select:focus,textarea:focus{outline:3px solid rgba(109,91,255,.14);b
 @media (max-width:640px){.auth-page{padding:22px 0 56px}.auth-layout{gap:24px}.auth-intro h1{font-size:38px;margin-top:18px}.auth-intro>p{font-size:16px}.auth-benefits{display:none}.auth-card{padding:23px 18px;border-radius:24px}.auth-card__heading h2{font-size:23px}.auth-card__icon{width:46px;height:46px}.account-identity-card,.account-upgrade-card{align-items:flex-start;flex-wrap:wrap;padding:20px}.account-identity-card>form,.account-upgrade-card>.btn{width:100%}.account-identity-card>form .btn,.account-upgrade-card>.btn{width:100%;justify-content:center}.account-section-heading{align-items:flex-start;flex-direction:column}.account-session-item{grid-template-columns:auto minmax(0,1fr)}.account-session-item>form,.account-session-item__badge{grid-column:2}.account-session-item__revoke{padding:6px 0}.account-page__heading{align-items:flex-start}}
 .auth-submit:disabled{cursor:not-allowed;opacity:.52;transform:none;box-shadow:none}
 .auth-alert--warning{background:#fff8e8;color:#865e16;border:1px solid #f2deb0}
+
+/* AI-001: explicit manual fallback; respects the existing theme. */
+.ai-manual-notice { display: flex; flex-wrap: wrap; gap: .35rem .8rem; padding: .85rem 1rem; margin-bottom: 1rem; border: 1px solid rgba(20,75,80,.18); border-radius: 12px; background: rgba(20,130,125,.06); line-height: 1.55; }
+.ai-manual-notice strong { flex-shrink: 0; }
+.ai-manual-notice span { min-width: 0; flex: 1 1 260px; overflow-wrap: anywhere; }
