@@ -271,6 +271,11 @@ jobs:
           tests/test_architecture_boundaries.py
           tests/test_postgresql_integration.py
 
+      - name: Verify AI-001 synthetic runtime and technical cost guards
+        run: |
+          python scripts/check_ai001_package.py
+          python -m pytest -q tests/test_ai001_runtime.py tests/test_ai001_migration.py tests/test_ai001_routes.py
+
       - name: Verify PostgreSQL encrypted backup and restore
         env:
           DATABASE_URL: ${{ env.POSTGRES_TEST_URL }}
