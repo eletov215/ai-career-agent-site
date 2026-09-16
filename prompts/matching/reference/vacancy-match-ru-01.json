@@ -1,0 +1,54 @@
+{
+  "verdict": "partial",
+  "matched_requirements": [
+    {
+      "requirement_id": "v1",
+      "requirement": "Python обязателен",
+      "explanation": "Три года Python backend подтверждают соответствие обязательному требованию Python.",
+      "evidence_ids": [
+        "v1",
+        "c1"
+      ]
+    },
+    {
+      "requirement_id": "v2",
+      "requirement": "Django или FastAPI",
+      "explanation": "Подтвержденный FastAPI соответствует альтернативному требованию по фреймворку.",
+      "evidence_ids": [
+        "v2",
+        "c2"
+      ]
+    },
+    {
+      "requirement_id": "v3",
+      "requirement": "PostgreSQL",
+      "explanation": "Опыт PostgreSQL подтвержден и соответствует требованию вакансии.",
+      "evidence_ids": [
+        "v3",
+        "c3"
+      ]
+    }
+  ],
+  "gaps": [
+    {
+      "requirement_id": "v4",
+      "requirement": "Docker обязателен",
+      "explanation": "Опыт Docker не подтвержден, поэтому обязательное требование остается пробелом.",
+      "evidence_ids": [
+        "v4",
+        "c4"
+      ]
+    },
+    {
+      "requirement_id": "v5",
+      "requirement": "Kubernetes будет плюсом",
+      "explanation": "Опыт Kubernetes не подтвержден, поэтому предпочтительное требование не засчитывается как совпадение.",
+      "evidence_ids": [
+        "v5",
+        "c5"
+      ]
+    }
+  ],
+  "recommendation": "Кандидат частично соответствует вакансии. Docker остается обязательным неподтвержденным требованием. Если опыт Docker у пользователя действительно есть, но не отражен в профиле или резюме, его стоит подтвердить или добавить — после этого AI Career Agent сможет пересчитать соответствие, и итоговый match может повыситься. Kubernetes можно учитывать отдельно как предпочтительный навык; неподтвержденный опыт заявлять не нужно.",
+  "caveats": []
+}

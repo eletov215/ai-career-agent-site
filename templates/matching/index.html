@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+{% block title %}{{ ui.title }} - AI Career Agent{% endblock %}
+{% block head_extra %}<link rel="stylesheet" href="{{ url_for('static', filename='vacancy_match.css') }}?v=1">{% endblock %}
+{% block content %}
+<main class="section ai004-match-page" lang="ru"><div class="container ai004-match-shell">
+<header class="ai004-match-header"><div><p class="ai004-match-kicker">{{ ui.subtitle }}</p><h1>{{ ui.title }}</h1></div><a href="{{ url_for('vacancy_match.review_gate') }}">{{ ui.gate_title }}</a></header>
+<aside class="ai004-match-notice"><strong>{{ ui.notice }}</strong><p>{{ ui.unchanged }}</p></aside>
+<h2>{{ ui.examples }}</h2><div class="ai004-match-grid">
+{% for choice in choices %}{% set words = locales[choice.language] %}
+<section class="ai004-match-card" lang="{{ choice.language }}"><span class="ai004-match-pill">{{ choice.language|upper }}</span><h3>{{ words.candidate }}</h3>
+{% for fact in choice.source_facts if fact.kind == 'candidate' %}<p>{{ fact.text }}</p>{% endfor %}
+<h3>{{ words.vacancy }}</h3>{% for fact in choice.source_facts if fact.kind == 'vacancy' %}<p>{{ fact.text }}</p>{% endfor %}
+<form method="post" action="{{ url_for('vacancy_match.reference') }}">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="fixture_id" value="{{ choice.fixture_id }}"><input type="hidden" name="source_hash" value="{{ choice.source_hash }}"><input type="hidden" name="operation_key" value="{{ operation_key() }}">
+<button class="ai004-match-primary" type="submit">{{ words.create }}</button></form></section>
+{% endfor %}</div>
+<h2>{{ ui.history }}</h2>
+{% for item in reports %}<article class="ai004-match-history"><div><span class="ai004-match-pill">{{ item.language|upper }}</span> <strong>{{ item.result.summary.score_percent }}%</strong><p>{{ ui.version }} {{ item.version }} / {{ item.policy_version }}</p></div><a href="{{ url_for('vacancy_match.detail', report_id=item.id) }}">{{ ui.view }}</a></article>
+{% else %}<p>{{ ui.empty }}</p>{% endfor %}
+</div></main>
+{% endblock %}

@@ -1,23 +1,25 @@
-# AI Career Agent - реестр канонических документов
+# AI Career Agent - canonical document registry
 
-| Поле | Значение |
+| Field | Value |
 |---|---|
 | Date | 2026-09-16 |
-| PLAN_CURRENT | 1.5.4 |
-| PROJECT_PASSPORT | 2.71 |
-| SOURCE_AUDIT | 1.5.4 |
-| AI-002 verification | 1.1 / ВЫПОЛНЕНО, accepted reference-only scope |
-| AI-003 implementation/runbook/verification | 1.0 r1 / НУЖНА ПРОВЕРКА |
-| LEGAL-001 | 1.3 / ОТЛОЖЕНО ДО РЕШЕНИЯ ВЛАДЕЛЬЦА |
+| PLAN_CURRENT | 1.5.6 |
+| PROJECT_PASSPORT | 2.73 |
+| SOURCE_AUDIT | 1.5.6 |
+| AI-003 | 1.1 FINAL / ВЫПОЛНЕНО, synthetic/reference-only |
+| AI-004 | 1.0 r1 / НУЖНА ПРОВЕРКА, synthetic/reference-only |
+| Accepted / candidate schema | 20260916_0017 / 20260916_0018 |
+| Public AI | Disabled / manual |
+| LEGAL-001 | 1.3 / deferred until owner decision |
 
-## 1. Active repository documents
+## 1. Active candidate inventory
 
-PLAN_CURRENT.md, PROJECT_PASSPORT.md, SOURCE_AUDIT.md, ROADMAP.md, AI003_IMPLEMENTATION.md, AI003_RUNBOOK.md and AI003_VERIFICATION_STATUS.md describe this candidate. CHANGELOG.md records the change. Canonical Markdown carries the full project history. The release companion DOCX/PDF is the package delivery and verification guide, not a claim that every historical canonical page was independently re-rendered.
+PLAN_CURRENT.md, PROJECT_PASSPORT.md, SOURCE_AUDIT.md, ROADMAP.md, CHANGELOG.md and AI004_IMPLEMENTATION.md / AI004_RUNBOOK.md / AI004_VERIFICATION_STATUS.md / AI004_CHANGESET.md describe this candidate. The latest measured evidence is under evidence/ai-004. The AI-003 acceptance documents remain historical proof for accepted0017, with newly verified baseline CI #276 provenance.
 
-## 2. Historical accepted sources
+## 2. Acceptance boundary
 
-The owner-supplied final PDFs dated 2026-09-15 remain AI-002 acceptance evidence. They establish 0016, CI #270, owner review/relogin/UI smoke and review flag off. They do not establish acceptance of 0017. Earlier benchmark/provider/AI-001 evidence stays unchanged. Later candidate status is separate from historical completion.
+No candidate CI/deploy/owner PASS is inferred from baseline success. Public real-data AI, payment and release are not authorized. Reference matching is not a free-form live product. Candidate acceptance must be recorded separately before changing status to complete.
 
-## 3. Current gate
+## 3. Source-of-truth rule
 
-AI-003 requires external CI/staging/owner acceptance. Public AI remains off. LEGAL-001 is deferred, not passed. Verification email delivery is unresolved. Do not label AI-003 complete from local tests alone.
+GitHub main `c683520058cc1f729c79ed49ac5c213811e4c9f3` was read and its complete tree verified before changes. There is no new user ZIP to request solely for this already-verified snapshot. If main changes, compare the new commit before applying a patch. This candidate incorporates the AI-003 final documentation missing from the source branch; do not reapply the older final patch over it.

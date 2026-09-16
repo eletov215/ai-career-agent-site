@@ -42,6 +42,9 @@ def test_successor_hashes_are_checked_and_cannot_whitelist_evals(tmp_path):
     for relative in successor:
         (tmp_path/relative).parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(ROOT/relative, tmp_path/relative)
+    for relative in ('docs/evidence/ai-004/change_boundary.json','docs/evidence/ai-004/baseline_files_sha256.json'):
+        (tmp_path/relative).parent.mkdir(parents=True,exist_ok=True)
+        shutil.copy2(ROOT/relative,tmp_path/relative)
     assert load_boundary(tmp_path)
     (tmp_path/'app.py').write_text('changed')
     with pytest.raises(ValueError):load_boundary(tmp_path)

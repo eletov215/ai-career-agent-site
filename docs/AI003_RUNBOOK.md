@@ -2,8 +2,8 @@
 
 | Поле | Значение |
 |---|---|
-| Version | 1.0 r1.2 / 2026-09-16 |
-| Status | НУЖНА ПРОВЕРКА / NEEDS_VERIFICATION |
+| Version | 1.1 FINAL / 2026-09-16 |
+| Status | ВЫПОЛНЕНО / ACCEPTED |
 | Input | main (33) |
 | Expected schema after deployment | 20260916_0017 |
 
@@ -80,3 +80,7 @@ AI_INTERVIEW_REVIEW_ENABLED=0
 ## 9. Откат
 
 Сначала остановите запись и проверьте резервную копию. Сохраните нужную историю интервью. Старый код требует точную ревизию `0016`: нельзя считать, что он автоматически примет `0017`. Контролируемый `alembic downgrade 20260915_0016` выполняется текущим кодом миграций, затем возвращается прежнее приложение. Будут удалены только две новые таблицы интервью и их история; тестовые черновики и версии резюме сохранятся. Не удаляйте базу, кеш или `DATABASE_URL`.
+
+## 10. Acceptance record
+
+The owner completed the prescribed private review and final regression flow on 2026-09-16. The review gate was closed after testing, staging remained at `20260916_0017`, and public AI remained manual/unavailable. This runbook is retained for rollback/reverification; it is not an instruction to reopen the private review window during normal operation.

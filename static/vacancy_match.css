@@ -1,0 +1,42 @@
+/* AI-004: scoped styles, no global redesign or feature JavaScript. */
+.ai004-match-page { padding: 40px 0 64px; color: var(--text, #1e293b); }
+.ai004-match-shell { max-width: 1080px; margin: 0 auto; padding: 0 20px; }
+.ai004-match-page * { box-sizing: border-box; min-width: 0; }
+.ai004-match-page h1 { font-size: clamp(1.75rem, 3.5vw, 2.6rem); line-height: 1.18; margin: 8px 0 16px; }
+.ai004-match-page h2 { font-size: 1.35rem; margin: 24px 0 16px; }
+.ai004-match-page h3 { font-size: 1.12rem; margin: 12px 0; }
+.ai004-match-page h4 { font-size: 1rem; margin-bottom: 8px; }
+.ai004-match-page p, .ai004-match-page label { line-height: 1.6; overflow-wrap: anywhere; }
+.ai004-match-page a { color: var(--primary, #4f46e5); text-underline-offset: 3px; }
+.ai004-match-kicker, .ai004-match-meta { color: var(--muted, #64748b); font-size: .9rem; }
+.ai004-match-header { display: flex; justify-content: space-between; align-items: center; gap: 20px; flex-wrap: wrap; }
+.ai004-match-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+.ai004-match-card { background: var(--surface, #fff); border: 1px solid var(--border, #e2e8f0); border-radius: 18px; padding: 24px; margin: 16px 0; }
+.ai004-match-grid .ai004-match-card { margin: 0; display: flex; flex-direction: column; }
+.ai004-match-grid form { margin-top: auto; padding-top: 20px; }
+.ai004-match-notice, .ai004-match-warning { padding: 18px 22px; border: 1px solid #cbd5e1; border-radius: 14px; background: #f8fafc; margin: 20px 0; line-height: 1.6; }
+.ai004-match-warning { border-color: #d6b873; background: #fffaf0; }
+.ai004-match-notice p, .ai004-match-warning p { margin-bottom: 0; }
+.ai004-match-primary, .ai004-match-secondary { font: inherit; line-height: 1.4; white-space: normal; cursor: pointer; border-radius: 12px; padding: 12px 18px; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; text-align: center; text-decoration: none; max-width: 100%; }
+.ai004-match-page .ai004-match-primary { background: var(--primary, #4f46e5); color: #fff; border: 1px solid transparent; transition: transform .15s ease; }
+.ai004-match-primary:hover { transform: translateY(-2px); }
+.ai004-match-secondary { color: inherit; border: 1px solid #cbd5e1; background: transparent; margin-top: 16px; }
+.ai004-match-page :focus-visible { outline: 3px solid #6366f1; outline-offset: 4px; }
+.ai004-match-pill { display: inline-block; font-size: .85rem; padding: 5px 11px; border: 1px solid #cbd5e1; border-radius: 12px; white-space: normal; }
+.ai004-match-score { display: grid; grid-template-columns: minmax(200px, .6fr) minmax(0, 1fr); align-items: center; gap: 32px; }
+.ai004-match-score h2 { margin-top: 0; }
+.ai004-match-percentage { font-size: clamp(3rem, 7vw, 4.5rem); font-weight: 700; letter-spacing: -.05em; line-height: 1.05 !important; margin: 12px 0; }
+.ai004-match-percentage span { font-size: .55em; }
+.ai004-match-formula { font-variant-numeric: tabular-nums; }
+.ai004-match-requirement blockquote { border-left: 3px solid #cbd5e1; margin: 12px 0; padding-left: 14px; overflow-wrap: anywhere; }
+.ai004-match-history { display: flex; justify-content: space-between; align-items: center; gap: 20px; padding: 18px 0; border-bottom: 1px solid #e2e8f0; }
+.ai004-match-history p { margin: 8px 0 0; }
+.ai004-match-confirm { display: flex; align-items: flex-start; gap: 12px; cursor: pointer; }
+.ai004-match-confirm input { width: 18px; height: 18px; margin-top: 4px; flex-shrink: 0; }
+.ai004-match-provenance dd { margin: 4px 0 16px; overflow-wrap: anywhere; }
+.ai004-match-page code { white-space: normal; overflow-wrap: anywhere; }
+.ai004-match-page summary { cursor: pointer; padding: 4px 0; line-height: 1.5; }
+@media (max-width: 700px) { .ai004-match-grid, .ai004-match-score { grid-template-columns: minmax(0, 1fr); } .ai004-match-card { padding: 18px; } .ai004-match-shell { padding: 0 14px; } .ai004-match-score { gap: 12px; } .ai004-match-header { align-items: flex-start; } .ai004-match-history { flex-wrap: wrap; } }
+@media (prefers-reduced-motion: reduce) { .ai004-match-primary { transition: none; } .ai004-match-primary:hover { transform: none; } }
+
+.ai004-match-grid .ai004-match-pill { align-self: flex-start; }

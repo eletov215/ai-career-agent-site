@@ -12,6 +12,8 @@ from sqlalchemy import delete, func, or_, select, text
 from models.ai import AIUsageEvent, AIUserPlan, AIBudgetBucket
 from models.resume_analysis import ResumeAnalysisReport, ResumeAnalysisDecision, ResumeAnalysisReviewEvent
 from repositories.resume_analysis import report_view
+from models.vacancy_match import VacancyMatchReport, VacancyMatchSeries
+from repositories.vacancy_match import match_view
 from models.resume_interview import ResumeInterviewSession, ResumeInterviewEvent
 from repositories.resume_interview import interview_snapshot
 from repositories.ai import public_usage
@@ -234,7 +236,20 @@ class PrivacyRepository(RepositoryBase):
                 if len(events) > 60:
                     raise PrivacySnapshotConflictError('interview_export_limit')
                 interview_export.append(interview_snapshot(row, events))
+            match_rows = session.scalars(select(VacancyMatchReport).where(
+                VacancyMatchReport.user_id == user.id
+            ).order_by(VacancyMatchReport.created_at, VacancyMatchReport.id).limit(101)).all()
+            if len(match_rows) > 100:
+                raise PrivacySnapshotConflictError('match_export_limit')
+            match_series = session.scalars(select(VacancyMatchSeries).where(
+                VacancyMatchSeries.user_id == user.id
+            ).order_by(VacancyMatchSeries.fixture_id).limit(3)).all()
+            if len(match_series) > 2:
+                raise PrivacySnapshotConflictError('match_series_export_limit')
             snapshot: dict[str, Any] = {
+                "vacancy_matches": [match_view(row) for row in match_rows],
+                "vacancy_match_series": [{"fixture_id": row.fixture_id, "last_version": row.last_version}
+                                         for row in match_series],
                 "resume_interviews": interview_export,
                 "resume_analyses": analysis_export,
                 "ai_usage": [public_usage(row) for row in ai_rows],
@@ -450,6 +465,8 @@ class PrivacyRepository(RepositoryBase):
             "resume_versions": 0,
             "resume_assets": 0,
             "resume_exports": 0,
+            "vacancy_match_reports": self._count(session, VacancyMatchReport, VacancyMatchReport.user_id == user_id),
+            "vacancy_match_series": self._count(session, VacancyMatchSeries, VacancyMatchSeries.user_id == user_id),
             "resume_interview_sessions": self._count(session, ResumeInterviewSession, ResumeInterviewSession.user_id == user_id),
             "resume_analysis_reports": self._count(session, ResumeAnalysisReport, ResumeAnalysisReport.user_id == user_id),
         }

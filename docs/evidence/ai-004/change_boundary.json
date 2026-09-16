@@ -1,0 +1,36 @@
+{
+  "package": "AI-004",
+  "public_real_data_enabled": false,
+  "source_commit": "c683520058cc1f729c79ed49ac5c213811e4c9f3",
+  "source_tree": "6458daea23371dadfbbd49d830abcdde44df1293",
+  "reviewed_runtime_changes": {
+    "app.py": {
+      "previous_sha256": "a4f785906d3bb33ad24ce6fca0157adfd2e31ed35d0f99a9a93705790eb44b4c",
+      "current_sha256": "d99b7d23110cc0c8bfdadaa303a150e0966d03d4827293bd7bf77d2c067e262e"
+    },
+    "database.py": {
+      "previous_sha256": "59804901071d2ea6bc9998808efd44bca9858e70799e206c55e9ec3bff664d0c",
+      "current_sha256": "45f7e95e6bc91def52fe2edd08b50ed4a93f0f0cf3015d86beb3cd3c7518c6d7"
+    },
+    "models/__init__.py": {
+      "previous_sha256": "5131bfe3b28fb1badea4151cbe32b77732ad134d3da86bb2a5509fb8ccba04a2",
+      "current_sha256": "3ae8b2c6041d1e16f8aaad0bee6b06aa2561415534621468d6df524122a677c1"
+    },
+    "operations/backup.py": {
+      "previous_sha256": "23d8d2a64949fcaffc443ed3bab2e56f58ef9659ef3e9a5ccd8f77bdd9b80cf2",
+      "current_sha256": "65b49fc7ba3765702da511d7f8c029c32042e0cc3c3e96f1f5abd67c21130409"
+    },
+    "repositories/privacy.py": {
+      "previous_sha256": "f7a15e10dfaa5d6499ed81dfb679b4156d87496cba77d8fb31fb3ae0bf279f49",
+      "current_sha256": "58bb856fe4f48a375a27c52c3be2dc3222845a077abdfcee0298302ecc1dbd39"
+    },
+    "services/privacy.py": {
+      "previous_sha256": "7ea8dc2cd7be7a37cea3d37a3376ec50c0cb6d3312763b7cd7e7f587946952eb",
+      "current_sha256": "86165697eb49fb8a3aaf35b5a58b48b9252bdfc7ec813ed6d6ef755ab84d9d38"
+    },
+    "services/storage.py": {
+      "previous_sha256": "955ea2860c9e6ec1fb4594044306aa78bb7585433efa56a3023cea79a200e0b8",
+      "current_sha256": "24e4599be5f8e8f74012d602645cf8767fbe5b2063daf43c30663b27c57b3904"
+    }
+  }
+}

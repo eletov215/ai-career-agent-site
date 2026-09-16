@@ -1,0 +1,15 @@
+{
+  "repository": "eletov215/ai-career-agent-site",
+  "branch": "main",
+  "commit": "c683520058cc1f729c79ed49ac5c213811e4c9f3",
+  "git_tree": "6458daea23371dadfbbd49d830abcdde44df1293",
+  "verified_local_tree": "6458daea23371dadfbbd49d830abcdde44df1293",
+  "source_files": 527,
+  "ci_run_id": 35132463421,
+  "ci_run_number": 276,
+  "ci_conclusion": "success",
+  "paid_jobs": "skipped",
+  "ai003_final_docs_on_remote": false,
+  "ai003_final_docs_included_in_ai004": true,
+  "owner_ai003_acceptance": "Confirmed in chat before this request; no fresh staging probe performed by assistant"
+}

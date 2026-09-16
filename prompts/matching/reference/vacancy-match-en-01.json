@@ -1,0 +1,45 @@
+{
+  "verdict": "partial",
+  "matched_requirements": [
+    {
+      "requirement_id": "v1",
+      "requirement": "React required",
+      "explanation": "Two years of React experience directly support the required React skill.",
+      "evidence_ids": [
+        "v1",
+        "c1"
+      ]
+    },
+    {
+      "requirement_id": "v2",
+      "requirement": "TypeScript required",
+      "explanation": "TypeScript is explicitly confirmed in the candidate facts.",
+      "evidence_ids": [
+        "v2",
+        "c2"
+      ]
+    },
+    {
+      "requirement_id": "v4",
+      "requirement": "Automated frontend testing preferred",
+      "explanation": "Component testing with Jest is relevant evidence for the preferred automated frontend testing requirement.",
+      "evidence_ids": [
+        "v4",
+        "c3"
+      ]
+    }
+  ],
+  "gaps": [
+    {
+      "requirement_id": "v3",
+      "requirement": "Next.js required",
+      "explanation": "Verified Next.js experience is absent, so this mandatory requirement remains a gap.",
+      "evidence_ids": [
+        "v3",
+        "c4"
+      ]
+    }
+  ],
+  "recommendation": "The candidate is a partial fit: React, TypeScript, and automated testing align, while Next.js remains an unverified mandatory gap. If the user genuinely has Next.js experience that is missing from the profile or resume, they can confirm or add it and AI Career Agent can deterministically recalculate the match; no future percentage is assumed.",
+  "caveats": []
+}

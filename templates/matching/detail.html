@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+{% block title %}{{ ui.title }} - AI Career Agent{% endblock %}
+{% block head_extra %}<link rel="stylesheet" href="{{ url_for('static', filename='vacancy_match.css') }}?v=1">{% endblock %}
+{% block content %}
+{% set summary = report.result.summary %}
+<main class="section ai004-match-page" lang="{{ report.language }}"><div class="container ai004-match-shell">
+<header class="ai004-match-header"><div><p class="ai004-match-kicker">{{ ui.subtitle }}</p><h1>{{ ui.title }}</h1><p>{{ ui.version }} {{ report.version }}</p></div><a href="{{ url_for('vacancy_match.index') }}">{{ ui.back }}</a></header>
+<aside class="ai004-match-notice"><strong>{{ ui.notice }}</strong><p>{{ ui[report.origin] }}</p></aside>
+{% if report.stale_source %}<aside class="ai004-match-warning">{{ ui.stale }}</aside>{% endif %}
+<section class="ai004-match-card ai004-match-score"><div><h2>{{ ui.score }}</h2><p class="ai004-match-percentage">{{ summary.score_percent }}<span>%</span></p></div><div><p>{{ ui.score_note }}</p><p class="ai004-match-formula">{{ ui.formula }}: {{ summary.matched_weight }} / {{ summary.total_weight }} &times; 100 &asymp; {{ summary.score_percent }}%</p><p>{{ ui.all_classified }}: {{ summary.classified_count }} / {{ summary.requirement_count }}</p></div></section>
+{% if summary.mandatory_unresolved_ids %}<aside class="ai004-match-warning" data-mandatory-warning><strong>{{ ui.mandatory_warning }}</strong>{% for row in report.result.requirements if row.requirement_id in summary.mandatory_unresolved_ids %}<p>{{ row.requirement }} &mdash; {{ ui[row.status] }}</p>{% endfor %}</aside>{% endif %}
+<h2>{{ ui.requirements }}</h2>
+{% for row in report.result.requirements %}<article class="ai004-match-card ai004-match-requirement" id="requirement-{{ row.requirement_id }}" data-status="{{ row.status }}">
+<div class="ai004-match-header"><h3>{{ row.requirement }}</h3><span class="ai004-match-pill">{{ ui[row.status] }}</span></div>
+<p class="ai004-match-meta">{{ ui[row.importance] }} &middot; {{ ui.weight }}: {{ row.weight }}</p>
+<h4>{{ ui.evidence }}</h4>{% for fact in row.evidence %}<blockquote><a href="#source-{{ fact.id }}">{{ fact.text }}</a></blockquote>{% endfor %}
+{% if row.status == 'unverified' %}<p>{{ ui.unknown_note }}</p>{% endif %}
+</article>{% endfor %}
+<section class="ai004-match-card"><h2>{{ ui.coverage }}: {{ summary.evidence_coverage_percent }}%</h2><p>{{ ui.coverage_note }}</p><p>{{ ui.unchanged }}</p></section>
+<details class="ai004-match-card"><summary>{{ ui.sources }}</summary><div class="ai004-match-grid">{% for kind,label in [('candidate',ui.candidate),('vacancy',ui.vacancy)] %}<section><h3>{{ label }}</h3>{% for fact in report.source_facts if fact.kind == kind %}<p id="source-{{ fact.id }}">{{ fact.text }}</p>{% endfor %}</section>{% endfor %}</div></details>
+<details class="ai004-match-card"><summary>{{ ui.provenance }}</summary><dl class="ai004-match-provenance"><dt>{{ ui.policy }}</dt><dd>{{ report.policy_version }}</dd><dt>{{ ui.source_version }}</dt><dd>{{ report.source_version }}</dd><dt>Source SHA-256</dt><dd><code>{{ report.source_hash }}</code></dd><dt>Candidate SHA-256</dt><dd><code>{{ report.candidate_hash }}</code></dd><dt>Vacancy SHA-256</dt><dd><code>{{ report.vacancy_hash }}</code></dd><dt>Result SHA-256</dt><dd><code>{{ report.result_hash }}</code></dd></dl></details>
+<form method="post" action="{{ url_for('vacancy_match.delete_report', report_id=report.id) }}" class="ai004-match-card ai004-match-delete">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="result_hash" value="{{ report.result_hash }}">
+<label class="ai004-match-confirm"><input type="checkbox" name="confirm" value="1" required> <span>{{ ui.delete_confirm }}</span></label><button class="ai004-match-secondary" type="submit">{{ ui.delete }}</button></form>
+</div></main>
+{% endblock %}

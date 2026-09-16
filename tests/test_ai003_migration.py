@@ -24,15 +24,14 @@ def test_0017_round_trip_preserves_existing_data_and_confirmed_resume(tmp_path):
     owner = str(uuid4())
     with db.session() as session, session.begin():
         session.add(User(id=owner, status='active', email_verified_at=1, created_at=1, updated_at=1))
-    upgrade_database(url)
-    assert CURRENT_REVISION == current_revision(db.engine) == '20260916_0017'
+    upgrade_database(url, '20260916_0017')
+    assert current_revision(db.engine) == '20260916_0017'
     assert set(inspect(db.engine).get_table_names()) - old == NEW_TABLES
-    command.check(alembic_config(url))
     svc = ResumeInterviewService(ResumeInterviewRepository(db), fingerprint_key='test')
     env = (db, owner, '', svc)
     result = review(env)
     final = svc.execute(confirm_command(env, result))
-    upgrade_database(url)  # Idempotent.
+    upgrade_database(url, '20260916_0017')  # Idempotent.
     downgrade_database(url, '20260915_0016')
     assert set(inspect(db.engine).get_table_names()) == old
     with db.session() as session:
@@ -41,6 +40,7 @@ def test_0017_round_trip_preserves_existing_data_and_confirmed_resume(tmp_path):
         assert draft.revision == 2
         assert session.get(ResumeVersion, final['confirmed_version_id'])
     upgrade_database(url)
+    assert current_revision(db.engine) == CURRENT_REVISION
     command.check(alembic_config(url))
     assert not svc.history(owner)  # Downgrade deliberately removed interview history, not drafts.
     db.dispose()

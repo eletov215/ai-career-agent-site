@@ -26,4 +26,4 @@ Final preserved AI-002 full-package SHA-256: `3f5b43ceda531bdf5827d521ec6310a9b5
 
 ## 4. Successor distinction
 
-Main (33) is now the source for AI-003. AI-003 target 0017 and its new test counts are not retroactively attributed to AI-002. AI003_VERIFICATION_STATUS remains NEEDS_VERIFICATION until its own external gates pass.
+AI-003 later advanced staging to 0017 and was accepted on 2026-09-16. Its tests and acceptance are not retroactively attributed to AI-002; see AI003_VERIFICATION_STATUS v1.1 FINAL.
