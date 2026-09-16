@@ -1,5 +1,9 @@
 # AI Career Agent - CHANGELOG
 
+## AI-003 r1.1 / 2026-09-16 - Render review-flag hotfix
+
+GitHub CI #274 and Render/Neon schema 0017 were confirmed by the owner, with `/api/ai/status` still manual/disabled. Private `/ai-interview` returned 404 while `/admin/sources` worked for the same administrator. The route guard therefore isolated the failure to `AI_INTERVIEW_REVIEW_ENABLED`; inspection found that `render.yaml` hardcoded the review flag to `0`. The Blueprint declaration is changed to `sync: false`, preserving the application default-off behavior while allowing the temporary Render Dashboard review window. Manifest/package regression checks were added. No migration/provider/public-AI change; AI-003 remains НУЖНА ПРОВЕРКА until hotfix CI/deploy and browser smoke pass.
+
 ## 1.5.4 / 2026-09-16 - AI-003 reference interview candidate
 
 Source main (33), archive comment 20947f2e015097010cbe33772f7662bef4503f37. Two-table additive migration 0017; private pinned RU/EN adaptive interviews; owner-scoped state/history/rewind, exact selected facts and explicit atomic confirmation to isolated synthetic drafts; export/deletion/backup integration; current documents PLAN1.5.4/PASSPORT2.71/AUDIT1.5.4. No accepted benchmark/dependency changes or provider call. Status НУЖНА ПРОВЕРКА; GitHub/PostgreSQL/Render/owner acceptance pending.
@@ -47,6 +51,10 @@ Owner-directed legal deferral and technical sequencing change; last source main(
 - No production routes/models/migrations/secrets/provider calls changed. Final r2 ordinary CI remains the closure gate.
 
 # AI Career Agent - CHANGELOG
+
+## AI-003 r1.1 / 2026-09-16 - Render review-flag hotfix
+
+GitHub CI #274 and Render/Neon schema 0017 were confirmed by the owner, with `/api/ai/status` still manual/disabled. Private `/ai-interview` returned 404 while `/admin/sources` worked for the same administrator. The route guard therefore isolated the failure to `AI_INTERVIEW_REVIEW_ENABLED`; inspection found that `render.yaml` hardcoded the review flag to `0`. The Blueprint declaration is changed to `sync: false`, preserving the application default-off behavior while allowing the temporary Render Dashboard review window. Manifest/package regression checks were added. No migration/provider/public-AI change; AI-003 remains НУЖНА ПРОВЕРКА until hotfix CI/deploy and browser smoke pass.
 
 ## 2026-09-14 - AI-PROVIDER-001 strategy candidate / plan 1.4.49
 

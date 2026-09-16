@@ -2,7 +2,7 @@
 
 | Поле | Значение |
 |---|---|
-| Version | 1.0 r1 / 2026-09-16 |
+| Version | 1.0 r1.1 / 2026-09-16 |
 | Status | НУЖНА ПРОВЕРКА / NEEDS_VERIFICATION |
 | Baseline | main (33) / 20947f2e015097010cbe33772f7662bef4503f37 |
 | Target schema | 20260916_0017 |
@@ -30,7 +30,7 @@ Bounds: two fixtures, no more than eight graph steps, 50 sessions per owner, 60 
 
 ## 4. Access and API
 
-`AI_INTERVIEW_REVIEW_ENABLED` defaults to false. Existing active/verified first-party account plus `SEARCH_ADMIN_EMAILS` allowlist is required for every interview route. Public/default/non-admin access receives 404; ordinary builder remains available. Global CSRF, per-route limits, no-store/noindex responses and autoescaped templates remain in force. SQL errors produce neutral 503 without parameters. Duplicate JSON/form fields and unknown fields are rejected.
+`AI_INTERVIEW_REVIEW_ENABLED` defaults to false in application code. In Render Blueprint configuration it is declared with `sync: false`, so the temporary review value is controlled explicitly from the Render Dashboard and is not reset to `0` by Blueprint sync. Existing active/verified first-party account plus `SEARCH_ADMIN_EMAILS` allowlist is required for every interview route. Public/default/non-admin access receives 404; ordinary builder remains available. Global CSRF, per-route limits, no-store/noindex responses and autoescaped templates remain in force. SQL errors produce neutral 503 without parameters. Duplicate JSON/form fields and unknown fields are rejected.
 
 | Method | Route | Purpose |
 |---|---|---|

@@ -2,7 +2,7 @@
 
 | Поле | Значение |
 |---|---|
-| Version | 1.0 r1 / 2026-09-16 |
+| Version | 1.0 r1.1 / 2026-09-16 |
 | Status | НУЖНА ПРОВЕРКА / NEEDS_VERIFICATION |
 | Code baseline | main (33), 20947f2e015097010cbe33772f7662bef4503f37 |
 | Target schema | 20260916_0017 |
@@ -39,6 +39,15 @@ Machine-readable measurements, reproducible per-partition commands and logs: `ev
 GitHub ordinary CI with pinned requirements and PostgreSQL 17: PENDING. Real Flask HTTP/CSRF suite: PENDING in CI (Flask unavailable in local environment). Psycopg/PostgreSQL: PENDING. Container/backup integration: PENDING in CI. Render/Neon migration/current=expected 20260916_0017: PENDING. Owner browser branching/confirmation/relogin/stale/ownership/mobile/regression and review flag returned off: PENDING.
 
 No billable Alice run, real-resume provider dispatch or remote deployment was performed. Public runtime remains closed by code defaults; the actual deployed status must be checked after deployment.
+
+
+## 2A. External verification received / hotfix trigger
+
+Owner evidence on 2026-09-16: GitHub Actions CI #274 passed, including the dedicated AI-003 package/control gate; paid Alice jobs were skipped as intended. Render/Neon `/health/ready` returned `status=ok`, persistent PostgreSQL and `current_revision=expected_revision=20260916_0017` with `migrations.ok=true`. `/api/ai/status` returned the expected closed runtime (`generation_available=false`, `mode=manual`, `reason=runtime_not_activated`).
+
+The private `/ai-interview` smoke then returned 404 even though `/admin/sources` opened normally for the same logged-in allowlisted administrator. The route guard therefore isolated the failure to the interview review flag. Inspection found `render.yaml` hardcoded `AI_INTERVIEW_REVIEW_ENABLED` to `0`. Candidate hotfix r1.1 changes only that Blueprint variable to `sync: false`, extends regression checks, and leaves the application default false. External acceptance remains **PENDING** until the hotfix CI/deploy and browser interview smoke pass.
+
+Focused hotfix checks: `python scripts/check_ai003_package.py` PASS; `tests/test_infra_manifests.py + tests/test_ai003_package.py` = **19 passed**; `tests/test_ai003_routes.py + tests/test_ai003_service.py + tests/test_ai003_migration.py` = **42 passed, 2 skipped** (Flask HTTP execution and disposable PostgreSQL remain CI gates in this local environment). Repository hygiene PASS.
 
 ## 3. Accepted baseline versus candidate
 

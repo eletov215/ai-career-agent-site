@@ -109,6 +109,8 @@ def test_render_uses_external_worker_runtime_supervisor():
     service = render["services"][0]
     assert "scripts/start_runtime.py" in service["startCommand"]
     env = {item["key"]: item for item in service["envVars"]}
+    assert env["AI_INTERVIEW_REVIEW_ENABLED"]["sync"] is False
+    assert "value" not in env["AI_INTERVIEW_REVIEW_ENABLED"]
     assert env["AUTH_EMAIL_BACKEND"]["value"] == "disabled"
     assert env["AUTH_SMTP_PASSWORD"]["sync"] is False
     assert env["AUTH_SMTP_USE_TLS"]["value"] == "1"

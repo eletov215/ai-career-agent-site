@@ -13,7 +13,7 @@ services:
     healthCheckPath: /health/ready
     envVars:
       - key: AI_INTERVIEW_REVIEW_ENABLED
-        value: "0"
+        sync: false
       - key: APP_ENV
         value: production
       - key: DATABASE_URL

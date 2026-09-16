@@ -35,7 +35,7 @@
     },
     "render.yaml": {
       "previous_sha256": "df25db5704550bba6c58b35a106e2d229f7a63df704258b5f1c7d7670dc1e191",
-      "current_sha256": "14142d801a3ca11ea8a864d6ebb03a1820407c404ac3f480d0bd7ddf65378e14"
+      "current_sha256": "f61662adb273597df027195c2d28922c841b0f18fc6904e68258e46cb7cc0c37"
     },
     "repositories/privacy.py": {
       "previous_sha256": "2e23b1146bffb7632e0b37a3ad95ebf2acd4215e468a518677c2f839416ff680",

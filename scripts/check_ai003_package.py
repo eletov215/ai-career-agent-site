@@ -66,6 +66,9 @@ def validate(root=ROOT):
                    isinstance(n.func, ast.Attribute) and n.func.attr == 'create_table' and n.args and isinstance(n.args[0], ast.Constant)}
         if created != {'resume_interview_sessions', 'resume_interview_events'} or "down_revision = '20260915_0016'" not in source:
             errors.append('Incorrect additive migration')
+        render = (root/'render.yaml').read_text()
+        if '- key: AI_INTERVIEW_REVIEW_ENABLED\n        sync: false' not in render or '- key: AI_INTERVIEW_REVIEW_ENABLED\n        value:' in render:
+            errors.append('Render interview review flag must be dashboard-controlled')
         config = (root/'config.py').read_text()
         if '_bool(source, "AI_INTERVIEW_REVIEW_ENABLED", False)' not in config:
             errors.append('Private review must default off')
