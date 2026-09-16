@@ -12,6 +12,8 @@ from sqlalchemy import delete, func, or_, select, text
 from models.ai import AIUsageEvent, AIUserPlan, AIBudgetBucket
 from models.resume_analysis import ResumeAnalysisReport, ResumeAnalysisDecision, ResumeAnalysisReviewEvent
 from repositories.resume_analysis import report_view
+from models.resume_interview import ResumeInterviewSession, ResumeInterviewEvent
+from repositories.resume_interview import interview_snapshot
 from repositories.ai import public_usage
 
 from models import (
@@ -217,7 +219,23 @@ class PrivacyRepository(RepositoryBase):
                 review_events = session.scalars(select(ResumeAnalysisReviewEvent).where(ResumeAnalysisReviewEvent.report_id == row.id)
                     .order_by(ResumeAnalysisReviewEvent.created_at, ResumeAnalysisReviewEvent.revision)).all()
                 analysis_export.append(report_view(row, decisions, review_events))
+            interview_rows = session.scalars(select(ResumeInterviewSession).where(
+                ResumeInterviewSession.user_id == user.id
+            ).order_by(ResumeInterviewSession.created_at, ResumeInterviewSession.id).limit(51)).all()
+            if len(interview_rows) > 50:
+                raise PrivacySnapshotConflictError('interview_export_limit')
+            interview_export = []
+            for row in interview_rows:
+                if row.draft_id not in draft_ids:
+                    raise PrivacySnapshotConflictError('interview_owner_mismatch')
+                events = session.scalars(select(ResumeInterviewEvent).where(
+                    ResumeInterviewEvent.session_id == row.id
+                ).order_by(ResumeInterviewEvent.revision).limit(61)).all()
+                if len(events) > 60:
+                    raise PrivacySnapshotConflictError('interview_export_limit')
+                interview_export.append(interview_snapshot(row, events))
             snapshot: dict[str, Any] = {
+                "resume_interviews": interview_export,
                 "resume_analyses": analysis_export,
                 "ai_usage": [public_usage(row) for row in ai_rows],
                 "schema_version": 1,
@@ -432,6 +450,7 @@ class PrivacyRepository(RepositoryBase):
             "resume_versions": 0,
             "resume_assets": 0,
             "resume_exports": 0,
+            "resume_interview_sessions": self._count(session, ResumeInterviewSession, ResumeInterviewSession.user_id == user_id),
             "resume_analysis_reports": self._count(session, ResumeAnalysisReport, ResumeAnalysisReport.user_id == user_id),
         }
         if profile is not None:

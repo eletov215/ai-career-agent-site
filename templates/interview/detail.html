@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+{% block title %}{{ ui.title }} - AI Career Agent{% endblock %}
+{% block head_extra %}<link rel="stylesheet" href="{{ url_for('static', filename='resume_interview.css') }}?v=1">{% endblock %}
+{% macro fields(action) -%}
+<input type="hidden" name="action" value="{{ action }}">
+<input type="hidden" name="expected_revision" value="{{ interview.revision }}">
+<input type="hidden" name="source_hash" value="{{ interview.source_hash }}">
+<input type="hidden" name="operation_key" value="{{ operation_key() }}">
+{%- endmacro %}
+{% block content %}
+<main class="section interview-page"><div class="container interview-shell">
+  <header class="interview-header"><div><a class="interview-link" href="{{ url_for('resume_interview.index') }}">{{ ui.back }}</a><p class="interview-kicker">AI-003 / {{ ui.subtitle }}</p><h1>{{ interview.title }}</h1><span class="interview-pill">{{ ui['status_' + interview.status] }} / {{ ui.revision }} {{ interview.revision }}</span></div><a class="interview-link" href="{{ url_for('resume_drafts.builder', draft_id=interview.draft_id) }}">{{ ui.builder }}</a></header>
+  <aside class="interview-notice"><strong>{{ ui.notice }}</strong><p>{{ ui.warning }}</p></aside>
+  <div class="interview-grid interview-grid--detail">
+    <section class="interview-card" aria-label="{{ ui.title }}">
+      <div class="interview-conversation" lang="{{ interview.language }}">
+      {% for turn in interview.conversation %}
+        <article class="interview-turn"><p class="interview-goal">{{ turn.goal }}</p><p class="interview-question">{{ turn.question }}</p><p class="interview-answer">{{ turn.answer }}</p>
+        {% if interview.status != 'confirmed' %}<form method="post" action="{{ url_for('resume_interview.action', session_id=interview.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">{{ fields('rewind') }}<input type="hidden" name="answer_index" value="{{ loop.index0 }}"><button class="interview-text-button" type="submit" title="{{ ui.change_note }}">{{ ui.change }}</button></form>{% endif %}</article>
+      {% endfor %}
+      </div>
+      <div id="interview-current" tabindex="-1">
+      {% if interview.current_question and interview.status == 'active' %}
+      <form method="post" action="{{ url_for('resume_interview.action', session_id=interview.id) }}" class="interview-question-form" lang="{{ interview.language }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">{{ fields('answer') }}<input type="hidden" name="node_id" value="{{ interview.current_node_id }}">
+        <p class="interview-goal">{{ ui.goal }}: {{ interview.current_question.goal }}</p>
+        <fieldset><legend>{{ interview.current_question.question }}</legend><p class="interview-hint">{{ interview.current_question.hint }}</p>
+          {% for choice in interview.current_question.choices %}<label class="interview-choice"><input type="radio" name="choice_id" value="{{ choice.id }}" required><span>{{ choice.text }}</span></label>{% endfor %}
+        </fieldset><button class="interview-primary" type="submit">{{ ui.answer }}</button>
+      </form>
+      {% elif interview.status == 'review' %}
+        <h2>{{ ui.review }}</h2><p>{{ ui.review_note }}</p>
+        {% if interview.suggestions %}
+        <form method="post" action="{{ url_for('resume_interview.action', session_id=interview.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">{{ fields('confirm') }}
+          <fieldset><legend class="interview-visually-hidden">{{ ui.review }}</legend>{% for fact in interview.suggestions %}<label class="interview-choice"><input type="checkbox" name="selected_fact_ids" value="{{ fact.id }}" checked><span lang="{{ interview.language }}">{{ fact.text }}</span></label>{% endfor %}</fieldset>
+          <label class="interview-consent"><input type="checkbox" name="confirm" value="1" required><span>{{ ui.consent }}</span></label>
+          <button class="interview-primary" type="submit">{{ ui.confirm }}</button>
+        </form>
+        {% else %}<p>{{ ui.no_facts }}</p>{% endif %}
+      {% else %}
+        <h2>{{ ui.confirmed }}</h2><p>{{ ui.confirmed_note }}</p><div class="interview-result" lang="{{ interview.language }}">{{ interview.confirmed_text }}</div><p>{{ ui.readonly }}</p><a class="interview-link" href="{{ url_for('resume_drafts.builder', draft_id=interview.draft_id) }}">{{ ui.builder }}</a>
+      {% endif %}
+      </div>
+    </section>
+    <aside class="interview-sidebar">
+      <section class="interview-card"><h2>{{ ui.source }}</h2>{% for fact in interview.source_facts %}<p lang="{{ interview.language }}">{{ fact }}</p>{% endfor %}</section>
+      <section class="interview-card"><h2>{{ ui.suggestions if interview.status != 'confirmed' else ui.applied }}</h2><p>{{ ui.pending_note if interview.status != 'confirmed' else ui.applied_note }}</p>
+        {% for fact in interview.suggestions %}<div class="interview-evidence"><p lang="{{ interview.language }}">{{ fact.text }}</p><details><summary>{{ ui.evidence }}</summary><blockquote lang="{{ interview.language }}">{{ fact.evidence }}</blockquote></details></div>{% else %}<p>{{ ui.no_facts }}</p>{% endfor %}
+      </section>
+    </aside>
+  </div>
+  <details class="interview-card interview-audit"><summary>{{ ui.audit }}</summary>{% for event in interview.events %}<article><strong>{{ ui.revision }} {{ event.revision }} - {{ ui['kind_' + event.kind] }}</strong>{% if event.payload.question %}<p>{{ event.payload.question }}</p>{% endif %}{% if event.payload.answer %}<p>{{ event.payload.answer }}</p>{% endif %}{% if event.payload.text %}<p class="interview-result">{{ event.payload.text }}</p>{% endif %}</article>{% endfor %}</details>
+  <form class="interview-delete" method="post" action="{{ url_for('resume_drafts.delete_draft', draft_id=interview.draft_id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="interview-text-button" type="submit">{{ ui.delete }}</button></form>
+</div></main>
+{% endblock %}

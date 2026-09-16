@@ -1,5 +1,12 @@
 # AI Career Agent - AI-002 / Patch and verification runbook
 
+## 0. Accepted status / 2026-09-15
+
+AI-002: **ВЫПОЛНЕНО** in synthetic/reference-only scope. Final owner-supplied documents dated 2026-09-15 establish CI #270 PASS after the import hotfix, Neon staging at `20260915_0016`, owner review/relogin persistence and the final conditional-actions UI smoke. `AI_ANALYSIS_REVIEW_ENABLED` was returned to disabled; `/api/ai/status` remained manual/unavailable. No new paid Alice call and no real resume dispatch were required. A post-UI-hotfix CI run number is not known; the current main (33) archive comment is recorded as source evidence, not a new CI claim.
+
+The detailed reconstruction instructions below are historical AI-002 procedures. Current deployment target and review steps are in AI003_RUNBOOK; do not downgrade the current candidate to 0016 as an ordinary deployment step.
+
+
 | Field | Value |
 |---|---|
 | Version | 1.0-r2 / 2026-09-15 |

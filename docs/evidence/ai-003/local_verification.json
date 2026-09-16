@@ -1,0 +1,231 @@
+{
+  "package": "AI-003 r1",
+  "date": "2026-09-16",
+  "status": "NEEDS_VERIFICATION",
+  "code_baseline": "main (33)",
+  "target_schema": "20260916_0017",
+  "environment": {
+    "python": "3.13.5",
+    "sqlalchemy": "2.0.50",
+    "alembic": "1.18.4",
+    "pytest": "9.0.2",
+    "missing": [
+      "flask",
+      "psycopg",
+      "PostgreSQL service",
+      "Docker runtime"
+    ],
+    "dependency_changes": "none; local preinstalled versions differ from pinned CI requirements"
+  },
+  "partitions": [
+    {
+      "partition": "ai",
+      "files": [
+        "tests/test_ai001_migration.py",
+        "tests/test_ai001_package.py",
+        "tests/test_ai001_routes.py",
+        "tests/test_ai001_runtime.py",
+        "tests/test_ai002_migration.py",
+        "tests/test_ai002_package.py",
+        "tests/test_ai002_routes.py",
+        "tests/test_ai002_service.py",
+        "tests/test_ai003_migration.py",
+        "tests/test_ai003_package.py",
+        "tests/test_ai003_routes.py",
+        "tests/test_ai003_service.py",
+        "tests/test_ai_bench_alice_final_gate.py",
+        "tests/test_ai_bench_dataset.py",
+        "tests/test_ai_bench_package_layout.py",
+        "tests/test_ai_bench_providers.py",
+        "tests/test_ai_bench_runner.py",
+        "tests/test_ai_bench_scoring.py",
+        "tests/test_ai_provider_policy.py"
+      ],
+      "exit_code": 0,
+      "passed": 330,
+      "skipped": 7,
+      "subtests_passed": 82,
+      "pytest_seconds": 19.46,
+      "command": "python -m pytest -q --durations=8 tests/test_ai001_migration.py tests/test_ai001_package.py tests/test_ai001_routes.py tests/test_ai001_runtime.py tests/test_ai002_migration.py tests/test_ai002_package.py tests/test_ai002_routes.py tests/test_ai002_service.py tests/test_ai003_migration.py tests/test_ai003_package.py tests/test_ai003_routes.py tests/test_ai003_service.py tests/test_ai_bench_alice_final_gate.py tests/test_ai_bench_dataset.py tests/test_ai_bench_package_layout.py tests/test_ai_bench_providers.py tests/test_ai_bench_runner.py tests/test_ai_bench_scoring.py tests/test_ai_provider_policy.py",
+      "skips": [
+        "SKIPPED [1] tests/test_ai002_routes.py:7: could not import 'flask': No module named 'flask'",
+        "SKIPPED [1] tests/test_ai003_routes.py:9: Flask route execution is mandatory in installed GitHub CI",
+        "SKIPPED [1] tests/test_ai001_migration.py:33: POSTGRES_TEST_URL required; dedicated CI provides PostgreSQL",
+        "SKIPPED [1] tests/test_ai001_routes.py:6: Flask is installed from requirements.txt in CI",
+        "SKIPPED [1] tests/test_ai001_routes.py:16: Flask is installed from requirements.txt in CI",
+        "SKIPPED [1] tests/test_ai002_migration.py:35: Disposable PostgreSQL CI database required",
+        "SKIPPED [1] tests/test_ai003_migration.py:49: Disposable PostgreSQL service required in GitHub CI"
+      ]
+    },
+    {
+      "partition": "account_infra",
+      "files": [
+        "tests/test_app_startup_modes.py",
+        "tests/test_architecture_boundaries.py",
+        "tests/test_auth002_migration.py",
+        "tests/test_auth002_routes.py",
+        "tests/test_auth_migration.py",
+        "tests/test_auth_routes.py",
+        "tests/test_auth_service.py",
+        "tests/test_backup_restore.py",
+        "tests/test_config.py",
+        "tests/test_database.py",
+        "tests/test_document_structure.py",
+        "tests/test_email_delivery.py",
+        "tests/test_infra_manifests.py",
+        "tests/test_infra_probe.py",
+        "tests/test_legacy_import.py",
+        "tests/test_oauth_identity_service.py",
+        "tests/test_observability.py",
+        "tests/test_passwords.py",
+        "tests/test_postgresql_integration.py",
+        "tests/test_rate_limit_proxy.py",
+        "tests/test_repositories.py",
+        "tests/test_repository_hygiene.py",
+        "tests/test_routes.py",
+        "tests/test_template_security.py"
+      ],
+      "exit_code": 0,
+      "passed": 138,
+      "skipped": 8,
+      "subtests_passed": 0,
+      "pytest_seconds": 12.89,
+      "command": "python -m pytest -q --durations=8 tests/test_app_startup_modes.py tests/test_architecture_boundaries.py tests/test_auth002_migration.py tests/test_auth002_routes.py tests/test_auth_migration.py tests/test_auth_routes.py tests/test_auth_service.py tests/test_backup_restore.py tests/test_config.py tests/test_database.py tests/test_document_structure.py tests/test_email_delivery.py tests/test_infra_manifests.py tests/test_infra_probe.py tests/test_legacy_import.py tests/test_oauth_identity_service.py tests/test_observability.py tests/test_passwords.py tests/test_postgresql_integration.py tests/test_rate_limit_proxy.py tests/test_repositories.py tests/test_repository_hygiene.py tests/test_routes.py tests/test_template_security.py",
+      "skips": [
+        "SKIPPED [1] tests/test_app_startup_modes.py:11: Flask is installed from requirements.txt in CI",
+        "SKIPPED [1] tests/test_auth002_routes.py:11: could not import 'flask': No module named 'flask'",
+        "SKIPPED [1] tests/test_auth_routes.py:10: could not import 'flask': No module named 'flask'",
+        "SKIPPED [1] tests/test_observability.py:8: Flask is installed from requirements.txt in CI",
+        "SKIPPED [1] tests/test_rate_limit_proxy.py:5: Flask is installed from requirements.txt in CI",
+        "SKIPPED [1] tests/test_routes.py:11: Flask is installed from requirements.txt in CI",
+        "SKIPPED [1] tests/test_database.py:61: could not import 'psycopg': No module named 'psycopg'",
+        "SKIPPED [1] tests/test_postgresql_integration.py:50: POSTGRES_TEST_URL is provided by the GitHub Actions PostgreSQL service"
+      ]
+    },
+    {
+      "partition": "profile_privacy",
+      "files": [
+        "tests/test_priv001_migration.py",
+        "tests/test_privacy_routes.py",
+        "tests/test_privacy_service.py",
+        "tests/test_prof001_migration.py",
+        "tests/test_prof002_migration.py",
+        "tests/test_prof003_frontend_contract.py",
+        "tests/test_prof003_migration.py",
+        "tests/test_profile_routes.py",
+        "tests/test_profile_service.py",
+        "tests/test_resume_draft_routes.py",
+        "tests/test_resume_draft_service.py",
+        "tests/test_resume_import_routes.py",
+        "tests/test_resume_import_service.py",
+        "tests/test_resume_parser.py"
+      ],
+      "exit_code": 0,
+      "passed": 32,
+      "skipped": 4,
+      "subtests_passed": 0,
+      "pytest_seconds": 3.6,
+      "command": "python -m pytest -q --durations=8 tests/test_priv001_migration.py tests/test_privacy_routes.py tests/test_privacy_service.py tests/test_prof001_migration.py tests/test_prof002_migration.py tests/test_prof003_frontend_contract.py tests/test_prof003_migration.py tests/test_profile_routes.py tests/test_profile_service.py tests/test_resume_draft_routes.py tests/test_resume_draft_service.py tests/test_resume_import_routes.py tests/test_resume_import_service.py tests/test_resume_parser.py",
+      "skips": [
+        "SKIPPED [1] tests/test_privacy_routes.py:14: could not import 'flask': No module named 'flask'",
+        "SKIPPED [1] tests/test_profile_routes.py:10: could not import 'flask': No module named 'flask'",
+        "SKIPPED [1] tests/test_resume_draft_routes.py:12: could not import 'flask': No module named 'flask'",
+        "SKIPPED [1] tests/test_resume_import_routes.py:13: could not import 'flask': No module named 'flask'"
+      ]
+    },
+    {
+      "partition": "search_sync",
+      "files": [
+        "tests/test_providers.py",
+        "tests/test_search005_migration.py",
+        "tests/test_search005_route_registration.py",
+        "tests/test_search005_routes.py",
+        "tests/test_search005_security.py",
+        "tests/test_search_deduplication.py",
+        "tests/test_search_filters.py",
+        "tests/test_search_normalization.py",
+        "tests/test_search_pagination.py",
+        "tests/test_source_health_service.py",
+        "tests/test_source_status.py",
+        "tests/test_sync_incremental.py",
+        "tests/test_sync_worker.py",
+        "tests/test_university_logo_security.py",
+        "tests/test_vacancy_presenter.py",
+        "tests/test_vacancy_store.py"
+      ],
+      "exit_code": 0,
+      "passed": 108,
+      "skipped": 2,
+      "subtests_passed": 0,
+      "pytest_seconds": 8.35,
+      "command": "python -m pytest -q --durations=8 tests/test_providers.py tests/test_search005_migration.py tests/test_search005_route_registration.py tests/test_search005_routes.py tests/test_search005_security.py tests/test_search_deduplication.py tests/test_search_filters.py tests/test_search_normalization.py tests/test_search_pagination.py tests/test_source_health_service.py tests/test_source_status.py tests/test_sync_incremental.py tests/test_sync_worker.py tests/test_university_logo_security.py tests/test_vacancy_presenter.py tests/test_vacancy_store.py",
+      "skips": [
+        "SKIPPED [1] tests/test_search005_routes.py:10: could not import 'flask': No module named 'flask'",
+        "SKIPPED [1] tests/test_search005_route_registration.py:5: could not import 'flask': No module named 'flask'"
+      ]
+    }
+  ],
+  "totals": {
+    "passed": 608,
+    "skipped": 21,
+    "subtests_passed": 82
+  },
+  "test_files_partitioned_once": 73,
+  "focused_ai003": {
+    "passed": 56,
+    "skipped": [
+      "Flask routes module",
+      "PostgreSQL migration/service scenario"
+    ],
+    "included_in_totals": true,
+    "executed": [
+      "41 service tests",
+      "14 package tests",
+      "1 SQLite migration round-trip"
+    ]
+  },
+  "static": {
+    "python_compile": "PASS",
+    "python_files": 236,
+    "jinja_parse": "PASS",
+    "template_count": 35,
+    "yaml_parse": [
+      ".github/workflows/ci.yml",
+      "compose.yaml",
+      "render.yaml"
+    ],
+    "builder_javascript_vs_input": "byte-identical script blocks",
+    "new_feature_javascript": "none; native forms",
+    "note": "YAML parse is not remote workflow execution; Flask/PG still require CI"
+  },
+  "offline_browser": {
+    "layouts": 36,
+    "viewports": [
+      1440,
+      768,
+      390,
+      320
+    ],
+    "states": 9,
+    "engine": "Chromium via Playwright",
+    "mode": "offline Jinja+Chromium render, not Flask HTTP/E2E",
+    "network": "all requests blocked; actual repository CSS inlined; webfont fallback; local HTTP blocked by environment",
+    "full_account_e2e": false
+  },
+  "limitations": [
+    "Initial monolithic baseline attempt and a sequential partition orchestration timed out; neither is a passed run. Every final partition was executed independently and exited zero.",
+    "21 skips include 13 entire Flask-dependent modules, not only individual test functions. Passing subtests are reported separately, not added to the 608 test count.",
+    "Flask HTTP/CSRF, PostgreSQL 17, pinned production requirements, backup/container integration, GitHub CI, Render/Neon deployment and owner acceptance are PENDING. Offline HTML checks are not HTTP/E2E evidence."
+  ],
+  "external": {
+    "github_actions": "PENDING",
+    "flask_http": "PENDING",
+    "postgresql_17": "PENDING",
+    "backup_container_integration": "PENDING",
+    "render_neon": "PENDING",
+    "owner_e2e": "PENDING",
+    "billable_provider_calls": "NOT RUN",
+    "real_resume_dispatch": "NOT RUN",
+    "public_real_data_enabled": false
+  }
+}

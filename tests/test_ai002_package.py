@@ -35,6 +35,13 @@ def test_successor_hashes_are_checked_and_cannot_whitelist_evals(tmp_path):
     d=json.loads((ROOT/'docs/evidence/ai-002/change_boundary.json').read_text())
     for name in d['reviewed_runtime_changes']:
         (tmp_path/name).parent.mkdir(parents=True,exist_ok=True);shutil.copy2(ROOT/name,tmp_path/name)
+    for relative in ('docs/evidence/ai-003/change_boundary.json', 'docs/evidence/ai-003/baseline_files_sha256.json', 'docs/evidence/ai-001/change_boundary.json'):
+        (tmp_path/relative).parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(ROOT/relative, tmp_path/relative)
+    successor = json.loads((ROOT/'docs/evidence/ai-003/change_boundary.json').read_text())['reviewed_runtime_changes']
+    for relative in successor:
+        (tmp_path/relative).parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(ROOT/relative, tmp_path/relative)
     assert load_boundary(tmp_path)
     (tmp_path/'app.py').write_text('changed')
     with pytest.raises(ValueError):load_boundary(tmp_path)

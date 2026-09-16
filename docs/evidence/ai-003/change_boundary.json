@@ -1,0 +1,61 @@
+{
+  "package": "AI-003",
+  "public_real_data_enabled": false,
+  "source": "main (33).zip",
+  "source_sha256": "3f46536638fb541310c15a5520dc5a445d4916d8af90baf14292c99866971533",
+  "source_commit": "20947f2e015097010cbe33772f7662bef4503f37",
+  "reviewed_runtime_changes": {
+    "app.py": {
+      "previous_sha256": "bce51f2587a81133773c071c2db8f17b0c0befe6ebcb4dbf4d7e5bdc2616313b",
+      "current_sha256": "a4f785906d3bb33ad24ce6fca0157adfd2e31ed35d0f99a9a93705790eb44b4c"
+    },
+    "compose.yaml": {
+      "previous_sha256": "2a3bd21c57284ce1b728bf976da4a2d46d507b3efee0210d07953c07c8c0147d",
+      "current_sha256": "f09124d559e751d6429430d28055f2bbbffe9480d29268aa3cb6c7a86166992d"
+    },
+    "config.py": {
+      "previous_sha256": "eacd3358a7315b535e5fd0623d60f35160bad427d32b8ad35d34c539248ebdd2",
+      "current_sha256": "c2c73e1948ea949a7d02f0e9fe5c1dc4248b5673bf263ac6e3a9a37978fda545"
+    },
+    "database.py": {
+      "previous_sha256": "a327edd4e5bb9f9f5cf859b4c47c8d2a92614023d725277b9306ff8deebae24e",
+      "current_sha256": "59804901071d2ea6bc9998808efd44bca9858e70799e206c55e9ec3bff664d0c"
+    },
+    "infra/vps/.env.example": {
+      "previous_sha256": "48be51f6d66b024cdaae7b1b72b4ea368d5f4dbe549431a1ab6c83d7785cdbc1",
+      "current_sha256": "39c44c627ce22a5f9eaf466d780cdb85a43743bd889b928dccd33caa9834b65b"
+    },
+    "models/__init__.py": {
+      "previous_sha256": "f31f1b9a687d9fa301d5e8219ba29e85a5f9a9019a447aa64b9054c6a307b805",
+      "current_sha256": "5131bfe3b28fb1badea4151cbe32b77732ad134d3da86bb2a5509fb8ccba04a2"
+    },
+    "operations/backup.py": {
+      "previous_sha256": "8f7b584355afe3d7b1e665f6c174fa7b76c1538428d97dac9cd8bdaf9aea288b",
+      "current_sha256": "23d8d2a64949fcaffc443ed3bab2e56f58ef9659ef3e9a5ccd8f77bdd9b80cf2"
+    },
+    "render.yaml": {
+      "previous_sha256": "df25db5704550bba6c58b35a106e2d229f7a63df704258b5f1c7d7670dc1e191",
+      "current_sha256": "14142d801a3ca11ea8a864d6ebb03a1820407c404ac3f480d0bd7ddf65378e14"
+    },
+    "repositories/privacy.py": {
+      "previous_sha256": "2e23b1146bffb7632e0b37a3ad95ebf2acd4215e468a518677c2f839416ff680",
+      "current_sha256": "f7a15e10dfaa5d6499ed81dfb679b4156d87496cba77d8fb31fb3ae0bf279f49"
+    },
+    "routes/resume_drafts.py": {
+      "previous_sha256": "5446a58c5d5def38a83322ac7d1d86089daa9f67b14b7d562d887ed7f8d020cb",
+      "current_sha256": "43c07691930d604a392a5aa493e96e28f2fa8e5b8ef6c1cb8d24d2a045ef467c"
+    },
+    "services/privacy.py": {
+      "previous_sha256": "8df2adf9473f2423c86db4974ca79206cffda41d14f0fbe4361ed3fdc27feec2",
+      "current_sha256": "7ea8dc2cd7be7a37cea3d37a3376ec50c0cb6d3312763b7cd7e7f587946952eb"
+    },
+    "services/storage.py": {
+      "previous_sha256": "7136a8403ae779b06fb7ebc0d23274bd05829ceaed94dce40c90ff58257b0361",
+      "current_sha256": "955ea2860c9e6ec1fb4594044306aa78bb7585433efa56a3023cea79a200e0b8"
+    },
+    "templates/resume_builder.html": {
+      "previous_sha256": "12fa97ca305c0c5e5f31ca4c5ae7f5313ef0ccfc2478cafd8d6b81f7b5c53590",
+      "current_sha256": "b228ae03d52a4c7643cb447b06e7474518cce72aea65dd82e95ea7507f18ec8c"
+    }
+  }
+}

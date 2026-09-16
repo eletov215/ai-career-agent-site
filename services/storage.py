@@ -11,6 +11,7 @@ from dataclasses import dataclass
 
 from database import DatabaseRuntime
 from repositories.ai import AIRepository
+from repositories.resume_interview import ResumeInterviewRepository
 from repositories.resume_analysis import ResumeAnalysisRepository
 from repositories import (
     AuthRepository,
@@ -32,6 +33,7 @@ from services.vacancy_store import VacancyStore
 class StorageServices:
     """Repository-backed persistence entry points for application services."""
 
+    interviews: ResumeInterviewRepository
     analyses: ResumeAnalysisRepository
     ai: AIRepository
     auth: AuthRepository
@@ -50,6 +52,7 @@ class StorageServices:
     @classmethod
     def from_database(cls, database: DatabaseRuntime) -> "StorageServices":
         return cls(
+            interviews=ResumeInterviewRepository(database),
             analyses=ResumeAnalysisRepository(database),
             ai=AIRepository(database),
             auth=AuthRepository(database),

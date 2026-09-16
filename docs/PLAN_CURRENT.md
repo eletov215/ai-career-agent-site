@@ -4,34 +4,33 @@
 
 
 <!-- ACA-CANONICAL-STATUS:START -->
-## Каноническое состояние / 2026-09-15
+## Каноническое состояние / 2026-09-16
 
 | Поле | Значение |
 |---|---|
-| Current package | AI-002 - НУЖНА ПРОВЕРКА; rebuilt synthetic analysis/report candidate r2 |
-| Source code | Owner main (32).zip; bc177dd6b970750f556f48f34dbd022a30e80a34; SHA-256 161d52efebf1762a5dd73f0be890b7afb204d2a26e34f9237341eaf832075de9 |
-| Canonical versions | PLAN 1.5.2; PASSPORT 2.69; SOURCE_AUDIT 1.5.2 |
-| Completed AI foundation | AI-BENCH-001 / AI-PROVIDER-001 / AI-001 - ВЫПОЛНЕНО in their accepted scope |
-| LEGAL-001 | ОТЛОЖЕНО ДО РЕШЕНИЯ ВЛАДЕЛЬЦА; public real-data AI and payments remain disabled |
-| Schema | Staging verified 20260914_0015; candidate target 20260915_0016; three additive report/review tables |
-| Candidate boundary | Two pinned resume fixtures; internal provider validation; private reference-only UI; no live dispatch from browser |
-| Verification | New local measurements only; GitHub CI and Neon migration/smoke pending |
-| Next action | Verify AI-002; preserve backup and closed AI switches; do not begin AI-003 yet |
-
+| Current package | AI-003 - НУЖНА ПРОВЕРКА; synthetic/reference-only adaptive interview candidate r1 |
+| Source code | Owner main (33).zip; archive comment 20947f2e015097010cbe33772f7662bef4503f37; SHA-256 3f46536638fb541310c15a5520dc5a445d4916d8af90baf14292c99866971533 |
+| Canonical versions | PLAN 1.5.4; PASSPORT 2.71; SOURCE_AUDIT 1.5.4 |
+| Completed AI foundation | AI-BENCH-001 / AI-PROVIDER-001 / AI-001 / AI-002 - ВЫПОЛНЕНО in accepted boundaries |
+| LEGAL-001 | ОТЛОЖЕНО ДО РЕШЕНИЯ ВЛАДЕЛЬЦА; public real-data AI and paid launch remain blocked |
+| Schema | Last accepted staging 20260915_0016; AI-003 target 20260916_0017, two additive tables; NOT YET verified on staging |
+| Candidate boundary | Private RU/EN reference interviews; pinned choice IDs; persisted history; explicit confirmation into isolated synthetic draft; no provider call |
+| Verification | Local evidence in AI003_VERIFICATION_STATUS; GitHub CI, PostgreSQL 17, Render and owner browser acceptance PENDING |
+| Next action | Ordinary CI, backup, staging migration and private AI-003 review; then disable review flag; no AI-004 start before acceptance |
 <!-- ACA-CANONICAL-STATUS:END -->
 
 | Поле | Значение |
 |---|---|
 | Документ | PLAN_CURRENT |
-| Версия | 1.5.2 |
-| Дата | 15 сентября 2026 |
+| Версия | 1.5.4 |
+| Дата | 16 сентября 2026 |
 | Статус | ДЕЙСТВУЮЩИЙ |
-| Основа кода | main (32).zip / bc177dd; AI-002 rebuilt candidate on 0015 -> 0016 |
-| Текущий пакет | AI-001 - ВЫПОЛНЕНО; AI-002 - НУЖНА ПРОВЕРКА; LEGAL-001 - ОТЛОЖЕНО |
+| Основа кода | main (33).zip / 20947f2e015097010cbe33772f7662bef4503f37 |
+| Текущий пакет | AI-002 - ВЫПОЛНЕНО; AI-003 - НУЖНА ПРОВЕРКА; LEGAL-001 - ОТЛОЖЕНО ДО РЕШЕНИЯ ВЛАДЕЛЬЦА |
 
 > ОБЯЗАТЕЛЬНО ДЛЯ КАЖДОГО НОВОГО ЧАТА: прочитать этот план, новый паспорт и актуальный архив. После завершения любого пункта вернуть обновлённые DOCX/PDF/Markdown, новый ZIP, доказательства проверки и запись в журнале версий.
 
-> КОНТРОЛЬНЫЕ СТАТУСЫ ЭТОЙ ВЕРСИИ: FND-001/FND-002/DATA-001/DATA-002/SEC-001/OPS-001/INFRA-PREP-001/SYNC-001/SYNC-002/SEARCH-001..005/AUTH-001/AUTH-002/PROF-001/PROF-002/PROF-003/PRIV-001/AI-BENCH-001/AI-PROVIDER-001/AI-001 - **ВЫПОЛНЕНО**; `LEGAL-001` - **ОТЛОЖЕНО ДО РЕШЕНИЯ ВЛАДЕЛЬЦА**; `AI-002` - **НУЖНА ПРОВЕРКА**; `DOC-001` - **В РАБОТЕ**; `INFRA-001` - **ОТЛОЖЕНО ДО ПРЕДРЕЛИЗНОГО ЭТАПА**. Документы ниже `1.5.1` устарели для определения текущего gate.
+> Контрольные статусы: FND/DATA/SEC/OPS/INFRA-PREP/SYNC/SEARCH/AUTH/PROF/PRIV/AI-BENCH-001/AI-PROVIDER-001/AI-001/AI-002 - **ВЫПОЛНЕНО**; AI-003 - **НУЖНА ПРОВЕРКА**; LEGAL-001 - **ОТЛОЖЕНО ДО РЕШЕНИЯ ВЛАДЕЛЬЦА**; DOC-001 - В РАБОТЕ; INFRA-001 - ОТЛОЖЕНО. Current PLAN 1.5.4 / PASSPORT 2.71; older dated entries are historical.
 
 
 ## 1. Источник истины и аудит источников
@@ -39,7 +38,10 @@
 - GitHub является главным источником актуального кода.
 - Если в текущем чате загружен более новый ZIP, он является рабочей основой этого чата.
 - Канонический план определяется наибольшей версией и датой; старые дубликаты не должны оставаться действующими.
-- AI-001 was externally accepted on GitHub CI #266 and Render/Neon staging revision `20260914_0015`; deployed version reports `bc177dd6b970750f556f48f34dbd022a30e80a34`. The owner has now supplied main (32), which is the inspected source for the rebuilt AI-002 candidate. SOURCE_AUDIT 1.5.2 records its exact hash and the new pending CI/staging gates.
+- Current code source: owner main (33), archive comment `20947f2e015097010cbe33772f7662bef4503f37`; SOURCE_AUDIT 1.5.4 records hashes. AI-002 was accepted at 0016 per the supplied final PDFs. AI-003 target 0017 is pending external acceptance.
+- Historical reconstruction: AI-001 CI #266/staging0015 preceded main (32) and the rebuilt AI-002 candidate. AI-002 subsequently passed CI #270 and owner staging0016 review.
+
+The dated version entries below preserve historical evidence and do not override the active gate.
 - Версия 1.4.38 фиксирует grounded-v2 hardening после первого live run: ordinary CI r4 green; manual run artifact 32958938365 completed 24/24 API calls with zero transport errors; stricter evidence/safety/match contract prepared for live run #2.
 - Версия 1.4.39 фиксирует grounded-v2.1 hardening после live run #2 artifact 32972783843: Unicode percent normalization, scenario provenance, RU/EN language gate, cover-letter motivation semantics, safe provider diagnostics and one bounded retry prepared for live run #3.
 - Версия 1.4.40 фиксирует grounded-v2.2 final safety hardening после live run #3 artifact 32978362483: source-matched impact families, regressions на реальные Alice outcome-inferences и post-score presentation sanitizer prepared for live run #4.
@@ -136,7 +138,7 @@
 | База | Production работает на PostgreSQL 17 через SQLAlchemy/Alembic; SQLite оставлен только как local/test fallback. |
 | OAuth | AUTH-002 complete: HeadHunter/SuperJob owner-bound к first-party `User`, Fernet encryption, state bound to first-party session; production ownership E2E подтверждён. |
 | Вакансии | Trudvsem cache, HH, Reed и public SuperJob search; SEARCH-001/002 подтверждены; SEARCH-003 persistent snapshot pagination подтверждена GitHub CI и production Render, включая latency hotfix, stable page boundaries и restart persistence. |
-| Резюме | PDF extraction на pypdf и browser resume builder; LLM пока нет. |
+| Резюме | PDF extraction на pypdf и browser resume builder; AI-001 technical runtime exists; public AI remains off. AI-003 interview r1 is reference-only. |
 | Тесты | GitHub Actions, unit/provider/route/config/database/migration/security/observability/backup tests. |
 | Hosting | Render временно используется как staging/резервная площадка. Для production требуется проверенный VPS с доступностью из РФ/РБ, собственный домен и план миграции. |
 | Текущая схема | Staging externally verified on Neon PostgreSQL at `20260914_0015`; `current_revision=expected_revision`, `migrations.ok=true`. Previous `0014` is historical. |
@@ -223,8 +225,8 @@ MVP не готов, если работает только отдельная �
 | AI-BENCH-001 | P0 | ВЫПОЛНЕНО | Alice Final `34830877796`: 8/8 machine PASS, zero provider errors/retries/hard safety counters; named human re-review accepted |
 | AI-PROVIDER-001 | P0 | ВЫПОЛНЕНО | Owner-approved strategy; ordinary GitHub CI #262 green; runtime AI still disabled pending LEGAL-001 + AI-001 |
 | AI-001 | P1 | ВЫПОЛНЕНО | Synthetic-only provider-neutral runtime, cost guards, central limits, idempotency, manual fallback; CI #266 + staging `0015` accepted |
-| AI-002 | P1 | НУЖНА ПРОВЕРКА | Настоящий анализ резюме; technical development behind closed/public-off gates |
-| AI-003 | P1 | ЗАПЛАНИРОВАНО | Адаптивное AI-интервью в конструкторе |
+| AI-002 | P1 | ВЫПОЛНЕНО | Synthetic/reference-only reports and review; CI #270 + staging 0016 + owner acceptance |
+| AI-003 | P1 | НУЖНА ПРОВЕРКА | Adaptive reference interview r1; private synthetic drafts; target 0017 |
 | AI-004 | P1 | ЗАПЛАНИРОВАНО | Объяснимая оценка соответствия вакансии |
 | AI-005 | P1 | ЗАПЛАНИРОВАНО | Генерация и версии сопроводительного письма |
 | AI-006 | P1 | ЗАПЛАНИРОВАНО | Оценка качества AI и защита от галлюцинаций |
@@ -394,7 +396,7 @@ MVP не готов, если работает только отдельная �
 
 **Реализация:** Канонические PLAN_CURRENT и паспорт обновляются после каждого архитектурного решения; README/ROADMAP/CHANGELOG и package-specific docs синхронизируются вместе с ближайшим кодовым пакетом, чтобы документация и код проходили один CI/merge cycle.
 
-**Текущее состояние:** PLAN_CURRENT 1.5.2; PROJECT_PASSPORT 2.69. AI-BENCH-001, AI-PROVIDER-001 и AI-001 ВЫПОЛНЕНО; LEGAL-001 ОТЛОЖЕНО ДО РЕШЕНИЯ ВЛАДЕЛЬЦА. AI-002 - следующий технический пакет после свежего GitHub ZIP. Staging: Render web + Neon PostgreSQL, revision `20260914_0015`, migrations current=expected/ok. Previous 0014 and earlier details are historical. Gmail API staging delivery remains separate operational work.
+**Текущее состояние:** PLAN_CURRENT 1.5.4; PROJECT_PASSPORT 2.71. AI-BENCH-001, AI-PROVIDER-001, AI-001 and AI-002 - ВЫПОЛНЕНО. Accepted staging: 20260915_0016. AI-003 - НУЖНА ПРОВЕРКА, candidate target 20260916_0017. LEGAL-001 - ОТЛОЖЕНО ДО РЕШЕНИЯ ВЛАДЕЛЬЦА. Email delivery remains unresolved. New GitHub/Render acceptance is pending.
 
 **Влияние на сайт:** Нет.
 
@@ -402,7 +404,7 @@ MVP не готов, если работает только отдельная �
 
 **Зависимости:** Постоянный процесс; не блокирует `SEARCH-001` и последующие пакеты.
 
-Active candidate inventory: PLAN_CURRENT 1.5.2; PROJECT_PASSPORT 2.69; AI-001 ВЫПОЛНЕНО at 20260914_0015; AI-002 НУЖНА ПРОВЕРКА; LEGAL-001 ОТЛОЖЕНО ДО РЕШЕНИЯ ВЛАДЕЛЬЦА.
+Active inventory: PLAN_CURRENT 1.5.4; PROJECT_PASSPORT 2.71; SOURCE_AUDIT 1.5.4. AI-003 НУЖНА ПРОВЕРКА; AI-002 ВЫПОЛНЕНО at 20260915_0016.
 
 ### Этап 2. Надёжный поиск и обновление вакансий
 
@@ -767,7 +769,7 @@ Active candidate inventory: PLAN_CURRENT 1.5.2; PROJECT_PASSPORT 2.69; AI-001 В
 
 **Влияние на сайт:** Появляются «Мои резюме», несколько черновиков, server save status, продолжение на другом устройстве, история/read-only версии, restore, durable photo/logo и export audit.
 
-**Критерии готовности:** Green GitHub Actions и Render current/expected `20260812_0012` подтверждены. Production E2E подтвердил persistence после relogin/cross-device/restart, owner isolation, stale `409`, no-op checkpoint, read-only history/restore, direct edit r2, durable photo/logo assets, iPhone Safari photo r3, preview/PDF parity r4 и mobile flow. До ВЫПОЛНЕНО остаётся final regression `/profile`/PROF-002/`/dashboard`/AUTH/OAuth/`/vacancies` и Render log privacy/error review.
+**Критерии готовности:** Green GitHub Actions и Render current/expected `20260812_0012` подтверждены. Production E2E подтвердил persistence после relogin/cross-device/restart, owner isolation, stale `409`, no-op checkpoint, read-only history/restore, direct edit r2, durable photo/logo assets, iPhone Safari photo r3, preview/PDF parity r4 и mobile flow. Final regression and Render log privacy/error review were subsequently confirmed in 1.4.27. PROF-003 is complete within that historical accepted scope; AI-003 does not constitute a new production re-test.
 
 **Exclusions:** AI interview/rewrite, collaborative merge, public sharing, server PDF binary storage, external object provider, template marketplace и PRIV-001 export/delete/retention.
 
@@ -848,30 +850,27 @@ Active candidate inventory: PLAN_CURRENT 1.5.2; PROJECT_PASSPORT 2.69; AI-001 В
 
 **Rollback:** verify backup first; to return to the previous exact-revision application, stop writers and perform a controlled downgrade to 0014 only after preserving any AI accounting metadata. Do not assume the old readiness accepts 0015.
 
-#### AI-002 - Анализ резюме / synthetic candidate
+#### AI-002 - Synthetic/reference resume analysis
+**Приоритет:** P1  
+**Статус:** ВЫПОЛНЕНО
 
-**Приоритет:** P1  **Статус:** НУЖНА ПРОВЕРКА
+AI-002: **ВЫПОЛНЕНО** in synthetic/reference-only scope. Final owner-supplied documents dated 2026-09-15 establish CI #270 PASS after the import hotfix, Neon staging at `20260915_0016`, owner review/relogin persistence and the final conditional-actions UI smoke. `AI_ANALYSIS_REVIEW_ENABLED` was returned to disabled; `/api/ai/status` remained manual/unavailable. No new paid Alice call and no real resume dispatch were required. A post-UI-hotfix CI run number is not known; the current main (33) archive comment is recorded as source evidence, not a new CI claim.
 
-Rebuilt from main (32), not recovered from the unavailable original candidate. Structured, evidence-linked synthetic resume analysis; immutable report versions; separate accept/reject decisions and history; no automatic canonical profile updates. Three additive tables in 0016. Private reference UI defaults off and never calls a provider. Internal provider path reuses AI-001 with feature validation before settlement.
-
-Scope and tests: AI002_IMPLEMENTATION.md, AI002_RUNBOOK.md and AI002_VERIFICATION_STATUS.md. Actual user profile/PDF analysis, calibrated confidence, production activation and live provider verification are not included. LEGAL-001 remains deferred and mandatory. External CI/Neon/private-review smoke must pass before closure.
+Three tables at 0016 persist reports, decisions and review events. Recommendations never automatically become confirmed profile facts. See AI002_VERIFICATION_STATUS v1.1 and the owner-supplied final PDFs.
 
 #### AI-003 - Адаптивное AI-интервью в конструкторе
+**Приоритет:** P1  
+**Статус:** НУЖНА ПРОВЕРКА
 
-**Приоритет:** P1
-**Статус:** ЗАПЛАНИРОВАНО
+The technical r1 implementation is a **synthetic/reference-only foundation**, not a live Alice interview. Two new pinned RU/EN fixtures, separate from the accepted benchmark, drive a bounded adaptive question graph. A vague answer requests clarification; a number requests its period/source; an unconfirmed number is omitted. Skip and rewind are supported. Questions therefore depend on previous answers without any provider dispatch.
 
-**Цель:** Задавать уточняющие вопросы и превращать обязанности в подтверждённые достижения.
+Conversation state, immutable source snapshot/hash and append-only events persist in `resume_interview_sessions` and `resume_interview_events` (additive `20260916_0017`). A session starts with a newly created isolated synthetic PROF-003 draft; attaching an existing real draft is not supported. Owner scope, revision checks, operation idempotency and atomic confirmation protect storage. Final statements are exact selected reference-answer facts; excluded/skipped facts are not added. Confirmation writes only the synthetic draft's achievements and a PROF-003 immutable version; canonical career-profile facts never change.
 
-**Реализация:** Conversation state, question goals, metric hints, mandatory confirmation.
+Private `/ai-interview` and `/resume-builder/<draft_id>/interview` require an active verified allowlisted administrator and `AI_INTERVIEW_REVIEW_ENABLED=1`. Default is off. The ordinary manual builder gets only a conditional private link; original editing, images and PDF code remain intact. No arbitrary answer text or uploads are accepted by this feature. Existing export/deletion and backup inventory include the new data.
 
-**Влияние на код:** interview service/models, AI prompts/schemas, builder API/UI/tests.
+Exit gates: ordinary GitHub CI including real PostgreSQL 17, staging readiness at `0017`, private owner branching/confirmation/stale-write/relogin/mobile smoke, core regressions, and review flag returned off. See `AI003_IMPLEMENTATION.md`, `AI003_RUNBOOK.md`, `AI003_VERIFICATION_STATUS.md`. The package is not externally accepted yet. Free-form real interviews, live multi-turn Alice, semantic rewriting and public activation remain outside r1 and must be reviewed separately; this foundation does not claim those features complete.
 
-**Влияние на сайт:** Статичная анкета становится адаптивной, пользователь контролирует финальный текст.
-
-**Критерии готовности:** Question depends on previous answer; facts not invented; history restores.
-
-**Зависимости:** AI-001, PROF-001/003.
+Dependencies: AI-001, PROF-001/003; LEGAL-001 remains deferred and blocks real-data/public AI.
 
 #### AI-004 - Объяснимая оценка соответствия вакансии
 
@@ -1506,8 +1505,9 @@ Render остаётся staging/резервной площадкой на пе�
 ```text
 AI-PROVIDER-001 COMPLETE
 -> AI-001 COMPLETE (synthetic-only foundation)
--> AI-002 REBUILT CANDIDATE; main (32) inspected, new CI/staging pending
--> AI-003..006 technical development with public AI blocked
+-> AI-002 COMPLETE (synthetic/reference-only, staging 0016)
+-> AI-003 CANDIDATE (main 33; CI/staging 0017 PENDING)
+-> AI-004..006 technical development with public AI blocked
 -> JOB-001..004
 ```
 
@@ -1529,11 +1529,11 @@ INFRA-001 real VPS test
 
 `AI-BENCH-001` не зависит от VPS. Финальная доступность Yandex AI с production source IP повторно подтверждается в `INFRA-001`. Порядок снова меняется только новой MINOR-версией PLAN_CURRENT с объяснением зависимостей.
 
-## 16. Current gate / AI-002
+## 16. Current gate / AI-003
 
-AI-BENCH-001, AI-PROVIDER-001 and AI-001: **ВЫПОЛНЕНО**. LEGAL-001: **ОТЛОЖЕНО ДО РЕШЕНИЯ ВЛАДЕЛЬЦА**. AI-002: **НУЖНА ПРОВЕРКА**.
+AI-002: **ВЫПОЛНЕНО** in its accepted scope. AI-003: **НУЖНА ПРОВЕРКА**. LEGAL-001: **ОТЛОЖЕНО ДО РЕШЕНИЯ ВЛАДЕЛЬЦА**.
 
-Staging is verified at `20260914_0015`; GitHub CI #266 and manual-mode/core smoke are accepted. Keep provider keys out of GitHub and leave all public AI activation controls disabled. AI-002 technical development may begin only after the owner supplies the current GitHub `main` ZIP and its source state is compared. AI-002 must not bypass unresolved LEGAL-001.
+Fresh main (33) has been inspected and is the code baseline. Candidate 0017 is not the currently accepted staging schema: that remains 0016 until deployment is confirmed. Run ordinary CI, preserve a verified backup, deploy, follow AI003_RUNBOOK, and return the temporary review flag to off. Public generation stays disabled. Email verification delivery remains unresolved. Do not start AI-004 or mark AI-003 complete until the external gates pass.
 
 ## 17. Обязательный отчёт после каждого пакета
 
@@ -1552,6 +1552,12 @@ GitHub/production/API: <подтверждено или требуется>
 ```
 
 ## 18. Журнал версий
+
+- 1.5.4 / 2026-09-16: AI-003 reference-interview candidate from main (33); two-table 0017, private adaptive flow, atomic confirmation; CI/staging pending.
+- 1.5.3 / 2026-09-15: AI-002 accepted per owner final PDFs; staging 0016, manual AI, review flag off.
+
+Historical entries below retain their original dates and do not change the current gate.
+
 
 - 1.5.0 / 2026-09-14: owner defers unresolved LEGAL-001 decisions; technical-only AI-001 candidate adds migration0015 with public/real-data activation still blocked. New CI/staging gate pending. Earlier unpublished 1.4.52 drafts are not active releases.
 
@@ -1756,6 +1762,6 @@ Artifact `ai-bench-20260827T112440Z-243eaaeb` completed 8/8 calls with zero prov
 | 1.4.51 | 2026-09-14 | AI-PROVIDER-001 closure | Owner approval + ordinary CI #262 green; provider strategy complete; LEGAL-001 becomes READY |
 | 1.4.50 | 2026-09-14 | AI-PROVIDER-001-R2 | Owner-approved manual fallback warning; technical guards separated from commercial tiers; Free + Standard launch intent; Max reserved; r1 CI #261 green; final r2 CI pending |
 
-## 99. Rebuilt AI-002 delivery / 2026-09-15
+## 99. Historical AI-002 reconstruction / 2026-09-15
 
-The owner has now supplied main (32); the earlier fresh-ZIP prerequisite is satisfied. Earlier future/pending statements describe their dated acceptance. Current candidate: AI-002 v1.5.2 rebuild-r2, new CI/staging required. Unavailable candidate-r1 links and claimed test results are not used as evidence. See AI002_VERIFICATION_STATUS.md.
+Historical note: main (32) satisfied the AI-002 reconstruction prerequisite on 2026-09-15; main (33) is the current AI-003 source. Earlier future/pending statements describe their dated acceptance. Historical candidate: AI-002 v1.5.2 rebuild-r2. Later accepted by the owner at 0016; current AI-003 evidence is separate. Unavailable candidate-r1 links and claimed test results are not used as evidence. See AI002_VERIFICATION_STATUS.md.

@@ -1,0 +1,8 @@
+{
+  "version": "reference-interview-v1",
+  "files": {
+    "schemas/interview/reference_v1.schema.json": "8f06dd1be231fdda1a2503d461e3c494a25bf5d706062a7d53ebfc10366bd283",
+    "prompts/interview/reference/resume-interview-ru-01.json": "6263a19171e2876343fd552db9c164100c199a8e4143a11830e6e1ce8d2fac3a",
+    "prompts/interview/reference/resume-interview-en-01.json": "5da8000a5b5aeee7ef82396fd69d68c80681ca000e7a11ea250a4c1eca1cc33d"
+  }
+}

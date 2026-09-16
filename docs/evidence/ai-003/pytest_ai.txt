@@ -1,0 +1,23 @@
+..s.......ss............................................................ [ 21%]
+.............s........................................................s. [ 42%]
+........................................................................ [ 64%]
+........................................................ [ 81%]
+...............................................................                [100%]
+============================= slowest 8 durations ==============================
+1.92s call     tests/test_ai003_package.py::test_all_direct_package_commands_are_stdlib_only
+1.19s call     tests/test_ai002_package.py::test_route_fixture_import_resolves_from_repository_root
+0.82s call     tests/test_ai001_package.py::test_ai001_checker_stays_dependency_free_for_isolated_benchmark_gate
+0.69s call     tests/test_ai_bench_alice_final_gate.py::AliceFinalGateTests::test_safe_deterministic_scenario_repairs_are_audited_but_allowed
+0.68s call     tests/test_ai_bench_alice_final_gate.py::AliceFinalGateTests::test_cover_letter_presentation_counter_rejected
+0.68s call     tests/test_ai_bench_alice_final_gate.py::AliceFinalGateTests::test_partial_rejected
+0.66s call     tests/test_ai_bench_alice_final_gate.py::AliceFinalGateTests::test_old_contract_is_rejected
+0.64s call     tests/test_ai_bench_alice_final_gate.py::AliceFinalGateTests::test_pass
+=========================== short test summary info ============================
+SKIPPED [1] tests/test_ai002_routes.py:7: could not import 'flask': No module named 'flask'
+SKIPPED [1] tests/test_ai003_routes.py:9: Flask route execution is mandatory in installed GitHub CI
+SKIPPED [1] tests/test_ai001_migration.py:33: POSTGRES_TEST_URL required; dedicated CI provides PostgreSQL
+SKIPPED [1] tests/test_ai001_routes.py:6: Flask is installed from requirements.txt in CI
+SKIPPED [1] tests/test_ai001_routes.py:16: Flask is installed from requirements.txt in CI
+SKIPPED [1] tests/test_ai002_migration.py:35: Disposable PostgreSQL CI database required
+SKIPPED [1] tests/test_ai003_migration.py:49: Disposable PostgreSQL service required in GitHub CI
+330 passed, 7 skipped, 82 subtests passed in 19.46s

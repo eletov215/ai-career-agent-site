@@ -19,14 +19,18 @@ def test_additive_0016_roundtrip_and_existing_user_survives(tmp_path):
     url=f'sqlite:///{tmp_path}/migration.db';upgrade_database(url,'20260914_0015');db=create_database(url)
     old=set(inspect(db.engine).get_table_names());uid=str(uuid4())
     with db.session() as s,s.begin():s.add(User(id=uid,status='active',email_verified_at=1,created_at=1,updated_at=1))
-    upgrade_database(url);assert current_revision(db.engine)=='20260915_0016'
+    upgrade_database(url,'20260915_0016');assert current_revision(db.engine)=='20260915_0016'
     assert set(inspect(db.engine).get_table_names())-old==NEW
     from alembic import command
+    # Metadata includes successor tables: check HEAD, then keep this test
+    # focused on the historical 0016 round trip.
+    upgrade_database(url)
     command.check(alembic_config(url))
-    upgrade_database(url);downgrade_database(url,'20260914_0015')
+    downgrade_database(url,'20260915_0016')
+    upgrade_database(url,'20260915_0016');downgrade_database(url,'20260914_0015')
     assert set(inspect(db.engine).get_table_names())==old
     with db.session() as s:assert s.get(User,uid)
-    upgrade_database(url);assert current_revision(db.engine)=='20260915_0016';db.dispose()
+    upgrade_database(url,'20260915_0016');assert current_revision(db.engine)=='20260915_0016';db.dispose()
 
 @pytest.mark.skipif(not os.environ.get('POSTGRES_TEST_URL'),reason='Disposable PostgreSQL CI database required')
 def test_postgresql_reports_persist_and_parallel_save_is_unique():

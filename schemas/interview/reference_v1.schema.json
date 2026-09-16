@@ -1,0 +1,190 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "fixture_id",
+    "contract_version",
+    "synthetic",
+    "origin",
+    "language",
+    "title",
+    "draft_answers",
+    "start_node",
+    "nodes",
+    "facts"
+  ],
+  "properties": {
+    "fixture_id": {
+      "enum": [
+        "resume-interview-ru-01",
+        "resume-interview-en-01"
+      ]
+    },
+    "contract_version": {
+      "const": "reference-interview-v1"
+    },
+    "synthetic": {
+      "const": true
+    },
+    "origin": {
+      "const": "reference"
+    },
+    "language": {
+      "enum": [
+        "ru",
+        "en"
+      ]
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 160
+    },
+    "draft_answers": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "role",
+        "experience",
+        "skills"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1000
+        },
+        "role": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1000
+        },
+        "experience": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1000
+        },
+        "skills": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1000
+        }
+      }
+    },
+    "start_node": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_-]{0,47}$"
+    },
+    "nodes": {
+      "type": "object",
+      "propertyNames": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9_-]{0,47}$"
+      },
+      "minProperties": 1,
+      "maxProperties": 8,
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "goal",
+          "question",
+          "hint",
+          "choices"
+        ],
+        "properties": {
+          "goal": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 1000
+          },
+          "question": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 1000
+          },
+          "hint": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 1000
+          },
+          "choices": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "id",
+                "text",
+                "next",
+                "fact_ids",
+                "kind"
+              ],
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "pattern": "^[a-z][a-z0-9_-]{0,47}$"
+                },
+                "text": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 1000
+                },
+                "next": {
+                  "type": "string",
+                  "pattern": "^[a-z][a-z0-9_-]{0,47}$"
+                },
+                "fact_ids": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "pattern": "^[a-z][a-z0-9_-]{0,47}$"
+                  },
+                  "uniqueItems": true,
+                  "maxItems": 4
+                },
+                "kind": {
+                  "enum": [
+                    "answer",
+                    "skip"
+                  ]
+                }
+              }
+            },
+            "minItems": 2,
+            "maxItems": 4
+          }
+        }
+      }
+    },
+    "facts": {
+      "type": "object",
+      "propertyNames": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9_-]{0,47}$"
+      },
+      "minProperties": 1,
+      "maxProperties": 12,
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "text",
+          "kind"
+        ],
+        "properties": {
+          "text": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 1000
+          },
+          "kind": {
+            "const": "reference_answer"
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,58 +1,52 @@
 # AI Career Agent
 
 <!-- ACA-CANONICAL-STATUS:START -->
-## Каноническое состояние / 2026-09-15
+## Каноническое состояние / 2026-09-16
 
 | Поле | Значение |
 |---|---|
-| Current package | AI-002 - НУЖНА ПРОВЕРКА; rebuilt synthetic analysis/report candidate r2 |
-| Source code | Owner main (32).zip; bc177dd6b970750f556f48f34dbd022a30e80a34; SHA-256 161d52efebf1762a5dd73f0be890b7afb204d2a26e34f9237341eaf832075de9 |
-| Canonical versions | PLAN 1.5.2; PASSPORT 2.69; SOURCE_AUDIT 1.5.2 |
-| Completed AI foundation | AI-BENCH-001 / AI-PROVIDER-001 / AI-001 - ВЫПОЛНЕНО in their accepted scope |
-| LEGAL-001 | ОТЛОЖЕНО ДО РЕШЕНИЯ ВЛАДЕЛЬЦА; public real-data AI and payments remain disabled |
-| Schema | Staging verified 20260914_0015; candidate target 20260915_0016; three additive report/review tables |
-| Candidate boundary | Two pinned resume fixtures; internal provider validation; private reference-only UI; no live dispatch from browser |
-| Verification | New local measurements only; GitHub CI and Neon migration/smoke pending |
-| Next action | Verify AI-002; preserve backup and closed AI switches; do not begin AI-003 yet |
-
+| Current package | AI-003 - НУЖНА ПРОВЕРКА; synthetic/reference-only adaptive interview candidate r1 |
+| Source code | Owner main (33).zip; archive comment 20947f2e015097010cbe33772f7662bef4503f37; SHA-256 3f46536638fb541310c15a5520dc5a445d4916d8af90baf14292c99866971533 |
+| Canonical versions | PLAN 1.5.4; PASSPORT 2.71; SOURCE_AUDIT 1.5.4 |
+| Completed AI foundation | AI-BENCH-001 / AI-PROVIDER-001 / AI-001 / AI-002 - ВЫПОЛНЕНО in accepted boundaries |
+| LEGAL-001 | ОТЛОЖЕНО ДО РЕШЕНИЯ ВЛАДЕЛЬЦА; public real-data AI and paid launch remain blocked |
+| Schema | Last accepted staging 20260915_0016; AI-003 target 20260916_0017, two additive tables; NOT YET verified on staging |
+| Candidate boundary | Private RU/EN reference interviews; pinned choice IDs; persisted history; explicit confirmation into isolated synthetic draft; no provider call |
+| Verification | Local evidence in AI003_VERIFICATION_STATUS; GitHub CI, PostgreSQL 17, Render and owner browser acceptance PENDING |
+| Next action | Ordinary CI, backup, staging migration and private AI-003 review; then disable review flag; no AI-004 start before acceptance |
 <!-- ACA-CANONICAL-STATUS:END -->
-
-## 0. AI-002 rebuilt candidate / 2026-09-15
-
-Current: AI-002 v1.5.2 rebuild-r2, NEEDS_VERIFICATION. Baseline main (32) / bc177dd; schema target 0016. Read docs/AI002_RUNBOOK.md before applying. Public AI remains disabled. The optional /ai-analysis admin review uses pinned reference text, not live Alice. Canonical repository versions: PLAN1.5.2 / PASSPORT2.69.
 
 ## 1. Product and runtime
 
-Career-support web service: account -> confirmed career profile -> resume -> real vacancy search -> future AI analysis/match/letters -> future tracker. Flask + Gunicorn (`app:app`), SQLAlchemy/Alembic PostgreSQL; external sync/privacy workers. Never create `app_fixed.py`.
+Flask + Gunicorn (`app:app`), PostgreSQL through SQLAlchemy/Alembic, independent sync/privacy workers. Confirmed career profiles and editable resume drafts remain separate. HH, SuperJob, Reed and Trudvsem vacancy search is unchanged by AI-003. Do not create `app_fixed.py`.
 
-## 2. Current work and checks
+## 2. AI-003 candidate
 
-AI-001 is accepted as a synthetic-only technical foundation. AI-002 is the current rebuilt candidate awaiting external verification. AI-BENCH and AI-PROVIDER are complete; LEGAL-001 is deferred by the owner, not waived. No real-data generation endpoint exists. Keep deployment activation flags disabled.
+Read `docs/AI003_RUNBOOK.md` before deployment. This is a private synthetic/reference-only adaptive interview, not a live Alice conversation. It accepts pinned answer IDs, keeps history, and applies only explicitly selected reference statements to a newly created test draft after confirmation. No real profile is read or sent to a provider. The accepted benchmark and provider strategy remain unchanged.
 
 ```bash
 python scripts/check_ai_provider_package.py
 python scripts/check_ai_bench_package.py
 python scripts/check_ai001_package.py
 python scripts/check_ai002_package.py
-python -m pytest -q tests/test_ai001_*.py tests/test_ai002_*.py
+python scripts/check_ai003_package.py
+python -m pytest -q
 python scripts/check_document_structure.py
 python scripts/check_repository_hygiene.py
 ```
 
-Candidate schema is `20260915_0016`; last externally verified staging is `20260914_0015`. Ordinary CI and staging smoke are still required. Both paid benchmark workflow inputs remain false. No provider secret is needed for acceptance.
+Ordinary CI installs pinned dependencies and runs PostgreSQL 17. Paid benchmark workflow inputs remain false. No new credentials are needed for this reference review. Full local results and skips are recorded in `docs/AI003_VERIFICATION_STATUS.md`.
 
-## 3. Source of truth and documentation
+## 3. Source of truth
 
-Use the most recently supplied GitHub archive for code and the latest canonical status for decisions. Source audit records the exact input hashes and all documentation drift. This delivery contains a PATCH and updated repository Markdown. Previously delivered external canonical v1.5.1 documents remain the historical AI-001 acceptance evidence; no newly rendered external PDF/DOCX bundle is claimed for this PATCH-only rebuild.
+The latest supplied GitHub archive is the code baseline. Owner final PDFs dated 2026-09-15 establish AI-002 acceptance and legal deferral, overriding stale Markdown in main (33). This candidate synchronizes repository Markdown to PLAN1.5.4 / PASSPORT2.71 / AUDIT1.5.4. Historical entries remain dated. See `docs/CANONICAL_DOCUMENTS.md` and `docs/SOURCE_AUDIT.md`.
 
-Read `docs/AI_PROVIDER001_DECISION.md`, `docs/AI_PROVIDER001_COSTS.md`, `docs/AI_PROVIDER001_DATA_AND_FAILURE_POLICY.md`, `docs/AI_PROVIDER001_SOURCES.md` and `docs/AI_PROVIDER001_VERIFICATION_STATUS.md`.
+## 4. Deployment and gates
 
-## 4. Deployment and next package
+Accepted staging: Render web + Neon PostgreSQL at `20260915_0016`. Candidate migration adds only two interview tables at `20260916_0017`; back up first. `AI_ENABLED=0`, `AI_KILL_SWITCH=1`, `AI_SYNTHETIC_ACCESS_ENABLED=0`, `AI_ANALYSIS_REVIEW_ENABLED=0` stay unchanged. `AI_INTERVIEW_REVIEW_ENABLED=0` is the new default. Only temporarily set it to `1` for verified allowlisted administrators during the runbook smoke. Return it to `0` afterward.
 
-Existing Render web uses Neon PostgreSQL staging, verified at revision `20260914_0015`. Back up before deployment: this package adds three report/review tables at `20260915_0016`. No provider credentials or activation changes are needed. INFRA-001 remains the pre-release VPS field test. Actual data-location, backup, mail-delivery and production AI activation gates are not bypassed by healthy staging.
-
-Owner strategy approval and AI-001 acceptance are recorded. Next: AI-002 ordinary CI, migration and private review smoke. AI-003 remains planned. LEGAL-001 remains deferred but mandatory before public real-data AI or a commercial release. Do not enable production AI or change billing settings as part of this patch.
+LEGAL-001 remains deferred and blocks public real-data AI, paid subscriptions and commercial launch. Verification email delivery remains unresolved. INFRA-001 and production restore/domain migration stay pre-release work. AI-004 is not started before AI-003 acceptance.
 
 ## 5. Upload and security
 
-Apply PATCH contents over a clean synchronized repository; never delete the repository first. Keep `.git` intact. Do not commit keys, `.env`, databases, dumps, virtualenvs, caches, bytecode or raw production payloads. Full ZIP is a complete source snapshot; PATCH contains only changed/new paths.
+Full ZIP is a complete source snapshot; PATCH is an overlay of changed/new paths for main (33) only. Do not delete the repository or `.git` first. Preserve `.github/workflows/ci.yml` when uploading. Never commit `.env`, tokens, databases, backups, virtualenvs, caches or bytecode. No package command sends mail, calls Alice or changes a remote account.

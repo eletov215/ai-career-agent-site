@@ -64,7 +64,7 @@ def load_boundary(root:Path)->dict:
         if item['previous_sha256']!=old.get(rel) or not hash_matches((root/rel).read_bytes(),current):
             raise ValueError('Runtime boundary checksum mismatch')
         effective[rel]={**item,'current_sha256':current}
-    return effective
+    return {**effective, **successor}
 
 def validate(root:Path=ROOT)->list[str]:
     errors=[]
@@ -88,7 +88,7 @@ def validate(root:Path=ROOT)->list[str]:
                 errors.append('Accepted schema changed: '+p.name)
         db=(root/'database.py').read_text()
         successor=(root/'docs/evidence/ai-002/change_boundary.json').is_file()
-        expected_head='20260915_0016' if successor else '20260914_0015'
+        expected_head='20260916_0017' if (root/'docs/evidence/ai-003/change_boundary.json').is_file() else '20260915_0016' if successor else '20260914_0015'
         if f'CURRENT_REVISION = "{expected_head}"' not in db:errors.append('Unexpected schema head')
         if successor:
             from scripts.check_ai002_package import validate as validate_ai002

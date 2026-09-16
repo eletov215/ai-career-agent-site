@@ -1,0 +1,14 @@
+{
+  "python_compile": "PASS",
+  "python_files": 236,
+  "jinja_parse": "PASS",
+  "template_count": 35,
+  "yaml_parse": [
+    ".github/workflows/ci.yml",
+    "compose.yaml",
+    "render.yaml"
+  ],
+  "builder_javascript_vs_input": "byte-identical script blocks",
+  "new_feature_javascript": "none; native forms",
+  "note": "YAML parse is not remote workflow execution; Flask/PG still require CI"
+}

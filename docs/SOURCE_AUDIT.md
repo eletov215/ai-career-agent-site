@@ -1,26 +1,31 @@
-# AI Career Agent - Source audit / AI-002 rebuild
+# AI Career Agent - Source audit / AI-003 candidate
 
 | Поле | Значение |
 |---|---|
-| Version | 1.5.2 / 2026-09-15 |
-| Baseline | ai-career-agent-site-main (32).zip |
-| Archive comment | bc177dd6b970750f556f48f34dbd022a30e80a34 |
-| SHA-256 | 161d52efebf1762a5dd73f0be890b7afb204d2a26e34f9237341eaf832075de9 |
-| Files | 467 in original ZIP |
-| Current package | AI-002 - NEEDS_VERIFICATION |
+| Version | 1.5.4 / 2026-09-16 |
+| Code baseline | ai-career-agent-site-main (33).zip |
+| Archive comment | 20947f2e015097010cbe33772f7662bef4503f37 |
+| Input SHA-256 | 3f46536638fb541310c15a5520dc5a445d4916d8af90baf14292c99866971533 |
+| Package | AI-003 r1 / NEEDS_VERIFICATION |
+| Accepted staging | 20260915_0016, from final AI-002 evidence |
+| Candidate target | 20260916_0017 / staging PENDING |
 
-## 1. Precedence and source state
+## 1. Source precedence
 
-The owner-supplied ZIP is this rebuild's baseline. It represents accepted AI-001 with the dependency-free checker hotfix. No remote GitHub state beyond this archive is asserted. Separate canonical v1.5.1 documents establish AI-001 completion from CI #266 and staging 0015. Repository docs lagged behind them; their closure text is synchronized without inventing new deployment evidence.
+The owner supplied main (33), it was CRC-checked and extracted before modifications. Its final AI-002 recommendation-action condition is present. The ZIP comment is literal source evidence, not an independently verified remote HEAD or CI result. No other repository was used as a code source.
 
-## 2. Missing delivery boundary
+The supplied final PLAN1.5.3, AI002_IMPLEMENTATION1.1, AI002_VERIFICATION_STATUS1.1, SOURCE_AUDIT1.5.3, ROADMAP and CANONICAL_DOCUMENTS PDFs (2026-09-15) establish accepted AI-002 state. LEGAL001_DEFERRED_DECISION1.3 establishes legal deferral and unresolved mail delivery. Their later decisions supersede old pending statements in the ZIP's Markdown. Original PROJECT_PASSPORT2.70 was listed in the registry but not separately supplied; this release updates available 2.69 Markdown using only verified changes and that registry, not an invented recovered 2.70 text.
 
-Previously announced AI-002 candidate files were unavailable. They are not the source of this patch and their claimed checks are not reused. The present code was rebuilt against the preserved main (32) bytes and actually tested as documented in rebuild_verification.json. This is candidate r2, not an assertion of a recovered r1.
+## 2. Measured change boundary
 
-## 3. Reviewed change boundary
+`evidence/ai-003/baseline_files_sha256.json` records every input file digest, archive digest and comment. `change_boundary.json` lists the thirteen reviewed existing runtime paths with previous/current digests. The AI-001 and AI-002 original manifests remain byte-identical; their gate adapters now validate the explicit successor chain rather than blindly rejecting intended 0017 wiring.
 
-New report/review tables require 0016. Public runtime flags, accepted benchmark prompts/schemas/evals and AI-PROVIDER decisions remain unchanged. Each reviewed runtime difference has its old/new SHA-256 in docs/evidence/ai-002/change_boundary.json. Previous boundary manifests remain intact; successor checks explicitly chain them. PATCH composition is compared byte-for-byte against main (32); no deletes or runtime secrets are included.
+Accepted `evals/`, earlier prompts/schemas, provider policy and all unmodified assets remain byte-preserved. No dependency version was changed. The two new reference fixtures are independent of accepted paid benchmark evidence. The complete diff is in `AI003_CHANGESET.md`. No input files are intentionally deleted. CI changes add only ordinary AI-003 checks; paid jobs stay manual-only.
 
-## 4. Open gates
+## 3. Evidence limits
 
-New GitHub CI, Neon migration and UI smoke remain required. Owner identity/jurisdiction and LEGAL-001 are unresolved. No real user resume was sent to a provider, no paid API was called and no remote deployment/database was modified during this rebuild.
+Local filesystem/test checks are not GitHub Actions, Render, Neon or a real browser account test. Flask and psycopg were unavailable locally; dependency installation failed because network access was unavailable. PostgreSQL 17/container and real HTTP acceptance remain CI/staging gates. The baseline full test attempt reached its time limit without a completed result; it is not listed as a passed baseline. Final local results are recorded separately in AI003_VERIFICATION_STATUS.
+
+## 4. Known remaining work
+
+Public AI is still disabled. LEGAL-001 and email verification are not resolved by this package. Existing staging data remains on 0016 until the owner deploys and confirms 0017. No new billable provider run, remote deployment, mail message or destructive production operation was performed.

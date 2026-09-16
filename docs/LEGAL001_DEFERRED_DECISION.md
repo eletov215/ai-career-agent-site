@@ -1,77 +1,32 @@
-# LEGAL-001 — отложенное решение владельца
+# AI Career Agent - LEGAL-001 deferred owner decision
 
 | Поле | Значение |
 |---|---|
-| Документ | LEGAL001_DEFERRED_DECISION |
-| Версия | 1.2 |
-| Дата | 2026-09-15 |
-| Статус | ОТЛОЖЕНО ДО РЕШЕНИЯ ВЛАДЕЛЬЦА |
-| Блокирует | публичное включение AI, финальную публикацию юридических текстов и коммерческий релиз |
-| Не блокирует | техническую разработку AI-001..AI-006 в fail-closed режиме |
+| Version | 1.3 / 2026-09-15; synchronized 2026-09-16 |
+| Status | ОТЛОЖЕНО ДО РЕШЕНИЯ ВЛАДЕЛЬЦА |
+| Blocks | Public real-data AI, final legal texts, paid subscriptions, commercial release |
+| Permits | Technical AI-001..006 work only in fail-closed synthetic/reference-only scope |
 
-## 1. Решение владельца
+## 1. Owner decision and unknowns
 
-На 2026-09-14 владелец проекта прямо подтвердил, что юридическое оформление сервиса пока не определено и к этому вопросу нужно вернуться позднее. Никакие недостающие реквизиты не считаются известными по умолчанию.
+The operator country/jurisdiction, legal form/name/requisites, legal contact, first launch countries, final data-location/transborder scheme and final Terms/Privacy/AI consent remain undecided. A benchmark reviewer's name is not automatically an operator legal identity. No deadline is invented. Source: owner-supplied ACA_LEGAL001_DEFERRED_DECISION_v1.3_FINAL.pdf.
 
-Не определены:
+## 2. Technical boundary
 
-- страна/юрисдикция оператора;
-- юридическая форма оператора: физическое лицо, самозанятый, ИП или организация;
-- окончательное наименование/ФИО оператора и обязательные регистрационные реквизиты;
-- контактный адрес/канал для юридически значимых обращений;
-- страны первого публичного запуска;
-- финальная схема размещения и трансграничной обработки персональных данных;
-- финальные тексты пользовательского соглашения, политики конфиденциальности и AI-согласия с учётом выбранной юрисдикции.
+Keep `AI_ENABLED=0`, `AI_KILL_SWITCH=1`, `AI_SYNTHETIC_ACCESS_ENABLED=0`. No real resume/profile dispatch. No `AI_LEGAL_APPROVED` boolean may substitute an actual legal decision or consent. Reference-review feature flags do not open provider access. Draft legal UI may be designed but must not be represented as final consent.
 
-Имя `Шекунов Д.С.`, использованное как имя human reviewer в AI-BENCH, **не является автоматически реквизитом оператора** и не должно переноситься в публичные юридические документы без отдельного решения владельца.
+## 3. Mandatory return gate
 
-## 2. Технический режим до решения
+Before public real-data AI, paid subscriptions or commercial release, establish operator/jurisdiction, markets, data/processors, production location/transborder scheme, retention/revocation/deletion, actual versions of Terms/Privacy/AI consent, versioned acceptance and owner/legal review. Technical success does not close this gate.
 
-До закрытия LEGAL-001:
+## 4. Accepted technical state and separate email issue
 
-```text
-AI_ENABLED=0
-AI_KILL_SWITCH=1
-AI_SYNTHETIC_ACCESS_ENABLED=0
-```
+AI-001 and AI-002 are accepted only in synthetic/reference-only scope. The private AI-002 flag was returned off. Render historical users were not transferred to the new Neon database. One normally registered staging admin was manually activated because verification email delivery remained unresolved. That workaround is not evidence of public registration/consent readiness.
 
-AI-001 может реализовывать provider interface, structured-output contract, технические лимиты, usage/cost ledger, circuit breaker и manual fallback. Однако пользовательские запросы с реальными данными не должны отправляться AI-провайдеру.
+## 5. Next technical action
 
-Юридические страницы/consent UX могут проектироваться как черновики и тестироваться на синтетических данных, но не должны объявляться финальными или использоваться как доказательство согласия реальных пользователей.
+AI-003 is now a candidate based on the inspected main (33), with public AI still blocked. Owner/legal decisions remain open, and owner timing remains unset. AI003_RUNBOOK does not authorize real-data processing. The earlier unaccepted LEGAL prototype is not in force.
 
-## 3. Обязательный gate перед публичным AI
+## 6. History
 
-Перед включением AI для реальных пользователей требуется отдельный пакет/решение, которое минимум фиксирует:
-
-1. оператора и его юрисдикцию;
-2. перечень рынков публичного запуска;
-3. фактические категории данных и процессоров;
-4. data-location/transborder схему для production;
-5. сроки хранения и процедуры отзыва/удаления;
-6. версии публичных Terms/Privacy/AI consent;
-7. порядок versioned acceptance;
-8. owner/legal review этих текстов.
-
-Только после этого можно выполнять activation checklist AI-001/AI-002. Техническая готовность AI сама по себе не заменяет LEGAL-001.
-
-## 4. Следующее действие
-
-LEGAL-001 остаётся в статусе `ОТЛОЖЕНО ДО РЕШЕНИЯ ВЛАДЕЛЬЦА`. AI-001 технически завершён; следующий пакет - AI-002 после загрузки свежего GitHub ZIP. Возврат к LEGAL-001 обязателен до public/real-data AI, платных подписок или коммерческого релиза.
-
-
-## 5. Scope of this deferral / 1.5.0
-
-This is an explicit sequencing change requested by the owner, not legal clearance. PLAN_CURRENT moves to a MINOR version (1.5.0) because technical AI development now precedes completion of LEGAL-001. The release/real-data gate is unchanged.
-
-AI-001 accepts only eight pinned synthetic fixture IDs. There is no `AI_LEGAL_APPROVED` shortcut in this package: an environment variable cannot turn a fictional consent into a real one. A future reviewed implementation must add real-data entry points and actual owner-bound, versioned consent checks.
-
-The earlier LEGAL-001 prototype and candidate documents were never delivered/deployed. They are not included in this code package, and their proposed migration was not applied. No fictitious operator data or consent acceptance is added to any account.
-
-Return trigger: before public AI activation, paid subscriptions or commercial release, whichever happens first. Responsible decision-maker: project owner. Due date: not supplied; do not invent one.
-
-## 6. Version log
-
-| Version | Date | Change |
-|---|---|---|
-| 1.2 | 2026-09-15 | AI-001 closure recorded; unresolved operator/jurisdiction questions unchanged; return trigger preserved before public AI/subscriptions/release |
-| 1.1 | 2026-09-14 | Verified deferral; no boolean legal bypass; technical-only AI-001 and mandatory return trigger |
+2026-09-14: owner deferral (1.1), no boolean bypass. 2026-09-15: AI-001 closure (1.2), AI-002 accepted reference-only scope and email caveat (1.3). This synchronization changes no legal decision.

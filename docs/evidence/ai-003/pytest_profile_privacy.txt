@@ -1,0 +1,16 @@
+................................                                         [100%]
+============================= slowest 8 durations ==============================
+0.30s setup    tests/test_resume_draft_service.py::test_assets_are_durable_owner_and_draft_scoped
+0.27s call     tests/test_privacy_service.py::test_retention_cleanup_removes_stale_pending_and_auth_artifacts_only
+0.16s call     tests/test_prof003_migration.py::test_prof003_0012_creates_owner_drafts_versions_assets_and_export_metadata
+0.16s call     tests/test_prof001_migration.py::test_prof001_0010_migration_creates_owner_profile_and_version_tables
+0.16s call     tests/test_prof002_migration.py::test_prof002_0011_adds_confirmed_import_provenance_without_rewriting_history
+0.15s call     tests/test_priv001_migration.py::test_priv001_0013_adds_identifier_free_privacy_audit
+0.15s call     tests/test_privacy_service.py::test_export_is_readable_and_omits_authentication_secrets
+0.15s call     tests/test_privacy_service.py::test_export_includes_owned_resume_asset_and_delete_cascades_resume_and_provider_data
+=========================== short test summary info ============================
+SKIPPED [1] tests/test_privacy_routes.py:14: could not import 'flask': No module named 'flask'
+SKIPPED [1] tests/test_profile_routes.py:10: could not import 'flask': No module named 'flask'
+SKIPPED [1] tests/test_resume_draft_routes.py:12: could not import 'flask': No module named 'flask'
+SKIPPED [1] tests/test_resume_import_routes.py:13: could not import 'flask': No module named 'flask'
+32 passed, 4 skipped in 3.60s

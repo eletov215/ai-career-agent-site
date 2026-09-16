@@ -1,0 +1,294 @@
+{
+  "kind": "offline Jinja+Chromium render, not Flask HTTP/E2E",
+  "network": "all requests blocked; actual repository CSS inlined; webfont fallback; local HTTP blocked by environment",
+  "checks": [
+    {
+      "page": "index",
+      "width": 1440,
+      "scrollWidth": 1440,
+      "fieldsets": 0,
+      "text": 906,
+      "csrf": true
+    },
+    {
+      "page": "active",
+      "width": 1440,
+      "scrollWidth": 1440,
+      "fieldsets": 1,
+      "text": 1158,
+      "csrf": true
+    },
+    {
+      "page": "clarify",
+      "width": 1440,
+      "scrollWidth": 1440,
+      "fieldsets": 1,
+      "text": 1268,
+      "csrf": true
+    },
+    {
+      "page": "metric",
+      "width": 1440,
+      "scrollWidth": 1440,
+      "fieldsets": 1,
+      "text": 1651,
+      "csrf": true
+    },
+    {
+      "page": "review",
+      "width": 1440,
+      "scrollWidth": 1440,
+      "fieldsets": 1,
+      "text": 1986,
+      "csrf": true
+    },
+    {
+      "page": "confirmed",
+      "width": 1440,
+      "scrollWidth": 1440,
+      "fieldsets": 0,
+      "text": 1713,
+      "csrf": true
+    },
+    {
+      "page": "english",
+      "width": 1440,
+      "scrollWidth": 1440,
+      "fieldsets": 1,
+      "text": 1139,
+      "csrf": true
+    },
+    {
+      "page": "empty",
+      "width": 1440,
+      "scrollWidth": 1440,
+      "fieldsets": 0,
+      "text": 1457,
+      "csrf": true
+    },
+    {
+      "page": "error",
+      "width": 1440,
+      "scrollWidth": 1440,
+      "fieldsets": 0,
+      "text": 89,
+      "csrf": true
+    },
+    {
+      "page": "index",
+      "width": 768,
+      "scrollWidth": 768,
+      "fieldsets": 0,
+      "text": 906,
+      "csrf": true
+    },
+    {
+      "page": "active",
+      "width": 768,
+      "scrollWidth": 768,
+      "fieldsets": 1,
+      "text": 1158,
+      "csrf": true
+    },
+    {
+      "page": "clarify",
+      "width": 768,
+      "scrollWidth": 768,
+      "fieldsets": 1,
+      "text": 1268,
+      "csrf": true
+    },
+    {
+      "page": "metric",
+      "width": 768,
+      "scrollWidth": 768,
+      "fieldsets": 1,
+      "text": 1651,
+      "csrf": true
+    },
+    {
+      "page": "review",
+      "width": 768,
+      "scrollWidth": 768,
+      "fieldsets": 1,
+      "text": 1986,
+      "csrf": true
+    },
+    {
+      "page": "confirmed",
+      "width": 768,
+      "scrollWidth": 768,
+      "fieldsets": 0,
+      "text": 1713,
+      "csrf": true
+    },
+    {
+      "page": "english",
+      "width": 768,
+      "scrollWidth": 768,
+      "fieldsets": 1,
+      "text": 1139,
+      "csrf": true
+    },
+    {
+      "page": "empty",
+      "width": 768,
+      "scrollWidth": 768,
+      "fieldsets": 0,
+      "text": 1457,
+      "csrf": true
+    },
+    {
+      "page": "error",
+      "width": 768,
+      "scrollWidth": 768,
+      "fieldsets": 0,
+      "text": 89,
+      "csrf": true
+    },
+    {
+      "page": "index",
+      "width": 390,
+      "scrollWidth": 390,
+      "fieldsets": 0,
+      "text": 906,
+      "csrf": true
+    },
+    {
+      "page": "active",
+      "width": 390,
+      "scrollWidth": 390,
+      "fieldsets": 1,
+      "text": 1158,
+      "csrf": true
+    },
+    {
+      "page": "clarify",
+      "width": 390,
+      "scrollWidth": 390,
+      "fieldsets": 1,
+      "text": 1268,
+      "csrf": true
+    },
+    {
+      "page": "metric",
+      "width": 390,
+      "scrollWidth": 390,
+      "fieldsets": 1,
+      "text": 1651,
+      "csrf": true
+    },
+    {
+      "page": "review",
+      "width": 390,
+      "scrollWidth": 390,
+      "fieldsets": 1,
+      "text": 1986,
+      "csrf": true
+    },
+    {
+      "page": "confirmed",
+      "width": 390,
+      "scrollWidth": 390,
+      "fieldsets": 0,
+      "text": 1713,
+      "csrf": true
+    },
+    {
+      "page": "english",
+      "width": 390,
+      "scrollWidth": 390,
+      "fieldsets": 1,
+      "text": 1139,
+      "csrf": true
+    },
+    {
+      "page": "empty",
+      "width": 390,
+      "scrollWidth": 390,
+      "fieldsets": 0,
+      "text": 1457,
+      "csrf": true
+    },
+    {
+      "page": "error",
+      "width": 390,
+      "scrollWidth": 390,
+      "fieldsets": 0,
+      "text": 89,
+      "csrf": true
+    },
+    {
+      "page": "index",
+      "width": 320,
+      "scrollWidth": 320,
+      "fieldsets": 0,
+      "text": 906,
+      "csrf": true
+    },
+    {
+      "page": "active",
+      "width": 320,
+      "scrollWidth": 320,
+      "fieldsets": 1,
+      "text": 1158,
+      "csrf": true
+    },
+    {
+      "page": "clarify",
+      "width": 320,
+      "scrollWidth": 320,
+      "fieldsets": 1,
+      "text": 1268,
+      "csrf": true
+    },
+    {
+      "page": "metric",
+      "width": 320,
+      "scrollWidth": 320,
+      "fieldsets": 1,
+      "text": 1651,
+      "csrf": true
+    },
+    {
+      "page": "review",
+      "width": 320,
+      "scrollWidth": 320,
+      "fieldsets": 1,
+      "text": 1986,
+      "csrf": true
+    },
+    {
+      "page": "confirmed",
+      "width": 320,
+      "scrollWidth": 320,
+      "fieldsets": 0,
+      "text": 1713,
+      "csrf": true
+    },
+    {
+      "page": "english",
+      "width": 320,
+      "scrollWidth": 320,
+      "fieldsets": 1,
+      "text": 1139,
+      "csrf": true
+    },
+    {
+      "page": "empty",
+      "width": 320,
+      "scrollWidth": 320,
+      "fieldsets": 0,
+      "text": 1457,
+      "csrf": true
+    },
+    {
+      "page": "error",
+      "width": 320,
+      "scrollWidth": 320,
+      "fieldsets": 0,
+      "text": 89,
+      "csrf": true
+    }
+  ]
+}

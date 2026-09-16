@@ -5,6 +5,7 @@ x-app-build: &app-build
   target: runtime
 
 x-app-environment: &app-environment
+  AI_INTERVIEW_REVIEW_ENABLED: ${AI_INTERVIEW_REVIEW_ENABLED:-0}
   APP_ENV: ${APP_ENV:?Set APP_ENV in .env}
   APP_VERSION: ${APP_VERSION:-infra-test}
   SERVICE_NAME: ${SERVICE_NAME:-ai-career-agent}

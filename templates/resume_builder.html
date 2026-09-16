@@ -14,6 +14,7 @@
         <div aria-hidden="true"><i id="builderProgressBar"></i></div>
       </div>
       <div class="resume-builder-save-tools">
+        {% if interview_review_url %}<a class="resume-builder-tool-link" href="{{ interview_review_url }}">Тест AI-интервью</a>{% endif %}
         <a class="resume-builder-tool-link" href="{{ url_for('resume_drafts.library') }}">Мои резюме</a>
         <button type="button" class="resume-builder-tool-button" id="builderEditFields">Редактировать поля</button>
         <button type="button" class="resume-builder-tool-button" id="builderCheckpoint">Сохранить версию</button>

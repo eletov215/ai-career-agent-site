@@ -1,0 +1,174 @@
+{
+  "fixture_id": "resume-interview-ru-01",
+  "contract_version": "reference-interview-v1",
+  "synthetic": true,
+  "origin": "reference",
+  "language": "ru",
+  "title": "Тестовое интервью: специалист по тестированию",
+  "draft_answers": {
+    "name": "Синтетический пример",
+    "role": "QA Engineer",
+    "experience": "1 год ручного тестирования; тест-кейсы и баг-репорты.",
+    "skills": "Ручное тестирование, тест-кейсы, баг-репорты."
+  },
+  "start_node": "contribution",
+  "nodes": {
+    "contribution": {
+      "goal": "Личный вклад",
+      "question": "Какую задачу из тестового резюме вы выполняли самостоятельно?",
+      "hint": "Уточните действие, а не общую обязанность. Не добавляйте неизвестный результат.",
+      "choices": [
+        {
+          "id": "vague",
+          "text": "Занимался основными задачами.",
+          "next": "clarify",
+          "fact_ids": [],
+          "kind": "answer"
+        },
+        {
+          "id": "specific",
+          "text": "Проверял REST API в Postman и оформлял баг-репорты.",
+          "next": "outcome",
+          "fact_ids": [
+            "contribution"
+          ],
+          "kind": "answer"
+        },
+        {
+          "id": "skip",
+          "text": "Пропустить вопрос",
+          "next": "outcome",
+          "fact_ids": [],
+          "kind": "skip"
+        }
+      ]
+    },
+    "clarify": {
+      "goal": "Уточнение ответа",
+      "question": "Предыдущий ответ пока общий. Какое конкретное действие можно подтвердить?",
+      "hint": "Если пример неизвестен, пропустите уточнение: мы не будем его придумывать.",
+      "choices": [
+        {
+          "id": "specific",
+          "text": "Проверял REST API в Postman и оформлял баг-репорты.",
+          "next": "outcome",
+          "fact_ids": [
+            "contribution"
+          ],
+          "kind": "answer"
+        },
+        {
+          "id": "skip",
+          "text": "Пропустить вопрос",
+          "next": "outcome",
+          "fact_ids": [],
+          "kind": "skip"
+        }
+      ]
+    },
+    "outcome": {
+      "goal": "Результат и его проверка",
+      "question": "Какой результат работы зафиксирован в тестовом примере?",
+      "hint": "Число само по себе недостаточно: нужны период и источник. Без них оно не попадёт в резюме.",
+      "choices": [
+        {
+          "id": "measured",
+          "text": "В журнале указано 12 дефектов.",
+          "next": "metric",
+          "fact_ids": [],
+          "kind": "answer"
+        },
+        {
+          "id": "qualitative",
+          "text": "Для найденных дефектов оформлял шаги воспроизведения и ожидаемый результат.",
+          "next": "review",
+          "fact_ids": [
+            "qualitative"
+          ],
+          "kind": "answer"
+        },
+        {
+          "id": "unknown",
+          "text": "Точных данных о результате нет.",
+          "next": "qualitative",
+          "fact_ids": [],
+          "kind": "answer"
+        },
+        {
+          "id": "skip",
+          "text": "Пропустить вопрос",
+          "next": "qualitative",
+          "fact_ids": [],
+          "kind": "skip"
+        }
+      ]
+    },
+    "metric": {
+      "goal": "Период и источник числа",
+      "question": "Предыдущий ответ содержит число. За какой период оно получено и чем подтверждается?",
+      "hint": "Не превращаем предположение в достижение. Неподтверждённое число будет исключено.",
+      "choices": [
+        {
+          "id": "verified",
+          "text": "За один релиз зарегистрировал 12 воспроизводимых дефектов; источник - журнал проверок.",
+          "next": "review",
+          "fact_ids": [
+            "metric"
+          ],
+          "kind": "answer"
+        },
+        {
+          "id": "uncertain",
+          "text": "Не могу подтвердить число или период.",
+          "next": "qualitative",
+          "fact_ids": [],
+          "kind": "answer"
+        },
+        {
+          "id": "skip",
+          "text": "Пропустить вопрос",
+          "next": "qualitative",
+          "fact_ids": [],
+          "kind": "skip"
+        }
+      ]
+    },
+    "qualitative": {
+      "goal": "Подтверждённый результат без чисел",
+      "question": "Число не подтверждено. Что можно описать без количественной оценки?",
+      "hint": "Незамеренный эффект не означает отсутствие пользы. Сохраняем только известные действия.",
+      "choices": [
+        {
+          "id": "documented",
+          "text": "Для найденных дефектов оформлял шаги воспроизведения и ожидаемый результат.",
+          "next": "review",
+          "fact_ids": [
+            "qualitative"
+          ],
+          "kind": "answer"
+        },
+        {
+          "id": "skip",
+          "text": "Пропустить вопрос",
+          "next": "review",
+          "fact_ids": [],
+          "kind": "skip"
+        }
+      ]
+    }
+  },
+  "facts": {
+    "contribution": {
+      "text": "Проверял REST API в Postman и оформлял баг-репорты.",
+      "kind": "reference_answer"
+    },
+    "qualitative": {
+      "text": "Для найденных дефектов оформлял шаги воспроизведения и ожидаемый результат.",
+      "kind": "reference_answer"
+    },
+    "metric": {
+      "text": "За один релиз зарегистрировал 12 воспроизводимых дефектов; источник - журнал проверок.",
+      "kind": "reference_answer"
+    }
+  }
+}

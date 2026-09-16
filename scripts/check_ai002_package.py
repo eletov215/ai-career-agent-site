@@ -4,7 +4,10 @@ from pathlib import Path
 import ast
 import hashlib
 import json
+import sys
 ROOT=Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 # Explicitly reviewed runtime changes, never an arbitrary exclusion list.
 CHANGES={
     'app.py','config.py','database.py','infra/vps/.env.example','models/__init__.py',
@@ -29,12 +32,19 @@ def load_boundary(root=ROOT):
     if d['package']!='AI-002' or d['public_real_data_enabled'] is not False or set(d['reviewed_runtime_changes'])!=CHANGES:
         raise ValueError('Invalid AI-002 scope')
     old=json.loads((root/'docs/evidence/ai-001/change_boundary.json').read_text())['reviewed_runtime_changes']
+    successor = {}
+    if (root/'docs/evidence/ai-003/change_boundary.json').is_file():
+        from scripts.check_ai003_package import load_boundary as load_ai003_boundary
+        successor = load_ai003_boundary(root)
+    effective = {}
     for rel,item in d['reviewed_runtime_changes'].items():
         if rel in old and item['previous_sha256']!=old[rel]['current_sha256']:
             raise ValueError('AI-001 parent mismatch')
-        if not matches(root/rel,item['current_sha256']):
+        current = successor.get(rel, item)['current_sha256']
+        effective[rel] = {**item, 'current_sha256': current}
+        if not matches(root/rel,current):
             raise ValueError('AI-002 runtime hash mismatch')
-    return d['reviewed_runtime_changes']
+    return {**effective, **successor}
 
 def validate_test_imports(root=ROOT):
     """Catch sibling test imports without importing Flask or executing test code."""
@@ -67,7 +77,12 @@ def validate(root=ROOT):
         errors.extend(validate_test_imports(root))
         for rel in REQUIRED:
             if not (root/rel).is_file():errors.append('Missing: '+rel)
-        if 'CURRENT_REVISION = "20260915_0016"' not in (root/'database.py').read_text():errors.append('Expected head 0016')
+        successor = (root/'docs/evidence/ai-003/change_boundary.json').is_file()
+        expected_head = '20260916_0017' if successor else '20260915_0016'
+        if f'CURRENT_REVISION = "{expected_head}"' not in (root/'database.py').read_text():errors.append('Unexpected schema head')
+        if successor:
+            from scripts.check_ai003_package import validate as validate_ai003
+            errors.extend(validate_ai003(root))
         migration=ast.parse((root/'migrations/versions/20260915_0016_resume_analysis.py').read_text())
         created={n.args[0].value for n in ast.walk(migration) if isinstance(n,ast.Call) and isinstance(n.func,ast.Attribute) and n.func.attr=='create_table' and n.args and isinstance(n.args[0],ast.Constant)}
         if created!={'resume_analysis_reports','resume_analysis_decisions','resume_analysis_review_events'}:errors.append('Incorrect additive tables')
@@ -86,7 +101,7 @@ def validate(root=ROOT):
         source=(root/'domain/ai.py').read_text()
         if 'REAL_DATA_SUPPORTED = False' not in source:errors.append('Real-data flag changed')
         docs=(root/'docs/AI002_VERIFICATION_STATUS.md').read_text()
-        if 'NEEDS_VERIFICATION' not in docs or 'NOT RUN' not in docs:errors.append('External checks must remain pending')
+        if not all(token in docs for token in ('CI #270', '20260915_0016', 'synthetic/reference-only', 'owner')):errors.append('Accepted AI-002 evidence missing')
         if 'python scripts/check_ai002_package.py' not in (root/'.github/workflows/ci.yml').read_text():errors.append('Missing CI step')
         for rel in ('templates/analysis/index.html','templates/analysis/detail.html'):
             html=(root/rel).read_text()

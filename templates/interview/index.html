@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+{% block title %}{{ ui.title }} - AI Career Agent{% endblock %}
+{% block head_extra %}<link rel="stylesheet" href="{{ url_for('static', filename='resume_interview.css') }}?v=1">{% endblock %}
+{% block content %}
+<main class="section interview-page">
+  <div class="container interview-shell">
+    <header class="interview-header"><div><p class="interview-kicker">AI-003 / {{ ui.subtitle }}</p><h1>{{ ui.title }}</h1></div><a class="interview-link" href="{{ url_for('resume_drafts.library') }}">{{ ui.library }}</a></header>
+    <aside class="interview-notice"><strong>{{ ui.notice }}</strong><p>{{ ui.draft_note }}</p></aside>
+    <div class="interview-grid">
+      {% for choice in choices %}
+      <section class="interview-card" lang="{{ choice.language }}">
+        <span class="interview-pill">{{ choice.language|upper }}</span><h2>{{ choice.title }}</h2>
+        {% for fact in choice.facts %}<p>{{ fact }}</p>{% endfor %}
+        <form method="post" action="{{ url_for('resume_interview.start') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="fixture_id" value="{{ choice.fixture_id }}">
+          <input type="hidden" name="source_hash" value="{{ choice.source_hash }}">
+          <input type="hidden" name="operation_key" value="{{ operation_key() }}">
+          <button class="interview-primary" type="submit">{{ ui.start }}</button>
+        </form>
+      </section>
+      {% endfor %}
+    </div>
+    <h2>{{ ui.history }}</h2>
+    {% for item in interviews %}
+    <article class="interview-history-row"><div><span class="interview-pill">{{ item.language|upper }}</span> <strong>{{ ui['status_' + item.status] }}</strong><p>{{ ui.revision }} {{ item.revision }}</p></div><a class="interview-link" href="{{ url_for('resume_interview.detail', draft_id=item.draft_id) }}">{{ ui.continue }}</a></article>
+    {% else %}<p>{{ ui.empty }}</p>{% endfor %}
+  </div>
+</main>
+{% endblock %}

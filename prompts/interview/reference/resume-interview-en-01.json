@@ -1,0 +1,174 @@
+{
+  "fixture_id": "resume-interview-en-01",
+  "contract_version": "reference-interview-v1",
+  "synthetic": true,
+  "origin": "reference",
+  "language": "en",
+  "title": "Test interview: financial planning analyst",
+  "draft_answers": {
+    "name": "Synthetic example",
+    "role": "FP&A analyst",
+    "experience": "2 years in financial planning; monthly forecasting.",
+    "skills": "Excel financial models, monthly forecasting."
+  },
+  "start_node": "contribution",
+  "nodes": {
+    "contribution": {
+      "goal": "Personal contribution",
+      "question": "Which task in the test resume did you carry out yourself?",
+      "hint": "Describe an action, not just a responsibility. Do not add an unknown outcome.",
+      "choices": [
+        {
+          "id": "vague",
+          "text": "Handled the usual tasks.",
+          "next": "clarify",
+          "fact_ids": [],
+          "kind": "answer"
+        },
+        {
+          "id": "specific",
+          "text": "Built Excel models for monthly forecasts.",
+          "next": "outcome",
+          "fact_ids": [
+            "contribution"
+          ],
+          "kind": "answer"
+        },
+        {
+          "id": "skip",
+          "text": "Skip this question",
+          "next": "outcome",
+          "fact_ids": [],
+          "kind": "skip"
+        }
+      ]
+    },
+    "clarify": {
+      "goal": "Clarify the previous answer",
+      "question": "Your previous answer is broad. Which specific action can be supported?",
+      "hint": "Skip the clarification when an example is unavailable; it will not be invented.",
+      "choices": [
+        {
+          "id": "specific",
+          "text": "Built Excel models for monthly forecasts.",
+          "next": "outcome",
+          "fact_ids": [
+            "contribution"
+          ],
+          "kind": "answer"
+        },
+        {
+          "id": "skip",
+          "text": "Skip this question",
+          "next": "outcome",
+          "fact_ids": [],
+          "kind": "skip"
+        }
+      ]
+    },
+    "outcome": {
+      "goal": "Outcome and verification",
+      "question": "Which outcome was recorded in this test example?",
+      "hint": "A number alone is not enough: its period and source must be established before it can enter the resume.",
+      "choices": [
+        {
+          "id": "measured",
+          "text": "The register lists 6 forecasts.",
+          "next": "metric",
+          "fact_ids": [],
+          "kind": "answer"
+        },
+        {
+          "id": "qualitative",
+          "text": "Documented forecast assumptions and the sources used in the Excel model.",
+          "next": "review",
+          "fact_ids": [
+            "qualitative"
+          ],
+          "kind": "answer"
+        },
+        {
+          "id": "unknown",
+          "text": "No precise outcome data are available.",
+          "next": "qualitative",
+          "fact_ids": [],
+          "kind": "answer"
+        },
+        {
+          "id": "skip",
+          "text": "Skip this question",
+          "next": "qualitative",
+          "fact_ids": [],
+          "kind": "skip"
+        }
+      ]
+    },
+    "metric": {
+      "goal": "Period and source of the number",
+      "question": "Your previous answer contains a number. What period does it cover, and what supports it?",
+      "hint": "An estimate is not an achievement. An unsupported number will be excluded.",
+      "choices": [
+        {
+          "id": "verified",
+          "text": "Prepared 6 monthly forecasts over a six-month reporting period; source: the forecast register.",
+          "next": "review",
+          "fact_ids": [
+            "metric"
+          ],
+          "kind": "answer"
+        },
+        {
+          "id": "uncertain",
+          "text": "I cannot confirm the number or its period.",
+          "next": "qualitative",
+          "fact_ids": [],
+          "kind": "answer"
+        },
+        {
+          "id": "skip",
+          "text": "Skip this question",
+          "next": "qualitative",
+          "fact_ids": [],
+          "kind": "skip"
+        }
+      ]
+    },
+    "qualitative": {
+      "goal": "Supported description without numbers",
+      "question": "The number is not supported. What can be described without a numerical claim?",
+      "hint": "An unmeasured impact does not mean the work lacked value. Keep only what is supported.",
+      "choices": [
+        {
+          "id": "documented",
+          "text": "Documented forecast assumptions and the sources used in the Excel model.",
+          "next": "review",
+          "fact_ids": [
+            "qualitative"
+          ],
+          "kind": "answer"
+        },
+        {
+          "id": "skip",
+          "text": "Skip this question",
+          "next": "review",
+          "fact_ids": [],
+          "kind": "skip"
+        }
+      ]
+    }
+  },
+  "facts": {
+    "contribution": {
+      "text": "Built Excel models for monthly forecasts.",
+      "kind": "reference_answer"
+    },
+    "qualitative": {
+      "text": "Documented forecast assumptions and the sources used in the Excel model.",
+      "kind": "reference_answer"
+    },
+    "metric": {
+      "text": "Prepared 6 monthly forecasts over a six-month reporting period; source: the forecast register.",
+      "kind": "reference_answer"
+    }
+  }
+}

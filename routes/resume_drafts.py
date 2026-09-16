@@ -52,8 +52,18 @@ def _json_error(message: str, status: int):
 def create_resume_drafts_blueprint(
     draft_service: ResumeDraftService,
     profile_service: CareerProfileService,
+    *, interview_service=None, settings=None,
 ) -> Blueprint:
     bp = Blueprint("resume_drafts", __name__)
+
+    def interview_url(draft_id):
+        from services.admin_access import is_search_admin
+        if interview_service is None or not getattr(settings, 'ai_interview_review_enabled', False):
+            return None
+        if not is_search_admin(getattr(g, 'current_user', None), settings):
+            return None
+        sid = interview_service.for_draft(g.current_user.id, draft_id)
+        return url_for('resume_interview.detail', draft_id=draft_id) if sid else url_for('resume_interview.index')
 
     @bp.after_request
     def protect_resume_responses(response):  # noqa: ANN001
@@ -158,6 +168,7 @@ def create_resume_drafts_blueprint(
             initial_state=initial_state,
             version_count=version_count,
             export_count=export_count,
+            interview_review_url=interview_url(draft.id),
         )
 
     @bp.put("/api/resume-drafts/<draft_id>")

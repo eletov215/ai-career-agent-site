@@ -1,0 +1,15 @@
+................s....................................................... [ 66%]
+.....................................                                    [100%]
+============================= slowest 8 durations ==============================
+0.75s call     tests/test_search_pagination.py::test_default_extension_round_is_single_provider_page_per_request
+0.40s call     tests/test_search_pagination.py::test_per_source_page_ceiling_is_reported_as_bounded_not_exact
+0.34s call     tests/test_search_pagination.py::test_snapshot_pages_are_stable_and_survive_service_restart
+0.32s call     tests/test_search_normalization.py::test_migration_0005_is_additive_and_remote_backfill_is_conservative
+0.29s call     tests/test_search_pagination.py::test_late_cross_page_duplicate_updates_committed_card_without_overlap
+0.29s call     tests/test_sync_worker.py::test_migration_closes_legacy_running_run_before_unique_index
+0.28s call     tests/test_search_pagination.py::test_late_arrival_is_appended_and_counted_once
+0.23s call     tests/test_search_pagination.py::test_anonymous_provider_rows_on_different_pages_do_not_overwrite
+=========================== short test summary info ============================
+SKIPPED [1] tests/test_search005_routes.py:10: could not import 'flask': No module named 'flask'
+SKIPPED [1] tests/test_search005_route_registration.py:5: could not import 'flask': No module named 'flask'
+108 passed, 2 skipped in 8.35s

@@ -12,6 +12,8 @@ services:
     startCommand: python scripts/manage_db.py upgrade && python scripts/start_runtime.py
     healthCheckPath: /health/ready
     envVars:
+      - key: AI_INTERVIEW_REVIEW_ENABLED
+        value: "0"
       - key: APP_ENV
         value: production
       - key: DATABASE_URL

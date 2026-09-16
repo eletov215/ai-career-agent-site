@@ -1,0 +1,21 @@
+........................................................................ [ 51%]
+.......................s...............................s............     [100%]
+============================= slowest 8 durations ==============================
+3.68s call     tests/test_backup_restore.py::test_maintenance_scripts_can_import_project_modules_from_cli
+1.53s call     tests/test_legacy_import.py::test_legacy_import_script_copies_current_tables
+0.71s call     tests/test_auth_service.py::test_password_reset_is_single_use_and_revokes_existing_sessions
+0.54s call     tests/test_auth_service.py::test_duplicate_registration_is_enumeration_safe_and_never_replaces_password
+0.52s call     tests/test_auth_service.py::test_login_public_failure_is_identical_for_unknown_wrong_and_unverified
+0.42s call     tests/test_auth_service.py::test_session_revocation_keeps_current_session
+0.42s call     tests/test_auth_service.py::test_register_verify_login_logout_round_trip
+0.39s call     tests/test_passwords.py::test_password_hash_is_salted_versioned_and_one_way
+=========================== short test summary info ============================
+SKIPPED [1] tests/test_app_startup_modes.py:11: Flask is installed from requirements.txt in CI
+SKIPPED [1] tests/test_auth002_routes.py:11: could not import 'flask': No module named 'flask'
+SKIPPED [1] tests/test_auth_routes.py:10: could not import 'flask': No module named 'flask'
+SKIPPED [1] tests/test_observability.py:8: Flask is installed from requirements.txt in CI
+SKIPPED [1] tests/test_rate_limit_proxy.py:5: Flask is installed from requirements.txt in CI
+SKIPPED [1] tests/test_routes.py:11: Flask is installed from requirements.txt in CI
+SKIPPED [1] tests/test_database.py:61: could not import 'psycopg': No module named 'psycopg'
+SKIPPED [1] tests/test_postgresql_integration.py:50: POSTGRES_TEST_URL is provided by the GitHub Actions PostgreSQL service
+138 passed, 8 skipped in 12.89s

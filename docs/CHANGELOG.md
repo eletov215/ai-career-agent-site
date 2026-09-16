@@ -1,5 +1,14 @@
 # AI Career Agent - CHANGELOG
 
+## 1.5.4 / 2026-09-16 - AI-003 reference interview candidate
+
+Source main (33), archive comment 20947f2e015097010cbe33772f7662bef4503f37. Two-table additive migration 0017; private pinned RU/EN adaptive interviews; owner-scoped state/history/rewind, exact selected facts and explicit atomic confirmation to isolated synthetic drafts; export/deletion/backup integration; current documents PLAN1.5.4/PASSPORT2.71/AUDIT1.5.4. No accepted benchmark/dependency changes or provider call. Status НУЖНА ПРОВЕРКА; GitHub/PostgreSQL/Render/owner acceptance pending.
+
+## 1.5.3 / 2026-09-15 - AI-002 accepted reference-only scope
+
+Synchronized from final owner PDFs: CI #270 passed, Neon0016 accepted, owner report/relogin/conditional-action UI smoke passed, review flag returned off. LEGAL remains deferred and email verification delivery remains unresolved. This is prior-package evidence, not new AI-003 acceptance.
+
+
 ## AI-002 v1.5.2 rebuild-r2 / ci-import-hotfix-r1 / 2026-09-15
 
 Fix the collection error reported by the owner: `tests/test_ai002_routes.py` now imports the shared fixture from `tests.test_ai002_service`, respecting the existing `tests/__init__.py` package. Keep the CI command, test discovery settings and runtime dependencies unchanged.
