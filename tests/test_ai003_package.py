@@ -35,7 +35,8 @@ def test_missing_evidence_is_not_accepted(tmp_path):
 
 def copy_boundary(tmp_path):
     files = CHANGES | {'docs/evidence/ai-001/change_boundary.json', 'docs/evidence/ai-002/change_boundary.json',
-                       'docs/evidence/ai-003/change_boundary.json', 'docs/evidence/ai-003/baseline_files_sha256.json'}
+                       'docs/evidence/ai-003/change_boundary.json', 'docs/evidence/ai-003/baseline_files_sha256.json',
+                       'docs/evidence/ai-004/change_boundary.json', 'docs/evidence/ai-004/baseline_files_sha256.json'}
     for rel in files:
         (tmp_path/rel).parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(ROOT/rel, tmp_path/rel)

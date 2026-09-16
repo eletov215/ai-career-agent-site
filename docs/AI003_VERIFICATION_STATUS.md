@@ -1,66 +1,61 @@
 # AI Career Agent - AI-003 verification status
 
-| Поле | Значение |
+| Field | Value |
 |---|---|
-| Version | 1.0 r1.2 / 2026-09-16 |
-| Status | НУЖНА ПРОВЕРКА / NEEDS_VERIFICATION |
-| Code baseline | main (33), 20947f2e015097010cbe33772f7662bef4503f37 |
-| Target schema | 20260916_0017 |
-| External acceptance | PENDING |
-| Provider calls | NOT RUN; not required for reference mode |
+| Version | 1.1 FINAL / 2026-09-16 |
+| Status | ВЫПОЛНЕНО / PASS in synthetic/reference-only scope |
+| Source lineage | owner `ai-career-agent-site-main-2.zip` + r1.2 session-review hotfix |
+| Accepted schema | 20260916_0017 |
+| Public generation | Disabled / manual mode |
+| Provider calls for acceptance | None; not required |
 
-## 1. Local checks
+## 1. Local implementation evidence
 
-The final local suite was executed in four separate, non-overlapping partitions covering all 73 `tests/test_*.py` files. Each final partition exited zero. This is not a completed single-process full-suite run.
+The r1 implementation introduced the adaptive reference-interview foundation and migration `20260916_0017`. The measured local suite before external acceptance completed four non-overlapping partitions with **608 passed, 21 skipped and 82 passing subtests**. Focused AI-003 coverage was **56 passed, 2 skipped**; later r1.2 hotfix checks reported **61 passed, 2 skipped** in the locally available non-Flask suite. Python compilation, Jinja parsing, migration round-trip, package checks, repository hygiene and offline UI checks passed. Local skips were kept explicit and were not treated as external proof.
 
-| Partition | Passed | Skipped | Passing subtests |
-|---|---:|---:|---:|
-| AI / benchmark / provider | 330 | 7 | 82 |
-| Account / database / infrastructure | 138 | 8 | 0 |
-| Profile / resume / privacy | 32 | 4 | 0 |
-| Search / sync | 108 | 2 | 0 |
-| **Total** | **608** | **21** | **82** |
+## 2. External CI and staging
 
-The 21 skips include 13 entire Flask-dependent modules, not only individual test functions. Subtests are separate and not added to the passed-test count. Focused AI-003: **56 passed, 2 skipped**, already included above (41 service, 14 package, one SQLite migration test; Flask routes and PostgreSQL scenario skipped).
+The owner confirmed the AI-003 GitHub workflow passed green after deployment of the accepted hotfix line; the subsequent direct GitHub inspection identified CI #276 (run 35132463421) as successful for accepted r1.2 commit `c683520058cc1f729c79ed49ac5c213811e4c9f3`. This is a source verification, not a new AI-004 test. Earlier CI #274 established the 0017 candidate before the review-access hotfix sequence. Paid Alice Final / Live Yandex jobs were not required for this package.
 
-Additional local checks:
-- Python compilation: 236 files; Jinja parsing: 35 templates; YAML parsing: CI, Compose, Render. PASS.
-- AI-001/002/003, provider and benchmark source/package checks: PASS, including dependency-free execution. Accepted benchmark/prompts/policy preserved.
-- SQLite 0016 -> 0017 -> 0016 -> 0017 migration and metadata checks: PASS in the migration tests.
-- Offline Chromium/Jinja rendering: 36 layouts (nine states, widths 1440/768/390/320), no horizontal overflow; native required inputs, CSRF form fields and safe templates checked. PASS. Actual CSS was inlined; external requests were blocked and web fonts used fallbacks. This is **not Flask HTTP or account E2E**.
-- Existing builder JavaScript script blocks are byte-identical to the input ZIP; the new interview uses native server forms, no new feature JavaScript.
+Render/Neon `/health/ready` was confirmed with:
 
-Environment: Python 3.13.5, SQLAlchemy 2.0.50, Alembic 1.18.4, pytest 9.0.2. Pinned application dependencies were not changed. CI must repeat with its pinned requirements and Python/PostgreSQL environment.
+- `status=ok`;
+- PostgreSQL persistent storage;
+- `current_revision=20260916_0017`;
+- `expected_revision=20260916_0017`;
+- `migrations.ok=true`.
 
-Machine-readable measurements, reproducible per-partition commands and logs: `evidence/ai-003/local_verification.json`, `pytest_*.txt`, `static_checks.json`, `offline_ui_checks.json`. No GitHub or staging PASS is inferred.
+`/api/ai/status` remained closed throughout acceptance: `generation_available=false`, `mode=manual`, `reason=runtime_not_activated`.
 
-## 2. Required external checks
+## 3. Review-access hotfix history
 
-GitHub ordinary CI with pinned requirements and PostgreSQL 17: PENDING. Real Flask HTTP/CSRF suite: PENDING in CI (Flask unavailable in local environment). Psycopg/PostgreSQL: PENDING. Container/backup integration: PENDING in CI. Render/Neon migration/current=expected 20260916_0017: PENDING. Owner browser branching/confirmation/relogin/stale/ownership/mobile/regression and review flag returned off: PENDING.
+The initial private route returned 404. The exact deployment-time cause was not established from a running-process diagnostic; it must not be treated as a proven Blueprint overwrite. r1.1 removed the hardcoded Render Blueprint value. A fresh owner GitHub ZIP then showed the r1.1 manifest was present, but the route was still operationally dependent on deployment-time flag propagation.
 
-No billable Alice run, real-resume provider dispatch or remote deployment was performed. Public runtime remains closed by code defaults; the actual deployed status must be checked after deployment.
+r1.2 therefore added `/ai-interview/review`: an active, verified `SEARCH_ADMIN_EMAILS` administrator may unlock the synthetic interview only for the current signed browser session. Non-admin access remains 404, CSRF protects the POST controls, logout/session rotation clears the unlock, and the optional global environment override remains default-off. This did not add a provider call, real-data input, schema change or public-AI activation.
 
+The owner confirmed r1.2 opened the private interview successfully.
 
-## 2A. External verification received / hotfix trigger
+## 4. Owner browser acceptance
 
-Owner evidence on 2026-09-16: GitHub Actions CI #274 passed, including the dedicated AI-003 package/control gate; paid Alice jobs were skipped as intended. Render/Neon `/health/ready` returned `status=ok`, persistent PostgreSQL and `current_revision=expected_revision=20260916_0017` with `migrations.ok=true`. `/api/ai/status` returned the expected closed runtime (`generation_available=false`, `mode=manual`, `reason=runtime_not_activated`).
+The owner confirmed the following production/staging scenarios work as designed:
 
-The private `/ai-interview` smoke then returned 404 even though `/admin/sources` opened normally for the same logged-in allowlisted administrator. The route guard therefore isolated the failure to the interview review flag. Inspection found `render.yaml` hardcoded `AI_INTERVIEW_REVIEW_ENABLED` to `0`. Candidate hotfix r1.1 changes only that Blueprint variable to `sync: false`, extends regression checks, and leaves the application default false. External acceptance remains **PENDING** until the hotfix CI/deploy and browser interview smoke pass.
+1. RU adaptive branching: a vague answer asks for clarification; a concrete action advances to the result question.
+2. Persistence: answers and current question survive refresh and logout/login; the saved interview resumes at the expected step.
+3. Unsupported metric handling: entering `12` and then declining to confirm its period/source keeps that number out of the proposed final text.
+4. Explicit control: unselected suggestions are not added; confirmation is required before writing a version; the career profile remains unchanged.
+5. Confirmed metric path: a period/source-supported metric can appear in the final proposal.
+6. Rewind/change path: changing an earlier answer invalidates the later active branch while preserving history in the event log.
+7. Same-session stale-write protection: two browser tabs on the same interview cannot silently overwrite a newer revision.
+8. Manual-builder conflict protection: if the linked synthetic draft is edited and synchronized in the normal builder, a stale interview confirmation is rejected and the manual edit is preserved.
+9. EN reference scenario: adaptive flow, confirmed metric handling and final version creation work.
+10. Core regression smoke: dashboard, profile, resumes/builder, preview/PDF, vacancies/search and logout/login remained operational.
+11. Privacy integration: account export contains `resume_interviews`; deleting one synthetic interview draft removes only its associated interview data while other drafts/interviews remain intact.
+12. Final closure: private review access was closed, `/ai-interview` returned 404 again, health stayed on 0017, AI status stayed manual/unavailable, and Render logs showed no new 500/Traceback/IntegrityError/migration errors or interview/resume text leakage according to the owner review.
 
-Focused hotfix checks: `python scripts/check_ai003_package.py` PASS; `tests/test_infra_manifests.py + tests/test_ai003_package.py` = **19 passed**; `tests/test_ai003_routes.py + tests/test_ai003_service.py + tests/test_ai003_migration.py` = **42 passed, 2 skipped** (Flask HTTP execution and disposable PostgreSQL remain CI gates in this local environment). Repository hygiene PASS.
+A separate fresh two-account manual isolation run was not explicitly evidenced in chat. Ownership/isolation remains covered by the green automated route/service tests; this document does not invent a second-account manual proof.
 
-### r1.2 session-review hotfix
+## 5. Accepted boundary
 
-After the owner deployed r1.1 with green CI, `/ai-interview` still returned 404 while `/admin/sources` remained available. The fresh GitHub ZIP was inspected and confirmed to contain the r1.1 `sync: false` manifest, registered interview blueprint, valid boolean parsing and the expected admin gate. No additional code defect was found in route registration. The remaining dependency was the deployment-time review flag actually reaching the running process.
+AI-003 is complete only as a **synthetic/reference-only adaptive interview foundation**. It does not accept arbitrary free-form experience text, does not run a live multi-turn Alice conversation, does not attach to arbitrary real resume drafts, and does not authorize public real-data AI. Final text remains user-controlled and writes only to the isolated synthetic resume draft used by the review flow.
 
-r1.2 removes that operational dependency for staging acceptance without widening public access: an active, verified `SEARCH_ADMIN_EMAILS` administrator may open `/ai-interview/review` and explicitly unlock the synthetic AI-003 UI only for the current signed browser session. Global `AI_INTERVIEW_REVIEW_ENABLED` remains supported as an operator override and still defaults off. Non-admin access to the review gate and all interview routes remains 404. Logout clears the browser session, so the per-session unlock is not durable across authentication rotation. No provider dispatch, real-data input, schema change or public-AI activation is introduced. External CI/deploy/browser acceptance remains **PENDING** for r1.2.
-
-Local r1.2 checks on the owner-supplied current GitHub ZIP baseline: `python scripts/check_ai003_package.py` PASS; focused non-Flask suite **61 passed, 2 skipped**. The skips are the Flask HTTP module and disposable PostgreSQL scenario. Interview templates parse successfully and repository hygiene passes after removing generated caches. Installing missing Flask packages was attempted but the sandbox has no external network access, so the new HTTP unlock flow remains a mandatory GitHub CI gate rather than a locally claimed PASS.
-
-## 3. Accepted baseline versus candidate
-
-AI-002 acceptance came from the supplied final documents: CI #270, accepted staging 0016 and owner review. It is not an AI-003 test. The original local full-suite attempt timed out and is not a passed baseline. Final local tests run in measured partitions, with skips recorded rather than treated as passes.
-
-## 4. Known limits
-
-Synthetic reference-only, pinned choices, no arbitrary free text or live multi-turn Alice. LEGAL-001 is still deferred. Verification email delivery remains unresolved. No new manual two-account proof exists until the owner supplies it. Do not close this package or start AI-004 without the required external acceptance.
+LEGAL-001 remains deferred and mandatory before public real-data AI, paid subscriptions or commercial release. Email-verification delivery remains a separate operational issue. The next technical package AI-004 uses directly verified GitHub main `c683520058cc1f729c79ed49ac5c213811e4c9f3`. Its new CI/staging checks are separate.

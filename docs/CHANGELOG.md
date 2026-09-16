@@ -1,5 +1,19 @@
 # AI Career Agent - CHANGELOG
 
+## 1.5.6 / 2026-09-16 - AI-004 r1 / NEEDS_VERIFICATION
+
+Verified GitHub main and CI #276 directly; incorporated pending AI-003 final documentation. Added private synthetic reference match reports, deterministic source-evidence scoring, immutable versions, migration0018, privacy/backup integration and new CI tests. No public activation, real-data dispatch or dependency/prompt changes. New external verification remains pending.
+
+## AI-003 closure / 2026-09-16 - plan 1.5.5
+
+- AI-003 marked ВЫПОЛНЕНО in synthetic/reference-only scope after owner-confirmed final acceptance.
+- Accepted staging: Render/Neon `20260916_0017`, current=expected, migrations OK; public AI remained manual/unavailable.
+- r1.2 private session review gate passed after the r1.1 Render-flag issue; final access was closed after testing.
+- Owner confirmed RU/EN branching, refresh/relogin persistence, unsupported-number exclusion, explicit fact selection/confirmation, rewind/history, same-session stale-write protection, manual-builder conflict protection, privacy export/deletion integration, core regressions and clean final log review.
+- No paid Alice run and no arbitrary real-resume provider dispatch were used for acceptance. A fresh two-account manual isolation run was not separately evidenced; automated ownership checks remain the recorded evidence.
+- Canonical versions advance to PLAN 1.5.5, PASSPORT 2.72 and SOURCE_AUDIT 1.5.5. AI-004 is next after a fresh post-AI-003 GitHub ZIP is supplied and inspected.
+
+
 ## AI-003 r1.2 / 2026-09-16 - per-session staging review gate
 
 Fresh GitHub ZIP after the r1.1 deploy was inspected. It already contains the expected `sync: false` Render manifest, the registered AI-003 blueprint and correct `1/0` boolean parsing, while the allowlisted administrator can open `/admin/sources`. Because `/ai-interview` still returned 404, r1.2 stops making manual acceptance depend on a Render environment value reaching the worker. An active verified `SEARCH_ADMIN_EMAILS` administrator can now open `/ai-interview/review` and explicitly unlock the synthetic interview only for the current signed browser session. CSRF protects enable/disable POSTs, logout/session rotation clears the unlock, non-admin access remains 404, and `AI_INTERVIEW_REVIEW_ENABLED` remains an optional default-off global override. No migration, provider call, real-data input or public-AI activation. AI-003 remains НУЖНА ПРОВЕРКА until r1.2 CI/deploy/browser smoke passes.

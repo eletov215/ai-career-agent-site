@@ -1,0 +1,4 @@
+{% extends 'base.html' %}
+{% block title %}{{ ui.error }} - AI Career Agent{% endblock %}
+{% block head_extra %}<link rel="stylesheet" href="{{ url_for('static', filename='vacancy_match.css') }}?v=1">{% endblock %}
+{% block content %}<main class="section ai004-match-page"><div class="container ai004-match-shell"><section class="ai004-match-card" role="alert"><h1>{{ ui.error }}</h1><p>{{ error }}</p><a href="{{ url_for('vacancy_match.review_gate') }}">{{ ui.retry }}</a></section></div></main>{% endblock %}

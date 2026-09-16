@@ -2,9 +2,9 @@
 
 | Поле | Значение |
 |---|---|
-| Version | 1.0 r1.2 / 2026-09-16 |
-| Status | НУЖНА ПРОВЕРКА / NEEDS_VERIFICATION |
-| Baseline | main (33) / 20947f2e015097010cbe33772f7662bef4503f37 |
+| Version | 1.1 FINAL / 2026-09-16 |
+| Status | ВЫПОЛНЕНО / PASS in synthetic/reference-only scope |
+| Accepted lineage | owner `ai-career-agent-site-main-2.zip` + r1.2 session-review hotfix |
 | Target schema | 20260916_0017 |
 | Feature mode | synthetic/reference-only; no live provider |
 
@@ -56,6 +56,12 @@ The source manifest verifies fixture/schema bytes and the registry also validate
 
 0017 is additive but application readiness enforces an exact migration head. An old application cannot be assumed ready on 0017. Before rollback: stop writers, verify backup, preserve any desired interview history, run a controlled downgrade to 0016 using the current migration code, then deploy the previous application. Downgrade removes the two interview tables and their history; it preserves synthetic resume drafts and existing PROF-003 versions. Do not erase the database/cache or remove DATABASE_URL.
 
-## 7. Limits and acceptance
+## 7. Limits and accepted boundary
 
-This foundation demonstrates deterministic branching, persistence and explicit confirmation. It does not provide a free-form live Alice interview, calibrated confidence, arbitrary real-resume generation or a public feature. Those require separate technical validation and the unresolved legal/activation gates. CI/PostgreSQL, Render migration and owner browser acceptance remain pending. See AI003_VERIFICATION_STATUS and AI003_RUNBOOK.
+This foundation demonstrates deterministic branching, persistence and explicit confirmation. It does not provide a free-form live Alice interview, calibrated confidence, arbitrary real-resume generation or a public feature. Those remain outside the accepted AI-003 scope and require separate technical validation plus the unresolved legal/activation gates. See AI003_VERIFICATION_STATUS and AI003_RUNBOOK.
+
+## 8. Final acceptance
+
+Owner staging acceptance on 2026-09-16 passed after r1.2. Render/Neon is on `20260916_0017`, public AI remains disabled/manual, RU and EN reference flows passed, relogin/history, rewind, unsupported-number exclusion, explicit selection/confirmation, same-session stale-write protection, manual-builder conflict protection, privacy export/deletion integration, core regressions and final closed-access/log review were confirmed. A fresh two-account manual isolation run was not separately evidenced; automated ownership checks remain the accepted evidence for that subcase.
+
+AI-003 is therefore **ВЫПОЛНЕНО** only within the documented synthetic/reference-only boundary. Arbitrary free text and live multi-turn Alice remain outside this package.

@@ -28,6 +28,8 @@ from database import CURRENT_REVISION, create_database, database_health
 from services.storage import StorageServices
 from services.ai.service import AIService
 from routes.ai_status import create_ai_status_blueprint
+from services.vacancy_match import VacancyMatchService
+from routes.vacancy_match import create_vacancy_match_blueprint
 from services.resume_interview import ResumeInterviewService
 from routes.resume_interview import create_resume_interview_blueprint
 from services.resume_analysis import ResumeAnalysisService
@@ -125,6 +127,8 @@ ANALYSIS_SERVICE = ResumeAnalysisService(STORAGE.analyses, AI_SERVICE, fingerpri
 app.register_blueprint(create_resume_analysis_blueprint(ANALYSIS_SERVICE, SETTINGS))
 INTERVIEW_SERVICE = ResumeInterviewService(STORAGE.interviews, fingerprint_key=SETTINGS.flask_secret_key)
 app.register_blueprint(create_resume_interview_blueprint(INTERVIEW_SERVICE, SETTINGS))
+MATCH_SERVICE = VacancyMatchService(STORAGE.vacancy_matches, AI_SERVICE, fingerprint_key=SETTINGS.flask_secret_key)
+app.register_blueprint(create_vacancy_match_blueprint(MATCH_SERVICE, SETTINGS))
 PROFILE_SERVICE = CareerProfileService(STORAGE.profiles)
 RESUME_IMPORT_SERVICE = ResumeImportService(
     max_pages=SETTINGS.max_resume_pages,

@@ -1,0 +1,7 @@
+................................                                         [100%]
+=========================== short test summary info ============================
+SKIPPED [1] tests/test_privacy_routes.py:14: could not import 'flask': No module named 'flask'
+SKIPPED [1] tests/test_profile_routes.py:10: could not import 'flask': No module named 'flask'
+SKIPPED [1] tests/test_resume_draft_routes.py:12: could not import 'flask': No module named 'flask'
+SKIPPED [1] tests/test_resume_import_routes.py:13: could not import 'flask': No module named 'flask'
+32 passed, 4 skipped in 5.10s

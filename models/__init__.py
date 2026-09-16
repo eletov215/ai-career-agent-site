@@ -3,6 +3,7 @@
 from .accounts import HeadHunterAccount, SuperJobAccount
 from .auth import AuthSession, AuthToken
 from .base import Base
+from .vacancy_match import VacancyMatchReport, VacancyMatchSeries
 from .resume_interview import ResumeInterviewSession, ResumeInterviewEvent
 from .resume_analysis import ResumeAnalysisReport, ResumeAnalysisDecision, ResumeAnalysisReviewEvent
 from .oauth_connection import OAuthConnection
@@ -24,6 +25,8 @@ from .vacancy import Vacancy, VacancySourceRecord
 
 __all__ = [
     "Base",
+    "VacancyMatchReport",
+    "VacancyMatchSeries",
     "ResumeInterviewSession",
     "ResumeInterviewEvent",
     "AuthSession",

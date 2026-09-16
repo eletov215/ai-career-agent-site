@@ -1,0 +1,10 @@
+{
+  "python_sources": 250,
+  "templates": 40,
+  "yaml": [
+    ".github/workflows/ci.yml",
+    "compose.yaml",
+    "render.yaml"
+  ],
+  "all_ok": true
+}

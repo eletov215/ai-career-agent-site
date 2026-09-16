@@ -41,15 +41,22 @@ def load_boundary(root=ROOT):
         raise ValueError('AI-003 source mismatch')
     older = json.loads((root/'docs/evidence/ai-001/change_boundary.json').read_text())['reviewed_runtime_changes']
     parent = json.loads((root/'docs/evidence/ai-002/change_boundary.json').read_text())['reviewed_runtime_changes']
+    successor = {}
+    if (root/'docs/evidence/ai-004/change_boundary.json').is_file():
+        from scripts.check_ai004_package import load_boundary as load_ai004_boundary
+        successor = load_ai004_boundary(root)
+    effective = {}
     for rel, item in data['reviewed_runtime_changes'].items():
         if item['previous_sha256'] != baseline['files'].get(rel):
             raise ValueError('AI-003 baseline checksum mismatch')
         expected = parent.get(rel, older.get(rel, {})).get('current_sha256')
         if expected and item['previous_sha256'] != expected:
             raise ValueError('AI-003 parent checksum mismatch')
-        if not matches(root/rel, item['current_sha256']):
+        current = successor.get(rel, item)['current_sha256']
+        if not matches(root/rel, current):
             raise ValueError('AI-003 runtime checksum mismatch')
-    return data['reviewed_runtime_changes']
+        effective[rel] = {**item, 'current_sha256': current}
+    return {**effective, **successor}
 
 
 def validate(root=ROOT):
@@ -59,8 +66,13 @@ def validate(root=ROOT):
         for rel in REQUIRED:
             if not (root/rel).is_file():
                 errors.append('Missing: '+rel)
-        if 'CURRENT_REVISION = "20260916_0017"' not in (root/'database.py').read_text():
-            errors.append('Expected head 0017')
+        successor = (root/'docs/evidence/ai-004/change_boundary.json').is_file()
+        expected_head = '20260916_0018' if successor else '20260916_0017'
+        if f'CURRENT_REVISION = "{expected_head}"' not in (root/'database.py').read_text():
+            errors.append('Unexpected schema head')
+        if successor:
+            from scripts.check_ai004_package import validate as validate_ai004
+            errors.extend(validate_ai004(root))
         source = (root/'migrations/versions/20260916_0017_resume_interview.py').read_text()
         migration = ast.parse(source)
         created = {n.args[0].value for n in ast.walk(migration) if isinstance(n, ast.Call) and
@@ -108,8 +120,10 @@ def validate(root=ROOT):
         if 'python scripts/check_ai003_package.py' not in (root/'.github/workflows/ci.yml').read_text():
             errors.append('Missing ordinary CI gate')
         status = (root/'docs/AI003_VERIFICATION_STATUS.md').read_text()
-        if not all(token in status for token in ('NEEDS_VERIFICATION', 'PENDING', 'NOT RUN', '20260916_0017')):
-            errors.append('External acceptance must not be invented')
+        accepted = all(token in status for token in ('PASS in synthetic/reference-only scope', '20260916_0017', 'generation_available=false', 'CI #276'))
+        pending = all(token in status for token in ('NEEDS_VERIFICATION', 'PENDING', 'NOT RUN', '20260916_0017'))
+        if not (accepted or pending):
+            errors.append('AI-003 verification status is incomplete or overclaims evidence')
         if 'REAL_DATA_SUPPORTED = False' not in (root/'domain/ai.py').read_text():
             errors.append('Public real-data flag changed')
     except (OSError, ValueError, KeyError, TypeError, AttributeError, SyntaxError):

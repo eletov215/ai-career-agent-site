@@ -271,7 +271,7 @@ class ProviderPolicyTests(unittest.TestCase):
         pending = "\u041d\u0423\u0416\u041d\u0410 \u041f\u0420\u041e\u0412\u0415\u0420\u041a\u0410"
         for bad_plan in (
             plan[:start] + plan[start:end].replace(complete, pending) + plan[end:],
-            plan.replace('PLAN_CURRENT 1.5.4;', 'PLAN_CURRENT 1.4.22;'),
+            plan.replace('PLAN_CURRENT 1.5.6;', 'PLAN_CURRENT 1.4.22;'),
             plan.replace('| AI-PROVIDER-001 |', '| deleted-provider-card |'),
             plan.replace('| LEGAL-001 | P0 до публичного AI | ОТЛОЖЕНО ДО РЕШЕНИЯ ВЛАДЕЛЬЦА |', '| LEGAL-001 | P0 до публичного AI | ЗАПЛАНИРОВАНО |'),
         ):

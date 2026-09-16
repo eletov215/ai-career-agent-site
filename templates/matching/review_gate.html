@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+{% block title %}{{ ui.gate_title }} - AI Career Agent{% endblock %}
+{% block head_extra %}<link rel="stylesheet" href="{{ url_for('static', filename='vacancy_match.css') }}?v=1">{% endblock %}
+{% block content %}
+<main class="section ai004-match-page" lang="ru"><div class="container ai004-match-shell">
+<header><p class="ai004-match-kicker">{{ ui.subtitle }}</p><h1>{{ ui.gate_title }}</h1></header>
+<aside class="ai004-match-notice"><strong>{{ ui.notice }}</strong><p>{{ ui.gate_note }}</p></aside>
+<section class="ai004-match-card">
+{% if enabled %}<a class="ai004-match-primary" href="{{ url_for('vacancy_match.index') }}">{{ ui.continue }}</a>
+<form method="post" action="{{ url_for('vacancy_match.disable_review') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button type="submit" class="ai004-match-secondary">{{ ui.close }}</button></form>
+{% else %}<form method="post" action="{{ url_for('vacancy_match.enable_review') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button type="submit" class="ai004-match-primary">{{ ui.open }}</button></form>{% endif %}
+</section></div></main>
+{% endblock %}

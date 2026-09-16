@@ -1,0 +1,12 @@
+..s.......ss............................................................ [ 36%]
+.............s........................................................s. [ 72%]
+......................................................                   [100%]
+=========================== short test summary info ============================
+SKIPPED [1] tests/test_ai002_routes.py:7: could not import 'flask': No module named 'flask'
+SKIPPED [1] tests/test_ai003_routes.py:9: Flask route execution is mandatory in installed GitHub CI
+SKIPPED [1] tests/test_ai001_migration.py:33: POSTGRES_TEST_URL required; dedicated CI provides PostgreSQL
+SKIPPED [1] tests/test_ai001_routes.py:6: Flask is installed from requirements.txt in CI
+SKIPPED [1] tests/test_ai001_routes.py:16: Flask is installed from requirements.txt in CI
+SKIPPED [1] tests/test_ai002_migration.py:35: Disposable PostgreSQL CI database required
+SKIPPED [1] tests/test_ai003_migration.py:49: Disposable PostgreSQL service required in GitHub CI
+193 passed, 7 skipped in 18.11s

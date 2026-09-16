@@ -1,0 +1,450 @@
+{
+  "mode": "Offline Jinja with actual base template/static CSS, inlined actual CSS; all external requests blocked; not Flask HTTP; web fonts blocked and fallbacks used",
+  "layouts": [
+    {
+      "width": 1440,
+      "scroll": 1440,
+      "main": 1440,
+      "required": 0,
+      "csrf": true,
+      "case": "gate-0",
+      "viewport": 1440
+    },
+    {
+      "width": 768,
+      "scroll": 768,
+      "main": 768,
+      "required": 0,
+      "csrf": true,
+      "case": "gate-0",
+      "viewport": 768
+    },
+    {
+      "width": 390,
+      "scroll": 390,
+      "main": 390,
+      "required": 0,
+      "csrf": true,
+      "case": "gate-0",
+      "viewport": 390
+    },
+    {
+      "width": 320,
+      "scroll": 320,
+      "main": 320,
+      "required": 0,
+      "csrf": true,
+      "case": "gate-0",
+      "viewport": 320
+    },
+    {
+      "width": 1440,
+      "scroll": 1440,
+      "main": 1440,
+      "required": 0,
+      "csrf": true,
+      "case": "gate-1",
+      "viewport": 1440
+    },
+    {
+      "width": 768,
+      "scroll": 768,
+      "main": 768,
+      "required": 0,
+      "csrf": true,
+      "case": "gate-1",
+      "viewport": 768
+    },
+    {
+      "width": 390,
+      "scroll": 390,
+      "main": 390,
+      "required": 0,
+      "csrf": true,
+      "case": "gate-1",
+      "viewport": 390
+    },
+    {
+      "width": 320,
+      "scroll": 320,
+      "main": 320,
+      "required": 0,
+      "csrf": true,
+      "case": "gate-1",
+      "viewport": 320
+    },
+    {
+      "width": 1440,
+      "scroll": 1440,
+      "main": 1440,
+      "required": 0,
+      "csrf": true,
+      "case": "index",
+      "viewport": 1440
+    },
+    {
+      "width": 768,
+      "scroll": 768,
+      "main": 768,
+      "required": 0,
+      "csrf": true,
+      "case": "index",
+      "viewport": 768
+    },
+    {
+      "width": 390,
+      "scroll": 390,
+      "main": 390,
+      "required": 0,
+      "csrf": true,
+      "case": "index",
+      "viewport": 390
+    },
+    {
+      "width": 320,
+      "scroll": 320,
+      "main": 320,
+      "required": 0,
+      "csrf": true,
+      "case": "index",
+      "viewport": 320
+    },
+    {
+      "width": 1440,
+      "scroll": 1440,
+      "main": 1440,
+      "required": 1,
+      "csrf": true,
+      "score_box": {
+        "x": 200,
+        "y": 433.6875,
+        "width": 1040,
+        "height": 216.375
+      },
+      "case": "detail-ru",
+      "viewport": 1440
+    },
+    {
+      "width": 768,
+      "scroll": 768,
+      "main": 768,
+      "required": 1,
+      "csrf": true,
+      "score_box": {
+        "x": 36,
+        "y": 477.234375,
+        "width": 696,
+        "height": 241.96875
+      },
+      "case": "detail-ru",
+      "viewport": 768
+    },
+    {
+      "width": 390,
+      "scroll": 390,
+      "main": 390,
+      "required": 1,
+      "csrf": true,
+      "score_box": {
+        "x": 26,
+        "y": 543.609375,
+        "width": 338,
+        "height": 440.640625
+      },
+      "case": "detail-ru",
+      "viewport": 390
+    },
+    {
+      "width": 320,
+      "scroll": 320,
+      "main": 320,
+      "required": 1,
+      "csrf": true,
+      "score_box": {
+        "x": 26,
+        "y": 602.234375,
+        "width": 268,
+        "height": 491.828125
+      },
+      "case": "detail-ru",
+      "viewport": 320
+    },
+    {
+      "width": 1440,
+      "scroll": 1440,
+      "main": 1440,
+      "required": 1,
+      "csrf": true,
+      "score_box": {
+        "x": 200,
+        "y": 433.6875,
+        "width": 1040,
+        "height": 216.375
+      },
+      "case": "expanded-ru",
+      "viewport": 1440
+    },
+    {
+      "width": 768,
+      "scroll": 768,
+      "main": 768,
+      "required": 1,
+      "csrf": true,
+      "score_box": {
+        "x": 36,
+        "y": 477.234375,
+        "width": 696,
+        "height": 241.96875
+      },
+      "case": "expanded-ru",
+      "viewport": 768
+    },
+    {
+      "width": 390,
+      "scroll": 390,
+      "main": 390,
+      "required": 1,
+      "csrf": true,
+      "score_box": {
+        "x": 26,
+        "y": 543.609375,
+        "width": 338,
+        "height": 440.640625
+      },
+      "case": "expanded-ru",
+      "viewport": 390
+    },
+    {
+      "width": 320,
+      "scroll": 320,
+      "main": 320,
+      "required": 1,
+      "csrf": true,
+      "score_box": {
+        "x": 26,
+        "y": 602.234375,
+        "width": 268,
+        "height": 491.828125
+      },
+      "case": "expanded-ru",
+      "viewport": 320
+    },
+    {
+      "width": 1440,
+      "scroll": 1440,
+      "main": 1440,
+      "required": 1,
+      "csrf": true,
+      "score_box": {
+        "x": 200,
+        "y": 433.6875,
+        "width": 1040,
+        "height": 216.375
+      },
+      "case": "detail-en",
+      "viewport": 1440
+    },
+    {
+      "width": 768,
+      "scroll": 768,
+      "main": 768,
+      "required": 1,
+      "csrf": true,
+      "score_box": {
+        "x": 36,
+        "y": 451.640625,
+        "width": 696,
+        "height": 241.96875
+      },
+      "case": "detail-en",
+      "viewport": 768
+    },
+    {
+      "width": 390,
+      "scroll": 390,
+      "main": 390,
+      "required": 1,
+      "csrf": true,
+      "score_box": {
+        "x": 26,
+        "y": 518.015625,
+        "width": 338,
+        "height": 380.5
+      },
+      "case": "detail-en",
+      "viewport": 390
+    },
+    {
+      "width": 320,
+      "scroll": 320,
+      "main": 320,
+      "required": 1,
+      "csrf": true,
+      "score_box": {
+        "x": 26,
+        "y": 518.015625,
+        "width": 268,
+        "height": 457.28125
+      },
+      "case": "detail-en",
+      "viewport": 320
+    },
+    {
+      "width": 1440,
+      "scroll": 1440,
+      "main": 1440,
+      "required": 1,
+      "csrf": true,
+      "score_box": {
+        "x": 200,
+        "y": 433.6875,
+        "width": 1040,
+        "height": 216.375
+      },
+      "case": "expanded-en",
+      "viewport": 1440
+    },
+    {
+      "width": 768,
+      "scroll": 768,
+      "main": 768,
+      "required": 1,
+      "csrf": true,
+      "score_box": {
+        "x": 36,
+        "y": 451.640625,
+        "width": 696,
+        "height": 241.96875
+      },
+      "case": "expanded-en",
+      "viewport": 768
+    },
+    {
+      "width": 390,
+      "scroll": 390,
+      "main": 390,
+      "required": 1,
+      "csrf": true,
+      "score_box": {
+        "x": 26,
+        "y": 518.015625,
+        "width": 338,
+        "height": 380.5
+      },
+      "case": "expanded-en",
+      "viewport": 390
+    },
+    {
+      "width": 320,
+      "scroll": 320,
+      "main": 320,
+      "required": 1,
+      "csrf": true,
+      "score_box": {
+        "x": 26,
+        "y": 518.015625,
+        "width": 268,
+        "height": 457.28125
+      },
+      "case": "expanded-en",
+      "viewport": 320
+    },
+    {
+      "width": 1440,
+      "scroll": 1440,
+      "main": 1440,
+      "required": 1,
+      "csrf": true,
+      "score_box": {
+        "x": 200,
+        "y": 517.28125,
+        "width": 1040,
+        "height": 216.375
+      },
+      "case": "stale",
+      "viewport": 1440
+    },
+    {
+      "width": 768,
+      "scroll": 768,
+      "main": 768,
+      "required": 1,
+      "csrf": true,
+      "score_box": {
+        "x": 36,
+        "y": 586.421875,
+        "width": 696,
+        "height": 241.96875
+      },
+      "case": "stale",
+      "viewport": 768
+    },
+    {
+      "width": 390,
+      "scroll": 390,
+      "main": 390,
+      "required": 1,
+      "csrf": true,
+      "score_box": {
+        "x": 26,
+        "y": 678.390625,
+        "width": 338,
+        "height": 440.640625
+      },
+      "case": "stale",
+      "viewport": 390
+    },
+    {
+      "width": 320,
+      "scroll": 320,
+      "main": 320,
+      "required": 1,
+      "csrf": true,
+      "score_box": {
+        "x": 26,
+        "y": 762.609375,
+        "width": 268,
+        "height": 491.828125
+      },
+      "case": "stale",
+      "viewport": 320
+    },
+    {
+      "width": 1440,
+      "scroll": 1440,
+      "main": 1440,
+      "required": 0,
+      "csrf": true,
+      "case": "error",
+      "viewport": 1440
+    },
+    {
+      "width": 768,
+      "scroll": 768,
+      "main": 768,
+      "required": 0,
+      "csrf": true,
+      "case": "error",
+      "viewport": 768
+    },
+    {
+      "width": 390,
+      "scroll": 390,
+      "main": 390,
+      "required": 0,
+      "csrf": true,
+      "case": "error",
+      "viewport": 390
+    },
+    {
+      "width": 320,
+      "scroll": 320,
+      "main": 320,
+      "required": 0,
+      "csrf": true,
+      "case": "error",
+      "viewport": 320
+    }
+  ],
+  "page_errors": []
+}
