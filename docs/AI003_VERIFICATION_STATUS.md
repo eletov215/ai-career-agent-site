@@ -2,7 +2,7 @@
 
 | Поле | Значение |
 |---|---|
-| Version | 1.0 r1.1 / 2026-09-16 |
+| Version | 1.0 r1.2 / 2026-09-16 |
 | Status | НУЖНА ПРОВЕРКА / NEEDS_VERIFICATION |
 | Code baseline | main (33), 20947f2e015097010cbe33772f7662bef4503f37 |
 | Target schema | 20260916_0017 |
@@ -48,6 +48,14 @@ Owner evidence on 2026-09-16: GitHub Actions CI #274 passed, including the dedic
 The private `/ai-interview` smoke then returned 404 even though `/admin/sources` opened normally for the same logged-in allowlisted administrator. The route guard therefore isolated the failure to the interview review flag. Inspection found `render.yaml` hardcoded `AI_INTERVIEW_REVIEW_ENABLED` to `0`. Candidate hotfix r1.1 changes only that Blueprint variable to `sync: false`, extends regression checks, and leaves the application default false. External acceptance remains **PENDING** until the hotfix CI/deploy and browser interview smoke pass.
 
 Focused hotfix checks: `python scripts/check_ai003_package.py` PASS; `tests/test_infra_manifests.py + tests/test_ai003_package.py` = **19 passed**; `tests/test_ai003_routes.py + tests/test_ai003_service.py + tests/test_ai003_migration.py` = **42 passed, 2 skipped** (Flask HTTP execution and disposable PostgreSQL remain CI gates in this local environment). Repository hygiene PASS.
+
+### r1.2 session-review hotfix
+
+After the owner deployed r1.1 with green CI, `/ai-interview` still returned 404 while `/admin/sources` remained available. The fresh GitHub ZIP was inspected and confirmed to contain the r1.1 `sync: false` manifest, registered interview blueprint, valid boolean parsing and the expected admin gate. No additional code defect was found in route registration. The remaining dependency was the deployment-time review flag actually reaching the running process.
+
+r1.2 removes that operational dependency for staging acceptance without widening public access: an active, verified `SEARCH_ADMIN_EMAILS` administrator may open `/ai-interview/review` and explicitly unlock the synthetic AI-003 UI only for the current signed browser session. Global `AI_INTERVIEW_REVIEW_ENABLED` remains supported as an operator override and still defaults off. Non-admin access to the review gate and all interview routes remains 404. Logout clears the browser session, so the per-session unlock is not durable across authentication rotation. No provider dispatch, real-data input, schema change or public-AI activation is introduced. External CI/deploy/browser acceptance remains **PENDING** for r1.2.
+
+Local r1.2 checks on the owner-supplied current GitHub ZIP baseline: `python scripts/check_ai003_package.py` PASS; focused non-Flask suite **61 passed, 2 skipped**. The skips are the Flask HTTP module and disposable PostgreSQL scenario. Interview templates parse successfully and repository hygiene passes after removing generated caches. Installing missing Flask packages was attempted but the sandbox has no external network access, so the new HTTP unlock flow remains a mandatory GitHub CI gate rather than a locally claimed PASS.
 
 ## 3. Accepted baseline versus candidate
 

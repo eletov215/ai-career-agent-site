@@ -95,3 +95,9 @@ Runtime changes add private reference interviews, two additive tables, owner-sco
 The FULL ZIP has one `ai-career-agent-site-main/` project folder. Upload the contents of that folder to the repository root, not as a nested second project. The PATCH ZIP contains modified/new paths relative to the repository root, with no enclosing project folder. It is an alternative overlay ONLY for unchanged main (33). Applying PATCH to that baseline must produce byte-identical contents to FULL. Neither archive contains local caches, environments, databases or credentials. Do not delete `.git`, remote secrets or production data.
 
 Local measurements: `docs/evidence/ai-003/local_verification.json`. User acceptance procedure: `docs/AI003_RUNBOOK.md`. GitHub/Render/Neon acceptance is still pending.
+
+## r1.2 hotfix delta against the owner-supplied current GitHub ZIP
+
+The r1.2 delivery is based on `ai-career-agent-site-main-2.zip` (SHA-256 `ce5fe48c531dba9dc57e982e1f2223be14b767bac720c309ffc3ce93ab88fa9a`), supplied after the owner reported that r1.1 CI/deploy remained 404. The repository already contains the r1.1 Render manifest hotfix. After excluding generated `__pycache__`, `.pyc` and `.pytest_cache` artifacts from the comparison, the current GitHub snapshot contains **526** project files. r1.2 contains **527**: **8 existing project files modified, 1 new file added, 0 project source files deleted**. The new file is `templates/interview/review_gate.html`. Database revision remains `20260916_0017`.
+
+The eight modified paths are `routes/resume_interview.py`, `scripts/check_ai003_package.py`, `tests/test_ai003_routes.py`, `docs/AI003_CHANGESET.md`, `docs/AI003_IMPLEMENTATION.md`, `docs/AI003_RUNBOOK.md`, `docs/AI003_VERIFICATION_STATUS.md` and `docs/CHANGELOG.md`. Generated cache artifacts present in the supplied ZIP are intentionally excluded from the delivery archives and are not treated as project-source deletions.

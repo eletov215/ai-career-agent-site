@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+{% block title %}AI-003 review access - AI Career Agent{% endblock %}
+{% block head_extra %}<link rel="stylesheet" href="{{ url_for('static', filename='resume_interview.css') }}?v=2">{% endblock %}
+{% block content %}
+<main class="section interview-page">
+  <div class="container interview-shell">
+    <header class="interview-header">
+      <div>
+        <p class="interview-kicker">AI-003 / закрытая проверка</p>
+        <h1>Доступ к тестовому интервью</h1>
+      </div>
+      <a class="interview-link" href="{{ url_for('resume_drafts.library') }}">К резюме</a>
+    </header>
+
+    <aside class="interview-notice">
+      <strong>Только синтетический сценарий.</strong>
+      <p>Эта страница не включает публичный AI, не отправляет резюме или свободный текст провайдеру и доступна только активному подтвержденному администратору из SEARCH_ADMIN_EMAILS.</p>
+    </aside>
+
+    <section class="interview-card interview-review-gate">
+      <h2>Текущий режим</h2>
+      {% if environment_enabled %}
+      <p>Глобальный review-флаг среды включен. Интервью доступно этому администратору без дополнительной разблокировки сессии.</p>
+      <a class="interview-primary" href="{{ url_for('resume_interview.index') }}">Открыть тестовое интервью</a>
+      {% elif session_enabled %}
+      <p>Тестовое интервью открыто только для текущей браузерной сессии. Выход из аккаунта очищает этот доступ.</p>
+      <a class="interview-primary" href="{{ url_for('resume_interview.index') }}">Продолжить проверку</a>
+      <form method="post" action="{{ url_for('resume_interview.disable_review') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button class="interview-text-button interview-review-disable" type="submit">Закрыть доступ в этой сессии</button>
+      </form>
+      {% else %}
+      <p>Глобальный review-флаг среды выключен. Можно безопасно открыть AI-003 только в текущей административной сессии.</p>
+      <form method="post" action="{{ url_for('resume_interview.enable_review') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button class="interview-primary" type="submit">Открыть тестовое интервью в этой сессии</button>
+      </form>
+      {% endif %}
+    </section>
+  </div>
+</main>
+{% endblock %}

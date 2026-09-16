@@ -11,7 +11,7 @@ from flask import Flask, g
 from flask_wtf import CSRFProtect
 from jinja2 import ChoiceLoader, DictLoader, FileSystemLoader
 from werkzeug.datastructures import MultiDict
-from routes.resume_interview import create_resume_interview_blueprint
+from routes.resume_interview import _REVIEW_SESSION_KEY, create_resume_interview_blueprint
 from services.ai.interview_reference import ROOT
 from tests.test_ai003_service import env, start, review, command, confirm_command
 
@@ -61,6 +61,41 @@ def test_private_gate_and_no_generation_links_by_default(web):
             old = getattr(user, key);setattr(user, key, value)
             assert all(client.get(url).status_code == 404 for url in urls)
             setattr(user, key, old)
+
+
+def test_allowlisted_admin_can_unlock_review_for_current_browser_session(web):
+    client, user, settings, env = web
+    settings.ai_interview_review_enabled = False
+    assert client.get('/ai-interview').status_code == 404
+
+    gate = client.get('/ai-interview/review')
+    assert gate.status_code == 200
+    token = csrf(gate)
+    enabled = client.post('/ai-interview/review/enable', data={'csrf_token': token}, follow_redirects=False)
+    assert enabled.status_code == 303 and enabled.location.endswith('/ai-interview')
+    with client.session_transaction() as browser_session:
+        assert browser_session.get(_REVIEW_SESSION_KEY) is True
+    assert client.get('/ai-interview').status_code == 200
+
+    gate = client.get('/ai-interview/review')
+    disabled = client.post('/ai-interview/review/disable', data={'csrf_token': csrf(gate)}, follow_redirects=False)
+    assert disabled.status_code == 303 and disabled.location.endswith('/ai-interview/review')
+    with client.session_transaction() as browser_session:
+        assert _REVIEW_SESSION_KEY not in browser_session
+    assert client.get('/ai-interview').status_code == 404
+
+
+def test_review_unlock_gate_is_hidden_from_non_admin(web):
+    client, user, settings, env = web
+    settings.ai_interview_review_enabled = False
+    token = csrf(client.get('/ai-interview/review'))
+    original = user.normalized_email
+    user.normalized_email = 'not-admin@example.invalid'
+    try:
+        assert client.get('/ai-interview/review').status_code == 404
+        assert client.post('/ai-interview/review/enable', data={'csrf_token': token}).status_code == 404
+    finally:
+        user.normalized_email = original
 
 
 def test_form_start_answer_restore_and_confirm(web):

@@ -1,5 +1,9 @@
 # AI Career Agent - CHANGELOG
 
+## AI-003 r1.2 / 2026-09-16 - per-session staging review gate
+
+Fresh GitHub ZIP after the r1.1 deploy was inspected. It already contains the expected `sync: false` Render manifest, the registered AI-003 blueprint and correct `1/0` boolean parsing, while the allowlisted administrator can open `/admin/sources`. Because `/ai-interview` still returned 404, r1.2 stops making manual acceptance depend on a Render environment value reaching the worker. An active verified `SEARCH_ADMIN_EMAILS` administrator can now open `/ai-interview/review` and explicitly unlock the synthetic interview only for the current signed browser session. CSRF protects enable/disable POSTs, logout/session rotation clears the unlock, non-admin access remains 404, and `AI_INTERVIEW_REVIEW_ENABLED` remains an optional default-off global override. No migration, provider call, real-data input or public-AI activation. AI-003 remains НУЖНА ПРОВЕРКА until r1.2 CI/deploy/browser smoke passes.
+
 ## AI-003 r1.1 / 2026-09-16 - Render review-flag hotfix
 
 GitHub CI #274 and Render/Neon schema 0017 were confirmed by the owner, with `/api/ai/status` still manual/disabled. Private `/ai-interview` returned 404 while `/admin/sources` worked for the same administrator. The route guard therefore isolated the failure to `AI_INTERVIEW_REVIEW_ENABLED`; inspection found that `render.yaml` hardcoded the review flag to `0`. The Blueprint declaration is changed to `sync: false`, preserving the application default-off behavior while allowing the temporary Render Dashboard review window. Manifest/package regression checks were added. No migration/provider/public-AI change; AI-003 remains НУЖНА ПРОВЕРКА until hotfix CI/deploy and browser smoke pass.

@@ -2,7 +2,7 @@
 
 | Поле | Значение |
 |---|---|
-| Version | 1.0 r1.1 / 2026-09-16 |
+| Version | 1.0 r1.2 / 2026-09-16 |
 | Status | НУЖНА ПРОВЕРКА / NEEDS_VERIFICATION |
 | Baseline | main (33) / 20947f2e015097010cbe33772f7662bef4503f37 |
 | Target schema | 20260916_0017 |
@@ -30,10 +30,13 @@ Bounds: two fixtures, no more than eight graph steps, 50 sessions per owner, 60 
 
 ## 4. Access and API
 
-`AI_INTERVIEW_REVIEW_ENABLED` defaults to false in application code. In Render Blueprint configuration it is declared with `sync: false`, so the temporary review value is controlled explicitly from the Render Dashboard and is not reset to `0` by Blueprint sync. Existing active/verified first-party account plus `SEARCH_ADMIN_EMAILS` allowlist is required for every interview route. Public/default/non-admin access receives 404; ordinary builder remains available. Global CSRF, per-route limits, no-store/noindex responses and autoescaped templates remain in force. SQL errors produce neutral 503 without parameters. Duplicate JSON/form fields and unknown fields are rejected.
+`AI_INTERVIEW_REVIEW_ENABLED` defaults to false in application code and remains an optional operator-wide staging override. r1.2 also adds a safer per-browser review gate at `/ai-interview/review`: only an active, verified first-party administrator present in `SEARCH_ADMIN_EMAILS` can see it, and enabling review stores a single boolean in the signed Flask session. All other interview routes require the same administrator plus either the environment override or this current-session unlock. Logout/session rotation clears the unlock. Public/default/non-admin access receives 404; ordinary builder remains available. Global CSRF protects the enable/disable POSTs, per-route limits remain active, and interview responses keep no-store/noindex protection. SQL errors produce neutral 503 without parameters. Duplicate JSON/form fields and unknown fields are rejected.
 
 | Method | Route | Purpose |
 |---|---|---|
+| GET | `/ai-interview/review` | Admin-only per-session review gate |
+| POST | `/ai-interview/review/enable` | Unlock synthetic review in the current signed session |
+| POST | `/ai-interview/review/disable` | Remove the current-session unlock |
 | GET | `/ai-interview` | Private examples and owned sessions |
 | POST | `/ai-interview/start` | Start a new synthetic draft/session |
 | GET | `/resume-builder/<draft_id>/interview` | Private adaptive builder page |

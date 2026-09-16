@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import json
 import secrets
-from flask import Blueprint, abort, g, jsonify, redirect, render_template, request, url_for
+from flask import Blueprint, abort, g, jsonify, redirect, render_template, request, session, url_for
 from sqlalchemy.exc import SQLAlchemyError
 
 from domain.resume_interview import InterviewCommand, InterviewError, StartInterviewRequest
@@ -15,6 +15,12 @@ _COMMAND_FIELDS = {'action', 'expected_revision', 'source_hash', 'operation_key'
                    'choice_id', 'answer_index', 'selected_fact_ids', 'confirm'}
 _CONFLICTS = {'stale_source', 'stale_interview', 'stale_draft', 'idempotency_conflict',
               'already_confirmed', 'unexpected_question', 'history_limit'}
+_REVIEW_SESSION_KEY = 'ai_interview_review_session'
+_REVIEW_GATE_ENDPOINTS = {
+    'resume_interview.review_gate',
+    'resume_interview.enable_review',
+    'resume_interview.disable_review',
+}
 
 
 def create_resume_interview_blueprint(service, settings):
@@ -22,7 +28,15 @@ def create_resume_interview_blueprint(service, settings):
 
     @bp.before_request
     def private_boundary():
-        if not settings.ai_interview_review_enabled or not is_search_admin(getattr(g, 'current_user', None), settings):
+        # Every AI-003 review route remains hidden from ordinary users. The
+        # allowlisted administrator can explicitly unlock the synthetic review
+        # UI for the current signed browser session. This avoids depending on
+        # a deployment-time environment toggle for a one-off staging review.
+        if not is_search_admin(getattr(g, 'current_user', None), settings):
+            abort(404)
+        if request.endpoint in _REVIEW_GATE_ENDPOINTS:
+            return None
+        if not settings.ai_interview_review_enabled and session.get(_REVIEW_SESSION_KEY) is not True:
             abort(404)
 
     @bp.after_request
@@ -96,6 +110,30 @@ def create_resume_interview_blueprint(service, settings):
             operation_key=data.get('operation_key'), action=data.get('action'), node_id=data.get('node_id'),
             choice_id=data.get('choice_id'), answer_index=data.get('answer_index'),
             selected_fact_ids=tuple(selected), confirm=data.get('confirm', False))
+
+    @bp.get('/ai-interview/review')
+    @limiter.limit('30 per 5 minutes')
+    def review_gate():
+        return render_template(
+            'interview/review_gate.html',
+            ui=UI,
+            environment_enabled=bool(settings.ai_interview_review_enabled),
+            session_enabled=session.get(_REVIEW_SESSION_KEY) is True,
+        )
+
+    @bp.post('/ai-interview/review/enable')
+    @limiter.limit('20 per hour')
+    def enable_review():
+        session[_REVIEW_SESSION_KEY] = True
+        session.modified = True
+        return redirect(url_for('resume_interview.index'), code=303)
+
+    @bp.post('/ai-interview/review/disable')
+    @limiter.limit('20 per hour')
+    def disable_review():
+        session.pop(_REVIEW_SESSION_KEY, None)
+        session.modified = True
+        return redirect(url_for('resume_interview.review_gate'), code=303)
 
     @bp.get('/ai-interview')
     @limiter.limit('60 per 5 minutes')

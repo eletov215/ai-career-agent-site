@@ -20,6 +20,7 @@ REQUIRED = {
     'services/ai/interview_reference_manifest.json', 'routes/resume_interview.py',
     'migrations/versions/20260916_0017_resume_interview.py',
     'templates/interview/index.html', 'templates/interview/detail.html', 'templates/interview/error.html',
+    'templates/interview/review_gate.html',
     'static/resume_interview.css', 'tests/test_ai003_service.py', 'tests/test_ai003_routes.py',
     'tests/test_ai003_migration.py', 'tests/test_ai003_package.py',
     'docs/AI003_IMPLEMENTATION.md', 'docs/AI003_RUNBOOK.md', 'docs/AI003_VERIFICATION_STATUS.md',
@@ -83,7 +84,8 @@ def validate(root=ROOT):
                 if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute) and node.func.attr in {'generate', 'analyze'}:
                     errors.append('Reference flow must not dispatch a provider: '+rel)
         route = (root/'routes/resume_interview.py').read_text()
-        for guard in ('is_search_admin', 'ai_interview_review_enabled', 'request.files', 'csrf_token', 'no-store', 'object_pairs_hook'):
+        for guard in ('is_search_admin', 'ai_interview_review_enabled', '_REVIEW_SESSION_KEY', 'review_gate',
+                      'request.files', 'csrf_token', 'no-store', 'object_pairs_hook'):
             if guard not in route:
                 errors.append('Missing private route control: '+guard)
         manifest = json.loads((root/'services/ai/interview_reference_manifest.json').read_text())
