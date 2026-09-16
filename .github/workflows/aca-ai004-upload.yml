@@ -1,0 +1,109 @@
+name: Temporary AI-004 object upload
+
+"on":
+  push:
+    branches: [aca-upload-ai004-20260916]
+    paths: [.github/aca-ai004-payload.b64]
+
+permissions:
+  contents: read
+
+jobs:
+  upload:
+    if: github.repository == 'eletov215/ai-career-agent-site' && github.ref == 'refs/heads/aca-upload-ai004-20260916'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Verify exact package and store Git objects without changing any branch
+        env:
+          UPLOAD_TOKEN: ${{ github.token }}
+        run: |
+          python - <<'PY'
+          import base64, hashlib, io, json, lzma, os, subprocess, tarfile, time
+          from pathlib import Path, PurePosixPath
+          from urllib.request import Request, urlopen
+          from urllib.error import HTTPError
+
+          BASE = 'c683520058cc1f729c79ed49ac5c213811e4c9f3'
+          BASE_TREE = '6458daea23371dadfbbd49d830abcdde44df1293'
+          EXPECTED_TREE = '53d86b0ff72f5090f214c20979df493e6f1f0ee3'
+          PAYLOAD_HASH = 'd6636acf0ccc77fae0c642097321b6e29189642a45fbb11ee1aed75ae484563a'
+          REPO = 'eletov215/ai-career-agent-site'
+          assert os.environ['GITHUB_REPOSITORY'] == REPO
+          assert os.environ['GITHUB_REF'] == 'refs/heads/aca-upload-ai004-20260916'
+          assert subprocess.check_output(['git', 'rev-parse', BASE + '^{tree}']).decode().strip() == BASE_TREE
+          encoded = Path('.github/aca-ai004-payload.b64').read_bytes()
+          assert len(encoded) < 100000
+          payload_bytes = lzma.decompress(base64.b64decode(encoded, validate=True), memlimit=128 * 1024 * 1024)
+          assert len(payload_bytes) < 1000000
+          assert hashlib.sha256(payload_bytes).hexdigest() == PAYLOAD_HASH
+          payload = json.loads(payload_bytes)
+          assert payload['baseline'] == BASE and len(payload['files']) == 69
+          archive = subprocess.check_output(['git', 'archive', '--format=tar', BASE])
+          with tarfile.open(fileobj=io.BytesIO(archive)) as tar:
+              baseline = {m.name: tar.extractfile(m).read() for m in tar.getmembers() if m.isfile()}
+          assert len(baseline) == 527
+          pending = []
+          for path, entry in payload['files'].items():
+              parsed = PurePosixPath(path)
+              assert not parsed.is_absolute() and '..' not in parsed.parts and '.git' not in parsed.parts
+              if 'generated' in entry:
+                  assert path == 'docs/evidence/ai-004/baseline_files_sha256.json'
+                  assert set(entry['paths']) == set(baseline) and len(entry['paths']) == len(baseline)
+                  obj = {'source_commit': BASE, 'source_tree': BASE_TREE,
+                         'files': {p: hashlib.sha256(baseline[p]).hexdigest() for p in entry['paths']}}
+                  data = json.dumps(obj, ensure_ascii=False, indent=2).encode() + b'\n'
+              elif 'text' in entry:
+                  assert path not in baseline
+                  data = entry['text'].encode()
+              else:
+                  original = baseline[path]
+                  assert hashlib.sha256(original).hexdigest() == entry['base_sha256']
+                  lines = original.decode().splitlines(keepends=True)
+                  for start, end, replacement in reversed(entry['edits']):
+                      assert 0 <= start <= end <= len(lines)
+                      lines[start:end] = replacement
+                  data = ''.join(lines).encode()
+              assert hashlib.sha256(data).hexdigest() == entry['sha256'], path
+              blob_sha = hashlib.sha1(b'blob ' + str(len(data)).encode() + b'\0' + data).hexdigest()
+              pending.append((path, data, blob_sha))
+          assert sum(p not in baseline for p, _, _ in pending) == 38
+          assert sum(p in baseline for p, _, _ in pending) == 31
+
+          def post(endpoint, body):
+              assert endpoint in ('blobs', 'trees')
+              url = 'https://api.github.com/repos/' + REPO + '/git/' + endpoint
+              encoded_body = json.dumps(body).encode()
+              for attempt in range(3):
+                  req = Request(url, data=encoded_body, method='POST', headers={
+                      'Authorization': 'Bearer ' + os.environ['UPLOAD_TOKEN'],
+                      'Accept': 'application/vnd.github+json', 'Content-Type': 'application/json',
+                      'User-Agent': 'ACA-verified-package-upload'})
+                  try:
+                      with urlopen(req, timeout=60) as response:
+                          return json.load(response)
+                  except HTTPError as error:
+                      if error.code not in (429, 500, 502, 503, 504) or attempt == 2:
+                          raise RuntimeError('Git object upload failed: HTTP ' + str(error.code)) from None
+                      time.sleep(5 * (attempt + 1))
+              raise RuntimeError('Git object upload failed')
+
+          elements = []
+          for path, data, expected_sha in pending:
+              response = post('blobs', {'content': base64.b64encode(data).decode(), 'encoding': 'base64'})
+              assert response['sha'] == expected_sha, path
+              elements.append({'path': path, 'mode': '100644', 'type': 'blob', 'sha': expected_sha})
+          response = post('trees', {'base_tree': BASE_TREE, 'tree': elements})
+          assert response['sha'] == EXPECTED_TREE
+          print('AI004_UPLOAD_TREE=' + response['sha'])
+          print('AI004_UPLOAD_FILES=69; modified=31; added=38; deleted=0')
+          print('No commits, branch refs, pull requests, repository secrets or deployment settings were changed by this job.')
+          with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as out:
+              out.write('AI-004 r1 objects verified and uploaded. Tree: `' + response['sha'] + '`.\n')
+          PY
