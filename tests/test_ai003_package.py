@@ -40,6 +40,8 @@ def copy_boundary(tmp_path):
     for rel in files:
         (tmp_path/rel).parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(ROOT/rel, tmp_path/rel)
+    from tests.job001_boundary_helper import copy_job001_boundary
+    copy_job001_boundary(ROOT, tmp_path)
     assert load_boundary(tmp_path)
 
 

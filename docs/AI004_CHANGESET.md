@@ -90,3 +90,7 @@ The repository's historical package-checker test copies now include the AI-004 s
 ## 4. Installation and rollback
 
 PATCH is an overlay only for the verified source commit; FULL is a complete candidate with one project folder. Never apply the older AI003 final patch after AI004. No remote commit/deploy is performed by these files. Follow AI004_RUNBOOK.md: backup before automatic migration, new ordinary CI, private review, public runtime closed. Downgrade0018 drops matching reports/series, so preserve a backup and coordinate old exact-revision readiness.
+
+## Documentation closure / 1.5.7 / 2026-09-17
+
+The accepted 565-file application tree `53d86b0ff72f5090f214c20979df493e6f1f0ee3` at main `d5e0dac2ba87d4d7e14fc5b48fbb6b9182c885a4` is unchanged by runtime logic. The final release updates canonical Markdown and adds acceptance evidence and next-package readiness notes only. No migrations, prompts, workflow, dependencies, application sources or assets change. Two documentation-status checkers and their two existing test files are updated to require the recorded closure evidence, not the old candidate status. The separate generated PATCH manifest contains the exact documentation paths/hashes; it is not the original AI-004 31-modified/38-added code delta. A later documentation merge has not been inferred.

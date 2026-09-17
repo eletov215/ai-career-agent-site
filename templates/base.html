@@ -54,6 +54,7 @@
           <span>Вакансии</span>
         </a>
         {% if current_user %}
+          <a class="nav-muted-link" href="{{ url_for('saved_vacancies.index') }}">Сохранённые</a>
           <a class="nav-muted-link" href="{{ url_for('dashboard') }}#connections">Подключения</a>
           <a class="nav-muted-link" href="{{ url_for('privacy_controls.center') }}">Мои данные</a>
           {% if search_admin_access %}<a class="nav-muted-link" href="{{ url_for('admin_sources.source_center') }}">Источники</a>{% endif %}

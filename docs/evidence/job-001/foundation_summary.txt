@@ -1,0 +1,7 @@
+SKIPPED [1] tests/test_app_startup_modes.py:11: Flask is installed from requirements.txt in CI
+SKIPPED [1] tests/test_observability.py:8: Flask is installed from requirements.txt in CI
+SKIPPED [1] tests/test_rate_limit_proxy.py:5: Flask is installed from requirements.txt in CI
+SKIPPED [1] tests/test_routes.py:11: Flask is installed from requirements.txt in CI
+SKIPPED [1] tests/test_database.py:61: could not import 'psycopg': No module named 'psycopg'
+SKIPPED [1] tests/test_postgresql_integration.py:50: POSTGRES_TEST_URL is provided by the GitHub Actions PostgreSQL service
+======================= 115 passed, 6 skipped in 14.68s ========================

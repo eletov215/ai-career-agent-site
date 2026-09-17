@@ -1,0 +1,4 @@
+{% extends 'base.html' %}
+{% block title %}{{ ui.error_title }} - AI Career Agent{% endblock %}
+{% block head_extra %}<link rel="stylesheet" href="{{ url_for('static', filename='saved_vacancies.css') }}?v=1.1">{% endblock %}
+{% block content %}<main class="section job001-page"><div class="container job001-shell"><h1>{{ ui.error_title }}</h1><p role="alert">{{ error }}</p><p><a href="{{ url_for('saved_vacancies.index') }}">{{ ui.back }}</a></p><a href="{{ url_for('vacancies') }}">{{ ui.search }}</a></div></main>{% endblock %}

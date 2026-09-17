@@ -1,0 +1,3 @@
+SKIPPED [1] tests/test_search005_routes.py:10: could not import 'flask': No module named 'flask'
+SKIPPED [1] tests/test_search005_route_registration.py:5: could not import 'flask': No module named 'flask'
+======================= 104 passed, 2 skipped in 15.86s ========================

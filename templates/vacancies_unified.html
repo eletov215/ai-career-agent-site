@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% block title %}Вакансии — AI Career Agent{% endblock %}
 {% block head_extra %}
+<link rel="stylesheet" href="{{ url_for('static', filename='saved_vacancies.css') }}?v=1.1">
   <link rel="canonical" href="{{ url_for('vacancies', _external=True) }}">
 {% endblock %}
 {% block content %}
@@ -523,22 +524,28 @@
             </div>
 
             <div class="vacancy-actions">
-              <button
-                class="btn btn-ghost vacancy-save-button"
-                type="button"
-                data-save-vacancy
-                data-save-key="{{ vacancy.save_key }}"
-                aria-pressed="false"
-              >
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4.8A1.8 1.8 0 0 1 7.8 3h8.4A1.8 1.8 0 0 1 18 4.8V21l-6-3.8L6 21V4.8Z"></path></svg>
-                <span>Сохранить</span>
-              </button>
+              {% if current_user and vacancy.saved_control %}
+                {% if vacancy.saved_control.saved_id %}
+                  <a class="btn btn-ghost vacancy-save-button is-saved" href="{{ url_for('saved_vacancies.detail', saved_id=vacancy.saved_control.saved_id) }}">Сохранено</a>
+                {% elif vacancy.saved_control.reference %}
+                  <form class="job001-save-form" method="post" action="{{ url_for('saved_vacancies.save') }}" data-server-save>
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="reference" value="{{ vacancy.saved_control.reference }}">
+                    <button class="btn btn-ghost vacancy-save-button" type="submit"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4.8A1.8 1.8 0 0 1 7.8 3h8.4A1.8 1.8 0 0 1 18 4.8V21l-6-3.8L6 21V4.8Z"></path></svg><span>Сохранить</span></button>
+                  </form>
+                {% endif %}
+              {% elif not current_user %}
+                <a class="btn btn-ghost vacancy-save-button" href="{{ url_for('auth.login', next=request.full_path) }}">Войти и сохранить</a>
+              {% else %}
+                <span class="muted">Сохранение временно недоступно</span>
+              {% endif %}
               {% if vacancy.url %}
                 <a class="btn btn-primary vacancy-details-button vacancy-apply-button" href="{{ vacancy.url }}" target="_blank" rel="noopener noreferrer">
                   <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 3 10.4 13.6"></path><path d="m21 3-6.8 18-3.8-7.4L3 9.8 21 3Z"></path></svg>
                   <span>Откликнуться</span>
                 </a>
               {% endif %}
+              <p class="job001-save-status" data-save-status role="status" aria-live="polite"></p>
             </div>
           </div>
         </article>
@@ -734,38 +741,6 @@
     hh: 'HeadHunter'
   };
 
-  const savedVacanciesKey = 'ai-career-agent:saved-vacancies';
-  let savedVacancies = new Set();
-  try {
-    savedVacancies = new Set(JSON.parse(localStorage.getItem(savedVacanciesKey) || '[]'));
-  } catch (error) {
-    savedVacancies = new Set();
-  }
-
-  document.querySelectorAll('[data-save-vacancy]').forEach((button) => {
-    const key = button.dataset.saveKey || '';
-    const label = button.querySelector('span');
-    const renderSavedState = () => {
-      const isSaved = savedVacancies.has(key);
-      button.classList.toggle('is-saved', isSaved);
-      button.setAttribute('aria-pressed', String(isSaved));
-      if (label) label.textContent = isSaved ? 'Сохранено' : 'Сохранить';
-    };
-
-    renderSavedState();
-    button.addEventListener('click', () => {
-      if (!key) return;
-      if (savedVacancies.has(key)) savedVacancies.delete(key);
-      else savedVacancies.add(key);
-      try {
-        localStorage.setItem(savedVacanciesKey, JSON.stringify(Array.from(savedVacancies)));
-      } catch (error) {
-        // Интерфейс продолжает работать, даже если хранилище браузера недоступно.
-      }
-      renderSavedState();
-    });
-  });
-
   searchForm?.addEventListener('submit', (event) => {
     if (!searchForm.checkValidity()) return;
 
@@ -833,4 +808,5 @@
 })();
 </script>
 {% endif %}
+<script nonce="{{ csp_nonce }}" src="{{ url_for('static', filename='saved_vacancies.js') }}?v=1.1" defer></script>
 {% endblock %}

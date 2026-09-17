@@ -31,6 +31,8 @@ def test_explicit_hash_chain_cannot_allow_unreviewed_source(tmp_path,change):
     files=CHANGES|{'docs/evidence/ai-003/change_boundary.json','docs/evidence/ai-004/change_boundary.json','docs/evidence/ai-004/baseline_files_sha256.json'}
     for rel in files:
         path=tmp_path/rel;path.parent.mkdir(parents=True,exist_ok=True);shutil.copyfile(ROOT/rel,path)
+    from tests.job001_boundary_helper import copy_job001_boundary
+    copy_job001_boundary(ROOT, tmp_path)
     assert load_boundary(tmp_path)
     path=tmp_path/'docs/evidence/ai-004/change_boundary.json';data=json.loads(path.read_text())
     if change=='public':data['public_real_data_enabled']=True
@@ -46,6 +48,11 @@ def test_existing_prompt_policy_dependency_and_frontend_bytes_preserved():
     baseline=json.loads((ROOT/'docs/evidence/ai-004/baseline_files_sha256.json').read_text())['files']
     for rel,sha in baseline.items():
         if rel.startswith(('evals/','prompts/','schemas/','templates/','static/','docs/policies/','services/ai/')) or rel in {'config.py','render.yaml','requirements.txt','requirements-dev.txt','domain/ai.py'}:
+            from scripts.check_job001_package import load_boundary as job_boundary
+            successor = job_boundary(ROOT)
+            if rel in successor:
+                assert successor[rel]['previous_sha256'] == sha, rel
+                sha = successor[rel]['current_sha256']
             assert hashlib.sha256((ROOT/rel).read_bytes()).hexdigest()==sha,rel
 
 
@@ -106,3 +113,27 @@ def test_match_css_namespace_does_not_collide_with_existing_landing_widgets():
     # The old landing page has an absolutely positioned .match-score. Its
     # behavior must never apply to this document's normal-flow summary.
     assert 'position: absolute' not in css
+
+
+@pytest.mark.parametrize('change', ['missing', 'scope', 'commit', 'ci', 'public', 'manual', 'backup', 'next'])
+def test_closure_evidence_cannot_invent_acceptance(tmp_path, change):
+    from scripts.check_ai004_package import validate_closure
+    for rel in ('docs/AI004_VERIFICATION_STATUS.md', 'docs/evidence/ai-004/acceptance.json'):
+        path = tmp_path / rel
+        path.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(ROOT / rel, path)
+    assert validate_closure(tmp_path) == []
+    path = tmp_path / 'docs/evidence/ai-004/acceptance.json'
+    data = json.loads(path.read_text())
+    if change == 'missing':
+        path.unlink()
+    else:
+        if change == 'scope': data['scope'] = 'public-live'
+        if change == 'commit': data['accepted_code']['commit'] = '0' * 40
+        if change == 'ci': data['github']['main_ci']['conclusion'] = 'failure'
+        if change == 'public': data['owner_acceptance']['generation_available'] = True
+        if change == 'manual': data['manual_two_account_isolation']['status'] = 'PASS'
+        if change == 'backup': data['real_database_backup'] = 'PASS'
+        if change == 'next': data['next_package']['implementation_started'] = True
+        path.write_text(json.dumps(data))
+    assert validate_closure(tmp_path)

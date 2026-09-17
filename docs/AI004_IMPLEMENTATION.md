@@ -2,10 +2,11 @@
 
 | Field | Value |
 |---|---|
-| Version | 1.0 r1 / 2026-09-16 |
-| Status | НУЖНА ПРОВЕРКА / NEEDS_VERIFICATION |
+| Version | 1.1 FINAL / 2026-09-17 |
+| Status | ВЫПОЛНЕНО / COMPLETE (synthetic/reference-only) |
 | Baseline | GitHub main c683520058cc1f729c79ed49ac5c213811e4c9f3; CI #276 PASS |
-| Accepted staging / target | 20260916_0017 / 20260916_0018 |
+| Accepted code | d5e0dac2ba87d4d7e14fc5b48fbb6b9182c885a4 |
+| Accepted staging | 20260916_0018; owner-confirmed |
 | Public or real-data AI | Disabled; no new consent or activation inferred |
 
 ## 1. Product boundary
@@ -20,7 +21,7 @@ The browser can neither upload a resume nor submit free text, profile contents, 
 
 The pinned RU case is 6/9 = **67%**; mandatory Docker and preferred Kubernetes remain unverified. The EN case is 5/7 = **71%**; mandatory Next.js remains unverified. Missing evidence is not interpreted as proof of missing ability. A high percentage cannot produce the internal strong verdict when any mandatory requirement remains unresolved. The UI always exposes the mandatory warning and every requirement rather than replacing them with prose.
 
-Evidence coverage is calculated separately and labelled as coverage, not calibrated confidence or hiring probability. The general scorer distinguishes `mismatch` from `unverified`; these two fixtures contain no explicit mismatch. This candidate does not claim to infer real-world contradictions from arbitrary text.
+Evidence coverage is calculated separately and labelled as coverage, not calibrated confidence or hiring probability. The general scorer distinguishes `mismatch` from `unverified`; these two fixtures contain no explicit mismatch. This accepted foundation does not claim to infer real-world contradictions from arbitrary text.
 
 ## 3. Provider boundary
 
@@ -59,4 +60,19 @@ The RU/EN detail pages expose formula, per-requirement source evidence, mandator
 
 App remains `app:app`; runtime dependencies, config.py, render.yaml, accepted AI policy/prompts/schemas/evals and existing frontend are preserved. AI-003 final documentation synchronization is bundled because it was absent on the verified main. New and earlier package gates share an explicit additive checksum chain instead of disabling old protection checks.
 
-See AI004_VERIFICATION_STATUS.md for measured local checks and uncompleted external gates. See AI004_RUNBOOK.md for safe deployment and rollback. Additive 0018 is not automatically compatible with old exact-revision readiness checks: do not revert the application to an 0017-only version while leaving an unplanned schema mismatch.
+See AI004_VERIFICATION_STATUS.md for historical local checks and completed external acceptance, with explicit manual/recovery exclusions. See AI004_RUNBOOK.md for safe deployment and rollback. Additive 0018 is not automatically compatible with old exact-revision readiness checks: do not revert the application to an 0017-only version while leaving an unplanned schema mismatch.
+
+## 7. Final acceptance / 2026-09-17
+
+PR #38 is merged. PR CI #280 and main CI #281 succeeded; the latter logs explicitly record 71 focused AI-004 tests and 804 final full-suite tests, without skips. Owner stepwise and final browser confirmations establish the staging review, not a new live Alice call. Full matrix: AI004_VERIFICATION_STATUS.md; machine-readable provenance: evidence/ai-004/acceptance.json.
+
+Manual two-account isolation is NOT RUN, explicitly due to absence of a second active account. Automated route and service ownership tests are the separate evidence. No real account deletion, independent real database backup or restore drill was demonstrated. The test review is closed and public AI is still unavailable/manual.
+
+## 8. Release change boundary and next action
+
+The 1.5.7 closure changes documentation/evidence and status guards only; the accepted implementation described in sections 1-6 is unchanged. AI-005 preparation must resolve the declared JOB-001 dependency before promising integrated saved-vacancy letters. No future model, migration or endpoint is invented.
+
+## 9. Version history
+
+- 1.1 / 2026-09-17: accepted reference foundation; CI #280/#281 and owner evidence recorded; limits preserved.
+- 1.0 r1 / 2026-09-16: original implementation, NEEDS_VERIFICATION at delivery; external tests were PENDING then.

@@ -2,10 +2,16 @@
 
 | Field | Value |
 |---|---|
-| Version | 1.0 r1 / 2026-09-16 |
-| Status | НУЖНА ПРОВЕРКА / NEEDS_VERIFICATION |
+| Version | 1.1 FINAL / 2026-09-17 |
+| Status | ВЫПОЛНЕНО / COMPLETE (accepted reference-only scope) |
 | Input | GitHub main c683520058cc1f729c79ed49ac5c213811e4c9f3 |
-| Schema | accepted 0017 -> candidate 0018 |
+| Schema | accepted 20260916_0018; historical upgrade 0017 -> 0018 |
+
+## Acceptance note / 2026-09-17
+
+The original procedure below remains a regression/rollout reference; it is not a request to repeat all already accepted tests. Main CI #281 and owner final staging review passed. The current accepted application is `d5e0dac2ba87d4d7e14fc5b48fbb6b9182c885a4`, schema0018. Manual two-account isolation was NOT RUN because the owner has no second active account. The pre-deployment real-backup requirement was not evidenced; do not treat that prerequisite as retroactively completed. See AI004_VERIFICATION_STATUS.md for the exact acceptance matrix and remaining recovery work.
+
+This closure release changes documentation only; no new migration is added. No new paid Alice run is required. Review access remains closed after acceptance.
 
 ## 1. Before upload/deploy
 
@@ -52,3 +58,8 @@ First remove the session unlock/logout; no public AI switch should be turned on.
 ## 9. Acceptance boundary
 
 This can close only the synthetic/reference foundation. Live real-data matching, arbitrary requirement extraction, actual quality evidence and LEGAL-001/consent remain separate. No new paid provider call is required for reference acceptance. Successful unit tests alone do not close candidate HTTP, CI or staging gates.
+
+## 10. Version history
+
+- 1.1 / 2026-09-17: final accepted status and source/evidence notes added; original procedure and safety limits retained.
+- 1.0 / 2026-09-16: candidate rollout, privacy, session-gate and rollback procedure.

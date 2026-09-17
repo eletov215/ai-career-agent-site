@@ -1,0 +1,29 @@
+{
+  "release": "1.5.7",
+  "compiled_on": "2026-09-17",
+  "command": "PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 python -m pytest -q -ra tests/test_ai004_package.py tests/test_document_structure.py tests/test_ai004_scoring.py tests/test_ai004_service.py tests/test_ai004_migration.py tests/test_ai004_routes.py tests/test_ai_provider_policy.py",
+  "passed": 118,
+  "skipped": 2,
+  "passing_subtests": 59,
+  "skip_reasons": [
+    "Flask HTTP tests require installed application dependencies in CI",
+    "Disposable PostgreSQL service required in CI"
+  ],
+  "application_logic_changed": false,
+  "database_revision": "20260916_0018",
+  "new_remote_ci": "NOT RUN",
+  "previous_external_ci": {
+    "run_number": 281,
+    "passed": 804,
+    "skipped": 0
+  },
+  "notes": "Old and new evidence are separate; no paid/provider call or deployment during documentation work.",
+  "final_static_checks": {
+    "repository_hygiene": "PASS after removal of generated local caches",
+    "ai004_package": "PASS",
+    "provider_package": "PASS",
+    "document_structure": "PASS",
+    "runtime_byte_preservation": "PASS versus accepted GitHub tree",
+    "document_qa": "PASS; 10 documents, 92 PDF pages, no missing source fragments or out-of-bounds text"
+  }
+}

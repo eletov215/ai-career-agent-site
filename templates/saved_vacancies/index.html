@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+{% block title %}{{ ui.title }} - AI Career Agent{% endblock %}
+{% block head_extra %}<link rel="stylesheet" href="{{ url_for('static', filename='saved_vacancies.css') }}?v=1.1">{% endblock %}
+{% block content %}
+<main class="section job001-page"><div class="container job001-shell">
+<header class="job001-header"><div><h1>{{ ui.title }}</h1><p>{{ ui.intro }}</p></div><a class="btn btn-secondary" href="{{ url_for('vacancies') }}">{{ ui.search }}</a></header>
+<form class="job001-filter" method="get" action="{{ url_for('saved_vacancies.index') }}"><label for="saved-query">{{ ui.filter }}</label><div class="job001-actions"><input id="saved-query" name="q" value="{{ results.query }}" maxlength="160"><button class="btn btn-primary" type="submit">{{ ui.find }}</button></div></form>
+<section class="job001-card" data-legacy-panel hidden><h2>{{ ui.legacy_title }}</h2><p>{{ ui.legacy_notice }}</p><p data-legacy-count></p>
+<form action="{{ url_for('saved_vacancies.import_legacy') }}" method="post" data-legacy-form><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><label class="job001-check"><input type="checkbox" name="confirm" value="1" required> {{ ui.legacy_confirm }}</label><button type="submit" class="btn btn-secondary">{{ ui.legacy_button }}</button></form><p data-legacy-result role="status" aria-live="polite"></p></section>
+<div class="job001-grid">{% for item in results['items'] %}<article class="job001-card"><h2><a href="{{ url_for('saved_vacancies.detail', saved_id=item.id) }}">{{ item.card.title }}</a></h2><p>{{ item.card.company }}</p><p>{{ item.card.salary_display }}</p><p>{{ item.card.meta_labels|join(' / ') }}</p><p class="job001-muted">{{ ui.saved_at }}: {{ item.created_at|saved_time }}</p>{% if item.note %}<p class="job001-text">{{ item.note[:180] }}{% if item.note|length > 180 %}...{% endif %}</p>{% endif %}<a href="{{ url_for('saved_vacancies.detail', saved_id=item.id) }}">{{ ui.open }}</a></article>{% else %}<p>{{ ui.empty }}</p>{% endfor %}</div>
+<nav class="job001-actions" aria-label="{{ ui.page }}">{% if results.page > 1 %}<a class="btn btn-secondary" href="{{ url_for('saved_vacancies.index', q=results.query, page=results.page-1) }}">{{ ui.prev }}</a>{% endif %}<span>{{ ui.page }} {{ results.page }} / {{ results.pages }}</span>{% if results.page < results.pages %}<a class="btn btn-secondary" href="{{ url_for('saved_vacancies.index', q=results.query, page=results.page+1) }}">{{ ui.next }}</a>{% endif %}</nav>
+</div></main><script nonce="{{ csp_nonce }}" src="{{ url_for('static', filename='saved_vacancies.js') }}?v=1.1" defer></script>
+{% endblock %}

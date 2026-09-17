@@ -11,6 +11,7 @@ from dataclasses import dataclass
 
 from database import DatabaseRuntime
 from repositories.ai import AIRepository
+from repositories.saved_vacancies import SavedVacancyRepository
 from repositories.vacancy_match import VacancyMatchRepository
 from repositories.resume_interview import ResumeInterviewRepository
 from repositories.resume_analysis import ResumeAnalysisRepository
@@ -34,6 +35,7 @@ from services.vacancy_store import VacancyStore
 class StorageServices:
     """Repository-backed persistence entry points for application services."""
 
+    saved_vacancies: SavedVacancyRepository
     vacancy_matches: VacancyMatchRepository
     interviews: ResumeInterviewRepository
     analyses: ResumeAnalysisRepository
@@ -54,6 +56,7 @@ class StorageServices:
     @classmethod
     def from_database(cls, database: DatabaseRuntime) -> "StorageServices":
         return cls(
+            saved_vacancies=SavedVacancyRepository(database),
             vacancy_matches=VacancyMatchRepository(database),
             interviews=ResumeInterviewRepository(database),
             analyses=ResumeAnalysisRepository(database),

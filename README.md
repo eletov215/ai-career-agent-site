@@ -1,27 +1,33 @@
 # AI Career Agent
 
-## Current candidate / AI-004 r1
+## Current accepted package / AI-004
 
-PLAN_CURRENT 1.5.6 / PROJECT_PASSPORT 2.73. AI-003 is accepted; AI-004 is NEEDS_VERIFICATION. Source is verified GitHub main c683520058cc1f729c79ed49ac5c213811e4c9f3 / CI #276. Last accepted staging schema0017; candidate0018 requires new CI/deployment. Private reference matching opens via `/ai-match/review` for a verified allowlisted admin and never calls Alice from the browser. See `docs/AI004_RUNBOOK.md`. No new Render environment variable, free text or public AI activation. This package includes pending AI-003 final doc sync. Older dated summaries below are historical.
+PLAN_CURRENT 1.5.7 / PROJECT_PASSPORT 2.74. AI-004 is ВЫПОЛНЕНО only in the synthetic/reference-only scope, on application `d5e0dac2ba87d4d7e14fc5b48fbb6b9182c885a4`, schema `20260916_0018`. Main CI #281: 804 passed; dedicated AI-004: 71 passed, no skips. Owner final review passed; no second active account exists, so manual two-account isolation is NOT RUN. Public AI remains manual/unavailable and session review is closed. Real backup/snapshot evidence and production recovery are not established by this acceptance.
+
+This release changes documentation and its status guards only. See `docs/AI004_VERIFICATION_STATUS.md` for evidence and `docs/NEXT_PACKAGE_PREPARATION.md` for the unresolved AI-005/JOB-001 dependency; no next-package implementation or unapproved reorder is included.
 
 <!-- ACA-CANONICAL-STATUS:START -->
-## Canonical state / 2026-09-16
+## Canonical state / JOB-001 r1.1 REBUILT / 2026-09-17
 
 | Field | Value |
 |---|---|
-| Current package | AI-003 - ВЫПОЛНЕНО in synthetic/reference-only scope; AI-004 r1 - НУЖНА ПРОВЕРКА / NEEDS_VERIFICATION |
-| Source lineage | GitHub main `c683520058cc1f729c79ed49ac5c213811e4c9f3`; tree `6458daea23371dadfbbd49d830abcdde44df1293`; 527 verified files |
-| Canonical versions | PLAN 1.5.6; PASSPORT 2.73; SOURCE_AUDIT 1.5.6 |
-| Completed AI foundation | AI-BENCH-001 / AI-PROVIDER-001 / AI-001 / AI-002 / AI-003 - ВЫПОЛНЕНО in accepted boundaries |
-| LEGAL-001 | ОТЛОЖЕНО ДО РЕШЕНИЯ ВЛАДЕЛЬЦА; public real-data AI, payments and commercial release remain blocked |
-| Accepted staging schema | Render/Neon 20260916_0017; owner-confirmed current=expected and migrations.ok=true |
-| New candidate schema | 20260916_0018; two additive matching tables; deployment NOT yet verified |
-| AI-004 boundary | Closed RU/EN reference reports; exact code-derived score, per-requirement source evidence, versions and privacy; no browser provider call |
-| Runtime | generation_available=false, mode=manual, reason=runtime_not_activated |
-| Baseline CI | GitHub CI #276 / run 35132463421 / success; directly read through connector for the exact source commit |
-| Candidate verification | Local measurements in AI004_VERIFICATION_STATUS; new GitHub CI, Render/Neon and owner browser tests PENDING |
-| Next action | Deliver candidate -> ordinary CI -> 0018 readiness -> private /ai-match/review acceptance; keep public AI closed |
+| Current candidate | JOB-001 r1.1 REBUILT - НУЖНА ПРОВЕРКА / NEEDS_VERIFICATION |
+| Verified GitHub baseline | `d5e0dac2ba87d4d7e14fc5b48fbb6b9182c885a4`; tree `53d86b0ff72f5090f214c20979df493e6f1f0ee3`; 565 files |
+| Accepted foundation | AI-004 COMPLETE in synthetic/reference-only scope; prior accepted packages unchanged |
+| Canonical versions | PLAN 1.6.0; PASSPORT 2.75; SOURCE_AUDIT 1.6.0 |
+| Accepted staging | `20260916_0018`; owner-confirmed for AI-004, not a deployment of JOB-001 |
+| Candidate migration | `20260917_0019`; new saved_vacancies and saved_vacancy_sources |
+| Approved sequence | JOB-001 before AI-005; explicitly approved by the owner in this conversation |
+| Rebuild provenance | The previous JOB-001 r1 bytes were unavailable. This is a newly implemented replacement, not a byte-identical reissue |
+| Verification | New local measurements only; JOB-001 remote CI and staging acceptance remain NOT RUN |
+| Publication | Local files only; no GitHub write, merge, workflow dispatch or deployment in this rebuild |
+| Public AI | Disabled/manual; no new provider calls, keys, consent or legal activation |
+| Remaining limits | No second active account; actual Neon backup/restore unconfirmed; email delivery and LEGAL-001 remain open |
 <!-- ACA-CANONICAL-STATUS:END -->
+
+## JOB-001 rebuilt candidate
+
+Local candidate r1.1: see `docs/JOB001_IMPLEMENTATION.md`, `docs/JOB001_RUNBOOK.md` and `docs/JOB001_VERIFICATION_STATUS.md`. Do not upload the old AI-004 closure patch over this candidate. New migration0019 has not been applied to the real database. The historical section below describes the accepted AI-004 baseline, not acceptance of JOB-001.
 
 ## 1. Product and runtime
 

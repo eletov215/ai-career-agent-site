@@ -1,0 +1,90 @@
+{
+  "package": "AI-004",
+  "document_release": "1.5.7",
+  "compiled_on": "2026-09-17",
+  "status": "COMPLETE",
+  "scope": "synthetic/reference-only",
+  "accepted_code": {
+    "commit": "d5e0dac2ba87d4d7e14fc5b48fbb6b9182c885a4",
+    "tree": "53d86b0ff72f5090f214c20979df493e6f1f0ee3",
+    "file_count": 565,
+    "pull_request": 38,
+    "candidate_commit": "39229d887fe8fa8fa58bb80df7ff6e751d91f819"
+  },
+  "github": {
+    "source": "GitHub connector direct reads in the documentation-closure task",
+    "pr_ci": {
+      "run_number": 280,
+      "run_id": 35149229406,
+      "conclusion": "success"
+    },
+    "main_ci": {
+      "run_number": 281,
+      "run_id": 35151012823,
+      "job_id": 104979035501,
+      "conclusion": "success",
+      "ai004_tests": {
+        "passed": 71,
+        "skipped": 0,
+        "seconds": 6.83
+      },
+      "final_pytest": {
+        "collected": 804,
+        "passed": 804,
+        "skipped": 0,
+        "seconds": 80.4
+      }
+    },
+    "paid_jobs": "skipped",
+    "log_url": "https://github.com/eletov215/ai-career-agent-site/actions/runs/35151012823/job/104979035501"
+  },
+  "owner_acceptance": {
+    "source": "Explicit stepwise confirmations in the current conversation, followed by final acceptance; not assistant browser telemetry",
+    "exact_timestamp": null,
+    "schema": "20260916_0018",
+    "migrations_ok": true,
+    "generation_available": false,
+    "mode": "manual",
+    "reason": "runtime_not_activated",
+    "checks": [
+      "private gate",
+      "RU 67 percent and mandatory Docker warning",
+      "source/provenance display",
+      "refresh and relogin persistence",
+      "EN 71 percent and mandatory Next.js warning",
+      "new versions preserve old reports",
+      "GET refresh does not create versions",
+      "privacy export both match sections",
+      "single report deletion with mandatory confirmation",
+      "deleted report unavailable with review still open",
+      "version counter does not reuse deleted numbers",
+      "profile/resume/core search/builder/PDF regression",
+      "AI-003 saved interview regression",
+      "AI-003 and AI-004 review access closed",
+      "report and API denied after closing review",
+      "logout/login boundary",
+      "final readiness and manual AI status",
+      "Render log privacy/error review"
+    ]
+  },
+  "manual_two_account_isolation": {
+    "status": "NOT RUN",
+    "reason": "No second active account; explicitly confirmed by owner"
+  },
+  "automated_ownership_evidence": [
+    "tests/test_ai004_routes.py::test_different_allowlisted_admin_cannot_read_or_delete_other_reports",
+    "tests/test_ai004_service.py::test_cross_owner_read_delete_and_privacy_export"
+  ],
+  "manual_exact_post_replay": "NOT RUN separately; automated duplicate-operation/parallel replay tests passed",
+  "real_database_backup": "NOT EVIDENCED; no snapshot identifier or backup verification supplied",
+  "real_database_restore": "NOT RUN; OPS-002/REL-001 remains a release gate",
+  "ci_backup_note": "CI encrypted backup/verify/restore passed at 0018; match table counts in that CI dump were both zero, so this is not proof of restoring populated production match history",
+  "live_alice_or_real_data_dispatch": "NOT RUN / not enabled",
+  "next_package": {
+    "listed": "AI-005",
+    "unmet_dependency": "JOB-001",
+    "implementation_started": false,
+    "sequence_change_approved": false
+  },
+  "release_change_scope": "Documentation/evidence and status-checker regressions only; no application, schema, workflow or dependency changes"
+}

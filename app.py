@@ -26,6 +26,8 @@ from services.university_logo import find_university_logo
 from config import AppSettings, load_settings
 from database import CURRENT_REVISION, create_database, database_health
 from services.storage import StorageServices
+from services.saved_vacancies import SavedVacancyService
+from routes.saved_vacancies import create_saved_vacancies_blueprint
 from services.ai.service import AIService
 from routes.ai_status import create_ai_status_blueprint
 from services.vacancy_match import VacancyMatchService
@@ -123,6 +125,8 @@ def ai_availability_context():
 AUTH_EMAIL_SENDER = build_auth_email_sender(SETTINGS)
 AUTH_SERVICE = AuthService(STORAGE.auth, AUTH_EMAIL_SENDER, SETTINGS)
 app.register_blueprint(create_auth_blueprint(AUTH_SERVICE, SETTINGS))
+SAVED_VACANCY_SERVICE = SavedVacancyService(STORAGE.saved_vacancies, signing_key=SETTINGS.flask_secret_key)
+app.register_blueprint(create_saved_vacancies_blueprint(SAVED_VACANCY_SERVICE))
 ANALYSIS_SERVICE = ResumeAnalysisService(STORAGE.analyses, AI_SERVICE, fingerprint_key=SETTINGS.flask_secret_key)
 app.register_blueprint(create_resume_analysis_blueprint(ANALYSIS_SERVICE, SETTINGS))
 INTERVIEW_SERVICE = ResumeInterviewService(STORAGE.interviews, fingerprint_key=SETTINGS.flask_secret_key)
@@ -1075,6 +1079,14 @@ def university_logo_api():
     return jsonify({"ok": True, **result})
 
 
+@app.after_request
+def protect_saved_search_controls(response):
+    if request.endpoint == "vacancies":
+        response.headers["Cache-Control"] = "no-store, max-age=0"
+        response.headers["Pragma"] = "no-cache"
+    return response
+
+
 @app.get("/vacancies")
 @limiter.limit("60 per 5 minutes")
 def vacancies():
@@ -1306,6 +1318,15 @@ def vacancies():
         snapshot_restarted = aggregation.snapshot_restarted
         deduplication_stats = aggregation.deduplication_stats
         all_items = [present_vacancy(item) for item in aggregation.items]
+        if getattr(g, "current_user", None) is not None:
+            try:
+                controls = SAVED_VACANCY_SERVICE.controls(g.current_user.id, snapshot_id, aggregation.items)
+                for card, control in zip(all_items, controls):
+                    card["saved_control"] = control
+            except Exception as exc:
+                # Saving is non-gating for search. Never log source/user payloads.
+                logger.warning("Saved-vacancy controls unavailable", extra={
+                    "event": "saved_vacancy_controls_unavailable", "error_type": type(exc).__name__})
 
         candidate_counts_by_source = {
             key: summary.fetched_items

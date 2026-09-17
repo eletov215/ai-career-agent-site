@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+{% block title %}{{ record.card.title }} - AI Career Agent{% endblock %}
+{% block head_extra %}<link rel="stylesheet" href="{{ url_for('static', filename='saved_vacancies.css') }}?v=1.1">{% endblock %}
+{% block content %}
+<main class="section job001-page"><div class="container job001-shell">
+<header><a href="{{ url_for('saved_vacancies.index') }}">{{ ui.back }}</a><h1>{{ record.card.title }}</h1><p>{{ record.card.company }}</p><p>{{ record.card.salary_display }}</p><p>{{ record.card.meta_labels|join(' / ') }}</p></header>
+<aside class="job001-notice"><p>{{ ui.snapshot_notice }}</p><p>{{ ui.saved_at }}: {{ record.created_at|saved_time }}</p>{% if record.old_snapshot %}<p>{{ ui.old }}</p>{% endif %}{% if record.snapshot.truncated_fields %}<p>{{ ui.truncated }}: {{ record.snapshot.truncated_fields|join(', ') }}</p>{% endif %}</aside>
+<section class="job001-card"><h2>{{ ui.description }}</h2><p class="job001-text">{{ record.snapshot.description or ui.no_description }}</p>{% if record.snapshot.requirements %}<h2>{{ ui.requirements }}</h2><p class="job001-text">{{ record.snapshot.requirements }}</p>{% endif %}</section>
+<section class="job001-card"><h2>{{ ui.sources }}</h2>{% for source in record.sources %}<article class="job001-source"><h3>{{ source.source }}</h3>{% if source.url %}<a href="{{ source.url }}" target="_blank" rel="noopener noreferrer">{{ ui.source_link }}</a>{% endif %}<p>{{ ui[source.state] }}</p>{% if source.observed_at %}<p class="job001-muted">{{ ui.observed }}: {{ source.observed_at|saved_time }}</p>{% endif %}</article>{% endfor %}</section>
+<section class="job001-notice"><h2>{{ ui.match }}</h2><p>{{ ui.match_unavailable }}</p></section>
+<form class="job001-card" action="{{ url_for('saved_vacancies.save_note', saved_id=record.id) }}" method="post"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="expected_revision" value="{{ record.revision }}"><h2><label for="saved-note">{{ ui.note }}</label></h2><textarea id="saved-note" name="note" rows="6" maxlength="{{ note_limit }}">{{ draft_note }}</textarea><p class="job001-muted">{{ ui.revision }} {{ record.revision }} / {{ note_limit }}</p><button class="btn btn-primary" type="submit">{{ ui.save_note }}</button></form>
+<form class="job001-card" action="{{ url_for('saved_vacancies.delete_saved', saved_id=record.id) }}" method="post"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="expected_revision" value="{{ record.revision }}"><label class="job001-check"><input type="checkbox" name="confirm" value="1" required> {{ ui.confirm_delete }}</label><button class="btn btn-secondary" type="submit">{{ ui.delete }}</button></form>
+</div></main>
+{% endblock %}

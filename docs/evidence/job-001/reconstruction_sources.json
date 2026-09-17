@@ -1,0 +1,14 @@
+{
+  "package": "JOB-001",
+  "release": "r1.1 REBUILT",
+  "source_commit": "d5e0dac2ba87d4d7e14fc5b48fbb6b9182c885a4",
+  "source_tree": "53d86b0ff72f5090f214c20979df493e6f1f0ee3",
+  "baseline_files": 565,
+  "github_branch_listing": [
+    "main"
+  ],
+  "github_read_only": true,
+  "preserved_ai004_closure_sha256": "46667831594f09d18d319bc32c3fecf066853c40ca6ab71d2b0e606badbe3988",
+  "original_job001_archive_available": false,
+  "original_job001_equivalence": "NOT ESTABLISHED"
+}

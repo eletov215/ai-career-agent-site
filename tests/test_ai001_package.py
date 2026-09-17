@@ -28,6 +28,8 @@ def test_protected_runtime_changes_require_current_hash(tmp_path):
     for relative in successor:
         (tmp_path/relative).parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(ROOT/relative, tmp_path/relative)
+    from tests.job001_boundary_helper import copy_job001_boundary
+    copy_job001_boundary(ROOT, tmp_path)
     assert load_boundary(tmp_path)
     (tmp_path/'app.py').write_text('unreviewed runtime replacement')
     with pytest.raises(ValueError):load_boundary(tmp_path)

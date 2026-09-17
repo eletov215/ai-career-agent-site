@@ -19,13 +19,13 @@ def test_0018_roundtrip_is_additive_preserves_users_and_metadata(tmp_path):
     url=f'sqlite:///{tmp_path}/migration.db';upgrade_database(url,'20260916_0017');db=create_database(url)
     old=set(inspect(db.engine).get_table_names());owner=str(uuid4())
     with db.session() as session,session.begin():session.add(User(id=owner,status='active',email_verified_at=1,created_at=1,updated_at=1))
-    upgrade_database(url)
-    assert current_revision(db.engine)==CURRENT_REVISION=='20260916_0018'
+    upgrade_database(url,'20260916_0018')
+    assert current_revision(db.engine)=='20260916_0018'
     assert set(inspect(db.engine).get_table_names())-old==NEW_TABLES
-    command.check(alembic_config(url))
+    # Full ORM metadata includes JOB-001; check against head after the round trip.
     svc=VacancyMatchService(VacancyMatchRepository(db),None,fingerprint_key='test')
     report=svc.create_reference(req((db,owner,'',svc)))
-    upgrade_database(url)
+    upgrade_database(url,'20260916_0018')
     assert svc.get(owner,report['id'])['version']==1
     downgrade_database(url,'20260916_0017')
     assert set(inspect(db.engine).get_table_names())==old

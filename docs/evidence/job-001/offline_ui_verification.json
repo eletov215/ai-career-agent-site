@@ -1,0 +1,176 @@
+{
+  "checks": [
+    {
+      "page": "library",
+      "width": 320,
+      "document": 320,
+      "main": 320,
+      "main_overflow": []
+    },
+    {
+      "page": "empty",
+      "width": 320,
+      "document": 320,
+      "main": 320,
+      "main_overflow": []
+    },
+    {
+      "page": "detail",
+      "width": 320,
+      "document": 320,
+      "main": 320,
+      "main_overflow": []
+    },
+    {
+      "page": "conflict",
+      "width": 320,
+      "document": 320,
+      "main": 320,
+      "main_overflow": []
+    },
+    {
+      "page": "error",
+      "width": 320,
+      "document": 320,
+      "main": 320,
+      "main_overflow": []
+    },
+    {
+      "page": "search_save",
+      "width": 320,
+      "document": 320,
+      "main": 320,
+      "main_overflow": []
+    },
+    {
+      "page": "library",
+      "width": 390,
+      "document": 390,
+      "main": 390,
+      "main_overflow": []
+    },
+    {
+      "page": "empty",
+      "width": 390,
+      "document": 390,
+      "main": 390,
+      "main_overflow": []
+    },
+    {
+      "page": "detail",
+      "width": 390,
+      "document": 390,
+      "main": 390,
+      "main_overflow": []
+    },
+    {
+      "page": "conflict",
+      "width": 390,
+      "document": 390,
+      "main": 390,
+      "main_overflow": []
+    },
+    {
+      "page": "error",
+      "width": 390,
+      "document": 390,
+      "main": 390,
+      "main_overflow": []
+    },
+    {
+      "page": "search_save",
+      "width": 390,
+      "document": 390,
+      "main": 390,
+      "main_overflow": []
+    },
+    {
+      "page": "library",
+      "width": 768,
+      "document": 768,
+      "main": 768,
+      "main_overflow": []
+    },
+    {
+      "page": "empty",
+      "width": 768,
+      "document": 768,
+      "main": 768,
+      "main_overflow": []
+    },
+    {
+      "page": "detail",
+      "width": 768,
+      "document": 768,
+      "main": 768,
+      "main_overflow": []
+    },
+    {
+      "page": "conflict",
+      "width": 768,
+      "document": 768,
+      "main": 768,
+      "main_overflow": []
+    },
+    {
+      "page": "error",
+      "width": 768,
+      "document": 768,
+      "main": 768,
+      "main_overflow": []
+    },
+    {
+      "page": "search_save",
+      "width": 768,
+      "document": 768,
+      "main": 768,
+      "main_overflow": []
+    },
+    {
+      "page": "library",
+      "width": 1440,
+      "document": 1440,
+      "main": 1440,
+      "main_overflow": []
+    },
+    {
+      "page": "empty",
+      "width": 1440,
+      "document": 1440,
+      "main": 1440,
+      "main_overflow": []
+    },
+    {
+      "page": "detail",
+      "width": 1440,
+      "document": 1440,
+      "main": 1440,
+      "main_overflow": []
+    },
+    {
+      "page": "conflict",
+      "width": 1440,
+      "document": 1440,
+      "main": 1440,
+      "main_overflow": []
+    },
+    {
+      "page": "error",
+      "width": 1440,
+      "document": 1440,
+      "main": 1440,
+      "main_overflow": []
+    },
+    {
+      "page": "search_save",
+      "width": 1440,
+      "document": 1440,
+      "main": 1440,
+      "main_overflow": []
+    }
+  ],
+  "isolated_dom_js": "PASS",
+  "network_and_storage": "test bindings only",
+  "external_fonts": "blocked",
+  "flask_http": "NOT RUN"
+}

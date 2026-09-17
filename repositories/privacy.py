@@ -13,6 +13,9 @@ from models.ai import AIUsageEvent, AIUserPlan, AIBudgetBucket
 from models.resume_analysis import ResumeAnalysisReport, ResumeAnalysisDecision, ResumeAnalysisReviewEvent
 from repositories.resume_analysis import report_view
 from models.vacancy_match import VacancyMatchReport, VacancyMatchSeries
+from models.saved_vacancy import SavedVacancy, SavedVacancySource
+from repositories.saved_vacancies import saved_view, source_view
+from domain.saved_vacancy import MAX_SAVED, MAX_SOURCES, SavedVacancyError
 from repositories.vacancy_match import match_view
 from models.resume_interview import ResumeInterviewSession, ResumeInterviewEvent
 from repositories.resume_interview import interview_snapshot
@@ -246,7 +249,22 @@ class PrivacyRepository(RepositoryBase):
             ).order_by(VacancyMatchSeries.fixture_id).limit(3)).all()
             if len(match_series) > 2:
                 raise PrivacySnapshotConflictError('match_series_export_limit')
+            saved_rows = session.scalars(select(SavedVacancy).where(SavedVacancy.user_id == user.id)
+                .order_by(SavedVacancy.created_at, SavedVacancy.id).limit(MAX_SAVED+1)).all()
+            saved_sources = session.scalars(select(SavedVacancySource).where(SavedVacancySource.user_id == user.id)
+                .order_by(SavedVacancySource.saved_vacancy_id, SavedVacancySource.id).limit(MAX_SAVED*MAX_SOURCES+1)).all()
+            if len(saved_rows) > MAX_SAVED or len(saved_sources) > MAX_SAVED*MAX_SOURCES:
+                raise PrivacySnapshotConflictError('saved_vacancy_export_limit')
+            saved_ids = {row.id for row in saved_rows}
+            if any(source.saved_vacancy_id not in saved_ids for source in saved_sources):
+                raise PrivacySnapshotConflictError('saved_vacancy_owner_mismatch')
+            try:
+                saved_exports = [saved_view(row) for row in saved_rows]
+            except SavedVacancyError:
+                raise PrivacySnapshotConflictError('saved_vacancy_integrity') from None
             snapshot: dict[str, Any] = {
+                "saved_vacancies": saved_exports,
+                "saved_vacancy_sources": [source_view(row) for row in saved_sources],
                 "vacancy_matches": [match_view(row) for row in match_rows],
                 "vacancy_match_series": [{"fixture_id": row.fixture_id, "last_version": row.last_version}
                                          for row in match_series],
@@ -465,6 +483,8 @@ class PrivacyRepository(RepositoryBase):
             "resume_versions": 0,
             "resume_assets": 0,
             "resume_exports": 0,
+            "saved_vacancies": self._count(session, SavedVacancy, SavedVacancy.user_id == user_id),
+            "saved_vacancy_sources": self._count(session, SavedVacancySource, SavedVacancySource.user_id == user_id),
             "vacancy_match_reports": self._count(session, VacancyMatchReport, VacancyMatchReport.user_id == user_id),
             "vacancy_match_series": self._count(session, VacancyMatchSeries, VacancyMatchSeries.user_id == user_id),
             "resume_interview_sessions": self._count(session, ResumeInterviewSession, ResumeInterviewSession.user_id == user_id),

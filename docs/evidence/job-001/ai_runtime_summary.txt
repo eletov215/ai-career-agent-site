@@ -1,0 +1,10 @@
+SKIPPED [1] tests/test_ai002_routes.py:7: could not import 'flask': No module named 'flask'
+SKIPPED [1] tests/test_ai003_routes.py:9: Flask route execution is mandatory in installed GitHub CI
+SKIPPED [1] tests/test_ai004_routes.py:8: Flask HTTP tests require installed application dependencies in CI
+SKIPPED [1] tests/test_ai001_migration.py:33: POSTGRES_TEST_URL required; dedicated CI provides PostgreSQL
+SKIPPED [1] tests/test_ai001_routes.py:6: Flask is installed from requirements.txt in CI
+SKIPPED [1] tests/test_ai001_routes.py:16: Flask is installed from requirements.txt in CI
+SKIPPED [1] tests/test_ai002_migration.py:35: Disposable PostgreSQL CI database required
+SKIPPED [1] tests/test_ai003_migration.py:49: Disposable PostgreSQL service required in GitHub CI
+SKIPPED [1] tests/test_ai004_migration.py:38: Disposable PostgreSQL service required in CI
+======================= 262 passed, 9 skipped in 30.42s ========================

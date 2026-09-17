@@ -42,3 +42,10 @@ A privacy export ZIP is generated in memory and is not stored as a server artifa
 ## AI-001 delta / 1.5.0 / 2026-09-14
 
 Backup inventory includes the seven AI tables introduced by0015. No production/staging restore drill was performed in this task. Do not claim CI recovery equals a real deployment backup. Preserve AI accounting data before controlled downgrade.
+
+
+## JOB-001 r1.1 REBUILT / candidate0019
+
+Backup inventory now includes saved_vacancies and saved_vacancy_sources, including saved snapshots, notes and alias ownership. They have no deletion dependency on the live vacancy/search cache. A real Neon backup/snapshot was not proved during the earlier AI-004 acceptance; obtain a confirmed recovery point before deployment0019. An account privacy ZIP is not a whole-database backup.
+
+Use an isolated disposable database for backup/restore tests, including non-empty saved rows and notes. Do not restore into the live database during routine verification. A controlled0019->0018 downgrade deletes both saved tables and their notes; it is destructive and must follow preserved/verified data and coordinated compatible application rollback. No downgrade or production restore has been run in this reconstruction.

@@ -808,7 +808,7 @@ class SearchAggregationService:
             page_size=self.page_size,
         )
         page_items = [
-            payload
+            {**payload, "_snapshot_item_key": row.stable_key}
             for row in page_rows
             if (payload := _decode_payload(row.payload_json)) is not None
         ]

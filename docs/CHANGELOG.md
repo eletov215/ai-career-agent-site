@@ -1,5 +1,21 @@
 # AI Career Agent - CHANGELOG
 
+## 1.6.0 / 2026-09-17 - JOB-001 r1.1 REBUILT
+
+- Recover missing delivery as a newly implemented candidate, not the original archive; no old JOB-001 test claims reused.
+- Owner-scoped saved vacancy snapshots, source aliases, revisioned manual notes, safe native forms and explicit partial legacy migration.
+- Additive migration0019, private export/cascade/backup inventory, installed-environment route/PG tests and ordinary CI gate.
+- Bundle previously unmerged AI-004 FINAL1.5.7 documentation/status guards; preserve provider/prompt/schema/config/dependency bytes.
+- Record explicitly approved JOB-001 before AI-005 as MINOR plan1.6.0; passport2.75. Remote CI and deployment remain pending.
+
+
+## 1.5.7 / 2026-09-17 - AI-004 reference foundation accepted
+
+PR #38 merged at `d5e0dac2ba87d4d7e14fc5b48fbb6b9182c885a4`. PR CI #280 and main CI #281 passed; actual main log records 71 focused AI-004 and 804 full-suite tests, zero skips. Owner confirmed staged schema0018, RU/EN reports, versions/relogin, mandatory unknowns, privacy export/deletion, preserved core functions and final closed review/log checks. Public AI remains manual/unavailable. Manual two-account isolation is NOT RUN because no second active account exists; automated ownership is separate evidence. Real backup/snapshot and production restore remain unconfirmed, not replaced by CI results.
+
+Canonical versions: PLAN1.5.7 / PASSPORT2.74 / AUDIT1.5.7 / AI004 docs1.1. Documentation/evidence only; no application or schema changes. Preparation identified the existing AI-005 prerequisite JOB-001 as planned; a different execution order is a proposal awaiting explicit decision, not a silent plan change.
+
+
 ## 1.5.6 / 2026-09-16 - AI-004 r1 / NEEDS_VERIFICATION
 
 Verified GitHub main and CI #276 directly; incorporated pending AI-003 final documentation. Added private synthetic reference match reports, deterministic source-evidence scoring, immutable versions, migration0018, privacy/backup integration and new CI tests. No public activation, real-data dispatch or dependency/prompt changes. New external verification remains pending.

@@ -1,0 +1,72 @@
+{
+  "checks": [
+    {
+      "command": "python -B -S scripts/check_job001_package.py",
+      "returncode": 0,
+      "stdout": "{\n  \"package\": \"JOB-001\",\n  \"release\": \"r1.1 REBUILT\",\n  \"external_ci\": \"not_run\",\n  \"ok\": true,\n  \"errors\": []\n}",
+      "stderr": ""
+    },
+    {
+      "command": "python -B -S scripts/check_ai004_package.py",
+      "returncode": 0,
+      "stdout": "{\n  \"package\": \"AI-004\",\n  \"scope\": \"synthetic/reference-only\",\n  \"ok\": true,\n  \"errors\": []\n}",
+      "stderr": ""
+    },
+    {
+      "command": "python -B -S scripts/check_ai003_package.py",
+      "returncode": 0,
+      "stdout": "{\n  \"package\": \"AI-003\",\n  \"scope\": \"synthetic/reference-only\",\n  \"ok\": true,\n  \"errors\": []\n}",
+      "stderr": ""
+    },
+    {
+      "command": "python -B -S scripts/check_ai002_package.py",
+      "returncode": 0,
+      "stdout": "{\n  \"package\": \"AI-002\",\n  \"scope\": \"synthetic_only\",\n  \"ok\": true,\n  \"errors\": []\n}",
+      "stderr": ""
+    },
+    {
+      "command": "python -B -S scripts/check_ai001_package.py",
+      "returncode": 0,
+      "stdout": "{\n  \"ok\": true,\n  \"package\": \"AI-001\",\n  \"scope\": \"synthetic_only\",\n  \"external_ci\": \"pending\",\n  \"errors\": []\n}",
+      "stderr": ""
+    },
+    {
+      "command": "python -B -S scripts/check_ai_provider_package.py",
+      "returncode": 0,
+      "stdout": "{\n  \"ok\": true,\n  \"package\": \"AI-PROVIDER-001\",\n  \"scope\": \"offline only\",\n  \"owner_approval\": \"approved\",\n  \"external_ci\": \"not_attested_by_local_check\",\n  \"errors\": []\n}",
+      "stderr": ""
+    },
+    {
+      "command": "python -B -S scripts/check_ai_bench_package.py",
+      "returncode": 0,
+      "stdout": "AI-BENCH-001 package gate passed",
+      "stderr": ""
+    },
+    {
+      "command": "python -B -S scripts/check_document_structure.py",
+      "returncode": 0,
+      "stdout": "{\n  \"ok\": true,\n  \"errors\": []\n}",
+      "stderr": ""
+    },
+    {
+      "command": "python -B -S scripts/check_repository_hygiene.py",
+      "returncode": 0,
+      "stdout": "Repository hygiene check passed.",
+      "stderr": ""
+    },
+    {
+      "command": "python -B scripts/infra_manifest_check.py",
+      "returncode": 0,
+      "stdout": "{\n  \"ok\": true,\n  \"errors\": []\n}",
+      "stderr": ""
+    },
+    {
+      "command": "node --check static/saved_vacancies.js",
+      "returncode": 0,
+      "stdout": "",
+      "stderr": ""
+    }
+  ],
+  "python_ast_files": 265,
+  "remote_ci": "NOT RUN"
+}

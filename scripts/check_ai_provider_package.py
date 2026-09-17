@@ -28,7 +28,6 @@ def validate_canonical_status(plan: str, passport: str) -> list[str]:
     """Reject status drift after the provider package is formally closed."""
     errors: list[str] = []
     complete = "ВЫПОЛНЕНО"
-    ai003_complete = complete
     deferred = "ОТЛОЖЕНО ДО РЕШЕНИЯ ВЛАДЕЛЬЦА"
     status = "**Статус:**"
     card = re.search(r"^#### AI-PROVIDER-001[^\n]*\n(.*?)(?=^#### |\Z)", plan, re.M | re.S)
@@ -41,11 +40,26 @@ def validate_canonical_status(plan: str, passport: str) -> list[str]:
     if not legal_rows or any(deferred not in line for line in legal_rows):
         errors.append("LEGAL-001 must preserve the recorded owner deferral")
     for label, text in (("plan", plan), ("passport", passport)):
-        current = next((line for line in text.splitlines() if line.startswith("| Current package |")), "")
-        if "AI-003" not in current or ai003_complete not in current or "AI-004" not in current:
-            errors.append(label + " active package is inconsistent")
+        current = next((line for line in text.splitlines() if line.startswith("| Current candidate |")), "")
+        accepted = next((line for line in text.splitlines() if line.startswith("| Accepted foundation |")), "")
+        if not all(value in current for value in ("JOB-001", "r1.1 REBUILT", "NEEDS_VERIFICATION")):
+            errors.append(label + " active candidate is inconsistent")
+        if "AI-004 COMPLETE" not in accepted or "synthetic/reference-only" not in accepted:
+            errors.append(label + " accepted AI-004 foundation is inconsistent")
+    job_card = re.search(r"^#### JOB-001[^\n]*\n(.*?)(?=^#### |\Z)", plan, re.M | re.S)
+    job_row = next((line for line in plan.splitlines() if line.startswith("| JOB-001 |")), "")
+    pending = "\u041d\u0423\u0416\u041d\u0410 \u041f\u0420\u041e\u0412\u0415\u0420\u041a\u0410"
+    if job_card is None or status + " " + pending not in job_card.group(1) or pending not in job_row:
+        errors.append("JOB-001 cannot claim external acceptance during reconstruction")
+    # The new package closure does not reopen the earlier provider decision.
+    match_card = re.search(r"^#### AI-004[^\n]*\n(.*?)(?=^#### |\Z)", plan, re.M | re.S)
+    if match_card is None or status + " " + complete not in match_card.group(1):
+        errors.append("AI-004 card must preserve the accepted reference scope")
+    match_row = next((line for line in plan.splitlines() if line.startswith("| AI-004 |")), "")
+    if complete not in match_row:
+        errors.append("AI-004 roadmap must be complete")
     doc = re.search(r"^#### DOC-001[^\n]*\n(.*?)(?=^### |\Z)", plan, re.M | re.S)
-    if doc is None or not all(v in doc.group(1) for v in ("PLAN_CURRENT 1.5.6;", "PROJECT_PASSPORT 2.73.", "20260916_0017", complete, deferred)):
+    if doc is None or not all(v in doc.group(1) for v in ("PLAN_CURRENT 1.6.0;", "PROJECT_PASSPORT 2.75.", "20260916_0018", complete, deferred)):
         errors.append("DOC-001 active version inventory is stale")
     return errors
 
@@ -100,7 +114,7 @@ def validate(root: Path = ROOT) -> list[str]:
         plan = (root / "docs/PLAN_CURRENT.md").read_text(encoding="utf-8")
         passport = (root / "docs/PROJECT_PASSPORT.md").read_text(encoding="utf-8")
         errors.extend(validate_canonical_status(plan, passport))
-        if "1.5.6" not in plan or "2.73" not in passport:
+        if "| \u0412\u0435\u0440\u0441\u0438\u044f | 1.6.0 |" not in plan or "| \u0412\u0435\u0440\u0441\u0438\u044f \u043f\u0430\u0441\u043f\u043e\u0440\u0442\u0430 | 2.75 |" not in passport:
             errors.append("current canonical versions are not synchronized")
         workflow = (root / ".github/workflows/ci.yml").read_text(encoding="utf-8")
         if "python scripts/check_ai_provider_package.py" not in workflow:

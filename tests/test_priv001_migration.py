@@ -30,7 +30,7 @@ def test_priv001_0013_adds_identifier_free_privacy_audit(tmp_path):
     try:
         inspector = inspect(runtime.engine)
         assert current_revision(runtime.engine) == "20260813_0013"
-        assert CURRENT_REVISION == "20260916_0018"
+        assert CURRENT_REVISION == "20260917_0019"
         assert "privacy_audit_events" in inspector.get_table_names()
         resume_asset_indexes = {item["name"] for item in inspector.get_indexes("resume_assets")}
         assert "idx_resume_assets_created" in resume_asset_indexes

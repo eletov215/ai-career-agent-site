@@ -1,0 +1,16 @@
+AI-004 acceptance evidence - selected non-sensitive CI log lines
+Source: https://github.com/eletov215/ai-career-agent-site/actions/runs/35151012823/job/104979035501
+Commit: d5e0dac2ba87d4d7e14fc5b48fbb6b9182c885a4
+Read through the GitHub connector during document compilation on 2026-09-17.
+This file contains selected result lines, not the full CI log or any production log.
+
+71 passed in 6.83s
+Context: dedicated AI-004 step; scoring, service, routes, migration and package tests.
+
+collected 804 items
+======================== 804 passed in 80.40s (0:01:20) ========================
+Context: final single-process python -m pytest -ra in main CI #281.
+
+No skips in either result. Earlier local 669/23 measurements are separate historical evidence.
+Encrypted CI backup/verify/restore: successful at revision 20260916_0018.
+Both match tables in that CI dump had zero rows. No populated real-database restore is inferred.

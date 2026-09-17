@@ -1,0 +1,87 @@
+{
+  "package": "JOB-001",
+  "release": "r1.1 REBUILT",
+  "date": "2026-09-17",
+  "python": "3.13.5",
+  "source_commit": "d5e0dac2ba87d4d7e14fc5b48fbb6b9182c885a4",
+  "partitions": [
+    {
+      "partition": "job001",
+      "passed": 83,
+      "skipped": 2,
+      "module_count": 4,
+      "command": "PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 python -m pytest -ra tests/test_job001_migration.py tests/test_job001_package.py tests/test_job001_routes.py tests/test_job001_service.py",
+      "returncode": 0,
+      "pytest_elapsed": "27.49s"
+    },
+    {
+      "partition": "ai_runtime",
+      "passed": 262,
+      "skipped": 9,
+      "module_count": 17,
+      "command": "PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 python -m pytest -ra tests/test_ai001_migration.py tests/test_ai001_package.py tests/test_ai001_routes.py tests/test_ai001_runtime.py tests/test_ai002_migration.py tests/test_ai002_package.py tests/test_ai002_routes.py tests/test_ai002_service.py tests/test_ai003_migration.py tests/test_ai003_package.py tests/test_ai003_routes.py tests/test_ai003_service.py tests/test_ai004_migration.py tests/test_ai004_package.py tests/test_ai004_routes.py tests/test_ai004_scoring.py tests/test_ai004_service.py",
+      "returncode": 0,
+      "pytest_elapsed": "30.42s"
+    },
+    {
+      "partition": "ai_benchmark",
+      "passed": 137,
+      "skipped": 0,
+      "module_count": 7,
+      "command": "PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 python -m pytest -ra tests/test_ai_bench_alice_final_gate.py tests/test_ai_bench_dataset.py tests/test_ai_bench_package_layout.py tests/test_ai_bench_providers.py tests/test_ai_bench_runner.py tests/test_ai_bench_scoring.py tests/test_ai_provider_policy.py",
+      "returncode": 0,
+      "pytest_elapsed": "7.98s"
+    },
+    {
+      "partition": "account_profile",
+      "passed": 59,
+      "skipped": 6,
+      "module_count": 22,
+      "command": "PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 python -m pytest -ra tests/test_auth002_migration.py tests/test_auth002_routes.py tests/test_auth_migration.py tests/test_auth_routes.py tests/test_auth_service.py tests/test_email_delivery.py tests/test_oauth_identity_service.py tests/test_passwords.py tests/test_priv001_migration.py tests/test_privacy_routes.py tests/test_privacy_service.py tests/test_prof001_migration.py tests/test_prof002_migration.py tests/test_prof003_frontend_contract.py tests/test_prof003_migration.py tests/test_profile_routes.py tests/test_profile_service.py tests/test_resume_draft_routes.py tests/test_resume_draft_service.py tests/test_resume_import_routes.py tests/test_resume_import_service.py tests/test_resume_parser.py",
+      "returncode": 0,
+      "pytest_elapsed": "13.14s"
+    },
+    {
+      "partition": "search_sync",
+      "passed": 104,
+      "skipped": 2,
+      "module_count": 15,
+      "command": "PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 python -m pytest -ra tests/test_providers.py tests/test_search005_migration.py tests/test_search005_route_registration.py tests/test_search005_routes.py tests/test_search005_security.py tests/test_search_deduplication.py tests/test_search_filters.py tests/test_search_normalization.py tests/test_search_pagination.py tests/test_source_health_service.py tests/test_source_status.py tests/test_sync_incremental.py tests/test_sync_worker.py tests/test_vacancy_presenter.py tests/test_vacancy_store.py",
+      "returncode": 0,
+      "pytest_elapsed": "15.86s"
+    },
+    {
+      "partition": "foundation",
+      "passed": 115,
+      "skipped": 6,
+      "module_count": 17,
+      "command": "PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 python -m pytest -ra tests/test_app_startup_modes.py tests/test_architecture_boundaries.py tests/test_backup_restore.py tests/test_config.py tests/test_database.py tests/test_document_structure.py tests/test_infra_manifests.py tests/test_infra_probe.py tests/test_legacy_import.py tests/test_observability.py tests/test_postgresql_integration.py tests/test_rate_limit_proxy.py tests/test_repositories.py tests/test_repository_hygiene.py tests/test_routes.py tests/test_template_security.py tests/test_university_logo_security.py",
+      "returncode": 0,
+      "pytest_elapsed": "14.68s"
+    }
+  ],
+  "totals": {
+    "passed": 760,
+    "skipped": 25,
+    "modules": 82
+  },
+  "counting": "Non-overlapping final partitions. JOB-001 focused tests are included, not added again. Additional unittest subcase XML entries are not added to pytest terminal counts.",
+  "single_full_process": "Timed out after 120 seconds; NOT a successful full-suite run. Final non-overlapping partitions replaced that attempt.",
+  "earlier_failures_fixed": [
+    "Active canonical status/version guards synchronized for the approved JOB-001 candidate without reopening AI-004 acceptance.",
+    "Historical PRIV-001 test head assertion updated to0019; its0012/0013 migration round-trip assertions preserved."
+  ],
+  "skips": "25 skip reports include15 entire Flask-dependent modules. Missing local Flask/Flask-WTF/Flask-Limiter and psycopg/PostgreSQL; installed GitHub CI remains required.",
+  "dependency_install": "Pinned installation attempted; failed due package network/DNS unavailable. No requirements version changed.",
+  "static_checks": {
+    "python_ast": 264,
+    "jinja_templates": 44,
+    "yaml_files": 3,
+    "new_js_node_syntax": "PASS"
+  },
+  "new_remote_ci": "NOT RUN",
+  "real_database": "NOT MODIFIED",
+  "github_writes": false,
+  "manual_two_account": "NOT RUN; no second active account",
+  "real_backup": "NOT CONFIRMED"
+}
