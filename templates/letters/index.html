@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+{% block title %}{{ ui.title }} - AI Career Agent{% endblock %}
+{% block head_extra %}<link rel="stylesheet" href="{{ url_for('static', filename='cover_letters.css') }}?v=1">{% endblock %}
+{% block content %}
+<main class="section ai005-page"><div class="container ai005-shell">
+<header><h1>{{ ui.title }}</h1><p>{{ ui.intro }}</p><a href="/saved-vacancies">{{ ui.saved }}</a></header>
+<aside class="ai005-notice">{{ ui.manual_notice }}</aside>
+{% if source %}
+<h2>{{ source.source.vacancy.title }}</h2><p>{{ source.source.vacancy.company }}</p>
+<form method="post" action="{{ url_for('cover_letters.create') }}" class="ai005-card">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="saved_id" value="{{ saved_id }}"><input type="hidden" name="source_hash" value="{{ source.source_hash }}"><input type="hidden" name="operation_key" value="{{ operation_key }}">
+{% set editor = {'language':'ru', 'length':'short', 'tone':'professional'} %}{% include 'letters/_options.html' %}
+<p>{{ ui.source_notice }}</p>{% if not source.source.facts %}<p>{{ ui.no_facts }}</p>{% endif %}
+<label class="ai005-check"><input type="checkbox" name="confirm" value="1" required> {{ ui.source_confirm }}</label>
+<button class="btn btn-primary" type="submit">{{ ui.new }}</button>
+</form>{% with source=source.source %}{% include 'letters/_source.html' %}{% endwith %}
+{% endif %}
+<div class="ai005-grid">{% for item in results['items'] %}<article class="ai005-card"><h2><a href="{{ url_for('cover_letters.detail',letter_id=item.id) }}">{{ item.content.subject or item.source.vacancy.title }}</a></h2><p>{{ item.source.vacancy.company }}</p><p>{{ ui.version }} {{ item.last_version }} / {{ ui[item.content.language] }}</p><a href="{{ url_for('cover_letters.detail',letter_id=item.id) }}">{{ ui.open }}</a></article>{% else %}<p>{{ ui.empty }}</p>{% endfor %}</div>
+<nav class="ai005-actions" aria-label="{{ ui.page }}">{% if results.page>1 %}<a href="?page={{ results.page-1 }}">{{ ui.prev }}</a>{% endif %}<span>{{ ui.page }} {{ results.page }} / {{ results.pages }}</span>{% if results.page<results.pages %}<a href="?page={{ results.page+1 }}">{{ ui.next }}</a>{% endif %}</nav>
+</div></main>
+{% endblock %}

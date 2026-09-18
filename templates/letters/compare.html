@@ -1,0 +1,3 @@
+{% extends 'base.html' %}
+{% block head_extra %}<link rel="stylesheet" href="{{ url_for('static',filename='cover_letters.css') }}?v=1">{% endblock %}
+{% block content %}<main class="section ai005-page"><div class="container ai005-shell"><h1>{{ ui.compare }}</h1><p>{{ ui.version }} {{ compared.left.number }} / {{ compared.right.number }}</p><pre class="ai005-card ai005-text">{{ compared.diff or ui.no_diff }}</pre><a href="{{ url_for('cover_letters.detail',letter_id=letter_id) }}">{{ ui.reload }}</a></div></main>{% endblock %}

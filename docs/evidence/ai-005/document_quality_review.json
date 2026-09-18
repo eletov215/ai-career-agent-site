@@ -1,0 +1,17 @@
+{
+  "documents": 8,
+  "rendered_page_count": 91,
+  "page_counts": {
+    "AI005_DELIVERY_GUIDE": 2,
+    "AI005_SCOPE": 1,
+    "AI005_IMPLEMENTATION": 2,
+    "AI005_RUNBOOK": 2,
+    "AI005_VERIFICATION_STATUS": 2,
+    "PLAN_CURRENT": 57,
+    "PROJECT_PASSPORT": 19,
+    "SOURCE_AUDIT": 6
+  },
+  "visual_review": "All rendered pages inspected at native-resolution contact sheets; no text clipping or overlapping elements found. Short table rows kept together and repeated headers retained.",
+  "template_visual_checks": 40,
+  "template_visual_checks_scope": "Offline rendered templates only, external requests blocked; not Flask E2E or real account/provider acceptance."
+}

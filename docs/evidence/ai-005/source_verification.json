@@ -1,0 +1,32 @@
+{
+  "repository": "eletov215/ai-career-agent-site",
+  "ref": "main",
+  "commit": "c095bfb70bad5b1ba22cd9b1aeac1795a0b59c4c",
+  "tree": "6bb34aba4c05213a3d68f784e9d9b385c6d577d3",
+  "baseline_files": 608,
+  "main_rechecked_before_packaging": true,
+  "code_materialization": "Preserved FULL recomputed using exact Git blob/tree serialization, matches remote tree.",
+  "canonical_input_zip": "ACA_JOB001_CANONICAL_DOCS_v1.6.1_FINAL.zip",
+  "canonical_input_sha256": "3e2a45a60bddebc9a3803e567f8b843cc38903cbede84264fbbab6a629dfb1ab",
+  "canonical_md_match_with_preserved_closure": {
+    "CANONICAL_DOCUMENTS.md": "8f27bebdcdf7f82c30bd677e6bd39fd4d5ec2f0911273cbb9be77eb87e9594e2",
+    "JOB001_ACCEPTANCE_SUMMARY.md": "27c0f8c4a5b705604d52611260cb9239e7c5d8bfa0f904d068b4099b4f5baa6f",
+    "JOB001_IMPLEMENTATION.md": "1dfbdcbf7f62b3defa9dfee62dcf57788b5e9c7c69a7387b123fcd211b8ec667",
+    "JOB001_RUNBOOK.md": "c8936ed8c8ff63543cf054791f0f65cdfa20b6e7298cd534066d228c057f538e",
+    "JOB001_VERIFICATION_STATUS.md": "e18673aace2c49255ebd1b4171721b367ae38c1e99875b49828e91cfd56c8ddf",
+    "NEXT_PACKAGE_PREPARATION.md": "9771fe0d20e14520110cb13ade49fe1626490b4b7af07f767ef7946bf8e3496f",
+    "PLAN_CURRENT.md": "7b6090ba96429a76987004cdb2650ea75f23b67edafc0b0649002688ef3664bd",
+    "PROJECT_PASSPORT.md": "e5f5bc82ba72d274ac190b12b88fb4c616f06f2add5ca24d66a873b1f65cd3fc",
+    "ROADMAP.md": "384306367536fc70832f4c614c86a3271bb1b007371b258c0ff44b6f510a0dbc",
+    "SOURCE_AUDIT.md": "8ab164b43ab8e82f882e34581c6a67aa872c69e796a6708f43bad35db2e643e4"
+  },
+  "base_ci": {
+    "run_id": 35219447896,
+    "run_number": 283,
+    "status": "success",
+    "candidate_evidence": false
+  },
+  "remote_writes": false,
+  "deployment": false,
+  "provider_calls": false
+}

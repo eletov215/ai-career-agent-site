@@ -40,17 +40,21 @@ def validate_canonical_status(plan: str, passport: str) -> list[str]:
     if not legal_rows or any(deferred not in line for line in legal_rows):
         errors.append("LEGAL-001 must preserve the recorded owner deferral")
     for label, text in (("plan", plan), ("passport", passport)):
-        current = next((line for line in text.splitlines() if line.startswith("| Current candidate |")), "")
-        accepted = next((line for line in text.splitlines() if line.startswith("| Accepted foundation |")), "")
-        if not all(value in current for value in ("JOB-001", "r1.1 REBUILT", "NEEDS_VERIFICATION")):
-            errors.append(label + " active candidate is inconsistent")
+        head = text.split('<!-- ACA-CANONICAL-STATUS:START -->',1)[-1].split('<!-- ACA-CANONICAL-STATUS:END -->',1)[0]
+        current = next((line for line in head.splitlines() if line.startswith("| Current full package |")), "")
+        previous = next((line for line in head.splitlines() if line.startswith("| Accepted predecessor |")), "")
+        accepted = next((line for line in head.splitlines() if line.startswith("| Accepted foundation |")), "")
+        if not all(value in current for value in ("AI-005", "IN_PROGRESS")):
+            errors.append(label + " AI-005 full scope must remain in progress")
+        if not all(value in previous for value in ("JOB-001", "COMPLETE", "1.6.1", "2.76")):
+            errors.append(label + " accepted predecessor is inconsistent")
         if "AI-004 COMPLETE" not in accepted or "synthetic/reference-only" not in accepted:
             errors.append(label + " accepted AI-004 foundation is inconsistent")
     job_card = re.search(r"^#### JOB-001[^\n]*\n(.*?)(?=^#### |\Z)", plan, re.M | re.S)
     job_row = next((line for line in plan.splitlines() if line.startswith("| JOB-001 |")), "")
     pending = "\u041d\u0423\u0416\u041d\u0410 \u041f\u0420\u041e\u0412\u0415\u0420\u041a\u0410"
-    if job_card is None or status + " " + pending not in job_card.group(1) or pending not in job_row:
-        errors.append("JOB-001 cannot claim external acceptance during reconstruction")
+    if job_card is None or status + " " + complete not in job_card.group(1) or complete not in job_row:
+        errors.append("JOB-001 must retain the accepted functional status")
     # The new package closure does not reopen the earlier provider decision.
     match_card = re.search(r"^#### AI-004[^\n]*\n(.*?)(?=^#### |\Z)", plan, re.M | re.S)
     if match_card is None or status + " " + complete not in match_card.group(1):
@@ -59,7 +63,7 @@ def validate_canonical_status(plan: str, passport: str) -> list[str]:
     if complete not in match_row:
         errors.append("AI-004 roadmap must be complete")
     doc = re.search(r"^#### DOC-001[^\n]*\n(.*?)(?=^### |\Z)", plan, re.M | re.S)
-    if doc is None or not all(v in doc.group(1) for v in ("PLAN_CURRENT 1.6.0;", "PROJECT_PASSPORT 2.75.", "20260916_0018", complete, deferred)):
+    if doc is None or not all(v in doc.group(1) for v in ("PLAN_CURRENT 1.6.2;", "PROJECT_PASSPORT 2.77.", "20260917_0019", complete, deferred)):
         errors.append("DOC-001 active version inventory is stale")
     return errors
 
@@ -114,7 +118,9 @@ def validate(root: Path = ROOT) -> list[str]:
         plan = (root / "docs/PLAN_CURRENT.md").read_text(encoding="utf-8")
         passport = (root / "docs/PROJECT_PASSPORT.md").read_text(encoding="utf-8")
         errors.extend(validate_canonical_status(plan, passport))
-        if "| \u0412\u0435\u0440\u0441\u0438\u044f | 1.6.0 |" not in plan or "| \u0412\u0435\u0440\u0441\u0438\u044f \u043f\u0430\u0441\u043f\u043e\u0440\u0442\u0430 | 2.75 |" not in passport:
+        from scripts.check_job001_package import validate_closure
+        errors.extend(validate_closure(root))
+        if "| \u0412\u0435\u0440\u0441\u0438\u044f | 1.6.2 |" not in plan or "| \u0412\u0435\u0440\u0441\u0438\u044f \u043f\u0430\u0441\u043f\u043e\u0440\u0442\u0430 | 2.77 |" not in passport:
             errors.append("current canonical versions are not synchronized")
         workflow = (root / ".github/workflows/ci.yml").read_text(encoding="utf-8")
         if "python scripts/check_ai_provider_package.py" not in workflow:

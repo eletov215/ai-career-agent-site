@@ -1,31 +1,55 @@
-# AI Career Agent - ROADMAP / 1.6.0
+# AI Career Agent - ROADMAP / 1.6.2
 
 | Field | Value |
 |---|---|
-| Candidate | JOB-001 r1.1 REBUILT / NEEDS_VERIFICATION |
-| Accepted staging | 20260916_0018 |
-| Candidate schema | 20260917_0019; not deployed |
-| Public AI | Disabled/manual |
-| Publication | Local delivery only |
+| Date | 2026-09-17 |
+| Full package | AI-005 IN_PROGRESS |
+| Delivery | r1 NEEDS_VERIFICATION; LIVE_NOT_ACCEPTED |
+| Base / candidate schema | 0019 / 0020 |
 
-## 1. Accepted foundations
+## 1. Agreed sequence and current work
 
-AI-004 and earlier foundations retain their recorded acceptance scopes. AI-004 remains synthetic/reference-only at main d5e0dac2ba87d4d7e14fc5b48fbb6b9182c885a4; CI281 and the owner's previous browser checks do not establish JOB-001 acceptance.
+JOB-001 COMPLETE -> AI-005 IN_PROGRESS -> AI-006 -> JOB-002..004. The current local r1 is a general owned letter document workflow (manual/local templates), not completed live AI-005. It attaches real saved vacancies and immutable confirmed-profile snapshots, with review/version/compare/TXT/privacy and stale-write controls. No pinned demonstration replaces the planned feature.
 
-## 2. Approved order
+## 2. Remaining AI-005 work
 
-The owner explicitly approved JOB-001 before AI-005. Execute JOB-001 ordinary CI and staging acceptance, then return to AI-005 and AI-006, then JOB-002..004. This MINOR1.6.0 records the reorder required by the existing AI-005 dependency; no dependency is removed.
+General-input runtime admission, persistent generation accounting/idempotency, failure recovery, consent/data-routing and model/language quality must still be implemented and reviewed. LEGAL-001 stays deferred. There is no public generation activation in this delivery. AI-006 is not started merely because manual letters work.
 
-JOB-001 candidate supplies owner-scoped server snapshots, known source aliases, immutable content, revisioned notes, explicit partial localStorage migration, export and deletion. It does not generate a match score or letter, create an application tracker, or activate live AI.
+## 3. Verification and release
 
-## 3. Remaining gates
+Local candidate0020 requires new ordinary CI with Flask/PostgreSQL and site acceptance. Real Neon recovery point must be confirmed before deployment/migration. Previous optional-account/device/legacy and recovery gaps stay recorded. No GitHub/Render write was performed.
 
-New GitHub CI and real-site0019 checks are pending. Before applying the migration, obtain a confirmed Neon recovery point. Actual restore remains OPS-002/REL-001. Manual two-account verification is not claimed when a second active account is unavailable. LEGAL-001 and verification email delivery remain open. VPS/domain migration stays in the pre-release infrastructure window.
+## 4. Historical predecessor (unchanged dated source)
 
-## 4. Recovery provenance
+The following reflects the previous release. It does not override the active sections above.
 
-The previously delivered JOB-001 r1 archive was unavailable. r1.1 is a newly implemented replacement with new tests and manifests, not a byte-identical restoration. The accepted baseline and AI-004 FINAL documentation were preserved and verified. No GitHub write or deployment occurs in this recovery delivery.
+# AI Career Agent - ROADMAP / 1.6.1
+
+| Field | Value |
+|---|---|
+| Current accepted package | JOB-001 / ВЫПОЛНЕНО / COMPLETE |
+| Accepted code | `c095bfb70bad5b1ba22cd9b1aeac1795a0b59c4c` |
+| Accepted schema | 20260917_0019 |
+| Evidence | Main CI283 success and owner final acceptance |
+| Next | AI-005 preparation; no new package code started |
+| Public AI | Disabled / manual |
+
+## 1. Accepted result
+
+Ordinary verified-account saved vacancies now have durable owner-bound source snapshots, private revisioned notes, a searchable library, duplicate-save protection, explicit legacy recovery, export and confirmed deletion. The owner confirmed required browser blocks and final regressions. AI-003/004 retain their limited accepted reference scopes.
+
+## 2. Approved order and next gate
+
+JOB-001 COMPLETE -> AI-005 -> AI-006 -> JOB-002..004. The owner's previously approved ordering remains unchanged. JOB-001 is no longer a missing dependency for letters. AI-005 still requires fresh input/ownership/provenance and quality/real-data/consent design; its live activation is not ready merely because saved vacancies work. See NEXT_PACKAGE_PREPARATION.md.
+
+## 3. Open verification and operational work
+
+Manual second-account isolation NOT RUN; no second active account. Actual legacy transfer and second-device outcomes are not separately identified. Test-database CI coverage remains distinct. Real Neon recovery point and production restore are not evidenced. Email delivery and LEGAL-001 remain open. The pre-release VPS/domain/migration/recovery plan is unchanged.
+
+## 4. Release and rollback
+
+This final documentation and status-guard update has no runtime, workflow or schema change. It has not been published; new remote CI is not claimed. Revert of these files needs no database downgrade. Runtime rollback0019->0018 remains a controlled destructive operation, not a routine test.
 
 ## 5. Version history
 
-1.6.0 / 2026-09-17: approved JOB-001 -> AI-005 sequence and rebuilt candidate. 1.5.7: accepted AI-004 closure. 1.5.6: AI-004 candidate. Full historical plan cards and source evidence remain in PLAN_CURRENT and SOURCE_AUDIT.
+1.6.1 / 2026-09-17: accepted JOB-001, CI283/owner evidence and explicit exclusions. 1.6.0: owner-approved sequence and r1.1 rebuilt candidate. Older AI-004 and foundation decisions remain in the full PLAN_CURRENT.

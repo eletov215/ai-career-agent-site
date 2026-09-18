@@ -2,12 +2,16 @@
 
 | Field | Value |
 |---|---|
-| Version | 1.1 REBUILT / 2026-09-17 |
-| Status | NEEDS_VERIFICATION |
+| Version | 1.2 FINAL / 2026-09-17; accepted r1.1 REBUILT |
+| Status | ВЫПОЛНЕНО / COMPLETE |
 | Baseline | d5e0dac2ba87d4d7e14fc5b48fbb6b9182c885a4 |
-| Accepted / candidate schema | 20260916_0018 / 20260917_0019 |
+| Accepted schema | 20260917_0019 |
 | Scope | Ordinary verified-account saved vacancies, not synthetic AI examples |
-| Remote publication | Not performed in this reconstruction |
+| Accepted application | c095bfb70bad5b1ba22cd9b1aeac1795a0b59c4c; main CI283 success |
+
+## Acceptance note / 2026-09-17
+
+Main `c095bfb70bad5b1ba22cd9b1aeac1795a0b59c4c` / CI283 and the owner's final staging confirmation establish JOB-001 acceptance at0019. The original r1.1 REBUILT procedure and design below remain a historical implementation/regression reference, not a request to repeat accepted tests. Manual two-account isolation is NOT RUN; legacy transfer and second-device results are not separately confirmed. Real Neon recovery-point creation remains NOT EVIDENCED. See JOB001_VERIFICATION_STATUS.md for the exact matrix. This local closure changes no application logic or migration and performs no remote write.
 
 ## 1. Source and reconstruction boundary
 
@@ -69,6 +73,10 @@ This module does not call Alice or mutate a resume/profile. The match field is n
 
 ## 8. Compatibility and checks
 
-WSGI remains app:app; config.py, render.yaml, dependencies, provider prompts/schemas/benchmarks and accepted AI policy are byte-preserved. The existing startup migration mechanism will apply0019 only after future deployment. Old exact-head checks are synchronized through an explicit JOB-001 checksum boundary; no blanket protection bypass is added. AI-004 historical migration tests still target0018 explicitly while current metadata remains0019.
+WSGI remains app:app; config.py, render.yaml, dependencies, provider prompts/schemas/benchmarks and accepted AI policy are byte-preserved. The existing startup mechanism applied0019 in the owner-confirmed deployment; this closure adds no migration. Old exact-head checks are synchronized through an explicit JOB-001 checksum boundary; no blanket protection bypass is added. AI-004 historical migration tests still target0018 explicitly while current metadata remains0019.
 
-New local results and exact limitations are in JOB001_VERIFICATION_STATUS.md. External GitHub CI, installed Flask/PG scenarios and real-site acceptance remain separate. Rollback instructions are in JOB001_RUNBOOK.md.
+Historical local results, main CI283 conclusions and owner acceptance are separated in JOB001_VERIFICATION_STATUS.md. Rollback instructions are in JOB001_RUNBOOK.md.
+
+## 9. Version history
+
+1.2 FINAL: functional acceptance, evidence distinctions and recovery exclusions; no runtime delta. 1.1 REBUILT: replacement implementation and candidate procedure, NEEDS_VERIFICATION at original delivery.

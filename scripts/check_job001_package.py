@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Dependency-free JOB-001 additive hash/scope gate. Does not attest external CI."""
+"""JOB-001 source/closure guard. Checks recorded evidence, not remote CI live."""
 from pathlib import Path
 import ast
 import hashlib
@@ -41,17 +41,92 @@ def load_boundary(root=ROOT):
             or set(data['new_runtime_sha256']) != NEW_RUNTIME):
         raise ValueError('Invalid JOB-001 boundary')
     parent = json.loads((root/'docs/evidence/ai-004/change_boundary.json').read_text())['reviewed_runtime_changes']
+    successor = {}
+    if (root/'docs/evidence/ai-005/change_boundary.json').is_file():
+        from scripts.check_ai005_package import load_boundary as load_ai005
+        successor = load_ai005(root)
+    effective = {}
     for rel, row in data['reviewed_runtime_changes'].items():
         if row['previous_sha256'] != base['files'].get(rel):
             raise ValueError('JOB-001 baseline mismatch')
         if rel in parent and row['previous_sha256'] != parent[rel]['current_sha256']:
             raise ValueError('JOB-001 parent mismatch')
-        if not matches(root/rel, row['current_sha256']):
+        if rel in successor and successor[rel]['previous_sha256'] != row['current_sha256']:
+            raise ValueError('AI-005 predecessor mismatch')
+        current = successor.get(rel, row)['current_sha256']
+        if not matches(root/rel, current):
             raise ValueError('JOB-001 runtime mismatch')
+        effective[rel] = {**row, 'current_sha256': current}
     for rel, sha in data['new_runtime_sha256'].items():
-        if not matches(root/rel, sha):
+        if rel in successor and successor[rel]['previous_sha256'] != sha:
+            raise ValueError('AI-005 new predecessor mismatch')
+        current = successor.get(rel, {}).get('current_sha256', sha)
+        if not matches(root/rel, current):
             raise ValueError('JOB-001 new runtime mismatch')
-    return data['reviewed_runtime_changes']
+    return {**effective, **successor}
+
+
+ACCEPTED_COMMIT = 'c095bfb70bad5b1ba22cd9b1aeac1795a0b59c4c'
+ACCEPTED_TREE = '6bb34aba4c05213a3d68f784e9d9b385c6d577d3'
+
+
+def validate_closure(root=ROOT):
+    """Require the recorded acceptance without turning unrun cases into passes."""
+    errors = []
+    try:
+        data = json.loads((root/'docs/evidence/job-001/acceptance.json').read_text())
+        ci = data['github']
+        if (data['package'] != 'JOB-001' or data['status'] != 'COMPLETE'
+                or data['accepted_release'] != 'r1.1 REBUILT'
+                or data['closure_release'] != '1.6.1'
+                or data['accepted_code'] != {'commit': ACCEPTED_COMMIT, 'tree': ACCEPTED_TREE, 'files': 608}):
+            errors.append('JOB-001 accepted source is inconsistent')
+        if (ci['run_id'] != 35219447896 or ci['run_number'] != 283
+                or ci['head_sha'] != ACCEPTED_COMMIT or ci['branch'] != 'main'
+                or ci['status'] != 'completed' or ci['conclusion'] != 'success'
+                or ci['python_job_id'] != 105195697162
+                or ci['job001_step_conclusion'] != 'success' or ci['paid_jobs'] != 'skipped'
+                or ci['exact_test_counts'] is not None):
+            errors.append('JOB-001 recorded CI is inconsistent')
+        owner = data['owner_acceptance']
+        if (owner['schema'] != '20260917_0019' or owner['migrations_ok'] is not True
+                or owner['generation_available'] is not False or owner['mode'] != 'manual'
+                or owner['reason'] != 'runtime_not_activated'
+                or owner['final_status'] != 'PASS_OWNER_REPORTED'
+                or owner['assistant_ran_production_browser'] is not False):
+            errors.append('JOB-001 owner evidence or runtime boundary is inconsistent')
+        required = {'readiness','manual_ai','save_and_snapshot','refresh_relogin','notes','stale_note',
+                    'duplicate_save','filter','export','stale_delete','confirmed_delete','logout_access',
+                    'regression','final_gate_logs'}
+        if set(owner['cases']) != required or not all(isinstance(v,str) and v.strip() for v in owner['cases'].values()):
+            errors.append('JOB-001 owner case matrix is incomplete')
+        if (data['manual_two_account_isolation']['status'] != 'NOT RUN'
+                or data['manual_restart']['status'] != 'NOT RUN'
+                or data['manual_legacy_import']['status'] != 'NOT SEPARATELY CONFIRMED'
+                or data['manual_second_device']['status'] != 'NOT SEPARATELY CONFIRMED'):
+            errors.append('JOB-001 optional manual evidence must not be invented')
+        if (not data['real_database_backup'].startswith('NOT EVIDENCED')
+                or not data['real_database_restore'].startswith('NOT RUN')):
+            errors.append('JOB-001 real recovery evidence must not be invented')
+        for key in ('application_changed_by_closure','new_migration','public_ai_activated','new_paid_provider_calls','closure_published'):
+            if data[key] is not False:
+                errors.append('JOB-001 closure boundary changed: '+key)
+        if (data['next_package']['id'] != 'AI-005'
+                or data['next_package']['job001_dependency_satisfied'] is not True
+                or data['next_package']['implementation_started'] is not False
+                or data['next_package']['full_live_activation_ready'] is not False):
+            errors.append('JOB-001 next-package gate is inconsistent')
+        status = (root/'docs/JOB001_VERIFICATION_STATUS.md').read_text()
+        if '| Status |' not in status or '/ COMPLETE in the server-saved vacancy scope' not in status or '1.2 FINAL' not in status:
+            errors.append('JOB-001 final status document is inconsistent')
+        for rel in ('docs/PLAN_CURRENT.md','docs/PROJECT_PASSPORT.md'):
+            doc = (root/rel).read_text()
+            head = doc.split('<!-- ACA-CANONICAL-STATUS:START -->',1)[1].split('<!-- ACA-CANONICAL-STATUS:END -->',1)[0]
+            if not all(x in head for x in ('JOB-001','COMPLETE',ACCEPTED_COMMIT,'1.6.1','2.76','20260917_0019')):
+                errors.append('JOB-001 canonical status is inconsistent: '+rel)
+    except (OSError, ValueError, KeyError, TypeError, AttributeError, IndexError):
+        errors.append('Missing or malformed JOB-001 acceptance evidence')
+    return errors
 
 
 def validate(root=ROOT):
@@ -61,7 +136,8 @@ def validate(root=ROOT):
         for rel in REQUIRED:
             if not (root/rel).is_file():
                 errors.append('Missing: '+rel)
-        if 'CURRENT_REVISION = "20260917_0019"' not in (root/'database.py').read_text():
+        expected_head = '20260917_0020' if (root/'docs/evidence/ai-005/change_boundary.json').is_file() else '20260917_0019'
+        if f'CURRENT_REVISION = "{expected_head}"' not in (root/'database.py').read_text():
             errors.append('Expected schema 0019')
         source = (root/'migrations/versions/20260917_0019_saved_vacancies.py').read_text()
         names = {node.args[0].value for node in ast.walk(ast.parse(source)) if isinstance(node, ast.Call)
@@ -90,9 +166,7 @@ def validate(root=ROOT):
         workflow=(root/'.github/workflows/ci.yml').read_text()
         if 'python scripts/check_job001_package.py' not in workflow or 'test_job001_routes.py' not in workflow:
             errors.append('Missing ordinary JOB-001 CI step')
-        status=(root/'docs/JOB001_VERIFICATION_STATUS.md').read_text()
-        if 'NEEDS_VERIFICATION' not in status or 'REBUILT' not in status:
-            errors.append('Rebuilt release must not invent external acceptance')
+        errors.extend(validate_closure(root))
     except (OSError, ValueError, KeyError, TypeError, AttributeError, SyntaxError):
         errors.append('JOB-001 evidence incomplete or invalid')
     return errors
@@ -100,6 +174,6 @@ def validate(root=ROOT):
 
 if __name__ == '__main__':
     errors=validate()
-    print(json.dumps({'package':'JOB-001','release':'r1.1 REBUILT','external_ci':'not_run',
+    print(json.dumps({'package':'JOB-001','release':'r1.1 REBUILT / closure1.6.1','external_ci':'recorded_success_for_accepted_application',
                       'ok':not errors,'errors':errors},indent=2))
     raise SystemExit(bool(errors))

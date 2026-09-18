@@ -14,6 +14,9 @@ from models.resume_analysis import ResumeAnalysisReport, ResumeAnalysisDecision,
 from repositories.resume_analysis import report_view
 from models.vacancy_match import VacancyMatchReport, VacancyMatchSeries
 from models.saved_vacancy import SavedVacancy, SavedVacancySource
+from models.cover_letter import CoverLetter, CoverLetterVersion, CoverLetterProposal
+from repositories.cover_letters import CoverLetterRepository
+from domain.cover_letter import LetterError
 from repositories.saved_vacancies import saved_view, source_view
 from domain.saved_vacancy import MAX_SAVED, MAX_SOURCES, SavedVacancyError
 from repositories.vacancy_match import match_view
@@ -262,7 +265,14 @@ class PrivacyRepository(RepositoryBase):
                 saved_exports = [saved_view(row) for row in saved_rows]
             except SavedVacancyError:
                 raise PrivacySnapshotConflictError('saved_vacancy_integrity') from None
+            try:
+                letter_export = CoverLetterRepository.export_in_session(session, user.id)
+                if any(row['saved_vacancy_id'] not in saved_ids for row in letter_export['cover_letters']):
+                    raise LetterError('storage_integrity')
+            except LetterError:
+                raise PrivacySnapshotConflictError('cover_letter_integrity') from None
             snapshot: dict[str, Any] = {
+                **letter_export,
                 "saved_vacancies": saved_exports,
                 "saved_vacancy_sources": [source_view(row) for row in saved_sources],
                 "vacancy_matches": [match_view(row) for row in match_rows],
@@ -483,6 +493,9 @@ class PrivacyRepository(RepositoryBase):
             "resume_versions": 0,
             "resume_assets": 0,
             "resume_exports": 0,
+            "cover_letters": self._count(session, CoverLetter, CoverLetter.user_id == user_id),
+            "cover_letter_versions": self._count(session, CoverLetterVersion, CoverLetterVersion.user_id == user_id),
+            "cover_letter_proposals": self._count(session, CoverLetterProposal, CoverLetterProposal.user_id == user_id),
             "saved_vacancies": self._count(session, SavedVacancy, SavedVacancy.user_id == user_id),
             "saved_vacancy_sources": self._count(session, SavedVacancySource, SavedVacancySource.user_id == user_id),
             "vacancy_match_reports": self._count(session, VacancyMatchReport, VacancyMatchReport.user_id == user_id),

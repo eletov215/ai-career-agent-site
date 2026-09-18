@@ -1,3 +1,63 @@
+# AI Career Agent - Next-package preparation / 1.3
+
+| Field | Value |
+|---|---|
+| Date | 2026-09-17 |
+| Full package | AI-005 IN_PROGRESS |
+| Delivery | r1 NEEDS_VERIFICATION; LIVE_NOT_ACCEPTED |
+| Base / candidate schema | 0019 / 0020 |
+
+## 1. Current request and audit
+
+The owner explicitly requested implementation after JOB-001 acceptance. Current main c095bfb, 608-file tree6bb34ab, source schemas, access/privacy and fixed-fixture AI runtime were inspected. Technical ownership/storage prerequisites are available; general real-data generation is not already present. No keys/payments or new user secrets are required to write offline/document code.
+
+## 2. Implemented and remaining
+
+AI-005 r1 general document workflow is now a local candidate; full AI-005 is IN_PROGRESS, not complete. Native editing, selected local factual templates, confirmed version history, compare/delete/TXT, source snapshots and privacy are implemented. The generic evidence-selection model contract is offline. Actual arbitrary-input Alice integration, admission/consent, accounting/idempotency and general writing quality remain to implement. An environment flag must not substitute for that work. The original requirements and order are preserved; no restricted-reference completion is claimed.
+
+## 3. Next action
+
+Review delivered scope/code. Publish only on the owner's later instruction, run new CI then obtain a real recovery point before migration0020/site tests. Keep public AI manual. Continue the outstanding AI-005 live-runtime work and its quality/legal gates; do not advance to AI-006 under a false completed-AI-005 status. Earlier next-package-not-started statements below are history only.
+
+## 4. Historical predecessor (unchanged dated source)
+
+The following reflects the previous release. It does not override the active sections above.
+
+# AI Career Agent - next-package preparation / 1.2
+
+| Field | Value |
+|---|---|
+| Version and date | 1.2 / 2026-09-17 |
+| Preparation status | Technical prerequisite JOB-001 satisfied; next feature design pending |
+| Accepted base | `c095bfb70bad5b1ba22cd9b1aeac1795a0b59c4c`; schema20260917_0019 |
+| Next package | AI-005 - cover-letter generation and versions |
+| Implementation started | No |
+| Public/live activation | Not approved; existing gates remain |
+
+## 1. Agreed feature scope
+
+PLAN_CURRENT's AI-005 card requires a personalized editable draft, short/full modes, tone/language, editor, versions and export; sending only on explicit user action. Letters remain associated with the vacancy. Unsupported facts, automatic send and loss of history are prohibited. Dependencies remain AI-001, PROF-001, AI-004 and JOB-001; none is removed.
+
+JOB-001 was deliberately implemented first at the owner's instruction and is now accepted. The previous ordering conflict is resolved. Saved source content, owner identity, canonical confirmed profile and editable resume content remain distinct; a saved note is not automatically a confirmed candidate fact.
+
+## 2. Required design before writing AI-005
+
+Re-read actual main, approved current documents, the saved-vacancy access/deletion rules and the limited AI-001/AI-004 input contracts. Define letter ownership and immutable source/provenance binding, edits/version conflict behavior, comparison/export/delete, and the effect of deleting a linked vacancy. Choose contracts from existing verified fields, not presumed database columns.
+
+A live implementation needs arbitrary real-input handling, candidate-fact evidence checks, hallucination/unsupported-number controls, token/cost/idempotency/failure behavior, consent/data-routing and quality acceptance. Existing AI-001/AI-004 reference foundations are not a proof that those paths already work. Do not silently substitute another pinned demonstration for the complete planned feature. A restricted reference-only delivery would need a separate explicit scope decision.
+
+## 3. Publication, safety and next action
+
+Publish the local JOB-001 closure only on instruction and run its ordinary CI. Then begin AI-005 as a separate package after a fresh source audit and an explicit implementation request. LEGAL-001 remains deferred and public AI unavailable/manual. No billable run, service payment, free-form real-data dispatch, auto-apply or live activation is authorized here. Before any new migration, obtain a confirmed real recovery point; CI restores do not replace it.
+
+## 4. Version history
+
+1.2: JOB-001 accepted; prerequisite resolved, live-feature design/activation gates remain. 1.1: owner approved JOB-001 first and the rebuilt candidate was delivered. 1.0: AI-004 closure identified the original ordering conflict.
+
+## 5. Historical preparation / 1.1
+
+The following retains earlier decisions and their dated state. Pending JOB-001 and unresolved-order labels are historical, not current.
+
 # AI Career Agent - next-package preparation / 1.1
 
 | Field | Value |

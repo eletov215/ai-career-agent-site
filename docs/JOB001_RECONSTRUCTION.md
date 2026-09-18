@@ -10,6 +10,10 @@
 | Available closure | AI-004 FINAL1.5.7 local documents/status guards |
 | User instruction | Rebuild and deliver a download first; do not modify GitHub now |
 
+## Acceptance annotation / 2026-09-17
+
+This retained record describes the original reconstruction, not current publication status. JOB-001 r1.1 REBUILT is now accepted on `c095bfb70bad5b1ba22cd9b1aeac1795a0b59c4c` after mainCI283 and owner staging0019 confirmation. Original-r1 equivalence remains NOT ESTABLISHED. See JOB001_VERIFICATION_STATUS1.2.
+
 ## 1. What is and is not recovered
 
 Current branch listing and the full main tree contain only the accepted AI-004 foundation, not a published JOB-001. The local search found earlier AI-004 packages, but no retained JOB-001 implementation, patch, FULL or usable manifest. Therefore no claim is made that this is the original ZIP with a refreshed link.

@@ -21,13 +21,13 @@ def test_0019_additive_roundtrip_metadata_and_repeat_upgrade(tmp_path):
     url=f'sqlite:///{tmp_path}/migrate.db';upgrade_database(url,'20260916_0018');db=create_database(url)
     before=set(inspect(db.engine).get_table_names());owner=str(uuid4())
     with db.session() as s,s.begin():s.add(User(id=owner,status='active',email_verified_at=1,created_at=1,updated_at=1))
-    upgrade_database(url)
-    assert current_revision(db.engine)==CURRENT_REVISION=='20260917_0019'
+    upgrade_database(url,'20260917_0019')
+    assert current_revision(db.engine)=='20260917_0019'
     assert set(inspect(db.engine).get_table_names())-before==TABLES
-    command.check(alembic_config(url))
+    # Metadata-to-head validation is exercised after the final upgrade below.
     env=SimpleNamespace(db=db,owner=owner,svc=SavedVacancyService(SavedVacancyRepository(db),signing_key='test-only'))
     token,sid,key=reference(env);row=env.svc.save(owner,token)
-    upgrade_database(url);assert env.svc.get(owner,row['id'])
+    upgrade_database(url,'20260917_0019');assert env.svc.get(owner,row['id'])
     downgrade_database(url,'20260916_0018')
     assert set(inspect(db.engine).get_table_names())==before
     with db.session() as s:assert s.get(User,owner) and s.get(SearchSnapshot,sid)

@@ -1,0 +1,77 @@
+{
+  "python_ast_and_compile_files": 281,
+  "jinja_templates_parsed": 52,
+  "yaml_files": [
+    ".github/workflows/ci.yml",
+    "render.yaml",
+    "compose.yaml"
+  ],
+  "checks": [
+    {
+      "command": "python scripts/check_ai005_package.py",
+      "exit_code": 0,
+      "stdout": "{\n  \"package\": \"AI-005\",\n  \"scope\": \"document-workflow; live generation not activated\",\n  \"remote_ci\": \"not_attested_by_local_check\",\n  \"ok\": true,\n  \"errors\": []\n}\n",
+      "stderr": ""
+    },
+    {
+      "command": "python scripts/check_job001_package.py",
+      "exit_code": 0,
+      "stdout": "{\n  \"package\": \"JOB-001\",\n  \"release\": \"r1.1 REBUILT / closure1.6.1\",\n  \"external_ci\": \"recorded_success_for_accepted_application\",\n  \"ok\": true,\n  \"errors\": []\n}\n",
+      "stderr": ""
+    },
+    {
+      "command": "python scripts/check_ai004_package.py",
+      "exit_code": 0,
+      "stdout": "{\n  \"package\": \"AI-004\",\n  \"scope\": \"synthetic/reference-only\",\n  \"ok\": true,\n  \"errors\": []\n}\n",
+      "stderr": ""
+    },
+    {
+      "command": "python scripts/check_ai003_package.py",
+      "exit_code": 0,
+      "stdout": "{\n  \"package\": \"AI-003\",\n  \"scope\": \"synthetic/reference-only\",\n  \"ok\": true,\n  \"errors\": []\n}\n",
+      "stderr": ""
+    },
+    {
+      "command": "python scripts/check_ai002_package.py",
+      "exit_code": 0,
+      "stdout": "{\n  \"package\": \"AI-002\",\n  \"scope\": \"synthetic_only\",\n  \"ok\": true,\n  \"errors\": []\n}\n",
+      "stderr": ""
+    },
+    {
+      "command": "python scripts/check_ai001_package.py",
+      "exit_code": 0,
+      "stdout": "{\n  \"ok\": true,\n  \"package\": \"AI-001\",\n  \"scope\": \"synthetic_only\",\n  \"external_ci\": \"pending\",\n  \"errors\": []\n}\n",
+      "stderr": ""
+    },
+    {
+      "command": "python scripts/check_ai_provider_package.py",
+      "exit_code": 0,
+      "stdout": "{\n  \"ok\": true,\n  \"package\": \"AI-PROVIDER-001\",\n  \"scope\": \"offline only\",\n  \"owner_approval\": \"approved\",\n  \"external_ci\": \"not_attested_by_local_check\",\n  \"errors\": []\n}\n",
+      "stderr": ""
+    },
+    {
+      "command": "python scripts/check_ai_bench_package.py",
+      "exit_code": 0,
+      "stdout": "AI-BENCH-001 package gate passed\n",
+      "stderr": ""
+    },
+    {
+      "command": "python scripts/check_document_structure.py",
+      "exit_code": 0,
+      "stdout": "{\n  \"ok\": true,\n  \"errors\": []\n}\n",
+      "stderr": ""
+    },
+    {
+      "command": "python scripts/infra_manifest_check.py",
+      "exit_code": 0,
+      "stdout": "{\n  \"ok\": true,\n  \"errors\": []\n}\n",
+      "stderr": ""
+    },
+    {
+      "command": "python scripts/check_repository_hygiene.py",
+      "exit_code": 0,
+      "stdout": "Repository hygiene check passed.\n",
+      "stderr": ""
+    }
+  ]
+}

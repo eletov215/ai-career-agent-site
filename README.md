@@ -1,33 +1,34 @@
 # AI Career Agent
 
-## Current accepted package / AI-004
+## Current candidate / AI-005 r1
 
-PLAN_CURRENT 1.5.7 / PROJECT_PASSPORT 2.74. AI-004 is ВЫПОЛНЕНО only in the synthetic/reference-only scope, on application `d5e0dac2ba87d4d7e14fc5b48fbb6b9182c885a4`, schema `20260916_0018`. Main CI #281: 804 passed; dedicated AI-004: 71 passed, no skips. Owner final review passed; no second active account exists, so manual two-account isolation is NOT RUN. Public AI remains manual/unavailable and session review is closed. Real backup/snapshot evidence and production recovery are not established by this acceptance.
+General owned letter documents, manual editor, reviewed versions, local extractive templates, comparison/TXT/privacy are implemented locally. Full AI-005 is IN_PROGRESS; r1 NEEDS_VERIFICATION and LIVE_NOT_ACCEPTED. General real-input Alice runtime is not integrated. Accepted0019 / proposed0020; new CI/deploy NOT RUN. See docs/AI005_SCOPE.md and docs/AI005_RUNBOOK.md. The following JOB-001 block is the accepted predecessor, not a claim that letters are complete.
 
-This release changes documentation and its status guards only. See `docs/AI004_VERIFICATION_STATUS.md` for evidence and `docs/NEXT_PACKAGE_PREPARATION.md` for the unresolved AI-005/JOB-001 dependency; no next-package implementation or unapproved reorder is included.
+## Current accepted package / JOB-001
+
+PLAN_CURRENT1.6.1 / PROJECT_PASSPORT2.76. JOB-001 is ВЫПОЛНЕНО / COMPLETE on `c095bfb70bad5b1ba22cd9b1aeac1795a0b59c4c`, schema20260917_0019. Main CI283 succeeded; the owner confirmed stepwise and final staging checks. Saved vacancy snapshots, notes, search, export/delete and access boundaries are accepted. Optional manual and real-recovery gaps remain explicit in docs/JOB001_VERIFICATION_STATUS.md. Public AI remains manual/unavailable.
 
 <!-- ACA-CANONICAL-STATUS:START -->
-## Canonical state / JOB-001 r1.1 REBUILT / 2026-09-17
+## Canonical state / JOB-001 accepted / 2026-09-17
 
 | Field | Value |
 |---|---|
-| Current candidate | JOB-001 r1.1 REBUILT - НУЖНА ПРОВЕРКА / NEEDS_VERIFICATION |
-| Verified GitHub baseline | `d5e0dac2ba87d4d7e14fc5b48fbb6b9182c885a4`; tree `53d86b0ff72f5090f214c20979df493e6f1f0ee3`; 565 files |
-| Accepted foundation | AI-004 COMPLETE in synthetic/reference-only scope; prior accepted packages unchanged |
-| Canonical versions | PLAN 1.6.0; PASSPORT 2.75; SOURCE_AUDIT 1.6.0 |
-| Accepted staging | `20260916_0018`; owner-confirmed for AI-004, not a deployment of JOB-001 |
-| Candidate migration | `20260917_0019`; new saved_vacancies and saved_vacancy_sources |
-| Approved sequence | JOB-001 before AI-005; explicitly approved by the owner in this conversation |
-| Rebuild provenance | The previous JOB-001 r1 bytes were unavailable. This is a newly implemented replacement, not a byte-identical reissue |
-| Verification | New local measurements only; JOB-001 remote CI and staging acceptance remain NOT RUN |
-| Publication | Local files only; no GitHub write, merge, workflow dispatch or deployment in this rebuild |
-| Public AI | Disabled/manual; no new provider calls, keys, consent or legal activation |
-| Remaining limits | No second active account; actual Neon backup/restore unconfirmed; email delivery and LEGAL-001 remain open |
+| Current package | JOB-001 r1.1 REBUILT - ВЫПОЛНЕНО / COMPLETE; ordinary verified-account saved vacancies |
+| Accepted foundation | AI-004 COMPLETE in synthetic/reference-only scope; previous package boundaries unchanged |
+| Accepted code | `c095bfb70bad5b1ba22cd9b1aeac1795a0b59c4c`; tree `6bb34aba4c05213a3d68f784e9d9b385c6d577d3`; 608 source files |
+| Canonical versions | PLAN 1.6.1; PASSPORT 2.76; SOURCE_AUDIT 1.6.1 |
+| Accepted staging | `20260917_0019`; PostgreSQL persistent, current=expected, migrations.ok=true; owner-confirmed |
+| Automated evidence | Main CI #283 / run 35219447896 / success; JOB-001, previous gates, PostgreSQL, backup/restore, containers and full tests |
+| Manual evidence | Stepwise save/relogin, notes/conflicts, duplicates/filter, export/delete and final regression/access/log confirmations |
+| Optional manual evidence | Two-account NOT RUN; legacy import and second-device results not separately confirmed; no deliberate restart claimed |
+| Public AI | Disabled/manual; generation_available=false; existing AI-003/004 review gates closed, owner-confirmed |
+| Next package | AI-005 preparation; JOB-001 dependency satisfied. Live input/quality/consent/legal activation remain separate |
+| Recovery and other limits | Real Neon recovery point and production restore not evidenced; email delivery and LEGAL-001 stay open |
+| Publication | This final documentation/status-guard update is local only; no new GitHub commit, CI or deploy claimed |
+| Historical lineage | Accepted r1.1 REBUILT; equivalence to unavailable original r1 remains NOT ESTABLISHED |
 <!-- ACA-CANONICAL-STATUS:END -->
 
-## JOB-001 rebuilt candidate
-
-Local candidate r1.1: see `docs/JOB001_IMPLEMENTATION.md`, `docs/JOB001_RUNBOOK.md` and `docs/JOB001_VERIFICATION_STATUS.md`. Do not upload the old AI-004 closure patch over this candidate. New migration0019 has not been applied to the real database. The historical section below describes the accepted AI-004 baseline, not acceptance of JOB-001.
+This local closure changes only documentation/evidence and status guards. A new docs commit/CI is not claimed. AI-005 preparation follows the approved order; no new feature code or provider call is started. Do not overlay older closure/rebuild patches after this release.
 
 ## 1. Product and runtime
 

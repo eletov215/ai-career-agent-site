@@ -2,10 +2,14 @@
 
 | Field | Value |
 |---|---|
-| Version | 1.1 REBUILT / 2026-09-17 |
-| Status | NEEDS_VERIFICATION |
-| Accepted / candidate schema | 20260916_0018 / 20260917_0019 |
-| Current action | Deliver rebuilt files only, no remote write |
+| Version | 1.2 FINAL / 2026-09-17; accepted r1.1 REBUILT |
+| Status | ВЫПОЛНЕНО / COMPLETE |
+| Accepted schema | 20260917_0019 |
+| Current action | Local final documentation; accepted code already on main |
+
+## Acceptance note / 2026-09-17
+
+Main `c095bfb70bad5b1ba22cd9b1aeac1795a0b59c4c` / CI283 and the owner's final staging confirmation establish JOB-001 acceptance at0019. The original r1.1 REBUILT procedure and design below remain a historical implementation/regression reference, not a request to repeat accepted tests. Manual two-account isolation is NOT RUN; legacy transfer and second-device results are not separately confirmed. Real Neon recovery-point creation remains NOT EVIDENCED. See JOB001_VERIFICATION_STATUS.md for the exact matrix. This local closure changes no application logic or migration and performs no remote write.
 
 ## 1. Publication and recovery gate
 
@@ -56,3 +60,7 @@ Review Render logs for unexpected500/Traceback/IntegrityError/migration errors a
 ## 8. Rollback
 
 Stop writes and preserve a verified backup including populated saved objects, notes and sources before any destructive rollback. Controlled0019->0018 drops both new saved tables. Coordinate compatible application rollback because old releases require exact revision0018. Do not revert application code blindly while keeping an unexplained0019 schema mismatch, and do not restore over production as part of ordinary testing. Real recovery drill stays OPS-002/REL-001.
+
+## 9. Version history
+
+1.2 FINAL: functional acceptance, evidence distinctions and recovery exclusions; no runtime delta. 1.1 REBUILT: replacement implementation and candidate procedure, NEEDS_VERIFICATION at original delivery.

@@ -1,0 +1,3 @@
+{% extends 'base.html' %}
+{% block head_extra %}<link rel="stylesheet" href="{{ url_for('static',filename='cover_letters.css') }}?v=1">{% endblock %}
+{% block content %}<main class="section ai005-page"><div class="container ai005-shell"><h1>{{ ui.error_title }}</h1><p role="alert">{{ ui.conflict }}</p>{% if record.source_stale %}<p>{{ ui.stale }}</p>{% endif %}<section class="ai005-card"><h2>{{ ui.draft }}</h2><h3>{{ draft.subject }}</h3><pre class="ai005-text">{{ draft.body }}</pre></section><section class="ai005-card"><h2>{{ ui.server }}</h2><h3>{{ record.content.subject }}</h3><pre class="ai005-text">{{ record.content.body }}</pre></section><a href="{{ url_for('cover_letters.detail',letter_id=record.id) }}">{{ ui.reload }}</a></div></main>{% endblock %}

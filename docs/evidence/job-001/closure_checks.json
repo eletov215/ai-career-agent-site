@@ -1,0 +1,17 @@
+{
+  "recorded_on": "2026-09-17",
+  "release": "JOB-001 closure1.6.1",
+  "kind": "local_closure_verification",
+  "command": "PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 python -m pytest -q -ra tests/test_job001_package.py tests/test_job001_service.py tests/test_job001_routes.py tests/test_job001_migration.py tests/test_document_structure.py tests/test_ai004_package.py tests/test_ai_provider_policy.py",
+  "passed": 167,
+  "skipped": 2,
+  "passing_subtests": 62,
+  "subtests_counted_separately": true,
+  "skips": [
+    "Entire JOB-001 Flask HTTP module: Flask unavailable locally",
+    "Disposable PostgreSQL migration scenario: no PostgreSQL service"
+  ],
+  "not_a_full_suite_run": true,
+  "new_remote_ci": "NOT RUN",
+  "initial_failures": "Existing status/version guards required candidate versions; synchronized guard expectations and negative tests, then reran the complete stated local subset successfully."
+}

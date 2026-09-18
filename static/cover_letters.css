@@ -1,0 +1,13 @@
+/* AI-005 only: no overrides of search, homepage or resume builder. */
+.ai005-shell{max-width:1000px;min-width:0;margin-inline:auto}.ai005-page{padding-block:32px}
+.ai005-page h1{overflow-wrap:anywhere}.ai005-card{padding:22px;margin-block:20px;background:var(--surface,#fff);border:1px solid #e3e8ee;border-radius:16px;min-width:0;overflow-wrap:anywhere}
+.ai005-notice,.ai005-warning{padding:16px 20px;margin-block:18px;border-radius:12px;background:#f4f7fa;border:1px solid #dce3ed;overflow-wrap:anywhere}.ai005-warning{background:#fff8ed;border-color:#ebd7af}
+.ai005-options{display:flex;align-items:end;flex-wrap:wrap;gap:14px;margin-block:16px}.ai005-options>label{flex:1 1 180px;min-width:0}
+.ai005-page input:not([type=checkbox]):not([type=hidden]),.ai005-page textarea,.ai005-page select{display:block;box-sizing:border-box;max-width:100%;width:100%;font:inherit;border:1px solid #b6c2ce;background:#fff;border-radius:8px;padding:10px;margin-block:6px 16px;color:inherit}
+.ai005-page textarea{resize:vertical;line-height:1.6}.ai005-page fieldset{min-width:0;border:1px solid #e1e7ee;padding:14px;border-radius:10px}
+.ai005-check{display:flex;align-items:flex-start;gap:10px;margin-block:14px;line-height:1.55}.ai005-check input{flex:0 0 auto;margin-top:5px}.ai005-check span{min-width:0}
+.ai005-text{white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word;font:inherit;line-height:1.6}.ai005-text small{font-size:.82em;opacity:.7}
+.ai005-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:18px}.ai005-actions,.ai005-version{display:flex;align-items:center;flex-wrap:wrap;gap:14px;margin-block:14px}
+.ai005-page summary{cursor:pointer;font-weight:600}.ai005-page :focus-visible{outline:3px solid #467b9e;outline-offset:3px}.ai005-page .btn{white-space:normal;text-align:center;max-width:100%}
+@media(max-width:600px){.ai005-page{padding-block:18px}.ai005-card{padding:16px}.ai005-options{display:block}.ai005-version{align-items:flex-start;flex-direction:column}}
+@media(prefers-reduced-motion:reduce){.ai005-page *{scroll-behavior:auto;transition:none!important}}

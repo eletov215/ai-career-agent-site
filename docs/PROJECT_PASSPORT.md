@@ -4,34 +4,39 @@
 
 
 <!-- ACA-CANONICAL-STATUS:START -->
-## Canonical state / JOB-001 r1.1 REBUILT / 2026-09-17
+## Canonical state / AI-005 implementation / 2026-09-17
 
 | Field | Value |
 |---|---|
-| Current candidate | JOB-001 r1.1 REBUILT - НУЖНА ПРОВЕРКА / NEEDS_VERIFICATION |
-| Verified GitHub baseline | `d5e0dac2ba87d4d7e14fc5b48fbb6b9182c885a4`; tree `53d86b0ff72f5090f214c20979df493e6f1f0ee3`; 565 files |
-| Accepted foundation | AI-004 COMPLETE in synthetic/reference-only scope; prior accepted packages unchanged |
-| Canonical versions | PLAN 1.6.0; PASSPORT 2.75; SOURCE_AUDIT 1.6.0 |
-| Accepted staging | `20260916_0018`; owner-confirmed for AI-004, not a deployment of JOB-001 |
-| Candidate migration | `20260917_0019`; new saved_vacancies and saved_vacancy_sources |
-| Approved sequence | JOB-001 before AI-005; explicitly approved by the owner in this conversation |
-| Rebuild provenance | The previous JOB-001 r1 bytes were unavailable. This is a newly implemented replacement, not a byte-identical reissue |
-| Verification | New local measurements only; JOB-001 remote CI and staging acceptance remain NOT RUN |
-| Publication | Local files only; no GitHub write, merge, workflow dispatch or deployment in this rebuild |
-| Public AI | Disabled/manual; no new provider calls, keys, consent or legal activation |
-| Remaining limits | No second active account; actual Neon backup/restore unconfirmed; email delivery and LEGAL-001 remain open |
+| Current full package | AI-005 / IN_PROGRESS; personalized live letters are NOT complete |
+| This r1 delivery | NEEDS_VERIFICATION: general owned document workflow, not a pinned demonstration |
+| Accepted predecessor | JOB-001 COMPLETE; closure PLAN 1.6.1 / PASSPORT 2.76; prior AI scopes unchanged |
+| Accepted foundation | AI-004 COMPLETE in synthetic/reference-only scope; no new live acceptance |
+| Code source | c095bfb70bad5b1ba22cd9b1aeac1795a0b59c4c; tree 6bb34aba4c05213a3d68f784e9d9b385c6d577d3; 608 files |
+| Current document versions | PLAN 1.6.2; PASSPORT 2.77; SOURCE_AUDIT 1.6.2 |
+| Accepted / candidate schema | 20260917_0019 / 20260917_0020; candidate migration only tested locally |
+| Implemented | Owned letters linked to saved vacancies/profile source snapshots; explicit manual versions, local templates, comparison/TXT/privacy, stale protection |
+| Not implemented | General-input live Alice runtime integration and its consent/accounting/quality acceptance; LIVE_NOT_ACCEPTED |
+| AI boundary | generation_available=false, mode=manual; no real-data provider dispatch or automatic sending |
+| Base CI | CI283 success is predecessor evidence only; new GitHub CI, deployment and owner acceptance NOT RUN |
+| Evidence gaps retained | Second account NOT RUN; device/legacy outcomes not separately confirmed; real Neon backup/restore not evidenced |
+| Publication | Local delivery only; no GitHub writes, paid calls, deployment or production database changes |
 <!-- ACA-CANONICAL-STATUS:END -->
 
 | Поле | Значение |
 |---|---|
 | Документ        | PROJECT_PASSPORT                                                                              |
-| Версия паспорта | 2.75 |
+| Версия паспорта | 2.77 |
 | Дата            | 17 сентября 2026                                                                               |
 | Статус          | ДЕЙСТВУЮЩИЙ                                                                                   |
-| Связанный план | `AI_Career_Agent_PLAN_CURRENT v1.6.0` |
-| Основа кода | GitHub main d5e0dac2ba87d4d7e14fc5b48fbb6b9182c885a4, accepted source; local JOB-001 r1.1 rebuilt candidate |
+| Связанный план | `AI_Career_Agent_PLAN_CURRENT v1.6.2` |
+| Основа кода | GitHub main `c095bfb70bad5b1ba22cd9b1aeac1795a0b59c4c`; JOB-001 accepted baseline; AI-005 local candidate |
 
-> Контрольные статусы: FND/DATA/SEC/OPS/INFRA-PREP/SYNC/SEARCH/AUTH/PROF/PRIV/AI-BENCH-001/AI-PROVIDER-001/AI-001/AI-002/AI-003 - **ВЫПОЛНЕНО**; LEGAL-001 - **ОТЛОЖЕНО ДО РЕШЕНИЯ ВЛАДЕЛЬЦА**; DOC-001 - В РАБОТЕ; INFRA-001 - ОТЛОЖЕНО. Current PLAN 1.6.0 / PASSPORT 2.75; JOB-001 NEEDS_VERIFICATION; AI-004 also accepted in synthetic/reference-only scope; older dated entries are historical.
+> Контрольные статусы: FND/DATA/SEC/OPS/INFRA-PREP/SYNC/SEARCH/AUTH/PROF/PRIV/AI-BENCH-001/AI-PROVIDER-001/AI-001/AI-002/AI-003 - **ВЫПОЛНЕНО**; LEGAL-001 - **ОТЛОЖЕНО ДО РЕШЕНИЯ ВЛАДЕЛЬЦА**; DOC-001 - В РАБОТЕ; INFRA-001 - ОТЛОЖЕНО. Current PLAN 1.6.2 / PASSPORT 2.77; JOB-001 COMPLETE; AI-004 also accepted in synthetic/reference-only scope; older dated entries are historical.
+
+## 0. AI-005 candidate / 2.77
+
+Three new tables cover_letters, cover_letter_versions and cover_letter_proposals attach owned letter documents to JOB-001 snapshots. Only selected current confirmed profile excerpts seed local templates; edits never rewrite the profile. Immutable reviewed versions, source-stale checks, concurrency protection, comparison/TXT and privacy are implemented. Normal vacancy deletion is blocked while letters exist; explicit letter deletion or confirmed account deletion has defined cascades. General live Alice generation remains unimplemented and unavailable. See AI005_IMPLEMENTATION.md and AI005_SCOPE.md. Candidate0020 is not deployed; accepted staging stays0019.
 
 ## 1. Назначение
 
@@ -76,7 +81,7 @@ AI Career Agent — коммерческий веб-сервис карьерн�
 >     scripts/                   migrations, backup, restore, alert, infra probes, sync CLI/worker/supervisor
 >     domain/ models/ repositories/ services/
 >     services/source_status.py    safe public source-state contract
->     migrations/                Alembic 0001..0018; accepted staging 0018
+>     migrations/                Alembic 0001..0019; accepted staging 0019
 >     tests/                     unit/integration/security/ops/infra/sync/search/auth/AI benchmark tests
 >     docs/                      architecture, security and runbooks
 >     render.yaml
@@ -429,7 +434,7 @@ DNS/OAuth callback URL не переключаются.
 - Trudvsem cache остаётся PostgreSQL-backed; внешний worker и SYNC-002 checkpoint/retry/lifecycle подтверждены.
 - SEARCH-001 canonical contract и SEARCH-002 conservative dedup подтверждены; multi-source grouping сохраняет все исходные публикации.
 - PDF parser эвристический, не LLM.
-- Accepted main still uses localStorage. The local JOB-001 candidate adds owner-scoped server snapshots, notes and explicit legacy import; deployment and acceptance are pending.
+- JOB-001 server-saved vacancies are accepted: owner-scoped immutable snapshots, private revisioned notes, source aliases, filtering, explicit legacy recovery and privacy controls. Existing browser marks are not auto-assigned to an account.
 - AI-BENCH-001 закрыт на grounded-v2.6.1: final Alice live 8/8 machine PASS + named human acceptance; production AI provider пока не подключён.
 - First-party account AUTH-001, OAuth ownership AUTH-002, structured profile PROF-001 и resume import PROF-002 подтверждены production E2E. PROF-002 сохраняет confirmation-first boundary; real AI/match/letters/tracker впереди.
 
@@ -441,11 +446,11 @@ DNS/OAuth callback URL не переключаются.
 >     -> SEARCH-005 COMPLETE
 >     -> AI-BENCH-001 COMPLETE
 >     -> AI-PROVIDER-001 COMPLETE -> AI-001 COMPLETE (synthetic only) -> AI-002 COMPLETE
->     -> AI-003 COMPLETE (0017; synthetic/reference-only) -> AI-004 COMPLETE (0018; synthetic/reference-only) -> JOB-001 NEEDS_VERIFICATION
+>     -> AI-003 COMPLETE (0017; synthetic/reference-only) -> AI-004 COMPLETE (0018; synthetic/reference-only) -> JOB-001 COMPLETE (0019)
 >     -> AI-005 -> AI-006 -> JOB-002 -> JOB-003/JOB-004
 >     -> PERF/A11Y/ANL по готовности
 
-**Approved sequencing / 2.75:** JOB-001 is implemented first at the owner's explicit request, then AI-005. Candidate acceptance remains pending; the historical proposal is preserved in NEXT_PACKAGE_PREPARATION.md.
+**Approved sequencing / 2.76:** JOB-001 has been implemented and accepted first, as requested; AI-005 preparation follows. Live AI remains separately gated. Historical proposals retain their original date and are not active decisions.
 
 LEGAL-001 remains deferred until an owner decision and is mandatory before public AI.
 
@@ -506,7 +511,7 @@ Manual two-account isolation is NOT RUN because the owner has no second active a
 
 ### Next-package preparation
 
-The owner approved JOB-001 before AI-005. New local JOB-001 files implement saved snapshot/source/notes/privacy boundaries at candidate0019. There is no deployment or live AI activation yet. Read JOB001_IMPLEMENTATION.md and JOB001_VERIFICATION_STATUS.md before continuing.
+JOB-001 is accepted on `c095bfb70bad5b1ba22cd9b1aeac1795a0b59c4c` with main CI283 and owner staging0019/final confirmation. AI-005 now has the saved-vacancy prerequisite, but arbitrary real-data AI generation/consent/quality/legal integration is not implicitly complete. No new letter code is started by this closure. See JOB001_VERIFICATION_STATUS.md and NEXT_PACKAGE_PREPARATION.md.
 
 ## 24. Правила рабочего чата
 
@@ -523,6 +528,8 @@ The owner approved JOB-001 before AI-005. New local JOB-001 files implement save
 
 
 ## 25. Журнал версий
+
+- 2.76 / 2026-09-17: JOB-001 ВЫПОЛНЕНО; accepted schema0019 and main CI283; final browser confirmation and optional-manual/recovery gaps recorded; PLAN1.6.1.
 
 - 2.75 / 2026-09-17: JOB-001 r1.1 REBUILT, approved dependency order, saved snapshots/aliases/notes/privacy and candidate0019; no original-r1 or external verification claims.
 
@@ -693,3 +700,8 @@ Verified source `c683520058cc1f729c79ed49ac5c213811e4c9f3`, tree `6458daea23371d
 ## Passport 2.74 closure / 2026-09-17
 
 This documentation-only release records AI-004 acceptance at schema0018, main `d5e0dac2ba87d4d7e14fc5b48fbb6b9182c885a4`, CI #280/#281 and owner final checks. Earlier 2.73 candidate paragraphs are historical, not active gates. No runtime files or database schema are changed. The new next-package readiness note preserves the stated AI-005 dependency on JOB-001. See AI004_VERIFICATION_STATUS.md and evidence/ai-004/acceptance.json for provenance and exclusions.
+
+
+## 101. Version 2.77 / 2026-09-17
+
+AI-005 document-workflow candidate prepared from verified current main. Full AI-005 remains IN_PROGRESS and LIVE_NOT_ACCEPTED. General input provider integration remains required, not a switch. Earlier dated closure labels preserve the accepted predecessor, not the current candidate status.

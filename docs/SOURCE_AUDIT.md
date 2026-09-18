@@ -1,3 +1,68 @@
+# AI Career Agent - source audit / AI-005 / 1.6.2
+
+| Field | Value |
+|---|---|
+| Date | 2026-09-17 |
+| Actual GitHub main | c095bfb70bad5b1ba22cd9b1aeac1795a0b59c4c |
+| Exact baseline tree | 6bb34aba4c05213a3d68f784e9d9b385c6d577d3; 608 files |
+| Authoritative uploaded docs | JOB-001 canonical ZIP1.6.1 / PASSPORT2.76 |
+| New delivery | AI-005 r1 document workflow NEEDS_VERIFICATION; full feature IN_PROGRESS |
+| Accepted / candidate schema | 20260917_0019 / 20260917_0020 |
+| Remote write / candidate CI | Not performed / NOT RUN |
+
+## 1. Source precedence and exact materialization
+
+Main and its commit/tree were read through the connected GitHub. The retained JOB-001 REBUILT FULL archive was independently rehashed with Git blob/tree serialization; all608 files exactly match the current remote tree. The retained closure FULL adds only the unpublished21-file final docs/guard delta. All ten Markdown documents in the latest user canonical ZIP match closure sources. Older standalone AI-004 PDFs are historical, not the active plan. Resource-fork __MACOSX files are not project source and are excluded.
+
+## 2. Changes and acceptance boundaries
+
+The candidate adds general owner-bound letter documents, explicit reviewed versions, local selected-excerpt templates, stale conflicts, comparison/delete/TXT and privacy. Eleven existing runtime files are changed through an exact additive checksum chain. Existing provider policy, AI runtime, benchmark/prompts/schemas, config, dependencies, render settings and legal deferral stay byte-preserved. Historical exact-head tests move only their current-head assertions; old migrations still test their original target. New migration0020 adds three letter tables. Full AI-005 is not narrowed or claimed complete: general real-input provider integration remains unimplemented, not merely disabled.
+
+## 3. Measured evidence and limits
+
+The final available local full suite passed857 tests with27 skips and86 separately counted subtests (single run). Focused AI005 plus inherited package guards passed166 with2 skips. Flask HTTP modules and disposable PostgreSQL remain explicitly skipped locally; pinned installation was attempted and no package source was available. Forty actual-base-template offline Chromium layouts passed without horizontal overflow; external requests were blocked. This is not Flask E2E, CI, real-account testing, or model writing-quality evidence. New measurements and commands are in evidence/ai-005/local_verification.json. Base CI283 success is not new-candidate CI evidence.
+
+## 4. Remaining work and publication
+
+No GitHub push/PR/merge, Render deploy, real database migration/backup, real-data model call or paid benchmark occurred. Mandatory recovery proof before future0020 deployment is still absent. LEGAL-001, delivery email, optional manual isolation/device/legacy evidence and production restore remain as recorded. Continue full AI005 runtime/accounting/consent/quality work; do not close it from this manual/local workflow.
+
+## 5. Previous source audit (dated history)
+
+# AI Career Agent - source audit / JOB-001 closure
+
+| Field | Value |
+|---|---|
+| Version | 1.6.1 / 2026-09-17 |
+| Accepted package | JOB-001 / ВЫПОЛНЕНО / COMPLETE; r1.1 REBUILT |
+| Accepted main | `c095bfb70bad5b1ba22cd9b1aeac1795a0b59c4c` |
+| Accepted tree | `6bb34aba4c05213a3d68f784e9d9b385c6d577d3` |
+| Source materialization | 608 files; locally recomputed Git tree equals the directly read remote tree |
+| Main CI | #283 / run35219447896 / success; Python job105195697162 |
+| Staging | 20260917_0019; user-confirmed |
+| Closure publication | Not performed; new local artifacts only |
+
+## 1. Source of truth and retained lineage
+
+GitHub main and its commit were read directly again. The preserved ACA_JOB001_r1_1_REBUILT_FULL.zip was extracted and all608 blobs and directories were serialized using Git hashing. The resulting tree matches `6bb34aba4c05213a3d68f784e9d9b385c6d577d3` exactly; therefore the archive is a verified materialization of current main, not an assumed stale ZIP. The active Markdown version1.6.0 on main is newer than the uploaded AI-004 PDFs1.5.7. Their AI-004 acceptance remains historical; they do not override the approved JOB-001 sequence or current0019 state.
+
+The original JOB-001 r1 bytes were unavailable during reconstruction. This acceptance is explicitly of r1.1 REBUILT, not proof of equality to the lost archive. The complete historical audit is retained below.
+
+## 2. Evidence hierarchy and closure boundaries
+
+CI283 is completed/success on the exact accepted commit. Direct latest job-step reads show successful JOB-001, previous guards, PostgreSQL, backup/restore, container and full-test steps; optional paid jobs are skipped. The owner's confirmations establish real-site behavior and final logs; no raw account data or production logs were gathered. Exact CI test totals were not extracted and are not inferred from step counts.
+
+Manual two-account isolation is NOT RUN. Legacy import and second-device subcases lack distinct outcomes in the broad confirmations and remain NOT SEPARATELY CONFIRMED. Real backup/snapshot and recovery are not evidenced. This is functional JOB-001 acceptance, not completion of infrastructure or public AI gates.
+
+## 3. Change and next action
+
+The release updates canonical status/history, evidence and status guards; it does not change application logic, workflow, migration0019 or real user data. The generated delta manifest lists the exact files. Original r1.1 runtime boundary hashes are preserved. New local closure tests are separate from accepted CI283; a later publication needs its own ordinary CI. Nothing is committed remotely by this task.
+
+Next: AI-005 design and implementation after a fresh main audit, retaining the complete declared letter scope and explicit live-data/quality/consent/legal gates. No automatic send, hidden provider activation or copied synthetic score is authorized.
+
+## 4. Historical source audit / 1.6.0
+
+The following dated text describes the original reconstructed candidate. Its then-current/pending statements do not override sections1-3 above.
+
 # AI Career Agent - source audit / JOB-001 reconstruction
 
 | Field | Value |
@@ -101,3 +166,7 @@ LEGAL-001 operator/market/data-location/consent decisions remain deferred. Stagi
 
 - 1.5.7 / 2026-09-17: final source/CI/owner audit; manual and recovery limits explicit.
 - 1.5.6 / 2026-09-16: verified GitHub baseline and candidate provenance.
+
+## Closure version history
+
+1.6.1 / 2026-09-17: functional JOB-001 accepted, main CI283 and owner evidence recorded; current application materialization608 files verified.

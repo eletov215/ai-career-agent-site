@@ -46,7 +46,7 @@ def create_saved_vacancies_blueprint(service):
     def feature_error(error):
         code = str(error)
         status = (404 if code in ('not_found','verified_account_required') else
-                  409 if code in ('stale_source','stale_write','ambiguous_group','invalid_reference') else
+                  409 if code in ('stale_source','stale_write','ambiguous_group','invalid_reference','has_letters') else
                   503 if code in ('storage_unavailable','invalid_saved_snapshot') else 400)
         message = ERROR_MESSAGES.get(code, UI['invalid'])
         if wants_json():

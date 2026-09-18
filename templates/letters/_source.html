@@ -1,0 +1,6 @@
+<details class="ai005-card"><summary>{{ ui.source }}</summary><p>{{ ui.source_notice }}</p>
+<p>{{ ui.version }} {{ source.profile_version }}</p><p>{{ ui.vacancy }}: {{ source.vacancy.title }} / {{ source.vacancy.company }}</p>
+<p class="ai005-text">{{ source.vacancy.description }}</p><p class="ai005-text">{{ source.vacancy.requirements }}</p>
+{% for fact in source.facts %}<p class="ai005-text"><small>{{ fact.id }}</small><br>{{ fact.text }}</p>{% endfor %}
+{% if source.omitted_fact_ids %}<p>{{ ui.omitted }}</p>{% endif %}<p>{{ ui.match_notice }}</p>
+</details>

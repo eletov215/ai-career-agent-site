@@ -1,0 +1,24 @@
+{
+  "recorded_on": "2026-09-17",
+  "source": "GitHub connector: workflow and job-step reads",
+  "commit": "c095bfb70bad5b1ba22cd9b1aeac1795a0b59c4c",
+  "tree": "6bb34aba4c05213a3d68f784e9d9b385c6d577d3",
+  "run_id": 35219447896,
+  "run_number": 283,
+  "url": "https://github.com/eletov215/ai-career-agent-site/actions/runs/35219447896",
+  "status": "completed",
+  "conclusion": "success",
+  "python_job_id": 105195697162,
+  "selected_successful_steps": [
+    "Verify JOB-001 server-saved vacancy controls",
+    "Verify PostgreSQL migrations",
+    "Run PostgreSQL integration test",
+    "Verify PostgreSQL encrypted backup and restore",
+    "Build INFRA-001 container targets",
+    "Smoke-test INFRA-001 runtime image",
+    "Run tests"
+  ],
+  "ai_bench_package_gate": "success",
+  "optional_paid_jobs": "skipped",
+  "scope_note": "Summarized observed fields, not a raw log export. CI backup/restore uses disposable test data, not the real Neon database."
+}

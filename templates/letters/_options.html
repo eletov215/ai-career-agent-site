@@ -1,0 +1,5 @@
+<div class="ai005-options">
+<label>{{ ui.language }}<select name="language">{% for code in ('ru','en') %}<option value="{{ code }}"{% if editor.language == code %} selected{% endif %}>{{ ui[code] }}</option>{% endfor %}</select></label>
+<label>{{ ui.length }}<select name="length">{% for code in ('short','full') %}<option value="{{ code }}"{% if editor.length == code %} selected{% endif %}>{{ ui[code] }}</option>{% endfor %}</select></label>
+<label>{{ ui.tone }}<select name="tone">{% for code in ('professional','friendly') %}<option value="{{ code }}"{% if editor.tone == code %} selected{% endif %}>{{ ui[code] }}</option>{% endfor %}</select></label>
+</div>

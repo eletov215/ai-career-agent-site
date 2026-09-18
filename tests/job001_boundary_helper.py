@@ -10,3 +10,6 @@ def copy_job001_boundary(root: Path, destination: Path):
     for relative in CHANGES | NEW_RUNTIME | EVIDENCE:
         target=destination/relative;target.parent.mkdir(parents=True,exist_ok=True)
         shutil.copy2(root/relative,target)
+
+    from tests.ai005_boundary_helper import copy_ai005_boundary
+    copy_ai005_boundary(root, destination)

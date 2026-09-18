@@ -1,5 +1,25 @@
 # AI Career Agent - CHANGELOG
 
+## 1.6.2 / AI-005 r1 / 2026-09-17
+
+- Full AI-005 IN_PROGRESS. New general document-workflow candidate, not completed live generation or an approved reduced final scope.
+- Three additive tables0020; owned saved-vacancy/profile snapshots, explicit review, source-bound local templates, immutable versions/compare/delete/TXT/privacy.
+- Normal saved-vacancy deletion now protects associated letters; explicit account cascade remains intact. No implicit source/profile edits.
+- Generic fact-selection prompt/schema offline; browser real-input Alice dispatch remains closed and unimplemented. Existing runtime/evals/keys/config/legal documents unchanged.
+- New CI step and unit/route/PG/security/negative guards; no remote writes. Includes unpublished JOB-001 final closure.
+- Local full857 passed27skipped86subtests; installed-Flask/PG and external acceptance remain required.
+
+
+## 1.6.1 / 2026-09-17 - JOB-001 accepted
+
+- Accepted r1.1 REBUILT on `c095bfb70bad5b1ba22cd9b1aeac1795a0b59c4c`, tree`6bb34aba4c05213a3d68f784e9d9b385c6d577d3`; exact608-file source match.
+- Direct mainCI283 and owner final staging0019 confirmation recorded separately; publicAI remains manual/unavailable.
+- Save/relogin, notes and stale conflicts, duplicate prevention/filter, export/delete, anonymous access and core/log regressions confirmed.
+- No second active account: manual isolation NOT RUN. Legacy import and second-device outcomes not separately confirmed; real recovery point/restore not evidenced.
+- Update canonical PLAN/AUDIT1.6.1, PASSPORT2.76, JOB001 docs1.2 and next preparation1.2; preserve historical candidate evidence.
+- Documentation/status guards only; no runtime, schema or workflow changes; remote publication not performed.
+
+
 ## 1.6.0 / 2026-09-17 - JOB-001 r1.1 REBUILT
 
 - Recover missing delivery as a newly implemented candidate, not the original archive; no old JOB-001 test claims reused.

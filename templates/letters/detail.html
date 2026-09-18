@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% block title %}{{ ui.title }} - AI Career Agent{% endblock %}
+{% block head_extra %}<link rel="stylesheet" href="{{ url_for('static', filename='cover_letters.css') }}?v=1">{% endblock %}
+{% block content %}
+<main class="section ai005-page"><div class="container ai005-shell">
+<header><a href="{{ url_for('cover_letters.index') }}">{{ ui.back }}</a><h1>{{ record.source.vacancy.title }}</h1><p>{{ record.source.vacancy.company }}</p><a href="/saved-vacancies/{{ record.saved_vacancy_id }}">{{ ui.vacancy }}</a></header>
+<aside class="ai005-notice">{{ ui.manual_notice }}</aside>
+{% if record.source_stale %}<aside class="ai005-warning">{{ ui.stale }}</aside>{% endif %}
+{% if proposal %}<h2>{{ ui.proposal }}</h2><aside class="ai005-warning">{{ ui[proposal.origin] }}. {{ ui.unreviewed }}</aside>{% endif %}
+<form class="ai005-card" method="post" action="{{ url_for('cover_letters.save',letter_id=record.id) }}">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="expected_revision" value="{{ proposal.base_revision if proposal else record.revision }}"><input type="hidden" name="proposal_id" value="{{ proposal.id if proposal else '' }}">
+{% include 'letters/_options.html' %}
+<label for="letter-subject">{{ ui.subject }}</label><input id="letter-subject" name="subject" maxlength="{{ max_subject }}" value="{{ editor.subject }}" required>
+<label for="letter-body">{{ ui.body }}</label><textarea id="letter-body" name="body" rows="14" maxlength="{{ max_body }}" required>{{ editor.body }}</textarea>
+<p>{{ ui.revision }} {{ record.revision }}. {{ ui.provenance_notice }}</p>
+<label class="ai005-check"><input type="checkbox" name="confirm" value="1" required> {{ ui.confirm }}</label><button class="btn btn-primary" type="submit">{{ ui.save }}</button>
+</form>
+{% if proposal %}<form class="ai005-card" method="post" action="{{ url_for('cover_letters.reject',letter_id=record.id,proposal_id=proposal.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="expected_revision" value="{{ record.revision }}"><label class="ai005-check"><input name="confirm" type="checkbox" value="1" required> {{ ui.reject_confirm }}</label><button class="btn btn-secondary" type="submit">{{ ui.reject }}</button></form>{% endif %}
+{% with source=record.source %}{% include 'letters/_source.html' %}{% endwith %}
+{% if record.source.facts and not record.source_stale %}
+<details class="ai005-card"><summary>{{ ui.local }}</summary><p>{{ ui.local_hint }}</p><form method="post" action="{{ url_for('cover_letters.compose_local',letter_id=record.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="expected_revision" value="{{ record.revision }}"><input type="hidden" name="operation_key" value="{{ operation_key }}">
+{% include 'letters/_options.html' %}<fieldset><legend>{{ ui.facts }}</legend>{% for fact in record.source.facts %}<label class="ai005-check"><input type="checkbox" name="fact_id" value="{{ fact.id }}"><span class="ai005-text"><small>{{ fact.id }}</small><br>{{ fact.text }}</span></label>{% endfor %}</fieldset><button class="btn btn-secondary" type="submit">{{ ui.local }}</button></form></details>
+{% endif %}
+{% if record.proposals %}<section class="ai005-card"><h2>{{ ui.proposals }}</h2>{% for p in record.proposals %}<p><a href="{{ url_for('cover_letters.detail',letter_id=record.id,proposal=p.id) }}">{{ p.content.subject }}</a> / {{ ui[p.origin] }}</p><form method="post" action="{{ url_for('cover_letters.reject',letter_id=record.id,proposal_id=p.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="expected_revision" value="{{ record.revision }}"><label class="ai005-check"><input type="checkbox" name="confirm" value="1" required> {{ ui.reject_confirm }}</label><button class="btn btn-secondary" type="submit">{{ ui.reject }}</button></form>{% endfor %}</section>{% endif %}
+<section class="ai005-card"><h2>{{ ui.versions }}</h2>
+{% for version in record.versions %}<div class="ai005-version"><a href="{{ url_for('cover_letters.version',letter_id=record.id,number=version.number) }}">{{ ui.version }} {{ version.number }}</a><span>{{ ui[version.origin] }}</span><a href="{{ url_for('cover_letters.export',letter_id=record.id,number=version.number) }}">{{ ui.export }}</a></div>{% else %}<p>{{ ui.no_versions }}</p>{% endfor %}
+{% if record.versions|length>1 %}<form class="ai005-options" method="get" action="{{ url_for('cover_letters.compare',letter_id=record.id) }}"><label>{{ ui.left }}<select name="left">{% for v in record.versions %}<option value="{{ v.number }}">{{ v.number }}</option>{% endfor %}</select></label><label>{{ ui.right }}<select name="right">{% for v in record.versions|reverse %}<option value="{{ v.number }}">{{ v.number }}</option>{% endfor %}</select></label><button class="btn btn-secondary" type="submit">{{ ui.compare }}</button></form>{% endif %}
+</section>
+<form class="ai005-card" method="post" action="{{ url_for('cover_letters.delete_letter',letter_id=record.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="expected_revision" value="{{ record.revision }}"><label class="ai005-check"><input type="checkbox" name="confirm" value="1" required> {{ ui.delete_confirm }}</label><button class="btn btn-secondary" type="submit">{{ ui.delete }}</button></form>
+</div></main>
+{% endblock %}

@@ -1,0 +1,322 @@
+[
+  {
+    "width": 1440,
+    "doc": 1440,
+    "main": 1440,
+    "mainWidth": 1440,
+    "forms": 0,
+    "state": "library"
+  },
+  {
+    "width": 768,
+    "doc": 768,
+    "main": 768,
+    "mainWidth": 768,
+    "forms": 0,
+    "state": "library"
+  },
+  {
+    "width": 390,
+    "doc": 390,
+    "main": 390,
+    "mainWidth": 390,
+    "forms": 0,
+    "state": "library"
+  },
+  {
+    "width": 320,
+    "doc": 320,
+    "main": 320,
+    "mainWidth": 320,
+    "forms": 0,
+    "state": "library"
+  },
+  {
+    "width": 1440,
+    "doc": 1440,
+    "main": 1440,
+    "mainWidth": 1440,
+    "forms": 0,
+    "state": "empty"
+  },
+  {
+    "width": 768,
+    "doc": 768,
+    "main": 768,
+    "mainWidth": 768,
+    "forms": 0,
+    "state": "empty"
+  },
+  {
+    "width": 390,
+    "doc": 390,
+    "main": 390,
+    "mainWidth": 390,
+    "forms": 0,
+    "state": "empty"
+  },
+  {
+    "width": 320,
+    "doc": 320,
+    "main": 320,
+    "mainWidth": 320,
+    "forms": 0,
+    "state": "empty"
+  },
+  {
+    "width": 1440,
+    "doc": 1440,
+    "main": 1440,
+    "mainWidth": 1440,
+    "forms": 1,
+    "state": "create"
+  },
+  {
+    "width": 768,
+    "doc": 768,
+    "main": 768,
+    "mainWidth": 768,
+    "forms": 1,
+    "state": "create"
+  },
+  {
+    "width": 390,
+    "doc": 390,
+    "main": 390,
+    "mainWidth": 390,
+    "forms": 1,
+    "state": "create"
+  },
+  {
+    "width": 320,
+    "doc": 320,
+    "main": 320,
+    "mainWidth": 320,
+    "forms": 1,
+    "state": "create"
+  },
+  {
+    "width": 1440,
+    "doc": 1440,
+    "main": 1440,
+    "mainWidth": 1440,
+    "forms": 5,
+    "state": "editor"
+  },
+  {
+    "width": 768,
+    "doc": 768,
+    "main": 768,
+    "mainWidth": 768,
+    "forms": 5,
+    "state": "editor"
+  },
+  {
+    "width": 390,
+    "doc": 390,
+    "main": 390,
+    "mainWidth": 390,
+    "forms": 5,
+    "state": "editor"
+  },
+  {
+    "width": 320,
+    "doc": 320,
+    "main": 320,
+    "mainWidth": 320,
+    "forms": 5,
+    "state": "editor"
+  },
+  {
+    "width": 1440,
+    "doc": 1440,
+    "main": 1440,
+    "mainWidth": 1440,
+    "forms": 3,
+    "state": "blank"
+  },
+  {
+    "width": 768,
+    "doc": 768,
+    "main": 768,
+    "mainWidth": 768,
+    "forms": 3,
+    "state": "blank"
+  },
+  {
+    "width": 390,
+    "doc": 390,
+    "main": 390,
+    "mainWidth": 390,
+    "forms": 3,
+    "state": "blank"
+  },
+  {
+    "width": 320,
+    "doc": 320,
+    "main": 320,
+    "mainWidth": 320,
+    "forms": 3,
+    "state": "blank"
+  },
+  {
+    "width": 1440,
+    "doc": 1440,
+    "main": 1440,
+    "mainWidth": 1440,
+    "forms": 6,
+    "state": "proposal"
+  },
+  {
+    "width": 768,
+    "doc": 768,
+    "main": 768,
+    "mainWidth": 768,
+    "forms": 6,
+    "state": "proposal"
+  },
+  {
+    "width": 390,
+    "doc": 390,
+    "main": 390,
+    "mainWidth": 390,
+    "forms": 6,
+    "state": "proposal"
+  },
+  {
+    "width": 320,
+    "doc": 320,
+    "main": 320,
+    "mainWidth": 320,
+    "forms": 6,
+    "state": "proposal"
+  },
+  {
+    "width": 1440,
+    "doc": 1440,
+    "main": 1440,
+    "mainWidth": 1440,
+    "forms": 0,
+    "state": "conflict"
+  },
+  {
+    "width": 768,
+    "doc": 768,
+    "main": 768,
+    "mainWidth": 768,
+    "forms": 0,
+    "state": "conflict"
+  },
+  {
+    "width": 390,
+    "doc": 390,
+    "main": 390,
+    "mainWidth": 390,
+    "forms": 0,
+    "state": "conflict"
+  },
+  {
+    "width": 320,
+    "doc": 320,
+    "main": 320,
+    "mainWidth": 320,
+    "forms": 0,
+    "state": "conflict"
+  },
+  {
+    "width": 1440,
+    "doc": 1440,
+    "main": 1440,
+    "mainWidth": 1440,
+    "forms": 1,
+    "state": "version"
+  },
+  {
+    "width": 768,
+    "doc": 768,
+    "main": 768,
+    "mainWidth": 768,
+    "forms": 1,
+    "state": "version"
+  },
+  {
+    "width": 390,
+    "doc": 390,
+    "main": 390,
+    "mainWidth": 390,
+    "forms": 1,
+    "state": "version"
+  },
+  {
+    "width": 320,
+    "doc": 320,
+    "main": 320,
+    "mainWidth": 320,
+    "forms": 1,
+    "state": "version"
+  },
+  {
+    "width": 1440,
+    "doc": 1440,
+    "main": 1440,
+    "mainWidth": 1440,
+    "forms": 0,
+    "state": "compare"
+  },
+  {
+    "width": 768,
+    "doc": 768,
+    "main": 768,
+    "mainWidth": 768,
+    "forms": 0,
+    "state": "compare"
+  },
+  {
+    "width": 390,
+    "doc": 390,
+    "main": 390,
+    "mainWidth": 390,
+    "forms": 0,
+    "state": "compare"
+  },
+  {
+    "width": 320,
+    "doc": 320,
+    "main": 320,
+    "mainWidth": 320,
+    "forms": 0,
+    "state": "compare"
+  },
+  {
+    "width": 1440,
+    "doc": 1440,
+    "main": 1440,
+    "mainWidth": 1440,
+    "forms": 0,
+    "state": "error"
+  },
+  {
+    "width": 768,
+    "doc": 768,
+    "main": 768,
+    "mainWidth": 768,
+    "forms": 0,
+    "state": "error"
+  },
+  {
+    "width": 390,
+    "doc": 390,
+    "main": 390,
+    "mainWidth": 390,
+    "forms": 0,
+    "state": "error"
+  },
+  {
+    "width": 320,
+    "doc": 320,
+    "main": 320,
+    "mainWidth": 320,
+    "forms": 0,
+    "state": "error"
+  }
+]

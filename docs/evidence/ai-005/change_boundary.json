@@ -1,0 +1,72 @@
+{
+  "package": "AI-005",
+  "source_commit": "c095bfb70bad5b1ba22cd9b1aeac1795a0b59c4c",
+  "source_tree": "6bb34aba4c05213a3d68f784e9d9b385c6d577d3",
+  "public_real_data_enabled": false,
+  "reviewed_runtime_changes": {
+    "app.py": {
+      "previous_sha256": "d99a422b255abc697337db4f96b2e722486290d154cd090fea076f5909f98154",
+      "current_sha256": "fc2ce98bd4d7406b00dc127f6830d74967a723cb8018df52fa4013a0690b62df"
+    },
+    "database.py": {
+      "previous_sha256": "8b554efc6b7520bb9ac4cfc05700d57938b9e27550dcbb0f97a23081a9a8b702",
+      "current_sha256": "84bc8182c749c225c510d76416d9bb3aefd9b04b7b9da8910a1c4c65726fe947"
+    },
+    "models/__init__.py": {
+      "previous_sha256": "e4c3ff9746a23c8bb05722f55e1bfacdfc2fda222096d6b9e0b7cfe301c804c4",
+      "current_sha256": "5f1e851ce9d5e1a0b0163aa276d27324a69a9ca4501e091d8cc7d44fecc7bf66"
+    },
+    "operations/backup.py": {
+      "previous_sha256": "26be1432649649587dc6e14414aec85067b8f109f3b747e823f916125b4a4cca",
+      "current_sha256": "494eeb5824c39b2a5191e875e210bcf52a1c55e41fa74835e8ed1565d6b08b4e"
+    },
+    "repositories/privacy.py": {
+      "previous_sha256": "c5a8ef475e5fa1726436e7f9ef3ed5defaac5b1b5e50bcb8ce4aa837dc1eee7e",
+      "current_sha256": "e52ca53338a37f793e2ce93862ef946378896cbc5f41949652bd336f77d5a858"
+    },
+    "repositories/saved_vacancies.py": {
+      "previous_sha256": "3611c4d3b23fcd0a68dd205febaf1e9280a7554251c6da2f3d5d028933f31d70",
+      "current_sha256": "70c7be0508492d6db79ccd004a9eae0446df59bc9f5bd223ccccc657f3e4807d"
+    },
+    "routes/saved_vacancies.py": {
+      "previous_sha256": "46d6c609e65aaa51766b33255925c7fac6821be5586aba29369e08a7beb7750b",
+      "current_sha256": "4d62e587dca0afbbe0dcbb826a407ae9a0f7c40f63acd288bcc9c1aa7e1cbcb4"
+    },
+    "services/privacy.py": {
+      "previous_sha256": "5d49b94ebac0cde30fc7ff1c8e968ada50db4857a4c0712f71e8b72604f209aa",
+      "current_sha256": "4828acb4635d9f4b19f9b079b409814dde01182331424bbed28c39a4e775b53d"
+    },
+    "services/saved_vacancy_labels.py": {
+      "previous_sha256": "f5b997eed86cbb2a12e5207e4e9d458a369de48741d16784c587e693e3a5f38b",
+      "current_sha256": "2e16e37d1b4c163f1ccbf3438823156639282fe617f77a04e16fe95b88511ea3"
+    },
+    "services/storage.py": {
+      "previous_sha256": "6b00a7d99d1761af8e3abb3fa8955678fadec66c560610b487e5131ca6dfa0bc",
+      "current_sha256": "27bc958a32c07d6c9c0db973ed4f1fb03c04f650b2f6a8f16a877870adc9e32a"
+    },
+    "templates/saved_vacancies/detail.html": {
+      "previous_sha256": "0cde8213dc1fa607e541eaafed728cb9cbddcd9635be8ed0829e00f0c4614bec",
+      "current_sha256": "1c1c73d14c46d172e6ea8678a08b66c6b1f172322c62d1cabbe4a11e95f6cefc"
+    }
+  },
+  "new_runtime_sha256": {
+    "domain/cover_letter.py": "94b29a2d4d977cb201fb65b54effecb15a14a8b056d6f52df4b037dd5ec03e6d",
+    "migrations/versions/20260917_0020_cover_letters.py": "916d47871d2f9fd3b96cdd9684c80755addb30d4dbb827807dbe769300143443",
+    "models/cover_letter.py": "ef52e4401b05c9b05f9ab73318bf6b64a42d2ab8a4cfba3903d8669eaf4117c6",
+    "repositories/cover_letters.py": "d0c810db55ebd12b64e5e4642f66c2e61899fff8b4b365a161489064a6def2d0",
+    "routes/cover_letters.py": "bb2a80f8fc66b24360fcbae9a5f8a69dbf3fad08a909359fae32f0f8793139a0",
+    "services/cover_letter_generation.py": "aabbfebbb05e3da6c6c6250ffc6849f3931d452207cbfe8d2567382704e0e2c8",
+    "services/cover_letter_labels.py": "68a69cb45aecc6b6f7e6fbc66b2a83290d8ec0dc30d852839522abcb6b83e8ae",
+    "services/cover_letter_source.py": "150623380083d5c207de4b502c6bee66c130ad1876ca79f69dfa187fbd706fc5",
+    "services/cover_letters.py": "a07b2a6182a72a01dad0b7732e10121149a93d32880006218318bf73f3ee26c6",
+    "static/cover_letters.css": "130021cc93cfc559e9ffd442eefd0186417c5fbe358e0d2059f5fad4a6ae6234",
+    "templates/letters/_options.html": "ad404d75970c5514eb921a860cde856ebee97162a1acf8da2a773d3ea13a321b",
+    "templates/letters/_source.html": "10068987198c28c9329423db512a73ea5fec3a366cdd3e5e0e244196a53f75c6",
+    "templates/letters/compare.html": "05a4c838c427665e948d3513a7647c062211adf220bd7978c82de7bf986e4c8a",
+    "templates/letters/conflict.html": "005a86076c9e92d1985ed1b22cf5d97b99f7cbd20086b06c4fa576ff6090faf8",
+    "templates/letters/detail.html": "0b18ea4f734f5735ab16c95de27488d7bd1d32c3ae16754e393a9ab3a4e12b0d",
+    "templates/letters/error.html": "bb9b068b09187bacf3d11a14c26838f20fbcaec1e9d91a26253c5345aa9b200a",
+    "templates/letters/index.html": "5c467ea09b01374778929f98187c38ee528b401698711f252f2de5d41a5d6e13",
+    "templates/letters/version.html": "a3a59f0c7b117f007149a4d5285108e8152952d3dd93553df6c5aa3de8c4ed2e"
+  }
+}

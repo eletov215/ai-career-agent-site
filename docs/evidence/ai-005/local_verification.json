@@ -1,0 +1,72 @@
+{
+  "package": "AI-005",
+  "release": "r1",
+  "date": "2026-09-17",
+  "source_commit": "c095bfb70bad5b1ba22cd9b1aeac1795a0b59c4c",
+  "python": "3.13.5",
+  "full_feature_status": "IN_PROGRESS",
+  "delivery_status": "NEEDS_VERIFICATION",
+  "live_status": "LIVE_NOT_ACCEPTED",
+  "full_suite": {
+    "command": "PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 python -m pytest -q",
+    "passed": 857,
+    "skipped": 27,
+    "subtests_passed": 86,
+    "elapsed_seconds": 61.64,
+    "exit_code": 0,
+    "counts_are_not_additive_with_focused": true
+  },
+  "focused_with_predecessor_guards": {
+    "passed": 166,
+    "skipped": 2,
+    "elapsed_seconds": 20.13
+  },
+  "offline_layouts": {
+    "count": 40,
+    "states": 10,
+    "widths": [
+      1440,
+      768,
+      390,
+      320
+    ],
+    "browser": "system Chromium",
+    "external_requests": "blocked",
+    "http_e2e": false
+  },
+  "unavailable": [
+    "Flask and Flask extensions",
+    "Psycopg/PostgreSQL"
+  ],
+  "remote_ci": "NOT RUN",
+  "render_neon": "NOT RUN",
+  "provider_calls": "NOT RUN",
+  "public_generation_available": false,
+  "production_modified": false,
+  "known_fixed_test_failure": "Historical PRIV001 exact current-head assertion 0019 updated to 0020; original historical migration targets preserved.",
+  "final_rerun": {
+    "command": "PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 python -m pytest -q",
+    "passed": 857,
+    "skipped": 27,
+    "subtests_passed": 86,
+    "elapsed_seconds": 68.31,
+    "exit_code": 0,
+    "log": "release_full_suite.txt",
+    "note": "Single completed full run after final document-status guards were synchronized; not additive with earlier or focused runs."
+  },
+  "ai005_only": {
+    "passed": 83,
+    "skipped": 2,
+    "elapsed_seconds": 16.28,
+    "log": "ai005_only.txt",
+    "included_in_full_suite": true
+  },
+  "final_document_guard_tests": {
+    "passed": 98,
+    "subtests_passed": 62,
+    "elapsed_seconds": 8.71,
+    "log": "final_document_guard_tests.txt",
+    "included_in_full_suite": true
+  },
+  "fixed_document_guard_mismatch": "Provider package guards were synchronized from current docs 1.6.1/2.76 to 1.6.2/2.77 and the new active canonical section; negative mutation tests retained. Predecessor acceptance not rewritten."
+}

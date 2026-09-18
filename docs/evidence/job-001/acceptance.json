@@ -1,0 +1,106 @@
+{
+  "schema_version": 1,
+  "package": "JOB-001",
+  "status": "COMPLETE",
+  "scope": "verified-account server-saved vacancies; no live AI",
+  "accepted_release": "r1.1 REBUILT",
+  "closure_release": "1.6.1",
+  "recorded_on": "2026-09-17",
+  "accepted_code": {
+    "commit": "c095bfb70bad5b1ba22cd9b1aeac1795a0b59c4c",
+    "tree": "6bb34aba4c05213a3d68f784e9d9b385c6d577d3",
+    "files": 608
+  },
+  "github": {
+    "run_id": 35219447896,
+    "run_number": 283,
+    "head_sha": "c095bfb70bad5b1ba22cd9b1aeac1795a0b59c4c",
+    "branch": "main",
+    "event": "push",
+    "status": "completed",
+    "conclusion": "success",
+    "python_job_id": 105195697162,
+    "job001_step": "Verify JOB-001 server-saved vacancy controls",
+    "job001_step_conclusion": "success",
+    "paid_jobs": "skipped",
+    "url": "https://github.com/eletov215/ai-career-agent-site/actions/runs/35219447896",
+    "exact_test_counts": null,
+    "evidence_kind": "Direct GitHub workflow and latest job-step summaries; numerical test totals not read"
+  },
+  "owner_acceptance": {
+    "evidence_kind": "Stepwise and final owner confirmations in this conversation",
+    "schema": "20260917_0019",
+    "migrations_ok": true,
+    "generation_available": false,
+    "mode": "manual",
+    "reason": "runtime_not_activated",
+    "cases": {
+      "readiness": "PostgreSQL persistent; current=expected=20260917_0019; migrations.ok=true",
+      "manual_ai": "generation_available=false; mode=manual; reason=runtime_not_activated",
+      "save_and_snapshot": "Fresh search save; available title, employer, content and sources retained",
+      "refresh_relogin": "Saved record and note remain after refresh and logout/login",
+      "notes": "Explicit note save, refresh and editing after conflict",
+      "stale_note": "Same-object stale editor refuses overwrite and preserves the newer note",
+      "duplicate_save": "Repeated source save returns the same saved ID and retains the private note",
+      "filter": "Saved-library filter by note/title/employer, empty result and reset",
+      "export": "saved_vacancies and saved_vacancy_sources present; note matches the saved text",
+      "stale_delete": "An older delete form cannot remove a record with a newer note",
+      "confirmed_delete": "Confirmation required; only selected object removed; detail/API unavailable",
+      "logout_access": "Anonymous pages redirect to login; private API refuses anonymous read",
+      "regression": "Dashboard/profile/resumes/builder/preview/PDF/search/admin and prior AI histories",
+      "final_gate_logs": "Final readiness/manual mode, closed AI review gates and Render log review"
+    },
+    "final_status": "PASS_OWNER_REPORTED",
+    "exact_manual_timestamps": null,
+    "assistant_ran_production_browser": false,
+    "render_logs_evidence": "Owner-confirmed review, raw logs not collected"
+  },
+  "manual_two_account_isolation": {
+    "status": "NOT RUN",
+    "reason": "Owner explicitly reports no second active account"
+  },
+  "manual_legacy_import": {
+    "status": "NOT SEPARATELY CONFIRMED",
+    "reason": "General final confirmation does not identify panel availability or an actual import result"
+  },
+  "manual_second_device": {
+    "status": "NOT SEPARATELY CONFIRMED",
+    "reason": "Group confirmation received; no distinct device/result identified"
+  },
+  "manual_restart": {
+    "status": "NOT RUN",
+    "reason": "No intentional service restart was requested or confirmed"
+  },
+  "manual_optional_boundaries": {
+    "pagination_over_20": "NOT SEPARATELY CONFIRMED",
+    "expired_search_form": "NOT SEPARATELY CONFIRMED",
+    "real_cache_purge": "NOT RUN"
+  },
+  "automated_evidence": {
+    "named_tests": [
+      "tests/test_job001_routes.py::test_cross_owner_reads_notes_deletion_and_reference_fail",
+      "tests/test_job001_service.py::test_owner_reference_and_read_edit_delete_export_are_isolated",
+      "tests/test_job001_routes.py::test_legacy_needs_explicit_confirmation_and_is_partial",
+      "tests/test_job001_service.py::test_legacy_only_explicit_exact_matches_and_partial_results",
+      "tests/test_job001_service.py::test_server_snapshot_persists_after_cache_cleanup_and_reconnect",
+      "tests/test_job001_service.py::test_signed_reference_expiration_and_tampering",
+      "tests/test_job001_service.py::test_limit_search_paging_and_literal_wildcards",
+      "tests/test_job001_service.py::test_composite_owner_fk_and_user_deletion_cascade"
+    ],
+    "context": "Present in accepted source and included in successful JOB-001 / full CI gates; distinct from production manual observations"
+  },
+  "real_database_backup": "NOT EVIDENCED; no confirmed recovery-point identifier",
+  "real_database_restore": "NOT RUN; retained in OPS-002/REL-001",
+  "application_changed_by_closure": false,
+  "new_migration": false,
+  "public_ai_activated": false,
+  "new_paid_provider_calls": false,
+  "closure_published": false,
+  "next_package": {
+    "id": "AI-005",
+    "job001_dependency_satisfied": true,
+    "implementation_started": false,
+    "full_live_activation_ready": false,
+    "sequence": "JOB-001 -> AI-005 -> AI-006 -> JOB-002..004"
+  }
+}

@@ -30,7 +30,7 @@ def test_package_passes_without_site_packages():
     result = subprocess.run([sys.executable, '-S', str(ROOT/'scripts/check_job001_package.py')],
                             cwd=ROOT, capture_output=True, text=True, timeout=30)
     assert result.returncode == 0, (result.stdout, result.stderr)
-    assert json.loads(result.stdout)['external_ci'] == 'not_run'
+    assert json.loads(result.stdout)['external_ci'] == 'recorded_success_for_accepted_application'
 
 
 def test_missing_scope_is_rejected(tmp_path):
@@ -106,3 +106,33 @@ def test_network_no_auto_import_csrf_and_accessibility_boundaries():
     assert 'prefers-reduced-motion' in css and ':focus-visible' in css
     for path in (ROOT/'templates/saved_vacancies').glob('*.html'):
         assert '|safe' not in path.read_text()
+
+
+@pytest.mark.parametrize('mutation', ['missing', 'commit', 'ci', 'schema', 'live', 'manual',
+                                    'legacy', 'device', 'backup', 'next', 'matrix', 'counts', 'published', 'canonical'])
+def test_closure_rejects_invented_or_missing_acceptance(tmp_path, mutation):
+    from scripts.check_job001_package import validate_closure
+    paths = ['docs/evidence/job-001/acceptance.json','docs/JOB001_VERIFICATION_STATUS.md',
+             'docs/PLAN_CURRENT.md','docs/PROJECT_PASSPORT.md']
+    for rel in paths:
+        target=tmp_path/rel; target.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(ROOT/rel,target)
+    assert validate_closure(tmp_path) == []
+    path=tmp_path/paths[0];data=json.loads(path.read_text())
+    if mutation == 'missing': path.unlink()
+    elif mutation == 'canonical': (tmp_path/'docs/PLAN_CURRENT.md').write_text('outdated plan')
+    else:
+        if mutation == 'commit': data['accepted_code']['commit']='0'*40
+        if mutation == 'ci': data['github']['conclusion']='failure'
+        if mutation == 'schema': data['owner_acceptance']['schema']='20260916_0018'
+        if mutation == 'live': data['owner_acceptance']['generation_available']=True
+        if mutation == 'manual': data['manual_two_account_isolation']['status']='PASS'
+        if mutation == 'legacy': data['manual_legacy_import']['status']='PASS'
+        if mutation == 'device': data['manual_second_device']['status']='PASS'
+        if mutation == 'backup': data['real_database_backup']='PASS'
+        if mutation == 'next': data['next_package']['implementation_started']=True
+        if mutation == 'matrix': data['owner_acceptance']['cases'].pop('stale_delete')
+        if mutation == 'counts': data['github']['exact_test_counts']={'passed':9999}
+        if mutation == 'published': data['closure_published']=True
+        path.write_text(json.dumps(data))
+    assert validate_closure(tmp_path)

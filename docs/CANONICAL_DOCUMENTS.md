@@ -1,39 +1,55 @@
-# AI Career Agent - canonical document registry / JOB-001 rebuilt candidate
+# AI Career Agent - Canonical documents / 1.6.2
 
 | Field | Value |
 |---|---|
-| Document release | 1.6.0 / 2026-09-17 |
-| PLAN_CURRENT | 1.6.0 |
-| PROJECT_PASSPORT | 2.75 |
-| SOURCE_AUDIT | 1.6.0 |
-| AI004 implementation / verification / runbook | 1.1 FINAL / ВЫПОЛНЕНО, synthetic/reference-only |
-| NEXT_PACKAGE_PREPARATION | 1.1; owner-approved JOB-001 before AI-005 |
-| JOB001 implementation / verification / runbook | 1.1 REBUILT; NEEDS_VERIFICATION |
-| Accepted application | d5e0dac2ba87d4d7e14fc5b48fbb6b9182c885a4 |
-| Accepted schema | 20260916_0018 |
-| Public AI | Disabled / manual; session review closed |
-| LEGAL-001 | Existing1.3 decision unchanged; deferred |
+| Date | 2026-09-17 |
+| Full package | AI-005 IN_PROGRESS |
+| Delivery | r1 NEEDS_VERIFICATION; LIVE_NOT_ACCEPTED |
+| Base / candidate schema | 0019 / 0020 |
+
+## 1. Active inventory
+
+PLAN_CURRENT1.6.2, PROJECT_PASSPORT2.77, SOURCE_AUDIT1.6.2, ROADMAP1.6.2, NEXT_PACKAGE_PREPARATION1.3, this registry, AI005_SCOPE/IMPLEMENTATION/RUNBOOK/VERIFICATION_STATUS1.0 and AI005_DELIVERY_GUIDE1.0. Markdown is authoritative. Distribution inventory records which documents have PDF/DOCX counterparts; no uncreated format is claimed. Full plan/passport histories are retained.
+
+## 2. Scope and provenance
+
+AI-005 full feature IN_PROGRESS; r1 document workflow NEEDS_VERIFICATION; LIVE_NOT_ACCEPTED. The latest uploaded JOB-001 canonical ZIP1.6.1 overrides old standalone AI-004 PDFs. Its ten Markdown sources match the preserved closure; __MACOSX metadata is excluded. GitHub main c095bfb is the exact code baseline; unpublished JOB-001 closure docs/guards are carried forward. Existing acceptance JSON is historical and not rewritten to claim new tests.
+
+## 3. Distribution and verification
+
+The new PATCH is against exact current main, not the locally closed predecessor. FULL must match PATCH applied to that base. No remote publication/deployment/new CI is claimed. No old FINAL PATCH should be overlaid after AI-005. Refer to AI005_RUNBOOK for backup before candidate0020 and coordinated rollback. PDF/DOCX exports are convenience versions, not evidence of live AI readiness.
+
+## 4. Historical predecessor (unchanged dated source)
+
+The following reflects the previous release. It does not override the active sections above.
+
+# AI Career Agent - canonical document registry / JOB-001 closure
+
+| Field | Value |
+|---|---|
+| Release | 1.6.1 / 2026-09-17 |
+| PLAN_CURRENT / SOURCE_AUDIT / ROADMAP | 1.6.1 |
+| PROJECT_PASSPORT | 2.76 |
+| JOB001 implementation / runbook / verification | 1.2 FINAL; ВЫПОЛНЕНО / COMPLETE |
+| JOB001 acceptance summary | 1.0 FINAL |
+| NEXT_PACKAGE_PREPARATION | 1.2; JOB-001 dependency satisfied, AI-005 not started |
+| Accepted application / schema | `c095bfb70bad5b1ba22cd9b1aeac1795a0b59c4c` / 20260917_0019 |
+| LEGAL-001 | Existing decision unchanged; deferred |
 
 ## 1. Active release inventory
 
-JOB001_IMPLEMENTATION.md, JOB001_RUNBOOK.md, JOB001_VERIFICATION_STATUS.md and JOB001_RECONSTRUCTION.md join the active inventory. The remaining text sources are PLAN_CURRENT.md, PROJECT_PASSPORT.md, SOURCE_AUDIT.md, ROADMAP.md, CHANGELOG.md, this registry, AI004_IMPLEMENTATION.md, AI004_RUNBOOK.md, AI004_VERIFICATION_STATUS.md , NEXT_PACKAGE_PREPARATION.md and AI004_ACCEPTANCE_SUMMARY.md. AI004_CHANGESET.md records code lineage and the documentation delta. Acceptance provenance is in evidence/ai-004/acceptance.json and ci281_verified_excerpt.txt. The prior benchmark/provider/AI001..003 evidence and legal deferral are preserved, not recreated or reaccepted.
+The bundle provides10 matching Markdown/DOCX/PDF document triples listed in FILE_INDEX.json. Full PLAN_CURRENT and PROJECT_PASSPORT histories are preserved. README and CHANGELOG are synchronized in the code delta. JOB001_RECONSTRUCTION remains dated lineage. The shared export follows DOCUMENT_STANDARD1.3; historical AI and legal evidence is unchanged.
 
-AI004_ACCEPTANCE_SUMMARY1.1 is the Russian acceptance summary; it does not replace the full verification report. LEGAL001_DEFERRED_DECISION1.3 remains unchanged in the repository and prior sources; it is not a newly approved or newly issued document in this bundle.
+## 2. Evidence and publication
 
-This reconstruction delivery contains updated repository Markdown sources and archive manifests. Existing AI-004 closure PDF/DOCX exports remain historical1.5.7; no new PDF/DOCX exports are claimed. Full plan/passport histories remain in the documents rather than being replaced by a short summary. The common styling follows DOCUMENT_STANDARD1.3.
+Recorded acceptance is based on mainCI283 and owner-confirmed final browser/log checks. evidence/job-001/acceptance.json and ci283_verified_summary.json preserve identifiers and separate sources. closure_checks.json reports only newly executed local checks. New remote CI for this final documentation/status-guard update is NOT RUN until publication. No runtime code, schema or deployment is changed by document creation.
 
-## 2. Acceptance and limitations
+Manual isolation is NOT RUN due to the explicitly absent second account. Legacy transfer and second-device subcases have no separate confirmed outcome. Actual Neon backup/restore is not evidenced. Full public/live AI, email delivery and LEGAL-001 remain open. Older AI acceptance evidence, provider policy and legal decisions remain unmodified.
 
-AI-004 is accepted in its technical reference scope after CI #280/#281 and owner-confirmed final tests. Manual two-account isolation is NOT RUN; no second active account exists. Actual backup/snapshot and production recovery are not evidenced. Email delivery and LEGAL-001 stay open. Current documentation must not imply live/free-form AI readiness.
+## 3. Distribution and rollback
 
-## 3. GitHub and publication rule
+The canonical bundle includes10 matching document triples, source evidence, FILE_INDEX and SHA-256. The code PATCH is based on exact accepted main and lists all changes; FULL is its equivalent complete snapshot. Do not overlay older AI-004/JOB-001 patches afterwards. These artifacts are local, not an assertion of a changed GitHub main. Reverting this documentation-only closure needs no migration; runtime rollback is separately specified in JOB001_RUNBOOK.
 
-The source application was verified directly on GitHub at `d5e0dac2ba87d4d7e14fc5b48fbb6b9182c885a4` with tree `53d86b0ff72f5090f214c20979df493e6f1f0ee3`. The unmerged AI-004 closure docs are bundled with the new JOB-001 code. Do not overlay the old closure PATCH afterwards. Until applied/committed, these new documents are delivered artifacts, not an asserted change to remote main. Future work must read actual GitHub again and compare any intervening change.
+## 4. Next action and version history
 
-## 4. Next action
-
-The owner-approved JOB-001 candidate is now implemented locally. Read JOB001_IMPLEMENTATION.md, JOB001_VERIFICATION_STATUS.md, JOB001_RUNBOOK.md and JOB001_RECONSTRUCTION.md. Deliver archives first; publication and installed CI are separate. Migration0019 requires a confirmed real recovery point. No paid Alice call is needed.
-
-## 5. Version history
-
-1.6.0: owner-approved JOB-001 ordering and rebuilt candidate; Markdown updated locally. 1.5.7: AI-004 closure and readiness audit. 1.5.6: AI-004 candidate. Earlier documents retain dated historical meaning and do not override this closure.
+Next in the approved sequence is AI-005. Its saved-vacancy prerequisite is satisfied; feature design and live/legal activation remain separate. 1.6.1 records JOB-001 acceptance; 1.6.0 records the reconstructed candidate and approved ordering; 1.5.7 remains the historical AI-004 closure.

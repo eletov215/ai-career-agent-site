@@ -13,6 +13,7 @@ from domain.saved_vacancy import (
 )
 from models import User, SearchSnapshot, SearchSnapshotItem, VacancySourceRecord
 from models.saved_vacancy import SavedVacancy, SavedVacancySource
+from models.cover_letter import CoverLetter
 from services.saved_vacancy_snapshot import build_snapshot, old_browser_key
 from .base import RepositoryBase
 
@@ -202,6 +203,11 @@ class SavedVacancyRepository(RepositoryBase):
             row = self._row(session, user_id, saved_id)
             if row.revision != expected_revision:
                 raise SavedVacancyError('stale_write')
+            # The shared owner lock serializes letter creation against deletion.
+            # Account deletion has a separate explicit whole-account confirmation.
+            if session.scalar(select(CoverLetter.id).where(CoverLetter.user_id == user_id,
+                                CoverLetter.saved_vacancy_id == saved_id).limit(1)) is not None:
+                raise SavedVacancyError('has_letters')
             session.execute(delete(SavedVacancy).where(SavedVacancy.id == saved_id, SavedVacancy.user_id == user_id))
 
     @staticmethod
