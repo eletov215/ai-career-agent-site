@@ -1,0 +1,47 @@
+{
+  "package": "AI-005",
+  "release": "r2-technical",
+  "date": "2026-09-20",
+  "base_commit": "be0eadf6c26a6a45b9a3764f5859a52651f372d2",
+  "environment": {
+    "python_syntax_files": 293,
+    "jinja_templates": 53,
+    "python_version": "3.13.5",
+    "pytest_version": "9.0.2",
+    "syntax": "PASS",
+    "template_parse": "PASS",
+    "browser_render": "NOT RUN: no installed browser",
+    "http": "NOT RUN: Flask dependencies unavailable",
+    "postgresql": "NOT RUN: disposable service/driver unavailable"
+  },
+  "complete_pytest_run": {
+    "passed": 933,
+    "skipped": 29,
+    "seconds": 91.96,
+    "exit_code": 0,
+    "evidence": "pytest_full.txt"
+  },
+  "r2_focused": {
+    "passed": 76,
+    "skipped": 2,
+    "seconds": 7.35,
+    "included_in_full": true,
+    "evidence": "pytest_r2_focused.txt"
+  },
+  "inherited_guards": {
+    "passed": 118,
+    "subtests_passed": 64,
+    "seconds": 5.78,
+    "overlaps_full": true,
+    "evidence": "pytest_inherited_guards.txt"
+  },
+  "paid_provider_calls": 0,
+  "ordinary_transport": "StubTransport with real YandexAliceProvider adapter; no external API",
+  "actual_yandex_response": "NOT RUN",
+  "new_github_ci": "NOT RUN",
+  "new_render_deployment": "NOT RUN",
+  "new_real_data_admission": "CLOSED",
+  "production_database_mutations": 0,
+  "browser_render": "NOT RUN: browser not installed",
+  "skip_explanation": "17 whole modules skipped at collection; 12 individual skips. Flask extensions, PostgreSQL driver and disposable PostgreSQL absent. Installed GitHub CI remains mandatory."
+}

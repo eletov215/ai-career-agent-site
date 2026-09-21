@@ -1,0 +1,64 @@
+{
+  "package": "AI-005",
+  "tranche": "r1-document-workflow",
+  "status": "ACCEPTED_WITH_MANUAL_EXCLUSIONS",
+  "full_package_status": "IN_PROGRESS",
+  "date": "2026-09-20",
+  "code_commit": "be0eadf6c26a6a45b9a3764f5859a52651f372d2",
+  "code_tree": "dbcadece7814336942ea80da0ce85707a695c428",
+  "github": {
+    "run_id": 35319097205,
+    "run_number": 285,
+    "attempt": 2,
+    "head_sha": "be0eadf6c26a6a45b9a3764f5859a52651f372d2",
+    "branch": "main",
+    "conclusion": "success",
+    "python_job_id": 105527233222,
+    "ai005_step": "success",
+    "full_tests_step": "success",
+    "paid_jobs": "skipped",
+    "exact_test_counts": null
+  },
+  "owner_report": {
+    "schema": "20260917_0020",
+    "generation_available": false,
+    "mode": "manual",
+    "reason": "runtime_not_activated",
+    "final_status": "PASS_OWNER_REPORTED",
+    "cases": [
+      "readiness",
+      "manual_create",
+      "save_and_relogin",
+      "noop_save",
+      "immutable_versions",
+      "compare",
+      "txt_exports",
+      "stale_edit",
+      "fresh_edit",
+      "privacy_export",
+      "old_version_delete",
+      "current_version_ui_protection",
+      "vacancy_link_protection",
+      "document_delete",
+      "vacancy_release",
+      "logout_access",
+      "regression",
+      "final_logs"
+    ]
+  },
+  "manual_exclusions": {
+    "profile_proposals": "NOT RUN",
+    "two_accounts": "NOT RUN",
+    "stale_delete": "NOT SEPARATELY CONFIRMED"
+  },
+  "manual_exclusion_reasons": {
+    "profile_proposals": "Owner career profile is empty; no local composition, RU/EN proposal review, accept/reject or stale-source test",
+    "two_accounts": "No second active account",
+    "stale_delete": "Editing conflict was confirmed; stale deletion was not separately demonstrated"
+  },
+  "real_database_backup": "NOT EVIDENCED",
+  "real_database_restore": "NOT RUN",
+  "assistant_production_browser_run": false,
+  "real_data_authorized": false,
+  "paid_live_calls_this_release": 0
+}

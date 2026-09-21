@@ -1,5 +1,10 @@
 # AI Career Agent - CHANGELOG
 
+## 2026-09-20 / AI-005 r1 acceptance and r2 technical candidate
+
+Recorded CI285 attempt2 and owner r1 acceptance with explicit exclusions. New source-bound writer, signed preview, shared Alice provider/ledger, atomic pending proposal, isolated synthetic probe. No new migration or real-data activation. New r2 CI/live-quality evidence remains pending.
+
+
 ## 1.6.2 / AI-005 r1 / 2026-09-17
 
 - Full AI-005 IN_PROGRESS. New general document-workflow candidate, not completed live generation or an approved reduced final scope.

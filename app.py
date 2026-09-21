@@ -28,6 +28,8 @@ from database import CURRENT_REVISION, create_database, database_health
 from services.storage import StorageServices
 from services.saved_vacancies import SavedVacancyService
 from services.cover_letters import CoverLetterService
+from services.cover_letter_ai import CoverLetterGenerator
+from services.ai.letter_runtime import LetterRuntime
 from routes.cover_letters import create_cover_letters_blueprint
 from routes.saved_vacancies import create_saved_vacancies_blueprint
 from services.ai.service import AIService
@@ -129,7 +131,12 @@ AUTH_SERVICE = AuthService(STORAGE.auth, AUTH_EMAIL_SENDER, SETTINGS)
 app.register_blueprint(create_auth_blueprint(AUTH_SERVICE, SETTINGS))
 SAVED_VACANCY_SERVICE = SavedVacancyService(STORAGE.saved_vacancies, signing_key=SETTINGS.flask_secret_key)
 app.register_blueprint(create_saved_vacancies_blueprint(SAVED_VACANCY_SERVICE))
-COVER_LETTER_SERVICE = CoverLetterService(STORAGE.cover_letters, signing_key=SETTINGS.flask_secret_key)
+# Default admission remains closed. It cannot be changed through an environment
+# switch or a user-supplied consent/synthetic flag. LEGAL-001 supplies the next gate.
+COVER_LETTER_GENERATOR = CoverLetterGenerator(STORAGE.cover_letters, LetterRuntime(AI_SERVICE),
+    signing_key=SETTINGS.flask_secret_key)
+COVER_LETTER_SERVICE = CoverLetterService(STORAGE.cover_letters, signing_key=SETTINGS.flask_secret_key,
+    generator=COVER_LETTER_GENERATOR)
 app.register_blueprint(create_cover_letters_blueprint(COVER_LETTER_SERVICE))
 ANALYSIS_SERVICE = ResumeAnalysisService(STORAGE.analyses, AI_SERVICE, fingerprint_key=SETTINGS.flask_secret_key)
 app.register_blueprint(create_resume_analysis_blueprint(ANALYSIS_SERVICE, SETTINGS))

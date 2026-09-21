@@ -1,0 +1,89 @@
+
+check_ai001_package
+{
+  "ok": true,
+  "package": "AI-001",
+  "scope": "synthetic_only",
+  "external_ci": "pending",
+  "errors": []
+}
+
+check_ai002_package
+{
+  "package": "AI-002",
+  "scope": "synthetic_only",
+  "ok": true,
+  "errors": []
+}
+
+check_ai003_package
+{
+  "package": "AI-003",
+  "scope": "synthetic/reference-only",
+  "ok": true,
+  "errors": []
+}
+
+check_ai004_package
+{
+  "package": "AI-004",
+  "scope": "synthetic/reference-only",
+  "ok": true,
+  "errors": []
+}
+
+check_ai005_package
+{
+  "package": "AI-005",
+  "scope": "document-workflow; live generation not activated",
+  "remote_ci": "not_attested_by_local_check",
+  "ok": true,
+  "errors": []
+}
+
+check_ai005_r2_package
+{
+  "package": "AI-005",
+  "release": "r2-technical",
+  "ok": true,
+  "remote_ci": "NOT RUN for r2",
+  "live_quality": "NOT RUN",
+  "errors": []
+}
+
+check_job001_package
+{
+  "package": "JOB-001",
+  "release": "r1.1 REBUILT / closure1.6.1",
+  "external_ci": "recorded_success_for_accepted_application",
+  "ok": true,
+  "errors": []
+}
+
+check_ai_provider_package
+{
+  "ok": true,
+  "package": "AI-PROVIDER-001",
+  "scope": "offline only",
+  "owner_approval": "approved",
+  "external_ci": "not_attested_by_local_check",
+  "errors": []
+}
+
+check_ai_bench_package
+AI-BENCH-001 package gate passed
+
+check_document_structure
+{
+  "ok": true,
+  "errors": []
+}
+
+infra_manifest_check
+{
+  "ok": true,
+  "errors": []
+}
+
+check_repository_hygiene
+Repository hygiene check passed.

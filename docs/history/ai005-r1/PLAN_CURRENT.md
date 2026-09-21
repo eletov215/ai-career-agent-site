@@ -4,59 +4,42 @@
 
 
 <!-- ACA-CANONICAL-STATUS:START -->
-## Актуальное состояние / 20 сентября 2026
+## Canonical state / AI-005 implementation / 2026-09-17
 
-| Поле | Подтверждённое состояние |
+| Field | Value |
 |---|---|
-| Current full package | AI-005 — IN_PROGRESS; LIVE_NOT_ACCEPTED |
-| Документная часть r1 | ACCEPTED_WITH_MANUAL_EXCLUSIONS: принята владельцем, с явно сохранёнными исключениями |
-| Текущий main | `be0eadf6c26a6a45b9a3764f5859a52651f372d2` |
-| Git-дерево основы | `dbcadece7814336942ea80da0ce85707a695c428`; 655 файлов |
-| CI принятой основы | №285, попытка 2, success; задания платных вызовов skipped |
-| Схема принятой базы | `20260917_0020`; по подтверждению владельца current=expected, persistent PostgreSQL |
-| Новый технический выпуск | AI-005 r2 — NEEDS_VERIFICATION; новый путь вызова адаптера Алисы, не локальный шаблон |
-| Новая миграция | Нет; r2 сохраняет `0020` |
-| Документы | PLAN 1.6.3; PASSPORT 2.78; SOURCE_AUDIT 1.6.3 |
-| Публичный AI | `generation_available=false`, `mode=manual`; реальный ввод провайдеру закрыт по умолчанию |
-| Следующая последовательность | r2 CI и технический/синтетический прогон → LEGAL-001 → допуск реальных данных и проверка качества → полная приёмка AI-005 |
-| Исключения ручной проверки | Пустой профиль: предложения/устаревание источника NOT RUN. Второй аккаунт NOT RUN. Устаревшее удаление не подтверждено отдельно |
-| Резервирование рабочей базы | Реальная копия до миграции NOT EVIDENCED; восстановление рабочей базы NOT RUN |
-| Публикация r2 | Локальные файлы. GitHub, Render и рабочая база в этом выпуске не изменялись; платных вызовов 0 |
-| Accepted predecessor | JOB-001 COMPLETE; PLAN 1.6.1 / PASSPORT 2.76; c095bfb70bad5b1ba22cd9b1aeac1795a0b59c4c; schema20260917_0019; current accepted schema0020 above |
+| Current full package | AI-005 / IN_PROGRESS; personalized live letters are NOT complete |
+| This r1 delivery | NEEDS_VERIFICATION: general owned document workflow, not a pinned demonstration |
+| Accepted predecessor | JOB-001 COMPLETE; closure PLAN 1.6.1 / PASSPORT 2.76; prior AI scopes unchanged |
 | Accepted foundation | AI-004 COMPLETE in synthetic/reference-only scope; no new live acceptance |
+| Code source | c095bfb70bad5b1ba22cd9b1aeac1795a0b59c4c; tree 6bb34aba4c05213a3d68f784e9d9b385c6d577d3; 608 files |
+| Current document versions | PLAN 1.6.2; PASSPORT 2.77; SOURCE_AUDIT 1.6.2 |
+| Accepted / candidate schema | 20260917_0019 / 20260917_0020; candidate migration only tested locally |
+| Implemented | Owned letters linked to saved vacancies/profile source snapshots; explicit manual versions, local templates, comparison/TXT/privacy, stale protection |
+| Not implemented | General-input live Alice runtime integration and its consent/accounting/quality acceptance; LIVE_NOT_ACCEPTED |
+| AI boundary | generation_available=false, mode=manual; no real-data provider dispatch or automatic sending |
+| Base CI | CI283 success is predecessor evidence only; new GitHub CI, deployment and owner acceptance NOT RUN |
+| Evidence gaps retained | Second account NOT RUN; device/legacy outcomes not separately confirmed; real Neon backup/restore not evidenced |
+| Publication | Local delivery only; no GitHub writes, paid calls, deployment or production database changes |
 <!-- ACA-CANONICAL-STATUS:END -->
 
 | Поле | Значение |
 |---|---|
 | Документ | PLAN_CURRENT |
-| Версия | 1.6.3 |
-| Дата | 20 сентября 2026 |
+| Версия | 1.6.2 |
+| Дата | 17 сентября 2026 |
 | Статус | ДЕЙСТВУЮЩИЙ |
-| Основа кода | GitHub main `be0eadf6c26a6a45b9a3764f5859a52651f372d2`; принятая документная часть AI-005 r1; локальный технический кандидат r2 |
-| Текущий пакет | AI-005 IN_PROGRESS; r1 принят с исключениями; r2 NEEDS_VERIFICATION; LIVE_NOT_ACCEPTED |
+| Основа кода | GitHub main `c095bfb70bad5b1ba22cd9b1aeac1795a0b59c4c`; JOB-001 accepted baseline; AI-005 local candidate |
+| Текущий пакет | AI-005 IN_PROGRESS; r1 document workflow NEEDS_VERIFICATION; public AI remains disabled |
 
 > ОБЯЗАТЕЛЬНО ДЛЯ КАЖДОГО НОВОГО ЧАТА: прочитать этот план, новый паспорт и актуальный архив. После завершения любого пункта вернуть обновлённые DOCX/PDF/Markdown, новый ZIP, доказательства проверки и запись в журнале версий.
 
-> Historical control note from PLAN 1.6.2 (current status above): prior accepted foundations and AI-001..004 are ВЫПОЛНЕНО in their documented scopes. LEGAL-001 remains deferred; DOC-001 is ongoing. PLAN 1.6.2 / PASSPORT 2.77. JOB-001 accepted; AI-005 follows the approved order with its own live-data/quality/legal gates. Dated older entries remain historical.
-
-
-
-## Продолжение AI-005 / решение 20 сентября 2026
-
-r1 принят только в проверенных границах ручного редактора, версий, сравнения, экспорта, владения и удаления. Полный исходный критерий персонализированной генерации не сокращён. Точные исключения и источники подтверждения приведены в AI005_ACCEPTANCE_SUMMARY и evidence/ai-005-r1-acceptance/acceptance.json. Зелёный CI №285 не относится к новым файлам r2.
-
-r2 реализует отдельный контракт `cover-letter-draft-v1`, выбор разрешённых фактов и снимка вакансии, подписанный предварительный просмотр, вызов существующего адаптера YandexAliceProvider, резервирование/сверку расходов, запрет автоматического повтора неопределённого запроса и атомарное сохранение ожидающего решения предложения. Принятие пользователем создаёт версию с отдельным происхождением; письмо не отправляется работодателю.
-
-Реальный ввод по умолчанию отклоняет ClosedLetterAdmission. Проверки структуры, цитат, чисел и некоторых неподтверждённых утверждений не доказывают семантическую истинность всего текста. Для LEGAL-001 ещё нужны фактический оператор, страна управления, аудитория, регионы хранения/передачи, документы, версии согласий и отзыв; решения о правовой форме бизнеса заранее не выдумываются. Сервис допуска и согласий для реальных пользователей и общая живая оценка качества ещё не приняты.
-
-Порядок согласован владельцем: технический AI-005 → LEGAL-001 → допуск реальных данных → приёмка настоящей генерации → окончательное закрытие AI-005. AI-006 не начинается вместо незавершённой генерации. Новое решение задаёт очередь LEGAL-001, но не заменяет и не переписывает ранее зафиксированное юридическое отложенное решение.
-
-Полный текст предыдущих разделов, карточек и истории ниже сохранён. Датированные сведения о candidate0019/0020, неопубликованном r1 и прежних следующих шагах описывают своё время и не отменяют актуальный блок этой версии.
+> Control: prior accepted foundations and AI-001..004 are ВЫПОЛНЕНО in their documented scopes. LEGAL-001 remains deferred; DOC-001 is ongoing. PLAN 1.6.2 / PASSPORT 2.77. JOB-001 accepted; AI-005 follows the approved order with its own live-data/quality/legal gates. Dated older entries remain historical.
 
 
 ## 1. Источник истины и аудит источников
 
-Historical JOB-001 closure audit (superseded by AI-005 r1 acceptance above): main c095bfb70bad5b1ba22cd9b1aeac1795a0b59c4c, exact608-file tree6bb34aba4c05213a3d68f784e9d9b385c6d577d3; mainCI283 success and owner final staging0019 confirmation. See JOB001_VERIFICATION_STATUS1.2. Uploaded AI-004 PDFs1.5.7 remain the previous release, not the active JOB-001 state.
+Current JOB-001 closure audit: main c095bfb70bad5b1ba22cd9b1aeac1795a0b59c4c, exact608-file tree6bb34aba4c05213a3d68f784e9d9b385c6d577d3; mainCI283 success and owner final staging0019 confirmation. See JOB001_VERIFICATION_STATUS1.2. Uploaded AI-004 PDFs1.5.7 remain the previous release, not the active JOB-001 state.
 
 - GitHub является главным источником актуального кода.
 - Если в текущем чате загружен более новый ZIP, он является рабочей основой этого чата.
@@ -165,7 +148,7 @@ The dated version entries below preserve historical evidence and do not override
 | Резюме | PDF extraction на pypdf и browser resume builder; AI-001 technical runtime exists; public AI remains off. AI-003 interview r1 is reference-only. |
 | Тесты | GitHub Actions, unit/provider/route/config/database/migration/security/observability/backup tests. |
 | Hosting | Render временно используется как staging/резервная площадка. Для production требуется проверенный VPS с доступностью из РФ/РБ, собственный домен и план миграции. |
-| Текущая схема | Render/Neon PostgreSQL: `20260917_0020`, current=expected, migrations.ok=true; подтверждено владельцем после AI-005 r1. Новая локальная r2 миграцию не добавляет. |
+| Текущая схема | Render/Neon PostgreSQL: `20260917_0019`, current=expected, migrations.ok=true; owner-confirmed after JOB-001. Earlier revisions below are dated history. |
 
 ### 5.1 Выполнено/частично
 
@@ -276,7 +259,7 @@ MVP не готов, если работает только отдельная �
 | MIG-001 | P0 | ЗАПЛАНИРОВАНО | Перенос PostgreSQL и production с Render на VPS с rollback |
 | PERF-001 | P2 | ЗАПЛАНИРОВАНО | Оптимизация frontend и статических ресурсов |
 | A11Y-001 | P2 | ЗАПЛАНИРОВАНО | Доступность интерфейса |
-| LEGAL-001 | P0 до публичного AI | ОТЛОЖЕНО ДО РЕШЕНИЯ ВЛАДЕЛЬЦА | Юридические документы, согласия и data-processing gate. Порядок согласован: после технического AI-005, до реальных данных; решение о фактических параметрах запуска ещё требуется |
+| LEGAL-001 | P0 до публичного AI | ОТЛОЖЕНО ДО РЕШЕНИЯ ВЛАДЕЛЬЦА | Юридические документы, согласия и data-processing gate перед публичным AI |
 | ANL-001 | P2 | ЗАПЛАНИРОВАНО | Продуктовая аналитика без содержимого резюме |
 | BILL-001 | P3 | ОТЛОЖЕНО | Тарифы, платежи и лимиты использования |
 | SRC-001 | P3 | ОТЛОЖЕНО | Подключение новых источников вакансий |
@@ -420,7 +403,7 @@ MVP не готов, если работает только отдельная �
 
 **Реализация:** Канонические PLAN_CURRENT и паспорт обновляются после каждого архитектурного решения; README/ROADMAP/CHANGELOG и package-specific docs синхронизируются вместе с ближайшим кодовым пакетом, чтобы документация и код проходили один CI/merge cycle.
 
-**Current state:** PLAN_CURRENT 1.6.3; PROJECT_PASSPORT 2.78; SOURCE_AUDIT 1.6.3. AI-005 r1 принят с исключениями на schema20260917_0020 / main CI285 attempt2. r2 NEEDS_VERIFICATION; полный AI-005 IN_PROGRESS / LIVE_NOT_ACCEPTED. LEGAL-001 следует после технической проверки r2; фактические условия допуска ещё не определены. Email/recovery остаются отдельными задачами.
+**Current state:** PLAN_CURRENT 1.6.2; PROJECT_PASSPORT 2.77. JOB-001 ВЫПОЛНЕНО; staging20260917_0019. Main CI283 is verified directly and final browser checks are owner-confirmed. LEGAL-001 - ОТЛОЖЕНО ДО РЕШЕНИЯ ВЛАДЕЛЬЦА; prior AI boundaries and email/recovery work remain unchanged.
 
 **Влияние на сайт:** Нет.
 
@@ -428,9 +411,7 @@ MVP не готов, если работает только отдельная �
 
 **Зависимости:** Постоянный процесс; не блокирует `SEARCH-001` и последующие пакеты.
 
-Active inventory: PLAN_CURRENT1.6.3; PROJECT_PASSPORT2.78; SOURCE_AUDIT1.6.3. AI005 docs2.0 и ACCEPTANCE_SUMMARY1.0 действуют; точные предыдущие PLAN/PASSPORT и отчёты r1 сохранены в docs/history/ai005-r1. JOB001 docs1.2 FINAL остаются историей принятого предшественника.
-
-Current acceptance addendum 2026-09-20: AI-005 r1 accepted with exclusions on schema20260917_0020 / CI285 attempt2. Technical r2 NEEDS_VERIFICATION; full AI-005 IN_PROGRESS / LIVE_NOT_ACCEPTED. The dated predecessor records remain historical.
+Active inventory: PLAN_CURRENT1.6.2; PROJECT_PASSPORT2.77; SOURCE_AUDIT1.6.2. JOB001 docs1.2 FINAL retained. AI-005 r1 is a partial candidate, not completed live generation.
 
 ### Этап 2. Надёжный поиск и обновление вакансий
 
@@ -936,8 +917,6 @@ Dependencies: AI-001, PROF-001/003. AI-004 has now been accepted separately at s
 
 **Implementation / 1.6.2:** r1 implements general owner-bound manual/local letter documents, reviewed versions, comparison/delete/TXT/privacy and source snapshots at candidate0020. The local template is NOT an Alice response and never translates or infers source facts. Generic model-selection schema is offline only. Actual arbitrary-input provider dispatch, runtime accounting/admission/consent and live quality remain unimplemented. This delivery does not reduce the full feature criteria above. New CI and site review are NOT RUN. See AI005_SCOPE.md.
 
-**Current implementation / 1.6.3:** r1 принят после CI285 attempt2 и подтверждения владельца; локальные предложения при пустом профиле и второй аккаунт NOT RUN. r2 добавляет настоящий технический вызов существующего адаптера Алисы, предварительный просмотр, учёт затрат, повторов и атомарную доставку отдельного предложения. r2 ещё не проходил GitHub CI, развёртывание и платный синтетический прогон. Реальные данные на сайте остаются закрыты; LEGAL-001, реализованный допуск/согласия и живая проверка качества обязательны до полной приёмки. Описание 1.6.2 выше — историческое состояние r1 до его проверки.
-
 #### AI-006 - Оценка качества AI и защита от галлюцинаций
 
 **Приоритет:** P1
@@ -1149,8 +1128,6 @@ Dependencies: AI-001, PROF-001/003. AI-004 has now been accepted separately at s
 #### LEGAL-001 - Юридические документы и согласия
 
 **Приоритет:** P0 до публичного AI  **Статус:** ОТЛОЖЕНО ДО РЕШЕНИЯ ВЛАДЕЛЬЦА
-
-Уточнение 20.09.2026: владелец согласовал место LEGAL-001 после технической проверки AI-005. Статус отложенного допуска означает отсутствие решений о фактических параметрах обработки, а не отсутствие согласия на саму подготовку LEGAL-001. Прежний LEGAL001_DEFERRED_DECISION.md сохраняется как запись незакрытых условий, не как отмена новой очереди.
 
 The owner has not selected the operator country, legal form, legal contact/requisites, first launch markets or final production data-location scheme. These values remain unknown. Detailed open questions and the mandatory return trigger are in `LEGAL001_DEFERRED_DECISION.md` v1.1.
 
@@ -1545,15 +1522,12 @@ AI-PROVIDER-001 COMPLETE
 -> AI-003 COMPLETE (synthetic/reference-only; staging 0017)
 -> AI-004 COMPLETE (synthetic/reference-only; staging 0018)
 -> JOB-001 COMPLETE (r1.1 REBUILT accepted; schema 0019)
--> AI-005 r1 accepted; r2 technical checks
--> LEGAL-001 and real-data admission
--> AI-005 live quality / final acceptance
--> AI-006 -> JOB-002..004
+-> AI-005 -> AI-006 -> JOB-002..004
 ```
 
 **Approved sequencing / 1.6.0:** the owner explicitly chose JOB-001 before AI-005. This MINOR version records that dependency-respecting order. The unavailable earlier JOB-001 r1 artifact and its claimed 1.5.8 document version are not reused as byte-level evidence. No dependency or acceptance gate is removed.
 
-Порядок работы с LEGAL-001 согласован владельцем: после технической интеграции и синтетической проверки AI-005, до допуска реальных данных и полной приёмки AI-005. Не определены фактические параметры оператора, рынков и маршрутов данных; юридический допуск не утверждён. Это уточнение этапов внутри незавершённого AI-005, а не разрешение публичной генерации или коммерческого запуска. MINOR version 1.5.0 introduced the explicit dependency/sequence change; patch version 1.5.1 records external closure of AI-001 and promotion of AI-002 to the next technical package. INFRA-001 remains pre-release work; the prior package evidence remains historical.
+LEGAL-001 is deferred by the owner, not completed or removed. Return to it before public AI activation, paid subscriptions or commercial release. MINOR version 1.5.0 introduced the explicit dependency/sequence change; patch version 1.5.1 records external closure of AI-001 and promotion of AI-002 to the next technical package. INFRA-001 remains pre-release work; the prior package evidence remains historical.
 
 ### 15.2 Предрелизный инфраструктурный блок
 
@@ -1573,7 +1547,7 @@ INFRA-001 real VPS test
 
 ## 16. Current gate / AI-005 in progress
 
-Принятая документная основа AI-005 r1: main be0eadf6c26a6a45b9a3764f5859a52651f372d2, CI285 attempt2 success, schema20260917_0020 и подтверждение владельца с указанными исключениями. Текущий локальный кандидат r2 — NEEDS_VERIFICATION; технический вызов адаптера написан, новый CI и настоящий ответ не проверены. Полный AI-005 IN_PROGRESS / LIVE_NOT_ACCEPTED. Далее технические проверки r2, LEGAL-001 и реализация допуска, затем реальная генерация и финальная приёмка. Матрица — AI005_ACCEPTANCE_SUMMARY и AI005_VERIFICATION_STATUS.
+AI-005 r1 is delivered locally for review. Full AI-005 remains IN_PROGRESS; document-workflow acceptance must not be mistaken for live-generation acceptance. Source audit and exact exclusions: AI005_SCOPE.md and AI005_VERIFICATION_STATUS.md. The accepted predecessor below remains unchanged.
 
 ### 16.1 Accepted JOB-001 predecessor
 
@@ -1583,7 +1557,7 @@ Manual two-account isolation is NOT RUN. Legacy migration and a second-device re
 
 Public AI stays disabled/manual. Previous AI-003/004 histories and closure gates passed the owner's regression block. No real recovery point or production restore is established; that operational gap remains explicit before future migrations and in OPS-002/REL-001. Email delivery and LEGAL-001 remain unresolved.
 
-JOB-001 остаётся принятым предшественником. Синхронизация его документов вошла в опубликованную основу r1; r1 уже проверен. Текущая новая локальная работа — AI-005 r2. Её публикация и новый CI не выполнялись. Историческое состояние до r1 сохранено отдельно и не определяет текущую очередь.
+AI-005 implementation has begun after the requested source audit. Its r1 document workflow awaits review; full live runtime and quality/consent/legal gates remain open. The unuploaded JOB-001 closure is bundled without changing its acceptance. No remote write has occurred.
 
 ## 17. Обязательный отчёт после каждого пакета
 

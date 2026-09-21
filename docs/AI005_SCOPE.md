@@ -1,19 +1,32 @@
-# AI-005 scope and implementation boundary / r1
+# AI-005 — объём и границы r2
 
-## 1. Requested feature, unchanged
+| Поле | Значение |
+|---|---|
+| Версия / дата | 2.0 / 20 сентября 2026 |
+| Полный пакет | IN_PROGRESS / LIVE_NOT_ACCEPTED |
+| r1 | ACCEPTED_WITH_MANUAL_EXCLUSIONS |
+| r2 | NEEDS_VERIFICATION, техническая интеграция |
 
-The owner requested AI-005 after JOB-001 acceptance. PLAN_CURRENT requires personalized editable cover letters, short/full, tone/language, editor, immutable versions, comparison/deletion and export, linked to a vacancy; no unsupported model claims and no automatic sending. The uploaded JOB-001 canonical bundle1.6.1 is authoritative over the older standalone AI-004 PDFs. All ten Markdown documents in that bundle match the preserved JOB-001 closure exactly.
+## 1. Исходная цель не сокращена
 
-## 2. Implemented in this delivery
+Персонализированное редактируемое сопроводительное письмо по выбранной вакансии и подтверждённым фактам профиля: RU/EN, короткое/полное, тон, версии, сравнение, удаление и экспорт. Никакой автоматической отправки. Локальный шаблон не считается живой генерацией.
 
-A general private letter document workflow for real saved vacancies and user-confirmed profile snapshots: explicit creation, manual editor, reviewed immutable versions, comparison, selected-version TXT export, pending proposals, optimistic conflicts, ownership and privacy/account deletion. Optional LOCAL extractive composition copies user-selected facts into a labelled template; it is not Alice or a new AI evaluation. It works on arbitrary owned snapshots, not two pinned demo examples. Saved notes and editable resume drafts are not facts. The saved vacancy cannot be removed through normal UI while letters exist; account deletion still removes the whole owned subtree.
+## 2. Принимаемая часть r1
 
-## 3. Not substituted or declared complete
+Ручной редактор и документные операции приняты после CI285 и сообщений владельца. Профиль пуст; предложения и устаревание источника вручную не проверены. Второго аккаунта нет. Подробная матрица и эксплуатационные пробелы — в AI005_ACCEPTANCE_SUMMARY.
 
-The full planned AI-005 remains IN_PROGRESS. This r1 document-workflow candidate is NEEDS_VERIFICATION; it is not an approved narrowing of the final AI-005 definition of done. General evidence-selection prompt/schema/validation code is written and tested offline, but an arbitrary real-input production provider path is NOT integrated or activated. The existing AI-001 runtime admits only pinned synthetic fixtures and reports manual/unavailable publicly. A browser generation attempt fails closed even when environment switches are changed. There is no new legal-approval boolean, no legal-text acceptance fabricated, and no real source data leaves the application.
+## 3. Написанная техническая часть r2
 
-The generic contract intentionally accepts only fact IDs bound to the source hash. It cannot insert a model-authored achievement, number or impact. Local framing preserves exact source excerpts; it does not translate their text or prove their truth. A human-edited letter is explicitly user-authored/edited rather than certified grounded AI output.
+Новый источник-зависимый writer-контракт, минимальная проекция выбранных фактов и вакансии, подписанное подтверждение просмотра, общий ledger затрат/дедупликации, вызов существующего адаптера Алисы, строгая обработка результата и атомарное помещение в ожидающие решения предложения. Пользователь отдельно принимает текст, создавая версию. Локальная композиция не используется как fallback вместо модельного текста.
 
-## 4. Remaining implementation and release gates
+Механическая валидация проверяет JSON, разрешённые ссылки/дословные цитаты, числовые утверждения, некоторые запрещённые расширения смысла, язык и пределы. Она не доказывает логическое следование каждой фразы исходникам. Маркер semantic_grounding=human_review_required сохраняет эту границу.
 
-The live generator still needs integration with an actual approved real-input admission/consent/data-routing service, source-bound runtime accounting/idempotency, failures before and after dispatch, general-input quality validation and actual language/writing review. LEGAL-001 is still deferred; requirements are not waived. No further pinned demonstration may be labelled the completed live feature. Sending/auto-apply and trackers are not introduced. Technical tests and deployment acceptance of this r1 must not close the entire AI-005 feature.
+## 4. Не завершено
+
+Настоящий платный ответ для нового контракта NOT RUN; поддержка конкретной строгой схемы моделью и качество произвольных писем ещё не подтверждены. Общая смысловая оценка не заменяется несколькими тестовыми кейсами. Сервис правового допуска реальных пользователей, версии/отзыв согласий, разрешённый маршрут данных, обновление соответствующих runtime/UI-ограничений и финальная реальная проверка остаются следующей работой.
+
+В приложении установлен ClosedLetterAdmission; выбор тестового admission невозможен переменной окружения или клиентской галочкой. Тестовый runner допускает только полное совпадение с закреплёнными синтетическими источниками. Старые REAL_DATA_SUPPORTED=False и публичный manual status сохранены. Значит, пользователи пока не могут нажать кнопку и получить письмо Алисы по своему опыту.
+
+## 5. Порядок закрытия
+
+r2 CI/техническая проверка → разрешённый синтетический live-тест → LEGAL-001 и реализация реального допуска → контролируемая проверка настоящих данных → полная приёмка AI-005. Утверждение «осталось только включить флаг» неверно. AI-006 не заменяет незавершённую работу AI-005.

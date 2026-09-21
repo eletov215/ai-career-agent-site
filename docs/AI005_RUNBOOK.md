@@ -1,35 +1,63 @@
-# AI-005 rollout and checks / 1.0 r1
+# AI-005 — внедрение и проверка r2
 
-The delivery is local only. Do not upload/deploy without the owner's next instruction. The r1 document workflow is not the complete live AI-005. No new keys/Render variables or paid Alice benchmark are needed for these tests.
+| Поле | Значение |
+|---|---|
+| Версия / дата | 2.0 / 20 сентября 2026 |
+| Статус | NEEDS_VERIFICATION; полный AI-005 IN_PROGRESS / LIVE_NOT_ACCEPTED |
+| Основа | main be0eadf6…; схема0020 |
 
-## 1. Before deployment
+## 1. Перед публикацией
 
-Recheck main against the exact baseline c095bfb70bad5b1ba22cd9b1aeac1795a0b59c4c. Apply one PATCH or FULL, not both, without overlaying old JOB/AI final patches. Review the missing JOB-001 closure synchronization bundled here. Create and verify a real recovery point before migration; earlier Neon backup creation is not evidenced. Do not upload secrets, exports, runtime data, backups or caches. Run ordinary branch/PR CI including the new AI-005 step; old CI283 is not new evidence. Merge only after the required full new CI is green and the recovery prerequisite has been confirmed.
+r1 принят с исключениями по AI005_ACCEPTANCE_SUMMARY. В этом выпуске код только передан; публикация, платные запросы и активация не выполнялись. Проверить main против полного SHA из manifest. Применить один PATCH или FULL, не оба. Не накладывать старые FINAL-патчи. Не загружать секреты, экспорты аккаунта, отчёты с реальными данными или служебные каталоги.
 
-## 2. Technical acceptance
+Получить отдельное разрешение владельца на ветку/PR. Сохранить обычный полный CI и новые тесты r2; пропуски локального Flask/PG не заменяют installed CI. До зелёного нового SHA не объявлять r2 проверенным. Выполнить контрольную точку восстановления перед будущим рисковым изменением данных; ранее выполненный реальный backup не подтверждён. Новая миграция r2 отсутствует.
 
-After deployment health/ready must have current=expected=20260917_0020, migrations.ok=true, persistent PostgreSQL and the exact new commit. /api/ai/status remains generation_available=false, mode=manual, reason=runtime_not_activated. No account/admin review switch is required for the ordinary private letter editor. The generator remains unavailable even if unrelated synthetic flags are on.
+## 2. Локальная и CI-проверка без расходов
 
-## 3. Document workflow
+```bash
+python scripts/check_ai005_package.py
+python scripts/check_ai005_r2_package.py
+python -m pytest -q \
+  tests/test_ai005_live_contract.py \
+  tests/test_ai005_live_runtime.py \
+  tests/test_ai005_live_routes.py \
+  tests/test_ai005_live_postgresql.py \
+  tests/test_ai005_synthetic_probe.py \
+  tests/test_ai005_r2_package.py
+python -m pytest -ra
+```
 
-In an existing verified account, open a saved vacancy and the new letters link. Inspect the source preview and create with explicit confirmation. No profile is required for a blank manual draft; local composition needs confirmed facts. Fill subject/body/preferences, confirm and save version1. Refresh/relogin: it persists. Save unchanged: no version2. Material edit: version2, old version unchanged. Compare1/2 and export each TXT; texts and preferences must match. A download or local composition must never send an email or an application.
+Все эти тесты используют поддельный transport, не внешние платные обращения. Рекомендуемый CI остаётся обычным workflow, а не существующим старым AI-BENCH Alice Final: новый writer не является старым квалифицированным контрактом.
 
-Open EXACTLY the same letter in two tabs before saving. Save tab1 then submit old tab2:409 with both texts and no overwrite. A stale deletion must also fail. A newly opened form must allow a new deliberate edit. Keep actual personal data out of screenshots/logs sent to the assistant.
+## 3. Preview-only probe
 
-## 4. Source/template behavior
+В изолированном shell без DATABASE_URL, POSTGRES_TEST_URL, RESTORE_DATABASE_URL и Render variables:
 
-Use a disposable test letter and profile facts. Select one or two facts and make a LOCAL proposal. It must be explicitly labelled non-AI; chosen source wording is preserved, no extra numbers or achievements appear, and current letter text is unchanged before confirmation. Review/edit then confirm; origin distinguishes unchanged template from user edits. Replayed pending proposal forms do not create duplicates. Rejecting deletes only the proposal. Change the profile after preparing a proposal: stale warning, no silent source replacement and no application of the old proposal; existing manual versions remain. Do not replace real profile contents just for testing.
+```bash
+python scripts/ai005_synthetic_probe.py --language ru \
+  --output-dir /tmp/aca-ai005-preview-ru
+```
 
-RU/EN, short/full and tone all work; untranslated source excerpts are disclosed, not magically translated. No synthetic67/71 match score appears on real letters. The supplied offline model contract is NOT proof of live semantic writing quality; no paid call is authorized.
+Выбрать новый каталог вне репозитория. Ожидается preview_only, network_calls0; никакой ключ для preview не нужен. Просмотреть проекцию: только синтетические факты, вакансия и параметры. Скрипт откажется перезаписывать существующий каталог.
 
-## 5. Privacy/deletion/regression
+## 4. Настоящий синтетический вызов — отдельное разрешение
 
-Download own privacy export privately; inspect cover_letters, cover_letter_versions and cover_letter_proposals. Do not send the archive. Delete an old non-current version with confirmation; its URL/export404 and the next version number is not reused. Current-version deletion alone must fail. Delete the whole letter only with confirmation; other letters, vacancy, profile and resume remain. While a letter exists, deleting its saved vacancy must fail with explanation; after explicit deletion of linked letters, ordinary JOB-001 deletion works again. Do not delete the real account; cascades are disposable-database tests.
+Не запускать этот этап автоматически с публикацией или по текущему сообщению о ручных тестах. Потребуются явное согласование расхода, проверка существующих AI_* credentials/gates, настоящая дата отключения логирования и актуальный проверенный тарифный снимок. Даты не подставлять вымышленными значениями ради обхода проверок. Производственный Render не переключать.
 
-Logout: private pages go to login and API401; another active account's detail/edit/compare/export/delete must be404. Without a second account record manual isolation NOT RUN, separately from automated tests. Verify JOB-001 notes/dedup/export, resume autosave/PDF, profile/search/dashboard/admin and existing closed AI003/004 histories. Review Render logs for unexpected500, database errors and leaked text/secrets. Keep public AI disabled.
+После отдельного разрешения тот же CLI с --allow-billable-alice выполняет максимум один dispatch; новая команда создаёт новую отдельную операцию. При успехе proposal-for-review.json содержит модельный черновик и evidence, report.json — счётчики/расходы и REQUIRES_HUMAN_REVIEW. Ошибка, timeout или отсутствие результата не разрешают бесконтрольно повторять запросы. Старые записи temporary ledger не являются ledger сайта.
 
-## 6. Rollback and completion
+Проверить RU и EN, тон и объём, требования вакансии, каждую фактическую фразу/число, отсутствие вымышленных достижений и следов инструкций из исходника. Успешный JSON без читабельного достоверного текста не считается качественной генерацией.
 
-A0020->0019 downgrade destroys ONLY letter tables and their contents. Preserve a verified populated backup, stop writes and coordinate application/schema rollback; old exact-head checks must not be hidden with stamp/reset. This is not an ordinary manual test. Real recovery remains operational work.
+## 5. Проверка сайта после r2 CI
 
-Record exact new CI and owner observations for the document tranche. Do NOT mark the entire planned AI-005 COMPLETE: approved general-input provider/consent/runtime integration and live-quality evidence are still required, as stated in AI005_SCOPE.md.
+health/ready остаётся на0020 и новом SHA; public AI status manual/unavailable. Редактор, версии, TXT, история, локальные предложения при наличии фактов, приватность и JOB-001 должны оставаться работоспособными. Пользовательские /generation-preview и /generate не обходят ClosedLetterAdmission. Наличие новых маршрутов не означает разрешения реального ввода.
+
+Не повторять все разрушительные тесты на полезных данных без необходимости; новые проверки проводить на тестовом письме. Проверить отсутствие содержимого писем/ключей в логах. Реальные профили не отправлять, пока не завершён следующий этап допуска.
+
+## 6. LEGAL и окончательная приёмка
+
+По согласованной очереди далее LEGAL-001: фактическая схема обработки, оператор, аудитория, документы и реализованный admission/consent/withdrawal. Затем изменение реальных runtime/UI-границ отдельным проверяемым выпуском, ограниченный тест реальных данных и человеческая оценка. Полный AI-005 до этого не COMPLETE.
+
+## 7. Откат
+
+r2 не добавляет миграцию и не требует downgrade0020. Если ещё не создавались alice_draft/user_edited_alice_draft записи, можно согласованно вернуть код предыдущей принятой версии. Если такие записи уже есть, r1 не поддерживает их происхождение: сохранить backup, остановить новые вызовы и подготовить совместимый forward-fix. Не удалять данные ради зелёных тестов и не использовать stamp/reset.

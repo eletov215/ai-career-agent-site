@@ -88,7 +88,12 @@ class AIRepository(RepositoryBase):
     def recover(self,*,now:int) -> int:
         with self._locked() as (s,row,p): return self._recover(s,now)
 
-    def admit(self,*,user_id:str,key_hash:str,request_hash:str,fixture:dict,now:int,input_estimate:int | None=None) -> Admission:
+    def admit(self,*,user_id:str,key_hash:str,request_hash:str,fixture:dict,now:int,input_estimate:int | None=None,
+              prompt_version:str=CONTRACT) -> Admission:
+        # A new general writer records its actual contract, not the accepted
+        # benchmark's version. This is metadata, never an admission permission.
+        if prompt_version not in {CONTRACT, 'cover-letter-draft-v1'}:
+            raise AIAdmissionError('invalid_contract')
         day=datetime.fromtimestamp(now,timezone.utc).date().isoformat();month=day[:7]
         with self._locked() as (s,control,p):
             self._recover(s,now)
@@ -126,7 +131,7 @@ class AIRepository(RepositoryBase):
             request_id=str(uuid4())
             for b in buckets[:3]: b.spent_microrub+=worst;b.requests+=1
             s.add(AIUsageEvent(id=request_id,user_id=user_id,idempotency_hash=key_hash,request_hash=request_hash,
-                task=fixture['task'],language=fixture['language'],fixture_id=fixture['case_id'],prompt_version=CONTRACT,
+                task=fixture['task'],language=fixture['language'],fixture_id=fixture['case_id'],prompt_version=prompt_version,
                 policy_version=control.version,input_rate=p['input_microrub_per_token'],output_rate=p['output_microrub_per_token'],
                 day=day,month=month,status='reserved',reason='admitted',reserved_microrub=worst,charged_microrub=worst,
                 cost_uncertain=True,attempts=0,input_tokens=0,output_tokens=0,commercial_reserved=p['commercial_enforcement_enabled'],commercial_action_consumed=False,
@@ -145,7 +150,8 @@ class AIRepository(RepositoryBase):
             return True
 
     def settle(self,request_id:str,*,status:str,reason:str,cost:int,uncertain:bool,
-               input_tokens:int,output_tokens:int,provider_failed:bool,now:int) -> bool:
+               input_tokens:int,output_tokens:int,provider_failed:bool,now:int,
+               on_success=None) -> bool:
         if status not in {'succeeded','failed','unknown'} or type(cost) is not int or cost<0:
             raise ValueError('Invalid settlement')
         with self._locked() as (s,control,p):
@@ -155,6 +161,12 @@ class AIRepository(RepositoryBase):
                 # Deleted owner: retain global reservation conservatively, never return output.
                 return False
             if e.status!='reserved':return False
+            if status=='succeeded' and on_success is not None:
+                if not p['enabled'] or p['kill_switch'] or e.lease_expires_at<=now:
+                    raise AIAdmissionError('result_not_delivered')
+                # The callback may insert a feature-owned proposal in this same
+                # transaction. A failed insertion cannot consume a success quota.
+                on_success(s,e)
             buckets=[s.get(AIBudgetBucket,k[0]) for k in _keys(e.user_id,e.task,e.day,e.month)]
             if any(b is None for b in buckets): raise AIAdmissionError('ledger_integrity_failure')
             delta=cost-e.charged_microrub

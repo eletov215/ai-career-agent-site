@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+{% block title %}{{ ui.generation_preview }} - AI Career Agent{% endblock %}
+{% block head_extra %}<link rel="stylesheet" href="{{ url_for('static',filename='cover_letters.css') }}?v=1">{% endblock %}
+{% block content %}
+<main class="section ai005-page"><div class="container ai005-shell">
+<h1>{{ ui.generation_preview }}</h1>
+<aside class="ai005-notice">{{ ui.preview_notice }}</aside>
+<p>{{ ui.recipient }}: {{ preview.recipient }}</p>
+<section class="ai005-card"><h2>{{ ui.vacancy }}</h2>
+{% for key,value in preview.projection.vacancy.items() %}<p class="ai005-text"><strong>{{ ui['generation_' + key] }}</strong><br>{{ value }}</p>{% endfor %}
+</section>
+<section class="ai005-card"><h2>{{ ui.facts }}</h2>
+{% for fact in preview.projection.candidate_facts %}<p class="ai005-text">{{ fact.text }}</p>{% endfor %}
+<p>{{ ui[preview.projection.preferences.language] }} / {{ ui['generation_' + preview.projection.preferences.length] }} / {{ ui[preview.projection.preferences.tone] }}</p>
+</section>
+<form method="post" class="ai005-card" action="{{ url_for('cover_letters.generate',letter_id=letter_id) }}">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+<input type="hidden" name="review_token" value="{{ preview.review_token }}">
+<label class="ai005-check"><input type="checkbox" name="confirm" value="1" required> {{ ui.generate_confirm }}</label>
+<button class="btn btn-primary" type="submit">{{ ui.generate }}</button>
+</form>
+<a href="{{ url_for('cover_letters.detail',letter_id=letter_id) }}">{{ ui.reload }}</a>
+</div></main>
+{% endblock %}

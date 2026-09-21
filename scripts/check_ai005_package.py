@@ -32,12 +32,26 @@ def load_boundary(root=ROOT):
             or data['public_real_data_enabled'] is not False or set(data['reviewed_runtime_changes'])!=CHANGES
             or set(data['new_runtime_sha256'])!=NEW_RUNTIME or base['source_commit']!=BASE_COMMIT or base['source_tree']!=BASE_TREE):
         raise ValueError('Invalid AI-005 scope')
+    successor={}
+    if (root/'docs/evidence/ai-005-r2/change_boundary.json').is_file():
+        from scripts.check_ai005_r2_package import load_boundary as load_r2
+        successor=load_r2(root)
+    effective={}
     for rel,row in data['reviewed_runtime_changes'].items():
-        if row['previous_sha256']!=base['files'].get(rel) or not matches(root/rel,row['current_sha256']):
+        if row['previous_sha256']!=base['files'].get(rel):
             raise ValueError('AI-005 changed source mismatch')
+        if rel in successor and successor[rel]['previous_sha256']!=row['current_sha256']:
+            raise ValueError('AI-005 r2 predecessor mismatch')
+        current=successor.get(rel,row)['current_sha256']
+        if not matches(root/rel,current):raise ValueError('AI-005 changed source mismatch')
+        # Preserve the original predecessor for JOB-001 and older hash chains.
+        effective[rel]={**row,'current_sha256':current}
     for rel,sha in data['new_runtime_sha256'].items():
-        if not matches(root/rel,sha):raise ValueError('AI-005 new runtime mismatch')
-    return data['reviewed_runtime_changes']
+        if rel in successor and successor[rel]['previous_sha256']!=sha:
+            raise ValueError('AI-005 r2 new predecessor mismatch')
+        current=successor.get(rel,{}).get('current_sha256',sha)
+        if not matches(root/rel,current):raise ValueError('AI-005 new runtime mismatch')
+    return {**successor,**effective}
 
 
 def validate(root=ROOT):

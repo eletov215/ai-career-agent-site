@@ -1,0 +1,42 @@
+{
+  "package": "AI-005",
+  "release": "r2-technical",
+  "source_commit": "be0eadf6c26a6a45b9a3764f5859a52651f372d2",
+  "source_tree": "dbcadece7814336942ea80da0ce85707a695c428",
+  "public_real_data_enabled": false,
+  "reviewed_runtime_changes": {
+    "app.py": {
+      "previous_sha256": "fc2ce98bd4d7406b00dc127f6830d74967a723cb8018df52fa4013a0690b62df",
+      "current_sha256": "1b3527d6aa4725a0801e9209d6803bc485a6f5dfd645c8bd4fcd361519caa749"
+    },
+    "repositories/ai.py": {
+      "previous_sha256": "7b1212bac70f727afc1e7c23081a085c997541fda4702d2159392e5defa76bd8",
+      "current_sha256": "8421e3c0befa5d2715e18ce8dbc5e6b0b9b80499e06661ea61680a410cc58670"
+    },
+    "repositories/cover_letters.py": {
+      "previous_sha256": "d0c810db55ebd12b64e5e4642f66c2e61899fff8b4b365a161489064a6def2d0",
+      "current_sha256": "7c896d2c2bc9493a0aea1d3cfcea811b228480ad284361215ac983e86fb5c05a"
+    },
+    "routes/cover_letters.py": {
+      "previous_sha256": "bb2a80f8fc66b24360fcbae9a5f8a69dbf3fad08a909359fae32f0f8793139a0",
+      "current_sha256": "6084a3c5d6ac9b350c119616844257370f166815850bc3b4c6bfe13cad314236"
+    },
+    "services/cover_letter_labels.py": {
+      "previous_sha256": "68a69cb45aecc6b6f7e6fbc66b2a83290d8ec0dc30d852839522abcb6b83e8ae",
+      "current_sha256": "ae1e0a5132134439f8ca6a5b034e03572848c7ad643014be18fb678d5bff0d2f"
+    },
+    "services/cover_letters.py": {
+      "previous_sha256": "a07b2a6182a72a01dad0b7732e10121149a93d32880006218318bf73f3ee26c6",
+      "current_sha256": "390b0b81ae2be5e2b8b3492679eb1c336ddba3d1264e9ad4c78a511e62c3ee40"
+    }
+  },
+  "new_runtime_sha256": {
+    "scripts/ai005_synthetic_probe.py": "d17f5a85cad8711c181d595df98c1c71a01e9e4e8482154d288013d7f8571e6e",
+    "services/ai/letter_admission.py": "df9d3ee915df579341a8b29c8888e205b63e4f11fcef219b98c12207e8902fa8",
+    "services/ai/letter_contract.py": "b1ef9f4eb069b505e031c773c822d8abe280f8c96edd0d4d196887be96f563d6",
+    "services/ai/letter_runtime.py": "93064769bbac637ad08b798a0436194ba611618a171ada25c3488ad2f8e34bbb",
+    "services/ai/letter_synthetic_cases.json": "2a1068724e70646e56d902f50cc06a8a9b4db0307617194c4ad16317766c6005",
+    "services/cover_letter_ai.py": "9995a750518f06eec81f91e92e8ceddf889eb21fc29c8245b9ad94c11c163dd5",
+    "templates/letters/generation_preview.html": "e17fe1eaea76130ca87987191cf62b1567371780e6304cac543a3ea344e2a232"
+  }
+}
