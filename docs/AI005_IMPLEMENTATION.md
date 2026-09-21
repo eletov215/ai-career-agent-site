@@ -1,31 +1,52 @@
-# AI-005 implementation / 1.0 r1
+# AI-005 — техническая реализация r2
 
-Status: NEEDS_VERIFICATION for the document-workflow delivery. The entire planned AI-005 is IN_PROGRESS; live generation is not integrated. See AI005_SCOPE.md.
+| Поле | Значение |
+|---|---|
+| Версия / дата | 2.0 / 20 сентября 2026 |
+| Статус r2 | NEEDS_VERIFICATION |
+| Полный пакет | IN_PROGRESS / LIVE_NOT_ACCEPTED |
+| Схема | 20260917_0020, без новой миграции |
 
-## 1. Ownership and sources
+## 1. Слои и совместимость
 
-CoverLetter is bound to an active verified first-party user and their SavedVacancy by a composite foreign key. Explicit creation freezes the vacancy content/hash and selected allowlisted fields from the immutable current confirmed career-profile version. Structured contact fields, salary/geography preferences, saved notes, resume drafts and synthetic match reports are not candidate evidence. Empty profiles allow manual letters; no facts are invented. The source includes its version/hash, per-fragment IDs and omitted-field notice. Profile confirmation establishes a user declaration, not independent employment verification.
+Сохранённая документная основа r1 остаётся: CoverLetter, CoverLetterVersion, CoverLetterProposal; источники привязаны к immutable-профилю и снимку вакансии. Сохранение/сравнение/экспорт/удаление остаются явными owner-scoped действиями. В r2 расширен список происхождения: alice_draft и user_edited_alice_draft. Модельные тексты не объявляются подтверждёнными до решения пользователя.
 
-Creation uses a server-source preview hash and HMAC operation key. Duplicate requests while the object exists return it; changing parameters under the same key fails. Later profile changes mark the source stale rather than rewriting history. Local proposal creation/acceptance then requires a new letter; manual editing of the historical document remains available with a warning.
+## 2. Новый контракт и проекция
 
-## 2. Editor, proposals, history and export
+services/ai/letter_contract.py строит отдельный cover-letter-draft-v1. Наружу допускаются выбранные candidate_facts, четыре поля вакансии title/company/description/requirements и язык/объём/тон. Идентификаторы аккаунта/письма/вакансии, profile hash, контакты структурных полей, заметки, черновики резюме и synthetic match не передаются. payload_hash вычисляется от самой проекции.
 
-All saves are explicit native forms with review confirmation and expected_revision. A successful material save creates an immutable numbered version. An unchanged save does not consume a revision or version. Stale tabs fail409 and show both saved and unsaved text, escaped, without auto-resubmission against a fresh revision. Pending local proposals never replace current content automatically. Accepted proposals are removed after their content/provenance is recorded in a reviewed version; discarded proposal text is deleted. A changed proposal is labelled user_edited_local_template, not certified AI text.
+Контактоподобные строки в свободном тексте блокируют запрос, а не молча редактируются. Это эвристика, не гарантия анонимизации: карьерные сведения всё ещё могут идентифицировать человека. Короткий ввод ограничивает число выбранных фактов1–3, полный1–8. Весь payload ограничен размером; оценка входа по UTF-8 байтам консервативная, не токенизатор Яндекса. Старые токен-бюджеты не ослаблены; избыточный запрос отклоняется.
 
-The current version cannot be separately deleted; historical deletion increments the editor revision and does not reuse version numbers. Whole-letter deletion requires confirmation and removes its versions/proposals, not the vacancy/profile. TXT export is an authenticated download of one immutable reviewed version; it never exports an unreviewed proposal as a final letter. Comparison uses escaped unified text differences including preferences. No mail, clipboard auto-send, provider apply or notification is triggered.
+Ответ содержит тему, абзацы с ролью и ссылками на дословные цитаты, поля вакансии и внутренние caveats. Валидатор не допускает произвольный ID или цитату, отсутствующую в выбранном факте, проверяет часть чисел/расширений смысла, маркировку и язык. Он не является полным семантическим доказательством; живое качество нужно проверять отдельно.
 
-## 3. Limits and concurrency
+## 3. Предварительный просмотр и допуск
 
-100 letters per owner;50 reviewed versions and20 pending proposals per letter;240 subject characters,8000 body characters; bounded source size and100 fact fragments. Short composition uses1-3 fragments, full1-8. Excerpts are copied without translation or numeric inference; tone changes framing only. Under PostgreSQL, short writes acquire the same owner row lock as JOB-001 with a5-second timeout; SQLite uses BEGIN IMMEDIATE. There is no network I/O under those locks. Both linked deletion and letter creation use this lock, preventing a check/delete race.
+CoverLetterGenerator получает актуальную owner-версию, строит проекцию и запрашивает admission. Подписанный review_token связывает владельца, письмо, revision, source_hash, payload_hash, параметры, факты, случайный ключ операции и срок10минут. Изменённый/чужой/просроченный токен не запускает вызов. Полный исходный текст не берётся из подменяемого браузерного POST.
 
-## 4. Migration and privacy
+POST /cover-letters/<uuid>/generation-preview и /generate используют CSRF, строгие поля и общий private-response. Новая страница предварительного просмотра экранирует данные. По умолчанию ClosedLetterAdmission запрещает пользовательскую генерацию; приложение не устанавливает SyntheticLetterAdmission. Галочка — техническое подтверждение показанного payload, не LEGAL-согласие. Публичная кнопка разрешённого real-data вызова пока не включена.
 
-Migration0020 creates cover_letters, cover_letter_versions, cover_letter_proposals after0019. Composite ownership constraints and cascade behavior apply to versions/proposals. Normal vacancy deletion is rejected while letters exist, preventing silent loss of history; confirmed whole-account deletion cascades. Privacy export adds all three sections and validates bounded owned snapshots without operation keys. Backup inventory includes all three tables. Existing AI/public settings and external providers are unchanged.
+## 4. Вызов провайдера и учёт
 
-## 5. Generation boundary
+LetterRuntime повторно использует существующий YandexAliceProvider, settings и AIRepository. Отдельный prompt_version не подменяет принятый grounded-v2.6.1. Проходят текущие проверенные ограничения модели/ключа/логирования, policy/budget/concurrency. Ни резервирование, ни сетевой вызов не считаются сохранением готового письма.
 
-services/cover_letter_generation.py builds a general source-hash-bound evidence-selection prompt/schema and validates exact candidate IDs. Models cannot supply free-form factual prose or numeric scores through that contract. This is an OFFLINE contract, not a deployed Alice integration or semantic-quality proof. The real generation endpoint is deliberately unavailable; no environment flag enables it. Manual editing and clearly labelled local composition are usable without any provider. Scope requirements and missing live work remain explicit in AI005_SCOPE.md.
+Перед dispatch повторно проверяются владелец, revision, свежесть источника и admission. Вызов провайдера проходит без открытой транзакции пользовательских данных. Новый путь делает максимум одну попытку; после неопределённого timeout или 502 сам не повторяет запрос. Повтор того же подписанного ключа не создаёт вторую платную отправку. Новый просмотр/новая команда — отдельная намеренная операция, ограниченная общим бюджетом.
 
-## 6. Interface and tests
+Резервируется существующий верхний лимит, расходы сверяются по usage; отсутствие счётчиков учитывается консервативно. Неуспешный или запрещённый после ответа результат может стоить денег провайдеру, но не потребляет успешное коммерческое действие. Перерасход сохраняется и закрывает дальнейший допуск через kill-switch.
 
-Entry: /saved-vacancies/<id>/letters, with a link on saved detail; library /cover-letters; private /api/cover-letters/<id>; native create/save/compose/proposal-delete/version-delete/document-delete; version read/export and comparison. Global CSRF, strict form fields, active/verified ownership, no-store/noindex, fixed error codes and per-route limits apply. Unauthorized pages redirect to login, unauthorized API returns401, foreign objects404. New CSS uses ai005-only selectors and reduced-motion/focus styling. Existing templates and styles outside the saved-card integration are preserved.
+## 5. Атомарная доставка предложения
+
+В AIRepository.settle добавлен on_success callback в той же транзакции. Он ещё раз проверяет admission и источник, блокирует владельца короткой записью, вставляет pending proposal и лишь после этого фиксирует успешные счётчики. Если профиль/письмо изменены или удалены во время запроса, результат не вставляется и не заменяет свежий текст.
+
+Сбой вставки откатывает предложение и успех вместе. Неопределённое завершение удерживает резерв, затем recovery помечает unknown; повторный платный вызов не маскирует сбой хранения. Ключи/необработанные ответы/ошибки провайдера не попадают в пользовательские статусы. Пользователь отдельно сохраняет новую версию и может отклонить предложение.
+
+## 6. Изолированный синтетический runner
+
+scripts/ai005_synthetic_probe.py без платного флага создаёт только request-preview.json/report.json и не конструирует провайдера. Платный режим требует отдельного флага и действующих provider-gates, отказывается от production/Render/database окружения, создаёт временную SQLite и синтетического пользователя. Внешние файлы профиля/вакансии и реальные account IDs не принимаются.
+
+Две закреплённые RU/EN заготовки — только безопасный технический материал. Они не переопределяют продуктовый объём и не доказывают качество для иных данных. Полученный настоящий текст сохранялся бы отдельно для ручной проверки, не публикуется автоматически. Повтор CLI с платным флагом означает новый возможный расход. В этом выпуске платный CLI не запускался.
+
+## 7. Проверки, данные и откат
+
+Новые тесты покрывают проектируемые запросы, подмену preview, ownership, single-dispatch/parallel replay, провайдерские ошибки, изменения во время вызова, учёт и вставку, происхождение версий, runner-isolation и новый HTTP-контракт. Локально Flask и PostgreSQL недоступны; соответствующие проверки предназначены для обязательного нового CI.
+
+Новой миграции нет, таблицы0020 не меняются. После появления alice_draft в базе прежний r1 может отвергать новое происхождение при чтении: откат только при отсутствии новых записей либо согласованный forward-fix/backup, без стирания историй и без downgrade0020. До активации r2 на сайте таких новых записей этот локальный выпуск не создаёт.

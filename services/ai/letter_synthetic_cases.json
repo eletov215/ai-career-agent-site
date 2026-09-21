@@ -1,0 +1,34 @@
+{
+  "version": 1,
+  "scope": "synthetic_only",
+  "cases": {
+    "en": {
+      "candidate_facts": [
+        {
+          "id": "profile.summary",
+          "text": "I maintain Python APIs and write SQL queries."
+        }
+      ],
+      "vacancy": {
+        "title": "Python developer",
+        "company": "Example Test Studio",
+        "description": "Maintain APIs for an internal test product.",
+        "requirements": "Python and SQL."
+      }
+    },
+    "ru": {
+      "candidate_facts": [
+        {
+          "id": "profile.summary",
+          "text": "Поддерживаю API на Python и пишу SQL-запросы."
+        }
+      ],
+      "vacancy": {
+        "title": "Python developer",
+        "company": "Example Test Studio",
+        "description": "Поддержка API внутреннего тестового продукта.",
+        "requirements": "Python и SQL."
+      }
+    }
+  }
+}

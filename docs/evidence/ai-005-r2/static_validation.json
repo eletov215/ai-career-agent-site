@@ -1,0 +1,11 @@
+{
+  "python_syntax_files": 293,
+  "jinja_templates": 53,
+  "python_version": "3.13.5",
+  "pytest_version": "9.0.2",
+  "syntax": "PASS",
+  "template_parse": "PASS",
+  "browser_render": "NOT RUN: no installed browser",
+  "http": "NOT RUN: Flask dependencies unavailable",
+  "postgresql": "NOT RUN: disposable service/driver unavailable"
+}

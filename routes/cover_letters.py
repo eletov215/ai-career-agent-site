@@ -122,11 +122,27 @@ def create_cover_letters_blueprint(service):
             data['language'],data['length'],data['tone'],data.getlist('fact_id'),data['operation_key'])
         return redirect(url_for('cover_letters.detail',letter_id=letter_id,proposal=proposal['id']),code=303)
 
+    @bp.post('/cover-letters/<uuid:letter_id>/generation-preview')
+    @limiter.limit('20 per hour')
+    def generation_preview(letter_id):
+        data=fields({'expected_revision','language','length','tone'},repeated={'fact_id'})
+        preview=service.preview_generation(g.current_user.id,str(letter_id),data['expected_revision'],
+            data['language'],data['length'],data['tone'],data.getlist('fact_id'))
+        return render_template('letters/generation_preview.html',ui=UI,letter_id=str(letter_id),preview=preview)
+
     @bp.post('/cover-letters/<uuid:letter_id>/generate')
     @limiter.limit('10 per hour')
     def generate(letter_id):
-        fields(set())
-        return service.generate(g.current_user.id,str(letter_id))
+        data=fields(set(),optional={'review_token','confirm'})
+        result=service.generate(g.current_user.id,str(letter_id),review_token=data.get('review_token'),
+                                confirmed=data.get('confirm')=='1')
+        if result['status']=='proposal':
+            return redirect(url_for('cover_letters.detail',letter_id=letter_id,
+                                    proposal=result['proposal']['id']),code=303)
+        # Do not echo provider/ledger diagnostics or auto-repeat a paid operation.
+        if result['status']=='already_processed':
+            return render_template('letters/error.html',ui=UI,error=UI['already_processed']),409
+        return render_template('letters/error.html',ui=UI,error=UI['generation_failed']),503
 
     @bp.post('/cover-letters/<uuid:letter_id>/proposals/<uuid:proposal_id>/delete')
     @limiter.limit('30 per hour')

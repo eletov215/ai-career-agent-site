@@ -10,9 +10,10 @@ from domain.cover_letter import (LetterError, canonical, identifier, revision, o
 from repositories.cover_letters import CoverLetterRepository
 
 class CoverLetterService:
-    def __init__(self, repository: CoverLetterRepository, *, signing_key: str, clock=time.time):
+    def __init__(self, repository: CoverLetterRepository, *, signing_key: str, clock=time.time, generator=None):
         if not signing_key:raise ValueError('Signing key required')
         self.repository=repository;self._key=signing_key.encode();self.clock=clock
+        self.generator=generator
 
     def _operation(self,user_id,key):
         if not isinstance(key,str) or not re.fullmatch(r'[A-Za-z0-9_-]{16,128}',key):
@@ -59,12 +60,15 @@ class CoverLetterService:
         return self.repository.propose_local(user_id,letter_id,expected,opts,ids,op,
             self._hash([letter_id,expected,opts,ids]),now=int(self.clock()))
 
-    def generate(self,user_id,letter_id):
-        self.get(user_id,letter_id)  # No ownership oracle through the disabled endpoint.
-        # AI-001 supports fixed synthetic inputs only. No environment flag or
-        # claimed consent can authorize arbitrary data. LEGAL/quality integration
-        # must supply an actual general-input runtime before this route changes.
-        raise LetterError('generation_unavailable')
+    def preview_generation(self,user_id,letter_id,expected,language,length,tone,ids):
+        self.get(user_id,letter_id)
+        if self.generator is None:raise LetterError('generation_unavailable')
+        return self.generator.preview(user_id,letter_id,expected,language,length,tone,ids)
+
+    def generate(self,user_id,letter_id,*,review_token=None,confirmed=False):
+        self.get(user_id,letter_id)  # Preserve ownership before availability checks.
+        if self.generator is None:raise LetterError('generation_unavailable')
+        return self.generator.generate(user_id,letter_id,review_token,confirmed=confirmed)
 
     def reject(self,user_id,letter_id,proposal_id,expected,*,confirmed):
         if confirmed is not True:raise LetterError('confirmation_required')

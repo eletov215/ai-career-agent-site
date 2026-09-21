@@ -54,7 +54,7 @@ def evidence_view(raw):
 
 
 def version_view(row):
-    if row.origin not in ('manual','local_template','user_edited_local_template'):
+    if row.origin not in ('manual','local_template','user_edited_local_template','alice_draft','user_edited_alice_draft'):
         raise LetterError('storage_integrity')
     return dict(id=row.id, letter_id=row.letter_id, number=row.number,
                 content=checked_json(row.content_json,row.content_hash),content_hash=row.content_hash,
@@ -63,7 +63,7 @@ def version_view(row):
 
 
 def proposal_view(row):
-    if row.origin!='local_template':raise LetterError('storage_integrity')
+    if row.origin not in ('local_template','alice_draft'):raise LetterError('storage_integrity')
     return dict(id=row.id,letter_id=row.letter_id,base_revision=row.base_revision,
                 source_hash=row.source_hash,content=checked_json(row.content_json,row.content_hash),
                 content_hash=row.content_hash,evidence=evidence_view(row.evidence_json),
@@ -232,6 +232,51 @@ class CoverLetterRepository(RepositoryBase):
                 evidence_json=canonical({'selected_fact_ids':ids,'composition':'extractive-letter-v1'}),
                 origin='local_template',status='pending',created_at=now)
             s.add(p);s.flush()
+            return proposal_view(p)
+
+    def generation_snapshot(self,user_id,letter_id,expected):
+        """Short serial preflight. The transaction ends before the provider call."""
+        with self._write(user_id) as s:
+            row=self._row(s,user_id,letter_id);self._revision(row,expected)
+            if not self._fresh(s,user_id,row):raise LetterError('stale_source')
+            count=s.scalar(select(func.count()).select_from(CoverLetterProposal).where(
+                CoverLetterProposal.user_id==user_id,CoverLetterProposal.letter_id==letter_id,
+                CoverLetterProposal.status=='pending'))
+            if count>=MAX_PROPOSALS:raise LetterError('proposal_limit')
+            return letter_view(row)
+
+    def insert_ai_proposal(self,s,user_id,letter_id,expected,source_hash,
+                           operation_hash,request_hash,value,evidence,*,now):
+        """Called inside AIRepository.settle: proposal and accounting are atomic."""
+        self._owner(s,user_id,lock=True)
+        row=self._row(s,user_id,letter_id);self._revision(row,expected)
+        if row.source_hash!=source_hash or not self._fresh(s,user_id,row):
+            raise LetterError('stale_source')
+        if len(canonical(evidence))>10000:raise LetterError('invalid_generation')
+        old=s.scalar(select(CoverLetterProposal).where(CoverLetterProposal.user_id==user_id,
+                    CoverLetterProposal.operation_hash==operation_hash))
+        if old is not None:
+            if old.letter_id!=letter_id or old.request_hash!=request_hash:
+                raise LetterError('idempotency_conflict')
+            return proposal_view(old)
+        count=s.scalar(select(func.count()).select_from(CoverLetterProposal).where(
+            CoverLetterProposal.user_id==user_id,CoverLetterProposal.letter_id==letter_id,
+            CoverLetterProposal.status=='pending'))
+        if count>=MAX_PROPOSALS:raise LetterError('proposal_limit')
+        p=CoverLetterProposal(id=str(uuid4()),letter_id=letter_id,user_id=user_id,
+            operation_hash=operation_hash,request_hash=request_hash,base_revision=row.revision,
+            source_hash=source_hash,content_json=canonical(value),content_hash=digest(value),
+            evidence_json=canonical(evidence),origin='alice_draft',status='pending',created_at=now)
+        s.add(p);s.flush()
+        return proposal_view(p)
+
+    def generated_proposal(self,user_id,letter_id,operation_hash,request_hash):
+        with self.session() as s:
+            self._owner(s,user_id);self._row(s,user_id,letter_id)
+            p=s.scalar(select(CoverLetterProposal).where(CoverLetterProposal.user_id==user_id,
+                CoverLetterProposal.letter_id==letter_id,CoverLetterProposal.operation_hash==operation_hash))
+            if p is None:return None
+            if p.request_hash!=request_hash:raise LetterError('idempotency_conflict')
             return proposal_view(p)
 
     def reject(self,user_id,letter_id,proposal_id,expected):

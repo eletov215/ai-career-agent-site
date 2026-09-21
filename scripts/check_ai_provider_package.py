@@ -62,8 +62,11 @@ def validate_canonical_status(plan: str, passport: str) -> list[str]:
     match_row = next((line for line in plan.splitlines() if line.startswith("| AI-004 |")), "")
     if complete not in match_row:
         errors.append("AI-004 roadmap must be complete")
-    doc = re.search(r"^#### DOC-001[^\n]*\n(.*?)(?=^### |\Z)", plan, re.M | re.S)
-    if doc is None or not all(v in doc.group(1) for v in ("PLAN_CURRENT 1.6.2;", "PROJECT_PASSPORT 2.77.", "20260917_0019", complete, deferred)):
+    doc = re.search(r"^#### DOC-001[^\n]*\n(.*?)(?=^#{1,4} |\Z)", plan, re.M | re.S)
+    # Validate the active row, not a historical addendum with similar tokens.
+    inventory = next((line for line in (doc.group(1) if doc else "").splitlines()
+                      if line.startswith("**Current state:**")), "")
+    if not all(v in inventory for v in ("PLAN_CURRENT 1.6.3;", "PROJECT_PASSPORT 2.78;", "SOURCE_AUDIT 1.6.3", "20260917_0020", "CI285 attempt2", "r2 NEEDS_VERIFICATION", "AI-005 IN_PROGRESS / LIVE_NOT_ACCEPTED")):
         errors.append("DOC-001 active version inventory is stale")
     return errors
 
@@ -120,7 +123,7 @@ def validate(root: Path = ROOT) -> list[str]:
         errors.extend(validate_canonical_status(plan, passport))
         from scripts.check_job001_package import validate_closure
         errors.extend(validate_closure(root))
-        if "| \u0412\u0435\u0440\u0441\u0438\u044f | 1.6.2 |" not in plan or "| \u0412\u0435\u0440\u0441\u0438\u044f \u043f\u0430\u0441\u043f\u043e\u0440\u0442\u0430 | 2.77 |" not in passport:
+        if "| \u0412\u0435\u0440\u0441\u0438\u044f | 1.6.3 |" not in plan or "| \u0412\u0435\u0440\u0441\u0438\u044f \u043f\u0430\u0441\u043f\u043e\u0440\u0442\u0430 | 2.78 |" not in passport:
             errors.append("current canonical versions are not synchronized")
         workflow = (root / ".github/workflows/ci.yml").read_text(encoding="utf-8")
         if "python scripts/check_ai_provider_package.py" not in workflow:

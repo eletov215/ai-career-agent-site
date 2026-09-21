@@ -1,0 +1,143 @@
+{
+  "release": "AI-005 r2-technical / canonical 1.6.3",
+  "date": "2026-09-20",
+  "documents": 12,
+  "total_pdf_pages": 103,
+  "method": "DOCX rendered with LibreOffice using the document skill; all final pages visually reviewed at native 110 DPI without resizing; independent PDF glyph-boundary checks.",
+  "status": "PASS",
+  "scope": "Document layout only, not a website browser test or live-model quality proof.",
+  "items": [
+    {
+      "document": "PLAN_CURRENT",
+      "version": "1.6.3",
+      "pages": 54,
+      "all_pages_visually_reviewed": true,
+      "review_render_dpi": 110,
+      "geometry_check": "PASS",
+      "md_sha256": "9448e6c78212b307e1c04897a8d0e8ed8fc586e6d9b6718e428bc256cb8f7d1a",
+      "docx_sha256": "c2eb2b22e44463a2224e5680ce782b82d97cb2e837cfd96e76937e0365217290",
+      "pdf_sha256": "db4ec3e1533a2443a0c91598df713099358ae5e55ec4edf398bea835c5decf44"
+    },
+    {
+      "document": "PROJECT_PASSPORT",
+      "version": "2.78",
+      "pages": 20,
+      "all_pages_visually_reviewed": true,
+      "review_render_dpi": 110,
+      "geometry_check": "PASS",
+      "md_sha256": "958f7ecdae4c47eea3c1033d5770457b19ba33e43bf693b58ac9f1ab7a5e983b",
+      "docx_sha256": "16b034839354b2a55269837e17260f6d9d12306aaad422cd2c7e7d32d5bd9de9",
+      "pdf_sha256": "86dba7eacb91222f85f95de6c54680237311b156bdf84f30471ffb19de082e31"
+    },
+    {
+      "document": "SOURCE_AUDIT",
+      "version": "1.6.3",
+      "pages": 7,
+      "all_pages_visually_reviewed": true,
+      "review_render_dpi": 110,
+      "geometry_check": "PASS",
+      "md_sha256": "5e76f7a17b4ee12da2b5fee7fe8ebc8e5e9f9d4ebf9ef2b37312216ca8aa0a79",
+      "docx_sha256": "e5c00aae1942dfd6ffdb74524d7b55b139e916f4694760d5e05f2fcae2d14c54",
+      "pdf_sha256": "96d08b2e5260ecfe7ccb744cf401e9e0ad93690c629fbe3bc892ccd6846e8cdb"
+    },
+    {
+      "document": "ROADMAP",
+      "version": "1.6.3",
+      "pages": 3,
+      "all_pages_visually_reviewed": true,
+      "review_render_dpi": 110,
+      "geometry_check": "PASS",
+      "md_sha256": "c7f60c1eba3edf50c3c0cb171a8cb3703072689b79a1032ee3c6e677bba86bf1",
+      "docx_sha256": "dd9612e7f801d7f744d6e18b3d90334970ece9ae27a3a0202c72c0053f483465",
+      "pdf_sha256": "95bb27f650851d6ea6267849868d75a49c99c592430bb66ce74509dd4e30fb43"
+    },
+    {
+      "document": "CANONICAL_DOCUMENTS",
+      "version": "1.6.3",
+      "pages": 3,
+      "all_pages_visually_reviewed": true,
+      "review_render_dpi": 110,
+      "geometry_check": "PASS",
+      "md_sha256": "75771d1b142ea34996919eb29ceffc1dce4c4b72047b993aaa2f753e8b6d894c",
+      "docx_sha256": "cbd7d05acbce23f08ec983635318c3a81f75f95d4dffa491047a58ab53596965",
+      "pdf_sha256": "4249718e9588aff2f62f06fecfed4db69da3858c593a8267ecd8617df262453f"
+    },
+    {
+      "document": "AI005_ACCEPTANCE_SUMMARY",
+      "version": "1.0",
+      "pages": 2,
+      "all_pages_visually_reviewed": true,
+      "review_render_dpi": 110,
+      "geometry_check": "PASS",
+      "md_sha256": "84f8b77aec66ea10da7a8c04dd203a231f541f29b3c591ec34c662ffeed3aafc",
+      "docx_sha256": "845ebc98aed2e82491963fd6addb52054aeefc0e20be815121c2e5a2a0371879",
+      "pdf_sha256": "220ced7dc99cc97bcb00fe7a458430c848ec81631f42385680bfe398edcd1f4d"
+    },
+    {
+      "document": "AI005_IMPLEMENTATION",
+      "version": "2.0",
+      "pages": 2,
+      "all_pages_visually_reviewed": true,
+      "review_render_dpi": 110,
+      "geometry_check": "PASS",
+      "md_sha256": "32a3110e2c3965300b715ebb89fd53c1932a8f4edc1cc078daa603be2b5425b6",
+      "docx_sha256": "9d510f902d75b2d4f1c414ce5b02d4db34e161e771ee598a213b16b24ca7d133",
+      "pdf_sha256": "e86a9e9af9c6d7876668e10b2fc4fa8230f73dff44adb0d54f09794dad65eb7a"
+    },
+    {
+      "document": "AI005_RUNBOOK",
+      "version": "2.0",
+      "pages": 2,
+      "all_pages_visually_reviewed": true,
+      "review_render_dpi": 110,
+      "geometry_check": "PASS",
+      "md_sha256": "aa09b3acaeee688d13d14e48a6ffe98012d89c8c9eef21d78bde6fadba220b36",
+      "docx_sha256": "222fa0fd5d11db2a0d7f139a4e557314c3859e6fd39317b56dabed99697500c4",
+      "pdf_sha256": "d3c5b4db1b9f88c5044a8fa323b6b16a698ad5158609e6c023e7e7da133d3dd1"
+    },
+    {
+      "document": "AI005_VERIFICATION_STATUS",
+      "version": "2.0",
+      "pages": 2,
+      "all_pages_visually_reviewed": true,
+      "review_render_dpi": 110,
+      "geometry_check": "PASS",
+      "md_sha256": "7ff025d16c71651a5c9a7210abd349aa61c5eb31f3520cf2dd8a69f64191ff39",
+      "docx_sha256": "e5cec9be6cb1eb010d8883418fe1eb9d9c19653546649e741dafeb2103c26cbf",
+      "pdf_sha256": "694c9a8689c9bffeed7a4b80df6e897b722d0aed8a2e58b52542262d8e33490f"
+    },
+    {
+      "document": "NEXT_PACKAGE_PREPARATION",
+      "version": "1.4",
+      "pages": 6,
+      "all_pages_visually_reviewed": true,
+      "review_render_dpi": 110,
+      "geometry_check": "PASS",
+      "md_sha256": "7e774c1a3d859c853b689db40b8cec7db14fb39b83967955fe9ecf5cd1eb2404",
+      "docx_sha256": "2a2211234ea9544286a2490074b55a025381833f01707232090c90e6fcc86a17",
+      "pdf_sha256": "dc0cd447765f734f2a2279305d918f9a8717e695154dd210c2cbe08e68fce253"
+    },
+    {
+      "document": "AI005_SCOPE",
+      "version": "2.0",
+      "pages": 1,
+      "all_pages_visually_reviewed": true,
+      "review_render_dpi": 110,
+      "geometry_check": "PASS",
+      "md_sha256": "b8c5751c59880e97f81b6e83066580dea8bce188f307c500cb00880167eeb79f",
+      "docx_sha256": "584a9d43bccc1a5ecb3c6bcf6fbb14e4ec5ac59b70755c1b1b784d5bfe0d9eaf",
+      "pdf_sha256": "c980f6e89fc64eb91d6d29722585774245a23c106ca31d9db45cb0110ca1c556"
+    },
+    {
+      "document": "AI005_DELIVERY_GUIDE",
+      "version": "2.0",
+      "pages": 1,
+      "all_pages_visually_reviewed": true,
+      "review_render_dpi": 110,
+      "geometry_check": "PASS",
+      "md_sha256": "5557db12be8c81ef5d1072fd656c57a4591ad34f4457e45937a1dca018fb8bdd",
+      "docx_sha256": "113b239c67b88750be9b375b12bf548e69484fe12ef111c4976695460402cc61",
+      "pdf_sha256": "aa3d2bbb2084ab2aa6d0d8347bb915b8f1c993815dc380ac869f04654230e713"
+    }
+  ]
+}

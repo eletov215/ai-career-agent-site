@@ -271,7 +271,9 @@ class ProviderPolicyTests(unittest.TestCase):
         pending = "\u041d\u0423\u0416\u041d\u0410 \u041f\u0420\u041e\u0412\u0415\u0420\u041a\u0410"
         for bad_plan in (
             plan[:start] + plan[start:end].replace(complete, pending) + plan[end:],
-            plan.replace('PLAN_CURRENT 1.6.2;', 'PLAN_CURRENT 1.4.22;'),
+            plan.replace('PLAN_CURRENT 1.6.3;', 'PLAN_CURRENT 1.4.22;'),
+            plan.replace('PROJECT_PASSPORT 2.78;', 'PROJECT_PASSPORT 2.77;'),
+            plan.replace('schema20260917_0020 / main CI285 attempt2', 'schema20260917_0019 / main CI283'),
             plan.replace('| Current full package |', '| missing-package |'),
             plan.replace('AI-004 COMPLETE', 'AI-004 PENDING'),
             plan.replace('| JOB-001 |', '| missing-job |'),

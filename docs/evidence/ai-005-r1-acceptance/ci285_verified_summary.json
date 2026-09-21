@@ -1,0 +1,17 @@
+{
+  "run_id": 35319097205,
+  "run_number": 285,
+  "attempt": 2,
+  "head_sha": "be0eadf6c26a6a45b9a3764f5859a52651f372d2",
+  "branch": "main",
+  "conclusion": "success",
+  "python_job_id": 105527233222,
+  "ai005_step": "success",
+  "full_tests_step": "success",
+  "paid_jobs": "skipped",
+  "exact_test_counts": null,
+  "source": "Connected GitHub read on 2026-09-20",
+  "run_status": "completed",
+  "run_url": "https://github.com/eletov215/ai-career-agent-site/actions/runs/35319097205",
+  "scope": "r1 baseline only; not r2 CI; no full successful-attempt log count attested"
+}

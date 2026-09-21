@@ -1,5 +1,7 @@
 # AI Career Agent
 
+> AI-005 / 2026-09-20: r1 document workflow accepted with manual exclusions; r2 technical Alice integration is a local NEEDS_VERIFICATION candidate. Full AI-005 is IN_PROGRESS / LIVE_NOT_ACCEPTED. No real-data admission or automatic sending. See docs/AI005_DELIVERY_GUIDE.md.
+
 ## Current candidate / AI-005 r1
 
 General owned letter documents, manual editor, reviewed versions, local extractive templates, comparison/TXT/privacy are implemented locally. Full AI-005 is IN_PROGRESS; r1 NEEDS_VERIFICATION and LIVE_NOT_ACCEPTED. General real-input Alice runtime is not integrated. Accepted0019 / proposed0020; new CI/deploy NOT RUN. See docs/AI005_SCOPE.md and docs/AI005_RUNBOOK.md. The following JOB-001 block is the accepted predecessor, not a claim that letters are complete.
