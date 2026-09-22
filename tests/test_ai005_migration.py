@@ -27,7 +27,7 @@ def test_0020_round_trip_metadata_preserves_existing_saved_and_users(tmp_path):
     e=SimpleNamespace(db=db,owner=uid,svc=savedsvc);saved=savedsvc.save(uid,reference(e)[0])
     upgrade_database(url,'20260917_0020');assert current_revision(db.engine)=='20260917_0020'
     assert set(inspect(db.engine).get_table_names())-before==TABLES
-    command.check(alembic_config(url));upgrade_database(url)
+    upgrade_database(url);command.check(alembic_config(url))
     svc=CoverLetterService(CoverLetterRepository(db),signing_key='test')
     src=svc.source(uid,saved['id'])
     row=svc.create(uid,saved['id'],src['source_hash'],uuid4().hex,'en','short','professional',confirmed=True)
