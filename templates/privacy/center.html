@@ -14,6 +14,15 @@
 
     <section class="card spaced privacy-control-card">
       <div>
+        <div class="muted">LEGAL-001 · DRAFT</div>
+        <h2>Внешний AI и согласие</h2>
+        <p>Просмотрите текущий технический контур согласия, внешний AI provider, категории данных, версию документа и историю принятия/отзыва. DRAFT не является финальным юридическим документом и не включает production AI.</p>
+        <a class="btn btn-secondary" href="{{ url_for('privacy_controls.ai_consent') }}">Открыть AI consent</a>
+      </div>
+    </section>
+
+    <section class="card spaced privacy-control-card">
+      <div>
         <div class="muted">Экспорт</div>
         <h2>Скачать мои данные</h2>
         <p>ZIP содержит читаемые JSON-файлы и оригинальные изображения резюме. Парольные хеши, session/token hashes и OAuth access/refresh tokens намеренно не включаются.</p>

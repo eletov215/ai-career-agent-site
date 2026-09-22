@@ -4,12 +4,14 @@ from __future__ import annotations
 
 import io
 import logging
+from datetime import datetime, timezone
 
 from flask import Blueprint, g, render_template, request, send_file, session
 
 from routes.auth import login_required
 from security import limiter
 from services.auth import AuthService
+from services.consent import ConsentService, ConsentStaleStateError
 from services.privacy import (
     PrivacyAccountNotFoundError,
     PrivacyExportTooLargeError,
@@ -25,6 +27,7 @@ _DELETE_CONFIRMATION = "УДАЛИТЬ АККАУНТ"
 def create_privacy_blueprint(
     privacy_service: PrivacyService,
     auth_service: AuthService,
+    consent_service: ConsentService,
 ) -> Blueprint:
     bp = Blueprint("privacy_controls", __name__, url_prefix="/privacy-center")
 
@@ -38,6 +41,32 @@ def create_privacy_blueprint(
             ),
             status,
         )
+
+    def consent_context(*, error: str | None = None) -> dict:
+        state = consent_service.state(g.current_user.id)
+        def decorate(row):
+            if row is None:
+                return None
+            item = dict(row)
+            for key in ("accepted_at", "withdrawn_at", "created_at", "updated_at"):
+                value = item.get(key)
+                item[key + "_iso"] = (
+                    datetime.fromtimestamp(int(value), tz=timezone.utc).isoformat(timespec="seconds")
+                    if value is not None else None
+                )
+            return item
+        state["current"] = decorate(state.get("current"))
+        state["history"] = [decorate(row) for row in state.get("history", [])]
+        state["error"] = error
+        return state
+
+    def strict_consent_form() -> tuple[str | None, str]:
+        if request.is_json or request.files or (request.content_length or 0) > 16384:
+            raise ConsentStaleStateError("invalid_form")
+        allowed = {"csrf_token", "expected_record_id", "expected_revision"}
+        if set(request.form) != allowed or any(len(request.form.getlist(key)) != 1 for key in allowed):
+            raise ConsentStaleStateError("invalid_form")
+        return request.form.get("expected_record_id") or None, request.form["expected_revision"]
 
     @bp.after_request
     def protect_privacy_responses(response):  # noqa: ANN001
@@ -54,6 +83,48 @@ def create_privacy_blueprint(
             retention=privacy_service.retention_policy,
             delete_confirmation=_DELETE_CONFIRMATION,
         )
+
+    @bp.get("/ai-consent")
+    @login_required
+    @limiter.limit("60 per 5 minutes")
+    def ai_consent():
+        return render_template("privacy/ai_consent.html", **consent_context())
+
+    @bp.post("/ai-consent/accept")
+    @login_required
+    @limiter.limit("10 per hour")
+    def accept_ai_consent():
+        try:
+            record_id, revision = strict_consent_form()
+            consent_service.accept(
+                g.current_user.id,
+                expected_record_id=record_id,
+                expected_revision=revision,
+            )
+        except ConsentStaleStateError:
+            return render_template(
+                "privacy/ai_consent.html",
+                **consent_context(error="Состояние согласия изменилось. Обновите страницу и повторите явное действие."),
+            ), 409
+        return render_template("privacy/ai_consent.html", **consent_context()), 200
+
+    @bp.post("/ai-consent/withdraw")
+    @login_required
+    @limiter.limit("10 per hour")
+    def withdraw_ai_consent():
+        try:
+            record_id, revision = strict_consent_form()
+            consent_service.withdraw(
+                g.current_user.id,
+                expected_record_id=record_id,
+                expected_revision=revision,
+            )
+        except ConsentStaleStateError:
+            return render_template(
+                "privacy/ai_consent.html",
+                **consent_context(error="Состояние согласия изменилось. Обновите страницу и повторите явное действие."),
+            ), 409
+        return render_template("privacy/ai_consent.html", **consent_context()), 200
 
     @bp.post("/export")
     @login_required

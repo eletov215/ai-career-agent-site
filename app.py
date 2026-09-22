@@ -170,7 +170,7 @@ app.register_blueprint(
     )
 )
 PRIVACY_SERVICE = PrivacyService(STORAGE.privacy, SETTINGS)
-app.register_blueprint(create_privacy_blueprint(PRIVACY_SERVICE, AUTH_SERVICE))
+app.register_blueprint(create_privacy_blueprint(PRIVACY_SERVICE, AUTH_SERVICE, CONSENT_SERVICE))
 OAUTH_CONNECTIONS = STORAGE.oauth_connections
 OAUTH_IDENTITIES = OAuthIdentityService(OAUTH_CONNECTIONS)
 SYNC_RUNS = STORAGE.sync_runs

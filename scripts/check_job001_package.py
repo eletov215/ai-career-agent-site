@@ -136,7 +136,7 @@ def validate(root=ROOT):
         for rel in REQUIRED:
             if not (root/rel).is_file():
                 errors.append('Missing: '+rel)
-        expected_head = '20260917_0020' if (root/'docs/evidence/ai-005/change_boundary.json').is_file() else '20260917_0019'
+        expected_head = '20260922_0021' if (root/'docs/evidence/legal-001/change_boundary.json').is_file() else '20260917_0020' if (root/'docs/evidence/ai-005/change_boundary.json').is_file() else '20260917_0019'
         if f'CURRENT_REVISION = "{expected_head}"' not in (root/'database.py').read_text():
             errors.append('Expected schema 0019')
         source = (root/'migrations/versions/20260917_0019_saved_vacancies.py').read_text()
