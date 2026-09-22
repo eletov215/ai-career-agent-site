@@ -18,6 +18,7 @@ REQUIRED={
     "tests/test_legal001_migration.py","tests/test_legal001_service.py",
     "tests/test_legal001_routes.py","tests/test_legal001_admission.py",
     "tests/test_legal001_canonical.py","scripts/legal001_canonical.py",
+    "tests/test_legal001_binding.py","docs/LEGAL001_SOURCE_REVIEW.md",
     "docs/LEGAL001_SCOPE.md","docs/LEGAL001_IMPLEMENTATION.md",
     "docs/LEGAL001_RUNBOOK.md","docs/LEGAL001_VERIFICATION_STATUS.md",
     "docs/evidence/legal-001/ci304_verified_summary.json",
@@ -57,10 +58,16 @@ def validate(root=ROOT):
             errors.append("Application did not install LEGAL-001 admission")
         route=(root/"routes/privacy_controls.py").read_text()
         for marker in ("g.current_user.id","strict_consent_form","expected_record_id","expected_revision",
-                       "csrf_token","10 per hour","ConsentStaleStateError"):
+                       "csrf_token","10 per hour","ConsentStaleStateError","validate_form_token","consent_form_token"):
             if marker not in route: errors.append("Missing consent route control: "+marker)
         if "csrf.exempt" in route or "legal_approved" in route or "policy_version" in route:
             errors.append("Consent route accepts a forbidden bypass/policy selector")
+        consent=(root/"services/consent.py").read_text()
+        for marker in ("hmac.compare_digest", "asdict(self.policy)", "FORM_TTL_SECONDS", "issue_form_token"):
+            if marker not in consent: errors.append("Missing signed consent form control: "+marker)
+        generator=(root/"services/cover_letter_ai.py").read_text()
+        if generator.count("ticket['admission_scope']") < 5:
+            errors.append("Preview and result must bind the same admission scope")
         privacy=(root/"repositories/privacy.py").read_text()
         if '"ai_consents"' not in privacy or "AIConsent.user_id == user.id" not in privacy:
             errors.append("Privacy export/delete integration missing")

@@ -6,7 +6,7 @@ import io
 import logging
 from datetime import datetime, timezone
 
-from flask import Blueprint, g, render_template, request, send_file, session
+from flask import Blueprint, current_app, g, render_template, request, send_file, session
 
 from routes.auth import login_required
 from security import limiter
@@ -58,15 +58,25 @@ def create_privacy_blueprint(
         state["current"] = decorate(state.get("current"))
         state["history"] = [decorate(row) for row in state.get("history", [])]
         state["error"] = error
+        state["consent_form_token"] = consent_service.issue_form_token(
+            g.current_user.id, state["current"], signing_key=current_app.secret_key,
+        )
         return state
 
-    def strict_consent_form() -> tuple[str | None, str]:
+    def strict_consent_form(action: str) -> tuple[str | None, str]:
         if request.is_json or request.files or (request.content_length or 0) > 16384:
             raise ConsentStaleStateError("invalid_form")
-        allowed = {"csrf_token", "expected_record_id", "expected_revision"}
+        allowed = {"csrf_token", "expected_record_id", "expected_revision", "consent_form_token"}
         if set(request.form) != allowed or any(len(request.form.getlist(key)) != 1 for key in allowed):
             raise ConsentStaleStateError("invalid_form")
-        return request.form.get("expected_record_id") or None, request.form["expected_revision"]
+        record_id = request.form.get("expected_record_id") or None
+        revision = request.form["expected_revision"]
+        consent_service.validate_form_token(
+            g.current_user.id, request.form["consent_form_token"], action=action,
+            expected_record_id=record_id, expected_revision=revision,
+            signing_key=current_app.secret_key,
+        )
+        return record_id, revision
 
     @bp.after_request
     def protect_privacy_responses(response):  # noqa: ANN001
@@ -95,7 +105,7 @@ def create_privacy_blueprint(
     @limiter.limit("10 per hour")
     def accept_ai_consent():
         try:
-            record_id, revision = strict_consent_form()
+            record_id, revision = strict_consent_form("accept")
             consent_service.accept(
                 g.current_user.id,
                 expected_record_id=record_id,
@@ -113,7 +123,7 @@ def create_privacy_blueprint(
     @limiter.limit("10 per hour")
     def withdraw_ai_consent():
         try:
-            record_id, revision = strict_consent_form()
+            record_id, revision = strict_consent_form("withdraw")
             consent_service.withdraw(
                 g.current_user.id,
                 expected_record_id=record_id,

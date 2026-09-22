@@ -14,3 +14,8 @@ Implemented layers:
 - Existing AI-005 predecessor guards are preserved through an explicit LEGAL-001 successor hash map.
 
 No paid/external provider call is added by this package. Production policy remains DRAFT. GitHub CI #304 passed on candidate `fe3a7e1b553ccc9ebb5b956efce3779287291c04`; this is not deployment or legal acceptance.
+
+
+## Pre-merge source review
+
+Signed consent forms bind the displayed policy, owner, action, optimistic state and expiry; signed AI previews pin the exact admission scope across dispatch and result commit. See `LEGAL001_SOURCE_REVIEW.md`. The recorded CI304 above is historical evidence for its exact SHA; subsequent hardening requires its own green branch/PR CI. Production remains closed.

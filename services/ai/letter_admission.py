@@ -15,6 +15,7 @@ from domain.ai import PROVIDER, REAL_DATA_SUPPORTED
 from domain.cover_letter import LetterError, digest
 from services.ai.letter_contract import CONTRACT_VERSION, LetterContract
 from services.consent import ConsentNotActiveError, ConsentService
+from services.legal_policy import CURRENT_AI_CONSENT_POLICY
 
 
 class ClosedLetterAdmission:
@@ -30,7 +31,10 @@ class LegalLetterAdmission:
     def check(self, *, user_id: str, letter_id: str, contract: LetterContract,
               now: int, session=None) -> str:
         policy = self.consent_service.policy
-        if policy.provider != PROVIDER or contract.version != CONTRACT_VERSION:
+        if (policy.provider != PROVIDER or contract.version != CONTRACT_VERSION
+                or policy.purpose != CURRENT_AI_CONSENT_POLICY.purpose
+                or policy.scope != CURRENT_AI_CONSENT_POLICY.scope
+                or policy.consent_type != CURRENT_AI_CONSENT_POLICY.consent_type):
             raise LetterError("generation_unavailable")
         try:
             consent = self.consent_service.require_current_acceptance(user_id, session=session)
@@ -38,7 +42,7 @@ class LegalLetterAdmission:
             raise LetterError("generation_unavailable") from None
         if not policy.production_active or not REAL_DATA_SUPPORTED:
             raise LetterError("generation_unavailable")
-        return f"legal001:{policy.version}:{consent['id']}"
+        return f"legal001:{policy.version}:{policy.document_hash}:{consent['id']}:{consent['revision']}"
 
 
 SYNTHETIC_MANIFEST_SHA256 = "2a1068724e70646e56d902f50cc06a8a9b4db0307617194c4ad16317766c6005"

@@ -1,6 +1,10 @@
 """LEGAL-001 consent business logic."""
 from __future__ import annotations
 import re
+import hashlib
+import hmac
+import json
+from dataclasses import asdict
 import time
 from domain.consent import AIConsentPolicy
 from repositories.consent import ConsentConflictError, ConsentOwnerNotFoundError, ConsentRepository
@@ -13,11 +17,50 @@ class ConsentStaleStateError(ConsentError):
 class ConsentNotActiveError(ConsentError):
     pass
 
+FORM_TTL_SECONDS = 900
+
 _ID=re.compile(r"^[0-9a-fA-F-]{36}$")
 
 class ConsentService:
     def __init__(self, repository: ConsentRepository, *, policy: AIConsentPolicy=CURRENT_AI_CONSENT_POLICY, clock=time.time):
         self.repository=repository;self.policy=policy;self.clock=clock
+
+    def _form_signature(self, user_id, record_id, revision, action, issued, signing_key):
+        if not isinstance(signing_key, str) or not signing_key:
+            raise ConsentStaleStateError("invalid_form")
+        message = json.dumps(
+            ["legal001-form-v1", str(user_id), record_id, revision, action, issued,
+             asdict(self.policy)], sort_keys=True, separators=(",", ":"), ensure_ascii=True,
+        ).encode("utf-8")
+        return hmac.new(signing_key.encode("utf-8"), message, hashlib.sha256).hexdigest()
+
+    def issue_form_token(self, user_id, current, *, signing_key):
+        """Bind the rendered policy, owner, action and optimistic state, not a client version."""
+        record_id = current["id"] if current else None
+        revision = current["revision"] if current else 0
+        action = "withdraw" if current and current["status"] == "accepted" else "accept"
+        issued = int(self.clock())
+        signature = self._form_signature(user_id, record_id, revision, action, issued, signing_key)
+        return str(issued) + "." + signature
+
+    def validate_form_token(self, user_id, token, *, action, expected_record_id,
+                            expected_revision, signing_key):
+        """Reject old empty forms after policy changes as well as tampering/replay."""
+        record_id, revision = self.expected_state(expected_record_id, expected_revision)
+        try:
+            if action not in ("accept", "withdraw") or not isinstance(token, str) or len(token) > 100:
+                raise ValueError
+            raw_issued, signature = token.split(".")
+            if not raw_issued.isascii() or not raw_issued.isdecimal() or len(signature) != 64:
+                raise ValueError
+            issued = int(raw_issued)
+            if not issued <= int(self.clock()) < issued + FORM_TTL_SECONDS:
+                raise ValueError
+            expected = self._form_signature(user_id, record_id, revision, action, issued, signing_key)
+            if not hmac.compare_digest(signature, expected):
+                raise ValueError
+        except (ValueError, TypeError):
+            raise ConsentStaleStateError("stale_state") from None
 
     @staticmethod
     def expected_state(record_id, revision):

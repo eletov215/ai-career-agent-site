@@ -14,6 +14,7 @@ PREVIOUS_EXISTING={
     "services/ai/letter_admission.py":"df9d3ee915df579341a8b29c8888e205b63e4f11fcef219b98c12207e8902fa8",
     "routes/privacy_controls.py":"5ac8056b892e816f7a548350e3111940354f1a182044adf3e354f18d566e6099",
     "templates/privacy/center.html":"756924e30a9e64d7c254ca79bc3d1253dadea55203835fae96e49a0862fec067",
+    "services/cover_letter_ai.py":"9995a750518f06eec81f91e92e8ceddf889eb21fc29c8245b9ad94c11c163dd5",
 }
 
 EXPECTED_EXISTING={
@@ -23,10 +24,11 @@ EXPECTED_EXISTING={
     "repositories/privacy.py":"2df3c3fc02dbec9e0a5289cb98860f764705bd6d3d05c5f324715553762015c8",
     "services/privacy.py":"14f272f0c47b850d21c2c9d06186d1533857c0c0d931a00de7beaeca2b4f6a16",
     "services/storage.py":"a1480f0977cca00e7e7218b84f92cd35d659f6cb0743ab6a65b28258ec20bd0c",
-    "services/ai/letter_admission.py":"7c2017782ea38f997ef16c63999c3bafd1a3d510fef2db53a9317c23a02ee610",
+    "services/ai/letter_admission.py":"4671977d06b8a041091f85fe6a162dd420c9defa48affc3801441dccdd07c41c",
     "repositories/__init__.py":"ddf9d237ad13a75b362d6d4fabc68617294e4e92c26fca59b87fa89446d73235",
-    "routes/privacy_controls.py":"4bdd145bb9069e6785e020ef1ef38e6bae01d1a0ae90ebabbcf3d7edfb4374d2",
+    "routes/privacy_controls.py":"a9d806588c2ef6b7259b7745e8ff59710b82dc4f0b62424eff8fa4659d79e9e7",
     "templates/privacy/center.html":"1456023b9e3db561eab1416f6041fe5c2f975b3ad412fb29c40147bb33614fbc",
+    "services/cover_letter_ai.py":"de1fd9365a0515ab3f31d0bada43c2001a58a04bc8eec421b9ae04b50d5d97a3",
 }
 
 def _matches(path: Path, expected: str) -> bool:
