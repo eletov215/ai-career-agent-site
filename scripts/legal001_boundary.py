@@ -3,6 +3,19 @@ from pathlib import Path
 import hashlib
 import json
 
+PREVIOUS_EXISTING={
+    "app.py":"1b3527d6aa4725a0801e9209d6803bc485a6f5dfd645c8bd4fcd361519caa749",
+    "database.py":"84bc8182c749c225c510d76416d9bb3aefd9b04b7b9da8910a1c4c65726fe947",
+    "models/__init__.py":"5f1e851ce9d5e1a0b0163aa276d27324a69a9ca4501e091d8cc7d44fecc7bf66",
+    "repositories/__init__.py":"977815ca49d879d275e6afcdc5422234d24ec87ef79391250b919fcb68d454c9",
+    "repositories/privacy.py":"e52ca53338a37f793e2ce93862ef946378896cbc5f41949652bd336f77d5a858",
+    "services/privacy.py":"4828acb4635d9f4b19f9b079b409814dde01182331424bbed28c39a4e775b53d",
+    "services/storage.py":"27bc958a32c07d6c9c0db973ed4f1fb03c04f650b2f6a8f16a877870adc9e32a",
+    "services/ai/letter_admission.py":"df9d3ee915df579341a8b29c8888e205b63e4f11fcef219b98c12207e8902fa8",
+    "routes/privacy_controls.py":"5ac8056b892e816f7a548350e3111940354f1a182044adf3e354f18d566e6099",
+    "templates/privacy/center.html":"756924e30a9e64d7c254ca79bc3d1253dadea55203835fae96e49a0862fec067",
+}
+
 EXPECTED_EXISTING={
     "app.py":"170140c8c17b8fbb949f9e4b50be7adbc7ef2d9d9aa393b24584fe075eb14820",
     "database.py":"08ccc3b8b561067562bd74a18ac56d78d1c6c1735a0ca12f7a66716a85a63620",

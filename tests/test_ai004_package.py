@@ -50,10 +50,16 @@ def test_existing_prompt_policy_dependency_and_frontend_bytes_preserved():
         if rel.startswith(('evals/','prompts/','schemas/','templates/','static/','docs/policies/','services/ai/')) or rel in {'config.py','render.yaml','requirements.txt','requirements-dev.txt','domain/ai.py'}:
             from scripts.check_job001_package import load_boundary as job_boundary
             successor = job_boundary(ROOT)
+            current_sha = sha
             if rel in successor:
-                assert successor[rel]['previous_sha256'] == sha, rel
-                sha = successor[rel]['current_sha256']
-            assert hashlib.sha256((ROOT/rel).read_bytes()).hexdigest()==sha,rel
+                assert successor[rel]['previous_sha256'] == current_sha, rel
+                current_sha = successor[rel]['current_sha256']
+            if (ROOT/'docs/evidence/legal-001/change_boundary.json').is_file():
+                from scripts.legal001_boundary import EXPECTED_EXISTING, PREVIOUS_EXISTING
+                if rel in EXPECTED_EXISTING:
+                    assert PREVIOUS_EXISTING[rel] == current_sha, rel
+                    current_sha = EXPECTED_EXISTING[rel]
+            assert hashlib.sha256((ROOT/rel).read_bytes()).hexdigest()==current_sha,rel
 
 
 def render_page(name,**values):
