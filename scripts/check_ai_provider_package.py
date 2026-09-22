@@ -79,6 +79,9 @@ def validate(root: Path = ROOT) -> list[str]:
         preserved = json.loads((evidence_dir / "preserved_files_sha256.json").read_text(encoding="utf-8"))
         from scripts.check_ai001_package import load_boundary
         successor = load_boundary(root)
+        if (root / "docs/evidence/legal-001/change_boundary.json").is_file():
+            from scripts.legal001_boundary import successor_hashes
+            successor = {**successor, **successor_hashes(root)}
         for relative, expected in preserved["files"].items():
             if relative in successor:
                 expected = successor[relative]["current_sha256"]
