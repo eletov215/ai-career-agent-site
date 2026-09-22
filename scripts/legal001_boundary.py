@@ -11,6 +11,9 @@ EXPECTED_EXISTING={
     "services/privacy.py":"14f272f0c47b850d21c2c9d06186d1533857c0c0d931a00de7beaeca2b4f6a16",
     "services/storage.py":"a1480f0977cca00e7e7218b84f92cd35d659f6cb0743ab6a65b28258ec20bd0c",
     "services/ai/letter_admission.py":"7c2017782ea38f997ef16c63999c3bafd1a3d510fef2db53a9317c23a02ee610",
+    "repositories/__init__.py":"ddf9d237ad13a75b362d6d4fabc68617294e4e92c26fca59b87fa89446d73235",
+    "routes/privacy_controls.py":"4bdd145bb9069e6785e020ef1ef38e6bae01d1a0ae90ebabbcf3d7edfb4374d2",
+    "templates/privacy/center.html":"1456023b9e3db561eab1416f6041fe5c2f975b3ad412fb29c40147bb33614fbc",
 }
 
 def _matches(path: Path, expected: str) -> bool:
