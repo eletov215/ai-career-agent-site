@@ -226,6 +226,7 @@ class PrivacyService:
             "cover_letters": len(snapshot.get("cover_letters", [])),
             "cover_letter_versions": len(snapshot.get("cover_letter_versions", [])),
             "cover_letter_proposals": len(snapshot.get("cover_letter_proposals", [])),
+            "ai_consents": len(snapshot.get("ai_consents", [])),
             "saved_vacancies": len(snapshot.get("saved_vacancies", [])),
             "saved_vacancy_sources": len(snapshot.get("saved_vacancy_sources", [])),
             "vacancy_match_reports": len(snapshot.get("vacancy_matches", [])),
