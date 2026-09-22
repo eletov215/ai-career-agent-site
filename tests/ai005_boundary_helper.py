@@ -13,3 +13,13 @@ def copy_ai005_boundary(root,destination):
         for rel in C2|N2|E2:
             target=destination/rel;target.parent.mkdir(parents=True,exist_ok=True)
             shutil.copy2(root/rel,target)
+
+
+    if (root/'docs/evidence/legal-001/change_boundary.json').is_file():
+        from scripts.legal001_boundary import EXPECTED_EXISTING
+        for rel in set(EXPECTED_EXISTING) | {
+            'docs/evidence/legal-001/change_boundary.json',
+            'scripts/legal001_boundary.py',
+        }:
+            target=destination/rel;target.parent.mkdir(parents=True,exist_ok=True)
+            shutil.copy2(root/rel,target)

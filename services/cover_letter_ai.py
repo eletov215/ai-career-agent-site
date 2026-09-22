@@ -17,7 +17,7 @@ from services.ai.letter_admission import ClosedLetterAdmission
 from services.ai.letter_contract import build_writing_contract, RECIPIENT
 
 TICKET_SECONDS = 600
-TICKET_VERSION = 'letter-preview-v1'
+TICKET_VERSION = 'letter-preview-v2-consent-bound'
 
 
 def _encode(raw: bytes) -> str:
@@ -48,10 +48,11 @@ class CoverLetterGenerator:
         identifier(user_id); identifier(letter_id); expected=revision(expected)
         record=self.repository.generation_snapshot(user_id,letter_id,expected)
         contract=build_writing_contract(record['source'],fact_ids,language,length,tone)
-        self._check(user_id,letter_id,contract)
+        admission_scope=self._check(user_id,letter_id,contract)
         now=int(self.clock())
         ticket={'v':TICKET_VERSION,'user':user_id,'letter':letter_id,'revision':expected,
                 'source_hash':record['source_hash'],'payload_hash':contract.payload_hash,
+                'admission_scope':admission_scope,
                 'facts':fact_ids,'options':{'language':language,'length':length,'tone':tone},
                 'issued':now,'expires':now+TICKET_SECONDS,'operation':secrets.token_urlsafe(24)}
         raw=_encode(canonical(ticket).encode())
@@ -74,7 +75,7 @@ class CoverLetterGenerator:
                     out[key]=value
                 return out
             ticket=json.loads(_decode(raw),object_pairs_hook=unique)
-            if set(ticket)!={'v','user','letter','revision','source_hash','payload_hash','facts','options','issued','expires','operation'}:
+            if set(ticket)!={'v','user','letter','revision','source_hash','payload_hash','facts','options','issued','expires','operation','admission_scope'}:
                 raise ValueError
             if ticket['v']!=TICKET_VERSION or ticket['user']!=user_id or ticket['letter']!=letter_id:
                 raise ValueError
@@ -82,6 +83,8 @@ class CoverLetterGenerator:
             if (type(ticket['issued']) is not int or type(ticket['expires']) is not int
                     or ticket['expires']-ticket['issued']!=TICKET_SECONDS
                     or not ticket['issued']<=now<ticket['expires']):
+                raise ValueError
+            if not isinstance(ticket['admission_scope'],str) or not 1 <= len(ticket['admission_scope']) <= 512:
                 raise ValueError
             revision(ticket['revision']);check_hash(ticket['source_hash']);check_hash(ticket['payload_hash'])
             if not isinstance(ticket['operation'],str) or len(ticket['operation'])!=32:
@@ -103,10 +106,11 @@ class CoverLetterGenerator:
         contract=build_writing_contract(record['source'],ticket['facts'],**opts)
         if contract.payload_hash!=ticket['payload_hash'] or record['source_hash']!=ticket['source_hash']:
             raise LetterError('stale_source')
-        self._check(user_id,letter_id,contract)
+        if self._check(user_id,letter_id,contract)!=ticket['admission_scope']:
+            raise LetterError('generation_unavailable')
         operation=self._hash(['ai005-paid-operation',user_id,ticket['operation']])
         request_hash=self._hash(['ai005-paid-request',user_id,letter_id,ticket['revision'],
-                                 ticket['source_hash'],contract.payload_hash,contract.version])
+                                 ticket['source_hash'],contract.payload_hash,contract.version,ticket['admission_scope']])
 
         def preflight():
             current=self.repository.generation_snapshot(user_id,letter_id,ticket['revision'])
@@ -114,10 +118,13 @@ class CoverLetterGenerator:
                 raise LetterError('stale_source')
             if int(self.clock())>=ticket['expires']:
                 raise LetterError('invalid_preview')
-            self._check(user_id,letter_id,contract)
+            if self._check(user_id,letter_id,contract)!=ticket['admission_scope']:
+                raise LetterError('generation_unavailable')
 
         def store(session,event,validated):
             decision=self._check(user_id,letter_id,contract,session=session)
+            if decision!=ticket['admission_scope']:
+                raise LetterError('generation_unavailable')
             # Store no opaque provider IDs/errors/raw response or review token.
             evidence={**validated['evidence'],'runtime_request_id':event.id,
                       'admission_scope':decision,'review':'pending_user_confirmation'}

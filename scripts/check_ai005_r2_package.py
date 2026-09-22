@@ -28,12 +28,20 @@ def load_boundary(root=ROOT):
             or set(data['reviewed_runtime_changes'])!=CHANGES or set(data['new_runtime_sha256'])!=NEW_RUNTIME
             or base['source_commit']!=BASE_COMMIT or base['source_tree']!=BASE_TREE):
         raise ValueError('Invalid AI-005 r2 scope')
+    legal={}
+    if (root/'docs/evidence/legal-001/change_boundary.json').is_file():
+        from scripts.legal001_boundary import successor_hashes
+        legal=successor_hashes(root)
+    effective={}
     for rel,row in data['reviewed_runtime_changes'].items():
-        if row['previous_sha256']!=base['files'].get(rel) or not matches(root/rel,row['current_sha256']):
+        current=legal.get(rel,row['current_sha256'])
+        if row['previous_sha256']!=base['files'].get(rel) or not matches(root/rel,current):
             raise ValueError('AI-005 r2 predecessor/runtime mismatch')
+        effective[rel]={**row,'current_sha256':current}
     for rel,sha in data['new_runtime_sha256'].items():
-        if rel in base['files'] or not matches(root/rel,sha):raise ValueError('AI-005 r2 new source mismatch')
-    return data['reviewed_runtime_changes']
+        current=legal.get(rel,sha)
+        if rel in base['files'] or not matches(root/rel,current):raise ValueError('AI-005 r2 new source mismatch')
+    return effective
 
 def validate(root=ROOT):
     errors=[]
@@ -60,7 +68,8 @@ def validate(root=ROOT):
         if 'COVER_LETTER_GENERATOR = CoverLetterGenerator(' not in code or 'SyntheticLetterAdmission' in code:
             errors.append('Default application admission must remain closed')
         gate=(root/'services/ai/letter_admission.py').read_text()
-        if "raise LetterError('generation_unavailable')" not in gate or 'os.environ' in gate:
+        if ('ClosedLetterAdmission' not in gate or 'generation_unavailable' not in gate
+                or 'os.environ' in gate):
             errors.append('Legal gate cannot be an environment boolean')
         if 'REAL_DATA_SUPPORTED = False' not in (root/'domain/ai.py').read_text():errors.append('Real data enabled')
         for rel in NEW_RUNTIME|CHANGES:

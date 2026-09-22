@@ -1,0 +1,43 @@
+name: Package preflight
+
+on:
+  push:
+    branches: [main, legal001-consent-foundation]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  package-preflight:
+    name: Offline package and canonical preflight
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check out exact source
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+      - name: Check every inherited gate and canonical status without runtime dependencies
+        run: python -S -m unittest tests.test_legal001_canonical -v
+      - name: Archive tracked source for reproducible review
+        if: always()
+        shell: bash
+        run: |
+          mkdir -p "$RUNNER_TEMP/legal001-source"
+          git archive --format=zip --output="$RUNNER_TEMP/legal001-source/source.zip" HEAD
+          git archive --format=zip --output="$RUNNER_TEMP/legal001-source/baseline.zip" f5ce1f42836e3872854332324f2ebdd9c8934b36
+          git rev-parse HEAD HEAD^{tree} > "$RUNNER_TEMP/legal001-source/source-identifiers.txt"
+      - name: Retain private diagnostic source snapshot
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: legal001-reviewed-source
+          path: ${{ runner.temp }}/legal001-source/
+          if-no-files-found: error
+          retention-days: 3

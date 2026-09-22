@@ -88,7 +88,7 @@ def validate(root:Path=ROOT)->list[str]:
                 errors.append('Accepted schema changed: '+p.name)
         db=(root/'database.py').read_text()
         successor=(root/'docs/evidence/ai-002/change_boundary.json').is_file()
-        expected_head='20260917_0020' if (root/'docs/evidence/ai-005/change_boundary.json').is_file() else '20260917_0019' if (root/'docs/evidence/job-001/change_boundary.json').is_file() else '20260916_0018' if (root/'docs/evidence/ai-004/change_boundary.json').is_file() else '20260916_0017' if (root/'docs/evidence/ai-003/change_boundary.json').is_file() else '20260915_0016' if successor else '20260914_0015'
+        expected_head='20260922_0021' if (root/'docs/evidence/legal-001/change_boundary.json').is_file() else '20260917_0020' if (root/'docs/evidence/ai-005/change_boundary.json').is_file() else '20260917_0019' if (root/'docs/evidence/job-001/change_boundary.json').is_file() else '20260916_0018' if (root/'docs/evidence/ai-004/change_boundary.json').is_file() else '20260916_0017' if (root/'docs/evidence/ai-003/change_boundary.json').is_file() else '20260915_0016' if successor else '20260914_0015'
         if f'CURRENT_REVISION = "{expected_head}"' not in db:errors.append('Unexpected schema head')
         if successor:
             from scripts.check_ai002_package import validate as validate_ai002

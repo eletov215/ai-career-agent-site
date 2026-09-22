@@ -12,6 +12,7 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 from scripts.ai_provider_policy import PolicyError, cost_report, load_policy
+from scripts.legal001_canonical import validate_versions
 
 DOCUMENTS = (
     "AI_PROVIDER001_DECISION", "AI_PROVIDER001_DATA_AND_FAILURE_POLICY",
@@ -25,8 +26,8 @@ HARD_COUNTERS = (
 
 
 def validate_canonical_status(plan: str, passport: str) -> list[str]:
-    """Reject status drift after the provider package is formally closed."""
-    errors: list[str] = []
+    """Validate current release metadata and preserve accepted historical scopes."""
+    errors: list[str] = validate_versions(plan, passport)
     complete = "ВЫПОЛНЕНО"
     deferred = "ОТЛОЖЕНО ДО РЕШЕНИЯ ВЛАДЕЛЬЦА"
     status = "**Статус:**"
@@ -36,11 +37,11 @@ def validate_canonical_status(plan: str, passport: str) -> list[str]:
     roadmap = next((line for line in plan.splitlines() if line.startswith("| AI-PROVIDER-001 |")), "")
     if complete not in roadmap:
         errors.append("AI-PROVIDER-001 roadmap must be complete")
-    legal_rows = [line for line in plan.splitlines() if line.startswith("| LEGAL-001 | P0") ]
+    legal_rows = [line for line in plan.splitlines() if line.startswith("| LEGAL-001 | P0")]
     if not legal_rows or any(deferred not in line for line in legal_rows):
         errors.append("LEGAL-001 must preserve the recorded owner deferral")
     for label, text in (("plan", plan), ("passport", passport)):
-        head = text.split('<!-- ACA-CANONICAL-STATUS:START -->',1)[-1].split('<!-- ACA-CANONICAL-STATUS:END -->',1)[0]
+        head = text.split('<!-- ACA-CANONICAL-STATUS:START -->', 1)[-1].split('<!-- ACA-CANONICAL-STATUS:END -->', 1)[0]
         current = next((line for line in head.splitlines() if line.startswith("| Current full package |")), "")
         previous = next((line for line in head.splitlines() if line.startswith("| Accepted predecessor |")), "")
         accepted = next((line for line in head.splitlines() if line.startswith("| Accepted foundation |")), "")
@@ -52,10 +53,8 @@ def validate_canonical_status(plan: str, passport: str) -> list[str]:
             errors.append(label + " accepted AI-004 foundation is inconsistent")
     job_card = re.search(r"^#### JOB-001[^\n]*\n(.*?)(?=^#### |\Z)", plan, re.M | re.S)
     job_row = next((line for line in plan.splitlines() if line.startswith("| JOB-001 |")), "")
-    pending = "\u041d\u0423\u0416\u041d\u0410 \u041f\u0420\u041e\u0412\u0415\u0420\u041a\u0410"
     if job_card is None or status + " " + complete not in job_card.group(1) or complete not in job_row:
         errors.append("JOB-001 must retain the accepted functional status")
-    # The new package closure does not reopen the earlier provider decision.
     match_card = re.search(r"^#### AI-004[^\n]*\n(.*?)(?=^#### |\Z)", plan, re.M | re.S)
     if match_card is None or status + " " + complete not in match_card.group(1):
         errors.append("AI-004 card must preserve the accepted reference scope")
@@ -63,11 +62,13 @@ def validate_canonical_status(plan: str, passport: str) -> list[str]:
     if complete not in match_row:
         errors.append("AI-004 roadmap must be complete")
     doc = re.search(r"^#### DOC-001[^\n]*\n(.*?)(?=^#{1,4} |\Z)", plan, re.M | re.S)
-    # Validate the active row, not a historical addendum with similar tokens.
+    # Preserve the dated pre-LEGAL checkpoint inside the retained plan body.
+    # Current release versions are checked separately above, from the first
+    # metadata table, not by finding old version strings in the history.
     inventory = next((line for line in (doc.group(1) if doc else "").splitlines()
                       if line.startswith("**Current state:**")), "")
     if not all(v in inventory for v in ("PLAN_CURRENT 1.6.3;", "PROJECT_PASSPORT 2.78;", "SOURCE_AUDIT 1.6.3", "20260917_0020", "CI285 attempt2", "r2 NEEDS_VERIFICATION", "AI-005 IN_PROGRESS / LIVE_NOT_ACCEPTED")):
-        errors.append("DOC-001 active version inventory is stale")
+        errors.append("Historical DOC-001 checkpoint is inconsistent")
     return errors
 
 
@@ -79,6 +80,12 @@ def validate(root: Path = ROOT) -> list[str]:
         preserved = json.loads((evidence_dir / "preserved_files_sha256.json").read_text(encoding="utf-8"))
         from scripts.check_ai001_package import load_boundary
         successor = load_boundary(root)
+        if (root / "docs/evidence/legal-001/change_boundary.json").is_file():
+            from scripts.legal001_boundary import successor_hashes
+            successor = {
+                **successor,
+                **{relative: {"current_sha256": sha} for relative, sha in successor_hashes(root).items()},
+            }
         for relative, expected in preserved["files"].items():
             if relative in successor:
                 expected = successor[relative]["current_sha256"]
@@ -88,8 +95,6 @@ def validate(root: Path = ROOT) -> list[str]:
                 continue
             data = path.read_bytes()
             actual = hashlib.sha256(data).hexdigest()
-            # Git autocrlf is not an architectural change. The source ZIP audit
-            # separately uses exact byte comparisons when packaging releases.
             normalized = hashlib.sha256(data.replace(b"\r\n", b"\n")).hexdigest()
             if actual != expected and normalized != expected:
                 errors.append(f"preserved application/benchmark boundary changed: {relative}")
@@ -110,7 +115,7 @@ def validate(root: Path = ROOT) -> list[str]:
         if saved_cost != actual_cost:
             errors.append("cost snapshot is not reproducible from checked prices and usage")
         sources = json.loads((evidence_dir / "research_sources.json").read_text(encoding="utf-8"))
-        if {row["id"] for row in sources["sources"]} != {f"S{i}" for i in range(1,11)}:
+        if {row["id"] for row in sources["sources"]} != {f"S{i}" for i in range(1, 11)}:
             errors.append("source register is incomplete")
         if sources["checked_on"] != policy["checked_on"]:
             errors.append("source register and policy check dates differ")
@@ -123,8 +128,6 @@ def validate(root: Path = ROOT) -> list[str]:
         errors.extend(validate_canonical_status(plan, passport))
         from scripts.check_job001_package import validate_closure
         errors.extend(validate_closure(root))
-        if "| \u0412\u0435\u0440\u0441\u0438\u044f | 1.6.3 |" not in plan or "| \u0412\u0435\u0440\u0441\u0438\u044f \u043f\u0430\u0441\u043f\u043e\u0440\u0442\u0430 | 2.78 |" not in passport:
-            errors.append("current canonical versions are not synchronized")
         workflow = (root / ".github/workflows/ci.yml").read_text(encoding="utf-8")
         if "python scripts/check_ai_provider_package.py" not in workflow:
             errors.append("ordinary CI must check the provider decision package")
@@ -139,8 +142,8 @@ def validate(root: Path = ROOT) -> list[str]:
 
 def main() -> int:
     errors = validate()
-    print(json.dumps({"ok":not errors,"package":"AI-PROVIDER-001","scope":"offline only",
-                      "owner_approval":"approved","external_ci":"not_attested_by_local_check","errors":errors},ensure_ascii=False,indent=2))
+    print(json.dumps({"ok": not errors, "package": "AI-PROVIDER-001", "scope": "offline only",
+                      "owner_approval": "approved", "external_ci": "not_attested_by_local_check", "errors": errors}, ensure_ascii=False, indent=2))
     return int(bool(errors))
 
 

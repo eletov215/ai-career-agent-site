@@ -5,6 +5,7 @@ from .auth import AuthSession, AuthToken
 from .base import Base
 from .saved_vacancy import SavedVacancy, SavedVacancySource
 from .cover_letter import CoverLetter, CoverLetterVersion, CoverLetterProposal
+from .consent import AIConsent
 from .vacancy_match import VacancyMatchReport, VacancyMatchSeries
 from .resume_interview import ResumeInterviewSession, ResumeInterviewEvent
 from .resume_analysis import ResumeAnalysisReport, ResumeAnalysisDecision, ResumeAnalysisReviewEvent
@@ -27,6 +28,7 @@ from .vacancy import Vacancy, VacancySourceRecord
 
 __all__ = [
     "Base",
+    "AIConsent",
     "SavedVacancy",
     "SavedVacancySource",
     "VacancyMatchReport",

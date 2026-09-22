@@ -10,6 +10,7 @@ from typing import Any
 
 from sqlalchemy import delete, func, or_, select, text
 from models.ai import AIUsageEvent, AIUserPlan, AIBudgetBucket
+from models.consent import AIConsent
 from models.resume_analysis import ResumeAnalysisReport, ResumeAnalysisDecision, ResumeAnalysisReviewEvent
 from repositories.resume_analysis import report_view
 from models.vacancy_match import VacancyMatchReport, VacancyMatchSeries
@@ -217,6 +218,13 @@ class PrivacyRepository(RepositoryBase):
                                       .order_by(AIUsageEvent.created_at.asc()).limit(5001)).all()
             if len(ai_rows) > 5000:
                 raise PrivacySnapshotConflictError("ai_export_limit")
+            consent_rows = session.scalars(
+                select(AIConsent).where(AIConsent.user_id == user.id)
+                .order_by(AIConsent.created_at.asc(), AIConsent.cycle.asc(), AIConsent.id.asc())
+                .limit(501)
+            ).all()
+            if len(consent_rows) > 500:
+                raise PrivacySnapshotConflictError("consent_export_limit")
             analysis_rows = session.scalars(select(ResumeAnalysisReport).where(ResumeAnalysisReport.user_id == user.id)
                 .order_by(ResumeAnalysisReport.created_at, ResumeAnalysisReport.id).limit(101)).all()
             if len(analysis_rows) > 100:
@@ -281,6 +289,25 @@ class PrivacyRepository(RepositoryBase):
                 "resume_interviews": interview_export,
                 "resume_analyses": analysis_export,
                 "ai_usage": [public_usage(row) for row in ai_rows],
+                "ai_consents": [
+                    {
+                        "id": row.id,
+                        "consent_type": row.consent_type,
+                        "scope": row.scope,
+                        "policy_version": row.policy_version,
+                        "policy_hash": row.policy_hash,
+                        "provider": row.provider,
+                        "purpose": row.purpose,
+                        "status": row.status,
+                        "cycle": row.cycle,
+                        "revision": row.revision,
+                        "accepted_at": row.accepted_at,
+                        "withdrawn_at": row.withdrawn_at,
+                        "created_at": row.created_at,
+                        "updated_at": row.updated_at,
+                    }
+                    for row in consent_rows
+                ],
                 "schema_version": 1,
                 "account": {
                     "id": user.id,
@@ -502,6 +529,7 @@ class PrivacyRepository(RepositoryBase):
             "vacancy_match_series": self._count(session, VacancyMatchSeries, VacancyMatchSeries.user_id == user_id),
             "resume_interview_sessions": self._count(session, ResumeInterviewSession, ResumeInterviewSession.user_id == user_id),
             "resume_analysis_reports": self._count(session, ResumeAnalysisReport, ResumeAnalysisReport.user_id == user_id),
+            "ai_consents": self._count(session, AIConsent, AIConsent.user_id == user_id),
         }
         if profile is not None:
             counts["career_profile_versions"] = self._count(

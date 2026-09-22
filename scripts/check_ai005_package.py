@@ -36,20 +36,24 @@ def load_boundary(root=ROOT):
     if (root/'docs/evidence/ai-005-r2/change_boundary.json').is_file():
         from scripts.check_ai005_r2_package import load_boundary as load_r2
         successor=load_r2(root)
+    legal={}
+    if (root/'docs/evidence/legal-001/change_boundary.json').is_file():
+        from scripts.legal001_boundary import successor_hashes
+        legal=successor_hashes(root)
     effective={}
     for rel,row in data['reviewed_runtime_changes'].items():
         if row['previous_sha256']!=base['files'].get(rel):
             raise ValueError('AI-005 changed source mismatch')
         if rel in successor and successor[rel]['previous_sha256']!=row['current_sha256']:
             raise ValueError('AI-005 r2 predecessor mismatch')
-        current=successor.get(rel,row)['current_sha256']
+        current=legal.get(rel,successor.get(rel,row)['current_sha256'])
         if not matches(root/rel,current):raise ValueError('AI-005 changed source mismatch')
         # Preserve the original predecessor for JOB-001 and older hash chains.
         effective[rel]={**row,'current_sha256':current}
     for rel,sha in data['new_runtime_sha256'].items():
         if rel in successor and successor[rel]['previous_sha256']!=sha:
             raise ValueError('AI-005 r2 new predecessor mismatch')
-        current=successor.get(rel,{}).get('current_sha256',sha)
+        current=legal.get(rel,successor.get(rel,{}).get('current_sha256',sha))
         if not matches(root/rel,current):raise ValueError('AI-005 new runtime mismatch')
     return {**successor,**effective}
 
@@ -63,7 +67,8 @@ def validate(root=ROOT):
             if rel.startswith(('services/ai/','evals/','prompts/','schemas/','docs/policies/')) or rel in {
                 'domain/ai.py','config.py','render.yaml','requirements.txt','requirements-dev.txt','docs/LEGAL001_DEFERRED_DECISION.md'}:
                 if not matches(root/rel,sha):errors.append('Protected source changed: '+rel)
-        if 'CURRENT_REVISION = "20260917_0020"' not in (root/'database.py').read_text():errors.append('Expected head 0020')
+        expected_head='20260922_0021' if (root/'docs/evidence/legal-001/change_boundary.json').is_file() else '20260917_0020'
+        if f'CURRENT_REVISION = "{expected_head}"' not in (root/'database.py').read_text():errors.append('Unexpected schema head')
         migration=(root/'migrations/versions/20260917_0020_cover_letters.py').read_text()
         tables={node.args[0].value for node in ast.walk(ast.parse(migration)) if isinstance(node,ast.Call)
                 and isinstance(node.func,ast.Attribute) and node.func.attr=='create_table' and node.args and isinstance(node.args[0],ast.Constant)}

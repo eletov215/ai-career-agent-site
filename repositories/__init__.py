@@ -1,6 +1,7 @@
 """Repository layer hiding SQLAlchemy from routes and services."""
 
 from .auth import AuthRepository
+from .consent import ConsentConflictError, ConsentOwnerNotFoundError, ConsentRepository
 from .oauth_connections import (
     OAuthConnectionOwnershipError,
     OAuthConnectionRepository,
@@ -23,6 +24,9 @@ from .vacancies import VacancyRepository
 
 __all__ = [
     "AuthRepository",
+    "ConsentConflictError",
+    "ConsentOwnerNotFoundError",
+    "ConsentRepository",
     "OAuthConnectionOwnershipError",
     "OAuthConnectionRepository",
     "OAuthProviderAlreadyConnectedError",

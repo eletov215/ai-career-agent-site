@@ -1,0 +1,11 @@
+{
+  "package": "LEGAL-001",
+  "version": "technical-candidate-1",
+  "date": "2026-09-22",
+  "source_commit": "f5ce1f42836e3872854332324f2ebdd9c8934b36",
+  "source_tree": "350ddf3f136a490b6504fc962f64822ba1985a86",
+  "schema": "20260922_0021",
+  "production_legal_state": "DRAFT",
+  "public_real_data_enabled": false,
+  "paid_provider_calls": 0
+}

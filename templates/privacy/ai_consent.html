@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block title %}AI consent — AI Career Agent{% endblock %}
+{% block content %}
+<main class="section account-page">
+  <div class="container privacy-center">
+    <div class="page-heading account-page__heading">
+      <div>
+        <div class="muted">{{ policy.display_label }}</div>
+        <h1 class="page-title">Согласие на внешний AI</h1>
+        <p class="account-page__lead">Технический контур LEGAL-001. Текущий документ имеет статус <strong>{{ policy.release_state }}</strong> и не является финальным юридическим текстом.</p>
+      </div>
+      <a class="btn btn-secondary" href="{{ url_for('privacy_controls.center') }}">К конфиденциальности</a>
+    </div>
+
+    {% if error %}<div class="auth-alert auth-alert--error" role="alert">{{ error }}</div>{% endif %}
+
+    <section class="card spaced privacy-control-card">
+      <div class="muted">Текущая версия</div>
+      <h2>{{ policy.version }}</h2>
+      <p><strong>External provider:</strong> Yandex AI Studio / Alice AI LLM</p>
+      <p><strong>Цель:</strong> создание черновика сопроводительного письма для последующего просмотра пользователем.</p>
+      <p><strong>Потенциально передаваемые категории:</strong> выбранные подтверждённые факты карьерного профиля и сохранённый snapshot вакансии, ограниченный контрактом cover-letter.</p>
+      <p><strong>Не передаются этим контрактом:</strong> structured contacts, заметки вакансии, resume drafts, vacancy match scores, provider raw response и credentials.</p>
+      <p class="muted">Hash документа: <code>{{ policy.document_hash }}</code></p>
+      <p><strong>Production legal state:</strong> {{ policy.release_state }}. {% if not policy.production_active %}Реальная передача пользовательских данных провайдеру заблокирована независимо от принятия этого DRAFT-контура.{% endif %}</p>
+    </section>
+
+    <section class="card spaced privacy-control-card">
+      <div class="muted">Текущий статус</div>
+      {% if current %}
+        <h2>{{ current.status }}</h2>
+        <p>Принято: {{ current.accepted_at_iso }}</p>
+        {% if current.withdrawn_at_iso %}<p>Отозвано: {{ current.withdrawn_at_iso }}</p>{% endif %}
+        <p class="muted">Cycle {{ current.cycle }} · revision {{ current.revision }}</p>
+      {% else %}
+        <h2>Не принято</h2>
+        <p>Для текущей версии записи согласия ещё нет.</p>
+      {% endif %}
+
+      {% if current and current.status == "accepted" %}
+        <form method="post" action="{{ url_for('privacy_controls.withdraw_ai_consent') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="consent_form_token" value="{{ consent_form_token }}">
+          <input type="hidden" name="expected_record_id" value="{{ current.id }}">
+          <input type="hidden" name="expected_revision" value="{{ current.revision }}">
+          <button class="btn btn-danger-outline" type="submit">Отозвать согласие</button>
+        </form>
+      {% else %}
+        <form method="post" action="{{ url_for('privacy_controls.accept_ai_consent') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="consent_form_token" value="{{ consent_form_token }}">
+          <input type="hidden" name="expected_record_id" value="{{ current.id if current else '' }}">
+          <input type="hidden" name="expected_revision" value="{{ current.revision if current else 0 }}">
+          <button class="btn btn-primary" type="submit">Принять текущий DRAFT-контур</button>
+        </form>
+        <p class="muted">Это действие фиксирует только versioned technical consent record. Оно не переводит policy в ACTIVE и не включает real-data AI.</p>
+      {% endif %}
+    </section>
+
+    <section class="card spaced privacy-retention-card">
+      <div class="muted">История</div>
+      <h2>Принятия и отзывы</h2>
+      {% if history %}
+        <ul class="privacy-retention-list">
+        {% for item in history %}
+          <li>
+            <strong>{{ item.status }}</strong> · {{ item.policy_version }} · cycle {{ item.cycle }}
+            · accepted {{ item.accepted_at_iso }}
+            {% if item.withdrawn_at_iso %} · withdrawn {{ item.withdrawn_at_iso }}{% endif %}
+          </li>
+        {% endfor %}
+        </ul>
+      {% else %}
+        <p>История пуста.</p>
+      {% endif %}
+    </section>
+  </div>
+</main>
+{% endblock %}

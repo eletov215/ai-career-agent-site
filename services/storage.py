@@ -11,6 +11,7 @@ from dataclasses import dataclass
 
 from database import DatabaseRuntime
 from repositories.ai import AIRepository
+from repositories.consent import ConsentRepository
 from repositories.cover_letters import CoverLetterRepository
 from repositories.saved_vacancies import SavedVacancyRepository
 from repositories.vacancy_match import VacancyMatchRepository
@@ -36,6 +37,7 @@ from services.vacancy_store import VacancyStore
 class StorageServices:
     """Repository-backed persistence entry points for application services."""
 
+    consents: ConsentRepository
     cover_letters: CoverLetterRepository
     saved_vacancies: SavedVacancyRepository
     vacancy_matches: VacancyMatchRepository
@@ -58,6 +60,7 @@ class StorageServices:
     @classmethod
     def from_database(cls, database: DatabaseRuntime) -> "StorageServices":
         return cls(
+            consents=ConsentRepository(database),
             cover_letters=CoverLetterRepository(database),
             saved_vacancies=SavedVacancyRepository(database),
             vacancy_matches=VacancyMatchRepository(database),

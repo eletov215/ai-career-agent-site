@@ -24,7 +24,7 @@ from models import Base
 
 
 INITIAL_REVISION = "20260804_0001"
-CURRENT_REVISION = "20260917_0020"
+CURRENT_REVISION = "20260922_0021"
 
 
 class DatabaseConfigurationError(RuntimeError):

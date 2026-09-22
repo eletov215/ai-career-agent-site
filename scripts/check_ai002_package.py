@@ -78,7 +78,7 @@ def validate(root=ROOT):
         for rel in REQUIRED:
             if not (root/rel).is_file():errors.append('Missing: '+rel)
         successor = (root/'docs/evidence/ai-003/change_boundary.json').is_file()
-        expected_head = '20260917_0020' if (root/'docs/evidence/ai-005/change_boundary.json').is_file() else '20260917_0019' if (root/'docs/evidence/job-001/change_boundary.json').is_file() else '20260916_0018' if (root/'docs/evidence/ai-004/change_boundary.json').is_file() else '20260916_0017' if successor else '20260915_0016'
+        expected_head = '20260922_0021' if (root/'docs/evidence/legal-001/change_boundary.json').is_file() else '20260917_0020' if (root/'docs/evidence/ai-005/change_boundary.json').is_file() else '20260917_0019' if (root/'docs/evidence/job-001/change_boundary.json').is_file() else '20260916_0018' if (root/'docs/evidence/ai-004/change_boundary.json').is_file() else '20260916_0017' if successor else '20260915_0016'
         if f'CURRENT_REVISION = "{expected_head}"' not in (root/'database.py').read_text():errors.append('Unexpected schema head')
         if successor:
             from scripts.check_ai003_package import validate as validate_ai003
