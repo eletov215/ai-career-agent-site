@@ -20,6 +20,8 @@
 | AI admission | current user consent required server-side; separate production legal policy remains `DRAFT / NOT_ACTIVE`; `REAL_DATA_SUPPORTED=False` |
 | Privacy | owner consent history exported; account deletion cascades consent rows |
 | Paid provider calls | 0; paid Yandex/Alice CI jobs SKIPPED as intended |
+| Accepted predecessor | JOB-001 COMPLETE; PLAN 1.6.1 / PASSPORT 2.76; `c095bfb70bad5b1ba22cd9b1aeac1795a0b59c4c`; schema `20260917_0019` |
+| Accepted foundation | AI-004 COMPLETE in synthetic/reference-only scope |
 | Real-data Alice | CLOSED |
 | Next sequence | canonical sync → PR/merge after green branch CI → Render migration/readiness → production QA of consent UI with synthetic QA data → legal owner decisions before any real-data provider test |
 <!-- ACA-CANONICAL-STATUS:END -->
