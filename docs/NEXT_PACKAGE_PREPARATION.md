@@ -2,10 +2,18 @@
 
 | Поле | Значение |
 |---|---|
-| Версия / дата | 1.4 / 20 сентября 2026 |
+| Версия / дата | 1.5 / 22 сентября 2026 |
 | Принято | Документная часть AI-005 r1 с ручными исключениями |
-| Текущая разработка | AI-005 r2 NEEDS_VERIFICATION; полный AI-005 IN_PROGRESS / LIVE_NOT_ACCEPTED |
-| Новая миграция | Нет; схема0020 |
+| Текущая разработка | LEGAL-001 IMPLEMENTED + CI_PASS; полный AI-005 IN_PROGRESS / LIVE_NOT_ACCEPTED |
+| Новая миграция | candidate `20260922_0021` |
+
+## 1. Текущее состояние после CI #304
+
+LEGAL-001 technical foundation реализован и прошёл branch CI. Versioned consent, explicit withdrawal, stale/replay/concurrency controls, owner isolation, Privacy Center UI, privacy export/delete и server-side `LegalLetterAdmission` присутствуют. Admission повторно проверяется перед result settlement. Production legal policy остаётся `DRAFT / NOT_ACTIVE`, `REAL_DATA_SUPPORTED=False`, paid provider calls=0.
+
+Следующий инженерный порядок: синхронизировать canonical docs → проверить PR diff → merge только после green branch CI → post-merge main CI → Render migration/readiness `0021` → production QA consent UI на синтетических QA-данных. Даже после этого реальные пользовательские данные не передаются провайдеру, пока владелец не определит юридические параметры и reviewed policy не станет ACTIVE отдельным изменением.
+
+## 2. Исторический r2 technical candidate / 20 сентября 2026
 
 ## 1. Что уже написано
 

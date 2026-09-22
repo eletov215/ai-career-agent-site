@@ -2,9 +2,19 @@
 
 | Поле | Значение |
 |---|---|
-| Версия / дата | 1.6.3 / 20 сентября 2026 |
-| Код | main be0eadf6c26a6a45b9a3764f5859a52651f372d2 |
-| Статус | ДЕЙСТВУЮЩИЙ; AI-005 IN_PROGRESS / LIVE_NOT_ACCEPTED |
+| Версия / дата | 1.6.4 / 22 сентября 2026 |
+| Код | baseline main `f5ce1f42836e3872854332324f2ebdd9c8934b36`; candidate `fe3a7e1b553ccc9ebb5b956efce3779287291c04` |
+| Статус | ДЕЙСТВУЮЩИЙ; LEGAL-001 IMPLEMENTED + CI_PASS; AI-005 IN_PROGRESS / LIVE_NOT_ACCEPTED |
+
+## LEGAL-001 source/verification audit / 22 сентября 2026
+
+GitHub branch `legal001-consent-foundation` подтверждён как потомок baseline main `f5ce1f42836e3872854332324f2ebdd9c8934b36`. Candidate head `fe3a7e1b553ccc9ebb5b956efce3779287291c04`, tree `55f03c287a3132aa9a2a55b7429c24d35e2a1957`. GitHub CI #304 completed/success именно для этого head.
+
+В #304 успешны общий Python job, migration metadata, PostgreSQL migrations/integration, AI-005 r2 source-bound no-paid-call gate, dedicated `Verify LEGAL-001 consent and admission controls`, backup/restore и финальный `Run tests`. Платные `AI-BENCH-001 Live Yandex` и `Alice Final` jobs skipped. До этого эквивалентный code head успел выполнить полный suite: 1103 passed; отмена #303 произошла уже после PASS из-за 25-minute job timeout, после чего timeout увеличен до 40 минут и #304 завершился SUCCESS.
+
+Это доказательство `CI_PASS`, а не production acceptance. Render deploy/0021 production migration, /health/ready, Cloud Browser QA и реальный provider call не выполнялись. Paid provider calls: 0.
+
+Юридический текст остаётся DRAFT. Не определённые владельцем operator/legal entity, jurisdiction, launch countries, audience/age, storage regions, processor/subprocessor, cross-border, final retention, Terms/Privacy/AI-consent wording не выдумывались. Real-data admission остаётся CLOSED.
 
 ## 1. Подтверждённая основа
 

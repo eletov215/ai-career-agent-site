@@ -4,42 +4,50 @@
 
 
 <!-- ACA-CANONICAL-STATUS:START -->
-## Актуальное состояние / 20 сентября 2026
+## Актуальное состояние / 22 сентября 2026
 
 | Поле | Подтверждённое состояние |
 |---|---|
 | Current full package | AI-005 — IN_PROGRESS; LIVE_NOT_ACCEPTED |
-| Документная часть r1 | ACCEPTED_WITH_MANUAL_EXCLUSIONS: принята владельцем, с явно сохранёнными исключениями |
-| Текущий main | `be0eadf6c26a6a45b9a3764f5859a52651f372d2` |
-| Git-дерево основы | `dbcadece7814336942ea80da0ce85707a695c428`; 655 файлов |
-| CI принятой основы | №285, попытка 2, success; задания платных вызовов skipped |
-| Схема принятой базы | `20260917_0020`; по подтверждению владельца current=expected, persistent PostgreSQL |
-| Новый технический выпуск | AI-005 r2 — NEEDS_VERIFICATION; новый путь вызова адаптера Алисы, не локальный шаблон |
-| Новая миграция | Нет; r2 сохраняет `0020` |
-| Документы | PLAN 1.6.3; PASSPORT 2.78; SOURCE_AUDIT 1.6.3 |
-| Публичный AI | `generation_available=false`, `mode=manual`; реальный ввод провайдеру закрыт по умолчанию |
-| Следующая последовательность | r2 CI и технический/синтетический прогон → LEGAL-001 → допуск реальных данных и проверка качества → полная приёмка AI-005 |
-| Исключения ручной проверки | Пустой профиль: предложения/устаревание источника NOT RUN. Второй аккаунт NOT RUN. Устаревшее удаление не подтверждено отдельно |
-| Резервирование рабочей базы | Реальная копия до миграции NOT EVIDENCED; восстановление рабочей базы NOT RUN |
-| Публикация r2 | Локальные файлы. GitHub, Render и рабочая база в этом выпуске не изменялись; платных вызовов 0 |
-| Accepted predecessor | JOB-001 COMPLETE; PLAN 1.6.1 / PASSPORT 2.76; c095bfb70bad5b1ba22cd9b1aeac1795a0b59c4c; schema20260917_0019; current accepted schema0020 above |
-| Accepted foundation | AI-004 COMPLETE in synthetic/reference-only scope; no new live acceptance |
+| LEGAL-001 technical package | IMPLEMENTED + CI_PASS; DEPLOYED/PRODUCTION_TESTED/ACCEPTED/COMPLETE — NOT YET |
+| Candidate branch/head | `legal001-consent-foundation` / `fe3a7e1b553ccc9ebb5b956efce3779287291c04` |
+| Candidate tree | `55f03c287a3132aa9a2a55b7429c24d35e2a1957` |
+| Baseline main | `f5ce1f42836e3872854332324f2ebdd9c8934b36` |
+| GitHub CI | #304 SUCCESS for candidate head; Python tests, LEGAL-001 gate, PostgreSQL/migrations and AI-005 r2 no-paid-calls gate passed |
+| Full regression | 1103 tests passed in the preceding equivalent code run; #304 full Run tests step SUCCESS |
+| Schema candidate | `20260922_0021` |
+| Consent | versioned persistence + explicit accept/withdraw + stale/replay/concurrency controls |
+| AI admission | current user consent required server-side; separate production legal policy remains `DRAFT / NOT_ACTIVE`; `REAL_DATA_SUPPORTED=False` |
+| Privacy | owner consent history exported; account deletion cascades consent rows |
+| Paid provider calls | 0; paid Yandex/Alice CI jobs SKIPPED as intended |
+| Real-data Alice | CLOSED |
+| Next sequence | canonical sync → PR/merge after green branch CI → Render migration/readiness → production QA of consent UI with synthetic QA data → legal owner decisions before any real-data provider test |
 <!-- ACA-CANONICAL-STATUS:END -->
 
 | Поле | Значение |
 |---|---|
 | Документ | PLAN_CURRENT |
-| Версия | 1.6.3 |
-| Дата | 20 сентября 2026 |
+| Версия | 1.6.4 |
+| Дата | 22 сентября 2026 |
 | Статус | ДЕЙСТВУЮЩИЙ |
-| Основа кода | GitHub main `be0eadf6c26a6a45b9a3764f5859a52651f372d2`; принятая документная часть AI-005 r1; локальный технический кандидат r2 |
-| Текущий пакет | AI-005 IN_PROGRESS; r1 принят с исключениями; r2 NEEDS_VERIFICATION; LIVE_NOT_ACCEPTED |
+| Основа кода | baseline GitHub main `f5ce1f42836e3872854332324f2ebdd9c8934b36`; LEGAL-001 candidate branch `fe3a7e1b553ccc9ebb5b956efce3779287291c04` |
+| Текущий пакет | AI-005 IN_PROGRESS; LEGAL-001 technical candidate CI_PASS; LIVE_NOT_ACCEPTED |
 
 > ОБЯЗАТЕЛЬНО ДЛЯ КАЖДОГО НОВОГО ЧАТА: прочитать этот план, новый паспорт и актуальный архив. После завершения любого пункта вернуть обновлённые DOCX/PDF/Markdown, новый ZIP, доказательства проверки и запись в журнале версий.
 
 > Historical control note from PLAN 1.6.2 (current status above): prior accepted foundations and AI-001..004 are ВЫПОЛНЕНО in their documented scopes. LEGAL-001 remains deferred; DOC-001 is ongoing. PLAN 1.6.2 / PASSPORT 2.77. JOB-001 accepted; AI-005 follows the approved order with its own live-data/quality/legal gates. Dated older entries remain historical.
 
 
+
+## LEGAL-001 technical candidate / 22 сентября 2026
+
+После принятого AI-005 r2 technical integration реализован server-side технический контур LEGAL-001. Additive migration `20260922_0021` создаёт owner-bound versioned consent history; принятие и отзыв защищены CSRF, rate limiting, строгой формой, optimistic revision/stale-state и server-side policy binding. Повторное согласие создаёт новый цикл, старая версия policy не считается согласием с новой.
+
+`LegalLetterAdmission` проверяет активное согласие до provider dispatch и повторно при settlement/commit. Это не открывает production: текущая code-reviewed policy имеет `DRAFT / NOT_ACTIVE`, а `domain/ai.py::REAL_DATA_SUPPORTED=False`. Environment flags и client fields не являются bypass. PRIV-001 export/count/delete интегрированы с consent history; raw provider responses/secrets не добавлены.
+
+GitHub CI #304 для candidate head `fe3a7e1b553ccc9ebb5b956efce3779287291c04` завершился SUCCESS. Dedicated LEGAL-001, PostgreSQL/migrations, AI-005 r2 no-paid-call gate и общий Run tests прошли. Paid Alice/Yandex jobs SKIPPED. Это `CI_PASS`, но не deployment, production QA, legal acceptance или разрешение real-data AI.
+
+Исторический `docs/LEGAL001_DEFERRED_DECISION.md` не удалён: юридические неизвестные владельца остаются unresolved, поэтому technical foundation не превращается в финальные Terms/Privacy/AI-consent.
 
 ## Продолжение AI-005 / решение 20 сентября 2026
 

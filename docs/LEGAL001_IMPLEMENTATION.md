@@ -1,6 +1,6 @@
 # LEGAL-001 Implementation
 
-Status: IMPLEMENTED / NEEDS_VERIFICATION.
+Status: IMPLEMENTED / CI_PASS.
 
 Implemented layers:
 
@@ -13,4 +13,4 @@ Implemented layers:
 - PRIV-001 export/count/delete paths include consent history; provider raw response and credentials are not added.
 - Existing AI-005 predecessor guards are preserved through an explicit LEGAL-001 successor hash map.
 
-No paid/external provider call is added by this package. Production policy remains DRAFT.
+No paid/external provider call is added by this package. Production policy remains DRAFT. GitHub CI #304 passed on candidate `fe3a7e1b553ccc9ebb5b956efce3779287291c04`; this is not deployment or legal acceptance.

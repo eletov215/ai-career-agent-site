@@ -30,3 +30,8 @@ AI-003 is now a candidate based on the inspected main (33), with public AI still
 ## 6. History
 
 2026-09-14: owner deferral (1.1), no boolean bypass. 2026-09-15: AI-001 closure (1.2), AI-002 accepted reference-only scope and email caveat (1.3). This synchronization changes no legal decision.
+
+
+## Technical foundation update / 22 September 2026
+
+This historical deferral remains valid for unresolved owner/legal decisions. LEGAL-001 now has an implemented technical consent/admission foundation (candidate schema `20260922_0021`) and branch CI #304 passed. This does **not** resolve the deferred legal identity/jurisdiction/document decisions, does not make the DRAFT policy final, and does not open real-data Alice processing. See `LEGAL001_SCOPE.md`, `LEGAL001_IMPLEMENTATION.md`, `LEGAL001_RUNBOOK.md` and `LEGAL001_VERIFICATION_STATUS.md`.

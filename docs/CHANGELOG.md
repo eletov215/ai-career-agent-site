@@ -1,5 +1,15 @@
 # AI Career Agent - CHANGELOG
 
+## 2026-09-22 / LEGAL-001 technical candidate — CI_PASS
+
+- Added additive migration `20260922_0021` and owner-bound versioned AI consent history with explicit acceptance/withdrawal, stale/replay/concurrency protections and user cascade.
+- Added DRAFT-marked Privacy Center consent UI; provider/purpose/policy version are server-defined and cannot be selected by the client.
+- Added `LegalLetterAdmission` with independent active-consent and reviewed-code production-policy gates; `REAL_DATA_SUPPORTED=False` keeps real-data Alice closed.
+- Recheck occurs before provider dispatch and again before result settlement/commit. PRIV-001 export/count/delete includes consent history.
+- Added LEGAL-001 package guard/focused tests and updated predecessor guards through explicit successor evidence rather than bypasses.
+- GitHub CI #304 SUCCESS on `fe3a7e1b553ccc9ebb5b956efce3779287291c04`; PostgreSQL/migrations, AI-005 r2 no-paid-call gate, LEGAL-001 gate and full Run tests succeeded. Paid Yandex/Alice jobs skipped. Paid provider calls: 0.
+- Status is `IMPLEMENTED + CI_PASS`, not DEPLOYED/PRODUCTION_TESTED/ACCEPTED/COMPLETE. Legal policy remains DRAFT; operator/jurisdiction/final legal texts are unresolved.
+
 ## 2026-09-20 / AI-005 r1 acceptance and r2 technical candidate
 
 Recorded CI285 attempt2 and owner r1 acceptance with explicit exclusions. New source-bound writer, signed preview, shared Alice provider/ledger, atomic pending proposal, isolated synthetic probe. No new migration or real-data activation. New r2 CI/live-quality evidence remains pending.

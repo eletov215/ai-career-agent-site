@@ -2,27 +2,31 @@
 
 | Поле | Значение |
 |---|---|
-| Выпуск / дата | 1.6.3 / 20 сентября 2026 |
-| Основа кода | be0eadf6c26a6a45b9a3764f5859a52651f372d2 |
-| Статус | ДЕЙСТВУЮЩИЙ; r1 принят с исключениями, r2 NEEDS_VERIFICATION |
+| Выпуск / дата | 1.6.4 / 22 сентября 2026 |
+| Основа кода | baseline `f5ce1f42836e3872854332324f2ebdd9c8934b36`; LEGAL-001 candidate `fe3a7e1b553ccc9ebb5b956efce3779287291c04` |
+| Статус | ДЕЙСТВУЮЩИЙ; LEGAL-001 IMPLEMENTED + CI_PASS; real-data AI CLOSED |
 
 ## 1. Активные документы
 
 | Документ | Версия | Область |
 |---|---|---|
-| PLAN_CURRENT | 1.6.3 | Полный план с сохранённой историей |
-| PROJECT_PASSPORT | 2.78 | Полный паспорт с сохранённой историей |
-| SOURCE_AUDIT / ROADMAP / CANONICAL_DOCUMENTS | 1.6.3 | Источники, очередь, реестр |
+| PLAN_CURRENT | 1.6.4 | Полный план с сохранённой историей |
+| PROJECT_PASSPORT | 2.79 | Полный паспорт с сохранённой историей |
+| SOURCE_AUDIT / CANONICAL_DOCUMENTS | 1.6.4 | Источники, очередь, реестр |
 | AI005_ACCEPTANCE_SUMMARY | 1.0 | Приёмка только документной части r1 |
 | AI005_IMPLEMENTATION / AI005_RUNBOOK / AI005_VERIFICATION_STATUS | 2.0 | Технический r2 и границы проверки |
 | AI005_SCOPE / AI005_DELIVERY_GUIDE | 2.0 | Объём и порядок передачи |
-| NEXT_PACKAGE_PREPARATION | 1.4 | r2 → LEGAL-001 → реальные данные |
+| NEXT_PACKAGE_PREPARATION | 1.5 | LEGAL-001 CI_PASS → merge/deploy/QA → owner legal decisions → only then real-data test |
+
+| LEGAL001_SCOPE / IMPLEMENTATION / RUNBOOK / VERIFICATION_STATUS | 1.0 candidate | Versioned consent, withdrawal, admission, privacy, CI evidence |
 
 ## 2. Форматы и доказательства
 
 Markdown — текстовый первоисточник. Соответствующие DOCX и PDF сформированы по DOCUMENT_STANDARD1.3; фактический состав форматов указывается в FILE_INDEX.json общего комплекта. Полные план и паспорт не заменены краткими резюме. Предыдущие пакетные документы r1 сохранены в docs/history/ai005-r1.
 
 Приёмка r1: evidence/ai-005-r1-acceptance/acceptance.json и ci285_verified_summary.json. Технический r2: отдельные change_boundary и baseline_files_sha256, результаты локальных тестов. Старое evidence/ai-005 не переписано под новые результаты.
+
+GitHub CI #304 on `fe3a7e1b553ccc9ebb5b956efce3779287291c04` is SUCCESS. LEGAL-001 is `IMPLEMENTED + CI_PASS`; paid provider calls 0; real-data Alice CLOSED. Deployment/production QA/acceptance are not inferred from CI.
 
 ## 3. Статусы и распространение
 
