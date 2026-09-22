@@ -68,7 +68,8 @@ def validate(root=ROOT):
         if 'COVER_LETTER_GENERATOR = CoverLetterGenerator(' not in code or 'SyntheticLetterAdmission' in code:
             errors.append('Default application admission must remain closed')
         gate=(root/'services/ai/letter_admission.py').read_text()
-        if "raise LetterError('generation_unavailable')" not in gate or 'os.environ' in gate:
+        if ('ClosedLetterAdmission' not in gate or 'generation_unavailable' not in gate
+                or 'os.environ' in gate):
             errors.append('Legal gate cannot be an environment boolean')
         if 'REAL_DATA_SUPPORTED = False' not in (root/'domain/ai.py').read_text():errors.append('Real data enabled')
         for rel in NEW_RUNTIME|CHANGES:
