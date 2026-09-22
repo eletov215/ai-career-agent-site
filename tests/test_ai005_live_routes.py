@@ -56,8 +56,12 @@ def test_generation_strict_forms_csrf_ownership_and_default_closed(web,live):
 
 
 def test_default_application_stays_closed_when_unrelated_flags_enabled(client,app_module,monkeypatch):
-    from services.ai.letter_admission import ClosedLetterAdmission
-    assert isinstance(app_module.COVER_LETTER_GENERATOR.admission,ClosedLetterAdmission)
+    from services.ai.letter_admission import LegalLetterAdmission
+    admission=app_module.COVER_LETTER_GENERATOR.admission
+    assert isinstance(admission,LegalLetterAdmission)
+    assert admission.consent_service.policy.release_state=='DRAFT'
     monkeypatch.setenv('AI_ENABLED','1');monkeypatch.setenv('AI_SYNTHETIC_ACCESS_ENABLED','1')
-    assert isinstance(app_module.COVER_LETTER_GENERATOR.admission,ClosedLetterAdmission)
+    monkeypatch.setenv('AI_LEGAL_APPROVED','1')
+    assert isinstance(app_module.COVER_LETTER_GENERATOR.admission,LegalLetterAdmission)
+    assert app_module.COVER_LETTER_GENERATOR.admission.consent_service.policy.release_state=='DRAFT'
     assert app_module.AI_SERVICE.public_status()['generation_available'] is False
