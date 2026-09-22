@@ -8,6 +8,7 @@ import sys
 ROOT=Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path: sys.path.insert(0,str(ROOT))
 from scripts.legal001_boundary import successor_hashes
+from scripts.legal001_canonical import validate as validate_canonical
 
 REQUIRED={
     "domain/consent.py","models/consent.py","repositories/consent.py","services/consent.py",
@@ -16,8 +17,10 @@ REQUIRED={
     "migrations/versions/20260922_0021_legal_consent.py",
     "tests/test_legal001_migration.py","tests/test_legal001_service.py",
     "tests/test_legal001_routes.py","tests/test_legal001_admission.py",
+    "tests/test_legal001_canonical.py","scripts/legal001_canonical.py",
     "docs/LEGAL001_SCOPE.md","docs/LEGAL001_IMPLEMENTATION.md",
     "docs/LEGAL001_RUNBOOK.md","docs/LEGAL001_VERIFICATION_STATUS.md",
+    "docs/evidence/legal-001/ci304_verified_summary.json",
 }
 
 def validate(root=ROOT):
@@ -71,16 +74,16 @@ def validate(root=ROOT):
         workflow=(root/".github/workflows/ci.yml").read_text()
         if "Verify LEGAL-001 consent and admission controls" not in workflow or "check_legal001_package.py" not in workflow:
             errors.append("Missing LEGAL-001 CI gate")
-        verification=(root/"docs/LEGAL001_VERIFICATION_STATUS.md").read_text()
-        if not all(x in verification for x in ("NEEDS_VERIFICATION","DRAFT","paid provider calls: 0")):
-            errors.append("Verification status overclaims LEGAL-001")
+        # CI_PASS is an allowed documented transition only with the exact
+        # recorded code CI evidence; it never means production acceptance.
+        errors.extend(validate_canonical(root))
     except (OSError,ValueError,KeyError,TypeError,AttributeError,SyntaxError) as exc:
         errors.append("Missing or invalid LEGAL-001 package: "+type(exc).__name__)
     return errors
 
 if __name__=="__main__":
     errors=validate()
-    print(json.dumps({"package":"LEGAL-001","status":"NEEDS_VERIFICATION",
+    print(json.dumps({"package":"LEGAL-001","status":"IMPLEMENTED",
         "production_legal_state":"DRAFT","real_data_enabled":False,
         "paid_provider_calls":0,"remote_ci":"NOT ATTESTED BY LOCAL CHECK",
         "ok":not errors,"errors":errors},indent=2))

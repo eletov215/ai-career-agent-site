@@ -1,0 +1,30 @@
+{
+  "package": "LEGAL-001",
+  "recorded_on": "2026-09-22",
+  "source": "Connected GitHub workflow run metadata and job step inspection",
+  "run_id": 35734563736,
+  "run_number": 304,
+  "head_sha": "fe3a7e1b553ccc9ebb5b956efce3779287291c04",
+  "tree_sha": "55f03c287a3132aa9a2a55b7429c24d35e2a1957",
+  "branch": "legal001-consent-foundation",
+  "status": "completed",
+  "conclusion": "success",
+  "exact_test_counts": null,
+  "step_conclusions": {
+    "Verify LEGAL-001 consent and admission controls": "success",
+    "Verify AI-005 r2 source-bound Alice runtime (no paid calls)": "success",
+    "Verify PostgreSQL migrations": "success",
+    "Run PostgreSQL integration test": "success",
+    "Verify PostgreSQL encrypted backup and restore": "success",
+    "Run tests": "success"
+  },
+  "paid_provider_calls": 0,
+  "paid_jobs": "skipped",
+  "production_tested": false,
+  "real_data_enabled": false,
+  "limitations": [
+    "Recorded CI applies to the exact head_sha above, not future documentation commits.",
+    "Exact test counts were not extracted from run 304; the 1103 count in the documents belongs to run 303.",
+    "Deployment, production QA and final legal-owner decisions remain pending."
+  ]
+}
