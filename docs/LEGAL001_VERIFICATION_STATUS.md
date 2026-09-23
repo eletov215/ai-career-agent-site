@@ -1,5 +1,17 @@
 # LEGAL-001 Verification Status
 
+## LEGAL-OPS-01 follow-up / 2026-09-23
+
+The consolidated owner-supplied QA report now records a repeated privacy-worker
+heartbeat failure on deployed `97944ef2efb4d81f9e416868aabff234fdc7dc70`.
+The targeted worker correction is **IMPLEMENTED / LOCAL_ISOLATED_CHECKS_PASS**;
+new GitHub CI and production verification are separate gates, not inferred from
+CI314 or the earlier layout retest. See `LEGAL001_OPS_HEARTBEAT_FIX.md` for the
+exact source, reproduction, changes, test limits and rollout checklist.
+No new migration, consent mutation, policy activation or paid AI call is involved.
+Full technical QA remains incomplete; final legal decisions remain outstanding.
+
+
 The table below preserves historical CI304 evidence for its exact SHA. The
 2026-09-23 layout defect, correction and partial owner-provided QA follow-up
 are tracked in `LEGAL001_LAYOUT_QA.md`; no final production acceptance is claimed.

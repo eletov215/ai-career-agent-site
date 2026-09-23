@@ -1,0 +1,37 @@
+name: Privacy heartbeat regression
+
+"on":
+  push:
+    paths:
+      - scripts/privacy_cleanup_worker.py
+      - tests/test_privacy_cleanup_worker.py
+      - .github/workflows/privacy-heartbeat.yml
+      - requirements*.txt
+  pull_request:
+    paths:
+      - scripts/privacy_cleanup_worker.py
+      - tests/test_privacy_cleanup_worker.py
+      - .github/workflows/privacy-heartbeat.yml
+      - requirements*.txt
+
+permissions:
+  contents: read
+
+jobs:
+  heartbeat:
+    name: Cold-start and isolated heartbeat tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      APP_ENV: test
+      TRUDVSEM_SYNC_ENABLED: "0"
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Install pinned dependencies
+        run: python -m pip install -r requirements.txt -r requirements-dev.txt
+      - name: Verify LEGAL-OPS-01 without network or provider calls
+        run: python -m pytest -q tests/test_privacy_cleanup_worker.py

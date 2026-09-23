@@ -8,6 +8,7 @@ import logging
 import os
 import signal
 import sys
+import tempfile
 import time
 from contextlib import contextmanager
 from pathlib import Path
@@ -110,9 +111,41 @@ def _write_heartbeat(settings, *, status: str, counts=None, error: str | None = 
     }
     if error:
         payload["error_type"] = error[:80]
-    tmp = path.with_suffix(".tmp")
-    tmp.write_text(json.dumps(payload, sort_keys=True), encoding="utf-8")
-    os.replace(tmp, path)
+    # The PostgreSQL advisory-lock path does not create DATA_DIR. This worker
+    # must be independent of Gunicorn/other workers winning the startup race.
+    path.parent.mkdir(parents=True, exist_ok=True)
+    serialized = json.dumps(payload, sort_keys=True)
+    tmp = None
+    try:
+        # Lock-busy workers also publish heartbeats. Give each writer its own
+        # private file on the same filesystem, then replace the complete JSON.
+        with tempfile.NamedTemporaryFile(
+            mode="w", encoding="utf-8", dir=path.parent,
+            prefix="privacy_cleanup_heartbeat.", suffix=".tmp", delete=False,
+        ) as handle:
+            tmp = Path(handle.name)
+            handle.write(serialized)
+        os.replace(tmp, path)
+    finally:
+        if tmp is not None:
+            try:
+                tmp.unlink()
+            except FileNotFoundError:
+                pass
+
+
+def _publish_heartbeat(settings, logger, **payload) -> None:  # noqa: ANN001
+    """Report diagnostic I/O failures without relabelling or rerunning cleanup."""
+    try:
+        _write_heartbeat(settings, **payload)
+    except OSError as exc:
+        # Do not attempt an error-heartbeat on the same failing filesystem.
+        # Preserve the last good file; its timestamp remains stale until recovery.
+        # Log the exception class only, never a path, payload or raw exception.
+        logger.error(
+            "Privacy cleanup heartbeat write failed",
+            extra={"event": "privacy_retention_heartbeat_failed", "error_type": type(exc).__name__},
+        )
 
 
 def main() -> int:
@@ -125,6 +158,9 @@ def main() -> int:
         signal.signal(signal_name, _stop)
     try:
         while not _STOP:
+            heartbeat_status = "error"
+            counts = {}
+            error_type = None
             try:
                 with _cleanup_lock(database, settings) as acquired:
                     if not acquired:
@@ -132,7 +168,7 @@ def main() -> int:
                             "Privacy retention cleanup skipped because another worker owns the lock",
                             extra={"event": "privacy_retention_cleanup_lock_busy"},
                         )
-                        _write_heartbeat(settings, status="lock_busy")
+                        heartbeat_status = "lock_busy"
                     else:
                         counts = service.run_retention_cleanup()
                         logger.info(
@@ -147,13 +183,16 @@ def main() -> int:
                                 "legacy_oauth_mirror_count": counts.get("legacy_oauth_mirrors", 0),
                             },
                         )
-                        _write_heartbeat(settings, status="ok", counts=counts)
+                        heartbeat_status = "ok"
             except Exception as exc:
                 logger.exception(
                     "Privacy retention cleanup failed",
                     extra={"event": "privacy_retention_cleanup_failed"},
                 )
-                _write_heartbeat(settings, status="error", error=type(exc).__name__)
+                error_type = type(exc).__name__
+            _publish_heartbeat(
+                settings, logger, status=heartbeat_status, counts=counts, error=error_type,
+            )
             deadline = time.monotonic() + settings.privacy_cleanup_interval_seconds
             while not _STOP and time.monotonic() < deadline:
                 time.sleep(min(5, max(0.1, deadline - time.monotonic())))
