@@ -14,3 +14,11 @@ Verification sequence:
 8. Production QA may use only the existing verified account with synthetic QA data.
 
 Acceptance must not enable Alice real-data traffic. No environment variable is an activation path. A future reviewed code change plus final legal/owner decisions are required before any limited real-data test.
+
+## Layout QA follow-up / 2026-09-23
+
+See `LEGAL001_LAYOUT_QA.md` for the reported disclosure overlap, scoped CSS
+correction, local evidence and production retest checklist. No migration or
+Render environment change is required. Confirm the deployed hotfix SHA and
+new stylesheet before retesting; the historical CI304 record above is not
+proof of this later fix or final production acceptance.

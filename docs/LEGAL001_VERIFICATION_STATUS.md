@@ -1,5 +1,9 @@
 # LEGAL-001 Verification Status
 
+The table below preserves historical CI304 evidence for its exact SHA. The
+2026-09-23 layout defect, correction and partial owner-provided QA follow-up
+are tracked in `LEGAL001_LAYOUT_QA.md`; no final production acceptance is claimed.
+
 | Field | Status |
 | --- | --- |
 | Package | LEGAL-001 |
