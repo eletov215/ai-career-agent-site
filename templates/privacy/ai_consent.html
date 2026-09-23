@@ -1,7 +1,10 @@
 {% extends "base.html" %}
 {% block title %}AI consent — AI Career Agent{% endblock %}
+{% block head_extra %}
+<link rel="stylesheet" href="{{ url_for('static', filename='legal001-consent.css') }}?v=1">
+{% endblock %}
 {% block content %}
-<main class="section account-page">
+<main class="section account-page ai-consent-page">
   <div class="container privacy-center">
     <div class="page-heading account-page__heading">
       <div>

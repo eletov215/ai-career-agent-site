@@ -1,0 +1,52 @@
+/* LEGAL-001: document paragraphs must not inherit the two-column PRIV-001
+   text/action grid. Scope every rule to this page; leave the Privacy Center,
+   account controls, policy wording and signed forms unchanged. */
+.ai-consent-page .privacy-control-card,
+.ai-consent-page .privacy-retention-card {
+  grid-template-columns: minmax(0, 1fr);
+  align-items: start;
+  gap: 16px;
+}
+
+.ai-consent-page .privacy-control-card > *,
+.ai-consent-page .privacy-retention-card > *,
+.ai-consent-page .page-heading > * {
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+.ai-consent-page .privacy-control-card > h2,
+.ai-consent-page .privacy-control-card > p {
+  margin: 0;
+}
+
+.ai-consent-page .privacy-control-card code {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+
+.ai-consent-page .privacy-retention-list li {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.ai-consent-page .privacy-control-card form {
+  justify-self: start;
+}
+
+.ai-consent-page .btn {
+  white-space: normal;
+  overflow-wrap: normal;
+}
+
+.ai-consent-page .page-heading > .btn {
+  flex-shrink: 0;
+}
+
+@media (max-width: 760px) {
+  .ai-consent-page .privacy-control-card form {
+    width: 100%;
+  }
+}
