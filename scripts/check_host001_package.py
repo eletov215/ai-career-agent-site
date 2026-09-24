@@ -130,7 +130,7 @@ def validate(root: Path = ROOT) -> list[str]:
             errors.append("HOST-001 must not activate legal policy")
 
         workflow = _read(".github/workflows/host001-yandex-cloud.yml")
-        for marker in ("terraform fmt -check", "terraform init -backend=false", "terraform validate", "check_host001_package.py"):
+        for marker in ("fmt -check -recursive", "init -backend=false", "terraform -chdir=infra/yandex-cloud validate", "check_host001_package.py"):
             if marker not in workflow:
                 errors.append("HOST-001 workflow missing: " + marker)
         if re.search(r"(?m)^\s*terraform\s+apply\b", workflow):
