@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block head_extra %}<link rel="stylesheet" href="{{ url_for('static',filename='cover_letters.css') }}">{% endblock %}
+{% block content %}
+<main class="section ai005-page"><div class="container ai005-shell">
+<h1>Alice SITE QA — предварительный просмотр</h1>
+<aside class="ai005-notice"><strong>Синтетический тест.</strong> Ни одно поле реального профиля, резюме или пользовательской вакансии в этот запрос не подставляется.</aside>
+<p><strong>{{ ui.recipient }}:</strong> {{ prepared.preview.recipient }}</p>
+<section class="ai005-card">
+<h2>Параметры</h2>
+<p>{{ ui[prepared.preview.projection.preferences.language] }} / {{ ui['generation_' + prepared.preview.projection.preferences.length] }} / {{ ui[prepared.preview.projection.preferences.tone] }}</p>
+</section>
+<section class="ai005-card"><h2>{{ ui.vacancy }}</h2>
+{% for key,value in prepared.preview.projection.vacancy.items() %}
+<p class="ai005-text"><strong>{{ ui['generation_' + key] }}</strong><br>{{ value }}</p>
+{% endfor %}
+</section>
+<section class="ai005-card"><h2>{{ ui.facts }}</h2>
+{% for fact in prepared.preview.projection.candidate_facts %}<p class="ai005-text">{{ fact.text }}</p>{% endfor %}
+</section>
+<form method="post" class="ai005-card" action="{{ url_for('alice_site_qa.generate',letter_id=prepared.letter.id) }}">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+<input type="hidden" name="review_token" value="{{ prepared.preview.review_token }}">
+<p>После нажатия будет выполнен один запрос. Защита от повторной отправки работает на сервере.</p>
+<button class="btn btn-primary" type="submit">Создать черновик с Алисой</button>
+</form>
+<a href="{{ url_for('alice_site_qa.index') }}">Вернуться к тестам</a>
+</div></main>
+{% endblock %}
