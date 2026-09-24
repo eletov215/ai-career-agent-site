@@ -17,6 +17,7 @@ REQUIRED={
     "migrations/versions/20260922_0021_legal_consent.py",
     "tests/test_legal001_migration.py","tests/test_legal001_service.py",
     "tests/test_legal001_routes.py","tests/test_legal001_admission.py",
+    "tests/test_legal001_postgresql.py",".github/workflows/legal001-postgresql.yml",
     "tests/test_legal001_canonical.py","scripts/legal001_canonical.py",
     "tests/test_legal001_binding.py","docs/LEGAL001_SOURCE_REVIEW.md",
     "docs/LEGAL001_SCOPE.md","docs/LEGAL001_IMPLEMENTATION.md",
@@ -78,6 +79,10 @@ def validate(root=ROOT):
         deferred=(root/"docs/LEGAL001_DEFERRED_DECISION.md").read_text()
         if "ОТЛОЖЕНО ДО РЕШЕНИЯ ВЛАДЕЛЬЦА" not in deferred:
             errors.append("Historical LEGAL-001 deferral was rewritten or removed")
+        pg_workflow=(root/".github/workflows/legal001-postgresql.yml").read_text()
+        for marker in ("postgres:17-alpine","tests/test_legal001_postgresql.py",
+                       "T-06 PostgreSQL regressions","PG_DUMP_BIN","PG_RESTORE_BIN"):
+            if marker not in pg_workflow: errors.append("Missing LEGAL-001 PostgreSQL verification control: "+marker)
         workflow=(root/".github/workflows/ci.yml").read_text()
         if "Verify LEGAL-001 consent and admission controls" not in workflow or "check_legal001_package.py" not in workflow:
             errors.append("Missing LEGAL-001 CI gate")
