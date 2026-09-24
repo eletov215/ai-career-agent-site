@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+{% block title %}Черновик Alice SITE QA - AI Career Agent{% endblock %}
+{% block head_extra %}<link rel="stylesheet" href="{{ url_for('static',filename='cover_letters.css') }}?v=1">{% endblock %}
+{% block content %}
+<main class="section ai005-page"><div class="container ai005-shell">
+<header><a href="{{ url_for('ai005_site_qa.index') }}">Alice SITE QA</a><h1>{{ record.source.vacancy.title }}</h1><p>{{ record.source.vacancy.company }}</p></header>
+<aside class="ai005-notice">Источник данных: <strong>synthetic fixture</strong>. {% if proposal %}Источник предложения: <strong>Alice</strong>. Черновик ещё не принят пользователем.{% endif %}</aside>
+{% if proposal %}
+<form class="ai005-card" method="post" action="{{ url_for('ai005_site_qa.accept',language=language,letter_id=record.id) }}">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+<input type="hidden" name="expected_revision" value="{{ proposal.base_revision }}">
+<input type="hidden" name="proposal_id" value="{{ proposal.id }}">
+<label>Тема<input name="subject" maxlength="240" value="{{ proposal.content.subject }}" required></label>
+<label>Текст<textarea name="body" rows="14" maxlength="8000" required>{{ proposal.content.body }}</textarea></label>
+<label class="ai005-check"><input type="checkbox" name="confirm" value="1" required> Принять этот просмотренный черновик и сохранить версию</label>
+<button class="btn btn-primary" type="submit">Сохранить версию</button>
+</form>
+<form class="ai005-card" method="post" action="{{ url_for('ai005_site_qa.reject',language=language,letter_id=record.id,proposal_id=proposal.id) }}">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+<input type="hidden" name="expected_revision" value="{{ record.revision }}">
+<label class="ai005-check"><input type="checkbox" name="confirm" value="1" required> Отклонить этот черновик</label>
+<button class="btn btn-secondary" type="submit">Отклонить</button>
+</form>
+{% else %}
+<section class="ai005-card"><h2>Текущее состояние</h2>
+{% if record.last_version %}<p>Последняя сохранённая версия: {{ record.last_version }}.</p>{% else %}<p>Сохранённой версии пока нет.</p>{% endif %}
+</section>
+{% endif %}
+<section class="ai005-card"><h2>История версий</h2>
+{% for version in record.versions %}
+<div class="ai005-version"><a href="{{ url_for('ai005_site_qa.version',language=language,letter_id=record.id,number=version.number) }}">Версия {{ version.number }}</a><span>{{ version.origin }}</span><a href="{{ url_for('ai005_site_qa.export',language=language,letter_id=record.id,number=version.number) }}">TXT</a></div>
+{% else %}<p>Версий пока нет.</p>{% endfor %}
+</section>
+</div></main>
+{% endblock %}
