@@ -1,0 +1,58 @@
+name: HOST-001 Yandex Cloud foundation
+
+"on":
+  push:
+    paths:
+      - "infra/yandex-cloud/**"
+      - "docs/HOST001_*.md"
+      - "docs/LEGAL001_OWNER_DECISIONS_20260924.md"
+      - "scripts/check_host001_package.py"
+      - "tests/test_host001_package.py"
+      - ".github/workflows/host001-yandex-cloud.yml"
+      - "domain/ai.py"
+      - "services/legal_policy.py"
+  pull_request:
+    paths:
+      - "infra/yandex-cloud/**"
+      - "docs/HOST001_*.md"
+      - "docs/LEGAL001_OWNER_DECISIONS_20260924.md"
+      - "scripts/check_host001_package.py"
+      - "tests/test_host001_package.py"
+      - ".github/workflows/host001-yandex-cloud.yml"
+      - "domain/ai.py"
+      - "services/legal_policy.py"
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Terraform/static no-apply validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.11.4"
+
+      - name: HOST-001 package guard
+        run: python scripts/check_host001_package.py
+
+      - name: HOST-001 unit tests
+        run: python -m unittest tests.test_host001_package -v
+
+      - name: Terraform format
+        run: terraform -chdir=infra/yandex-cloud fmt -check -recursive
+
+      - name: Terraform init without backend
+        run: terraform -chdir=infra/yandex-cloud init -backend=false
+
+      - name: Terraform validate
+        run: terraform -chdir=infra/yandex-cloud validate

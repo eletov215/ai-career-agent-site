@@ -1,0 +1,28 @@
+# Non-secret example only. Never add credentials/passwords here.
+cloud_id  = "CHANGE_ME_CLOUD_ID"
+folder_id = "CHANGE_ME_FOLDER_ID"
+
+# Replace with the administrator's current trusted public IPv4 /32.
+admin_cidr = "203.0.113.10/32"
+
+# Public key only. Keep the private key outside this repository.
+ssh_public_key = "ssh-ed25519 CHANGE_ME_PUBLIC_KEY"
+
+# Russia-only launch topology.
+app_zone          = "ru-central1-d"
+db_secondary_zone = "ru-central1-b"
+
+# Keep the initial beta foundation small; review current Yandex Cloud pricing
+# before any terraform apply.
+vm_cores      = 2
+vm_memory_gb  = 4
+vm_disk_gb    = 40
+
+postgresql_resource_preset_id = "s3-c2-m8"
+postgresql_disk_type_id       = "network-ssd"
+postgresql_disk_size_gb       = 20
+postgresql_backup_retain_days = 7
+
+# Supply the database password only at runtime, for example:
+#   export TF_VAR_postgresql_app_password='...'
+# Do not put postgresql_app_password in this file.
