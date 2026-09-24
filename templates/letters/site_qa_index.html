@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+{% block title %}Alice SITE QA - AI Career Agent{% endblock %}
+{% block head_extra %}<link rel="stylesheet" href="{{ url_for('static',filename='cover_letters.css') }}?v=1">{% endblock %}
+{% block content %}
+<main class="section ai005-page"><div class="container ai005-shell">
+<h1>Alice SITE QA</h1>
+<aside class="ai005-notice"><strong>Синтетический тест.</strong> Будет создан отдельный технический владелец данных. Содержимое вашего настоящего профиля, резюме, вакансий и писем в этот тест не входит.</aside>
+<form class="ai005-card" method="post" action="{{ url_for('ai005_site_qa.start') }}">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+<label>Язык<select name="language"><option value="ru">Русский</option><option value="en">English</option></select></label>
+<label>Длина<select name="length"><option value="short">Короткое</option><option value="full">Полное</option></select></label>
+<label>Тон<select name="tone"><option value="professional">Профессиональный</option><option value="friendly">Дружелюбный</option></select></label>
+<button class="btn btn-primary" type="submit">Показать данные для Alice</button>
+</form>
+<p><a href="{{ url_for('ai005_site_qa.review_gate') }}">Управление тестовым доступом</a></p>
+</div></main>
+{% endblock %}
