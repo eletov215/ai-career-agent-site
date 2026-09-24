@@ -11,12 +11,14 @@ from uuid import uuid4
 from sqlalchemy import select, delete, func, text as sqltext
 from models import User, CareerProfile, CareerProfileVersion, SavedVacancy
 from models.cover_letter import CoverLetter, CoverLetterVersion, CoverLetterProposal
+from models.saved_vacancy import SavedVacancySource
 from repositories.base import RepositoryBase
 from repositories.saved_vacancies import saved_view
-from domain.saved_vacancy import SavedVacancyError
+from domain.saved_vacancy import SavedVacancyError, canonical_json, fingerprint, SNAPSHOT_VERSION
 from domain.cover_letter import (SOURCE_VERSION, MAX_LETTERS, MAX_VERSIONS, MAX_PROPOSALS,
     LetterError, canonical, digest, content)
 from services.cover_letter_source import build_source
+from services.saved_vacancy_snapshot import build_snapshot
 
 
 def checked_json(raw, expected):
@@ -144,7 +146,84 @@ class CoverLetterRepository(RepositoryBase):
     def _revision(row,expected):
         if row.revision!=expected:raise LetterError('stale_write')
 
+    @staticmethod
+    def _synthetic_source(saved, case):
+        return {
+            'schema': SOURCE_VERSION,
+            'saved_vacancy_id': saved['id'],
+            'vacancy_snapshot_hash': saved['snapshot_hash'],
+            'vacancy': dict(case['vacancy']),
+            'profile_version': 0,
+            'profile_hash': '',
+            'candidate_origin': 'synthetic_site_qa',
+            'facts': list(case['candidate_facts']),
+            'omitted_fact_ids': [],
+            'match': None,
+            'match_reason': 'synthetic_site_qa',
+        }
+
+    def create_synthetic_qa(self,user_id,case_key,initial,operation_hash,request_hash,*,now):
+        """Create a fixed-fixture workspace without reading the owner's profile."""
+        from services.ai.letter_admission import synthetic_cases
+        cases=synthetic_cases()
+        if case_key not in cases:
+            raise LetterError('invalid_request')
+        case=cases[case_key]
+        raw={'source':'hh','external_id':'ai005-site-qa-v1-'+case_key,
+             'url':'https://hh.ru/vacancy/ai005-site-qa-v1-'+case_key,
+             **case['vacancy'],'location':'','source_status':'active','currency':'RUB'}
+        snapshot=build_snapshot(raw)
+        source_record=snapshot['source_records'][0]
+        with self._write(user_id) as s:
+            old=s.scalar(select(CoverLetter).where(
+                CoverLetter.user_id==user_id,CoverLetter.operation_hash==operation_hash))
+            if old is not None:
+                if old.request_hash!=request_hash:raise LetterError('idempotency_conflict')
+                return {**letter_view(old),'created':False}
+            source_row=s.scalar(select(SavedVacancySource).where(
+                SavedVacancySource.user_id==user_id,
+                SavedVacancySource.identity_hash==source_record['identity_hash']))
+            if source_row is not None:
+                saved_row=self._saved(s,user_id,source_row.saved_vacancy_id)
+                saved_entity=s.get(SavedVacancy,source_row.saved_vacancy_id)
+            else:
+                saved_entity=SavedVacancy(id=str(uuid4()),user_id=user_id,
+                    snapshot_json=canonical_json(snapshot),snapshot_hash=fingerprint(snapshot),
+                    snapshot_version=SNAPSHOT_VERSION,title=snapshot['title'],company=snapshot['company'],
+                    location=snapshot['location'],
+                    search_text=' '.join(snapshot[k] for k in ('title','company','location')).casefold(),
+                    note='',revision=1,created_at=now,updated_at=now)
+                s.add(saved_entity);s.flush()
+                s.add(SavedVacancySource(id=str(uuid4()),saved_vacancy_id=saved_entity.id,user_id=user_id,
+                    source=source_record['source'],external_id=source_record['external_id'],
+                    identity_hash=source_record['identity_hash'],url=source_record['url'],created_at=now))
+                s.flush()
+                saved_row=saved_view(saved_entity)
+            if saved_entity is None:
+                raise LetterError('storage_integrity')
+            source=self._synthetic_source(saved_row,case)
+            count=s.scalar(select(func.count()).select_from(CoverLetter).where(CoverLetter.user_id==user_id))
+            if count>=MAX_LETTERS:raise LetterError('history_limit')
+            row=CoverLetter(id=str(uuid4()),user_id=user_id,saved_vacancy_id=saved_entity.id,
+                operation_hash=operation_hash,request_hash=request_hash,source_json=canonical(source),
+                source_hash=digest(source),content_json=canonical(initial),content_hash=digest(initial),
+                revision=1,last_version=0,created_at=now,updated_at=now)
+            s.add(row);s.flush()
+            return {**letter_view(row),'created':True}
+
     def _fresh(self,s,user_id,row):
+        stored=letter_view(row)['source']
+        if stored.get('candidate_origin')=='synthetic_site_qa':
+            try:
+                from services.ai.letter_admission import synthetic_cases
+                saved=self._saved(s,user_id,row.saved_vacancy_id)
+                cases=synthetic_cases()
+                match=next((case for case in cases.values()
+                    if stored.get('facts')==case['candidate_facts']
+                    and stored.get('vacancy')==case['vacancy']),None)
+                return match is not None and digest(self._synthetic_source(saved,match))==row.source_hash
+            except (LetterError,SavedVacancyError,KeyError,TypeError,StopIteration):
+                return False
         return digest(self._source(s,user_id,row.saved_vacancy_id))==row.source_hash
 
     def get(self,user_id,letter_id):
