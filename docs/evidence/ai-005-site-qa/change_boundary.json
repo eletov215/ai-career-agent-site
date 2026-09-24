@@ -1,0 +1,15 @@
+{
+  "package": "AI-005",
+  "tranche": "site-qa-synthetic",
+  "version": 1,
+  "date": "2026-09-24",
+  "source_commit": "b828596c893d59a544f9678d7b45ab6ed7f44230",
+  "source_tree": "05fc57dd0294cd5814637cc6e61e864f2bba9d2d",
+  "previous_app_blob": "a75c6e858a9ee03a181f79bf7c3d7e3343d0c179",
+  "current_app_blob": "4c36add8c06cbefe620fd207611d7d7b5e4ba0d2",
+  "public_real_data_enabled": false,
+  "production_legal_state": "DRAFT",
+  "paid_provider_calls": 0,
+  "terraform_apply": false,
+  "production_consent_mutations": 0
+}
