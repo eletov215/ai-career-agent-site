@@ -32,7 +32,9 @@ from services.cover_letter_ai import CoverLetterGenerator
 from services.consent import ConsentService
 from services.ai.letter_admission import LegalLetterAdmission
 from services.ai.letter_runtime import LetterRuntime
+from services.alice_site_qa import AliceSiteQAService
 from routes.cover_letters import create_cover_letters_blueprint
+from routes.alice_site_qa import create_alice_site_qa_blueprint
 from routes.saved_vacancies import create_saved_vacancies_blueprint
 from services.ai.service import AIService
 from routes.ai_status import create_ai_status_blueprint
@@ -136,11 +138,15 @@ app.register_blueprint(create_saved_vacancies_blueprint(SAVED_VACANCY_SERVICE))
 # LEGAL-001 installs owner consent plus an independent reviewed-code legal gate.
 # The current policy is DRAFT and REAL_DATA_SUPPORTED remains false.
 CONSENT_SERVICE = ConsentService(STORAGE.consents)
-COVER_LETTER_GENERATOR = CoverLetterGenerator(STORAGE.cover_letters, LetterRuntime(AI_SERVICE),
+LETTER_RUNTIME = LetterRuntime(AI_SERVICE)
+COVER_LETTER_GENERATOR = CoverLetterGenerator(STORAGE.cover_letters, LETTER_RUNTIME,
     signing_key=SETTINGS.flask_secret_key, admission=LegalLetterAdmission(CONSENT_SERVICE))
 COVER_LETTER_SERVICE = CoverLetterService(STORAGE.cover_letters, signing_key=SETTINGS.flask_secret_key,
     generator=COVER_LETTER_GENERATOR)
 app.register_blueprint(create_cover_letters_blueprint(COVER_LETTER_SERVICE))
+ALICE_SITE_QA_SERVICE = AliceSiteQAService(
+    STORAGE.cover_letters, LETTER_RUNTIME, signing_key=SETTINGS.flask_secret_key)
+app.register_blueprint(create_alice_site_qa_blueprint(SETTINGS, ALICE_SITE_QA_SERVICE))
 ANALYSIS_SERVICE = ResumeAnalysisService(STORAGE.analyses, AI_SERVICE, fingerprint_key=SETTINGS.flask_secret_key)
 app.register_blueprint(create_resume_analysis_blueprint(ANALYSIS_SERVICE, SETTINGS))
 INTERVIEW_SERVICE = ResumeInterviewService(STORAGE.interviews, fingerprint_key=SETTINGS.flask_secret_key)
