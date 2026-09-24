@@ -23,3 +23,12 @@ def copy_ai005_boundary(root,destination):
         }:
             target=destination/rel;target.parent.mkdir(parents=True,exist_ok=True)
             shutil.copy2(root/rel,target)
+
+    if (root/'docs/evidence/ai-005-site-qa/change_boundary.json').is_file():
+        from scripts.ai005_site_qa_boundary import NEW_BLOBS
+        for rel in set(NEW_BLOBS) | {
+            'docs/evidence/ai-005-site-qa/change_boundary.json',
+            'scripts/ai005_site_qa_boundary.py',
+        }:
+            target=destination/rel;target.parent.mkdir(parents=True,exist_ok=True)
+            shutil.copy2(root/rel,target)
