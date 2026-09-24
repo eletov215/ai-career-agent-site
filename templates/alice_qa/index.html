@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block head_extra %}<link rel="stylesheet" href="{{ url_for('static',filename='cover_letters.css') }}">{% endblock %}
+{% block content %}
+<main class="section ai005-page"><div class="container ai005-shell">
+<h1>Alice SITE QA</h1>
+<aside class="ai005-notice"><strong>Только синтетические данные.</strong> Этот закрытый тестовый путь не использует ваш карьерный профиль, резюме или пользовательский текст.</aside>
+<section class="ai005-card">
+<h2>Новый синтетический тест</h2>
+<p>Выберите параметры письма. Исходные факты и вакансия берутся только из встроенной проверенной fixture.</p>
+<form method="post" action="{{ url_for('alice_site_qa.preview') }}">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+{% include 'letters/_options.html' %}
+<button class="btn btn-primary" type="submit">Показать данные для Alice</button>
+</form>
+</section>
+<section class="ai005-card">
+<h2>Что проверяет этот путь</h2>
+<p>Тот же адаптер Alice, runtime, проверка результата, proposal, редактирование, принятие/отклонение, версии и TXT. Реальные данные пользователей остаются закрыты.</p>
+</section>
+</div></main>
+{% endblock %}
