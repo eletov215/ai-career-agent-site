@@ -74,7 +74,7 @@ class RepositoryGateTests(unittest.TestCase):
     def test_every_package_gate_in_clean_dependency_free_process(self):
         for name in ("check_ai001_package.py","check_ai002_package.py","check_ai003_package.py","check_ai004_package.py",
                      "check_job001_package.py","check_ai005_package.py","check_ai005_r2_package.py",
-                     "check_ai_provider_package.py","check_legal001_package.py"):
+                     "check_ai005_site_qa_package.py","check_ai_provider_package.py","check_legal001_package.py"):
             with self.subTest(gate=name):
                 result=subprocess.run([sys.executable,"-S",str(ROOT/"scripts"/name)],cwd=ROOT,capture_output=True,text=True,timeout=45)
                 self.assertEqual(0,result.returncode,result.stdout+result.stderr)
