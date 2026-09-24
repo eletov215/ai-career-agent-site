@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+{% block title %}Версия Alice SITE QA - AI Career Agent{% endblock %}
+{% block head_extra %}<link rel="stylesheet" href="{{ url_for('static',filename='cover_letters.css') }}?v=1">{% endblock %}
+{% block content %}
+<main class="section ai005-page"><div class="container ai005-shell">
+<a href="{{ url_for('ai005_site_qa.detail',language=language,letter_id=letter_id) }}">Назад к тестовому письму</a>
+<h1>Версия {{ version.number }}</h1>
+<aside class="ai005-notice">Происхождение: {{ version.origin }}</aside>
+<section class="ai005-card"><h2>{{ version.content.subject }}</h2><div class="ai005-text">{{ version.content.body }}</div></section>
+<a class="btn btn-secondary" href="{{ url_for('ai005_site_qa.export',language=language,letter_id=letter_id,number=version.number) }}">Скачать TXT</a>
+</div></main>
+{% endblock %}
