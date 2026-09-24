@@ -45,7 +45,12 @@ def successor_hashes(root: Path) -> dict[str,str]:
             or evidence.get("public_real_data_enabled") is not False
             or evidence.get("paid_provider_calls")!=0):
         raise ValueError("Invalid LEGAL-001 successor evidence")
+    site_qa={}
+    if (root/"docs/evidence/ai-005-site-qa/change_boundary.json").is_file():
+        from scripts.ai005_site_qa_boundary import successor_hashes as site_qa_successor_hashes
+        site_qa=site_qa_successor_hashes(root)
     for rel,sha in EXPECTED_EXISTING.items():
-        if not _matches(root/rel,sha):
+        current=site_qa.get(rel,sha)
+        if not _matches(root/rel,current):
             raise ValueError("LEGAL-001 successor hash mismatch: "+rel)
-    return dict(EXPECTED_EXISTING)
+    return {**EXPECTED_EXISTING,**site_qa}
