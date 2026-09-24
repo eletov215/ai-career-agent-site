@@ -1,0 +1,40 @@
+#cloud-config
+ssh_pwauth: false
+disable_root: true
+package_update: true
+package_upgrade: true
+
+users:
+  - default
+  - name: ${admin_username}
+    groups: [sudo]
+    shell: /bin/bash
+    sudo: "ALL=(ALL) NOPASSWD:ALL"
+    ssh_authorized_keys:
+      - ${ssh_public_key}
+
+packages:
+  - ca-certificates
+  - curl
+  - jq
+  - docker.io
+  - docker-compose-v2
+  - python3
+
+write_files:
+  - path: /etc/ai-career-agent/host.env
+    owner: root:root
+    permissions: "0600"
+    content: |
+      YC_LOCKBOX_SECRET_ID=${lockbox_secret_id}
+      ACA_REPO_DIR=/opt/ai-career-agent
+
+runcmd:
+  - [mkdir, -p, /opt/ai-career-agent, /etc/ai-career-agent]
+  - [chown, "${admin_username}:${admin_username}", /opt/ai-career-agent]
+  - [systemctl, enable, --now, docker]
+  - [usermod, -aG, docker, "${admin_username}"]
+  - [curl, -fsSL, "https://storage.yandexcloud.net/cloud-certs/CA.pem", -o, /etc/ai-career-agent/yandex-ca.pem]
+  - [chmod, "0644", /etc/ai-career-agent/yandex-ca.pem]
+
+final_message: "AI Career Agent HOST-001 Yandex Cloud base prepared. Application deployment is a separate reviewed step."

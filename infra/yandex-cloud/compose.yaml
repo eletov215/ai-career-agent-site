@@ -1,0 +1,193 @@
+name: ai-career-agent-yandex
+
+x-app-build: &app-build
+  context: ../..
+  target: runtime
+
+x-app-environment: &app-environment
+  APP_ENV: production
+  APP_VERSION: ${APP_VERSION:-host001-yandex}
+  SERVICE_NAME: ${SERVICE_NAME:-ai-career-agent}
+  PORT: "8000"
+  DATA_DIR: /var/lib/ai-career-agent
+  BACKUP_DIR: /var/backups/ai-career-agent
+  DATABASE_URL: ${DATABASE_URL:?Load DATABASE_URL from Lockbox}
+  FLASK_SECRET_KEY: ${FLASK_SECRET_KEY:?Load FLASK_SECRET_KEY from Lockbox}
+  TOKEN_ENCRYPTION_KEY: ${TOKEN_ENCRYPTION_KEY:?Load TOKEN_ENCRYPTION_KEY from Lockbox}
+  SUPERJOB_CLIENT_ID: ${SUPERJOB_CLIENT_ID:?Load SUPERJOB_CLIENT_ID from Lockbox}
+  SUPERJOB_CLIENT_SECRET: ${SUPERJOB_CLIENT_SECRET:?Load SUPERJOB_CLIENT_SECRET from Lockbox}
+  SUPERJOB_REDIRECT_URI: ${SUPERJOB_REDIRECT_URI:?Load SUPERJOB_REDIRECT_URI from Lockbox}
+  HH_CLIENT_ID: ${HH_CLIENT_ID:?Load HH_CLIENT_ID from Lockbox}
+  HH_CLIENT_SECRET: ${HH_CLIENT_SECRET:?Load HH_CLIENT_SECRET from Lockbox}
+  HH_REDIRECT_URI: ${HH_REDIRECT_URI:?Load HH_REDIRECT_URI from Lockbox}
+  HH_USER_AGENT: ${HH_USER_AGENT:?Load HH_USER_AGENT from Lockbox}
+  REED_API_KEY: ${REED_API_KEY:-}
+  SYNC_SECRET: ${SYNC_SECRET:?Load SYNC_SECRET from Lockbox}
+  TRUSTED_HOSTS: ${TRUSTED_HOSTS:?Load TRUSTED_HOSTS from Lockbox}
+  TRUST_PROXY_HEADERS: "1"
+  RATELIMIT_STORAGE_URI: ${RATELIMIT_STORAGE_URI:-memory://}
+  AUTH_EMAIL_BACKEND: ${AUTH_EMAIL_BACKEND:-disabled}
+  AUTH_EMAIL_FROM: ${AUTH_EMAIL_FROM:-}
+  AUTH_EMAIL_FROM_NAME: ${AUTH_EMAIL_FROM_NAME:-AI Career Agent}
+  AUTH_SMTP_HOST: ${AUTH_SMTP_HOST:-}
+  AUTH_SMTP_PORT: ${AUTH_SMTP_PORT:-587}
+  AUTH_SMTP_USERNAME: ${AUTH_SMTP_USERNAME:-}
+  AUTH_SMTP_PASSWORD: ${AUTH_SMTP_PASSWORD:-}
+  AUTH_SMTP_USE_TLS: ${AUTH_SMTP_USE_TLS:-1}
+  AUTH_SMTP_USE_SSL: ${AUTH_SMTP_USE_SSL:-0}
+  AUTH_SMTP_TIMEOUT_SECONDS: ${AUTH_SMTP_TIMEOUT_SECONDS:-8}
+  AUTH_GMAIL_CLIENT_ID: ${AUTH_GMAIL_CLIENT_ID:-}
+  AUTH_GMAIL_CLIENT_SECRET: ${AUTH_GMAIL_CLIENT_SECRET:-}
+  AUTH_GMAIL_REFRESH_TOKEN: ${AUTH_GMAIL_REFRESH_TOKEN:-}
+  AUTH_GMAIL_TIMEOUT_SECONDS: ${AUTH_GMAIL_TIMEOUT_SECONDS:-8}
+  AUTH_SESSION_TTL_SECONDS: ${AUTH_SESSION_TTL_SECONDS:-43200}
+  AUTH_VERIFICATION_TTL_SECONDS: ${AUTH_VERIFICATION_TTL_SECONDS:-86400}
+  AUTH_RESET_TTL_SECONDS: ${AUTH_RESET_TTL_SECONDS:-3600}
+  AUTH_PASSWORD_MIN_LENGTH: ${AUTH_PASSWORD_MIN_LENGTH:-12}
+  PRIVACY_CLEANUP_ENABLED: ${PRIVACY_CLEANUP_ENABLED:-1}
+  PRIVACY_CLEANUP_INTERVAL_SECONDS: ${PRIVACY_CLEANUP_INTERVAL_SECONDS:-86400}
+  PRIVACY_PENDING_ACCOUNT_RETENTION_DAYS: ${PRIVACY_PENDING_ACCOUNT_RETENTION_DAYS:-30}
+  PRIVACY_AUTH_ARTIFACT_RETENTION_DAYS: ${PRIVACY_AUTH_ARTIFACT_RETENTION_DAYS:-30}
+  PRIVACY_AUDIT_RETENTION_DAYS: ${PRIVACY_AUDIT_RETENTION_DAYS:-180}
+  PRIVACY_ORPHAN_ASSET_RETENTION_DAYS: ${PRIVACY_ORPHAN_ASSET_RETENTION_DAYS:-7}
+  PRIVACY_CLEANUP_BATCH_SIZE: ${PRIVACY_CLEANUP_BATCH_SIZE:-200}
+  SEARCH_ADMIN_EMAILS: ${SEARCH_ADMIN_EMAILS:-}
+  SOURCE_HEALTH_RECORDING_ENABLED: ${SOURCE_HEALTH_RECORDING_ENABLED:-1}
+  SOURCE_HEALTH_STALE_SECONDS: ${SOURCE_HEALTH_STALE_SECONDS:-900}
+  SEARCH_PAGE_SIZE: ${SEARCH_PAGE_SIZE:-20}
+  SEARCH_SNAPSHOT_TTL_SECONDS: ${SEARCH_SNAPSHOT_TTL_SECONDS:-1800}
+  SEARCH_SNAPSHOT_MAX_CANDIDATES: ${SEARCH_SNAPSHOT_MAX_CANDIDATES:-1200}
+  SEARCH_SNAPSHOT_MAX_PAGES_PER_SOURCE: ${SEARCH_SNAPSHOT_MAX_PAGES_PER_SOURCE:-8}
+  SEARCH_SNAPSHOT_MAX_ROUNDS_PER_REQUEST: ${SEARCH_SNAPSHOT_MAX_ROUNDS_PER_REQUEST:-1}
+  SEARCH_SNAPSHOT_BUFFER_ITEMS: ${SEARCH_SNAPSHOT_BUFFER_ITEMS:-1}
+  SEARCH_SNAPSHOT_EXTENSION_LEASE_SECONDS: ${SEARCH_SNAPSHOT_EXTENSION_LEASE_SECONDS:-90}
+  TRUDVSEM_SYNC_ENABLED: "0"
+  TRUDVSEM_SYNC_INTERVAL: ${TRUDVSEM_SYNC_INTERVAL:-1800}
+  TRUDVSEM_SYNC_ITEMS: ${TRUDVSEM_SYNC_ITEMS:-300}
+  TRUDVSEM_SYNC_BATCH: ${TRUDVSEM_SYNC_BATCH:-10}
+  TRUDVSEM_SYNC_POLL_SECONDS: ${TRUDVSEM_SYNC_POLL_SECONDS:-15}
+  TRUDVSEM_SYNC_STALE_SECONDS: ${TRUDVSEM_SYNC_STALE_SECONDS:-900}
+  TRUDVSEM_WORKER_HEARTBEAT_SECONDS: ${TRUDVSEM_WORKER_HEARTBEAT_SECONDS:-15}
+  TRUDVSEM_SYNC_WATERMARK_OVERLAP_SECONDS: ${TRUDVSEM_SYNC_WATERMARK_OVERLAP_SECONDS:-300}
+  TRUDVSEM_VACANCY_TTL_DAYS: ${TRUDVSEM_VACANCY_TTL_DAYS:-45}
+  TRUDVSEM_CLOSED_RETENTION_DAYS: ${TRUDVSEM_CLOSED_RETENTION_DAYS:-30}
+  TRUDVSEM_RETRY_BASE_SECONDS: ${TRUDVSEM_RETRY_BASE_SECONDS:-60}
+  TRUDVSEM_RETRY_MAX_SECONDS: ${TRUDVSEM_RETRY_MAX_SECONDS:-3600}
+  LOG_FORMAT: json
+  LOG_LEVEL: ${LOG_LEVEL:-INFO}
+  GUNICORN_WORKERS: "1"
+  GUNICORN_THREADS: ${GUNICORN_THREADS:-4}
+  GUNICORN_TIMEOUT: ${GUNICORN_TIMEOUT:-90}
+  FORWARDED_ALLOW_IPS: "*"
+  AI_ENABLED: "0"
+  AI_KILL_SWITCH: "1"
+  AI_SYNTHETIC_ACCESS_ENABLED: "0"
+  AI_INTERVIEW_REVIEW_ENABLED: "0"
+  AI_ANALYSIS_REVIEW_ENABLED: "0"
+
+x-app-volumes: &app-volumes
+  - app-data:/var/lib/ai-career-agent
+  - /etc/ai-career-agent/yandex-ca.pem:/etc/ssl/certs/yandex-cloud-ca.pem:ro
+
+services:
+  migrate:
+    build: *app-build
+    image: ai-career-agent:${APP_IMAGE_TAG:-host001-yandex}
+    restart: "no"
+    command: ["python", "scripts/manage_db.py", "upgrade"]
+    environment: *app-environment
+    volumes: *app-volumes
+    networks: [backend]
+
+  web:
+    build: *app-build
+    image: ai-career-agent:${APP_IMAGE_TAG:-host001-yandex}
+    restart: unless-stopped
+    command: ["gunicorn", "--config", "infra/gunicorn.conf.py", "app:app"]
+    environment: *app-environment
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    volumes: *app-volumes
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health/ready', timeout=4).read()"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks: [frontend, backend]
+
+  sync-worker:
+    build: *app-build
+    image: ai-career-agent:${APP_IMAGE_TAG:-host001-yandex}
+    restart: unless-stopped
+    command: ["python", "scripts/trudvsem_sync_worker.py"]
+    environment:
+      <<: *app-environment
+      TRUDVSEM_SYNC_ENABLED: "1"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    volumes: *app-volumes
+    stop_grace_period: 30s
+    networks: [backend]
+
+  privacy-worker:
+    build: *app-build
+    image: ai-career-agent:${APP_IMAGE_TAG:-host001-yandex}
+    restart: unless-stopped
+    command: ["python", "scripts/privacy_cleanup_worker.py"]
+    environment:
+      <<: *app-environment
+      PRIVACY_CLEANUP_ENABLED: "1"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    volumes: *app-volumes
+    stop_grace_period: 30s
+    networks: [backend]
+
+  gateway:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    environment:
+      SITE_ADDRESS: ${SITE_ADDRESS:-:80}
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      web:
+        condition: service_healthy
+    networks: [frontend]
+
+  ops:
+    build:
+      context: ../..
+      target: ops
+    image: ai-career-agent-ops:${APP_IMAGE_TAG:-host001-yandex}
+    profiles: ["ops"]
+    environment:
+      APP_ENV: production
+      DATABASE_URL: ${DATABASE_URL:?Load DATABASE_URL from Lockbox}
+      BACKUP_ENCRYPTION_KEY: ${BACKUP_ENCRYPTION_KEY:?Load BACKUP_ENCRYPTION_KEY from Lockbox}
+      BACKUP_DIR: /var/backups/ai-career-agent
+    volumes:
+      - backup-data:/var/backups/ai-career-agent
+      - /etc/ai-career-agent/yandex-ca.pem:/etc/ssl/certs/yandex-cloud-ca.pem:ro
+    networks: [backend]
+
+volumes:
+  app-data:
+  backup-data:
+  caddy-data:
+  caddy-config:
+
+networks:
+  frontend:
+  backend:
+    internal: false

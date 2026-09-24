@@ -1,0 +1,22 @@
+{
+    admin off
+}
+
+{$SITE_ADDRESS::80} {
+    encode zstd gzip
+
+    reverse_proxy web:8000 {
+        health_uri /health/live
+        health_interval 20s
+        health_timeout 5s
+    }
+
+    header {
+        -Server
+    }
+
+    log {
+        output stdout
+        format json
+    }
+}
