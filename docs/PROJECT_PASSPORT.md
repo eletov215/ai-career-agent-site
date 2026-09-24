@@ -16,11 +16,14 @@
 | Runtime equivalence | `28db01b719003149a0d616934e469b1b83c0237f..309afe0089356e6fb0d1c205ce7ca2c7cb682ae2` changes only verification workflow/guard/tests; no application runtime file changed |
 | GitHub CI | main CI #324 SUCCESS; Package preflight #11 SUCCESS; LEGAL-001 PostgreSQL verification #5 SUCCESS |
 | Schema | `20260922_0021`; production readiness current=expected confirmed |
+| Consent | versioned persistence + explicit accept/withdraw + stale/replay/concurrency controls |
 | PostgreSQL T-05/T-06 | PASS: migration 0020→0021, non-empty consent history, concurrency, owner CASCADE, encrypted backup/restore, destructive downgrade/re-upgrade and eight requested PG regression files |
 | Production QA | PASS_WITH_RECORDED_LIMITS: health/status, privacy headers/anonymous isolation, consent UI/conflicts, responsive 1280/768/390/360, ZIP export, TXT export, worker cold-start/resume observation |
 | Consent QA state | withdrawn / cycle 4 / revision 2; no further consent mutation required |
 | AI admission | current consent is necessary but not sufficient; production legal policy remains `DRAFT / NOT_ACTIVE`; `REAL_DATA_SUPPORTED=False` |
 | Paid provider calls | 0; paid Yandex/Alice jobs skipped |
+| Accepted predecessor | JOB-001 COMPLETE; PLAN 1.6.1 / PASSPORT 2.76; `c095bfb70bad5b1ba22cd9b1aeac1795a0b59c4c`; schema `20260917_0019` |
+| Accepted foundation | AI-004 COMPLETE in synthetic/reference-only scope |
 | Real-data Alice | CLOSED |
 | Legal-owner decisions | PENDING |
 | Remaining evidence limits | natural 24h cleanup cycle not observed; historical pre-migration production backup not evidenced; old baseline consent record ID was never captured |
