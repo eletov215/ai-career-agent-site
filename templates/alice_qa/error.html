@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block head_extra %}<link rel="stylesheet" href="{{ url_for('static',filename='cover_letters.css') }}">{% endblock %}
+{% block content %}
+<main class="section ai005-page"><div class="container ai005-shell">
+<h1>Тест Alice не выполнен</h1>
+<section class="ai005-card"><p>{{ error }}</p></section>
+<a href="{{ url_for('alice_site_qa.index') }}">Вернуться к Alice SITE QA</a>
+</div></main>
+{% endblock %}
