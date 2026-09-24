@@ -32,7 +32,9 @@ from services.cover_letter_ai import CoverLetterGenerator
 from services.consent import ConsentService
 from services.ai.letter_admission import LegalLetterAdmission
 from services.ai.letter_runtime import LetterRuntime
+from services.ai.letter_site_qa import AliceLetterSiteQA
 from routes.cover_letters import create_cover_letters_blueprint
+from routes.ai005_site_qa import create_ai005_site_qa_blueprint
 from routes.saved_vacancies import create_saved_vacancies_blueprint
 from services.ai.service import AIService
 from routes.ai_status import create_ai_status_blueprint
@@ -141,6 +143,10 @@ COVER_LETTER_GENERATOR = CoverLetterGenerator(STORAGE.cover_letters, LetterRunti
 COVER_LETTER_SERVICE = CoverLetterService(STORAGE.cover_letters, signing_key=SETTINGS.flask_secret_key,
     generator=COVER_LETTER_GENERATOR)
 app.register_blueprint(create_cover_letters_blueprint(COVER_LETTER_SERVICE))
+AI005_SITE_QA_SERVICE = AliceLetterSiteQA(
+    STORAGE.cover_letters, AI_SERVICE, signing_key=SETTINGS.flask_secret_key
+)
+app.register_blueprint(create_ai005_site_qa_blueprint(AI005_SITE_QA_SERVICE, SETTINGS))
 ANALYSIS_SERVICE = ResumeAnalysisService(STORAGE.analyses, AI_SERVICE, fingerprint_key=SETTINGS.flask_secret_key)
 app.register_blueprint(create_resume_analysis_blueprint(ANALYSIS_SERVICE, SETTINGS))
 INTERVIEW_SERVICE = ResumeInterviewService(STORAGE.interviews, fingerprint_key=SETTINGS.flask_secret_key)
