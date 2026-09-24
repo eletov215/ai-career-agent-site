@@ -2,9 +2,21 @@
 
 | Поле | Значение |
 |---|---|
-| Версия / дата | 1.6.4 / 22 сентября 2026 |
-| Код | baseline main `f5ce1f42836e3872854332324f2ebdd9c8934b36`; candidate `fe3a7e1b553ccc9ebb5b956efce3779287291c04` |
-| Статус | ДЕЙСТВУЮЩИЙ; LEGAL-001 IMPLEMENTED + CI_PASS; AI-005 IN_PROGRESS / LIVE_NOT_ACCEPTED |
+| Версия / дата | 1.6.5 / 24 сентября 2026 |
+| Код | technical acceptance main `309afe0089356e6fb0d1c205ce7ca2c7cb682ae2`, tree `2616a3b15df09f85bf7ae261e605356fb9f52f9d`; production runtime evidence `28db01b719003149a0d616934e469b1b83c0237f` |
+| Статус | ДЕЙСТВУЮЩИЙ; LEGAL-001 TECHNICAL_ACCEPTED / LEGAL_PENDING; AI-005 IN_PROGRESS / LIVE_NOT_ACCEPTED |
+
+## LEGAL-001 final technical audit / 24 сентября 2026
+
+GitHub source of truth подтверждён на main `309afe0089356e6fb0d1c205ce7ca2c7cb682ae2`, tree `2616a3b15df09f85bf7ae261e605356fb9f52f9d`. Post-merge CI #324, Package preflight #11 и LEGAL-001 PostgreSQL verification #5 завершены SUCCESS. Dedicated PostgreSQL run использовал disposable PostgreSQL 17 и не использовал production/provider credentials. Paid provider calls=0.
+
+T-05/T-06 имеют отдельное воспроизводимое evidence: 2 dedicated T-05 tests passed; migration tools и `tests/test_legal001_migration.py` passed; восемь PostgreSQL regression files прошли без SKIPPED. Backup/restore проверяет exact before/after consent rows в отдельной disposable DB, а destructive downgrade проверяется только на disposable copy.
+
+Production QA относится к `28db01b719003149a0d616934e469b1b83c0237f`. Сравнение GitHub между `28db01b719003149a0d616934e469b1b83c0237f` и `309afe0089356e6fb0d1c205ce7ca2c7cb682ae2` показывает ровно три verification-only path: `.github/workflows/legal001-postgresql.yml`, `scripts/check_legal001_package.py`, `tests/test_legal001_postgresql.py`. Application runtime не менялся.
+
+Manual production evidence: readiness/live/status PASS, privacy headers no-store PASS, unauthenticated isolation PASS, consent stale/conflict behavior PASS, responsive 1280/768/390/360 PASS, privacy ZIP PASS, TXT export PASS. Consent QA остался withdrawn/cycle4/revision2. Worker heartbeat после исправления наблюдался на двух стартах без прежнего FileNotFoundError; естественный 86400-second periodic cycle не наблюдался.
+
+Не подменяем отсутствующие доказательства: historical production backup до исходной migration не зафиксирован; старый baseline consent record ID не был сохранён; natural 24h cleanup cycle NOT_RUN. Юридические facts и финальные документы также не определены. Policy DRAFT/NOT_ACTIVE и real-data Alice CLOSED.
 
 ## LEGAL-001 source/verification audit / 22 сентября 2026
 

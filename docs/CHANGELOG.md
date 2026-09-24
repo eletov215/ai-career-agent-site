@@ -1,5 +1,16 @@
 # AI Career Agent - CHANGELOG
 
+## 2026-09-24 / LEGAL-001 technical acceptance
+
+- PR #43 merged; accepted technical main `309afe0089356e6fb0d1c205ce7ca2c7cb682ae2`, tree `2616a3b15df09f85bf7ae261e605356fb9f52f9d`.
+- Post-merge CI #324, Package preflight #11 and LEGAL-001 PostgreSQL verification #5 all SUCCESS.
+- T-05/T-06 PASS on disposable PostgreSQL 17: migration 0020→0021, no implicit consent, history/cycles/revisions, concurrency, owner CASCADE, encrypted backup/restore exact-row preservation, destructive downgrade/re-upgrade and eight PostgreSQL regression files.
+- Production QA on runtime-equivalent `28db01b719003149a0d616934e469b1b83c0237f` PASS_WITH_RECORDED_LIMITS: health/readiness, closed AI status, privacy headers/anonymous isolation, consent conflicts, responsive layouts, ZIP/TXT export; heartbeat startup/resume defect not reproduced after fix.
+- Compare `28db01b719003149a0d616934e469b1b83c0237f..309afe0089356e6fb0d1c205ce7ca2c7cb682ae2` changes only verification workflow/guard/tests; no application runtime change.
+- Remaining limits: natural 24h cleanup cycle NOT_RUN; historical pre-migration production backup not evidenced; old baseline consent ID not captured.
+- Status becomes `TECHNICAL_ACCEPTED / LEGAL_PENDING`. Policy stays `DRAFT / NOT_ACTIVE`, `REAL_DATA_SUPPORTED=False`, real-data Alice CLOSED, paid provider calls 0. Full AI-005 remains IN_PROGRESS / LIVE_NOT_ACCEPTED.
+
+
 ## 2026-09-22 / LEGAL-001 technical candidate — CI_PASS
 
 - Added additive migration `20260922_0021` and owner-bound versioned AI consent history with explicit acceptance/withdrawal, stale/replay/concurrency protections and user cascade.

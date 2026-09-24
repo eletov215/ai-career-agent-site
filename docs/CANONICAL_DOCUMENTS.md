@@ -2,35 +2,41 @@
 
 | Поле | Значение |
 |---|---|
-| Выпуск / дата | 1.6.4 / 22 сентября 2026 |
-| Основа кода | baseline `f5ce1f42836e3872854332324f2ebdd9c8934b36`; LEGAL-001 candidate `fe3a7e1b553ccc9ebb5b956efce3779287291c04` |
-| Статус | ДЕЙСТВУЮЩИЙ; LEGAL-001 IMPLEMENTED + CI_PASS; real-data AI CLOSED |
+| Выпуск / дата | 1.6.5 / 24 сентября 2026 |
+| Основа кода | technical acceptance main `309afe0089356e6fb0d1c205ce7ca2c7cb682ae2`, tree `2616a3b15df09f85bf7ae261e605356fb9f52f9d`; production runtime evidence `28db01b719003149a0d616934e469b1b83c0237f` |
+| Статус | ДЕЙСТВУЮЩИЙ; LEGAL-001 TECHNICAL_ACCEPTED / LEGAL_PENDING; real-data AI CLOSED |
 
 ## 1. Активные документы
 
 | Документ | Версия | Область |
 |---|---|---|
-| PLAN_CURRENT | 1.6.4 | Полный план с сохранённой историей |
-| PROJECT_PASSPORT | 2.79 | Полный паспорт с сохранённой историей |
-| SOURCE_AUDIT / CANONICAL_DOCUMENTS | 1.6.4 | Источники, очередь, реестр |
+| PLAN_CURRENT | 1.6.5 | Полный план с сохранённой историей |
+| PROJECT_PASSPORT | 2.80 | Полный паспорт с сохранённой историей |
+| SOURCE_AUDIT / CANONICAL_DOCUMENTS | 1.6.5 | Источники, evidence boundary, реестр |
+| ROADMAP | 1.6.5 | Очередь после технической приёмки LEGAL-001 |
+| NEXT_PACKAGE_PREPARATION | 1.6 | Owner/legal decisions → policy activation → controlled real-data AI-005 test |
 | AI005_ACCEPTANCE_SUMMARY | 1.0 | Приёмка только документной части r1 |
 | AI005_IMPLEMENTATION / AI005_RUNBOOK / AI005_VERIFICATION_STATUS | 2.0 | Технический r2 и границы проверки |
 | AI005_SCOPE / AI005_DELIVERY_GUIDE | 2.0 | Объём и порядок передачи |
-| NEXT_PACKAGE_PREPARATION | 1.5 | LEGAL-001 CI_PASS → merge/deploy/QA → owner legal decisions → only then real-data test |
+| LEGAL001_SCOPE / IMPLEMENTATION / RUNBOOK / VERIFICATION_STATUS | 1.1 technical acceptance | Versioned consent, production QA, PostgreSQL T-05/T-06, legal activation boundary |
 
-| LEGAL001_SCOPE / IMPLEMENTATION / RUNBOOK / VERIFICATION_STATUS | 1.0 candidate | Versioned consent, withdrawal, admission, privacy, CI evidence |
+## 2. Финальная техническая evidence chain LEGAL-001
 
-## 2. Форматы и доказательства
+Accepted technical main: `309afe0089356e6fb0d1c205ce7ca2c7cb682ae2`; tree `2616a3b15df09f85bf7ae261e605356fb9f52f9d`. Main CI #324, Package preflight #11 и LEGAL-001 PostgreSQL verification #5 — SUCCESS. Production runtime QA выполнен на `28db01b719003149a0d616934e469b1b83c0237f`; GitHub compare до accepted main содержит только verification workflow/guard/tests и не меняет application runtime.
 
-Markdown — текстовый первоисточник. Соответствующие DOCX и PDF сформированы по DOCUMENT_STANDARD1.3; фактический состав форматов указывается в FILE_INDEX.json общего комплекта. Полные план и паспорт не заменены краткими резюме. Предыдущие пакетные документы r1 сохранены в docs/history/ai005-r1.
+Production QA закрыл health/readiness, closed AI status, privacy cache headers/anonymous isolation, consent conflicts, responsive 1280/768/390/360, ZIP export и TXT export. Heartbeat fix не воспроизвёл прежний startup FileNotFoundError на двух наблюдавшихся стартах. T-05/T-06 закрыли ранее заблокированные disposable PostgreSQL сценарии.
 
-Приёмка r1: evidence/ai-005-r1-acceptance/acceptance.json и ci285_verified_summary.json. Технический r2: отдельные change_boundary и baseline_files_sha256, результаты локальных тестов. Старое evidence/ai-005 не переписано под новые результаты.
+Не закрыты и не выдумываются: natural 24h cleanup cycle, historical pre-migration production backup evidence, old baseline consent record ID.
 
-GitHub CI #304 on `fe3a7e1b553ccc9ebb5b956efce3779287291c04` is SUCCESS. LEGAL-001 is `IMPLEMENTED + CI_PASS`; paid provider calls 0; real-data Alice CLOSED. Deployment/production QA/acceptance are not inferred from CI.
+## 3. Юридическая граница
 
-## 3. Статусы и распространение
+Technical acceptance не переводит policy в ACTIVE. `DRAFT / NOT_ACTIVE`, `REAL_DATA_SUPPORTED=False`, real-data Alice CLOSED и paid provider calls=0 сохраняются. Operator/legal entity, jurisdiction, launch countries, audience/age, storage/processors/cross-border/final retention и финальные Terms/Privacy/AI-consent остаются PENDING.
 
-Полный AI-005 остаётся IN_PROGRESS / LIVE_NOT_ACCEPTED. Локальный технический выпуск не является новым GitHub CI или публичным разрешением real-data. PATCH и FULL альтернативны; накладывать старые AI/JOB FINAL PATCH поверх r2 нельзя. Полный состав изменений и SHA-256 выдаются с архивами.
+Полный AI-005 остаётся IN_PROGRESS / LIVE_NOT_ACCEPTED. Следующий шаг — owner/legal facts и финальные документы, затем отдельная policy activation, controlled real-data test и quality acceptance. AI-006 не начинается раньше.
+
+## 4. Форматы и история
+
+Markdown остаётся текстовым первоисточником. DOCX/PDF являются синхронизированными представлениями и не создают новое evidence сами по себе. Исторические CI304, layout fix, heartbeat fix и прежние release snapshots сохраняются отдельными документами/evidence; они не переписываются задним числом.
 
 ## Исторический снимок предыдущей версии / 17 сентября 2026
 

@@ -4,42 +4,53 @@
 
 
 <!-- ACA-CANONICAL-STATUS:START -->
-## Актуальное состояние / 22 сентября 2026
+## Актуальное состояние / 24 сентября 2026
 
 | Поле | Подтверждённое состояние |
 |---|---|
 | Current full package | AI-005 — IN_PROGRESS; LIVE_NOT_ACCEPTED |
-| LEGAL-001 technical package | IMPLEMENTED + CI_PASS; DEPLOYED/PRODUCTION_TESTED/ACCEPTED/COMPLETE — NOT YET |
-| Candidate branch/head | `legal001-consent-foundation` / `fe3a7e1b553ccc9ebb5b956efce3779287291c04` |
-| Candidate tree | `55f03c287a3132aa9a2a55b7429c24d35e2a1957` |
-| Baseline main | `f5ce1f42836e3872854332324f2ebdd9c8934b36` |
-| GitHub CI | #304 SUCCESS for candidate head; Python tests, LEGAL-001 gate, PostgreSQL/migrations and AI-005 r2 no-paid-calls gate passed |
-| Full regression | 1103 tests passed in the preceding equivalent code run; #304 full Run tests step SUCCESS |
-| Schema candidate | `20260922_0021` |
-| Consent | versioned persistence + explicit accept/withdraw + stale/replay/concurrency controls |
-| AI admission | current user consent required server-side; separate production legal policy remains `DRAFT / NOT_ACTIVE`; `REAL_DATA_SUPPORTED=False` |
-| Privacy | owner consent history exported; account deletion cascades consent rows |
-| Paid provider calls | 0; paid Yandex/Alice CI jobs SKIPPED as intended |
-| Accepted predecessor | JOB-001 COMPLETE; PLAN 1.6.1 / PASSPORT 2.76; `c095bfb70bad5b1ba22cd9b1aeac1795a0b59c4c`; schema `20260917_0019` |
-| Accepted foundation | AI-004 COMPLETE in synthetic/reference-only scope |
+| LEGAL-001 technical package | TECHNICAL_ACCEPTED; legal activation remains PENDING |
+| Accepted technical main | `309afe0089356e6fb0d1c205ce7ca2c7cb682ae2` |
+| Accepted technical tree | `2616a3b15df09f85bf7ae261e605356fb9f52f9d` |
+| Production runtime evidence | `28db01b719003149a0d616934e469b1b83c0237f`; production QA completed on this runtime-equivalent application code |
+| Runtime equivalence | `28db01b719003149a0d616934e469b1b83c0237f..309afe0089356e6fb0d1c205ce7ca2c7cb682ae2` changes only verification workflow/guard/tests; no application runtime file changed |
+| GitHub CI | main CI #324 SUCCESS; Package preflight #11 SUCCESS; LEGAL-001 PostgreSQL verification #5 SUCCESS |
+| Schema | `20260922_0021`; production readiness current=expected confirmed |
+| PostgreSQL T-05/T-06 | PASS: migration 0020→0021, non-empty consent history, concurrency, owner CASCADE, encrypted backup/restore, destructive downgrade/re-upgrade and eight requested PG regression files |
+| Production QA | PASS_WITH_RECORDED_LIMITS: health/status, privacy headers/anonymous isolation, consent UI/conflicts, responsive 1280/768/390/360, ZIP export, TXT export, worker cold-start/resume observation |
+| Consent QA state | withdrawn / cycle 4 / revision 2; no further consent mutation required |
+| AI admission | current consent is necessary but not sufficient; production legal policy remains `DRAFT / NOT_ACTIVE`; `REAL_DATA_SUPPORTED=False` |
+| Paid provider calls | 0; paid Yandex/Alice jobs skipped |
 | Real-data Alice | CLOSED |
-| Next sequence | canonical sync → PR/merge after green branch CI → Render migration/readiness → production QA of consent UI with synthetic QA data → legal owner decisions before any real-data provider test |
+| Legal-owner decisions | PENDING |
+| Remaining evidence limits | natural 24h cleanup cycle not observed; historical pre-migration production backup not evidenced; old baseline consent record ID was never captured |
+| Next sequence | owner/legal decisions → final Terms/Privacy/AI-consent and reviewed policy activation → controlled real-data AI test → quality acceptance → final AI-005 closure; AI-006 does not start yet |
 <!-- ACA-CANONICAL-STATUS:END -->
 
 | Поле | Значение |
 |---|---|
 | Документ | PLAN_CURRENT |
-| Версия | 1.6.4 |
-| Дата | 22 сентября 2026 |
+| Версия | 1.6.5 |
+| Дата | 24 сентября 2026 |
 | Статус | ДЕЙСТВУЮЩИЙ |
-| Основа кода | baseline GitHub main `f5ce1f42836e3872854332324f2ebdd9c8934b36`; LEGAL-001 candidate branch `fe3a7e1b553ccc9ebb5b956efce3779287291c04` |
-| Текущий пакет | AI-005 IN_PROGRESS; LEGAL-001 technical candidate CI_PASS; LIVE_NOT_ACCEPTED |
+| Основа кода | technical acceptance main `309afe0089356e6fb0d1c205ce7ca2c7cb682ae2`; production runtime evidence `28db01b719003149a0d616934e469b1b83c0237f` |
+| Текущий пакет | AI-005 IN_PROGRESS; LEGAL-001 TECHNICAL_ACCEPTED / LEGAL_PENDING; LIVE_NOT_ACCEPTED |
 
 > ОБЯЗАТЕЛЬНО ДЛЯ КАЖДОГО НОВОГО ЧАТА: прочитать этот план, новый паспорт и актуальный архив. После завершения любого пункта вернуть обновлённые DOCX/PDF/Markdown, новый ZIP, доказательства проверки и запись в журнале версий.
 
 > Historical control note from PLAN 1.6.2 (current status above): prior accepted foundations and AI-001..004 are ВЫПОЛНЕНО in their documented scopes. LEGAL-001 remains deferred; DOC-001 is ongoing. PLAN 1.6.2 / PASSPORT 2.77. JOB-001 accepted; AI-005 follows the approved order with its own live-data/quality/legal gates. Dated older entries remain historical.
 
 
+
+## LEGAL-001 technical acceptance / 24 сентября 2026
+
+Техническая часть LEGAL-001 принята. PR #43 добавил воспроизводимую PostgreSQL 17 verification без production credentials: T-05/T-06 закрыты, post-merge main `309afe0089356e6fb0d1c205ce7ca2c7cb682ae2` прошёл CI #324, Package preflight #11 и dedicated LEGAL-001 PostgreSQL verification #5. T-05 подтверждает additive migration `0020→0021`, отсутствие автоматического consent, versioned history/cycles/revision, concurrent stale protection, owner CASCADE, encrypted backup/restore exact-row preservation и ожидаемо destructive downgrade/re-upgrade. T-06 подтверждает восемь ранее заблокированных PostgreSQL regression paths.
+
+Production QA выполнялся на `28db01b719003149a0d616934e469b1b83c0237f`: readiness/live/status, no-store privacy headers, anonymous isolation, consent conflict handling, адаптивность 1280/768/390/360, privacy ZIP и TXT export прошли. LEGAL-OPS-01 после исправления heartbeat не воспроизвёл прежний FileNotFoundError на двух наблюдавшихся стартах. Сравнение `28db01b719003149a0d616934e469b1b83c0237f..309afe0089356e6fb0d1c205ce7ca2c7cb682ae2` содержит только `.github/workflows/legal001-postgresql.yml`, `scripts/check_legal001_package.py` и `tests/test_legal001_postgresql.py`; application runtime не изменён, поэтому production QA относится к той же runtime-реализации.
+
+Ограничения сохраняются: естественный 24-часовой cleanup cycle не наблюдался; historical production backup перед исходной migration не был зафиксирован; baseline consent record ID до раннего logout не был сохранён. Эти пункты не являются новым дефектом LEGAL-001 runtime.
+
+Юридическая активация не выполнена. Policy остаётся `DRAFT / NOT_ACTIVE`, `REAL_DATA_SUPPORTED=False`, real-data Alice CLOSED, paid provider calls=0. Не определены operator/legal entity, jurisdiction, launch countries, audience/age, storage/processor/cross-border/final retention и финальные Terms/Privacy/AI-consent. Поэтому статус — `TECHNICAL_ACCEPTED / LEGAL_PENDING`, а не COMPLETE.
 
 ## LEGAL-001 technical candidate / 22 сентября 2026
 
