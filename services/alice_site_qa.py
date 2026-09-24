@@ -6,7 +6,7 @@ import hmac
 import secrets
 import time
 
-from domain.cover_letter import canonical, content, identifier, options
+from domain.cover_letter import canonical, identifier, options
 from services.ai.letter_admission import SyntheticLetterAdmission, synthetic_cases
 from services.cover_letter_ai import CoverLetterGenerator
 
@@ -41,7 +41,7 @@ class AliceSiteQAService:
         operation=secrets.token_urlsafe(24)
         operation_hash=self._hash(['ai005-site-qa-workspace',user_id,operation])
         request_hash=self._hash(['ai005-site-qa-workspace-v1',user_id,operation,opts])
-        initial=content('', '', opts['language'], opts['length'], opts['tone'])
+        initial={**opts,'subject':'','body':''}
         row=self.repository.create_synthetic_qa(
             user_id,opts['language'],initial,operation_hash,request_hash,now=int(self.clock()))
         fact_ids=[fact['id'] for fact in case['candidate_facts']]
