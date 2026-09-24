@@ -7,7 +7,7 @@ package_upgrade: true
 users:
   - default
   - name: ${admin_username}
-    groups: [sudo, docker]
+    groups: [sudo]
     shell: /bin/bash
     sudo: "ALL=(ALL) NOPASSWD:ALL"
     ssh_authorized_keys:
@@ -33,6 +33,7 @@ runcmd:
   - [mkdir, -p, /opt/ai-career-agent, /etc/ai-career-agent]
   - [chown, "${admin_username}:${admin_username}", /opt/ai-career-agent]
   - [systemctl, enable, --now, docker]
+  - [usermod, -aG, docker, "${admin_username}"]
   - [curl, -fsSL, "https://storage.yandexcloud.net/cloud-certs/CA.pem", -o, /etc/ai-career-agent/yandex-ca.pem]
   - [chmod, "0644", /etc/ai-career-agent/yandex-ca.pem]
 
