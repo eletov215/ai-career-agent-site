@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{% block title %}Alice SITE QA - AI Career Agent{% endblock %}
+{% block head_extra %}<link rel="stylesheet" href="{{ url_for('static',filename='cover_letters.css') }}?v=1">{% endblock %}
+{% block content %}
+<main class="section ai005-page"><div class="container ai005-shell">
+<h1>Alice SITE QA</h1>
+<aside class="ai005-warning">Закрытый тест только для администратора. Все данные для Alice берутся из закреплённых синтетических fixtures. Реальные профиль, резюме и вакансии аккаунта не используются.</aside>
+{% if enabled %}
+<p>Тестовый интерфейс открыт только в этой браузерной сессии.</p>
+<a class="btn btn-primary" href="{{ url_for('ai005_site_qa.index') }}">Открыть Alice SITE QA</a>
+<form method="post" action="{{ url_for('ai005_site_qa.disable_review') }}">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+<button class="btn btn-secondary" type="submit">Закрыть тестовый доступ</button>
+</form>
+{% else %}
+<form method="post" action="{{ url_for('ai005_site_qa.enable_review') }}">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+<button class="btn btn-primary" type="submit">Открыть синтетический Alice-тест в этой сессии</button>
+</form>
+{% endif %}
+</div></main>
+{% endblock %}
