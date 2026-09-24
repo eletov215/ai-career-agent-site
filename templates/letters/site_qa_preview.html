@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% block title %}Предпросмотр Alice SITE QA - AI Career Agent{% endblock %}
+{% block head_extra %}<link rel="stylesheet" href="{{ url_for('static',filename='cover_letters.css') }}?v=1">{% endblock %}
+{% block content %}
+<main class="section ai005-page"><div class="container ai005-shell">
+<h1>Что будет передано Alice</h1>
+<aside class="ai005-notice"><strong>Alice test · synthetic only.</strong> Ниже показана полная прикладная проекция данных теста. Реальные данные текущего аккаунта не используются.</aside>
+<section class="ai005-card">
+<h2>Параметры</h2>
+<p>Язык: <strong>{{ options.language }}</strong> · Длина: <strong>{{ options.length }}</strong> · Тон: <strong>{{ options.tone }}</strong></p>
+</section>
+<section class="ai005-card"><h2>Синтетическая вакансия</h2>
+{% for key,value in preview.projection.vacancy.items() %}<p class="ai005-text"><strong>{{ key }}</strong><br>{{ value }}</p>{% endfor %}
+</section>
+<section class="ai005-card"><h2>Синтетические факты кандидата</h2>
+{% for fact in preview.projection.candidate_facts %}<p class="ai005-text">{{ fact.text }}</p>{% endfor %}
+</section>
+<section class="ai005-card"><h2>Получатель</h2><p>{{ preview.recipient }}</p><p>Контракт: {{ preview.contract_version }}</p></section>
+<form class="ai005-card" method="post" action="{{ url_for('ai005_site_qa.generate',language=language,letter_id=letter.id) }}">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+<input type="hidden" name="review_token" value="{{ preview.review_token }}">
+<button class="btn btn-primary" type="submit">Создать черновик с Алисой</button>
+<p class="ai005-text"><small>Одно нажатие — одна связанная операция. Повтор после неопределённого результата автоматически не выполняется.</small></p>
+</form>
+<a href="{{ url_for('ai005_site_qa.index') }}">Начать другой синтетический тест</a>
+</div></main>
+{% endblock %}
