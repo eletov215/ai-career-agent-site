@@ -1,0 +1,9 @@
+{% extends 'base.html' %}
+{% block title %}Alice SITE QA - AI Career Agent{% endblock %}
+{% block head_extra %}<link rel="stylesheet" href="{{ url_for('static',filename='cover_letters.css') }}?v=1">{% endblock %}
+{% block content %}
+<main class="section ai005-page"><div class="container ai005-shell">
+<h1>Alice SITE QA</h1><aside class="ai005-warning">{{ error }}</aside>
+<p><a href="{{ url_for('ai005_site_qa.index') }}">Вернуться к синтетическому тесту</a></p>
+</div></main>
+{% endblock %}
