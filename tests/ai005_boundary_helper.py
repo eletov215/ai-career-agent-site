@@ -23,3 +23,13 @@ def copy_ai005_boundary(root,destination):
         }:
             target=destination/rel;target.parent.mkdir(parents=True,exist_ok=True)
             shutil.copy2(root/rel,target)
+
+    if (root/'docs/evidence/ai-005-site-qa/change_boundary.json').is_file():
+        from scripts.ai005_site_qa_boundary import EXPECTED_PREVIOUS as QPREV, NEW_RUNTIME as QNEW
+        for rel in set(QPREV) | QNEW | {
+            'docs/evidence/ai-005-site-qa/change_boundary.json',
+            'scripts/ai005_site_qa_boundary.py',
+        }:
+            target=destination/rel;target.parent.mkdir(parents=True,exist_ok=True)
+            shutil.copy2(root/rel,target)
+
