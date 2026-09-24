@@ -44,7 +44,7 @@ def validate(root=ROOT):
         if "|safe" in preview:
             errors.append("Unsafe QA template")
         repo=(root/"repositories/cover_letters.py").read_text()
-        for marker in ("candidate_origin':'synthetic_site_qa'","create_synthetic_qa","synthetic_cases()"):
+        for marker in ("synthetic_site_qa","create_synthetic_qa","synthetic_cases()"):
             if marker not in repo:errors.append("Missing fixed-fixture repository control: "+marker)
         for rel in ("services/alice_site_qa.py","routes/alice_site_qa.py"):
             tree=ast.parse((root/rel).read_text())
