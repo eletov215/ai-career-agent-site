@@ -53,7 +53,8 @@ def create_alice_site_qa_blueprint(settings, service):
     def index():
         require_admin()
         cases=synthetic_cases()
-        return render_template("alice_qa/index.html",ui=UI,cases=cases)
+        editor={"language":"ru","length":"short","tone":"professional"}
+        return render_template("alice_qa/index.html",ui=UI,cases=cases,editor=editor)
 
     @bp.post("/admin/alice-qa/preview")
     @login_required
