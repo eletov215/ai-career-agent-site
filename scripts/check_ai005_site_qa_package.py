@@ -4,9 +4,12 @@ from __future__ import annotations
 
 import ast
 import json
+import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 REQUIRED = {
     "routes/ai005_site_qa.py",
     "services/ai/letter_site_qa.py",
