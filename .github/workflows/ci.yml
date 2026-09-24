@@ -306,6 +306,11 @@ jobs:
           python scripts/check_ai005_r2_package.py
           python -m pytest -q tests/test_ai005_live_contract.py tests/test_ai005_live_runtime.py tests/test_ai005_live_routes.py tests/test_ai005_live_postgresql.py tests/test_ai005_synthetic_probe.py tests/test_ai005_r2_package.py
 
+      - name: Verify AI-005 synthetic SITE QA controls
+        run: |
+          python scripts/check_ai005_site_qa_package.py
+          python -m pytest -q tests/test_ai005_site_qa.py
+
       - name: Verify LEGAL-001 consent and admission controls
         run: |
           python scripts/check_legal001_package.py
