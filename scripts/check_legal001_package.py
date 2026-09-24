@@ -23,6 +23,8 @@ REQUIRED={
     "docs/LEGAL001_SCOPE.md","docs/LEGAL001_IMPLEMENTATION.md",
     "docs/LEGAL001_RUNBOOK.md","docs/LEGAL001_VERIFICATION_STATUS.md",
     "docs/evidence/legal-001/ci304_verified_summary.json",
+    "docs/evidence/legal-001/ci324_verified_summary.json",
+    "docs/evidence/legal-001/technical_acceptance_20260924.json",
 }
 
 def validate(root=ROOT):

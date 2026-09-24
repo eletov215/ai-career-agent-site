@@ -1,0 +1,51 @@
+{
+  "package": "LEGAL-001",
+  "status": "TECHNICAL_ACCEPTED",
+  "legal_status": "PENDING",
+  "date": "2026-09-24",
+  "accepted_technical_main": "309afe0089356e6fb0d1c205ce7ca2c7cb682ae2",
+  "accepted_technical_tree": "2616a3b15df09f85bf7ae261e605356fb9f52f9d",
+  "production_runtime_commit": "28db01b719003149a0d616934e469b1b83c0237f",
+  "schema": "20260922_0021",
+  "runtime_equivalence": {
+    "compare_base": "28db01b719003149a0d616934e469b1b83c0237f",
+    "compare_head": "309afe0089356e6fb0d1c205ce7ca2c7cb682ae2",
+    "application_runtime_changed": false,
+    "changed_paths": [
+      ".github/workflows/legal001-postgresql.yml",
+      "scripts/check_legal001_package.py",
+      "tests/test_legal001_postgresql.py"
+    ]
+  },
+  "production_qa": {
+    "source": "Owner-confirmed manual production QA plus connected GitHub/runtime evidence",
+    "status": "PASS_WITH_RECORDED_LIMITS",
+    "checks": {
+      "health_ready": "pass",
+      "health_live": "pass",
+      "ai_status_closed": "pass",
+      "privacy_no_store_headers": "pass",
+      "unauthenticated_privacy_isolation": "pass",
+      "consent_stale_conflict": "pass",
+      "responsive_1280_768_390_360": "pass",
+      "privacy_zip_export": "pass",
+      "txt_export": "pass",
+      "worker_two_observed_starts_without_prior_file_not_found": "pass"
+    },
+    "consent_state_after_qa": {
+      "status": "withdrawn",
+      "cycle": 4,
+      "revision": 2
+    }
+  },
+  "remaining_limits": [
+    "Natural 86400-second production privacy cleanup cycle was not observed.",
+    "Historical production backup before the original migration is not evidenced and cannot be recreated retroactively.",
+    "The old baseline consent record ID was not captured before logout and cannot be reconstructed as historical evidence."
+  ],
+  "production_legal_state": "DRAFT / NOT_ACTIVE",
+  "real_data_enabled": false,
+  "real_data_alice": "CLOSED",
+  "paid_provider_calls": 0,
+  "next_gate": "Owner/legal facts -> final Terms/Privacy/AI-consent -> reviewed policy activation -> controlled real-data AI-005 test -> human quality acceptance -> final AI-005 closure."
+}

@@ -1,0 +1,95 @@
+{
+  "package": "LEGAL-001",
+  "recorded_on": "2026-09-24",
+  "source": "Connected GitHub workflow run metadata and job inspection",
+  "accepted_technical_main": "309afe0089356e6fb0d1c205ce7ca2c7cb682ae2",
+  "accepted_technical_tree": "2616a3b15df09f85bf7ae261e605356fb9f52f9d",
+  "runs": {
+    "main_ci": {
+      "run_id": 35973632218,
+      "run_number": 324,
+      "event": "push",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    "package_preflight": {
+      "run_id": 35973631903,
+      "run_number": 11,
+      "event": "push",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    "postgresql_verification": {
+      "run_id": 35973631913,
+      "run_number": 5,
+      "event": "push",
+      "status": "completed",
+      "conclusion": "success"
+    }
+  },
+  "postgres": {
+    "version": "17",
+    "production_credentials_used": false,
+    "provider_credentials_used": false,
+    "paid_provider_calls": 0,
+    "t05_dedicated_tests": {
+      "passed": 2,
+      "skipped": 0
+    },
+    "legal001_migration_regression": {
+      "passed": 1,
+      "skipped": 0
+    },
+    "t06": [
+      {
+        "file": "tests/test_postgresql_integration.py",
+        "passed": 1,
+        "skipped": 0
+      },
+      {
+        "file": "tests/test_ai001_migration.py",
+        "passed": 3,
+        "skipped": 0
+      },
+      {
+        "file": "tests/test_ai002_migration.py",
+        "passed": 2,
+        "skipped": 0
+      },
+      {
+        "file": "tests/test_ai003_migration.py",
+        "passed": 2,
+        "skipped": 0
+      },
+      {
+        "file": "tests/test_ai004_migration.py",
+        "passed": 2,
+        "skipped": 0
+      },
+      {
+        "file": "tests/test_job001_migration.py",
+        "passed": 2,
+        "skipped": 0
+      },
+      {
+        "file": "tests/test_ai005_migration.py",
+        "passed": 2,
+        "skipped": 0
+      },
+      {
+        "file": "tests/test_ai005_live_postgresql.py",
+        "passed": 1,
+        "skipped": 0
+      }
+    ],
+    "migration_tools": {
+      "manage_db_upgrade": "success",
+      "manage_db_check": "success",
+      "alembic_check": "success",
+      "current_revision": "20260922_0021"
+    }
+  },
+  "real_data_enabled": false,
+  "production_legal_state": "DRAFT / NOT_ACTIVE",
+  "paid_jobs": "skipped"
+}

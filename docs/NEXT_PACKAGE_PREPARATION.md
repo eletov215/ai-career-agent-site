@@ -2,16 +2,21 @@
 
 | Поле | Значение |
 |---|---|
-| Версия / дата | 1.5 / 22 сентября 2026 |
-| Принято | Документная часть AI-005 r1 с ручными исключениями |
-| Текущая разработка | LEGAL-001 IMPLEMENTED + CI_PASS; полный AI-005 IN_PROGRESS / LIVE_NOT_ACCEPTED |
-| Новая миграция | candidate `20260922_0021` |
+| Версия / дата | 1.6 / 24 сентября 2026 |
+| Принято | LEGAL-001 technical foundation accepted; AI-005 r1 document part remains accepted in its recorded scope |
+| Текущая разработка | LEGAL-001 TECHNICAL_ACCEPTED / LEGAL_PENDING; полный AI-005 IN_PROGRESS / LIVE_NOT_ACCEPTED |
+| Схема | `20260922_0021` |
+| Accepted technical main | `309afe0089356e6fb0d1c205ce7ca2c7cb682ae2` |
 
-## 1. Текущее состояние после CI #304
+## 1. Следующий разрешённый этап
 
-LEGAL-001 technical foundation реализован и прошёл branch CI. Versioned consent, explicit withdrawal, stale/replay/concurrency controls, owner isolation, Privacy Center UI, privacy export/delete и server-side `LegalLetterAdmission` присутствуют. Admission повторно проверяется перед result settlement. Production legal policy остаётся `DRAFT / NOT_ACTIVE`, `REAL_DATA_SUPPORTED=False`, paid provider calls=0.
+Инженерная часть consent/admission закрыта. Не требуется повторять consent mutation, ZIP/TXT или viewport QA без нового дефекта. Следующий этап — не AI-006 и не платный real-data call, а сбор фактических юридических исходных данных владельца и подготовка финальных документов/production policy.
 
-Следующий инженерный порядок: синхронизировать canonical docs → проверить PR diff → merge только после green branch CI → post-merge main CI → Render migration/readiness `0021` → production QA consent UI на синтетических QA-данных. Даже после этого реальные пользовательские данные не передаются провайдеру, пока владелец не определит юридические параметры и reviewed policy не станет ACTIVE отдельным изменением.
+До отдельного решения должны быть определены: фактический оператор и контактный канал, юрисдикция и страны запуска, аудитория/возраст, места приложения/БД/backup, processors/subprocessors и cross-border route, final retention. После этого готовятся Terms, Privacy Policy и AI-consent version; их активация должна быть отдельным reviewed code change. Environment flag не может заменить эту процедуру.
+
+После ACTIVE legal policy разрешается только ограниченная real-data AI-005 проверка. Затем обязательна human quality acceptance настоящих писем. Только после этого полный AI-005 может стать COMPLETE и открывается AI-006.
+
+Технические evidence limits остаются записанными: natural 24h cleanup cycle NOT_RUN; historical pre-migration production backup BLOCKED by missing historical evidence; baseline consent record ID not captured. Новая резервная копия не должна использоваться как доказательство старой.
 
 ## 2. Исторический r2 technical candidate / 20 сентября 2026
 
