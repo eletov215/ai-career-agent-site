@@ -1,0 +1,92 @@
+#!/usr/bin/env python3
+"""SITE QA successor proof; historical runtime and guards remain byte-preserved."""
+from pathlib import Path
+import ast
+import hashlib
+import json
+
+ROOT = Path(__file__).resolve().parents[1]
+BASE = 'b828596c893d59a544f9678d7b45ab6ed7f44230'
+TREE = '05fc57dd0294cd5814637cc6e61e864f2bba9d2d'
+PROTECTED = {
+    'app.py':'a75c6e858a9ee03a181f79bf7c3d7e3343d0c179',
+    'database.py':'9c24c8deabe2835ba0d66c871be410163ddb24f6',
+    'domain/ai.py':'7ce1cdec24c44ae147deaf4bce677fdc04b93eb5',
+    'services/legal_policy.py':'9786d82b5fb3317c24845b6e44555de9cc3a21bd',
+    'services/ai/provider.py':'63669e5ddeca995a852a76b61744c0084332d7a8',
+    'services/ai/settings.py':'aa949b018d97b8d68dce5a12fe6dfc9d9c6a4545',
+    'services/ai/letter_admission.py':'38a2d1fd9ea27fb22995e4dfef8e06de75e3dcfd',
+    'services/ai/letter_runtime.py':'c5a6dea1356153c9f5cfdd5b7452db84c773516e',
+    'services/ai/letter_contract.py':'d96160fcd5c9b3de4c52563df009916e685a0d20',
+    'services/cover_letter_ai.py':'b26cd3cb6470d328721bdcd2ca90917db92fb0aa',
+    'services/cover_letters.py':'1fa5ff4eea762d8d6132ea8f9b88491576884a1d',
+    'repositories/ai.py':'aafdd2adf62f4a77930d159bf882b774fbecab79',
+    'repositories/cover_letters.py':'182719d138f25d092b3a8fa43125c0c4757c8e28',
+    'routes/cover_letters.py':'8a8264da091fbbd090e7aec634d5bf8b427d0990',
+    'scripts/legal001_boundary.py':'d7084289514223c6871f9217cfa7a011009238dc',
+    'scripts/check_ai005_package.py':'7026ceb369a6cae102972938b8947a14a875f86a',
+    'scripts/check_ai005_r2_package.py':'372672bfd7bf1fd3493a3f0cf7970d27595e3ddb',
+}
+INTEGRATION = ('    # Independent synthetic QA namespace; ordinary source-health routes stay read-only.\n'
+    '    from routes.letter_site_qa import create_letter_site_qa_blueprint\n'
+    '    bp.register_blueprint(create_letter_site_qa_blueprint(settings, storage))\n\n')
+RUNTIME = {'services/letter_site_qa.py', 'routes/letter_site_qa.py',
+           'templates/letters/site_qa.html', 'static/letter_site_qa.css'}
+
+
+def blob(raw):
+    return hashlib.sha1(b'blob ' + str(len(raw)).encode() + b'\0' + raw).hexdigest()
+
+
+def validate(root=ROOT):
+    errors = []
+    try:
+        evidence = json.loads((root/'docs/evidence/ai-005-site-qa/change_boundary.json').read_text())
+        if (evidence['source_commit'] != BASE or evidence['source_tree'] != TREE
+                or evidence['real_data_enabled'] is not False or evidence['legal_state'] != 'DRAFT'
+                or evidence['paid_provider_calls'] != 0 or evidence['schema'] != '20260922_0021'
+                or set(evidence['runtime_git_blobs']) != RUNTIME):
+            errors.append('Invalid SITE QA scope')
+        for path, sha in PROTECTED.items():
+            raw = (root/path).read_bytes()
+            if sha not in {blob(raw), blob(raw.replace(b'\r\n', b'\n'))}:
+                errors.append('Protected predecessor changed: ' + path)
+        route = (root/'routes/admin_sources.py').read_text()
+        if route.count(INTEGRATION) != 1 or blob(route.replace(INTEGRATION, '').encode()) != 'f4f268c16a495abc6a4f2111971788bb106a6115':
+            errors.append('Unreviewed admin integration change')
+        for path, sha in evidence['runtime_git_blobs'].items():
+            raw = (root/path).read_bytes()
+            if sha not in {blob(raw), blob(raw.replace(b'\r\n',b'\n'))}:
+                errors.append('SITE QA runtime hash mismatch: ' + path)
+            if path.endswith('.py'):
+                tree = ast.parse(raw)
+                for node in ast.walk(tree):
+                    if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute) and node.func.attr == 'exempt':
+                        errors.append('Unexpected security exemption')
+                    if isinstance(node, ast.ImportFrom) and (node.module or '').startswith('tests'):
+                        errors.append('Test code imported by production')
+        service = (root/'services/letter_site_qa.py').read_text()
+        for marker in ('SyntheticLetterAdmission', 'LetterRuntime', "ticket['issued'] = record['created_at']", 'site-qa-one-dispatch-v1', 'self.qa.authorize'):
+            if marker not in service:
+                errors.append('Missing fixed-intention/admission boundary: ' + marker)
+        if 'update_policy(' in service or 'os.environ' in service:
+            errors.append('SITE QA must not activate policy or accept environment-supplied sources')
+        template = (root/'templates/letters/site_qa.html').read_text()
+        if '|safe' in template or 'csrf_token()' not in template:
+            errors.append('Unsafe SITE QA template')
+        preview = template.split("{% elif view == 'preview' %}", 1)[1].split("{% elif view == 'version' %}", 1)[0]
+        if 'type="checkbox"' in preview or 'name="confirm"' in preview:
+            errors.append('Per-call confirmation checkbox reintroduced')
+        workflow = (root/'.github/workflows/ai005-site-qa.yml').read_text()
+        if 'APP_ENV: test' not in workflow or 'test_ai005_site_qa_postgresql.py' not in workflow or 'secrets.' in workflow:
+            errors.append('Missing isolated no-paid-call CI')
+    except (OSError, ValueError, KeyError, TypeError, IndexError, SyntaxError):
+        errors.append('Missing or invalid SITE QA evidence')
+    return errors
+
+
+if __name__ == '__main__':
+    errors = validate()
+    print(json.dumps({'package':'AI-005-SITE-QA', 'ok':not errors, 'errors':errors,
+        'paid_provider_calls':0, 'real_data_enabled':False, 'ci':'NOT_ATTESTED_BY_STATIC_CHECK'}, indent=2))
+    raise SystemExit(bool(errors))
