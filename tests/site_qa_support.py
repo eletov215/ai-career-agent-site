@@ -8,16 +8,18 @@ import re
 from pathlib import Path
 from types import SimpleNamespace
 from uuid import uuid4
+from unittest.mock import patch
 
 from flask import Flask, g
 from flask_wtf import CSRFProtect
+from flask_limiter import Limiter
 from jinja2 import ChoiceLoader, DictLoader, FileSystemLoader
 
 from database import create_database, upgrade_database
 from domain.ai import ProviderError
 from models import User
 from routes.letter_site_qa import BASE, create_letter_site_qa_blueprint
-from security import limiter
+from security import rate_limit_key
 from services.ai.provider import YandexAliceProvider
 from services.ai.settings import AISettings
 from services.letter_site_qa import LetterSiteQA
@@ -89,14 +91,20 @@ def build_case(directory, *, url=None, rate_enabled=False):
     app.config.update(TESTING=True, SECRET_KEY='site-qa-csrf-test-key', RATELIMIT_ENABLED=rate_enabled,
                       RATELIMIT_STORAGE_URI='memory://')
     CSRFProtect(app)
-    limiter.init_app(app)
+    # A separate real Limiter instance prevents this harness from reconfiguring
+    # security.limiter, which belongs to the application's other route tests.
+    private_limiter = Limiter(key_func=rate_limit_key, default_limits=[])
+    private_limiter.init_app(app)
     @app.before_request
     def bind():
         g.current_user = identity.user
     app.jinja_loader = ChoiceLoader([DictLoader({'base.html': '<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="csrf-token" content="{{ csrf_token() }}"><title>Synthetic test harness - mock transport only</title>{% block head_extra %}{% endblock %}</head><body>{% block content %}{% endblock %}</body></html>'}), FileSystemLoader(ROOT / 'templates')])
-    app.register_blueprint(create_letter_site_qa_blueprint(settings, storage, service=qa))
+    # Decorators capture this private instance while the blueprint is built.
+    # Restore the module reference before any requests; production stays intact.
+    with patch('routes.letter_site_qa.limiter', private_limiter):
+        app.register_blueprint(create_letter_site_qa_blueprint(settings, storage, service=qa))
     return SimpleNamespace(db=db, qa=qa, app=app, client=app.test_client(), settings=settings, storage=storage,
-        identity=identity, admin=admin_id, other=other_id, ordinary=ordinary_id, transport=transport, clock=clock)
+        limiter=private_limiter, identity=identity, admin=admin_id, other=other_id, ordinary=ordinary_id, transport=transport, clock=clock)
 
 
 def field(response, name):
