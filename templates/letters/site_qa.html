@@ -1,0 +1,69 @@
+{% extends 'base.html' %}
+{% block title %}Alice SITE QA — AI Career Agent{% endblock %}
+{% block head_extra %}<link rel="stylesheet" href="{{ url_for('static', filename='letter_site_qa.css') }}?v=1">{% endblock %}
+{% block content %}
+{% set origins = {'alice_draft': 'Черновик Алисы, проверенный пользователем', 'user_edited_alice_draft': 'Черновик Алисы с правками пользователя', 'manual': 'Ручная правка сохранённого письма'} %}
+<main class="section site-qa"><div class="container site-qa-shell">
+<header class="site-qa-header"><p class="site-qa-kicker">AI-005 · ЗАКРЫТАЯ ПРОВЕРКА</p><h1>Alice SITE QA</h1><a href="{{ url_for('.home') }}">К тестовым письмам</a></header>
+<aside class="site-qa-notice"><strong>Только синтетические данные.</strong> Профиль вашего аккаунта не используется. Здесь проверяется общий механизм генерации и сохранения писем, а не готовность сервиса для реальных данных. Не вводите персональные сведения при редактировании.</aside>
+{% if not live_enabled %}<aside class="site-qa-warning"><strong>Запросы к Алисе выключены.</strong> Можно подготовить письмо и посмотреть состав данных. Для настоящего вызова нужны отдельное разрешение владельца и включение всех runtime-проверок.</aside>{% endif %}
+
+{% macro editor(value, proposal_id, expected) -%}
+<form method="post" action="{{ url_for('.save', letter_id=record.id) }}" class="site-qa-editor">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="expected_revision" value="{{ expected }}"><input type="hidden" name="proposal_id" value="{{ proposal_id }}">
+<label>Тема<input name="subject" value="{{ value.subject }}" maxlength="{{ max_subject }}" required></label>
+<label>Текст письма<textarea name="body" rows="12" maxlength="{{ max_body }}" required>{{ value.body }}</textarea></label>
+<label class="site-qa-check"><input type="checkbox" name="confirm" value="1" required><span>Я проверил текст и сохраняю эту версию. Это не подтверждение нового запроса к Алисе.</span></label>
+<button class="btn btn-primary" type="submit">Принять и сохранить версию</button>
+</form>
+{%- endmacro %}
+
+{% if view == 'home' %}
+<section class="site-qa-card"><h2>Подготовить тестовое письмо</h2><p>Сервер выберет закреплённые профиль и вакансию. Эта кнопка не вызывает провайдера и не расходует AI-бюджет.</p>
+<form method="post" action="{{ url_for('.prepare') }}">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="intention" value="{{ intention }}">
+<div class="site-qa-options">
+<label for="qa-language">Язык<select id="qa-language" name="language"><option value="ru">Русский</option><option value="en">English</option></select></label>
+<label for="qa-length">Длина<select id="qa-length" name="length"><option value="short">Короткое</option><option value="full">Полное</option></select></label>
+<label for="qa-tone">Тон<select id="qa-tone" name="tone"><option value="professional">Профессиональный</option><option value="friendly">Дружелюбный</option></select></label>
+</div><button class="btn btn-primary" type="submit">Подготовить тестовое письмо</button>
+</form></section>
+<section class="site-qa-card"><h2>Последние тестовые письма</h2>
+{% for item in recent %}<p><a href="{{ url_for('.detail', letter_id=item.id) }}">Тестовое письмо {{ item.id[:8] }}</a></p>{% else %}<p>Тестовых писем пока нет.</p>{% endfor %}</section>
+
+{% elif view == 'detail' %}
+<section class="site-qa-card"><h2>{{ record.source.vacancy.title }}</h2><p>{{ record.source.vacancy.company }}</p><p>Язык: {{ record.content.language }} · Длина: {{ 'короткое' if record.content.length == 'short' else 'полное' }} · Тон: {{ 'профессиональный' if record.content.tone == 'professional' else 'дружелюбный' }}</p>
+{% if record.source_stale %}<p class="site-qa-warning">Источник изменён. Генерация и принятие старого предложения заблокированы.</p>{% endif %}
+<details><summary>Посмотреть закреплённые исходные данные</summary><h3>Факты кандидата</h3>{% for fact in record.source.facts %}<p class="site-qa-text">{{ fact.text }}</p>{% endfor %}<h3>Вакансия</h3><p class="site-qa-text">{{ record.source.vacancy.description }}</p><p class="site-qa-text">{{ record.source.vacancy.requirements }}</p></details>
+{% if record.revision == 1 and not record.source_stale %}
+<p>На одно тестовое письмо разрешена одна операция генерации. Предварительный просмотр действует 10 минут с момента подготовки письма. Повторное открытие не продлевает срок и не создаёт новую операцию.</p>
+<form method="post" action="{{ url_for('.preview', letter_id=record.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn btn-secondary" type="submit">Предварительный просмотр данных</button></form>
+{% endif %}</section>
+{% for proposal in record.proposals %}
+<section class="site-qa-card"><h2>Предложение Алисы</h2><p class="site-qa-warning">Пока не принято. Проверьте факты, формулировки и соответствие вакансии. Автоматическая проверка не доказывает полную смысловую достоверность.</p>
+{{ editor(proposal.content, proposal.id, proposal.base_revision) }}
+<form method="post" action="{{ url_for('.reject', letter_id=record.id, proposal_id=proposal.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="expected_revision" value="{{ record.revision }}"><button class="btn btn-secondary" type="submit">Отклонить предложение</button></form>
+</section>{% endfor %}
+{% if record.last_version %}<section class="site-qa-card"><h2>Сохранённое письмо</h2><h3>{{ record.content.subject }}</h3><p class="site-qa-text">{{ record.content.body }}</p><details><summary>Редактировать сохранённую версию</summary>{{ editor(record.content, '', record.revision) }}</details></section>{% endif %}
+<section class="site-qa-card"><h2>История версий</h2>
+{% for version in record.versions %}<div class="site-qa-version"><a href="{{ url_for('.version', letter_id=record.id, number=version.number) }}">Версия {{ version.number }}</a><span>{{ origins.get(version.origin, version.origin) }}</span><a href="{{ url_for('.export', letter_id=record.id, number=version.number) }}">Скачать TXT</a></div>{% else %}<p>Предложение ещё не принято. Непроверенный текст нельзя экспортировать как сохранённое письмо.</p>{% endfor %}
+{% if record.versions|length > 1 %}<form method="get" action="{{ url_for('.compare', letter_id=record.id) }}" class="site-qa-options"><label>Левая версия<select name="left">{% for item in record.versions|reverse %}<option value="{{ item.number }}">{{ item.number }}</option>{% endfor %}</select></label><label>Правая версия<select name="right">{% for item in record.versions %}<option value="{{ item.number }}">{{ item.number }}</option>{% endfor %}</select></label><button class="btn btn-secondary" type="submit">Сравнить</button></form>{% endif %}
+</section><p>Для нового намеренного запроса подготовьте другое тестовое письмо. Перезагрузка страницы не запускает генерацию.</p>
+
+{% elif view == 'preview' %}
+<section class="site-qa-card"><h2>Данные для генерации</h2><p>Получатель: {{ preview.recipient }}</p><p>Параметры: {{ preview.projection.preferences.language }} / {{ preview.projection.preferences.length }} / {{ preview.projection.preferences.tone }}</p>
+<h3>Факты кандидата</h3>{% for fact in preview.projection.candidate_facts %}<p class="site-qa-text">{{ fact.text }}</p>{% endfor %}
+<h3>Вакансия</h3>{% for key, value in preview.projection.vacancy.items() %}<p class="site-qa-text">{{ value }}</p>{% endfor %}
+<p>В запрос не входят ваш профиль, контакты, заметки, правки писем или идентификаторы аккаунта. Работодателю ничего не отправляется.</p>
+<form method="post" action="{{ url_for('.generate', letter_id=letter_id) }}" id="site-qa-generate"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="review_token" value="{{ preview.review_token }}"><button class="btn btn-primary" type="submit" {% if not live_enabled %}disabled{% endif %}>Создать черновик с Алисой</button></form>
+<p>При включённом live-режиме действие обращается к платному API. Повтор одного запроса не создаёт повторный вызов; при неизвестном результате автоматического повтора нет.</p>
+<a href="{{ url_for('.detail', letter_id=letter_id) }}">Вернуться к письму</a></section>
+
+{% elif view == 'version' %}<section class="site-qa-card"><h2>Версия {{ version.number }}</h2><p>{{ origins.get(version.origin, version.origin) }}</p><h3>{{ version.content.subject }}</h3><p class="site-qa-text">{{ version.content.body }}</p><a href="{{ url_for('.export', letter_id=letter_id, number=version.number) }}">Скачать TXT</a></section><a href="{{ url_for('.detail', letter_id=letter_id) }}">Вернуться к письму</a>
+{% elif view == 'compare' %}<section class="site-qa-card"><h2>Сравнение версий</h2><pre class="site-qa-text">{{ compared.diff }}</pre></section><a href="{{ url_for('.detail', letter_id=letter_id) }}">Вернуться к письму</a>
+{% elif view == 'conflict' %}<section class="site-qa-card"><h2>Версия или источник изменились</h2><p>Правка не сохранена. Скопируйте текст ниже и откройте актуальную версию. Автоматической повторной записи нет.</p><h3>{{ draft.subject }}</h3><pre class="site-qa-text">{{ draft.body }}</pre><a href="{{ url_for('.detail', letter_id=letter_id) }}">Открыть актуальное письмо</a></section>
+{% elif view == 'processed' %}<section class="site-qa-card"><h2>Операция уже зарегистрирована</h2><p>Повторного запроса к Алисе нет. Операция может быть завершена, выполняться или иметь неизвестный результат. Ранее отклонённое предложение не восстанавливается.</p><a href="{{ url_for('.detail', letter_id=letter_id) }}">Посмотреть письмо</a></section>
+{% elif view == 'failed' %}<section class="site-qa-card"><h2>Предложение не получено</h2><p>Генерация недоступна, ответ не прошёл проверку или результат операции неизвестен. Автоматического повтора нет. Не начинайте новую операцию до проверки состояния и расходов.</p><a href="{{ url_for('.detail', letter_id=letter_id) }}">Вернуться к письму</a></section>
+{% else %}<section class="site-qa-card"><h2>Действие недоступно</h2><p>{{ error }}</p><p>Истёкший предварительный просмотр нельзя обновить в новую платную операцию. Для намеренного нового теста используется отдельное письмо.</p></section>{% endif %}
+</div></main>
+{% endblock %}

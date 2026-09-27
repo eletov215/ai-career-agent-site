@@ -1,0 +1,83 @@
+name: AI-005 SITE QA (synthetic, no paid calls)
+"on":
+  push:
+    branches: [ai005-site-qa-reviewed, main]
+  pull_request:
+permissions:
+  contents: read
+concurrency:
+  group: site-qa-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  runtime:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: site_qa_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres -d site_qa_test"
+          --health-interval 10s --health-timeout 5s --health-retries 5
+    env:
+      APP_ENV: test
+      DATA_DIR: /tmp/aca-site-qa-ci
+      POSTGRES_TEST_URL: postgresql+psycopg://postgres:postgres@127.0.0.1:5432/site_qa_test
+      AI_SITE_QA_ENABLED: "0"
+      AI_SITE_QA_LIVE_ENABLED: "0"
+      TRUDVSEM_SYNC_ENABLED: "0"
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Dependency-free successor boundary
+        run: python scripts/check_ai005_site_qa_package.py
+      - name: Install pinned project dependencies
+        run: python -m pip install -r requirements.txt -r requirements-dev.txt
+      - name: SITE QA routes, security and PostgreSQL
+        run: python -m pytest -q tests/test_ai005_site_qa.py tests/test_ai005_site_qa_package.py tests/test_ai005_site_qa_postgresql.py tests/test_ai005_site_qa_integration.py
+      - name: Preserve accepted package gates
+        run: |
+          python scripts/check_ai_provider_package.py
+          python -S -m unittest tests.test_legal001_canonical -v
+          python -m pytest -q tests/test_architecture_boundaries.py
+          python scripts/check_ai001_package.py
+          python scripts/check_ai002_package.py
+          python scripts/check_ai003_package.py
+          python scripts/check_ai004_package.py
+          python scripts/check_job001_package.py
+          python scripts/check_ai005_package.py
+          python scripts/check_ai005_r2_package.py
+          python scripts/check_legal001_package.py
+          python scripts/check_host001_package.py
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      APP_ENV: test
+      DATA_DIR: /tmp/aca-site-qa-browser-ci
+      AI_SITE_QA_ENABLED: "0"
+      AI_SITE_QA_LIVE_ENABLED: "0"
+      TRUDVSEM_SYNC_ENABLED: "0"
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+          cache: pip
+      - run: python -m pip install -r requirements.txt -r requirements-dev.txt playwright==1.57.0
+      - run: python -m playwright install --with-deps chromium
+      - name: Localhost mock-transport browser and TXT checks
+        run: python scripts/verify_site_qa_browser.py --output-dir /tmp/site-qa-browser-evidence
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: site-qa-component-browser-${{ github.sha }}
+          path: /tmp/site-qa-browser-evidence
+          retention-days: 14

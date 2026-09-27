@@ -1,0 +1,32 @@
+{
+  "package": "AI-005-SITE-QA",
+  "release": "r1-candidate",
+  "source_commit": "b828596c893d59a544f9678d7b45ab6ed7f44230",
+  "source_tree": "05fc57dd0294cd5814637cc6e61e864f2bba9d2d",
+  "schema": "20260922_0021",
+  "real_data_enabled": false,
+  "legal_state": "DRAFT",
+  "paid_provider_calls": 0,
+  "runtime_git_blobs": {
+    "services/letter_site_qa.py": "ed5ff596cf97f5f507c44aa474ea9cbe12bc7cff",
+    "repositories/letter_site_qa.py": "7fa0b9607e0f32f4a23e5c6603e11ac9f34b7c5b",
+    "routes/letter_site_qa.py": "520f3ca9e61e7becfdd89bb8aaa7fd216468a4f1",
+    "templates/letters/site_qa.html": "92126756274262565c9607f4ed10886413081cf7",
+    "static/letter_site_qa.css": "bfc1eaf7019021544d4fd398f7bf1c11f1f6531a"
+  },
+  "existing_change": {
+    "routes/admin_sources.py": {
+      "previous_git_blob": "f4f268c16a495abc6a4f2111971788bb106a6115",
+      "kind": "exact four-line child-blueprint registration; predecessor guards unchanged"
+    },
+    "scripts/check_ai_provider_package.py": {
+      "previous_git_blob": "80deee17f57d54f26a965c2a6b175bd34f549aca",
+      "kind": "exact additive checked SITE QA successor; all historical assertions preserved"
+    }
+  },
+  "ci": "PENDING_NEW_CANDIDATE",
+  "deployed": "NOT_RUN",
+  "site_qa": "NOT_RUN",
+  "live_provider": "NOT_RUN",
+  "quality": "NOT_RUN"
+}
