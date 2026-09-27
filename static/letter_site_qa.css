@@ -1,0 +1,26 @@
+.site-qa { padding: 2rem 0 4rem; }
+.site-qa-shell { max-width: 960px; margin: auto; padding: 0 1rem; }
+.site-qa-header { margin-bottom: 1.5rem; }
+.site-qa-header h1 { margin: .25rem 0 .75rem; line-height: 1.2; }
+.site-qa-kicker { font-size: .85rem; letter-spacing: .08em; }
+.site-qa-card { padding: 1.5rem; margin: 1.25rem 0; border: 1px solid #ccd3dc; border-radius: 12px; background: #fff; color: #172335; }
+.site-qa-card h2, .site-qa-card h3 { line-height: 1.35; margin: 0 0 .85rem; }
+.site-qa-card p, .site-qa-notice, .site-qa-warning { line-height: 1.6; }
+.site-qa-notice, .site-qa-warning { padding: 1rem 1.25rem; border-radius: 8px; margin: 1rem 0; }
+.site-qa-notice { background: #edf4fa; color: #172335; }
+.site-qa-warning { background: #fff4df; color: #493316; }
+.site-qa-options { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; margin: 1rem 0; align-items: end; }
+.site-qa label { display: block; margin: .8rem 0; min-width: 0; }
+.site-qa input:not([type=hidden]):not([type=checkbox]), .site-qa select, .site-qa textarea { display: block; width: 100%; max-width: 100%; box-sizing: border-box; margin-top: .45rem; padding: .7rem; border: 1px solid #8997a9; border-radius: 6px; background: #fff; color: #172335; font: inherit; }
+.site-qa textarea { resize: vertical; min-height: 12rem; }
+.site-qa .site-qa-check { display: flex; align-items: flex-start; gap: .7rem; line-height: 1.55; }
+.site-qa-check input { flex: 0 0 auto; margin-top: .35rem; width: 1.1rem; height: 1.1rem; }
+.site-qa .btn { display: inline-block; max-width: 100%; box-sizing: border-box; white-space: normal; overflow-wrap: anywhere; margin: .5rem 0; min-height: 44px; }
+.site-qa button:disabled { cursor: not-allowed; opacity: .65; }
+.site-qa :is(a, button, input, textarea, select, summary):focus-visible { outline: 3px solid #165ecc; outline-offset: 3px; }
+.site-qa-text { white-space: pre-wrap; overflow-wrap: anywhere; word-break: normal; font: inherit; line-height: 1.6; }
+.site-qa :is(h1,h2,h3,p,a,span,summary) { overflow-wrap: anywhere; }
+.site-qa summary { cursor: pointer; padding: .75rem 0; line-height: 1.5; }
+.site-qa-version { display: flex; flex-wrap: wrap; gap: .5rem 1rem; padding: .9rem 0; border-bottom: 1px solid #e1e5eb; align-items: baseline; }
+.site-qa-version span { flex: 1 1 14rem; }
+@media (max-width: 600px) { .site-qa-options { grid-template-columns: 1fr; gap: .25rem; } .site-qa-card { padding: 1rem; } .site-qa { padding-top: 1rem; } }

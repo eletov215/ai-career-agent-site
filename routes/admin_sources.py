@@ -119,4 +119,8 @@ def create_admin_sources_blueprint(settings: Any, storage: Any, vacancy_store: A
         _require_admin()
         return jsonify(_payload(settings, storage, vacancy_store))
 
+    # Independent synthetic QA namespace; ordinary source-health routes stay read-only.
+    from routes.letter_site_qa import create_letter_site_qa_blueprint
+    bp.register_blueprint(create_letter_site_qa_blueprint(settings, storage))
+
     return bp
