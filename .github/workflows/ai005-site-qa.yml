@@ -41,9 +41,12 @@ jobs:
       - name: Install pinned project dependencies
         run: python -m pip install -r requirements.txt -r requirements-dev.txt
       - name: SITE QA routes, security and PostgreSQL
-        run: python -m pytest -q tests/test_ai005_site_qa.py tests/test_ai005_site_qa_package.py tests/test_ai005_site_qa_postgresql.py
+        run: python -m pytest -q tests/test_ai005_site_qa.py tests/test_ai005_site_qa_package.py tests/test_ai005_site_qa_postgresql.py tests/test_ai005_site_qa_integration.py
       - name: Preserve accepted package gates
         run: |
+          python scripts/check_ai_provider_package.py
+          python -S -m unittest tests.test_legal001_canonical -v
+          python -m pytest -q tests/test_architecture_boundaries.py
           python scripts/check_ai001_package.py
           python scripts/check_ai002_package.py
           python scripts/check_ai003_package.py

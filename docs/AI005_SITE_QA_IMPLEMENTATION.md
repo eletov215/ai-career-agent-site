@@ -2,7 +2,7 @@
 
 ## Архитектура
 
-`routes/admin_sources.py` регистрирует дочерний blueprint с отдельным URL namespace. Четыре добавленные строки — единственное изменение существующего runtime-файла. `app.py`, исходные letter routes/services/repositories, provider/runtime/admission и все predecessor guards сохранены. Новый guard проверяет их Git blob hashes и точное восстановление исходного admin_sources.py после удаления зарегистрированной вставки.
+`routes/admin_sources.py` регистрирует дочерний blueprint с отдельным URL namespace. Четыре добавленные строки — единственное изменение существующего runtime-файла. `app.py`, исходные letter routes/services/repositories, provider/runtime/admission и остальные predecessor guards сохранены. Проверка AI-PROVIDER получает только точный additive successor hook, описанный ниже. Новый guard проверяет их Git blob hashes и точное восстановление исходного admin_sources.py после удаления зарегистрированной вставки.
 
 `LetterSiteQA` создаёт две постоянные внутренние synthetic identities на администратора: RU и EN. Идентификаторы получаются HMAC от серверного ключа и actor ID. Email, normalized_email, password, auth session, OAuth identity, auth token и consent не выдаются. Для совместимости с существующим repository допуска внутренние записи имеют active/verified технический статус; это не почтовая проверка реального пользователя. Внешний tester обязан иметь настоящий активный подтверждённый allowlisted account.
 
@@ -25,3 +25,7 @@ LetterRuntime выполняет один dispatch, без автоматиче�
 Автоматическая проверка формы, цитат и чисел не доказывает semantic grounding. Synthetic success не доказывает качество на реальном пользовательском содержимом. Нет автоматической очистки новых workspace; максимум писем ограничен MAX_LETTERS. Удаление настоящего tester блокирует доступ, но не удаляет отдельные synthetic owner rows автоматически. Сюда нельзя вводить реальные персональные данные. Работы по lifecycle/cleanup не должны затрагивать единственный рабочий аккаунт владельца.
 
 Существующий общий preview-шаблон с checkbox не меняется: ordinary real-data path закрыт. Новый QA action не ослабляет LegalLetterAdmission и не делает существующий общий путь доступным.
+
+## Candidate integration correction
+
+Initial CI391 caught direct ORM imports in the new service. SQL and persisted ownership are now in repositories/letter_site_qa.py; the existing architecture test is unchanged. Initial Package preflight25 rejected admin_sources.py against the older AI-PROVIDER boundary. A checked, exact additive successor hook now validates the entire new SITE QA manifest and permits only the four-line admin registration. The new guard verifies that removing this hook restores the historical provider guard byte-for-byte. No historical assertion is removed or weakened; all other inherited guards remain unchanged.

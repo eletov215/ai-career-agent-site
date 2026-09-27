@@ -30,8 +30,11 @@ PROTECTED = {
 INTEGRATION = ('    # Independent synthetic QA namespace; ordinary source-health routes stay read-only.\n'
     '    from routes.letter_site_qa import create_letter_site_qa_blueprint\n'
     '    bp.register_blueprint(create_letter_site_qa_blueprint(settings, storage))\n\n')
-RUNTIME = {'services/letter_site_qa.py', 'routes/letter_site_qa.py',
+RUNTIME = {'services/letter_site_qa.py', 'repositories/letter_site_qa.py', 'routes/letter_site_qa.py',
            'templates/letters/site_qa.html', 'static/letter_site_qa.css'}
+
+PROVIDER_INTEGRATION = '        if (root / "docs/evidence/ai-005-site-qa/change_boundary.json").is_file():\n            from scripts.check_ai005_site_qa_package import successor_hashes as site_qa_successor\n            successor = {\n                **successor,\n                **{relative: {"current_sha256": sha} for relative, sha in site_qa_successor(root).items()},\n            }\n'
+PROVIDER_BASE_BLOB = '80deee17f57d54f26a965c2a6b175bd34f549aca'
 
 
 def blob(raw):
@@ -54,6 +57,10 @@ def validate(root=ROOT):
         route = (root/'routes/admin_sources.py').read_text()
         if route.count(INTEGRATION) != 1 or blob(route.replace(INTEGRATION, '').encode()) != 'f4f268c16a495abc6a4f2111971788bb106a6115':
             errors.append('Unreviewed admin integration change')
+        provider_guard = (root/'scripts/check_ai_provider_package.py').read_text()
+        if (provider_guard.count(PROVIDER_INTEGRATION) != 1
+                or blob(provider_guard.replace(PROVIDER_INTEGRATION, '').encode()) != PROVIDER_BASE_BLOB):
+            errors.append('Unreviewed provider guard change')
         for path, sha in evidence['runtime_git_blobs'].items():
             raw = (root/path).read_bytes()
             if sha not in {blob(raw), blob(raw.replace(b'\r\n',b'\n'))}:
@@ -69,8 +76,11 @@ def validate(root=ROOT):
         for marker in ('SyntheticLetterAdmission', 'LetterRuntime', "ticket['issued'] = record['created_at']", 'site-qa-one-dispatch-v1', 'self.qa.authorize'):
             if marker not in service:
                 errors.append('Missing fixed-intention/admission boundary: ' + marker)
-        if 'update_policy(' in service or 'os.environ' in service:
+        storage = (root/'repositories/letter_site_qa.py').read_text()
+        if any(marker in service + storage for marker in ('update_policy(', 'os.environ')):
             errors.append('SITE QA must not activate policy or accept environment-supplied sources')
+        if 'from models' in service or 'from sqlalchemy' in service or 'session.execute' in service:
+            errors.append('SITE QA service must delegate database access to repository')
         template = (root/'templates/letters/site_qa.html').read_text()
         if '|safe' in template or 'csrf_token()' not in template:
             errors.append('Unsafe SITE QA template')
@@ -83,6 +93,14 @@ def validate(root=ROOT):
     except (OSError, ValueError, KeyError, TypeError, IndexError, SyntaxError):
         errors.append('Missing or invalid SITE QA evidence')
     return errors
+
+
+def successor_hashes(root=ROOT):
+    """Only the reviewed admin registration can supersede the older provider gate."""
+    errors = validate(root)
+    if errors:
+        raise ValueError('Invalid SITE QA successor evidence')
+    return {'routes/admin_sources.py': hashlib.sha256((root/'routes/admin_sources.py').read_bytes()).hexdigest()}
 
 
 if __name__ == '__main__':

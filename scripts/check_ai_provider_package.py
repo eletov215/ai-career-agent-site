@@ -86,6 +86,12 @@ def validate(root: Path = ROOT) -> list[str]:
                 **successor,
                 **{relative: {"current_sha256": sha} for relative, sha in successor_hashes(root).items()},
             }
+        if (root / "docs/evidence/ai-005-site-qa/change_boundary.json").is_file():
+            from scripts.check_ai005_site_qa_package import successor_hashes as site_qa_successor
+            successor = {
+                **successor,
+                **{relative: {"current_sha256": sha} for relative, sha in site_qa_successor(root).items()},
+            }
         for relative, expected in preserved["files"].items():
             if relative in successor:
                 expected = successor[relative]["current_sha256"]
