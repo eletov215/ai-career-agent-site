@@ -1,0 +1,64 @@
+name: Package change
+description: Define a bounded implementation package for Codex or a developer.
+title: "[PACKAGE-ID]: "
+labels: []
+body:
+  - type: markdown
+    attributes:
+      value: Do not include secrets, credentials, production data, or applicant personal data.
+  - type: input
+    id: package
+    attributes:
+      label: Package ID
+      placeholder: CODEX-OPS-001
+    validations:
+      required: true
+  - type: textarea
+    id: objective
+    attributes:
+      label: Objective
+      description: State the outcome, not an unbounded solution.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: List measurable completion criteria.
+      placeholder: "- [ ] ..."
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: In scope
+    validations:
+      required: true
+  - type: textarea
+    id: exclusions
+    attributes:
+      label: Explicitly out of scope
+      description: Include runtime, schema, production, provider-call, legal, and successor-package boundaries as applicable.
+    validations:
+      required: true
+  - type: textarea
+    id: guards
+    attributes:
+      label: Inherited guards and baseline
+      description: Identify predecessor hashes, package gates, canonical status, and required main baseline.
+    validations:
+      required: true
+  - type: textarea
+    id: verification
+    attributes:
+      label: Verification plan
+      description: List local checks, CI gates, and any live checks expressly authorized.
+    validations:
+      required: true
+  - type: textarea
+    id: delivery
+    attributes:
+      label: Delivery requirements
+      description: Specify branch, PR base, evidence, rollout, rollback, and reporting needs.
+    validations:
+      required: true
