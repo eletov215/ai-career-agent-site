@@ -1,5 +1,9 @@
 # AI-005 SITE QA — runbook / r1 candidate
 
+Актуальный preflight точной конфигурации и строго одной будущей RU/short/professional
+operation зафиксирован в `AI005_LIVE_QA_PREFLIGHT.md`. Он не является разрешением live
+вызова; при расхождении более узкие запреты и новый owner approval обязательны.
+
 ## 1. До публикации
 
 Проверить head SHA, diff, новый SITE QA workflow, обычный CI и Package preflight. При failure читать соответствующий job log. Старый CI #338 не подтверждает этот кандидат. Ветка `ai005-site-qa-reviewed`; main напрямую не изменяется. Merge не выполняется до проверки head/mergeability/checks.
