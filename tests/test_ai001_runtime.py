@@ -341,3 +341,17 @@ def test_http_child_blocks_redirects_and_never_reads_error_body(monkeypatch):
     result=child.perform({'headers':{'x-data-logging-enabled':'false'},'body':{},'timeout':2})
     assert not result['ok'] and not result['retryable'] and result['unknown']
     assert seen[0][0]==child.ENDPOINT and not seen[0][1]['allow_redirects'] and seen[0][2] is False
+
+
+@pytest.mark.parametrize('headers', [{}, {'x-data-logging-enabled': 'true'},
+                                      {'x-data-logging-enabled': False}])
+def test_http_child_rejects_missing_or_incorrect_no_logging_header_before_network(monkeypatch, headers):
+    from services.ai import _http_worker as child
+
+    class NoNetworkSession:
+        def __init__(self):
+            raise AssertionError('network session must not be created')
+
+    monkeypatch.setattr(child.requests, 'Session', NoNetworkSession)
+    result = child.perform({'headers': headers, 'body': {}, 'timeout': 2})
+    assert result == {'ok': False, 'code': 'configuration', 'retryable': False, 'unknown': False}

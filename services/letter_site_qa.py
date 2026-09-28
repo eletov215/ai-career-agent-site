@@ -18,6 +18,7 @@ from domain.cover_letter import LetterError, canonical, options
 from services.ai.letter_admission import SyntheticLetterAdmission, synthetic_cases
 from services.ai.letter_runtime import LetterRuntime
 from services.ai.service import AIService
+from services.ai.site_qa_gate import SiteQASettingsGate
 from services.cover_letter_ai import CoverLetterGenerator, TICKET_SECONDS, _encode
 from services.cover_letters import CoverLetterService
 from repositories.letter_site_qa import LetterSiteQARepository
@@ -69,7 +70,9 @@ class LetterSiteQA:
         self.repository = storage.cover_letters
         self.workspace = LetterSiteQARepository(self.repository, settings)
         self.letters = CoverLetterService(self.repository, signing_key=settings.flask_secret_key, clock=clock)
-        self.ai = AIService(storage.ai, settings.ai, fingerprint_key=settings.flask_secret_key,
+        # Only this fixed-source admin QA runtime may disregard the historical
+        # wait. Provider header enforcement and every other shared gate remain.
+        self.ai = AIService(storage.ai, SiteQASettingsGate(settings.ai), fingerprint_key=settings.flask_secret_key,
                             provider=provider, clock=clock)
         self.runtime = LetterRuntime(self.ai, clock=clock)
 

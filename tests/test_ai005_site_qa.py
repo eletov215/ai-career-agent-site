@@ -16,6 +16,8 @@ from models.ai import AIUsageEvent, AIBudgetBucket
 from routes.letter_site_qa import BASE, create_letter_site_qa_blueprint
 from services.ai.letter_admission import synthetic_cases
 from services.legal_policy import CURRENT_AI_CONSENT_POLICY
+from services.ai.settings import AISettings
+from services.ai.site_qa_gate import SiteQASettingsGate
 from tests.site_qa_support import build_case, field, prepare_http, preview_http, NOW
 
 
@@ -31,6 +33,34 @@ def qa_case(tmp_path):
 def usage(x):
     with x.db.session() as s:
         return list(s.scalars(select(AIUsageEvent)))
+
+
+@pytest.mark.parametrize('disabled_at', [None, NOW - 60, NOW - 90000])
+def test_site_qa_only_bypasses_no_logging_wait(tmp_path, disabled_at):
+    x = build_case(tmp_path, no_logging_disabled_at=disabled_at)
+    try:
+        path, csrf, _ = prepare_http(x)
+        token, _ = preview_http(x, path, csrf)
+        assert x.client.post(path + '/generate', data={'csrf_token': csrf, 'review_token': token}).status_code == 303
+        assert len(x.transport.calls) == 1
+    finally:
+        x.db.dispose()
+
+
+def test_site_qa_gate_preserves_all_other_settings_rejections():
+    valid = AISettings(True, False, True, 'unit-test-api-key', 'fixture-folder',
+                       'gpt://fixture-folder/aliceai-llm/latest', None)
+    assert valid.gate(NOW) == 'no_logging_wait'
+    assert SiteQASettingsGate(valid).gate(NOW) is None
+    cases = [
+        (replace(valid, enabled=False), 'runtime_not_activated'),
+        (replace(valid, kill_switch=True), 'runtime_not_activated'),
+        (replace(valid, synthetic_access_enabled=False), 'synthetic_access_disabled'),
+        (replace(valid, api_key=''), 'provider_not_configured'),
+        (replace(valid, model_uri='gpt://fixture-folder/other/latest'), 'provider_not_configured'),
+    ]
+    for settings, reason in cases:
+        assert SiteQASettingsGate(settings).gate(NOW) == reason
 
 
 @pytest.mark.parametrize('language,length,tone', [('ru','short','professional'), ('ru','full','professional'),

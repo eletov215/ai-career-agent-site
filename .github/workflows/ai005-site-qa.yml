@@ -1,7 +1,7 @@
 name: AI-005 SITE QA (synthetic, no paid calls)
 "on":
   push:
-    branches: [ai005-site-qa-reviewed, main]
+    branches: [ai005-site-qa-reviewed, ai005-site-qa-no-logging-wait, main]
   pull_request:
 permissions:
   contents: read

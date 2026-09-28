@@ -64,7 +64,7 @@ class RecordingTransport:
             'usage': {'prompt_tokens': 1000, 'completion_tokens': 300}}}
 
 
-def build_case(directory, *, url=None, rate_enabled=False):
+def build_case(directory, *, url=None, rate_enabled=False, no_logging_disabled_at=NOW - 90000):
     # No implicit DATABASE_URL. PostgreSQL callers must create an isolated schema.
     url = url or 'sqlite:///' + str(Path(directory) / 'site-qa.db')
     upgrade_database(url)
@@ -77,7 +77,7 @@ def build_case(directory, *, url=None, rate_enabled=False):
     settings = SimpleNamespace(flask_secret_key='site-qa-test-signing-key',
         search_admin_emails=('admin@example.test', 'other-admin@example.test'),
         ai=AISettings(True, False, True, 'unit-test-api-key', 'fixture-folder',
-                      'gpt://fixture-folder/aliceai-llm/latest', NOW - 90000))
+                      'gpt://fixture-folder/aliceai-llm/latest', no_logging_disabled_at))
     storage = StorageServices.from_database(db)
     version, _ = storage.ai.read_policy()
     storage.ai.update_policy({'enabled': True, 'kill_switch': False}, expected_version=version, now=NOW)

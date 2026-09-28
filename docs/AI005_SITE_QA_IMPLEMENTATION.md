@@ -29,3 +29,9 @@ LetterRuntime выполняет один dispatch, без автоматиче�
 ## Candidate integration correction
 
 Initial CI391 caught direct ORM imports in the new service. SQL and persisted ownership are now in repositories/letter_site_qa.py; the existing architecture test is unchanged. Initial Package preflight25 rejected admin_sources.py against the older AI-PROVIDER boundary. A checked, exact additive successor hook now validates the entire new SITE QA manifest and permits only the four-line admin registration. The new guard verifies that removing this hook restores the historical provider guard byte-for-byte. No historical assertion is removed or weakened; all other inherited guards remain unchanged.
+
+## No-logging wait successor
+
+`SiteQASettingsGate` композиционно оборачивает `AISettings`: вызывает исходный `gate(now)` и заменяет только `no_logging_wait` на success. `LetterSiteQA` передаёт эту обёртку своему `AIService`; ни один общий runtime или route не изменён. Credentials/model properties делегируются для неизменной provider qualification. Worker по-прежнему допускает сеть только при строковом header `x-data-logging-enabled: false`.
+
+Отдельный successor evidence разрешает ровно новый gate-файл и изменение wiring в SITE QA service. Исходный r1 evidence остаётся исторически неизменным; provider, settings, `domain/ai.py` и legal policy остаются в protected predecessor boundary.
