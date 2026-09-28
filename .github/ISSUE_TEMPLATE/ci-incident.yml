@@ -1,0 +1,102 @@
+name: CI incident
+description: Record and diagnose a CI or repository verification failure.
+title: "[CI] "
+labels: []
+body:
+  - type: input
+    id: workflow-run
+    attributes:
+      label: Workflow / run
+      description: Name the workflow and link or identify its run.
+    validations:
+      required: true
+  - type: input
+    id: commit-sha
+    attributes:
+      label: Commit SHA
+    validations:
+      required: true
+  - type: input
+    id: failed-job
+    attributes:
+      label: Failed job
+    validations:
+      required: true
+  - type: input
+    id: failed-step
+    attributes:
+      label: Failed step
+    validations:
+      required: true
+  - type: textarea
+    id: sanitized-error-log
+    attributes:
+      label: Sanitized error / log
+      description: Remove secrets and personal data before pasting the relevant failure output.
+    validations:
+      required: true
+  - type: textarea
+    id: last-known-good
+    attributes:
+      label: Last known good state
+      description: Provide the commit and successful run when known.
+    validations:
+      required: true
+  - type: dropdown
+    id: rerun-attempted
+    attributes:
+      label: Was a rerun attempted?
+      options:
+        - "Yes"
+        - "No"
+        - "Not safe or not available"
+    validations:
+      required: true
+  - type: dropdown
+    id: classification
+    attributes:
+      label: Classification
+      options:
+        - Code defect
+        - Test defect
+        - Dependency issue
+        - External transient
+        - Infrastructure
+        - Unknown
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction-status
+    attributes:
+      label: Reproduction status
+      description: State how and where the failure was reproduced, or why reproduction is NOT_RUN.
+    validations:
+      required: true
+  - type: textarea
+    id: affected-guards
+    attributes:
+      label: Affected guards
+      description: Identify package, hash, evidence, or other checks involved.
+    validations:
+      required: true
+  - type: textarea
+    id: repair-boundary
+    attributes:
+      label: Repair boundary
+      description: Define the narrowest permissible repair and explicit exclusions.
+    validations:
+      required: true
+  - type: textarea
+    id: verification-plan
+    attributes:
+      label: Verification plan
+      description: List reruns, local reproduction checks, and regression tests.
+    validations:
+      required: true
+  - type: textarea
+    id: final-incident-result
+    attributes:
+      label: Final incident result
+      description: Record root cause, repair, verification, and whether source code changed.
+    validations:
+      required: true
