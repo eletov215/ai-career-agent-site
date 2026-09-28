@@ -17,6 +17,8 @@
 | Cloud resources / terraform apply | 0 / NOT_RUN |
 | Full AI-005 | IN_PROGRESS / LIVE_NOT_ACCEPTED |
 
+Successor от 28 сентября 2026 добавляет локально проверяемое исключение только для `no_logging_wait`: отсутствующий, свежий и старше 24 часов timestamp проходят synthetic SITE QA; исходный `AISettings.gate()` без timestamp по-прежнему блокирует обычный runtime. Негативный transport test доказывает, что отсутствующий или неверный `x-data-logging-enabled` отклоняется до сети. Эти результаты не являются GitHub CI, deployment, live-provider или quality acceptance; соответствующие статусы остаются `PENDING`/`NOT_RUN` до проверки точного head.
+
 Локальная среда не содержит Flask и не имеет сетевого доступа к GitHub/PyPI. Существующие SQLAlchemy/Alembic/pytest и статическая проверка шаблона не подменяют закреплённую среду CI. Новые тесты не используют скрытую цепочку чужих pytest fixtures: собственный harness создаёт изолированную БД, synthetic users и настоящий provider adapter с явно поддельным транспортом.
 
 Старые закрытые PR #46/#47 не используются как приёмка и не сливаются. Предыдущий отказ fixture job_env не переименовывается в успешный тест. Здесь требуется новый CI на точном head. Никаких заявлений о новой production QA, новом настоящем ответе модели или окончательной приёмке до соответствующего evidence нет.

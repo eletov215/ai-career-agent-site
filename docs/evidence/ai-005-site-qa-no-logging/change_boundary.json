@@ -1,0 +1,20 @@
+{
+  "package": "AI-005-SITE-QA-NO-LOGGING-WAIT",
+  "release": "r1-successor-candidate",
+  "source_commit": "cd526df75ca13cfed310114be1d96c0551ecb06b",
+  "real_data_enabled": false,
+  "legal_state": "DRAFT",
+  "paid_provider_calls": 0,
+  "superseded_git_blobs": {
+    "services/letter_site_qa.py": "ed5ff596cf97f5f507c44aa474ea9cbe12bc7cff"
+  },
+  "runtime_git_blobs": {
+    "services/letter_site_qa.py": "7e2a32b12144c7a90ae1f4c89c062ddb3b5c6d6e",
+    "services/ai/site_qa_gate.py": "a4287659931107e60aff98adc3a476a206a101d5"
+  },
+  "ci": "PENDING_NEW_CANDIDATE",
+  "deployed": "NOT_RUN",
+  "site_qa": "NOT_RUN",
+  "live_provider": "NOT_RUN",
+  "quality": "NOT_RUN"
+}

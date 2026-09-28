@@ -32,6 +32,8 @@ INTEGRATION = ('    # Independent synthetic QA namespace; ordinary source-health
     '    bp.register_blueprint(create_letter_site_qa_blueprint(settings, storage))\n\n')
 RUNTIME = {'services/letter_site_qa.py', 'repositories/letter_site_qa.py', 'routes/letter_site_qa.py',
            'templates/letters/site_qa.html', 'static/letter_site_qa.css'}
+NO_LOGGING_EVIDENCE = 'docs/evidence/ai-005-site-qa-no-logging/change_boundary.json'
+NO_LOGGING_FILES = {'services/letter_site_qa.py', 'services/ai/site_qa_gate.py'}
 
 PROVIDER_INTEGRATION = '        if (root / "docs/evidence/ai-005-site-qa/change_boundary.json").is_file():\n            from scripts.check_ai005_site_qa_package import successor_hashes as site_qa_successor\n            successor = {\n                **successor,\n                **{relative: {"current_sha256": sha} for relative, sha in site_qa_successor(root).items()},\n            }\n'
 PROVIDER_BASE_BLOB = '80deee17f57d54f26a965c2a6b175bd34f549aca'
@@ -61,7 +63,18 @@ def validate(root=ROOT):
         if (provider_guard.count(PROVIDER_INTEGRATION) != 1
                 or blob(provider_guard.replace(PROVIDER_INTEGRATION, '').encode()) != PROVIDER_BASE_BLOB):
             errors.append('Unreviewed provider guard change')
-        for path, sha in evidence['runtime_git_blobs'].items():
+        successor = json.loads((root/NO_LOGGING_EVIDENCE).read_text())
+        if (successor.get('package') != 'AI-005-SITE-QA-NO-LOGGING-WAIT'
+                or successor.get('source_commit') != 'cd526df75ca13cfed310114be1d96c0551ecb06b'
+                or successor.get('real_data_enabled') is not False
+                or successor.get('legal_state') != 'DRAFT'
+                or successor.get('paid_provider_calls') != 0
+                or set(successor.get('runtime_git_blobs', {})) != NO_LOGGING_FILES
+                or successor.get('superseded_git_blobs') != {
+                    'services/letter_site_qa.py': evidence['runtime_git_blobs']['services/letter_site_qa.py']}):
+            errors.append('Invalid SITE QA no-logging successor scope')
+        runtime_hashes = {**evidence['runtime_git_blobs'], **successor.get('runtime_git_blobs', {})}
+        for path, sha in runtime_hashes.items():
             raw = (root/path).read_bytes()
             if sha not in {blob(raw), blob(raw.replace(b'\r\n',b'\n'))}:
                 errors.append('SITE QA runtime hash mismatch: ' + path)
@@ -81,6 +94,13 @@ def validate(root=ROOT):
             errors.append('SITE QA must not activate policy or accept environment-supplied sources')
         if 'from models' in service or 'from sqlalchemy' in service or 'session.execute' in service:
             errors.append('SITE QA service must delegate database access to repository')
+        gate = (root/'services/ai/site_qa_gate.py').read_text()
+        for marker in ('reason = self.settings.gate(now)', 'reason == "no_logging_wait"',
+                       'else reason', '@dataclass(frozen=True, slots=True)'):
+            if marker not in gate:
+                errors.append('Invalid SITE-QA-only no-logging gate: ' + marker)
+        if any(marker in gate for marker in ('os.environ', 'request.', 'REAL_DATA_SUPPORTED')):
+            errors.append('SITE QA gate must not be client/environment selectable or activate real data')
         template = (root/'templates/letters/site_qa.html').read_text()
         if '|safe' in template or 'csrf_token()' not in template:
             errors.append('Unsafe SITE QA template')

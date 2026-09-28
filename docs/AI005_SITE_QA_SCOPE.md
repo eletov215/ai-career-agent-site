@@ -19,3 +19,7 @@ IMPLEMENTED, CI_PASS, DEPLOYED, SITE_QA_PASS, LIVE_PROVIDER_PASS, QUALITY_PASS �
 ## Не входит
 
 Нет terraform apply, VM/Managed PostgreSQL/IP/Lockbox creation, production DB migration, billable Alice call, изменения DRAFT policy или реальных аккаунтов/согласий. Новые тестовые владельцы создаются только при явно разрешённом POST в включённом QA-разделе; запуск приложения не создаёт записей.
+
+## Successor: no-logging wait
+
+Successor от 28 сентября 2026 снимает историческое 24-часовое ожидание только внутри этого fixed synthetic SITE QA. Общий gate и остальные AI surfaces не меняются; обязательный `x-data-logging-enabled: false` сохраняется. Подробная граница зафиксирована в `AI005_SITE_QA_NO_LOGGING.md`; это не legal activation и не разрешение real-data AI.
