@@ -80,8 +80,7 @@ def validate(root: Path = ROOT) -> list[str]:
         if any(type(acceptance.get(k)) is not type(v) or acceptance.get(k) != v for k,v in required.items()):
             errors.append("Acceptance safety metadata is invalid")
         summary = json.loads((root/"docs/evidence/ai-006/reference_summary.json").read_text())
-        reference_metrics = {**THRESHOLDS, "unsupported_candidate_claims":1,
-                             "negative_rejection_rate":17/18}
+        reference_metrics = {**THRESHOLDS, "negative_rejection_rate":17/18}
         if (summary.get("status") != "failed" or summary.get("provider_calls") != 0
                 or summary.get("thresholds") != THRESHOLDS or summary.get("metrics") != reference_metrics
                 or summary.get("positive_case_count") != 6 or summary.get("negative_case_count") != 18
