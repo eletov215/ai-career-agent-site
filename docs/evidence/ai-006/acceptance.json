@@ -1,13 +1,14 @@
 {
   "canonical_owner_release": "ACA_AI005_CANONICAL_DOCS_v1.6.6_FINAL",
   "canonical_owner_release_date": "2026-09-29",
-  "ci": "FAILED #436 dependency defect; repair pending",
+  "ci": "#438 AI-006 job SUCCESS for dependency repair; current gap revision NOT_RUN",
   "complete": false,
   "legal_state": "DRAFT / NOT_ACTIVE",
   "manual_review": "NOT_RUN",
   "migration_or_schema_changes": false,
   "package": "AI-006",
   "production_changes": false,
+  "production_grounding_gap": "invented candidate prose accepted with valid unrelated verbatim quote",
   "provider_calls": 0,
   "public_real_data_enabled": false,
   "real_data_alice": "CLOSED",
@@ -15,5 +16,6 @@
   "schema": "20260922_0021",
   "source_commit": "ba7288518a3dab13878f610bbd9f8f6f38d66019",
   "source_tree": "f25217f284bf392c592fa583e67f6403268a70b2",
+  "status": "BLOCKED_BY_PRODUCTION_GAP",
   "synthetic_only": true
 }

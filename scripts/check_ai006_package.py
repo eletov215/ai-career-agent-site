@@ -73,14 +73,17 @@ def validate(root: Path = ROOT) -> list[str]:
             errors.append("Human review safety boundary is invalid")
         acceptance = json.loads((root/"docs/evidence/ai-006/acceptance.json").read_text())
         required = {"source_commit":BASE_COMMIT,"source_tree":BASE_TREE,"schema":"20260922_0021",
+                    "status":"BLOCKED_BY_PRODUCTION_GAP",
                     "synthetic_only":True,"provider_calls":0,"public_real_data_enabled":False,
                     "real_data_alice":"CLOSED","legal_state":"DRAFT / NOT_ACTIVE",
                     "production_changes":False,"migration_or_schema_changes":False,"complete":False}
         if any(type(acceptance.get(k)) is not type(v) or acceptance.get(k) != v for k,v in required.items()):
             errors.append("Acceptance safety metadata is invalid")
         summary = json.loads((root/"docs/evidence/ai-006/reference_summary.json").read_text())
-        if (summary.get("status") != "passed" or summary.get("provider_calls") != 0
-                or summary.get("thresholds") != THRESHOLDS or summary.get("metrics") != THRESHOLDS
+        reference_metrics = {**THRESHOLDS, "unsupported_candidate_claims":1,
+                             "negative_rejection_rate":17/18}
+        if (summary.get("status") != "failed" or summary.get("provider_calls") != 0
+                or summary.get("thresholds") != THRESHOLDS or summary.get("metrics") != reference_metrics
                 or summary.get("positive_case_count") != 6 or summary.get("negative_case_count") != 18
                 or summary.get("suite_sha256") != _hash(root/"quality/ai006/golden_suite_v1.json")):
             errors.append("Deterministic reference summary is invalid")
@@ -93,6 +96,10 @@ def validate(root: Path = ROOT) -> list[str]:
         for marker in ("python -m pip install -r requirements-dev.txt", "python scripts/check_ai006_package.py", "python -m ai_quality --output-dir /tmp/ai006-quality",
                        "tests/test_ai006_*.py", "tests/test_ai_bench_*.py", "tests/test_ai005_live_contract.py"):
             if marker not in workflow: errors.append("CI coverage missing: " + marker)
+        live_block = workflow.split("  ai-bench-yandex-live:", 1)[-1].split("  ai-bench-yandex-alice-final:", 1)[0]
+        alice_block = workflow.split("  ai-bench-yandex-alice-final:", 1)[-1]
+        if "      - ai-006" not in live_block or "      - ai-006" not in alice_block:
+            errors.append("Billable provider jobs must depend on AI-006")
     except (OSError, ValueError, TypeError, KeyError, json.JSONDecodeError):
         errors.append("Missing or malformed AI-006 package evidence")
     return errors

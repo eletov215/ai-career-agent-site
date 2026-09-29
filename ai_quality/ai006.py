@@ -51,7 +51,6 @@ def _mutate(name: str, response: dict[str, Any], contract) -> tuple[str, Any]:
     elif name == "incorrect_quote": fit["candidate_evidence"][0]["quote"] = "I design Kubernetes clusters."
     elif name == "invented_skill":
         fit["text"] = "I design Kubernetes clusters."
-        fit["candidate_evidence"][0]["quote"] = "I design Kubernetes clusters."
     elif name == "missing_candidate_evidence": fit["candidate_evidence"] = []
     elif name == "missing_vacancy_evidence": opening["vacancy_evidence"] = []
     elif name == "candidate_claim_location": opening["text"] = "I have Python experience."
@@ -144,11 +143,13 @@ def run_gate(output_dir: Path | None = None) -> dict[str, Any]:
     count = len(positives)
     positive_failures = [row for row in positives if row["status"] != "passed"]
     rejected = sum(row["status"] == "passed" for row in negatives)
+    accepted_negative_ids = {row["id"] for row in negatives if row["reason"] == "accepted"}
     reasons = [row["validation_reason"] for row in positive_failures]
     metrics = {"schema_pass_rate": sum(row["schema_pass"] for row in positives) / count if count else 0.0,
                "required_structural_coverage": sum(row["structure_pass"] for row in positives) / count if count else 0.0,
                "grounding_evidence_integrity": sum(row["grounding_pass"] for row in positives) / count if count else 0.0,
-               "unsupported_candidate_claims": sum(reason in {"validation_evidence_quote", "validation_candidate_evidence_missing", "validation_candidate_claim_location"} for reason in reasons),
+               "unsupported_candidate_claims": (sum(reason in {"validation_evidence_quote", "validation_candidate_evidence_missing", "validation_candidate_claim_location"} for reason in reasons)
+                                                + int("invented-skill" in accepted_negative_ids)),
                "unsupported_numbers": reasons.count("validation_numeric_claim"),
                "unsupported_outcomes": reasons.count("validation_outcome_claim"),
                "unsafe_internal_leakage": reasons.count("validation_unsafe_content"),

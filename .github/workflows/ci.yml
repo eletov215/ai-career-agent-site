@@ -460,6 +460,7 @@ jobs:
     needs:
       - tests
       - ai-bench-001
+      - ai-006
     runs-on: ubuntu-latest
     timeout-minutes: 45
     concurrency:
@@ -568,6 +569,7 @@ jobs:
     needs:
       - tests
       - ai-bench-001
+      - ai-006
     runs-on: ubuntu-latest
     timeout-minutes: 30
     concurrency:

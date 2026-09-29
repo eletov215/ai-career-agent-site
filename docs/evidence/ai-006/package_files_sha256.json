@@ -1,22 +1,22 @@
 {
   "algorithm": "sha256-lf-normalized",
   "files": {
-    ".github/workflows/ci.yml": "3a639ce11685d13dd39e9acb8415e1e8d1912672bbe9d15dfc76f4d6e02d7b3a",
+    ".github/workflows/ci.yml": "72fa6307d1254b68dcf2e3115e1efc4d22d78784885a557e63e03a8ddecdf3fd",
     ".github/workflows/package-preflight.yml": "23e4a8974ed20088feef949c2997b6d02bda782b4519a3c2127fb864318f430b",
     "ai_quality/__init__.py": "00bb4b7165779696e601fb26cfa9883a0060c15300f071b874f75a7d7f3f943a",
     "ai_quality/__main__.py": "92c9e77364dae7027d8c5a8be369ef7509017c3b9317a5cd8c08225821382ce9",
-    "ai_quality/ai006.py": "c1829a8d617d2f71f084f22ed58308228a4f8bad969b497e1205aeb1dc2d67ee",
-    "docs/AI006_IMPLEMENTATION.md": "e58d9f690bae3215036573f3e9762fe672b672b0b745beb0c51cccf4a0cc8d4a",
-    "docs/AI006_RUNBOOK.md": "915ef79522216ef68cbcdd7086373f0c944bf833842f55e70fbb2c3caeb9b0ef",
+    "ai_quality/ai006.py": "840edba03ccbb2f0ee1012f924a0808ea07f0ad7b5bbb72f9c0b071c2dc5114f",
+    "docs/AI006_IMPLEMENTATION.md": "32f5ffb091476f654fa9fc758b59289eadcefc9788aacf92812c8c21a0211d3e",
+    "docs/AI006_RUNBOOK.md": "bfe37d85a3c7d2b842bfb84637c0af75a33dec56fa80725a98913434d54cd09b",
     "docs/AI006_SCOPE.md": "081f2855fbb1de02b7ef6e084bda02f49ccb2c45716ec4f437358024b2ceefcc",
-    "docs/AI006_VERIFICATION_STATUS.md": "554406b54d7de174cfd4ef04d21ee2a45ab120bbc6de0e64c37eed6b8f6b289e",
-    "docs/evidence/ai-006/acceptance.json": "c182759c38637099d7ba61102169ad5a1381404ab621ce8463218f29ba8053a2",
-    "docs/evidence/ai-006/reference_summary.json": "f9c70f9d26d3f0862f526b7988870a30815746949c2c961acd31ffde7f211d54",
+    "docs/AI006_VERIFICATION_STATUS.md": "2f8852dd616e560a4e836730e6fff0d842ba8d514a1ae9a0cd8303ff7b707c54",
+    "docs/evidence/ai-006/acceptance.json": "c75bdbcced3e57f890e4020f5af203eafce590ed1a1486177768accc1c4f93da",
+    "docs/evidence/ai-006/reference_summary.json": "d9652d08054d807f8c651d447ab37ef5dcb978d1ec5650bf3473d6e9e5945a1c",
     "quality/ai006/golden_suite_v1.json": "1c94da649f0f593cb614203f2fb0161c72f230f7fa996f2679aab64878bae491",
     "quality/ai006/human_review_rubric_v1.json": "b19422be4982a5128228d21a8ad02e8fb1c99b59ddb25cabe4ed96b01777993c",
-    "scripts/check_ai006_package.py": "e550391eb6588c021bc57618038a0fdab84e6b4f481920969be357c9b4979c4e",
-    "tests/test_ai006_package.py": "43fcf3c50b3fb11c1f4a1ae4ad74f50a8bf96bfb292504fa446fbe9a4c1836d7",
-    "tests/test_ai006_quality.py": "d10dc3d6d853d974afbd1247da1706b99dddba95b9261553d50e658c3183d4b8"
+    "scripts/check_ai006_package.py": "ad508d32375ea83d4b258ef7c7e41a4bdbd5839107682176b100efc100d75298",
+    "tests/test_ai006_package.py": "1f05487947044671c5c8dc39d75f4dd81c4add1f01b603d64c7996ab183f637e",
+    "tests/test_ai006_quality.py": "9a7a328d034d9b2d5b652c0f7763564f54e2206b8380cda93a6e61c983fdd6a4"
   },
   "package": "AI-006"
 }

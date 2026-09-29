@@ -3,7 +3,7 @@
 | Field | State |
 |---|---|
 | Package | AI-006 |
-| Implementation | IMPLEMENTED |
+| Implementation | BLOCKED_BY_PRODUCTION_GAP |
 | Quality mechanism | deterministic synthetic/offline gate |
 | Provider calls | 0 |
 | Real data supported | `False` |
@@ -12,7 +12,7 @@
 | Production changes | NONE |
 | Schema/migrations | NONE |
 | Manual sampled review | NOT_RUN |
-| GitHub Actions | #436 FAILED; dependency repair pending |
+| GitHub Actions | #438 AI-006 job SUCCESS for dependency repair; current gap revision NOT_RUN |
 | CI_PASS | NOT_CLAIMED |
 | DEPLOYED | NOT_CLAIMED |
 | SITE_QA_PASS | NOT_CLAIMED |
