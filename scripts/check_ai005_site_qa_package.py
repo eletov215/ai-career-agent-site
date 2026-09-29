@@ -4,8 +4,11 @@ from pathlib import Path
 import ast
 import hashlib
 import json
+import sys
 
 ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 BASE = 'b828596c893d59a544f9678d7b45ab6ed7f44230'
 TREE = '05fc57dd0294cd5814637cc6e61e864f2bba9d2d'
 PROTECTED = {
@@ -46,15 +49,22 @@ def blob(raw):
 def validate(root=ROOT):
     errors = []
     try:
+        protected = dict(PROTECTED)
+        live_qa = root/'docs/evidence/ai-005-live-qa-001/change_boundary.json'
+        if live_qa.is_file():
+            from scripts.check_ai005_live_qa_boundary import successor_hashes as live_qa_hashes
+            protected.update(live_qa_hashes(root))
         evidence = json.loads((root/'docs/evidence/ai-005-site-qa/change_boundary.json').read_text())
         if (evidence['source_commit'] != BASE or evidence['source_tree'] != TREE
                 or evidence['real_data_enabled'] is not False or evidence['legal_state'] != 'DRAFT'
                 or evidence['paid_provider_calls'] != 0 or evidence['schema'] != '20260922_0021'
                 or set(evidence['runtime_git_blobs']) != RUNTIME):
             errors.append('Invalid SITE QA scope')
-        for path, sha in PROTECTED.items():
+        for path, sha in protected.items():
             raw = (root/path).read_bytes()
-            if sha not in {blob(raw), blob(raw.replace(b'\r\n', b'\n'))}:
+            if sha not in {blob(raw), blob(raw.replace(b'\r\n', b'\n')),
+                           hashlib.sha256(raw).hexdigest(),
+                           hashlib.sha256(raw.replace(b'\r\n', b'\n')).hexdigest()}:
                 errors.append('Protected predecessor changed: ' + path)
         route = (root/'routes/admin_sources.py').read_text()
         if route.count(INTEGRATION) != 1 or blob(route.replace(INTEGRATION, '').encode()) != 'f4f268c16a495abc6a4f2111971788bb106a6115':

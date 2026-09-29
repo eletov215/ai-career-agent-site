@@ -227,8 +227,21 @@ def test_response_outcomes_cost_and_delivery(live,mutation):
         assert result['status']=='proposal' and event.cost_uncertain
     else:
         assert result['status']=='manual' and event.status=='failed'
+    if mutation=='bad_json':
+        assert result['reason']=='feature_validation_failure'
+        assert event.reason=='validation_schema'
     if mutation=='input_overrun':assert x.ledger.read_policy()[1]['kill_switch']
     assert len(x.transport.calls)==1
+
+
+def test_unallowlisted_validator_error_stays_generic(live,monkeypatch):
+    x=live
+    monkeypatch.setattr('services.ai.letter_runtime.validate_writing',
+                        lambda *_: (_ for _ in ()).throw(LetterError('private response detail')))
+    result=run(x);event=events(x)[0]
+    assert result['reason']=='feature_validation_failure'
+    assert event.reason=='feature_validation_failure'
+    assert 'private response detail' not in json.dumps(result)
 
 
 def test_insertion_failure_keeps_reservation_and_no_orphan_proposal(live,monkeypatch):

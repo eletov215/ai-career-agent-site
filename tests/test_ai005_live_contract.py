@@ -71,7 +71,18 @@ def test_invalid_or_unsupported_result_is_rejected(change):
     if change=='wrong_language':fit['text']='\u042f \u043f\u043e\u0434\u0434\u0435\u0440\u0436\u0438\u0432\u0430\u044e \u043f\u0440\u043e\u0433\u0440\u0430\u043c\u043c\u043d\u044b\u0435 \u0438\u043d\u0442\u0435\u0440\u0444\u0435\u0439\u0441\u044b \u0438 \u043f\u0438\u0448\u0443 \u0437\u0430\u043f\u0440\u043e\u0441\u044b.'
     if change=='duplicate_reference':fit['candidate_evidence']*=2
     if change=='empty_quote':fit['candidate_evidence'][0]['quote']=' '
-    with pytest.raises(LetterError,match='invalid_generation'):validate_writing(json.dumps(r),c)
+    expected = {
+        'invented_id':'validation_schema', 'false_quote':'validation_evidence',
+        'new_metric':'validation_numeric_claim', 'unicode_metric':'validation_numeric_claim',
+        'vacancy_as_candidate':'validation_evidence', 'outcome':'validation_outcome_claim',
+        'familiarity':'validation_evidence', 'html':'validation_numeric_claim',
+        'link':'validation_unsafe_content', 'wrong_hash':'validation_schema',
+        'extra':'validation_schema', 'no_fit':'validation_structure',
+        'wrong_language':'validation_language', 'duplicate_reference':'validation_evidence',
+        'empty_quote':'validation_evidence',
+    }[change]
+    with pytest.raises(LetterError,match=f'^{expected}$'):
+        validate_writing(json.dumps(r),c)
 
 
 def test_duplicate_json_keys_and_nan_rejected():

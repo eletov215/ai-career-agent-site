@@ -11,7 +11,8 @@ from typing import Callable
 from domain.ai import AIResult, ProviderCall, ProviderError, PROVIDER
 from domain.cover_letter import LetterError
 from repositories.ai import AIAdmissionError
-from services.ai.letter_contract import LetterContract, validate_writing
+from services.ai.letter_contract import (LetterContract, LetterValidationError,
+                                         VALIDATION_REASONS, validate_writing)
 from services.ai.policy import cost_microrub
 
 
@@ -99,8 +100,12 @@ class LetterRuntime:
                 else:
                     try:
                         validated = validate_writing(response.content,contract)
-                    except LetterError:
-                        reason = 'feature_validation_failure'
+                    except LetterError as exc:
+                        # Persist only a fixed diagnostic category. The caller
+                        # still receives the generic public failure below.
+                        reason = (str(exc) if isinstance(exc, LetterValidationError)
+                                  and str(exc) in VALIDATION_REASONS
+                                  else 'feature_validation_failure')
                     else:
                         status, reason = 'succeeded', 'ok'
         except LetterError as exc:
@@ -139,4 +144,6 @@ class LetterRuntime:
             # The saved proposal is fetched by its owner separately; no private
             # model content is placed in status objects/loggable metadata.
             return AIResult('succeeded','ok',rid,commercial_action_consumed=bool(p['commercial_enforcement_enabled']))
-        return AIResult('manual',reason,rid)
+        public_reason = ('feature_validation_failure'
+                         if reason in VALIDATION_REASONS else reason)
+        return AIResult('manual',public_reason,rid)
