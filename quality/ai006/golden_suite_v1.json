@@ -1,0 +1,34 @@
+{
+  "package": "AI-006",
+  "version": 1,
+  "synthetic": true,
+  "production_contract": "cover-letter-draft-v1",
+  "positive_cases": [
+    {"id": "ru-short-professional", "language": "ru", "length": "short", "tone": "professional"},
+    {"id": "ru-full-professional", "language": "ru", "length": "full", "tone": "professional"},
+    {"id": "ru-short-friendly", "language": "ru", "length": "short", "tone": "friendly"},
+    {"id": "en-short-professional", "language": "en", "length": "short", "tone": "professional"},
+    {"id": "en-full-professional", "language": "en", "length": "full", "tone": "professional"},
+    {"id": "en-short-friendly", "language": "en", "length": "short", "tone": "friendly"}
+  ],
+  "negative_cases": [
+    {"id": "malformed-schema", "mutation": "schema", "expected_reason": "validation_schema"},
+    {"id": "wrong-structure", "mutation": "structure", "expected_reason": "validation_structure"},
+    {"id": "duplicate-evidence", "mutation": "duplicate_evidence", "expected_reason": "validation_evidence_duplicate"},
+    {"id": "incorrect-evidence-quote", "mutation": "incorrect_quote", "expected_reason": "validation_evidence_quote"},
+    {"id": "invented-skill", "mutation": "invented_skill", "expected_reason": "validation_evidence_quote"},
+    {"id": "missing-candidate-evidence", "mutation": "missing_candidate_evidence", "expected_reason": "validation_candidate_evidence_missing"},
+    {"id": "missing-vacancy-evidence", "mutation": "missing_vacancy_evidence", "expected_reason": "validation_vacancy_evidence_missing"},
+    {"id": "candidate-claim-location", "mutation": "candidate_claim_location", "expected_reason": "validation_candidate_claim_location"},
+    {"id": "unsupported-number", "mutation": "unsupported_number", "expected_reason": "validation_numeric_claim"},
+    {"id": "unsupported-outcome", "mutation": "unsupported_outcome", "expected_reason": "validation_outcome_claim"},
+    {"id": "invented-employer-familiarity", "mutation": "invented_familiarity", "expected_reason": "validation_candidate_claim_location"},
+    {"id": "internal-id-leak", "mutation": "internal_id", "expected_reason": "validation_unsafe_content"},
+    {"id": "contact-like-data", "mutation": "contact", "expected_reason": "validation_unsafe_content"},
+    {"id": "markup", "mutation": "markup", "expected_reason": "validation_unsafe_content"},
+    {"id": "body-length", "mutation": "length", "expected_reason": "validation_length"},
+    {"id": "language-mismatch", "mutation": "language", "expected_reason": "validation_language"},
+    {"id": "invalid-caveat", "mutation": "caveat", "expected_reason": "validation_caveat"},
+    {"id": "oversized-evidence", "mutation": "evidence_size", "expected_reason": "validation_evidence_size"}
+  ]
+}

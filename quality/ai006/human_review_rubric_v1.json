@@ -1,0 +1,20 @@
+{
+  "package": "AI-006",
+  "rubric_version": 1,
+  "synthetic_samples_only": true,
+  "machine_gate_must_pass": true,
+  "human_pass_cannot_override_machine_fail": true,
+  "scale": {"minimum": 1, "maximum": 5},
+  "criteria": [
+    "naturalness",
+    "professional_style",
+    "readability",
+    "vacancy_relevance",
+    "does_not_advertise_unconfirmed_weaknesses",
+    "no_invented_facts",
+    "usefulness",
+    "first_person_application_style",
+    "ru_en_language_quality"
+  ],
+  "review": {"reviewer": null, "reviewed_at": null, "sample_ids": [], "scores": {}, "notes": null, "status": "NOT_RUN"}
+}
