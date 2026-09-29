@@ -1,0 +1,16 @@
+{
+  "package": "AI-005-VALIDATION-REASONS",
+  "release": "validation-evidence-reason-successor",
+  "source_commit": "cc4a6a6c4363c2cdd39c5fea16b9debbb56d70f9",
+  "source_tree": "1d0a3a23eae29f05caa149d8807f7bf7ae89b952",
+  "issue": 54,
+  "public_real_data_enabled": false,
+  "legal_state": "DRAFT",
+  "paid_provider_calls": 0,
+  "reviewed_runtime_changes": {
+    "services/ai/letter_contract.py": {
+      "previous_sha256": "5100f690704a609f96e478a4b9d305133fc364703f9fe2513c9d036b83f56a38",
+      "current_sha256": "216d50a54096c38f8fa7dc7fc7a0c3995e8bfb11a14f18ed5842c29e706daed0"
+    }
+  }
+}
