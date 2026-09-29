@@ -12,6 +12,12 @@ CHANGES = {
     'services/ai/letter_contract.py', 'services/ai/letter_runtime.py',
     'scripts/legal001_boundary.py', 'scripts/check_ai005_site_qa_package.py',
 }
+PREVIOUS = {
+    'services/ai/letter_contract.py': 'b1ef9f4eb069b505e031c773c822d8abe280f8c96edd0d4d196887be96f563d6',
+    'services/ai/letter_runtime.py': '93064769bbac637ad08b798a0436194ba611618a171ada25c3488ad2f8e34bbb',
+    'scripts/legal001_boundary.py': '3245e76cab3d32d75256f3a2e151fc5a1bc3795e77772ddaf95c79dee984b4b6',
+    'scripts/check_ai005_site_qa_package.py': '9df01c00e5cda463573d90474ea68762d03ce652f461bf719b3ca6a089b0af19',
+}
 
 
 def _matches(path: Path, expected: str) -> bool:
@@ -34,7 +40,8 @@ def successor_hashes(root: Path = ROOT) -> dict[str, str]:
             or set(rows) != CHANGES):
         raise ValueError('Invalid AI-005 live QA successor scope')
     for relative, row in rows.items():
-        if set(row) != {'previous_sha256', 'current_sha256'}:
+        if (set(row) != {'previous_sha256', 'current_sha256'}
+                or row['previous_sha256'] != PREVIOUS[relative]):
             raise ValueError('Invalid AI-005 live QA hash transition')
         if not _matches(root/relative, row['current_sha256']):
             raise ValueError('AI-005 live QA successor hash mismatch: ' + relative)
