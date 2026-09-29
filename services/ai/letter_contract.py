@@ -41,6 +41,10 @@ NUMBER_WORDS = {'one':'1','two':'2','three':'3','four':'4','five':'5','six':'6',
 # are suitable for durable operational metadata, unlike exception text.
 VALIDATION_REASONS = frozenset({
     'validation_schema', 'validation_structure', 'validation_evidence',
+    'validation_evidence_duplicate', 'validation_evidence_quote',
+    'validation_candidate_evidence_missing',
+    'validation_vacancy_evidence_missing',
+    'validation_candidate_claim_location',
     'validation_numeric_claim', 'validation_outcome_claim',
     'validation_unsafe_content', 'validation_length', 'validation_language',
     'validation_caveat', 'validation_evidence_size',
@@ -186,17 +190,17 @@ def validate_writing(raw: str, contract: LetterContract) -> dict:
             refs = p['candidate_evidence']
             ids = [r['id'] for r in refs]
             if len(set(ids))!=len(ids) or len(set(p['vacancy_evidence']))!=len(p['vacancy_evidence']):
-                _invalid('validation_evidence')
+                _invalid('validation_evidence_duplicate')
             for r in refs:
                 if not r['quote'].strip() or r['quote'] not in facts[r['id']]:
-                    _invalid('validation_evidence')
+                    _invalid('validation_evidence_quote')
             used.update(ids)
             if p['kind']=='candidate_fit' and not refs:
-                _invalid('validation_evidence')
+                _invalid('validation_candidate_evidence_missing')
             if p['kind'] in ('opening','motivation') and not p['vacancy_evidence']:
-                _invalid('validation_evidence')
+                _invalid('validation_vacancy_evidence_missing')
             if p['kind']!='candidate_fit' and CANDIDATE_CLAIM.search(prose):
-                _invalid('validation_evidence')
+                _invalid('validation_candidate_claim_location')
             support = '\n'.join(r['quote'] for r in refs)
             if p['kind']!='candidate_fit':
                 support += '\n' + '\n'.join(projected['vacancy'][k] for k in p['vacancy_evidence'])

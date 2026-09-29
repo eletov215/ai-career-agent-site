@@ -14,7 +14,9 @@ def test_site_qa_package_boundary():
 def test_site_qa_guard_rejects_changed_legal_source(tmp_path):
     paths=set(PROTECTED)|RUNTIME|{'services/ai/site_qa_gate.py', 'routes/admin_sources.py', 'scripts/check_ai_provider_package.py', '.github/workflows/ai005-site-qa.yml',
                                 'docs/evidence/ai-005-site-qa/change_boundary.json', 'docs/evidence/ai-005-site-qa-no-logging/change_boundary.json',
-                                'docs/evidence/ai-005-live-qa-001/change_boundary.json', 'scripts/check_ai005_live_qa_boundary.py',
+                                    'docs/evidence/ai-005-live-qa-001/change_boundary.json',
+                                    'docs/evidence/ai-005-validation-reasons/change_boundary.json',
+                                    'scripts/check_ai005_live_qa_boundary.py',
                                 'scripts/check_ai005_site_qa_package.py', 'domain/ai.py'}
     for rel in paths:
         dest=tmp_path/rel;dest.parent.mkdir(parents=True,exist_ok=True);shutil.copyfile(ROOT/rel,dest)

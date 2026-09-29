@@ -72,16 +72,30 @@ def test_invalid_or_unsupported_result_is_rejected(change):
     if change=='duplicate_reference':fit['candidate_evidence']*=2
     if change=='empty_quote':fit['candidate_evidence'][0]['quote']=' '
     expected = {
-        'invented_id':'validation_schema', 'false_quote':'validation_evidence',
+        'invented_id':'validation_schema', 'false_quote':'validation_evidence_quote',
         'new_metric':'validation_numeric_claim', 'unicode_metric':'validation_numeric_claim',
-        'vacancy_as_candidate':'validation_evidence', 'outcome':'validation_outcome_claim',
-        'familiarity':'validation_evidence', 'html':'validation_numeric_claim',
+        'vacancy_as_candidate':'validation_candidate_evidence_missing', 'outcome':'validation_outcome_claim',
+        'familiarity':'validation_candidate_claim_location', 'html':'validation_numeric_claim',
         'link':'validation_unsafe_content', 'wrong_hash':'validation_schema',
         'extra':'validation_schema', 'no_fit':'validation_structure',
-        'wrong_language':'validation_language', 'duplicate_reference':'validation_evidence',
-        'empty_quote':'validation_evidence',
+        'wrong_language':'validation_language', 'duplicate_reference':'validation_evidence_duplicate',
+        'empty_quote':'validation_evidence_quote',
     }[change]
     with pytest.raises(LetterError,match=f'^{expected}$'):
+        validate_writing(json.dumps(r),c)
+
+
+def test_opening_without_vacancy_evidence_has_specific_safe_reason():
+    c=build_writing_contract(source(),['profile.summary'],'en','short','professional')
+    r=response(c);r['paragraphs'][0]['vacancy_evidence']=[]
+    with pytest.raises(LetterError,match='^validation_vacancy_evidence_missing$'):
+        validate_writing(json.dumps(r),c)
+
+
+def test_duplicate_vacancy_evidence_has_specific_safe_reason():
+    c=build_writing_contract(source(),['profile.summary'],'en','short','professional')
+    r=response(c);r['paragraphs'][0]['vacancy_evidence']=['title','title']
+    with pytest.raises(LetterError,match='^validation_evidence_duplicate$'):
         validate_writing(json.dumps(r),c)
 
 

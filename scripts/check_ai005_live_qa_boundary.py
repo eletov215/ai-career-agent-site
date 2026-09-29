@@ -6,6 +6,7 @@ import json
 
 ROOT = Path(__file__).resolve().parents[1]
 EVIDENCE = 'docs/evidence/ai-005-live-qa-001/change_boundary.json'
+DIAGNOSTIC_EVIDENCE = 'docs/evidence/ai-005-validation-reasons/change_boundary.json'
 SOURCE_COMMIT = 'c1b8f216868e77faaa679001d5861a0fb0886523'
 SOURCE_TREE = 'efed1c142f252a714daebe3c976e44ee7439a507'
 CHANGES = {
@@ -43,7 +44,9 @@ def successor_hashes(root: Path = ROOT) -> dict[str, str]:
         if (set(row) != {'previous_sha256', 'current_sha256'}
                 or row['previous_sha256'] != PREVIOUS[relative]):
             raise ValueError('Invalid AI-005 live QA hash transition')
-        if not _matches(root/relative, row['current_sha256']):
+        superseded = (relative == 'services/ai/letter_contract.py'
+                      and (root/DIAGNOSTIC_EVIDENCE).is_file())
+        if not superseded and not _matches(root/relative, row['current_sha256']):
             raise ValueError('AI-005 live QA successor hash mismatch: ' + relative)
     contract = (root/'services/ai/letter_contract.py').read_text()
     runtime = (root/'services/ai/letter_runtime.py').read_text()
@@ -52,7 +55,34 @@ def successor_hashes(root: Path = ROOT) -> dict[str, str]:
             or "else 'feature_validation_failure'" not in runtime
             or "if reason in VALIDATION_REASONS else reason" not in runtime):
         raise ValueError('AI-005 validation observability boundary is incomplete')
-    return {relative: row['current_sha256'] for relative, row in rows.items()}
+    effective = {relative: row['current_sha256'] for relative, row in rows.items()}
+    diagnostic = json.loads((root/DIAGNOSTIC_EVIDENCE).read_text())
+    diagnostic_rows = diagnostic.get('reviewed_runtime_changes', {})
+    if (diagnostic.get('package') != 'AI-005-VALIDATION-REASONS'
+            or diagnostic.get('release') != 'validation-evidence-reason-successor'
+            or diagnostic.get('source_commit') != 'cc4a6a6c4363c2cdd39c5fea16b9debbb56d70f9'
+            or diagnostic.get('source_tree') != '1d0a3a23eae29f05caa149d8807f7bf7ae89b952'
+            or diagnostic.get('issue') != 54
+            or diagnostic.get('public_real_data_enabled') is not False
+            or diagnostic.get('legal_state') != 'DRAFT'
+            or diagnostic.get('paid_provider_calls') != 0
+            or set(diagnostic_rows) != {'services/ai/letter_contract.py'}):
+        raise ValueError('Invalid AI-005 validation reason successor scope')
+    row = diagnostic_rows['services/ai/letter_contract.py']
+    if (set(row) != {'previous_sha256', 'current_sha256'}
+            or row['previous_sha256'] != effective['services/ai/letter_contract.py']
+            or not _matches(root/'services/ai/letter_contract.py', row['current_sha256'])):
+        raise ValueError('Invalid AI-005 validation reason hash transition')
+    required = {
+        'validation_evidence_duplicate', 'validation_evidence_quote',
+        'validation_candidate_evidence_missing',
+        'validation_vacancy_evidence_missing',
+        'validation_candidate_claim_location',
+    }
+    if not all(repr(reason) in contract for reason in required):
+        raise ValueError('AI-005 validation reason boundary is incomplete')
+    effective['services/ai/letter_contract.py'] = row['current_sha256']
+    return effective
 
 
 def validate(root: Path = ROOT) -> list[str]:
