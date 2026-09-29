@@ -37,6 +37,26 @@ NUMBER_WORDS = {'one':'1','two':'2','three':'3','four':'4','five':'5','six':'6',
                 '\u043e\u0434\u0438\u043d':'1','\u0434\u0432\u0430':'2','\u0434\u0432\u0435':'2','\u0442\u0440\u0438':'3',
                 '\u0447\u0435\u0442\u044b\u0440\u0435':'4','\u043f\u044f\u0442\u044c':'5'}
 
+# These codes are deliberately coarse and contain no model-authored data. They
+# are suitable for durable operational metadata, unlike exception text.
+VALIDATION_REASONS = frozenset({
+    'validation_schema', 'validation_structure', 'validation_evidence',
+    'validation_numeric_claim', 'validation_outcome_claim',
+    'validation_unsafe_content', 'validation_length', 'validation_language',
+    'validation_caveat', 'validation_evidence_size',
+})
+
+
+class LetterValidationError(LetterError):
+    def __init__(self, reason: str):
+        if reason not in VALIDATION_REASONS:
+            raise ValueError('Invalid validation reason')
+        super().__init__(reason)
+
+
+def _invalid(reason: str):
+    raise LetterValidationError(reason)
+
 
 @dataclass(frozen=True, slots=True)
 class LetterContract:
@@ -149,58 +169,64 @@ def _numbers(value: str) -> set[str]:
 
 def validate_writing(raw: str, contract: LetterContract) -> dict:
     try:
-        result = validate_output(raw, contract.schema)
+        try:
+            result = validate_output(raw, contract.schema)
+        except ContractError:
+            _invalid('validation_schema')
         projected = contract.projection
         facts = {f['id']:f['text'] for f in projected['candidate_facts']}
         paragraphs = result['paragraphs']
         if paragraphs[0]['kind']!='opening' or paragraphs[-1]['kind']!='closing':
-            raise ValueError
+            _invalid('validation_structure')
         if not any(p['kind']=='candidate_fit' for p in paragraphs):
-            raise ValueError
+            _invalid('validation_structure')
         used = set()
         for p in paragraphs:
             prose = text(p['text'],1800)
             refs = p['candidate_evidence']
             ids = [r['id'] for r in refs]
             if len(set(ids))!=len(ids) or len(set(p['vacancy_evidence']))!=len(p['vacancy_evidence']):
-                raise ValueError
+                _invalid('validation_evidence')
             for r in refs:
                 if not r['quote'].strip() or r['quote'] not in facts[r['id']]:
-                    raise ValueError
+                    _invalid('validation_evidence')
             used.update(ids)
             if p['kind']=='candidate_fit' and not refs:
-                raise ValueError
+                _invalid('validation_evidence')
             if p['kind'] in ('opening','motivation') and not p['vacancy_evidence']:
-                raise ValueError
+                _invalid('validation_evidence')
             if p['kind']!='candidate_fit' and CANDIDATE_CLAIM.search(prose):
-                raise ValueError
+                _invalid('validation_evidence')
             support = '\n'.join(r['quote'] for r in refs)
             if p['kind']!='candidate_fit':
                 support += '\n' + '\n'.join(projected['vacancy'][k] for k in p['vacancy_evidence'])
             if not _numbers(prose) <= _numbers(support):
-                raise ValueError
+                _invalid('validation_numeric_claim')
             if p['kind']=='candidate_fit':
                 for pattern in OUTCOME_FAMILIES:
                     if re.search(pattern,prose,re.I) and not re.search(pattern,support,re.I):
-                        raise ValueError
+                        _invalid('validation_outcome_claim')
             if CONTACT.search(prose) or MARKUP.search(prose) or PRIOR_FAMILIARITY.search(prose):
-                raise ValueError
+                _invalid('validation_unsafe_content')
         subject = text(result['subject'], MAX_SUBJECT, multiline=False)
         if CONTACT.search(subject) or MARKUP.search(subject) or PRIOR_FAMILIARITY.search(subject):
-            raise ValueError
+            _invalid('validation_unsafe_content')
         if not _numbers(subject) <= _numbers(canonical(projected['vacancy'])):
-            raise ValueError
+            _invalid('validation_numeric_claim')
         body = '\n\n'.join(text(p['text'],1800) for p in paragraphs)
         if len(body) > (1800 if contract.length=='short' else 6000):
-            raise ValueError
+            _invalid('validation_length')
         cyrillic = len(re.findall(r'[\u0400-\u04ff]',body))
         letters = len(re.findall(r'[^\W\d_]',body,re.U))
         if contract.language=='ru' and cyrillic < max(8, letters*0.2):
-            raise ValueError
+            _invalid('validation_language')
         if contract.language=='en' and cyrillic > max(4, letters*0.05):
-            raise ValueError
+            _invalid('validation_language')
         for caveat in result['caveats']:
-            text(caveat,300)
+            try:
+                text(caveat,300)
+            except LetterError:
+                _invalid('validation_caveat')
         evidence = {
             'selected_fact_ids':[f['id'] for f in projected['candidate_facts'] if f['id'] in used],
             'contract_version':contract.version, 'payload_hash':contract.payload_hash,
@@ -209,8 +235,10 @@ def validate_writing(raw: str, contract: LetterContract) -> dict:
             'caveats':result['caveats'], 'semantic_grounding':'human_review_required',
         }
         if len(canonical(evidence)) > 9000:
-            raise ValueError
+            _invalid('validation_evidence_size')
         return {'content':content(subject,body,contract.language,contract.length,contract.tone),
                 'evidence':evidence}
+    except LetterValidationError:
+        raise
     except (ContractError, LetterError, ValueError, TypeError, KeyError, RecursionError):
         raise LetterError('invalid_generation') from None
