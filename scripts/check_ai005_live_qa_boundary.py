@@ -7,6 +7,7 @@ import json
 ROOT = Path(__file__).resolve().parents[1]
 EVIDENCE = 'docs/evidence/ai-005-live-qa-001/change_boundary.json'
 DIAGNOSTIC_EVIDENCE = 'docs/evidence/ai-005-validation-reasons/change_boundary.json'
+PROMPT_EVIDENCE = 'docs/evidence/ai-005-vacancy-evidence-prompt/change_boundary.json'
 SOURCE_COMMIT = 'c1b8f216868e77faaa679001d5861a0fb0886523'
 SOURCE_TREE = 'efed1c142f252a714daebe3c976e44ee7439a507'
 CHANGES = {
@@ -70,8 +71,7 @@ def successor_hashes(root: Path = ROOT) -> dict[str, str]:
         raise ValueError('Invalid AI-005 validation reason successor scope')
     row = diagnostic_rows['services/ai/letter_contract.py']
     if (set(row) != {'previous_sha256', 'current_sha256'}
-            or row['previous_sha256'] != effective['services/ai/letter_contract.py']
-            or not _matches(root/'services/ai/letter_contract.py', row['current_sha256'])):
+            or row['previous_sha256'] != effective['services/ai/letter_contract.py']):
         raise ValueError('Invalid AI-005 validation reason hash transition')
     required = {
         'validation_evidence_duplicate', 'validation_evidence_quote',
@@ -82,6 +82,32 @@ def successor_hashes(root: Path = ROOT) -> dict[str, str]:
     if not all(repr(reason) in contract for reason in required):
         raise ValueError('AI-005 validation reason boundary is incomplete')
     effective['services/ai/letter_contract.py'] = row['current_sha256']
+    prompt = json.loads((root/PROMPT_EVIDENCE).read_text())
+    prompt_rows = prompt.get('reviewed_runtime_changes', {})
+    if (prompt.get('package') != 'AI-005-VACANCY-EVIDENCE-PROMPT'
+            or prompt.get('release') != 'vacancy-evidence-prompt-successor'
+            or prompt.get('source_commit') != 'cf79f774fe558e560068c7981300cb5e8d853180'
+            or prompt.get('source_tree') != '6b672a636684d82a274dacd9463cb04623794224'
+            or prompt.get('issue') != 54
+            or prompt.get('public_real_data_enabled') is not False
+            or prompt.get('legal_state') != 'DRAFT'
+            or prompt.get('paid_provider_calls') != 0
+            or set(prompt_rows) != {'services/ai/letter_contract.py'}):
+        raise ValueError('Invalid AI-005 vacancy evidence prompt successor scope')
+    prompt_row = prompt_rows['services/ai/letter_contract.py']
+    if (set(prompt_row) != {'previous_sha256', 'current_sha256'}
+            or prompt_row['previous_sha256'] != effective['services/ai/letter_contract.py']
+            or not _matches(root/'services/ai/letter_contract.py', prompt_row['current_sha256'])):
+        raise ValueError('Invalid AI-005 vacancy evidence prompt hash transition')
+    required_prompt = (
+        'Every opening and motivation paragraph must include at least one vacancy_evidence field',
+        'If the paragraph only refers to the supplied ',
+        "'role, cite title.",
+        'Do not leave vacancy_evidence empty for opening or motivation.',
+    )
+    if not all(fragment in contract for fragment in required_prompt):
+        raise ValueError('AI-005 vacancy evidence prompt boundary is incomplete')
+    effective['services/ai/letter_contract.py'] = prompt_row['current_sha256']
     return effective
 
 

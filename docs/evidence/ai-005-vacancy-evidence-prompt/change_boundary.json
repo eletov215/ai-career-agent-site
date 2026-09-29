@@ -1,0 +1,16 @@
+{
+  "package": "AI-005-VACANCY-EVIDENCE-PROMPT",
+  "release": "vacancy-evidence-prompt-successor",
+  "source_commit": "cf79f774fe558e560068c7981300cb5e8d853180",
+  "source_tree": "6b672a636684d82a274dacd9463cb04623794224",
+  "issue": 54,
+  "public_real_data_enabled": false,
+  "legal_state": "DRAFT",
+  "paid_provider_calls": 0,
+  "reviewed_runtime_changes": {
+    "services/ai/letter_contract.py": {
+      "previous_sha256": "216d50a54096c38f8fa7dc7fc7a0c3995e8bfb11a14f18ed5842c29e706daed0",
+      "current_sha256": "0cc6d87b2390b12c0145025819f85099175b30880e005e8a3a039618a9bffd86"
+    }
+  }
+}
