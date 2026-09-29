@@ -48,4 +48,9 @@ def successor_hashes(root: Path) -> dict[str,str]:
     for rel,sha in EXPECTED_EXISTING.items():
         if not _matches(root/rel,sha):
             raise ValueError("LEGAL-001 successor hash mismatch: "+rel)
-    return dict(EXPECTED_EXISTING)
+    effective = dict(EXPECTED_EXISTING)
+    live_qa = root/"docs/evidence/ai-005-live-qa-001/change_boundary.json"
+    if live_qa.is_file():
+        from scripts.check_ai005_live_qa_boundary import successor_hashes as live_qa_hashes
+        effective.update(live_qa_hashes(root))
+    return effective

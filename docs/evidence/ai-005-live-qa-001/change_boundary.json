@@ -1,0 +1,28 @@
+{
+  "package": "AI-005-LIVE-QA-001",
+  "release": "validation-observability-successor",
+  "source_commit": "c1b8f216868e77faaa679001d5861a0fb0886523",
+  "source_tree": "efed1c142f252a714daebe3c976e44ee7439a507",
+  "issue": 54,
+  "public_real_data_enabled": false,
+  "legal_state": "DRAFT",
+  "paid_provider_calls": 0,
+  "reviewed_runtime_changes": {
+    "services/ai/letter_contract.py": {
+      "previous_sha256": "b1ef9f4eb069b505e031c773c822d8abe280f8c96edd0d4d196887be96f563d6",
+      "current_sha256": "5100f690704a609f96e478a4b9d305133fc364703f9fe2513c9d036b83f56a38"
+    },
+    "services/ai/letter_runtime.py": {
+      "previous_sha256": "93064769bbac637ad08b798a0436194ba611618a171ada25c3488ad2f8e34bbb",
+      "current_sha256": "a7272f1926e28f9c40f3a30cb9a9129db39ef309b7a3436ce0695f42a099bfed"
+    },
+    "scripts/legal001_boundary.py": {
+      "previous_sha256": "3245e76cab3d32d75256f3a2e151fc5a1bc3795e77772ddaf95c79dee984b4b6",
+      "current_sha256": "9a707329b1887c5a345685904eda8fb93ce6992ad9978045dfd816af9a05f9ca"
+    },
+    "scripts/check_ai005_site_qa_package.py": {
+      "previous_sha256": "9df01c00e5cda463573d90474ea68762d03ce652f461bf719b3ca6a089b0af19",
+      "current_sha256": "428f4285ebc896711fc2b3e2e53f7c81fc0ca202c0df0c80773e960cc461483d"
+    }
+  }
+}
