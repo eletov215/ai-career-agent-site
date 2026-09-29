@@ -16,7 +16,7 @@
   "positive_case_count": 6,
   "provider_calls": 0,
   "status": "passed",
-  "suite_sha256": "755962ec8f26715fd224dc2ff9c83f8b14197c71b6f1ca5320ea82cc7f545864",
+  "suite_sha256": "1c94da649f0f593cb614203f2fb0161c72f230f7fa996f2679aab64878bae491",
   "synthetic_only": true,
   "thresholds": {
     "critical_validator_failures": 0,

@@ -13,6 +13,11 @@ def test_reference_gate_is_exact_and_provider_free(tmp_path):
     assert len(result["negative_cases"]) == 18
     assert all(row["status"] == "passed" for row in result["negative_cases"])
     assert result["metrics"] == HARD_THRESHOLDS
+    by_id = {row["id"]: row for row in result["positive_cases"]}
+    assert by_id["ru-full-professional"]["body_length"] > by_id["ru-short-professional"]["body_length"]
+    assert by_id["en-full-professional"]["body_length"] > by_id["en-short-professional"]["body_length"]
+    assert all(row["schema_pass"] and row["structure_pass"] and row["grounding_pass"]
+               and row["validation_reason"] is None for row in result["positive_cases"])
     assert {path.name for path in tmp_path.iterdir()} == {
         "run.json", "report.md", "manual_review_template.json"}
 
@@ -26,6 +31,19 @@ def test_critical_failure_cannot_be_hidden_by_other_metrics(monkeypatch, tmp_pat
     monkeypatch.setattr(ai006, "SUITE_PATH", changed)
     result = run_gate()
     assert result["metrics"]["negative_rejection_rate"] < 1.0
+    assert result["status"] == "failed"
+
+
+def test_positive_safety_metrics_are_derived_from_validation(monkeypatch, tmp_path):
+    from ai_quality import ai006
+    suite = json.loads(ai006.SUITE_PATH.read_text())
+    suite["positive_cases"][3]["expected"]["paragraphs"][1]["text"] = "I maintain 99 APIs."
+    changed = tmp_path / "suite.json"
+    changed.write_text(json.dumps(suite))
+    monkeypatch.setattr(ai006, "SUITE_PATH", changed)
+    result = run_gate()
+    assert result["metrics"]["unsupported_numbers"] == 1
+    assert result["metrics"]["critical_validator_failures"] == 1
     assert result["status"] == "failed"
 
 

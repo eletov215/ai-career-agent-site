@@ -9,5 +9,6 @@ AI-006 adds a deterministic, offline quality gate for AI-authored cover letters.
 - No production runtime, database schema, migration, infrastructure, provider configuration, key, budget, or employer auto-send change is in scope.
 - Historical AI-BENCH 1.6.1 / benchmark 1.4 / dataset 1.3.6 / `grounded-v2.6.1` artifacts remain byte-preserved.
 - The production `cover-letter-draft-v1` builder and validator are imported as pure functions and are not copied or weakened.
+- AI-BENCH canonical JSON, hashing, schema validation, and redaction primitives are reused without changing historical AI-BENCH files. Its contract-specific report renderer is intentionally not reused because it requires and describes the AI-BENCH-001 provider result schema.
 
 The package is an additive quality layer under `ai_quality/` and `quality/ai006/`. Machine safety is fail-closed; manual writing review is separate and cannot override a machine failure.

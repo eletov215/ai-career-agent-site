@@ -2,12 +2,13 @@
 from __future__ import annotations
 
 import copy
-import hashlib
 import json
 from pathlib import Path
 from typing import Any
 
-from domain.cover_letter import SOURCE_VERSION, canonical
+from domain.cover_letter import LetterError
+from evals.ai_bench.schema import validate_instance
+from evals.ai_bench.util import canonical_json, redact_secrets, sha256_file
 from services.ai.letter_contract import (
     LetterValidationError,
     VALIDATION_REASONS,
@@ -37,50 +38,11 @@ def _load(path: Path) -> dict[str, Any]:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
-def suite_fingerprint(path: Path = SUITE_PATH) -> str:
-    return hashlib.sha256(path.read_bytes().replace(b"\r\n", b"\n")).hexdigest()
+def suite_fingerprint(path: Path | None = None) -> str:
+    return sha256_file(path or SUITE_PATH)
 
 
-def _source(language: str) -> dict[str, Any]:
-    if language == "en":
-        fact = "I maintain Python APIs and write SQL queries."
-        vacancy = {"title": "Python developer", "company": "Example Labs",
-                   "description": "Build dependable services for a learning platform.",
-                   "requirements": "Python and SQL experience."}
-    else:
-        fact = "Поддерживаю API на Python и пишу SQL-запросы."
-        vacancy = {"title": "Python-разработчик", "company": "Пример Лабс",
-                   "description": "Разработка надёжных сервисов для учебной платформы.",
-                   "requirements": "Опыт с Python и SQL."}
-    return {"schema": SOURCE_VERSION, "facts": [{"id": "profile.summary", "text": fact}],
-            "vacancy": vacancy}
-
-
-def _response(contract, tone: str) -> dict[str, Any]:
-    fact = contract.projection["candidate_facts"][0]
-    if contract.language == "en":
-        opening = "I would like to apply for the Python developer role."
-        motivation = ("I am interested in building dependable services for the learning platform."
-                      if tone == "professional" else
-                      "I am excited to help build dependable services for the learning platform.")
-        closing = "Thank you for considering my application."
-        subject = "Application: Python developer"
-    else:
-        opening = "Хочу откликнуться на вакансию Python-разработчика."
-        motivation = ("Мне интересна разработка надёжных сервисов для учебной платформы."
-                      if tone == "professional" else
-                      "Буду рад помогать создавать надёжные сервисы для учебной платформы.")
-        closing = "Спасибо за рассмотрение моего отклика."
-        subject = "Отклик: Python-разработчик"
-    return {"source_hash": contract.payload_hash, "subject": subject, "paragraphs": [
-        {"kind": "opening", "text": opening, "candidate_evidence": [], "vacancy_evidence": ["title"]},
-        {"kind": "candidate_fit", "text": fact["text"], "candidate_evidence": [{"id": fact["id"], "quote": fact["text"]}], "vacancy_evidence": []},
-        {"kind": "motivation", "text": motivation, "candidate_evidence": [], "vacancy_evidence": ["description"]},
-        {"kind": "closing", "text": closing, "candidate_evidence": [], "vacancy_evidence": []},
-    ], "caveats": []}
-
-
-def _mutate(name: str, response: dict[str, Any], contract) -> str:
+def _mutate(name: str, response: dict[str, Any], contract) -> tuple[str, Any]:
     r = copy.deepcopy(response)
     fit, opening = r["paragraphs"][1], r["paragraphs"][0]
     if name == "schema": r["unexpected"] = True
@@ -108,30 +70,70 @@ def _mutate(name: str, response: dict[str, Any], contract) -> str:
     elif name == "evidence_size":
         # Full contracts permit eight facts. Reuse distinct, valid references per
         # paragraph so the production evidence envelope itself exceeds its cap.
-        source = _source("en")
-        source["facts"] = [{"id": f"profile.fact{i}", "text": "x" * 1900 + chr(65+i)} for i in range(8)]
+        source = {"schema": "cover-letter-source-v1",
+                  "vacancy": {"title":"Python developer", "company":"Example Labs",
+                              "description":"Build software.", "requirements":"Software experience."},
+                  "facts": [{"id": f"profile.fact{i}", "text": "x" * 1900 + chr(65+i)} for i in range(8)]}
         contract = build_writing_contract(source, [f"profile.fact{i}" for i in range(8)], "en", "full", "professional")
         refs = [{"id": f["id"], "quote": f["text"]} for f in contract.projection["candidate_facts"]]
-        r = _response(contract, "professional")
-        r["paragraphs"][1]["candidate_evidence"] = refs
-        r["paragraphs"][1]["text"] = "I work on software."
+        r = {"source_hash":contract.payload_hash, "subject":"Application: Python developer", "paragraphs":[
+            {"kind":"opening", "text":"I would like to apply for the Python developer role.", "candidate_evidence":[], "vacancy_evidence":["title"]},
+            {"kind":"candidate_fit", "text":"I work on software.", "candidate_evidence":refs, "vacancy_evidence":[]},
+            {"kind":"closing", "text":"Thank you for considering my application.", "candidate_evidence":[], "vacancy_evidence":[]}], "caveats":[]}
     else: raise ValueError("Unknown mutation")
-    return canonical(r), contract
+    return canonical_json(r), contract
+
+
+def _structure_pass(response: dict[str, Any], length: str) -> bool:
+    kinds = [row.get("kind") for row in response.get("paragraphs", [])]
+    expected_count = 5 if length == "full" else 4
+    return (len(kinds) == expected_count and kinds[:2] == ["opening", "candidate_fit"]
+            and kinds[-2:] == ["motivation", "closing"]
+            and (length != "full" or kinds.count("candidate_fit") >= 2))
+
+
+def _grounding_pass(response: dict[str, Any], contract) -> bool:
+    facts = {row["id"]: row["text"] for row in contract.projection["candidate_facts"]}
+    for paragraph in response.get("paragraphs", []):
+        references = paragraph.get("candidate_evidence", [])
+        if paragraph.get("kind") == "candidate_fit" and not references:
+            return False
+        if paragraph.get("kind") in {"opening", "motivation"} and not paragraph.get("vacancy_evidence"):
+            return False
+        for reference in references:
+            if reference.get("id") not in facts or reference.get("quote") not in facts[reference["id"]]:
+                return False
+        if paragraph.get("kind") == "candidate_fit" and paragraph.get("text") not in {r["quote"] for r in references}:
+            return False
+    return True
 
 
 def run_gate(output_dir: Path | None = None) -> dict[str, Any]:
     suite = _load(SUITE_PATH)
-    positives = []
+    positives: list[dict[str, Any]] = []
     for case in suite["positive_cases"]:
-        contract = build_writing_contract(_source(case["language"]), ["profile.summary"],
+        contract = build_writing_contract(case["source"], case["fact_ids"],
                                           case["language"], case["length"], case["tone"])
-        validated = validate_writing(canonical(_response(contract, case["tone"])), contract)
-        positives.append({"id": case["id"], "status": "passed",
-                          "body_length": len(validated["content"]["body"])})
+        response = case["expected"]
+        schema_errors = validate_instance(response, contract.schema)
+        structure_pass = _structure_pass(response, case["length"])
+        grounding_pass = _grounding_pass(response, contract)
+        reason = None
+        validated = None
+        try:
+            validated = validate_writing(canonical_json(response), contract)
+        except LetterError as exc:
+            reason = str(exc) if isinstance(exc, LetterValidationError) else "unexpected_validation_failure"
+        passed = not schema_errors and structure_pass and grounding_pass and reason is None
+        positives.append({"id": case["id"], "status": "passed" if passed else "failed",
+                          "schema_pass": not schema_errors, "structure_pass": structure_pass,
+                          "grounding_pass": grounding_pass, "validation_reason": reason,
+                          "body_length": len(validated["content"]["body"]) if validated else None})
     negatives = []
     for case in suite["negative_cases"]:
-        contract = build_writing_contract(_source("en"), ["profile.summary"], "en", "full" if case["mutation"] == "evidence_size" else "short", "professional")
-        raw, contract = _mutate(case["mutation"], _response(contract, "professional"), contract)
+        base = suite["positive_cases"][3]
+        contract = build_writing_contract(base["source"], base["fact_ids"], "en", "short", "professional")
+        raw, contract = _mutate(case["mutation"], base["expected"], contract)
         reason = "accepted"
         try:
             validate_writing(raw, contract)
@@ -140,13 +142,18 @@ def run_gate(output_dir: Path | None = None) -> dict[str, Any]:
         negatives.append({"id": case["id"], "expected_reason": case["expected_reason"],
                           "reason": reason, "status": "passed" if reason == case["expected_reason"] else "failed"})
     count = len(positives)
+    positive_failures = [row for row in positives if row["status"] != "passed"]
     rejected = sum(row["status"] == "passed" for row in negatives)
-    metrics = {"schema_pass_rate": 1.0 if count else 0.0,
-               "required_structural_coverage": 1.0 if count else 0.0,
-               "grounding_evidence_integrity": 1.0 if count else 0.0,
-               "unsupported_candidate_claims": 0, "unsupported_numbers": 0,
-               "unsupported_outcomes": 0, "unsafe_internal_leakage": 0,
-               "language_hard_violations": 0, "critical_validator_failures": 0,
+    reasons = [row["validation_reason"] for row in positive_failures]
+    metrics = {"schema_pass_rate": sum(row["schema_pass"] for row in positives) / count if count else 0.0,
+               "required_structural_coverage": sum(row["structure_pass"] for row in positives) / count if count else 0.0,
+               "grounding_evidence_integrity": sum(row["grounding_pass"] for row in positives) / count if count else 0.0,
+               "unsupported_candidate_claims": sum(reason in {"validation_evidence_quote", "validation_candidate_evidence_missing", "validation_candidate_claim_location"} for reason in reasons),
+               "unsupported_numbers": reasons.count("validation_numeric_claim"),
+               "unsupported_outcomes": reasons.count("validation_outcome_claim"),
+               "unsafe_internal_leakage": reasons.count("validation_unsafe_content"),
+               "language_hard_violations": reasons.count("validation_language"),
+               "critical_validator_failures": len(positive_failures),
                "negative_rejection_rate": rejected / len(negatives) if negatives else 0.0}
     hard_pass = all(metrics[key] == threshold for key, threshold in HARD_THRESHOLDS.items())
     result = {"package": "AI-006", "version": VERSION, "status": "passed" if hard_pass else "failed",
@@ -156,8 +163,8 @@ def run_gate(output_dir: Path | None = None) -> dict[str, Any]:
               "soft_writing_quality": {"status": "manual_review_required", "can_override_machine_failure": False}}
     if output_dir:
         output_dir.mkdir(parents=True, exist_ok=True)
-        (output_dir/"run.json").write_text(json.dumps(result, ensure_ascii=False, indent=2)+"\n", encoding="utf-8")
-        (output_dir/"manual_review_template.json").write_text(json.dumps(_load(RUBRIC_PATH), ensure_ascii=False, indent=2)+"\n", encoding="utf-8")
+        (output_dir/"run.json").write_text(json.dumps(redact_secrets(result), ensure_ascii=False, indent=2)+"\n", encoding="utf-8")
+        (output_dir/"manual_review_template.json").write_text(json.dumps(redact_secrets(_load(RUBRIC_PATH)), ensure_ascii=False, indent=2)+"\n", encoding="utf-8")
         lines = ["# AI-006 deterministic quality report", "", f"Machine status: **{result['status'].upper()}**", "",
                  f"Positive golden cases: {len(positives)}", f"Negative mutations rejected: {rejected}/{len(negatives)}", "",
                  "Human writing review is separate and cannot override a machine failure."]

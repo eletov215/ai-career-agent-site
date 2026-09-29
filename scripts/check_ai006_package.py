@@ -52,6 +52,18 @@ def validate(root: Path = ROOT) -> list[str]:
                            ("en","full","professional"),("en","short","friendly")}
         if suite.get("synthetic") is not True or matrix != required_matrix or len(positives) != 6:
             errors.append("Golden suite matrix is incomplete or not synthetic")
+        for row in positives:
+            source, expected = row.get("source"), row.get("expected")
+            if (not isinstance(source, dict) or not isinstance(expected, dict)
+                    or source.get("schema") != "cover-letter-source-v1"
+                    or not row.get("fact_ids") or not expected.get("source_hash")):
+                errors.append("Golden fixture does not contain versioned source and expected output")
+        for language in ("ru", "en"):
+            short = next((row for row in positives if row.get("language") == language and row.get("length") == "short" and row.get("tone") == "professional"), {})
+            full = next((row for row in positives if row.get("language") == language and row.get("length") == "full"), {})
+            if (len(full.get("fact_ids", [])) <= len(short.get("fact_ids", []))
+                    or len((full.get("expected") or {}).get("paragraphs", [])) <= len((short.get("expected") or {}).get("paragraphs", []))):
+                errors.append("Full golden fixture is not a distinct expanded variant: " + language)
         if len(negatives) != 18 or not REASONS <= {row.get("expected_reason") for row in negatives}:
             errors.append("Negative rule-level coverage is incomplete")
         rubric = json.loads((root/"quality/ai006/human_review_rubric_v1.json").read_text())
@@ -73,10 +85,12 @@ def validate(root: Path = ROOT) -> list[str]:
                 or summary.get("suite_sha256") != _hash(root/"quality/ai006/golden_suite_v1.json")):
             errors.append("Deterministic reference summary is invalid")
         code = (root/"ai_quality/ai006.py").read_text()
-        if "validate_writing(" not in code or "build_writing_contract(" not in code:
+        if ("validate_writing(" not in code or "build_writing_contract(" not in code
+                or "validate_instance(" not in code or "redact_secrets(" not in code
+                or "sha256_file(" not in code or "canonical_json(" not in code):
             errors.append("Production validator adapter is missing")
         workflow = (root/".github/workflows/ci.yml").read_text()
-        for marker in ("python scripts/check_ai006_package.py", "python -m ai_quality --output-dir /tmp/ai006-quality",
+        for marker in ("python -m pip install -r requirements-dev.txt", "python scripts/check_ai006_package.py", "python -m ai_quality --output-dir /tmp/ai006-quality",
                        "tests/test_ai006_*.py", "tests/test_ai_bench_*.py", "tests/test_ai005_live_contract.py"):
             if marker not in workflow: errors.append("CI coverage missing: " + marker)
     except (OSError, ValueError, TypeError, KeyError, json.JSONDecodeError):

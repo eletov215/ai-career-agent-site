@@ -1,7 +1,7 @@
 {
   "canonical_owner_release": "ACA_AI005_CANONICAL_DOCS_v1.6.6_FINAL",
   "canonical_owner_release_date": "2026-09-29",
-  "ci": "NOT_RUN",
+  "ci": "FAILED #436 dependency defect; repair pending",
   "complete": false,
   "legal_state": "DRAFT / NOT_ACTIVE",
   "manual_review": "NOT_RUN",

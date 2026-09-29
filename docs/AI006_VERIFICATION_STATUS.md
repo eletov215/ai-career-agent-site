@@ -12,7 +12,7 @@
 | Production changes | NONE |
 | Schema/migrations | NONE |
 | Manual sampled review | NOT_RUN |
-| GitHub Actions | NOT_RUN until PR |
+| GitHub Actions | #436 FAILED; dependency repair pending |
 | CI_PASS | NOT_CLAIMED |
 | DEPLOYED | NOT_CLAIMED |
 | SITE_QA_PASS | NOT_CLAIMED |

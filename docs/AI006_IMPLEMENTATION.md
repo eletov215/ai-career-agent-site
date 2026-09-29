@@ -1,8 +1,10 @@
 # AI-006 implementation
 
-`ai_quality.ai006` builds six versioned synthetic golden cases, calls the unchanged production contract builder and validator, and executes 18 isolated mutation regressions. The layer reuses the production schema/evidence validation and its fixed reason allowlist; it performs no Flask, database, runtime, or network import.
+`quality/ai006/golden_suite_v1.json` stores the complete source, selected fact IDs, and expected output for six synthetic golden cases. `ai_quality.ai006` loads those immutable inputs, calls the unchanged production contract builder and validator, and executes 18 isolated mutation regressions. Full cases contain an additional grounded candidate fact and candidate-fit paragraph; they are not short outputs evaluated under a larger limit.
 
-The hard gate compares every metric to an exact threshold. It never derives acceptance from an average score. Any positive validator error, accepted mutation, wrong rule-level reason, or safety counter makes the run fail.
+The adapter directly reuses AI-BENCH's dependency-free JSON-schema validator, canonical JSON and SHA-256 helpers, and recursive artifact redaction. Historical AI-BENCH reporting cannot be called safely because `render_markdown_report` requires the fixed AI-BENCH-001 provider/run/result schema and emits AI-BENCH-001 contract claims; adapting AI-006 into that shape would misrepresent the evidence. AI-006 therefore has a narrow package-specific Markdown summary while retaining AI-BENCH sanitization and validation primitives. No historical `evals/` source, dataset, regression, or accepted artifact is changed.
+
+The hard gate compares every metric to an exact threshold. Schema, structure and grounding rates are calculated from each executed fixture; safety counters and critical failures are derived from production validation outcomes. It never derives acceptance from an average score. Any positive validator error, accepted mutation, wrong rule-level reason, or safety counter makes the run fail.
 
 The historical AI-BENCH remains an inherited independent gate. Its schema/scoring/reporting concepts are reused (versioned inputs, machine JSON, Markdown report, sanitized/manual-review artifact) without editing protected AI-BENCH evidence.
 

@@ -4,31 +4,529 @@
   "synthetic": true,
   "production_contract": "cover-letter-draft-v1",
   "positive_cases": [
-    {"id": "ru-short-professional", "language": "ru", "length": "short", "tone": "professional"},
-    {"id": "ru-full-professional", "language": "ru", "length": "full", "tone": "professional"},
-    {"id": "ru-short-friendly", "language": "ru", "length": "short", "tone": "friendly"},
-    {"id": "en-short-professional", "language": "en", "length": "short", "tone": "professional"},
-    {"id": "en-full-professional", "language": "en", "length": "full", "tone": "professional"},
-    {"id": "en-short-friendly", "language": "en", "length": "short", "tone": "friendly"}
+    {
+      "id": "ru-short-professional",
+      "language": "ru",
+      "length": "short",
+      "tone": "professional",
+      "fact_ids": [
+        "profile.summary"
+      ],
+      "source": {
+        "schema": "cover-letter-source-v1",
+        "facts": [
+          {
+            "id": "profile.summary",
+            "text": "Поддерживаю API на Python и пишу SQL-запросы."
+          },
+          {
+            "id": "profile.review",
+            "text": "Провожу ревью кода и документирую интерфейсы сервисов."
+          }
+        ],
+        "vacancy": {
+          "title": "Python-разработчик",
+          "company": "Пример Лабс",
+          "description": "Разработка надёжных сервисов для учебной платформы.",
+          "requirements": "Опыт с Python, SQL, ревью кода и документацией API."
+        }
+      },
+      "expected": {
+        "source_hash": "cb060ba2b36b0bd0338929512f3b75fddf2c4a692f851dfe35111a5f817b9fcc",
+        "subject": "Отклик: Python-разработчик",
+        "paragraphs": [
+          {
+            "kind": "opening",
+            "text": "Хочу откликнуться на вакансию Python-разработчика.",
+            "candidate_evidence": [],
+            "vacancy_evidence": [
+              "title"
+            ]
+          },
+          {
+            "kind": "candidate_fit",
+            "text": "Поддерживаю API на Python и пишу SQL-запросы.",
+            "candidate_evidence": [
+              {
+                "id": "profile.summary",
+                "quote": "Поддерживаю API на Python и пишу SQL-запросы."
+              }
+            ],
+            "vacancy_evidence": []
+          },
+          {
+            "kind": "motivation",
+            "text": "Мне интересна разработка надёжных сервисов для учебной платформы.",
+            "candidate_evidence": [],
+            "vacancy_evidence": [
+              "description"
+            ]
+          },
+          {
+            "kind": "closing",
+            "text": "Спасибо за рассмотрение моего отклика.",
+            "candidate_evidence": [],
+            "vacancy_evidence": []
+          }
+        ],
+        "caveats": []
+      }
+    },
+    {
+      "id": "ru-full-professional",
+      "language": "ru",
+      "length": "full",
+      "tone": "professional",
+      "fact_ids": [
+        "profile.summary",
+        "profile.review"
+      ],
+      "source": {
+        "schema": "cover-letter-source-v1",
+        "facts": [
+          {
+            "id": "profile.summary",
+            "text": "Поддерживаю API на Python и пишу SQL-запросы."
+          },
+          {
+            "id": "profile.review",
+            "text": "Провожу ревью кода и документирую интерфейсы сервисов."
+          }
+        ],
+        "vacancy": {
+          "title": "Python-разработчик",
+          "company": "Пример Лабс",
+          "description": "Разработка надёжных сервисов для учебной платформы.",
+          "requirements": "Опыт с Python, SQL, ревью кода и документацией API."
+        }
+      },
+      "expected": {
+        "source_hash": "b88f6d4cfee9b4ae8825cfe6cb516af0e49b90054c8d0c1699454bfd156d2008",
+        "subject": "Отклик: Python-разработчик",
+        "paragraphs": [
+          {
+            "kind": "opening",
+            "text": "Хочу откликнуться на вакансию Python-разработчика.",
+            "candidate_evidence": [],
+            "vacancy_evidence": [
+              "title"
+            ]
+          },
+          {
+            "kind": "candidate_fit",
+            "text": "Поддерживаю API на Python и пишу SQL-запросы.",
+            "candidate_evidence": [
+              {
+                "id": "profile.summary",
+                "quote": "Поддерживаю API на Python и пишу SQL-запросы."
+              }
+            ],
+            "vacancy_evidence": []
+          },
+          {
+            "kind": "candidate_fit",
+            "text": "Провожу ревью кода и документирую интерфейсы сервисов.",
+            "candidate_evidence": [
+              {
+                "id": "profile.review",
+                "quote": "Провожу ревью кода и документирую интерфейсы сервисов."
+              }
+            ],
+            "vacancy_evidence": []
+          },
+          {
+            "kind": "motivation",
+            "text": "Мне интересна разработка надёжных сервисов для учебной платформы.",
+            "candidate_evidence": [],
+            "vacancy_evidence": [
+              "description"
+            ]
+          },
+          {
+            "kind": "closing",
+            "text": "Спасибо за рассмотрение моего отклика.",
+            "candidate_evidence": [],
+            "vacancy_evidence": []
+          }
+        ],
+        "caveats": []
+      }
+    },
+    {
+      "id": "ru-short-friendly",
+      "language": "ru",
+      "length": "short",
+      "tone": "friendly",
+      "fact_ids": [
+        "profile.summary"
+      ],
+      "source": {
+        "schema": "cover-letter-source-v1",
+        "facts": [
+          {
+            "id": "profile.summary",
+            "text": "Поддерживаю API на Python и пишу SQL-запросы."
+          },
+          {
+            "id": "profile.review",
+            "text": "Провожу ревью кода и документирую интерфейсы сервисов."
+          }
+        ],
+        "vacancy": {
+          "title": "Python-разработчик",
+          "company": "Пример Лабс",
+          "description": "Разработка надёжных сервисов для учебной платформы.",
+          "requirements": "Опыт с Python, SQL, ревью кода и документацией API."
+        }
+      },
+      "expected": {
+        "source_hash": "1f3e0fce90ab542268623f68b2ca5b3842fd2a62f984cdf563d9fd6cabb878a0",
+        "subject": "Отклик: Python-разработчик",
+        "paragraphs": [
+          {
+            "kind": "opening",
+            "text": "Хочу откликнуться на вакансию Python-разработчика.",
+            "candidate_evidence": [],
+            "vacancy_evidence": [
+              "title"
+            ]
+          },
+          {
+            "kind": "candidate_fit",
+            "text": "Поддерживаю API на Python и пишу SQL-запросы.",
+            "candidate_evidence": [
+              {
+                "id": "profile.summary",
+                "quote": "Поддерживаю API на Python и пишу SQL-запросы."
+              }
+            ],
+            "vacancy_evidence": []
+          },
+          {
+            "kind": "motivation",
+            "text": "Буду рад помогать создавать надёжные сервисы для учебной платформы.",
+            "candidate_evidence": [],
+            "vacancy_evidence": [
+              "description"
+            ]
+          },
+          {
+            "kind": "closing",
+            "text": "Спасибо за рассмотрение моего отклика.",
+            "candidate_evidence": [],
+            "vacancy_evidence": []
+          }
+        ],
+        "caveats": []
+      }
+    },
+    {
+      "id": "en-short-professional",
+      "language": "en",
+      "length": "short",
+      "tone": "professional",
+      "fact_ids": [
+        "profile.summary"
+      ],
+      "source": {
+        "schema": "cover-letter-source-v1",
+        "facts": [
+          {
+            "id": "profile.summary",
+            "text": "I maintain Python APIs and write SQL queries."
+          },
+          {
+            "id": "profile.review",
+            "text": "I review code and document service interfaces."
+          }
+        ],
+        "vacancy": {
+          "title": "Python developer",
+          "company": "Example Labs",
+          "description": "Build dependable services for a learning platform.",
+          "requirements": "Python, SQL, code review, and API documentation experience."
+        }
+      },
+      "expected": {
+        "source_hash": "c2b4fd52a497c0ea42482c418f34f24bc48bb954d6adc33d523ad7355d9d7742",
+        "subject": "Application: Python developer",
+        "paragraphs": [
+          {
+            "kind": "opening",
+            "text": "I would like to apply for the Python developer role.",
+            "candidate_evidence": [],
+            "vacancy_evidence": [
+              "title"
+            ]
+          },
+          {
+            "kind": "candidate_fit",
+            "text": "I maintain Python APIs and write SQL queries.",
+            "candidate_evidence": [
+              {
+                "id": "profile.summary",
+                "quote": "I maintain Python APIs and write SQL queries."
+              }
+            ],
+            "vacancy_evidence": []
+          },
+          {
+            "kind": "motivation",
+            "text": "I am interested in building dependable services for the learning platform.",
+            "candidate_evidence": [],
+            "vacancy_evidence": [
+              "description"
+            ]
+          },
+          {
+            "kind": "closing",
+            "text": "Thank you for considering my application.",
+            "candidate_evidence": [],
+            "vacancy_evidence": []
+          }
+        ],
+        "caveats": []
+      }
+    },
+    {
+      "id": "en-full-professional",
+      "language": "en",
+      "length": "full",
+      "tone": "professional",
+      "fact_ids": [
+        "profile.summary",
+        "profile.review"
+      ],
+      "source": {
+        "schema": "cover-letter-source-v1",
+        "facts": [
+          {
+            "id": "profile.summary",
+            "text": "I maintain Python APIs and write SQL queries."
+          },
+          {
+            "id": "profile.review",
+            "text": "I review code and document service interfaces."
+          }
+        ],
+        "vacancy": {
+          "title": "Python developer",
+          "company": "Example Labs",
+          "description": "Build dependable services for a learning platform.",
+          "requirements": "Python, SQL, code review, and API documentation experience."
+        }
+      },
+      "expected": {
+        "source_hash": "8e62612863fd1c600059486c3f16890026ac148463b76060ce4690c8a7ee2e89",
+        "subject": "Application: Python developer",
+        "paragraphs": [
+          {
+            "kind": "opening",
+            "text": "I would like to apply for the Python developer role.",
+            "candidate_evidence": [],
+            "vacancy_evidence": [
+              "title"
+            ]
+          },
+          {
+            "kind": "candidate_fit",
+            "text": "I maintain Python APIs and write SQL queries.",
+            "candidate_evidence": [
+              {
+                "id": "profile.summary",
+                "quote": "I maintain Python APIs and write SQL queries."
+              }
+            ],
+            "vacancy_evidence": []
+          },
+          {
+            "kind": "candidate_fit",
+            "text": "I review code and document service interfaces.",
+            "candidate_evidence": [
+              {
+                "id": "profile.review",
+                "quote": "I review code and document service interfaces."
+              }
+            ],
+            "vacancy_evidence": []
+          },
+          {
+            "kind": "motivation",
+            "text": "I am interested in building dependable services for the learning platform.",
+            "candidate_evidence": [],
+            "vacancy_evidence": [
+              "description"
+            ]
+          },
+          {
+            "kind": "closing",
+            "text": "Thank you for considering my application.",
+            "candidate_evidence": [],
+            "vacancy_evidence": []
+          }
+        ],
+        "caveats": []
+      }
+    },
+    {
+      "id": "en-short-friendly",
+      "language": "en",
+      "length": "short",
+      "tone": "friendly",
+      "fact_ids": [
+        "profile.summary"
+      ],
+      "source": {
+        "schema": "cover-letter-source-v1",
+        "facts": [
+          {
+            "id": "profile.summary",
+            "text": "I maintain Python APIs and write SQL queries."
+          },
+          {
+            "id": "profile.review",
+            "text": "I review code and document service interfaces."
+          }
+        ],
+        "vacancy": {
+          "title": "Python developer",
+          "company": "Example Labs",
+          "description": "Build dependable services for a learning platform.",
+          "requirements": "Python, SQL, code review, and API documentation experience."
+        }
+      },
+      "expected": {
+        "source_hash": "4c5e157b3503271fc54e0a86be392fb06996373569558e85c4f47f9d49b7ff05",
+        "subject": "Application: Python developer",
+        "paragraphs": [
+          {
+            "kind": "opening",
+            "text": "I would like to apply for the Python developer role.",
+            "candidate_evidence": [],
+            "vacancy_evidence": [
+              "title"
+            ]
+          },
+          {
+            "kind": "candidate_fit",
+            "text": "I maintain Python APIs and write SQL queries.",
+            "candidate_evidence": [
+              {
+                "id": "profile.summary",
+                "quote": "I maintain Python APIs and write SQL queries."
+              }
+            ],
+            "vacancy_evidence": []
+          },
+          {
+            "kind": "motivation",
+            "text": "I am excited to help build dependable services for the learning platform.",
+            "candidate_evidence": [],
+            "vacancy_evidence": [
+              "description"
+            ]
+          },
+          {
+            "kind": "closing",
+            "text": "Thank you for considering my application.",
+            "candidate_evidence": [],
+            "vacancy_evidence": []
+          }
+        ],
+        "caveats": []
+      }
+    }
   ],
   "negative_cases": [
-    {"id": "malformed-schema", "mutation": "schema", "expected_reason": "validation_schema"},
-    {"id": "wrong-structure", "mutation": "structure", "expected_reason": "validation_structure"},
-    {"id": "duplicate-evidence", "mutation": "duplicate_evidence", "expected_reason": "validation_evidence_duplicate"},
-    {"id": "incorrect-evidence-quote", "mutation": "incorrect_quote", "expected_reason": "validation_evidence_quote"},
-    {"id": "invented-skill", "mutation": "invented_skill", "expected_reason": "validation_evidence_quote"},
-    {"id": "missing-candidate-evidence", "mutation": "missing_candidate_evidence", "expected_reason": "validation_candidate_evidence_missing"},
-    {"id": "missing-vacancy-evidence", "mutation": "missing_vacancy_evidence", "expected_reason": "validation_vacancy_evidence_missing"},
-    {"id": "candidate-claim-location", "mutation": "candidate_claim_location", "expected_reason": "validation_candidate_claim_location"},
-    {"id": "unsupported-number", "mutation": "unsupported_number", "expected_reason": "validation_numeric_claim"},
-    {"id": "unsupported-outcome", "mutation": "unsupported_outcome", "expected_reason": "validation_outcome_claim"},
-    {"id": "invented-employer-familiarity", "mutation": "invented_familiarity", "expected_reason": "validation_candidate_claim_location"},
-    {"id": "internal-id-leak", "mutation": "internal_id", "expected_reason": "validation_unsafe_content"},
-    {"id": "contact-like-data", "mutation": "contact", "expected_reason": "validation_unsafe_content"},
-    {"id": "markup", "mutation": "markup", "expected_reason": "validation_unsafe_content"},
-    {"id": "body-length", "mutation": "length", "expected_reason": "validation_length"},
-    {"id": "language-mismatch", "mutation": "language", "expected_reason": "validation_language"},
-    {"id": "invalid-caveat", "mutation": "caveat", "expected_reason": "validation_caveat"},
-    {"id": "oversized-evidence", "mutation": "evidence_size", "expected_reason": "validation_evidence_size"}
+    {
+      "id": "malformed-schema",
+      "mutation": "schema",
+      "expected_reason": "validation_schema"
+    },
+    {
+      "id": "wrong-structure",
+      "mutation": "structure",
+      "expected_reason": "validation_structure"
+    },
+    {
+      "id": "duplicate-evidence",
+      "mutation": "duplicate_evidence",
+      "expected_reason": "validation_evidence_duplicate"
+    },
+    {
+      "id": "incorrect-evidence-quote",
+      "mutation": "incorrect_quote",
+      "expected_reason": "validation_evidence_quote"
+    },
+    {
+      "id": "invented-skill",
+      "mutation": "invented_skill",
+      "expected_reason": "validation_evidence_quote"
+    },
+    {
+      "id": "missing-candidate-evidence",
+      "mutation": "missing_candidate_evidence",
+      "expected_reason": "validation_candidate_evidence_missing"
+    },
+    {
+      "id": "missing-vacancy-evidence",
+      "mutation": "missing_vacancy_evidence",
+      "expected_reason": "validation_vacancy_evidence_missing"
+    },
+    {
+      "id": "candidate-claim-location",
+      "mutation": "candidate_claim_location",
+      "expected_reason": "validation_candidate_claim_location"
+    },
+    {
+      "id": "unsupported-number",
+      "mutation": "unsupported_number",
+      "expected_reason": "validation_numeric_claim"
+    },
+    {
+      "id": "unsupported-outcome",
+      "mutation": "unsupported_outcome",
+      "expected_reason": "validation_outcome_claim"
+    },
+    {
+      "id": "invented-employer-familiarity",
+      "mutation": "invented_familiarity",
+      "expected_reason": "validation_candidate_claim_location"
+    },
+    {
+      "id": "internal-id-leak",
+      "mutation": "internal_id",
+      "expected_reason": "validation_unsafe_content"
+    },
+    {
+      "id": "contact-like-data",
+      "mutation": "contact",
+      "expected_reason": "validation_unsafe_content"
+    },
+    {
+      "id": "markup",
+      "mutation": "markup",
+      "expected_reason": "validation_unsafe_content"
+    },
+    {
+      "id": "body-length",
+      "mutation": "length",
+      "expected_reason": "validation_length"
+    },
+    {
+      "id": "language-mismatch",
+      "mutation": "language",
+      "expected_reason": "validation_language"
+    },
+    {
+      "id": "invalid-caveat",
+      "mutation": "caveat",
+      "expected_reason": "validation_caveat"
+    },
+    {
+      "id": "oversized-evidence",
+      "mutation": "evidence_size",
+      "expected_reason": "validation_evidence_size"
+    }
   ]
 }
