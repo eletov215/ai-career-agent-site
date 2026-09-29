@@ -14,7 +14,7 @@ def test_reference_gate_is_exact_and_provider_free(tmp_path):
     failures = [row for row in result["negative_cases"] if row["status"] == "failed"]
     assert failures == [{"id": "invented-skill", "expected_reason": "validation_evidence_quote",
                          "reason": "accepted", "status": "failed"}]
-    assert result["metrics"]["unsupported_candidate_claims"] == 1
+    assert result["metrics"]["unsupported_candidate_claims"] == 0
     assert result["metrics"]["negative_rejection_rate"] == 17 / 18
     by_id = {row["id"]: row for row in result["positive_cases"]}
     assert by_id["ru-full-professional"]["body_length"] > by_id["ru-short-professional"]["body_length"]
@@ -69,5 +69,5 @@ def test_invented_skill_with_valid_unrelated_quote_exposes_production_gap():
     row = next(item for item in result["negative_cases"] if item["id"] == "invented-skill")
     assert row["reason"] == "accepted"
     assert row["status"] == "failed"
-    assert result["metrics"]["unsupported_candidate_claims"] == 1
+    assert result["metrics"]["unsupported_candidate_claims"] == 0
     assert result["status"] == "failed"

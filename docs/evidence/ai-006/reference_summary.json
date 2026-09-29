@@ -7,7 +7,7 @@
     "required_structural_coverage": 1.0,
     "schema_pass_rate": 1.0,
     "unsafe_internal_leakage": 0,
-    "unsupported_candidate_claims": 1,
+    "unsupported_candidate_claims": 0,
     "unsupported_numbers": 0,
     "unsupported_outcomes": 0
   },

@@ -8,7 +8,7 @@ The hard gate compares every metric to an exact threshold. Schema, structure and
 
 ## Blocking production grounding gap
 
-AI-006's `invented-skill` mutation changes visible prose to `I design Kubernetes clusters.` while retaining the valid verbatim source quote `I maintain Python APIs and write SQL queries.` The unchanged production validator accepts that response because it proves quote integrity but does not establish semantic entailment between prose and quote. AI-006 records the accepted mutation as one unsupported candidate claim and fails closed with `BLOCKED_BY_PRODUCTION_GAP` package status; it does not disguise the gap with a different expected reason.
+AI-006's `invented-skill` mutation changes visible prose to `I design Kubernetes clusters.` while retaining the valid verbatim source quote `I maintain Python APIs and write SQL queries.` The unchanged production validator accepts that response because it proves quote integrity but does not establish semantic entailment between prose and quote. AI-006 fails closed through the negative-rejection metric with `BLOCKED_BY_PRODUCTION_GAP` package status; it does not disguise the gap with a different expected reason or increment `unsupported_candidate_claims` when the production validator did not detect that claim.
 
 The required separate successor change should add a reviewed semantic-grounding rule to `services/ai/letter_contract.py`, assign a fixed allowlisted validation reason, add isolated contract/runtime tests, and extend the existing AI-005 successor hash chain. That production change requires architecture review and is intentionally not part of PR #59.
 
