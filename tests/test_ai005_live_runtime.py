@@ -42,7 +42,7 @@ class StubTransport:
         if self.error:raise self.error
         data=json.loads(payload['body']['messages'][1]['content'])
         fact=data['candidate_facts'][0]
-        body={'source_hash':data['source_hash'],'subject':'Application: Python Developer',
+        body={'source_hash':data['source_hash'],'subject':'Application',
               'paragraphs':[
                 {'kind':'opening','text':'I would like to apply for the Python Developer role.',
                  'candidate_evidence':[],'vacancy_evidence':['title']},

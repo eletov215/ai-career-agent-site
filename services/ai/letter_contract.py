@@ -46,7 +46,7 @@ FRAMING_PATTERNS = {
             r'Thank you for considering my application',
             r'I would welcome the opportunity to discuss (?:this|the) (?:role|position)',
         ),
-        'subject': (r'Application(?::| for)?(?: \{vacancy\})?', r'\{vacancy\}'),
+        'subject': (r'Application',),
     },
     'ru': {
         'opening': (
@@ -63,12 +63,12 @@ FRAMING_PATTERNS = {
             r'\u0421\u043f\u0430\u0441\u0438\u0431\u043e \u0437\u0430 \u0440\u0430\u0441\u0441\u043c\u043e\u0442\u0440\u0435\u043d\u0438\u0435 \u043c\u043e\u0435\u0439 \u043a\u0430\u043d\u0434\u0438\u0434\u0430\u0442\u0443\u0440\u044b',
             r'\u0411\u0443\u0434\u0443 \u0440\u0430\u0434(?:\u0430)? \u043e\u0431\u0441\u0443\u0434\u0438\u0442\u044c \u044d\u0442\u0443 \u0432\u0430\u043a\u0430\u043d\u0441\u0438\u044e',
         ),
-        'subject': (r'\u041e\u0442\u043a\u043b\u0438\u043a(?: \u043d\u0430 \u0432\u0430\u043a\u0430\u043d\u0441\u0438\u044e)?(?: \{vacancy\})?', r'\{vacancy\}'),
+        'subject': (r'\u041e\u0442\u043a\u043b\u0438\u043a',),
     },
 }
 # These are the exact provider-facing renderings of the framing allowlist. The
-# ``<vacancy>`` slot may contain only a bounded, contiguous phrase copied from a
-# cited vacancy field; all other characters are fixed.
+# ``<vacancy>`` slot may contain only the complete normalized vacancy title;
+# all other characters are fixed. Subjects deliberately have no untrusted slot.
 PROVIDER_FRAMING_TEMPLATES = {
     'en': {
         'opening': (
@@ -85,7 +85,7 @@ PROVIDER_FRAMING_TEMPLATES = {
             'Thank you for considering my application.',
             'I would welcome the opportunity to discuss this role.',
         ),
-        'subject': ('Application: <vacancy>', '<vacancy>'),
+        'subject': ('Application',),
     },
     'ru': {
         'opening': (
@@ -101,7 +101,7 @@ PROVIDER_FRAMING_TEMPLATES = {
             'Спасибо за рассмотрение моего отклика.',
             'Буду рад обсудить эту вакансию.',
         ),
-        'subject': ('Отклик на вакансию <vacancy>', '<vacancy>'),
+        'subject': ('Отклик',),
     },
 }
 MAX_FRAMING_VACANCY_CHARS = 500
@@ -150,9 +150,8 @@ def _grounding_text(value: str) -> str:
 
 def _safe_framing(value: str, kind: str, language: str,
                   vacancy: dict, evidence: list[str]) -> bool:
-    """Accept only bounded intent templates plus verbatim cited vacancy phrases."""
+    """Accept fixed intent templates whose only slot is the complete role title."""
     rendered = _grounding_text(value).rstrip(' .!?')
-    cited = tuple(_grounding_text(vacancy[field]).casefold() for field in evidence)
     for pattern in FRAMING_PATTERNS[language][kind]:
         if r'\{vacancy\}' not in pattern:
             if re.fullmatch(pattern, rendered, re.I):
@@ -165,7 +164,8 @@ def _safe_framing(value: str, kind: str, language: str,
         phrase = _grounding_text(match.group('vacancy'))
         if (phrase and len(phrase) <= MAX_FRAMING_VACANCY_CHARS
                 and len(phrase.split()) <= MAX_FRAMING_VACANCY_WORDS
-                and any(phrase.casefold() in vacancy_text for vacancy_text in cited)):
+                and 'title' in evidence
+                and phrase.casefold() == _grounding_text(vacancy['title']).casefold()):
             return True
     return False
 
@@ -291,8 +291,9 @@ def build_writing_contract(source: dict, fact_ids: list[str], language: str,
         'Short means at most 1800 visible body characters; full at most 6000. '
         'Provide opening first, one or more candidate_fit paragraphs, and closing last. '
         'Copy the supplied source_hash exactly. Audit each factual sentence against its cited sources. '
-        'The exact allowed framing templates are listed next. Replace <vacancy> only with a contiguous phrase copied '
-        'from a vacancy_evidence field; do not alter any other wording: '
+        'The exact allowed framing templates are listed next. Replace <vacancy> only with the complete '
+        'whitespace-normalized vacancy title and cite title; do not alter any other wording. Subject has no '
+        'untrusted vacancy slot: '
         + canonical(PROVIDER_FRAMING_TEMPLATES[language])
     )
     messages = [{'role':'system','content':system},
