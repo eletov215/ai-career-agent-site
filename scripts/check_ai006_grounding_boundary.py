@@ -42,10 +42,12 @@ def validate(root: Path = ROOT) -> list[str]:
         required = (
             "'validation_candidate_claim_grounding'",
             "len(refs) != 1",
+            "' '.join(refs[0]['quote'].split()) != ' '.join(facts[refs[0]['id']].split())",
             "' '.join(prose.split()) != ' '.join(refs[0]['quote'].split())",
             'Each candidate_fit paragraph uses exactly one candidate fact.',
-            'supporting candidate quote verbatim',
-            'do not paraphrase candidate experience',
+            'must copy the full supporting candidate fact verbatim',
+            'do not excerpt it',
+            'paraphrase candidate experience',
             'Use a separate candidate_fit paragraph for each additional fact.',
         )
         if not all(fragment in contract for fragment in required):

@@ -54,8 +54,9 @@ def test_general_writing_contract_and_projection(language,length,tone):
     assert 'If the paragraph only refers to the supplied role, cite title.' in system_prompt
     assert 'Do not leave vacancy_evidence empty for opening or motivation.' in system_prompt
     assert 'Each candidate_fit paragraph uses exactly one candidate fact.' in system_prompt
-    assert 'must copy the supporting candidate quote verbatim' in system_prompt
-    assert 'do not paraphrase candidate experience' in system_prompt
+    assert 'must copy the full supporting candidate fact verbatim' in system_prompt
+    assert 'do not excerpt it' in system_prompt
+    assert 'paraphrase candidate experience' in system_prompt
     assert 'Use a separate candidate_fit paragraph for each additional fact.' in system_prompt
     assert 'profile.summary' not in generated['content']['body']
 
@@ -141,7 +142,9 @@ def test_exact_quote_metric_is_allowed_not_a_calculated_metric():
 def test_candidate_fit_accepts_exact_quote_with_safe_whitespace_normalization(language):
     c=build_writing_contract(source(language),['profile.summary'],language,'short','professional')
     r=response(c);quote=r['paragraphs'][1]['candidate_evidence'][0]['quote']
-    r['paragraphs'][1]['text']='  \n '.join(quote.split())
+    normalized_variant='  \n '.join(quote.split())
+    r['paragraphs'][1]['candidate_evidence'][0]['quote']=normalized_variant
+    r['paragraphs'][1]['text']=normalized_variant
     assert validate_writing(json.dumps(r),c)['content']['body']
 
 
@@ -172,6 +175,19 @@ def test_candidate_fit_rejects_multiple_distinct_evidence_references():
     c=build_writing_contract(s,['profile.summary','profile.skills.0.name'],'en','full','professional')
     r=response(c);second=c.projection['candidate_facts'][1]
     r['paragraphs'][1]['candidate_evidence'].append({'id':second['id'],'quote':second['text']})
+    with pytest.raises(LetterError,match='^validation_candidate_claim_grounding$'):
+        validate_writing(json.dumps(r),c)
+
+
+@pytest.mark.parametrize(('fact','fragment'), [
+    ('I maintain Python APIs and write SQL queries.', 'Python APIs'),
+    ('I have not used Kubernetes.', 'Kubernetes'),
+])
+def test_candidate_fit_rejects_fragment_quote_even_when_visible_text_matches(fact,fragment):
+    s=source();s['facts'][0]['text']=fact
+    c=build_writing_contract(s,['profile.summary'],'en','short','professional')
+    r=response(c);r['paragraphs'][1]['candidate_evidence'][0]['quote']=fragment
+    r['paragraphs'][1]['text']=fragment
     with pytest.raises(LetterError,match='^validation_candidate_claim_grounding$'):
         validate_writing(json.dumps(r),c)
 
