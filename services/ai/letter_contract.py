@@ -21,6 +21,7 @@ CONTRACT_VERSION = 'cover-letter-draft-v1'
 MAX_PROJECTED_BYTES = 24000
 MAX_PARAGRAPH_TEXT = 1800
 BODY_LIMITS = {'short':1800, 'full':6000}
+MAX_PARAGRAPHS = {'short':6, 'full':8}
 RECIPIENT = 'Yandex AI Studio / Alice AI LLM'
 VACANCY_FIELDS = ('title', 'company', 'description', 'requirements')
 # Deliberately bounded common contact detection; it is not anonymization or DLP.
@@ -123,8 +124,11 @@ def build_writing_contract(source: dict, fact_ids: list[str], language: str,
     # Every selected fact must be emitted whole in its own candidate_fit
     # paragraph. Reject selections for which the response schema or total body
     # limit makes that contract impossible, before a provider can be called.
+    framing_min = 8 if language == 'ru' else 2
     if (any(len(f['text']) > MAX_PARAGRAPH_TEXT for f in facts)
-            or sum(len(f['text']) for f in facts) + 2 + 2 * (len(facts) + 1) > BODY_LIMITS[length]):
+            or len(facts) + 2 > MAX_PARAGRAPHS[length]
+            or sum(len(f['text']) for f in facts) + framing_min
+            + 2 * (len(facts) + 1) > BODY_LIMITS[length]):
         raise LetterError('input_limit')
     projection = {'candidate_facts':facts, 'vacancy':vacancy, 'preferences':opts}
     projected = canonical(projection)
@@ -133,6 +137,9 @@ def build_writing_contract(source: dict, fact_ids: list[str], language: str,
     if CONTACT.search(projected):
         # Do not silently redact facts and then claim the original was sent.
         raise LetterError('contact_data_present')
+    if any(MARKUP.search(f['text']) or PRIOR_FAMILIARITY.search(f['text']) for f in facts):
+        # Verbatim facts matching visible-prose filters can never validate.
+        raise LetterError('invalid_source')
     bound = digest(projection)
     evidence = _object({'id':{'type':'string','enum':fact_ids},
                         'quote':{'type':'string','minLength':1,'maxLength':4000}})
@@ -145,7 +152,7 @@ def build_writing_contract(source: dict, fact_ids: list[str], language: str,
     schema = _object({
         'source_hash':{'type':'string','enum':[bound]},
         'subject':{'type':'string','minLength':1,'maxLength':MAX_SUBJECT},
-        'paragraphs':{'type':'array','minItems':3,'maxItems':6 if length=='short' else 8,'items':paragraph},
+        'paragraphs':{'type':'array','minItems':3,'maxItems':MAX_PARAGRAPHS[length],'items':paragraph},
         'caveats':{'type':'array','maxItems':8,'items':{'type':'string','minLength':1,'maxLength':300}},
     })
     system = (
@@ -201,6 +208,7 @@ def validate_writing(raw: str, contract: LetterContract) -> dict:
         if not any(p['kind']=='candidate_fit' for p in paragraphs):
             _invalid('validation_structure')
         used = set()
+        candidate_fit_ids = []
         for p in paragraphs:
             prose = text(p['text'],MAX_PARAGRAPH_TEXT)
             refs = p['candidate_evidence']
@@ -219,6 +227,8 @@ def validate_writing(raw: str, contract: LetterContract) -> dict:
                     or ' '.join(refs[0]['quote'].split()) != ' '.join(facts[refs[0]['id']].split())
                     or ' '.join(prose.split()) != ' '.join(refs[0]['quote'].split())):
                 _invalid('validation_candidate_claim_grounding')
+            if p['kind']=='candidate_fit':
+                candidate_fit_ids.append(refs[0]['id'])
             if p['kind'] in ('opening','motivation') and not p['vacancy_evidence']:
                 _invalid('validation_vacancy_evidence_missing')
             if p['kind']!='candidate_fit' and CANDIDATE_CLAIM.search(prose):
@@ -234,6 +244,9 @@ def validate_writing(raw: str, contract: LetterContract) -> dict:
                         _invalid('validation_outcome_claim')
             if CONTACT.search(prose) or MARKUP.search(prose) or PRIOR_FAMILIARITY.search(prose):
                 _invalid('validation_unsafe_content')
+        if (set(candidate_fit_ids) != set(facts)
+                or any(candidate_fit_ids.count(fact_id) != 1 for fact_id in facts)):
+            _invalid('validation_candidate_claim_grounding')
         subject = text(result['subject'], MAX_SUBJECT, multiline=False)
         if CONTACT.search(subject) or MARKUP.search(subject) or PRIOR_FAMILIARITY.search(subject):
             _invalid('validation_unsafe_content')

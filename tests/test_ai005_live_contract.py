@@ -151,11 +151,47 @@ def test_selected_fact_aggregate_that_cannot_fit_body_is_rejected(length,fact_si
         build_writing_contract(s,ids,'en',length,'professional')
 
 
-@pytest.mark.parametrize(('length','fact_size'), [('short',1794),('full',1800)])
-def test_selected_fact_boundary_that_can_fit_still_builds_contract(length,fact_size):
+@pytest.mark.parametrize(('language','length','fact_size'), [
+    ('en','short',1794),
+    ('ru','short',1788),
+    ('en','full',1800),
+])
+def test_selected_fact_boundary_that_can_fit_still_builds_contract(language,length,fact_size):
     s=source();s['facts'][0]['text']='x'*fact_size
-    contract=build_writing_contract(s,['profile.summary'],'en',length,'professional')
+    contract=build_writing_contract(s,['profile.summary'],language,length,'professional')
     assert len(contract.projection['candidate_facts'][0]['text']) == fact_size
+
+
+def test_russian_selected_fact_over_deterministic_body_boundary_is_rejected():
+    s=source();s['facts'][0]['text']='x'*1789
+    with pytest.raises(LetterError,match='^input_limit$'):
+        build_writing_contract(s,['profile.summary'],'ru','short','professional')
+
+
+def test_full_six_fact_selection_fits_schema_paragraph_capacity():
+    s=source();s['facts']=[];ids=[]
+    for index in range(6):
+        fact_id=f'profile.skills.{index}.name';ids.append(fact_id)
+        s['facts'].append({'id':fact_id,'text':f'Safe fact {index}'})
+    contract=build_writing_contract(s,ids,'en','full','professional')
+    assert contract.schema['properties']['paragraphs']['maxItems'] == 8
+
+
+@pytest.mark.parametrize('fact_count',[7,8])
+def test_full_selection_over_schema_paragraph_capacity_is_rejected(fact_count):
+    s=source();s['facts']=[];ids=[]
+    for index in range(fact_count):
+        fact_id=f'profile.skills.{index}.name';ids.append(fact_id)
+        s['facts'].append({'id':fact_id,'text':f'Safe fact {index}'})
+    with pytest.raises(LetterError,match='^input_limit$'):
+        build_writing_contract(s,ids,'en','full','professional')
+
+
+@pytest.mark.parametrize('unsafe_fact',['<b>Built APIs</b>','I have long admired this company.'])
+def test_selected_fact_rejected_when_verbatim_text_is_inherently_unsafe(unsafe_fact):
+    s=source();s['facts'][0]['text']=unsafe_fact
+    with pytest.raises(LetterError,match='^invalid_source$'):
+        build_writing_contract(s,['profile.summary'],'en','short','professional')
 
 
 def test_exact_quote_metric_is_allowed_not_a_calculated_metric():
@@ -213,6 +249,21 @@ def test_full_letter_uses_one_candidate_fact_per_fit_paragraph():
         'candidate_evidence':[{'id':second['id'],'quote':second['text']}], 'vacancy_evidence':[]})
     assert validate_writing(json.dumps(r),c)['evidence']['selected_fact_ids'] == [
         'profile.summary','profile.skills.0.name']
+
+
+def test_candidate_fit_rejects_omitted_selected_fact():
+    s=source();s['facts'].append({'id':'profile.skills.0.name','text':'PostgreSQL'})
+    c=build_writing_contract(s,['profile.summary','profile.skills.0.name'],'en','full','professional')
+    with pytest.raises(LetterError,match='^validation_candidate_claim_grounding$'):
+        validate_writing(json.dumps(response(c)),c)
+
+
+def test_candidate_fit_rejects_repeated_fact_while_another_is_omitted():
+    s=source();s['facts'].append({'id':'profile.skills.0.name','text':'PostgreSQL'})
+    c=build_writing_contract(s,['profile.summary','profile.skills.0.name'],'en','full','professional')
+    r=response(c);r['paragraphs'].insert(2,copy.deepcopy(r['paragraphs'][1]))
+    with pytest.raises(LetterError,match='^validation_candidate_claim_grounding$'):
+        validate_writing(json.dumps(r),c)
 
 
 @pytest.mark.parametrize('claim', [

@@ -54,9 +54,16 @@ def validate(root: Path = ROOT) -> list[str]:
             "if p['kind'] in ('opening','motivation','closing')",
             'MAX_PARAGRAPH_TEXT = 1800',
             "BODY_LIMITS = {'short':1800, 'full':6000}",
+            "MAX_PARAGRAPHS = {'short':6, 'full':8}",
             "any(len(f['text']) > MAX_PARAGRAPH_TEXT for f in facts)",
-            "sum(len(f['text']) for f in facts) + 2 + 2 * (len(facts) + 1) > BODY_LIMITS[length]",
+            "len(facts) + 2 > MAX_PARAGRAPHS[length]",
+            "framing_min = 8 if language == 'ru' else 2",
+            "sum(len(f['text']) for f in facts) + framing_min",
+            "any(MARKUP.search(f['text']) or PRIOR_FAMILIARITY.search(f['text']) for f in facts)",
+            "set(candidate_fit_ids) != set(facts)",
+            "candidate_fit_ids.count(fact_id) != 1",
             "raise LetterError('input_limit')",
+            "raise LetterError('invalid_source')",
         )
         if not all(fragment in contract for fragment in required):
             raise ValueError('Grounding contract is incomplete')
