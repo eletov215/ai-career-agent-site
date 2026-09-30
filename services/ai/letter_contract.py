@@ -66,6 +66,46 @@ FRAMING_PATTERNS = {
         'subject': (r'\u041e\u0442\u043a\u043b\u0438\u043a(?: \u043d\u0430 \u0432\u0430\u043a\u0430\u043d\u0441\u0438\u044e)?(?: \{vacancy\})?', r'\{vacancy\}'),
     },
 }
+# These are the exact provider-facing renderings of the framing allowlist. The
+# ``<vacancy>`` slot may contain only a bounded, contiguous phrase copied from a
+# cited vacancy field; all other characters are fixed.
+PROVIDER_FRAMING_TEMPLATES = {
+    'en': {
+        'opening': (
+            'I would like to apply for the <vacancy> role.',
+            'I am applying for the role of <vacancy>.',
+            'I am interested in the <vacancy> position.',
+        ),
+        'motivation': (
+            'I am interested in the <vacancy> role.',
+            'The <vacancy> position interests me.',
+            'I would welcome the opportunity to contribute to <vacancy>.',
+        ),
+        'closing': (
+            'Thank you for considering my application.',
+            'I would welcome the opportunity to discuss this role.',
+        ),
+        'subject': ('Application: <vacancy>', '<vacancy>'),
+    },
+    'ru': {
+        'opening': (
+            'Хочу откликнуться на вакансию <vacancy>.',
+            'Меня заинтересовала вакансия <vacancy>.',
+            'Мне интересна вакансия <vacancy>.',
+        ),
+        'motivation': (
+            'Мне интересна вакансия <vacancy>.',
+            'Хочу внести вклад в <vacancy>.',
+        ),
+        'closing': (
+            'Спасибо за рассмотрение моего отклика.',
+            'Буду рад обсудить эту вакансию.',
+        ),
+        'subject': ('Отклик на вакансию <vacancy>', '<vacancy>'),
+    },
+}
+MAX_FRAMING_VACANCY_CHARS = 500
+MAX_FRAMING_VACANCY_WORDS = 32
 OUTCOME_FAMILIES = (
     r'improv|\u0443\u043b\u0443\u0447\u0448', r'increas|\u0443\u0432\u0435\u043b\u0438\u0447',
     r'reduc|\u0441\u043d\u0438\u0437|\u0441\u043e\u043a\u0440\u0430\u0442', r'accelerat|\u0443\u0441\u043a\u043e\u0440',
@@ -112,25 +152,22 @@ def _safe_framing(value: str, kind: str, language: str,
                   vacancy: dict, evidence: list[str]) -> bool:
     """Accept only bounded intent templates plus verbatim cited vacancy phrases."""
     rendered = _grounding_text(value).rstrip(' .!?')
-    variants = {rendered}
-    for field in evidence:
-        vacancy_text = _grounding_text(vacancy[field])
-        if vacancy_text:
-            # A framing slot may use a contiguous phrase from the cited vacancy
-            # field, but the surrounding grammar remains strictly allowlisted.
-            words = vacancy_text.split()
-            vacancy_phrases = {vacancy_text}
-            vacancy_phrases.update(' '.join(words[start:end])
-                                    for start in range(len(words))
-                                    for end in range(start + 1, len(words) + 1))
-            variants.update(re.sub(re.escape(phrase), '{vacancy}', candidate,
-                                   flags=re.I)
-                            for candidate in tuple(variants)
-                            for phrase in vacancy_phrases
-                            if re.search(re.escape(phrase), candidate, re.I))
-    return any(re.fullmatch(pattern, candidate, re.I)
-               for pattern in FRAMING_PATTERNS[language][kind]
-               for candidate in variants)
+    cited = tuple(_grounding_text(vacancy[field]).casefold() for field in evidence)
+    for pattern in FRAMING_PATTERNS[language][kind]:
+        if r'\{vacancy\}' not in pattern:
+            if re.fullmatch(pattern, rendered, re.I):
+                return True
+            continue
+        bounded_slot = rf'(?P<vacancy>.{{1,{MAX_FRAMING_VACANCY_CHARS}}}?)'
+        match = re.fullmatch(pattern.replace(r'\{vacancy\}', bounded_slot), rendered, re.I)
+        if not match:
+            continue
+        phrase = _grounding_text(match.group('vacancy'))
+        if (phrase and len(phrase) <= MAX_FRAMING_VACANCY_CHARS
+                and len(phrase.split()) <= MAX_FRAMING_VACANCY_WORDS
+                and any(phrase.casefold() in vacancy_text for vacancy_text in cited)):
+            return True
+    return False
 
 
 @dataclass(frozen=True, slots=True)
@@ -253,7 +290,10 @@ def build_writing_contract(source: dict, fact_ids: list[str], language: str,
         'No links, contact details, markup, evidence IDs in visible prose, probabilities, tools, sending or actions. '
         'Short means at most 1800 visible body characters; full at most 6000. '
         'Provide opening first, one or more candidate_fit paragraphs, and closing last. '
-        'Copy the supplied source_hash exactly. Audit each factual sentence against its cited sources.'
+        'Copy the supplied source_hash exactly. Audit each factual sentence against its cited sources. '
+        'The exact allowed framing templates are listed next. Replace <vacancy> only with a contiguous phrase copied '
+        'from a vacancy_evidence field; do not alter any other wording: '
+        + canonical(PROVIDER_FRAMING_TEMPLATES[language])
     )
     messages = [{'role':'system','content':system},
                 {'role':'user','content':canonical({'source_hash':bound, **projection})}]

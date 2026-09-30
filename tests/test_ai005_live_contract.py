@@ -3,7 +3,10 @@ import copy
 import json
 import pytest
 from domain.cover_letter import LetterError, SOURCE_VERSION
-from services.ai.letter_contract import build_writing_contract,validate_writing
+from services.ai.letter_contract import (
+    MAX_FRAMING_VACANCY_CHARS, MAX_FRAMING_VACANCY_WORDS,
+    PROVIDER_FRAMING_TEMPLATES, build_writing_contract, validate_writing,
+)
 from services.ai.letter_admission import synthetic_cases,SyntheticLetterAdmission,ClosedLetterAdmission
 
 
@@ -394,6 +397,49 @@ def test_safe_generic_and_vacancy_only_framing_remains_accepted():
     r['paragraphs'][-1]['text']='I would welcome the opportunity to discuss this role.'
     r['subject']='Application for Python developer'
     assert validate_writing(json.dumps(r),c)['content']['body']
+
+
+@pytest.mark.parametrize('language', ['en', 'ru'])
+def test_every_advertised_framing_template_is_accepted(language):
+    c=build_writing_contract(source(language),['profile.summary'],language,'full','professional')
+    vacancy=c.projection['vacancy']['title']
+    advertised=PROVIDER_FRAMING_TEMPLATES[language]
+    for kind, templates in advertised.items():
+        for template in templates:
+            r=response(c)
+            rendered=template.replace('<vacancy>', vacancy)
+            if kind == 'subject':
+                r['subject']=rendered
+            elif kind == 'closing':
+                r['paragraphs'][-1]['text']=rendered
+            elif kind == 'opening':
+                r['paragraphs'][0]['text']=rendered
+            else:
+                r['paragraphs'].insert(-1, {'kind':'motivation', 'text':rendered,
+                    'candidate_evidence':[], 'vacancy_evidence':['title']})
+            assert validate_writing(json.dumps(r),c)['content']['body']
+
+
+def test_non_allowlisted_natural_framing_remains_rejected():
+    c=build_writing_contract(source(),['profile.summary'],'en','short','professional')
+    r=response(c);r['paragraphs'][0]['text']='Please consider me for the Python developer opportunity.'
+    with pytest.raises(LetterError,match='^validation_candidate_claim_location$'):
+        validate_writing(json.dumps(r),c)
+
+
+@pytest.mark.parametrize('field', ['description', 'requirements'])
+def test_long_vacancy_framing_validation_is_bounded_and_fail_closed(field):
+    s=source();s['vacancy'][field]=(('bounded vacancy text ' * 284) + 'terminal phrase')[:6000]
+    c=build_writing_contract(s,['profile.summary'],'en','short','professional')
+    assert MAX_FRAMING_VACANCY_CHARS == 500
+    assert MAX_FRAMING_VACANCY_WORDS == 32
+    valid=response(c);valid['paragraphs'][0]['vacancy_evidence']=[field]
+    valid['paragraphs'][0]['text']='I would like to apply for the terminal phrase role.'
+    assert validate_writing(json.dumps(valid),c)['content']['body']
+    r=response(c);r['paragraphs'][0]['vacancy_evidence']=[field]
+    r['paragraphs'][0]['text']='I would like to apply for the unsupported phrase role.'
+    with pytest.raises(LetterError,match='^validation_candidate_claim_location$'):
+        validate_writing(json.dumps(r),c)
 
 
 def test_candidate_fit_rejects_multiple_distinct_evidence_references():
