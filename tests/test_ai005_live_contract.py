@@ -266,7 +266,7 @@ def test_wrong_language_model_authored_framing_is_rejected(
     c=build_writing_contract(source(requested_language),['profile.summary'],
                              requested_language,'short','professional')
     r=response(c);r['paragraphs'][0]['text']=wrong_opening;r['paragraphs'][-1]['text']=wrong_closing
-    with pytest.raises(LetterError,match='^validation_language$'):
+    with pytest.raises(LetterError,match='^validation_candidate_claim_location$'):
         validate_writing(json.dumps(r),c)
 
 
@@ -328,6 +328,72 @@ def test_candidate_fit_rejects_unsupported_visible_claim_with_valid_quote(claim)
     r=response(c);r['paragraphs'][1]['text']=claim
     with pytest.raises(LetterError,match='^validation_candidate_claim_grounding$'):
         validate_writing(json.dumps(r),c)
+
+
+@pytest.mark.parametrize('claim', [
+    'As a senior backend engineer, I would like to apply for the Python developer role.',
+    'I am a senior backend engineer applying for this role.',
+    'Experienced Kubernetes engineer interested in the Python developer role.',
+])
+def test_english_opening_rejects_candidate_self_description(claim):
+    c=build_writing_contract(source(),['profile.summary'],'en','short','professional')
+    r=response(c);r['paragraphs'][0]['text']=claim
+    with pytest.raises(LetterError,match='^validation_candidate_claim_location$'):
+        validate_writing(json.dumps(r),c)
+
+
+def test_english_motivation_rejects_candidate_qualification():
+    c=build_writing_contract(source(),['profile.summary'],'en','short','professional')
+    r=response(c);r['paragraphs'].insert(2, {
+        'kind':'motivation',
+        'text':'My backend experience makes me qualified for the Python developer role.',
+        'candidate_evidence':[], 'vacancy_evidence':['title']})
+    with pytest.raises(LetterError,match='^validation_candidate_claim_location$'):
+        validate_writing(json.dumps(r),c)
+
+
+@pytest.mark.parametrize('subject', [
+    'Senior backend engineer application',
+    'Kubernetes expert for Python developer',
+])
+def test_subject_rejects_candidate_qualification(subject):
+    c=build_writing_contract(source(),['profile.summary'],'en','short','professional')
+    r=response(c);r['subject']=subject
+    with pytest.raises(LetterError,match='^validation_candidate_claim_location$'):
+        validate_writing(json.dumps(r),c)
+
+
+@pytest.mark.parametrize('claim', [
+    'Как опытный backend-разработчик, хочу откликнуться на вакансию Python developer.',
+    'Я senior backend-инженер и хочу откликнуться на эту вакансию.',
+    'Опытный Kubernetes-инженер заинтересован в вакансии Python developer.',
+])
+def test_russian_opening_rejects_candidate_self_description(claim):
+    c=build_writing_contract(source('ru'),['profile.summary'],'ru','short','professional')
+    r=response(c);r['paragraphs'][0]['text']=claim
+    with pytest.raises(LetterError,match='^validation_candidate_claim_location$'):
+        validate_writing(json.dumps(r),c)
+
+
+def test_russian_motivation_and_subject_reject_candidate_qualifications():
+    c=build_writing_contract(source('ru'),['profile.summary'],'ru','short','professional')
+    r=response(c);r['paragraphs'].insert(2, {
+        'kind':'motivation', 'text':'Мой опыт Kubernetes подходит для этой вакансии.',
+        'candidate_evidence':[], 'vacancy_evidence':['title']})
+    with pytest.raises(LetterError,match='^validation_candidate_claim_location$'):
+        validate_writing(json.dumps(r),c)
+    r=response(c);r['subject']='Senior Kubernetes-инженер на вакансию Python developer'
+    with pytest.raises(LetterError,match='^validation_candidate_claim_location$'):
+        validate_writing(json.dumps(r),c)
+
+
+def test_safe_generic_and_vacancy_only_framing_remains_accepted():
+    c=build_writing_contract(source(),['profile.summary'],'en','short','professional')
+    r=response(c)
+    r['paragraphs'][0]['text']='I am interested in the Python developer role.'
+    r['paragraphs'][-1]['text']='I would welcome the opportunity to discuss this role.'
+    r['subject']='Application for Python developer'
+    assert validate_writing(json.dumps(r),c)['content']['body']
 
 
 def test_candidate_fit_rejects_multiple_distinct_evidence_references():

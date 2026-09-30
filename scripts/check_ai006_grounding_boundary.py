@@ -68,6 +68,12 @@ def validate(root: Path = ROOT) -> list[str]:
             "any(MARKUP.search(f['text']) or PRIOR_FAMILIARITY.search(f['text']) for f in facts)",
             "set(candidate_fit_ids) != set(facts)",
             "candidate_fit_ids.count(fact_id) != 1",
+            "def _safe_framing(value: str, kind: str, language: str,",
+            "FRAMING_PATTERNS[language][kind]",
+            "candidate facts and qualifications must appear only in candidate_fit",
+            "not _safe_framing(prose, p['kind'], contract.language",
+            "not _safe_framing(subject, 'subject', contract.language",
+            "elif refs:",
             "raise LetterError('input_limit')",
             "raise LetterError('invalid_source')",
         )

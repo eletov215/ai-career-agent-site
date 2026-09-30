@@ -30,7 +30,42 @@ VACANCY_FIELDS = ('title', 'company', 'description', 'requirements')
 CONTACT = re.compile(r'(?:[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}|https?://|www\.|(?:\+\d[\d ()-]{8,}\d))', re.I)
 MARKUP = re.compile(r'<\s*/?\s*[a-z][^>]*>|\[\s*profile\.|profile\.(?:summary|headline|skills|employment|education|achievements)', re.I)
 PRIOR_FAMILIARITY = re.compile(r'long admired|been following|followed your (?:work|company)|\u0434\u0430\u0432\u043d\u043e \u0441\u043b\u0435\u0436\u0443|\u0432\u0441\u0435\u0433\u0434\u0430 \u043c\u0435\u0447\u0442\u0430\u043b', re.I)
-CANDIDATE_CLAIM = re.compile(r'\bI (?:have|worked|built|managed|led|increased|reduced)|\bmy (?:experience|expertise|skills)|\u043c\u043e\u0439 \u043e\u043f\u044b\u0442|\u0432\u043b\u0430\u0434\u0435\u044e|\u0440\u0430\u0437\u0440\u0430\u0431\u043e\u0442\u0430\u043b|\u0440\u0443\u043a\u043e\u0432\u043e\u0434\u0438\u043b', re.I)
+FRAMING_PATTERNS = {
+    'en': {
+        'opening': (
+            r'I would like to apply for (?:the )?(?:\{vacancy\}|this) (?:role|position)',
+            r'I am applying for (?:the (?:role|position) of )?\{vacancy\}',
+            r'I am interested in (?:the )?(?:\{vacancy\}|this) (?:role|position)',
+        ),
+        'motivation': (
+            r'I am interested in (?:this|the \{vacancy\}) (?:role|position)',
+            r'The \{vacancy\} (?:role|position) interests me',
+            r'I would welcome the opportunity to contribute to \{vacancy\}',
+        ),
+        'closing': (
+            r'Thank you for considering my application',
+            r'I would welcome the opportunity to discuss (?:this|the) (?:role|position)',
+        ),
+        'subject': (r'Application(?::| for)?(?: \{vacancy\})?', r'\{vacancy\}'),
+    },
+    'ru': {
+        'opening': (
+            r'\u0425\u043e\u0447\u0443 \u043e\u0442\u043a\u043b\u0438\u043a\u043d\u0443\u0442\u044c\u0441\u044f \u043d\u0430 (?:\u0432\u0430\u043a\u0430\u043d\u0441\u0438\u044e )?(?:\{vacancy\}|\u044d\u0442\u0443 \u0432\u0430\u043a\u0430\u043d\u0441\u0438\u044e)',
+            r'\u041c\u0435\u043d\u044f \u0437\u0430\u0438\u043d\u0442\u0435\u0440\u0435\u0441\u043e\u0432\u0430\u043b\u0430 \u0432\u0430\u043a\u0430\u043d\u0441\u0438\u044f \{vacancy\}',
+            r'\u041c\u043d\u0435 \u0438\u043d\u0442\u0435\u0440\u0435\u0441\u043d\u0430 (?:\u0432\u0430\u043a\u0430\u043d\u0441\u0438\u044f )?\{vacancy\}',
+        ),
+        'motivation': (
+            r'\u041c\u043d\u0435 \u0438\u043d\u0442\u0435\u0440\u0435\u0441\u043d\u0430 (?:\u044d\u0442\u0430 \u0432\u0430\u043a\u0430\u043d\u0441\u0438\u044f|\u0432\u0430\u043a\u0430\u043d\u0441\u0438\u044f \{vacancy\})',
+            r'\u0425\u043e\u0447\u0443 \u0432\u043d\u0435\u0441\u0442\u0438 \u0432\u043a\u043b\u0430\u0434 \u0432 \{vacancy\}',
+        ),
+        'closing': (
+            r'\u0421\u043f\u0430\u0441\u0438\u0431\u043e \u0437\u0430 \u0440\u0430\u0441\u0441\u043c\u043e\u0442\u0440\u0435\u043d\u0438\u0435 (?:\u043c\u043e\u0435\u0433\u043e )?\u043e\u0442\u043a\u043b\u0438\u043a\u0430',
+            r'\u0421\u043f\u0430\u0441\u0438\u0431\u043e \u0437\u0430 \u0440\u0430\u0441\u0441\u043c\u043e\u0442\u0440\u0435\u043d\u0438\u0435 \u043c\u043e\u0435\u0439 \u043a\u0430\u043d\u0434\u0438\u0434\u0430\u0442\u0443\u0440\u044b',
+            r'\u0411\u0443\u0434\u0443 \u0440\u0430\u0434(?:\u0430)? \u043e\u0431\u0441\u0443\u0434\u0438\u0442\u044c \u044d\u0442\u0443 \u0432\u0430\u043a\u0430\u043d\u0441\u0438\u044e',
+        ),
+        'subject': (r'\u041e\u0442\u043a\u043b\u0438\u043a(?: \u043d\u0430 \u0432\u0430\u043a\u0430\u043d\u0441\u0438\u044e)?(?: \{vacancy\})?', r'\{vacancy\}'),
+    },
+}
 OUTCOME_FAMILIES = (
     r'improv|\u0443\u043b\u0443\u0447\u0448', r'increas|\u0443\u0432\u0435\u043b\u0438\u0447',
     r'reduc|\u0441\u043d\u0438\u0437|\u0441\u043e\u043a\u0440\u0430\u0442', r'accelerat|\u0443\u0441\u043a\u043e\u0440',
@@ -71,6 +106,31 @@ def _invalid(reason: str):
 def _grounding_text(value: str) -> str:
     """Return the only whitespace rendering accepted by grounding checks."""
     return ' '.join(value.split())
+
+
+def _safe_framing(value: str, kind: str, language: str,
+                  vacancy: dict, evidence: list[str]) -> bool:
+    """Accept only bounded intent templates plus verbatim cited vacancy phrases."""
+    rendered = _grounding_text(value).rstrip(' .!?')
+    variants = {rendered}
+    for field in evidence:
+        vacancy_text = _grounding_text(vacancy[field])
+        if vacancy_text:
+            # A framing slot may use a contiguous phrase from the cited vacancy
+            # field, but the surrounding grammar remains strictly allowlisted.
+            words = vacancy_text.split()
+            vacancy_phrases = {vacancy_text}
+            vacancy_phrases.update(' '.join(words[start:end])
+                                    for start in range(len(words))
+                                    for end in range(start + 1, len(words) + 1))
+            variants.update(re.sub(re.escape(phrase), '{vacancy}', candidate,
+                                   flags=re.I)
+                            for candidate in tuple(variants)
+                            for phrase in vacancy_phrases
+                            if re.search(re.escape(phrase), candidate, re.I))
+    return any(re.fullmatch(pattern, candidate, re.I)
+               for pattern in FRAMING_PATTERNS[language][kind]
+               for candidate in variants)
 
 
 @dataclass(frozen=True, slots=True)
@@ -179,6 +239,9 @@ def build_writing_contract(source: dict, fact_ids: list[str], language: str,
         'Do not transform vacancy requirements into candidate skills. Do not invent skills, employers, '
         'durations, achievements, metrics, causal benefits or familiarity with the company. '
         'Use atomic factual sentences: describe the actual activity without adding an inferred impact. '
+        'All candidate facts and qualifications must appear only in candidate_fit. Subject, opening, motivation, and '
+        'closing must use only the supplied safe intent templates and verbatim cited vacancy phrases; never put '
+        'candidate skills, seniority, employers, experience, background, achievements, outcomes, or certifications there. '
         'Opening and motivation may express present interest in the supplied role, not an invented past relationship. '
         'Every opening and motivation paragraph must include at least one vacancy_evidence field from title, '
         'company, description, or requirements that supports its wording. If the paragraph only refers to the supplied '
@@ -240,9 +303,14 @@ def validate_writing(raw: str, contract: LetterContract) -> dict:
                 _invalid('validation_candidate_claim_grounding')
             if p['kind']=='candidate_fit':
                 candidate_fit_ids.append(refs[0]['id'])
+            elif refs:
+                # Candidate evidence and candidate claims belong only in candidate_fit.
+                _invalid('validation_candidate_claim_location')
             if p['kind'] in ('opening','motivation') and not p['vacancy_evidence']:
                 _invalid('validation_vacancy_evidence_missing')
-            if p['kind']!='candidate_fit' and CANDIDATE_CLAIM.search(prose):
+            if (p['kind']!='candidate_fit'
+                    and not _safe_framing(prose, p['kind'], contract.language,
+                                          projected['vacancy'], p['vacancy_evidence'])):
                 _invalid('validation_candidate_claim_location')
             support = '\n'.join(r['quote'] for r in refs)
             if p['kind']!='candidate_fit':
@@ -263,6 +331,9 @@ def validate_writing(raw: str, contract: LetterContract) -> dict:
             _invalid('validation_unsafe_content')
         if not _numbers(subject) <= _numbers(canonical(projected['vacancy'])):
             _invalid('validation_numeric_claim')
+        if not _safe_framing(subject, 'subject', contract.language,
+                             projected['vacancy'], list(VACANCY_FIELDS)):
+            _invalid('validation_candidate_claim_location')
         body = '\n\n'.join(text(p['text'],MAX_PARAGRAPH_TEXT) for p in paragraphs)
         if len(body) > BODY_LIMITS[contract.length]:
             _invalid('validation_length')
