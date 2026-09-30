@@ -66,6 +66,11 @@ def _invalid(reason: str):
     raise LetterValidationError(reason)
 
 
+def _grounding_text(value: str) -> str:
+    """Return the only whitespace rendering accepted by grounding checks."""
+    return ' '.join(value.split())
+
+
 @dataclass(frozen=True, slots=True)
 class LetterContract:
     """Canonical JSON strings prevent mutation of a reviewed outgoing request."""
@@ -125,9 +130,10 @@ def build_writing_contract(source: dict, fact_ids: list[str], language: str,
     # paragraph. Reject selections for which the response schema or total body
     # limit makes that contract impossible, before a provider can be called.
     framing_min = 8 if language == 'ru' else 2
-    if (any(len(f['text']) > MAX_PARAGRAPH_TEXT for f in facts)
+    normalized_fact_lengths = [len(_grounding_text(f['text'])) for f in facts]
+    if (any(fact_length > MAX_PARAGRAPH_TEXT for fact_length in normalized_fact_lengths)
             or len(facts) + 2 > MAX_PARAGRAPHS[length]
-            or sum(len(f['text']) for f in facts) + framing_min
+            or sum(normalized_fact_lengths) + framing_min
             + 2 * (len(facts) + 1) > BODY_LIMITS[length]):
         raise LetterError('input_limit')
     projection = {'candidate_facts':facts, 'vacancy':vacancy, 'preferences':opts}
@@ -218,14 +224,14 @@ def validate_writing(raw: str, contract: LetterContract) -> dict:
             for r in refs:
                 if (not r['quote'].strip()
                         or (r['quote'] not in facts[r['id']]
-                            and ' '.join(r['quote'].split()) != ' '.join(facts[r['id']].split()))):
+                            and _grounding_text(r['quote']) != _grounding_text(facts[r['id']]))):
                     _invalid('validation_evidence_quote')
             used.update(ids)
             if p['kind']=='candidate_fit' and not refs:
                 _invalid('validation_candidate_evidence_missing')
             if p['kind']=='candidate_fit' and (len(refs) != 1
-                    or ' '.join(refs[0]['quote'].split()) != ' '.join(facts[refs[0]['id']].split())
-                    or ' '.join(prose.split()) != ' '.join(refs[0]['quote'].split())):
+                    or _grounding_text(refs[0]['quote']) != _grounding_text(facts[refs[0]['id']])
+                    or _grounding_text(prose) != _grounding_text(refs[0]['quote'])):
                 _invalid('validation_candidate_claim_grounding')
             if p['kind']=='candidate_fit':
                 candidate_fit_ids.append(refs[0]['id'])

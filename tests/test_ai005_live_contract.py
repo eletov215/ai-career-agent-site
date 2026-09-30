@@ -138,6 +138,30 @@ def test_selected_fact_over_paragraph_limit_is_rejected_before_contract_build():
         build_writing_contract(s,['profile.summary'],'en','full','professional')
 
 
+def test_raw_fact_over_paragraph_limit_that_normalizes_to_fit_builds_contract():
+    s=source();s['facts'][0]['text']='x   '*600
+    assert len(s['facts'][0]['text']) > 1800
+    contract=build_writing_contract(s,['profile.summary'],'en','short','professional')
+    assert contract.projection['candidate_facts'][0]['text'] == s['facts'][0]['text'].strip()
+
+
+def test_raw_fact_whose_normalized_form_exceeds_paragraph_limit_is_rejected():
+    s=source();s['facts'][0]['text']='x   '*901
+    with pytest.raises(LetterError,match='^input_limit$'):
+        build_writing_contract(s,['profile.summary'],'en','full','professional')
+
+
+def test_aggregate_body_lower_bound_uses_normalized_fact_lengths():
+    s=source();s['facts']=[
+        {'id':'profile.skills.0.name','text':'a   '*448},
+        {'id':'profile.skills.1.name','text':'b   '*448},
+    ]
+    contract=build_writing_contract(
+        s,['profile.skills.0.name','profile.skills.1.name'],'en','short','professional')
+    assert [fact['text'] for fact in contract.projection['candidate_facts']] == [
+        ('a   '*448).strip(),('b   '*448).strip()]
+
+
 @pytest.mark.parametrize(('length','fact_size','fact_count'), [
     ('short',898,2),
     ('full',1498,4),
