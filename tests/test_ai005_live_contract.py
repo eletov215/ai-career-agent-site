@@ -53,6 +53,10 @@ def test_general_writing_contract_and_projection(language,length,tone):
             in system_prompt)
     assert 'If the paragraph only refers to the supplied role, cite title.' in system_prompt
     assert 'Do not leave vacancy_evidence empty for opening or motivation.' in system_prompt
+    assert 'Each candidate_fit paragraph uses exactly one candidate fact.' in system_prompt
+    assert 'must copy the supporting candidate quote verbatim' in system_prompt
+    assert 'do not paraphrase candidate experience' in system_prompt
+    assert 'Use a separate candidate_fit paragraph for each additional fact.' in system_prompt
     assert 'profile.summary' not in generated['content']['body']
 
 
@@ -78,12 +82,12 @@ def test_invalid_or_unsupported_result_is_rejected(change):
     if change=='empty_quote':fit['candidate_evidence'][0]['quote']=' '
     expected = {
         'invented_id':'validation_schema', 'false_quote':'validation_evidence_quote',
-        'new_metric':'validation_numeric_claim', 'unicode_metric':'validation_numeric_claim',
-        'vacancy_as_candidate':'validation_candidate_evidence_missing', 'outcome':'validation_outcome_claim',
-        'familiarity':'validation_candidate_claim_location', 'html':'validation_numeric_claim',
-        'link':'validation_unsafe_content', 'wrong_hash':'validation_schema',
+        'new_metric':'validation_candidate_claim_grounding', 'unicode_metric':'validation_candidate_claim_grounding',
+        'vacancy_as_candidate':'validation_candidate_evidence_missing', 'outcome':'validation_candidate_claim_grounding',
+        'familiarity':'validation_candidate_claim_location', 'html':'validation_candidate_claim_grounding',
+        'link':'validation_candidate_claim_grounding', 'wrong_hash':'validation_schema',
         'extra':'validation_schema', 'no_fit':'validation_structure',
-        'wrong_language':'validation_language', 'duplicate_reference':'validation_evidence_duplicate',
+        'wrong_language':'validation_candidate_claim_grounding', 'duplicate_reference':'validation_evidence_duplicate',
         'empty_quote':'validation_evidence_quote',
     }[change]
     with pytest.raises(LetterError,match=f'^{expected}$'):
@@ -131,6 +135,45 @@ def test_exact_quote_metric_is_allowed_not_a_calculated_metric():
     assert validate_writing(json.dumps(r),c)['content']['body']
     r['paragraphs'][1]['text']='I wrote 13 API tests.'
     with pytest.raises(LetterError):validate_writing(json.dumps(r),c)
+
+
+@pytest.mark.parametrize('language', ['en', 'ru'])
+def test_candidate_fit_accepts_exact_quote_with_safe_whitespace_normalization(language):
+    c=build_writing_contract(source(language),['profile.summary'],language,'short','professional')
+    r=response(c);quote=r['paragraphs'][1]['candidate_evidence'][0]['quote']
+    r['paragraphs'][1]['text']='  \n '.join(quote.split())
+    assert validate_writing(json.dumps(r),c)['content']['body']
+
+
+def test_full_letter_uses_one_candidate_fact_per_fit_paragraph():
+    s=source();s['facts'].append({'id':'profile.skills.0.name','text':'PostgreSQL'})
+    c=build_writing_contract(s,['profile.summary','profile.skills.0.name'],'en','full','professional')
+    r=response(c);second=c.projection['candidate_facts'][1]
+    r['paragraphs'].insert(2, {'kind':'candidate_fit','text':second['text'],
+        'candidate_evidence':[{'id':second['id'],'quote':second['text']}], 'vacancy_evidence':[]})
+    assert validate_writing(json.dumps(r),c)['evidence']['selected_fact_ids'] == [
+        'profile.summary','profile.skills.0.name']
+
+
+@pytest.mark.parametrize('claim', [
+    'I design Kubernetes clusters.',
+    'I have strong Python expertise.',
+    'I am an experienced backend architect.',
+])
+def test_candidate_fit_rejects_unsupported_visible_claim_with_valid_quote(claim):
+    c=build_writing_contract(source(),['profile.summary'],'en','short','professional')
+    r=response(c);r['paragraphs'][1]['text']=claim
+    with pytest.raises(LetterError,match='^validation_candidate_claim_grounding$'):
+        validate_writing(json.dumps(r),c)
+
+
+def test_candidate_fit_rejects_multiple_distinct_evidence_references():
+    s=source();s['facts'].append({'id':'profile.skills.0.name','text':'PostgreSQL'})
+    c=build_writing_contract(s,['profile.summary','profile.skills.0.name'],'en','full','professional')
+    r=response(c);second=c.projection['candidate_facts'][1]
+    r['paragraphs'][1]['candidate_evidence'].append({'id':second['id'],'quote':second['text']})
+    with pytest.raises(LetterError,match='^validation_candidate_claim_grounding$'):
+        validate_writing(json.dumps(r),c)
 
 
 def test_synthetic_admission_compares_content_not_a_flag():

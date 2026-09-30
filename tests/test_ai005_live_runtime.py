@@ -46,7 +46,7 @@ class StubTransport:
               'paragraphs':[
                 {'kind':'opening','text':'I would like to apply for the Python Developer role.',
                  'candidate_evidence':[],'vacancy_evidence':['title']},
-                {'kind':'candidate_fit','text':'I built REST API tests in Python.',
+                {'kind':'candidate_fit','text':fact['text'],
                  'candidate_evidence':[{'id':fact['id'],'quote':fact['text']}],'vacancy_evidence':[]},
                 {'kind':'closing','text':'Thank you for considering my application.',
                  'candidate_evidence':[],'vacancy_evidence':[]},
@@ -88,7 +88,7 @@ def test_provider_path_saves_pending_proposal_and_accounting_atomically(live,mon
     monkeypatch.setattr('domain.cover_letter.compose',lambda *a,**k:(_ for _ in ()).throw(AssertionError('not a template')))
     result=run(x);assert result['status']=='proposal'
     p=result['proposal'];assert p['origin']=='alice_draft'
-    assert 'I built REST API tests' in p['content']['body']
+    assert 'Built REST API tests' in p['content']['body']
     current=x.e.svc.get(x.e.owner,x.record['id'])
     assert current['content']==x.record['content'] and current['last_version']==1
     assert len(current['proposals'])==1
@@ -242,6 +242,19 @@ def test_unallowlisted_validator_error_stays_generic(live,monkeypatch):
     assert result['reason']=='feature_validation_failure'
     assert event.reason=='feature_validation_failure'
     assert 'private response detail' not in json.dumps(result)
+
+
+def test_candidate_claim_grounding_reason_is_internal_and_public_result_is_generic(live):
+    x=live
+    def invent(reply):
+        body=json.loads(reply['envelope']['choices'][0]['message']['content'])
+        body['paragraphs'][1]['text']='I design Kubernetes clusters.'
+        reply['envelope']['choices'][0]['message']['content']=json.dumps(body)
+    x.transport.mutate=invent
+    result=run(x);event=events(x)[0]
+    assert result['reason']=='feature_validation_failure'
+    assert event.reason=='validation_candidate_claim_grounding'
+    assert 'Kubernetes' not in json.dumps(result)
 
 
 def test_insertion_failure_keeps_reservation_and_no_orphan_proposal(live,monkeypatch):

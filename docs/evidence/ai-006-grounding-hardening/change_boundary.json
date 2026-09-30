@@ -1,0 +1,16 @@
+{
+  "package": "AI-006-GROUNDING-HARDENING",
+  "release": "candidate-fit-grounding-successor",
+  "source_main_sha": "ba7288518a3dab13878f610bbd9f8f6f38d66019",
+  "provider_calls": 0,
+  "REAL_DATA_SUPPORTED": false,
+  "real_data_alice": "CLOSED",
+  "legal_state": "DRAFT / NOT_ACTIVE",
+  "production_schema": "unchanged",
+  "reviewed_runtime_changes": {
+    "services/ai/letter_contract.py": {
+      "previous_sha256": "0cc6d87b2390b12c0145025819f85099175b30880e005e8a3a039618a9bffd86",
+      "current_sha256": "93e837030910a0b666bb5027636eb494f860fa5d386b43c106d801f665c86f31"
+    }
+  }
+}
