@@ -132,6 +132,32 @@ def test_input_size_and_selection_are_bounded():
     with pytest.raises(LetterError):build_writing_contract(source(),[],'en','short','professional')
 
 
+def test_selected_fact_over_paragraph_limit_is_rejected_before_contract_build():
+    s=source();s['facts'][0]['text']='x'*1801
+    with pytest.raises(LetterError,match='^input_limit$'):
+        build_writing_contract(s,['profile.summary'],'en','full','professional')
+
+
+@pytest.mark.parametrize(('length','fact_size','fact_count'), [
+    ('short',898,2),
+    ('full',1498,4),
+])
+def test_selected_fact_aggregate_that_cannot_fit_body_is_rejected(length,fact_size,fact_count):
+    s=source();s['facts']=[];ids=[]
+    for index in range(fact_count):
+        fact_id=f'profile.skills.{index}.name';ids.append(fact_id)
+        s['facts'].append({'id':fact_id,'text':chr(65+index)*fact_size})
+    with pytest.raises(LetterError,match='^input_limit$'):
+        build_writing_contract(s,ids,'en',length,'professional')
+
+
+@pytest.mark.parametrize(('length','fact_size'), [('short',1794),('full',1800)])
+def test_selected_fact_boundary_that_can_fit_still_builds_contract(length,fact_size):
+    s=source();s['facts'][0]['text']='x'*fact_size
+    contract=build_writing_contract(s,['profile.summary'],'en',length,'professional')
+    assert len(contract.projection['candidate_facts'][0]['text']) == fact_size
+
+
 def test_exact_quote_metric_is_allowed_not_a_calculated_metric():
     s=source();s['facts'][0]['text']='I wrote 12 API tests.'
     c=build_writing_contract(s,['profile.summary'],'en','short','professional')

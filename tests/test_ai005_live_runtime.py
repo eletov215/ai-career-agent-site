@@ -171,6 +171,16 @@ def test_changes_before_dispatch_do_not_reserve_or_call(live,change):
     assert not x.transport.calls and not events(x)
 
 
+def test_impossible_selected_fact_is_rejected_during_preview_without_provider_call(live):
+    x=live;value=profile_payload();value['summary']='x'*1801
+    x.e.profile.save(user_id=x.e.owner,payload=value,expected_version=1)
+    record=save(x.e,new(x.e))
+    with pytest.raises(LetterError,match='^input_limit$'):
+        x.generator.preview(x.e.owner,record['id'],record['revision'],
+                            'en','full','professional',['profile.summary'])
+    assert not x.transport.calls and not events(x)
+
+
 @pytest.mark.parametrize('change',['source','letter','delete','gate','kill'])
 def test_changes_during_provider_suppress_delivery_without_success_charge(live,change):
     x=live

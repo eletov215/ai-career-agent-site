@@ -52,6 +52,11 @@ def validate(root: Path = ROOT) -> list[str]:
             'requested language applies to model-authored framing',
             'Keep every candidate_fit fact verbatim in its source language',
             "if p['kind'] in ('opening','motivation','closing')",
+            'MAX_PARAGRAPH_TEXT = 1800',
+            "BODY_LIMITS = {'short':1800, 'full':6000}",
+            "any(len(f['text']) > MAX_PARAGRAPH_TEXT for f in facts)",
+            "sum(len(f['text']) for f in facts) + 2 + 2 * (len(facts) + 1) > BODY_LIMITS[length]",
+            "raise LetterError('input_limit')",
         )
         if not all(fragment in contract for fragment in required):
             raise ValueError('Grounding contract is incomplete')

@@ -19,6 +19,8 @@ from services.ai.registry import ContractError, validate_output
 
 CONTRACT_VERSION = 'cover-letter-draft-v1'
 MAX_PROJECTED_BYTES = 24000
+MAX_PARAGRAPH_TEXT = 1800
+BODY_LIMITS = {'short':1800, 'full':6000}
 RECIPIENT = 'Yandex AI Studio / Alice AI LLM'
 VACANCY_FIELDS = ('title', 'company', 'description', 'requirements')
 # Deliberately bounded common contact detection; it is not anonymization or DLP.
@@ -118,6 +120,12 @@ def build_writing_contract(source: dict, fact_ids: list[str], language: str,
                           blank=k!='title', multiline=k not in ('title','company')) for k in VACANCY_FIELDS}
     except (KeyError, TypeError, AttributeError):
         raise LetterError('invalid_source') from None
+    # Every selected fact must be emitted whole in its own candidate_fit
+    # paragraph. Reject selections for which the response schema or total body
+    # limit makes that contract impossible, before a provider can be called.
+    if (any(len(f['text']) > MAX_PARAGRAPH_TEXT for f in facts)
+            or sum(len(f['text']) for f in facts) + 2 + 2 * (len(facts) + 1) > BODY_LIMITS[length]):
+        raise LetterError('input_limit')
     projection = {'candidate_facts':facts, 'vacancy':vacancy, 'preferences':opts}
     projected = canonical(projection)
     if len(projected.encode()) > MAX_PROJECTED_BYTES:
@@ -130,7 +138,7 @@ def build_writing_contract(source: dict, fact_ids: list[str], language: str,
                         'quote':{'type':'string','minLength':1,'maxLength':4000}})
     paragraph = _object({
         'kind':{'type':'string','enum':['opening','candidate_fit','motivation','closing']},
-        'text':{'type':'string','minLength':1,'maxLength':1800},
+        'text':{'type':'string','minLength':1,'maxLength':MAX_PARAGRAPH_TEXT},
         'candidate_evidence':{'type':'array','maxItems':8,'items':evidence},
         'vacancy_evidence':{'type':'array','maxItems':4,'items':{'type':'string','enum':list(VACANCY_FIELDS)}},
     })
@@ -194,7 +202,7 @@ def validate_writing(raw: str, contract: LetterContract) -> dict:
             _invalid('validation_structure')
         used = set()
         for p in paragraphs:
-            prose = text(p['text'],1800)
+            prose = text(p['text'],MAX_PARAGRAPH_TEXT)
             refs = p['candidate_evidence']
             ids = [r['id'] for r in refs]
             if len(set(ids))!=len(ids) or len(set(p['vacancy_evidence']))!=len(p['vacancy_evidence']):
@@ -231,10 +239,10 @@ def validate_writing(raw: str, contract: LetterContract) -> dict:
             _invalid('validation_unsafe_content')
         if not _numbers(subject) <= _numbers(canonical(projected['vacancy'])):
             _invalid('validation_numeric_claim')
-        body = '\n\n'.join(text(p['text'],1800) for p in paragraphs)
-        if len(body) > (1800 if contract.length=='short' else 6000):
+        body = '\n\n'.join(text(p['text'],MAX_PARAGRAPH_TEXT) for p in paragraphs)
+        if len(body) > BODY_LIMITS[contract.length]:
             _invalid('validation_length')
-        framing = '\n\n'.join(text(p['text'],1800) for p in paragraphs
+        framing = '\n\n'.join(text(p['text'],MAX_PARAGRAPH_TEXT) for p in paragraphs
                               if p['kind'] in ('opening','motivation','closing'))
         cyrillic = len(re.findall(r'[\u0400-\u04ff]',framing))
         letters = len(re.findall(r'[^\W\d_]',framing,re.U))
