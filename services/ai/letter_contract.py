@@ -157,8 +157,9 @@ def build_writing_contract(source: dict, fact_ids: list[str], language: str,
         'company, description, or requirements that supports its wording. If the paragraph only refers to the supplied '
         'role, cite title. Do not leave vacancy_evidence empty for opening or motivation. '
         'Keep unknown requirements only in internal caveats; do not advertise missing skills to the employer. '
-        'Closing contains no new factual claims. '
-        'Translate wording where necessary without adding facts; keep names unchanged. '
+        'Closing contains no new factual claims. The requested language applies to model-authored framing: opening, '
+        'motivation, and closing. Keep every candidate_fit fact verbatim in its source language; never translate or '
+        'paraphrase candidate facts. Keep names unchanged. '
         'Use digits for numerical claims and only numbers explicitly in cited quotes. '
         'No links, contact details, markup, evidence IDs in visible prose, probabilities, tools, sending or actions. '
         'Short means at most 1800 visible body characters; full at most 6000. '
@@ -233,8 +234,10 @@ def validate_writing(raw: str, contract: LetterContract) -> dict:
         body = '\n\n'.join(text(p['text'],1800) for p in paragraphs)
         if len(body) > (1800 if contract.length=='short' else 6000):
             _invalid('validation_length')
-        cyrillic = len(re.findall(r'[\u0400-\u04ff]',body))
-        letters = len(re.findall(r'[^\W\d_]',body,re.U))
+        framing = '\n\n'.join(text(p['text'],1800) for p in paragraphs
+                              if p['kind'] in ('opening','motivation','closing'))
+        cyrillic = len(re.findall(r'[\u0400-\u04ff]',framing))
+        letters = len(re.findall(r'[^\W\d_]',framing,re.U))
         if contract.language=='ru' and cyrillic < max(8, letters*0.2):
             _invalid('validation_language')
         if contract.language=='en' and cyrillic > max(4, letters*0.05):

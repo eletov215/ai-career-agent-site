@@ -58,6 +58,9 @@ def test_general_writing_contract_and_projection(language,length,tone):
     assert 'do not excerpt it' in system_prompt
     assert 'paraphrase candidate experience' in system_prompt
     assert 'Use a separate candidate_fit paragraph for each additional fact.' in system_prompt
+    assert 'requested language applies to model-authored framing' in system_prompt
+    assert 'Keep every candidate_fit fact verbatim in its source language' in system_prompt
+    assert 'never translate or paraphrase candidate facts' in system_prompt
     assert 'profile.summary' not in generated['content']['body']
 
 
@@ -146,6 +149,34 @@ def test_candidate_fit_accepts_exact_quote_with_safe_whitespace_normalization(la
     r['paragraphs'][1]['candidate_evidence'][0]['quote']=normalized_variant
     r['paragraphs'][1]['text']=normalized_variant
     assert validate_writing(json.dumps(r),c)['content']['body']
+
+
+@pytest.mark.parametrize(('requested_language','fact_language'), [('en','ru'),('ru','en')])
+def test_candidate_fit_preserves_cross_language_source_fact(requested_language,fact_language):
+    c=build_writing_contract(source(fact_language),['profile.summary'],requested_language,'short','professional')
+    r=response(c);fact=c.projection['candidate_facts'][0]['text']
+    r['paragraphs'][1]['text']=fact
+    assert validate_writing(json.dumps(r),c)['content']['body']
+
+
+@pytest.mark.parametrize(('requested_language','wrong_opening','wrong_closing'), [
+    ('en','Хочу откликнуться на эту вакансию.','Спасибо за рассмотрение моего отклика.'),
+    ('ru','I would like to apply for this role.','Thank you for considering my application.'),
+])
+def test_wrong_language_model_authored_framing_is_rejected(
+        requested_language,wrong_opening,wrong_closing):
+    c=build_writing_contract(source(requested_language),['profile.summary'],
+                             requested_language,'short','professional')
+    r=response(c);r['paragraphs'][0]['text']=wrong_opening;r['paragraphs'][-1]['text']=wrong_closing
+    with pytest.raises(LetterError,match='^validation_language$'):
+        validate_writing(json.dumps(r),c)
+
+
+def test_translated_candidate_fit_is_rejected_instead_of_treating_translation_as_grounding():
+    c=build_writing_contract(source('ru'),['profile.summary'],'en','short','professional')
+    r=response(c);r['paragraphs'][1]['text']='I maintain software interfaces and write database queries.'
+    with pytest.raises(LetterError,match='^validation_candidate_claim_grounding$'):
+        validate_writing(json.dumps(r),c)
 
 
 def test_full_letter_uses_one_candidate_fact_per_fit_paragraph():

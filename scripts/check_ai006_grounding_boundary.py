@@ -49,6 +49,9 @@ def validate(root: Path = ROOT) -> list[str]:
             'do not excerpt it',
             'paraphrase candidate experience',
             'Use a separate candidate_fit paragraph for each additional fact.',
+            'requested language applies to model-authored framing',
+            'Keep every candidate_fit fact verbatim in its source language',
+            "if p['kind'] in ('opening','motivation','closing')",
         )
         if not all(fragment in contract for fragment in required):
             raise ValueError('Grounding contract is incomplete')
