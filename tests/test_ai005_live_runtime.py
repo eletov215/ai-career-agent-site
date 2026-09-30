@@ -181,16 +181,15 @@ def test_impossible_selected_fact_is_rejected_during_preview_without_provider_ca
     assert not x.transport.calls and not events(x)
 
 
-@pytest.mark.parametrize('fact_count',[7,8])
-def test_over_capacity_full_selection_is_rejected_during_preview_without_usage(live,fact_count):
+def test_eight_fact_full_selection_builds_preview_without_provider_usage(live):
     x=live;value=profile_payload()
-    value['skills']=[{'name':f'Safe skill {index}'} for index in range(fact_count)]
+    value['skills']=[{'name':f'Safe skill {index}'} for index in range(8)]
     x.e.profile.save(user_id=x.e.owner,payload=value,expected_version=1)
     record=save(x.e,new(x.e,length='full'))
-    fact_ids=[f'profile.skills.{index}.name' for index in range(fact_count)]
-    with pytest.raises(LetterError,match='^input_limit$'):
-        x.generator.preview(x.e.owner,record['id'],record['revision'],
-                            'en','full','professional',fact_ids)
+    fact_ids=[f'profile.skills.{index}.name' for index in range(8)]
+    preview=x.generator.preview(x.e.owner,record['id'],record['revision'],
+                                'en','full','professional',fact_ids)
+    assert preview['review_token']
     assert not x.transport.calls and not events(x)
 
 

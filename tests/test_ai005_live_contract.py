@@ -54,13 +54,15 @@ def test_general_writing_contract_and_projection(language,length,tone):
     assert 'If the paragraph only refers to the supplied role, cite title.' in system_prompt
     assert 'Do not leave vacancy_evidence empty for opening or motivation.' in system_prompt
     assert 'Each candidate_fit paragraph uses exactly one candidate fact.' in system_prompt
-    assert 'must copy the full supporting candidate fact verbatim' in system_prompt
-    assert 'do not excerpt it' in system_prompt
+    assert 'must copy the complete supporting candidate fact' in system_prompt
+    assert 'Preserve every non-whitespace character and token in the same order.' in system_prompt
+    assert 'Whitespace runs (spaces, tabs, and newlines) may be collapsed to one normal space' in system_prompt
+    assert 'whitespace-only normalization is the only permitted transformation' in system_prompt
+    assert 'excerpt, omit or reorder words, translate, paraphrase, or semantically rewrite' in system_prompt
     assert 'paraphrase candidate experience' in system_prompt
     assert 'Use a separate candidate_fit paragraph for each additional fact.' in system_prompt
     assert 'requested language applies to model-authored framing' in system_prompt
-    assert 'Keep every candidate_fit fact verbatim in its source language' in system_prompt
-    assert 'never translate or paraphrase candidate facts' in system_prompt
+    assert 'Keep every candidate_fit fact in its source language' in system_prompt
     assert 'profile.summary' not in generated['content']['body']
 
 
@@ -192,21 +194,20 @@ def test_russian_selected_fact_over_deterministic_body_boundary_is_rejected():
         build_writing_contract(s,['profile.summary'],'ru','short','professional')
 
 
-def test_full_six_fact_selection_fits_schema_paragraph_capacity():
+def test_full_eight_fact_selection_fits_schema_paragraph_capacity():
     s=source();s['facts']=[];ids=[]
-    for index in range(6):
+    for index in range(8):
         fact_id=f'profile.skills.{index}.name';ids.append(fact_id)
         s['facts'].append({'id':fact_id,'text':f'Safe fact {index}'})
     contract=build_writing_contract(s,ids,'en','full','professional')
-    assert contract.schema['properties']['paragraphs']['maxItems'] == 8
+    assert contract.schema['properties']['paragraphs']['maxItems'] == 11
 
 
-@pytest.mark.parametrize('fact_count',[7,8])
-def test_full_selection_over_schema_paragraph_capacity_is_rejected(fact_count):
+def test_eight_fact_full_selection_that_cannot_fit_body_is_rejected():
     s=source();s['facts']=[];ids=[]
-    for index in range(fact_count):
+    for index in range(8):
         fact_id=f'profile.skills.{index}.name';ids.append(fact_id)
-        s['facts'].append({'id':fact_id,'text':f'Safe fact {index}'})
+        s['facts'].append({'id':fact_id,'text':chr(65+index)*749})
     with pytest.raises(LetterError,match='^input_limit$'):
         build_writing_contract(s,ids,'en','full','professional')
 
@@ -234,6 +235,17 @@ def test_candidate_fit_accepts_exact_quote_with_safe_whitespace_normalization(la
     normalized_variant='  \n '.join(quote.split())
     r['paragraphs'][1]['candidate_evidence'][0]['quote']=normalized_variant
     r['paragraphs'][1]['text']=normalized_variant
+    assert validate_writing(json.dumps(r),c)['content']['body']
+
+
+def test_raw_over_limit_fact_prompt_authorizes_normalized_complete_rendering():
+    s=source();s['facts'][0]['text']=('x   '*600).strip()
+    c=build_writing_contract(s,['profile.summary'],'en','short','professional')
+    prompt=c.messages[0]['content']
+    assert 'Whitespace runs (spaces, tabs, and newlines) may be collapsed to one normal space' in prompt
+    r=response(c);normalized=' '.join(c.projection['candidate_facts'][0]['text'].split())
+    r['paragraphs'][1]['text']=normalized
+    r['paragraphs'][1]['candidate_evidence'][0]['quote']=normalized
     assert validate_writing(json.dumps(r),c)['content']['body']
 
 
@@ -273,6 +285,22 @@ def test_full_letter_uses_one_candidate_fact_per_fit_paragraph():
         'candidate_evidence':[{'id':second['id'],'quote':second['text']}], 'vacancy_evidence':[]})
     assert validate_writing(json.dumps(r),c)['evidence']['selected_fact_ids'] == [
         'profile.summary','profile.skills.0.name']
+
+
+def test_valid_eight_fact_full_response_is_accepted():
+    s=source();s['facts']=[];ids=[]
+    for index in range(8):
+        fact_id=f'profile.skills.{index}.name';ids.append(fact_id)
+        s['facts'].append({'id':fact_id,'text':f'Safe fact {index}'})
+    c=build_writing_contract(s,ids,'en','full','professional')
+    r=response(c)
+    r['paragraphs'][1:2]=[{
+        'kind':'candidate_fit', 'text':fact['text'],
+        'candidate_evidence':[{'id':fact['id'],'quote':fact['text']}],
+        'vacancy_evidence':[],
+    } for fact in c.projection['candidate_facts']]
+    assert len(r['paragraphs']) == 10
+    assert validate_writing(json.dumps(r),c)['evidence']['selected_fact_ids'] == ids
 
 
 def test_candidate_fit_rejects_omitted_selected_fact():
@@ -321,6 +349,19 @@ def test_candidate_fit_rejects_fragment_quote_even_when_visible_text_matches(fac
     r=response(c);r['paragraphs'][1]['candidate_evidence'][0]['quote']=fragment
     r['paragraphs'][1]['text']=fragment
     with pytest.raises(LetterError,match='^validation_candidate_claim_grounding$'):
+        validate_writing(json.dumps(r),c)
+
+
+@pytest.mark.parametrize('changed', [
+    'I maintain Python APIs and write queries.',
+    'SQL queries write and APIs Python maintain I.',
+])
+def test_candidate_fit_rejects_removed_or_reordered_non_whitespace_content(changed):
+    c=build_writing_contract(source(),['profile.summary'],'en','short','professional')
+    r=response(c)
+    r['paragraphs'][1]['text']=changed
+    r['paragraphs'][1]['candidate_evidence'][0]['quote']=changed
+    with pytest.raises(LetterError,match='^validation_evidence_quote$'):
         validate_writing(json.dumps(r),c)
 
 
