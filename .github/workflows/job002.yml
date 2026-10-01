@@ -1,0 +1,42 @@
+name: JOB-002
+
+"on":
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  application-tracker:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      APP_ENV: test
+      DATA_DIR: /tmp/ai-career-agent-job002
+      TRUDVSEM_SYNC_ENABLED: "0"
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: |
+            requirements.txt
+            requirements-dev.txt
+      - run: python -m pip install -r requirements.txt -r requirements-dev.txt
+      - run: python scripts/check_job002_package.py
+      - name: Run inherited dependency-free package gates
+        run: |
+          python scripts/check_ai001_package.py
+          python scripts/check_ai002_package.py
+          python scripts/check_ai003_package.py
+          python scripts/check_ai004_package.py
+          python scripts/check_job001_package.py
+          python scripts/check_ai005_package.py
+          python scripts/check_ai005_r2_package.py
+          python scripts/check_legal001_package.py
+          python scripts/check_ai005_site_qa_package.py
+          python scripts/check_ai_bench_package.py
+      - run: python -m pytest -q tests/test_job002_service.py tests/test_job002_routes.py tests/test_job002_migration.py tests/test_job002_package.py

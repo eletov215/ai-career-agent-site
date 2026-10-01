@@ -105,7 +105,7 @@ def validate(root=ROOT):
         for rel in REQUIRED:
             if not (root/rel).is_file():errors.append('Missing: '+rel)
         has_job001 = (root/'docs/evidence/job-001/change_boundary.json').is_file()
-        expected_head = '20260922_0021' if (root/'docs/evidence/legal-001/change_boundary.json').is_file() else '20260917_0020' if (root/'docs/evidence/ai-005/change_boundary.json').is_file() else '20260917_0019' if has_job001 else '20260916_0018'
+        expected_head = '20261001_0022' if (root/'docs/evidence/job-002/change_boundary.json').is_file() else '20260922_0021' if (root/'docs/evidence/legal-001/change_boundary.json').is_file() else '20260917_0020' if (root/'docs/evidence/ai-005/change_boundary.json').is_file() else '20260917_0019' if has_job001 else '20260916_0018'
         if f'CURRENT_REVISION = "{expected_head}"' not in (root/'database.py').read_text():
             errors.append('Unexpected schema head')
         if has_job001:

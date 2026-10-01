@@ -67,7 +67,7 @@ def validate(root=ROOT):
             if rel.startswith(('services/ai/','evals/','prompts/','schemas/','docs/policies/')) or rel in {
                 'domain/ai.py','config.py','render.yaml','requirements.txt','requirements-dev.txt','docs/LEGAL001_DEFERRED_DECISION.md'}:
                 if not matches(root/rel,sha):errors.append('Protected source changed: '+rel)
-        expected_head='20260922_0021' if (root/'docs/evidence/legal-001/change_boundary.json').is_file() else '20260917_0020'
+        expected_head='20261001_0022' if (root/'docs/evidence/job-002/change_boundary.json').is_file() else '20260922_0021' if (root/'docs/evidence/legal-001/change_boundary.json').is_file() else '20260917_0020'
         if f'CURRENT_REVISION = "{expected_head}"' not in (root/'database.py').read_text():errors.append('Unexpected schema head')
         migration=(root/'migrations/versions/20260917_0020_cover_letters.py').read_text()
         tables={node.args[0].value for node in ast.walk(ast.parse(migration)) if isinstance(node,ast.Call)

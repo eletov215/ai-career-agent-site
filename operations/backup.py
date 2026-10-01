@@ -49,6 +49,7 @@ _INVENTORY_TABLES = (
     "resume_interview_sessions", "resume_interview_events",
     "vacancy_match_series", "vacancy_match_reports",
     "saved_vacancies", "saved_vacancy_sources",
+    "saved_vacancy_trackers", "saved_vacancy_tracker_events",
     "cover_letters", "cover_letter_versions", "cover_letter_proposals",
     "resume_analysis_reports", "resume_analysis_decisions", "resume_analysis_review_events",
     "ai_runtime_policies", "ai_usage_events", "ai_budget_buckets", "ai_request_leases",

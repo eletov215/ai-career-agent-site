@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+{% block title %}Трекер отклика — {{ record.card.title }}{% endblock %}
+{% block head_extra %}<link rel="stylesheet" href="{{ url_for('static', filename='saved_vacancies.css') }}?v=1.1">{% endblock %}
+{% block content %}<main class="section job001-page"><div class="container job001-shell">
+<header><a href="{{ url_for('saved_vacancies.detail', saved_id=record.id) }}">Назад к вакансии</a><h1>Трекер отклика</h1><p>{{ record.card.title }} — {{ record.card.company }}</p></header>
+<section class="job001-notice" aria-labelledby="tracker-boundary"><h2 id="tracker-boundary">Внутренний статус</h2><p>Статус записан пользователем. AI Career Agent не отправляет отклик работодателю и не получает подтверждение от работодателя.</p>{% if tracker.state in ('submitted_user_reported','in_process_user_reported') %}<p><strong>Этот статус записан пользователем и не подтверждён работодателем.</strong></p>{% endif %}</section>
+<section class="job001-card"><h2>Текущий статус</h2><p><strong>{{ labels[tracker.state] }}</strong></p><p class="job001-muted">Версия {{ tracker.revision }}</p>
+{% if targets %}<form action="{{ url_for('application_trackers.transition', saved_id=record.id) }}" method="post"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="expected_revision" value="{{ tracker.revision }}"><label for="tracker-state">Изменить статус</label><select id="tracker-state" name="state" required>{% for state in states %}{% if state in targets %}<option value="{{ state }}">{{ labels[state] }}</option>{% endif %}{% endfor %}</select><button class="btn btn-primary" type="submit">Сохранить статус</button></form>{% endif %}</section>
+<section class="job001-card"><h2>История</h2>{% if tracker.events %}<ol>{% for event in tracker.events %}<li><time>{{ event.created_at|saved_time }}</time>: {{ labels[event.from_state] }} → {{ labels[event.to_state] }}{% if event.to_state in ('submitted_user_reported','in_process_user_reported') %} — записано пользователем, не подтверждено работодателем{% endif %}</li>{% endfor %}</ol>{% else %}<p>Переходов пока нет.</p>{% endif %}</section>
+</div></main>{% endblock %}

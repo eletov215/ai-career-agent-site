@@ -2,6 +2,17 @@
 import shutil
 from scripts.check_ai005_package import CHANGES,NEW_RUNTIME,EVIDENCE
 
+
+def copy_job002_boundary(root, destination):
+    if not (root/'docs/evidence/job-002/change_boundary.json').is_file():
+        return
+    from scripts.check_job002_package import (EVIDENCE as JOB002_EVIDENCE,
+        EXISTING_RUNTIME, GUARD_CHANGES, NEW_RUNTIME as JOB002_NEW)
+    for rel in EXISTING_RUNTIME | GUARD_CHANGES | JOB002_NEW | {
+            JOB002_EVIDENCE, 'scripts/check_job002_package.py'}:
+        target=destination/rel;target.parent.mkdir(parents=True,exist_ok=True)
+        shutil.copy2(root/rel,target)
+
 def copy_ai005_boundary(root,destination):
     if not (root/'docs/evidence/ai-005/change_boundary.json').is_file():return
     for rel in CHANGES|NEW_RUNTIME|EVIDENCE:
@@ -33,3 +44,5 @@ def copy_ai005_boundary(root,destination):
                                    'scripts/check_ai005_live_qa_boundary.py', 'domain/ai.py'}:
             target=destination/rel;target.parent.mkdir(parents=True,exist_ok=True)
             shutil.copy2(root/rel,target)
+
+    copy_job002_boundary(root, destination)

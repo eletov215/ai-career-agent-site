@@ -13,7 +13,7 @@ def test_0020_to_0021_round_trip_and_owner_cascade(tmp_path):
             s.add(User(id=owner,status="active",email_verified_at=1,created_at=1,updated_at=1))
         upgrade_database(url,"20260922_0021")
         assert current_revision(db.engine)=="20260922_0021"
-        assert CURRENT_REVISION=="20260922_0021"
+        assert CURRENT_REVISION=="20261001_0022"
         inspector=inspect(db.engine)
         assert "ai_consents" in inspector.get_table_names()
         columns={c["name"] for c in inspector.get_columns("ai_consents")}
