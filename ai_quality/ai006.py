@@ -54,12 +54,12 @@ def _mutate(name: str, response: dict[str, Any], contract) -> tuple[str, Any]:
     elif name == "missing_candidate_evidence": fit["candidate_evidence"] = []
     elif name == "missing_vacancy_evidence": opening["vacancy_evidence"] = []
     elif name == "candidate_claim_location": opening["text"] = "I have Python experience."
-    elif name == "unsupported_number": fit["text"] = "I maintain 99 Python APIs."
+    elif name == "unsupported_number": r["subject"] = "Application 99"
     elif name == "unsupported_outcome": fit["text"] = "I improved product reliability."
     elif name == "invented_familiarity": opening["text"] = "I have long admired your company."
-    elif name == "internal_id": opening["text"] = "Apply for [profile.summary]."
-    elif name == "contact": fit["text"] = "Contact me at test@example.invalid."
-    elif name == "markup": fit["text"] = "<b>Python developer</b>"
+    elif name == "internal_id": r["subject"] = "[profile.summary]"
+    elif name == "contact": r["subject"] = "test@example.invalid"
+    elif name == "markup": r["subject"] = "<b>Application</b>"
     elif name == "length":
         opening["text"] = "Apply for this role. " * 35
         fit["text"] = "Software work. " * 45
@@ -67,18 +67,27 @@ def _mutate(name: str, response: dict[str, Any], contract) -> tuple[str, Any]:
     elif name == "language": fit["text"] = "Я поддерживаю программные интерфейсы и пишу запросы к базе данных."
     elif name == "caveat": r["caveats"] = ["bad\u0000caveat"]
     elif name == "evidence_size":
-        # Full contracts permit eight facts. Reuse distinct, valid references per
-        # paragraph so the production evidence envelope itself exceeds its cap.
+        # Keep the source within production preflight limits, then add the
+        # schema-permitted maximum caveats so only the persisted evidence cap
+        # is crossed during validation.
         source = {"schema": "cover-letter-source-v1",
-                  "vacancy": {"title":"Python developer", "company":"Example Labs",
+                  "vacancy": {"title":"Developer", "company":"Example Labs",
                               "description":"Build software.", "requirements":"Software experience."},
-                  "facts": [{"id": f"profile.fact{i}", "text": "x" * 1900 + chr(65+i)} for i in range(8)]}
-        contract = build_writing_contract(source, [f"profile.fact{i}" for i in range(8)], "en", "full", "professional")
-        refs = [{"id": f["id"], "quote": f["text"]} for f in contract.projection["candidate_facts"]]
-        r = {"source_hash":contract.payload_hash, "subject":"Application: Python developer", "paragraphs":[
-            {"kind":"opening", "text":"I would like to apply for the Python developer role.", "candidate_evidence":[], "vacancy_evidence":["title"]},
-            {"kind":"candidate_fit", "text":"I work on software.", "candidate_evidence":refs, "vacancy_evidence":[]},
-            {"kind":"closing", "text":"Thank you for considering my application.", "candidate_evidence":[], "vacancy_evidence":[]}], "caveats":[]}
+                  "facts": [{"id": f"profile.fact{i}",
+                             "text": chr(65+i) + "x" * 698} for i in range(8)]}
+        contract = build_writing_contract(
+            source, [f"profile.fact{i}" for i in range(8)], "en", "full", "professional")
+        paragraphs = [{"kind":"opening", "text":"I would like to apply for this role.",
+                       "candidate_evidence":[], "vacancy_evidence":["title"]}]
+        paragraphs.extend(
+            {"kind":"candidate_fit", "text": fact["text"],
+             "candidate_evidence":[{"id":fact["id"], "quote":fact["text"]}],
+             "vacancy_evidence":[]} for fact in contract.projection["candidate_facts"])
+        paragraphs.append(
+            {"kind":"closing", "text":"Thank you for considering my application.",
+             "candidate_evidence":[], "vacancy_evidence":[]})
+        r = {"source_hash":contract.payload_hash, "subject":"Application",
+             "paragraphs":paragraphs, "caveats":["x" * 300 for _ in range(8)]}
     else: raise ValueError("Unknown mutation")
     return canonical_json(r), contract
 

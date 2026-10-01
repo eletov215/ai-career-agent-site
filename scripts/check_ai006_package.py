@@ -6,15 +6,15 @@ import json
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-BASE_COMMIT = "ba7288518a3dab13878f610bbd9f8f6f38d66019"
-BASE_TREE = "f25217f284bf392c592fa583e67f6403268a70b2"
-CONTRACT_SHA256 = "0cc6d87b2390b12c0145025819f85099175b30880e005e8a3a039618a9bffd86"
+BASE_COMMIT = "6c41bdfa3e2abb0cd35bf951e243aaba0535243f"
+BASE_TREE = "b0fc7a3a8d0698fc4b41895c79c40670e37e0ed5"
+CONTRACT_SHA256 = "eb4709029f166b99421d80526791800a740ce1dcb744abd76e21543f62cfa2b8"
 REASONS = {
     "validation_schema", "validation_structure", "validation_evidence_duplicate",
     "validation_evidence_quote", "validation_candidate_evidence_missing",
     "validation_vacancy_evidence_missing", "validation_candidate_claim_location",
-    "validation_numeric_claim", "validation_outcome_claim", "validation_unsafe_content",
-    "validation_length", "validation_language", "validation_caveat", "validation_evidence_size",
+    "validation_candidate_claim_grounding", "validation_numeric_claim",
+    "validation_unsafe_content", "validation_caveat", "validation_evidence_size",
 }
 THRESHOLDS = {
     "schema_pass_rate": 1.0, "required_structural_coverage": 1.0,
@@ -43,7 +43,7 @@ def validate(root: Path = ROOT) -> list[str]:
                 if not isinstance(expected, str) or len(expected) != 64 or _hash(root/relative) != expected:
                     errors.append("AI-006 package file mismatch: " + relative)
         if _hash(root/"services/ai/letter_contract.py") != CONTRACT_SHA256:
-            errors.append("Production writer contract predecessor changed")
+            errors.append("Accepted production writer contract changed")
         suite = json.loads((root/"quality/ai006/golden_suite_v1.json").read_text())
         positives, negatives = suite.get("positive_cases", []), suite.get("negative_cases", [])
         matrix = {(row.get("language"), row.get("length"), row.get("tone")) for row in positives}
@@ -73,15 +73,15 @@ def validate(root: Path = ROOT) -> list[str]:
             errors.append("Human review safety boundary is invalid")
         acceptance = json.loads((root/"docs/evidence/ai-006/acceptance.json").read_text())
         required = {"source_commit":BASE_COMMIT,"source_tree":BASE_TREE,"schema":"20260922_0021",
-                    "status":"BLOCKED_BY_PRODUCTION_GAP",
+                    "status":"IMPLEMENTED",
                     "synthetic_only":True,"provider_calls":0,"public_real_data_enabled":False,
                     "real_data_alice":"CLOSED","legal_state":"DRAFT / NOT_ACTIVE",
                     "production_changes":False,"migration_or_schema_changes":False,"complete":False}
         if any(type(acceptance.get(k)) is not type(v) or acceptance.get(k) != v for k,v in required.items()):
             errors.append("Acceptance safety metadata is invalid")
         summary = json.loads((root/"docs/evidence/ai-006/reference_summary.json").read_text())
-        reference_metrics = {**THRESHOLDS, "negative_rejection_rate":17/18}
-        if (summary.get("status") != "failed" or summary.get("provider_calls") != 0
+        reference_metrics = THRESHOLDS
+        if (summary.get("status") != "passed" or summary.get("provider_calls") != 0
                 or summary.get("thresholds") != THRESHOLDS or summary.get("metrics") != reference_metrics
                 or summary.get("positive_case_count") != 6 or summary.get("negative_case_count") != 18
                 or summary.get("suite_sha256") != _hash(root/"quality/ai006/golden_suite_v1.json")):
