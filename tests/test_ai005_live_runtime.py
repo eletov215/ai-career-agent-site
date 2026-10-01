@@ -193,7 +193,18 @@ def test_eight_fact_full_selection_builds_preview_without_provider_usage(live):
     assert not x.transport.calls and not events(x)
 
 
-@pytest.mark.parametrize('unsafe_fact',['<b>Built APIs</b>','I have long admired this company.'])
+@pytest.mark.parametrize('unsafe_fact',[
+    '<b>Built APIs</b>',
+    'I have long admired this company.',
+    'I have long\tadmired this company.',
+    'I have long\nadmired this company.',
+    'I have long\u00a0admired this company.',
+    'I have long    admired this company.',
+    'Я давно\tслежу за компанией.',
+    'Я давно\nслежу за компанией.',
+    'Я давно\u00a0слежу за компанией.',
+    'Я давно    слежу за компанией.',
+])
 def test_unsafe_verbatim_fact_is_rejected_during_preview_without_usage(live,unsafe_fact):
     x=live;value=profile_payload();value['summary']=unsafe_fact
     x.e.profile.save(user_id=x.e.owner,payload=value,expected_version=1)

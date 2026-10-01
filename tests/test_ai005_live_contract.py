@@ -223,6 +223,39 @@ def test_selected_fact_rejected_when_verbatim_text_is_inherently_unsafe(unsafe_f
         build_writing_contract(s,['profile.summary'],'en','short','professional')
 
 
+@pytest.mark.parametrize('unsafe_fact', [
+    'I have long\tadmired this company.',
+    'I have long\nadmired this company.',
+    'I have long\u00a0admired this company.',
+    'I have long    admired this company.',
+    'Я давно\tслежу за компанией.',
+    'Я давно\nслежу за компанией.',
+    'Я давно\u00a0слежу за компанией.',
+    'Я давно    слежу за компанией.',
+])
+def test_selected_fact_familiarity_filter_uses_grounding_whitespace(unsafe_fact):
+    s=source();s['facts'][0]['text']=unsafe_fact
+    with pytest.raises(LetterError,match='^invalid_source$'):
+        build_writing_contract(s,['profile.summary'],'en','short','professional')
+
+
+@pytest.mark.parametrize('unsafe_subject', [
+    'I have long\tadmired this company.',
+    'I have long\nadmired this company.',
+    'I have long\u00a0admired this company.',
+    'I have long    admired this company.',
+    'Я давно\tслежу за компанией.',
+    'Я давно\nслежу за компанией.',
+    'Я давно\u00a0слежу за компанией.',
+    'Я давно    слежу за компанией.',
+])
+def test_visible_familiarity_filter_uses_grounding_whitespace(unsafe_subject):
+    c=build_writing_contract(source(),['profile.summary'],'en','short','professional')
+    r=response(c);r['subject']=unsafe_subject
+    with pytest.raises(LetterError,match='^validation_unsafe_content$'):
+        validate_writing(json.dumps(r),c)
+
+
 def test_exact_quote_metric_is_allowed_not_a_calculated_metric():
     s=source();s['facts'][0]['text']='I wrote 12 API tests.'
     c=build_writing_contract(s,['profile.summary'],'en','short','professional')

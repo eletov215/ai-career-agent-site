@@ -193,7 +193,8 @@ def build_writing_contract(source: dict, fact_ids: list[str], language: str,
     if CONTACT.search(projected):
         # Do not silently redact facts and then claim the original was sent.
         raise LetterError('contact_data_present')
-    if any(MARKUP.search(f['text']) or PRIOR_FAMILIARITY.search(f['text']) for f in facts):
+    if any(MARKUP.search(f['text'])
+           or PRIOR_FAMILIARITY.search(_grounding_text(f['text'])) for f in facts):
         # Verbatim facts matching visible-prose filters can never validate.
         raise LetterError('invalid_source')
     bound = digest(projection)
@@ -318,14 +319,16 @@ def validate_writing(raw: str, contract: LetterContract) -> dict:
                 for pattern in OUTCOME_FAMILIES:
                     if re.search(pattern,prose,re.I) and not re.search(pattern,support,re.I):
                         _invalid('validation_outcome_claim')
-            if CONTACT.search(prose) or MARKUP.search(prose) or PRIOR_FAMILIARITY.search(prose):
+            if (CONTACT.search(prose) or MARKUP.search(prose)
+                    or PRIOR_FAMILIARITY.search(_grounding_text(prose))):
                 _invalid('validation_unsafe_content')
         if (set(candidate_fit_ids) != set(facts)
                 or any(candidate_fit_ids.count(fact_id) != 1 for fact_id in facts)):
             _invalid('validation_candidate_claim_grounding')
-        subject = text(result['subject'], MAX_SUBJECT, multiline=False)
-        if CONTACT.search(subject) or MARKUP.search(subject) or PRIOR_FAMILIARITY.search(subject):
+        if (CONTACT.search(result['subject']) or MARKUP.search(result['subject'])
+                or PRIOR_FAMILIARITY.search(_grounding_text(result['subject']))):
             _invalid('validation_unsafe_content')
+        subject = text(result['subject'], MAX_SUBJECT, multiline=False)
         if not _numbers(subject) <= _numbers(canonical(projected['vacancy'])):
             _invalid('validation_numeric_claim')
         if not _safe_framing(subject, 'subject', contract.language):
