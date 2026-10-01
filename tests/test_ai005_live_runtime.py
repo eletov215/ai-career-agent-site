@@ -44,7 +44,7 @@ class StubTransport:
         fact=data['candidate_facts'][0]
         body={'source_hash':data['source_hash'],'subject':'Application',
               'paragraphs':[
-                {'kind':'opening','text':'I would like to apply for the Python Developer role.',
+                {'kind':'opening','text':'I would like to apply for this role.',
                  'candidate_evidence':[],'vacancy_evidence':['title']},
                 {'kind':'candidate_fit','text':fact['text'],
                  'candidate_evidence':[{'id':fact['id'],'quote':fact['text']}],'vacancy_evidence':[]},

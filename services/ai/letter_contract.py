@@ -33,14 +33,14 @@ PRIOR_FAMILIARITY = re.compile(r'long admired|been following|followed your (?:wo
 FRAMING_PATTERNS = {
     'en': {
         'opening': (
-            r'I would like to apply for (?:the )?(?:\{vacancy\}|this) (?:role|position)',
-            r'I am applying for (?:the (?:role|position) of )?\{vacancy\}',
-            r'I am interested in (?:the )?(?:\{vacancy\}|this) (?:role|position)',
+            r'I would like to apply for this role',
+            r'I am applying for this position',
+            r'I am interested in this role',
         ),
         'motivation': (
-            r'I am interested in (?:this|the \{vacancy\}) (?:role|position)',
-            r'The \{vacancy\} (?:role|position) interests me',
-            r'I would welcome the opportunity to contribute to \{vacancy\}',
+            r'I am interested in this role',
+            r'This position interests me',
+            r'I would welcome the opportunity to contribute in this role',
         ),
         'closing': (
             r'Thank you for considering my application',
@@ -50,13 +50,13 @@ FRAMING_PATTERNS = {
     },
     'ru': {
         'opening': (
-            r'\u0425\u043e\u0447\u0443 \u043e\u0442\u043a\u043b\u0438\u043a\u043d\u0443\u0442\u044c\u0441\u044f \u043d\u0430 (?:\u0432\u0430\u043a\u0430\u043d\u0441\u0438\u044e )?(?:\{vacancy\}|\u044d\u0442\u0443 \u0432\u0430\u043a\u0430\u043d\u0441\u0438\u044e)',
-            r'\u041c\u0435\u043d\u044f \u0437\u0430\u0438\u043d\u0442\u0435\u0440\u0435\u0441\u043e\u0432\u0430\u043b\u0430 \u0432\u0430\u043a\u0430\u043d\u0441\u0438\u044f \{vacancy\}',
-            r'\u041c\u043d\u0435 \u0438\u043d\u0442\u0435\u0440\u0435\u0441\u043d\u0430 (?:\u0432\u0430\u043a\u0430\u043d\u0441\u0438\u044f )?\{vacancy\}',
+            r'\u0425\u043e\u0447\u0443 \u043e\u0442\u043a\u043b\u0438\u043a\u043d\u0443\u0442\u044c\u0441\u044f \u043d\u0430 \u044d\u0442\u0443 \u0432\u0430\u043a\u0430\u043d\u0441\u0438\u044e',
+            r'\u041c\u0435\u043d\u044f \u0437\u0430\u0438\u043d\u0442\u0435\u0440\u0435\u0441\u043e\u0432\u0430\u043b\u0430 \u044d\u0442\u0430 \u0432\u0430\u043a\u0430\u043d\u0441\u0438\u044f',
+            r'\u041c\u043d\u0435 \u0438\u043d\u0442\u0435\u0440\u0435\u0441\u043d\u0430 \u044d\u0442\u0430 \u0432\u0430\u043a\u0430\u043d\u0441\u0438\u044f',
         ),
         'motivation': (
-            r'\u041c\u043d\u0435 \u0438\u043d\u0442\u0435\u0440\u0435\u0441\u043d\u0430 (?:\u044d\u0442\u0430 \u0432\u0430\u043a\u0430\u043d\u0441\u0438\u044f|\u0432\u0430\u043a\u0430\u043d\u0441\u0438\u044f \{vacancy\})',
-            r'\u0425\u043e\u0447\u0443 \u0432\u043d\u0435\u0441\u0442\u0438 \u0432\u043a\u043b\u0430\u0434 \u0432 \{vacancy\}',
+            r'\u041c\u043d\u0435 \u0438\u043d\u0442\u0435\u0440\u0435\u0441\u043d\u0430 \u044d\u0442\u0430 \u0432\u0430\u043a\u0430\u043d\u0441\u0438\u044f',
+            r'\u0425\u043e\u0447\u0443 \u0432\u043d\u0435\u0441\u0442\u0438 \u0432\u043a\u043b\u0430\u0434 \u0432 \u044d\u0442\u043e\u0439 \u0440\u043e\u043b\u0438',
         ),
         'closing': (
             r'\u0421\u043f\u0430\u0441\u0438\u0431\u043e \u0437\u0430 \u0440\u0430\u0441\u0441\u043c\u043e\u0442\u0440\u0435\u043d\u0438\u0435 (?:\u043c\u043e\u0435\u0433\u043e )?\u043e\u0442\u043a\u043b\u0438\u043a\u0430',
@@ -67,19 +67,18 @@ FRAMING_PATTERNS = {
     },
 }
 # These are the exact provider-facing renderings of the framing allowlist. The
-# ``<vacancy>`` slot may contain only the complete normalized vacancy title;
-# all other characters are fixed. Subjects deliberately have no untrusted slot.
+# All characters are fixed; untrusted vacancy text is never rendered as framing.
 PROVIDER_FRAMING_TEMPLATES = {
     'en': {
         'opening': (
-            'I would like to apply for the <vacancy> role.',
-            'I am applying for the role of <vacancy>.',
-            'I am interested in the <vacancy> position.',
+            'I would like to apply for this role.',
+            'I am applying for this position.',
+            'I am interested in this role.',
         ),
         'motivation': (
-            'I am interested in the <vacancy> role.',
-            'The <vacancy> position interests me.',
-            'I would welcome the opportunity to contribute to <vacancy>.',
+            'I am interested in this role.',
+            'This position interests me.',
+            'I would welcome the opportunity to contribute in this role.',
         ),
         'closing': (
             'Thank you for considering my application.',
@@ -89,13 +88,13 @@ PROVIDER_FRAMING_TEMPLATES = {
     },
     'ru': {
         'opening': (
-            'Хочу откликнуться на вакансию <vacancy>.',
-            'Меня заинтересовала вакансия <vacancy>.',
-            'Мне интересна вакансия <vacancy>.',
+            'Хочу откликнуться на эту вакансию.',
+            'Меня заинтересовала эта вакансия.',
+            'Мне интересна эта вакансия.',
         ),
         'motivation': (
-            'Мне интересна вакансия <vacancy>.',
-            'Хочу внести вклад в <vacancy>.',
+            'Мне интересна эта вакансия.',
+            'Хочу внести вклад в этой роли.',
         ),
         'closing': (
             'Спасибо за рассмотрение моего отклика.',
@@ -104,8 +103,6 @@ PROVIDER_FRAMING_TEMPLATES = {
         'subject': ('Отклик',),
     },
 }
-MAX_FRAMING_VACANCY_CHARS = 500
-MAX_FRAMING_VACANCY_WORDS = 32
 OUTCOME_FAMILIES = (
     r'improv|\u0443\u043b\u0443\u0447\u0448', r'increas|\u0443\u0432\u0435\u043b\u0438\u0447',
     r'reduc|\u0441\u043d\u0438\u0437|\u0441\u043e\u043a\u0440\u0430\u0442', r'accelerat|\u0443\u0441\u043a\u043e\u0440',
@@ -150,24 +147,17 @@ def _grounding_text(value: str) -> str:
 
 def _safe_framing(value: str, kind: str, language: str,
                   vacancy: dict, evidence: list[str]) -> bool:
-    """Accept fixed intent templates whose only slot is the complete role title."""
+    """Accept only fixed, title-free intent templates."""
     rendered = _grounding_text(value).rstrip(' .!?')
-    for pattern in FRAMING_PATTERNS[language][kind]:
-        if r'\{vacancy\}' not in pattern:
-            if re.fullmatch(pattern, rendered, re.I):
-                return True
-            continue
-        bounded_slot = rf'(?P<vacancy>.{{1,{MAX_FRAMING_VACANCY_CHARS}}}?)'
-        match = re.fullmatch(pattern.replace(r'\{vacancy\}', bounded_slot), rendered, re.I)
-        if not match:
-            continue
-        phrase = _grounding_text(match.group('vacancy'))
-        if (phrase and len(phrase) <= MAX_FRAMING_VACANCY_CHARS
-                and len(phrase.split()) <= MAX_FRAMING_VACANCY_WORDS
-                and 'title' in evidence
-                and phrase.casefold() == _grounding_text(vacancy['title']).casefold()):
-            return True
-    return False
+    return any(re.fullmatch(pattern, rendered, re.I)
+               for pattern in FRAMING_PATTERNS[language][kind])
+
+
+def _mandatory_framing_length(language: str) -> int:
+    """Exact minimum opening plus closing length advertised to the provider."""
+    templates = PROVIDER_FRAMING_TEMPLATES[language]
+    return (min(map(len, templates['opening']))
+            + min(map(len, templates['closing'])))
 
 
 @dataclass(frozen=True, slots=True)
@@ -228,7 +218,7 @@ def build_writing_contract(source: dict, fact_ids: list[str], language: str,
     # Every selected fact must be emitted whole in its own candidate_fit
     # paragraph. Reject selections for which the response schema or total body
     # limit makes that contract impossible, before a provider can be called.
-    framing_min = 8 if language == 'ru' else 2
+    framing_min = _mandatory_framing_length(language)
     normalized_fact_lengths = [len(_grounding_text(f['text'])) for f in facts]
     if (any(fact_length > MAX_PARAGRAPH_TEXT for fact_length in normalized_fact_lengths)
             or len(facts) + 2 > MAX_PARAGRAPHS[length]
@@ -291,9 +281,8 @@ def build_writing_contract(source: dict, fact_ids: list[str], language: str,
         'Short means at most 1800 visible body characters; full at most 6000. '
         'Provide opening first, one or more candidate_fit paragraphs, and closing last. '
         'Copy the supplied source_hash exactly. Audit each factual sentence against its cited sources. '
-        'The exact allowed framing templates are listed next. Replace <vacancy> only with the complete '
-        'whitespace-normalized vacancy title and cite title; do not alter any other wording. Subject has no '
-        'untrusted vacancy slot: '
+        'The exact allowed title-free framing templates are listed next. Do not alter their wording. '
+        'No framing or subject may reproduce vacancy text: '
         + canonical(PROVIDER_FRAMING_TEMPLATES[language])
     )
     messages = [{'role':'system','content':system},

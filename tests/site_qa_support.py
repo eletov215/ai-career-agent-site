@@ -48,7 +48,7 @@ class RecordingTransport:
             return {'ok': True, 'envelope': {'choices': []}}
         data = json.loads(payload['body']['messages'][1]['content'])
         ru = data['preferences']['language'] == 'ru'
-        opening = ('\u041c\u0435\u043d\u044f \u0437\u0430\u0438\u043d\u0442\u0435\u0440\u0435\u0441\u043e\u0432\u0430\u043b\u0430 \u0432\u0430\u043a\u0430\u043d\u0441\u0438\u044f ' if ru else 'I am applying for the role of ') + data['vacancy']['title'] + '.'
+        opening = ('\u041c\u0435\u043d\u044f \u0437\u0430\u0438\u043d\u0442\u0435\u0440\u0435\u0441\u043e\u0432\u0430\u043b\u0430 \u044d\u0442\u0430 \u0432\u0430\u043a\u0430\u043d\u0441\u0438\u044f.' if ru else 'I am applying for this position.')
         closing = ('\u0421\u043f\u0430\u0441\u0438\u0431\u043e \u0437\u0430 \u0440\u0430\u0441\u0441\u043c\u043e\u0442\u0440\u0435\u043d\u0438\u0435 \u043c\u043e\u0435\u0439 \u043a\u0430\u043d\u0434\u0438\u0434\u0430\u0442\u0443\u0440\u044b.' if ru else 'Thank you for considering my application.')
         fact = data['candidate_facts'][0]
         response = {'source_hash': data['source_hash'],
