@@ -15,6 +15,8 @@ def _copy(tmp_path):
         target = tmp_path/relative
         target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(ROOT/relative, target)
+    from tests.ai005_boundary_helper import copy_job002_boundary
+    copy_job002_boundary(ROOT, tmp_path)
 
 
 def test_live_qa_successor_boundary_is_exact():

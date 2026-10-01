@@ -33,11 +33,15 @@ class SavedVacancyTrackerEvent(Base):
         CheckConstraint(f"from_state IN ({_VALID})", name='ck_tracker_event_from_state'),
         CheckConstraint(f"to_state IN ({_VALID})", name='ck_tracker_event_to_state'),
         CheckConstraint('from_state <> to_state', name='ck_tracker_event_changed'),
-        Index('idx_tracker_event_owner_saved_created', 'user_id', 'saved_vacancy_id', 'created_at', 'id'),
+        CheckConstraint('event_revision >= 1', name='ck_tracker_event_revision'),
+        UniqueConstraint('user_id', 'saved_vacancy_id', 'event_revision',
+                         name='uq_tracker_event_owner_saved_revision'),
+        Index('idx_tracker_event_owner_saved_revision', 'user_id', 'saved_vacancy_id', 'event_revision'),
     )
     id: Mapped[str] = mapped_column(String(36), primary_key=True)
     saved_vacancy_id: Mapped[str] = mapped_column(String(36), nullable=False)
     user_id: Mapped[str] = mapped_column(String(36), nullable=False)
     from_state: Mapped[str] = mapped_column(String(32), nullable=False)
     to_state: Mapped[str] = mapped_column(String(32), nullable=False)
+    event_revision: Mapped[int] = mapped_column(Integer, nullable=False)
     created_at: Mapped[int] = mapped_column(BigInteger, nullable=False)

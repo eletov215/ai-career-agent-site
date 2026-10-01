@@ -276,7 +276,8 @@ class PrivacyRepository(RepositoryBase):
                 SavedVacancyTracker.created_at, SavedVacancyTracker.saved_vacancy_id).limit(MAX_SAVED+1)).all()
             tracker_events = session.scalars(select(SavedVacancyTrackerEvent).where(
                 SavedVacancyTrackerEvent.user_id == user.id).order_by(
-                SavedVacancyTrackerEvent.created_at, SavedVacancyTrackerEvent.id).limit(MAX_SAVED*100+1)).all()
+                SavedVacancyTrackerEvent.saved_vacancy_id,
+                SavedVacancyTrackerEvent.event_revision).limit(MAX_SAVED*100+1)).all()
             tracker_ids = {row.saved_vacancy_id for row in tracker_rows}
             if (len(tracker_rows) > MAX_SAVED or len(tracker_events) > MAX_SAVED*100
                     or not tracker_ids <= saved_ids
@@ -541,6 +542,10 @@ class PrivacyRepository(RepositoryBase):
             "cover_letter_proposals": self._count(session, CoverLetterProposal, CoverLetterProposal.user_id == user_id),
             "saved_vacancies": self._count(session, SavedVacancy, SavedVacancy.user_id == user_id),
             "saved_vacancy_sources": self._count(session, SavedVacancySource, SavedVacancySource.user_id == user_id),
+            "saved_vacancy_trackers": self._count(session, SavedVacancyTracker, SavedVacancyTracker.user_id == user_id),
+            "saved_vacancy_tracker_events": self._count(
+                session, SavedVacancyTrackerEvent, SavedVacancyTrackerEvent.user_id == user_id
+            ),
             "vacancy_match_reports": self._count(session, VacancyMatchReport, VacancyMatchReport.user_id == user_id),
             "vacancy_match_series": self._count(session, VacancyMatchSeries, VacancyMatchSeries.user_id == user_id),
             "resume_interview_sessions": self._count(session, ResumeInterviewSession, ResumeInterviewSession.user_id == user_id),

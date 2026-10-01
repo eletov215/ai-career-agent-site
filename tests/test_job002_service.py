@@ -59,8 +59,12 @@ def test_every_allowed_and_disallowed_transition():
 
 def test_later_transition_revision_events_owner_isolation_and_cascades(tracker_env):
     e=tracker_env;e.svc.transition(e.owner,e.saved,'submitted_user_reported',0,now=10)
-    second=e.svc.transition(e.owner,e.saved,'in_process_user_reported',1,now=11)
+    second=e.svc.transition(e.owner,e.saved,'in_process_user_reported',1,now=10)
     assert second['revision']==2
+    history=e.svc.get(e.owner,e.saved)['events']
+    assert [(event['event_revision'],event['from_state'],event['to_state']) for event in history]==[
+        (2,'submitted_user_reported','in_process_user_reported'),
+        (1,'saved','submitted_user_reported')]
     with pytest.raises(TrackerError,match='not_found'):e.svc.get(e.other,e.saved)
     with pytest.raises(TrackerError,match='not_found'):e.svc.transition(e.other,e.saved,'closed',2,now=12)
     snapshot,_=PrivacyRepository(e.db).export_snapshot(e.owner,expected_password_hash='hash')
@@ -75,7 +79,11 @@ def test_later_transition_revision_events_owner_isolation_and_cascades(tracker_e
 
 def test_account_delete_cascades_tracker_subtree(tracker_env):
     e=tracker_env;e.svc.transition(e.owner,e.saved,'closed',0,now=10)
-    with e.db.session() as s,s.begin():s.execute(delete(User).where(User.id==e.owner))
+    counts=PrivacyRepository(e.db).delete_account(
+        e.owner,expected_password_hash='hash',now=11)
+    assert counts['saved_vacancy_trackers']==1
+    assert counts['saved_vacancy_tracker_events']==1
     with e.db.session() as s:
+        assert s.get(User,e.owner) is None
         assert s.scalar(select(func.count()).select_from(SavedVacancyTracker))==0
         assert s.scalar(select(func.count()).select_from(SavedVacancyTrackerEvent))==0

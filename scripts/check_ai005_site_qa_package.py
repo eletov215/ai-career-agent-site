@@ -54,6 +54,10 @@ def validate(root=ROOT):
         if live_qa.is_file():
             from scripts.check_ai005_live_qa_boundary import successor_hashes as live_qa_hashes
             protected.update(live_qa_hashes(root))
+        job002 = root/'docs/evidence/job-002/change_boundary.json'
+        if job002.is_file():
+            from scripts.check_job002_package import successor_hashes as job002_hashes
+            protected.update({rel: row['current_sha256'] for rel, row in job002_hashes(root).items()})
         evidence = json.loads((root/'docs/evidence/ai-005-site-qa/change_boundary.json').read_text())
         if (evidence['source_commit'] != BASE or evidence['source_tree'] != TREE
                 or evidence['real_data_enabled'] is not False or evidence['legal_state'] != 'DRAFT'

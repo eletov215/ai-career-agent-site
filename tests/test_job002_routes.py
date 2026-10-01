@@ -27,7 +27,8 @@ def tracker_web(job_env):
     service=ApplicationTrackerService(ApplicationTrackerRepository(job_env.db))
     app.register_blueprint(create_application_trackers_blueprint(service,job_env.svc))
     app.jinja_loader=ChoiceLoader([DictLoader({'base.html':'<meta name="csrf-token" content="{{ csrf_token() }}">{% block head_extra %}{% endblock %}{% block content %}{% endblock %}'}),FileSystemLoader(ROOT/'templates')])
-    return SimpleNamespace(client=app.test_client(),identity=identity,saved=saved,env=job_env)
+    return SimpleNamespace(client=app.test_client(),identity=identity,saved=saved,env=job_env,
+                           service=service)
 
 
 def csrf(response):
@@ -53,3 +54,13 @@ def test_tracker_cross_owner_is_404(tracker_web):
     w=tracker_web;w.identity.user.id=w.env.other
     url=f"/saved-vacancies/{w.saved['id']}/tracker"
     assert w.client.get(url).status_code==404
+
+
+def test_same_second_history_renders_actual_transition_chain(tracker_web):
+    w=tracker_web
+    w.service.transition(w.env.owner,w.saved['id'],'submitted_user_reported',0,now=10)
+    w.service.transition(w.env.owner,w.saved['id'],'in_process_user_reported',1,now=10)
+    body=w.client.get(f"/saved-vacancies/{w.saved['id']}/tracker").get_data(as_text=True)
+    latest='Отклик отправлен (со слов пользователя) → Процесс продолжается (со слов пользователя)'
+    first='Сохранено → Отклик отправлен (со слов пользователя)'
+    assert body.index(latest) < body.index(first)

@@ -13,3 +13,6 @@ def copy_job001_boundary(root: Path, destination: Path):
 
     from tests.ai005_boundary_helper import copy_ai005_boundary
     copy_ai005_boundary(root, destination)
+
+    from tests.ai005_boundary_helper import copy_job002_boundary
+    copy_job002_boundary(root, destination)

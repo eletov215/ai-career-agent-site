@@ -42,13 +42,20 @@ def successor_hashes(root: Path = ROOT) -> dict[str, str]:
             or evidence.get('paid_provider_calls') != 0
             or set(rows) != CHANGES):
         raise ValueError('Invalid AI-005 live QA successor scope')
+    job002 = {}
+    if (root/'docs/evidence/job-002/change_boundary.json').is_file():
+        from scripts.check_job002_package import successor_hashes as job002_hashes
+        job002 = job002_hashes(root)
     for relative, row in rows.items():
         if (set(row) != {'previous_sha256', 'current_sha256'}
                 or row['previous_sha256'] != PREVIOUS[relative]):
             raise ValueError('Invalid AI-005 live QA hash transition')
         superseded = (relative == 'services/ai/letter_contract.py'
                       and (root/DIAGNOSTIC_EVIDENCE).is_file())
-        if not superseded and not _matches(root/relative, row['current_sha256']):
+        expected = job002.get(relative, {}).get('current_sha256', row['current_sha256'])
+        if relative in job002 and job002[relative]['previous_sha256'] != row['current_sha256']:
+            raise ValueError('JOB-002 live QA predecessor hash mismatch: ' + relative)
+        if not superseded and not _matches(root/relative, expected):
             raise ValueError('AI-005 live QA successor hash mismatch: ' + relative)
     contract = (root/'services/ai/letter_contract.py').read_text()
     runtime = (root/'services/ai/letter_runtime.py').read_text()
@@ -57,6 +64,7 @@ def successor_hashes(root: Path = ROOT) -> dict[str, str]:
             or "else 'feature_validation_failure'" not in runtime
             or "if reason in VALIDATION_REASONS else reason" not in runtime):
         raise ValueError('AI-005 validation observability boundary is incomplete')
+    # Return the historical boundary; callers apply JOB-002 after this link.
     effective = {relative: row['current_sha256'] for relative, row in rows.items()}
     diagnostic = json.loads((root/DIAGNOSTIC_EVIDENCE).read_text())
     diagnostic_rows = diagnostic.get('reviewed_runtime_changes', {})

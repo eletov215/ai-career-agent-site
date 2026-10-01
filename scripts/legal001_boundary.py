@@ -45,7 +45,14 @@ def successor_hashes(root: Path) -> dict[str,str]:
             or evidence.get("public_real_data_enabled") is not False
             or evidence.get("paid_provider_calls")!=0):
         raise ValueError("Invalid LEGAL-001 successor evidence")
+    job002_rows = {}
+    job002 = root/"docs/evidence/job-002/change_boundary.json"
+    if job002.is_file():
+        from scripts.check_job002_package import successor_hashes as job002_hashes
+        job002_rows = job002_hashes(root)
     for rel,sha in EXPECTED_EXISTING.items():
+        if rel in job002_rows:
+            continue
         if not _matches(root/rel,sha):
             raise ValueError("LEGAL-001 successor hash mismatch: "+rel)
     effective = dict(EXPECTED_EXISTING)
@@ -53,4 +60,10 @@ def successor_hashes(root: Path) -> dict[str,str]:
     if live_qa.is_file():
         from scripts.check_ai005_live_qa_boundary import successor_hashes as live_qa_hashes
         effective.update(live_qa_hashes(root))
+    if job002_rows:
+        successor = job002_rows
+        for rel, current in effective.items():
+            if rel in successor and successor[rel]["previous_sha256"] != current:
+                raise ValueError("JOB-002 predecessor hash mismatch: "+rel)
+        effective.update({rel: row["current_sha256"] for rel, row in successor.items()})
     return effective

@@ -33,19 +33,23 @@ def upgrade():
         sa.Column('user_id', sa.String(36), nullable=False),
         sa.Column('from_state', sa.String(32), nullable=False),
         sa.Column('to_state', sa.String(32), nullable=False),
+        sa.Column('event_revision', sa.Integer(), nullable=False),
         sa.Column('created_at', sa.BigInteger(), nullable=False),
         sa.ForeignKeyConstraint(['saved_vacancy_id','user_id'],
             ['saved_vacancy_trackers.saved_vacancy_id','saved_vacancy_trackers.user_id'],
             ondelete='CASCADE', name='fk_tracker_event_owned_tracker'),
         sa.CheckConstraint(f'from_state IN ({VALID})', name='ck_tracker_event_from_state'),
         sa.CheckConstraint(f'to_state IN ({VALID})', name='ck_tracker_event_to_state'),
-        sa.CheckConstraint('from_state <> to_state', name='ck_tracker_event_changed'))
-    op.create_index('idx_tracker_event_owner_saved_created', 'saved_vacancy_tracker_events',
-                    ['user_id','saved_vacancy_id','created_at','id'])
+        sa.CheckConstraint('from_state <> to_state', name='ck_tracker_event_changed'),
+        sa.CheckConstraint('event_revision >= 1', name='ck_tracker_event_revision'),
+        sa.UniqueConstraint('user_id','saved_vacancy_id','event_revision',
+                            name='uq_tracker_event_owner_saved_revision'))
+    op.create_index('idx_tracker_event_owner_saved_revision', 'saved_vacancy_tracker_events',
+                    ['user_id','saved_vacancy_id','event_revision'])
 
 
 def downgrade():
-    op.drop_index('idx_tracker_event_owner_saved_created', table_name='saved_vacancy_tracker_events')
+    op.drop_index('idx_tracker_event_owner_saved_revision', table_name='saved_vacancy_tracker_events')
     op.drop_table('saved_vacancy_tracker_events')
     op.drop_index('idx_tracker_owner_updated', table_name='saved_vacancy_trackers')
     op.drop_table('saved_vacancy_trackers')

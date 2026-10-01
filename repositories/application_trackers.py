@@ -20,7 +20,8 @@ def tracker_view(row, events=()):
 
 def event_view(row):
     return {'id': row.id, 'saved_vacancy_id': row.saved_vacancy_id,
-            'from_state': row.from_state, 'to_state': row.to_state, 'created_at': row.created_at}
+            'from_state': row.from_state, 'to_state': row.to_state,
+            'event_revision': row.event_revision, 'created_at': row.created_at}
 
 
 class ApplicationTrackerRepository(RepositoryBase):
@@ -62,7 +63,7 @@ class ApplicationTrackerRepository(RepositoryBase):
             events = session.scalars(select(SavedVacancyTrackerEvent).where(
                 SavedVacancyTrackerEvent.user_id == user_id,
                 SavedVacancyTrackerEvent.saved_vacancy_id == saved_id
-            ).order_by(SavedVacancyTrackerEvent.created_at.desc(), SavedVacancyTrackerEvent.id.desc())).all()
+            ).order_by(SavedVacancyTrackerEvent.event_revision.desc())).all()
             return tracker_view(row, events)
 
     def transition(self, user_id, saved_id, target, expected_revision, *, now):
@@ -82,6 +83,7 @@ class ApplicationTrackerRepository(RepositoryBase):
             else:
                 row.state, row.revision, row.updated_at = target, row.revision + 1, now
             session.add(SavedVacancyTrackerEvent(id=str(uuid4()), saved_vacancy_id=saved_id,
-                        user_id=user_id, from_state=current, to_state=target, created_at=now))
+                        user_id=user_id, from_state=current, to_state=target,
+                        event_revision=row.revision, created_at=now))
             session.flush()
             return tracker_view(row)
