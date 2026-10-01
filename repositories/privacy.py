@@ -15,6 +15,8 @@ from models.resume_analysis import ResumeAnalysisReport, ResumeAnalysisDecision,
 from repositories.resume_analysis import report_view
 from models.vacancy_match import VacancyMatchReport, VacancyMatchSeries
 from models.saved_vacancy import SavedVacancy, SavedVacancySource
+from models.application_tracker import SavedVacancyTracker, SavedVacancyTrackerEvent
+from repositories.application_trackers import tracker_view, event_view
 from models.cover_letter import CoverLetter, CoverLetterVersion, CoverLetterProposal
 from repositories.cover_letters import CoverLetterRepository
 from domain.cover_letter import LetterError
@@ -269,6 +271,17 @@ class PrivacyRepository(RepositoryBase):
             saved_ids = {row.id for row in saved_rows}
             if any(source.saved_vacancy_id not in saved_ids for source in saved_sources):
                 raise PrivacySnapshotConflictError('saved_vacancy_owner_mismatch')
+            tracker_rows = session.scalars(select(SavedVacancyTracker).where(
+                SavedVacancyTracker.user_id == user.id).order_by(
+                SavedVacancyTracker.created_at, SavedVacancyTracker.saved_vacancy_id).limit(MAX_SAVED+1)).all()
+            tracker_events = session.scalars(select(SavedVacancyTrackerEvent).where(
+                SavedVacancyTrackerEvent.user_id == user.id).order_by(
+                SavedVacancyTrackerEvent.created_at, SavedVacancyTrackerEvent.id).limit(MAX_SAVED*100+1)).all()
+            tracker_ids = {row.saved_vacancy_id for row in tracker_rows}
+            if (len(tracker_rows) > MAX_SAVED or len(tracker_events) > MAX_SAVED*100
+                    or not tracker_ids <= saved_ids
+                    or any(event.saved_vacancy_id not in tracker_ids for event in tracker_events)):
+                raise PrivacySnapshotConflictError('application_tracker_owner_mismatch')
             try:
                 saved_exports = [saved_view(row) for row in saved_rows]
             except SavedVacancyError:
@@ -283,6 +296,9 @@ class PrivacyRepository(RepositoryBase):
                 **letter_export,
                 "saved_vacancies": saved_exports,
                 "saved_vacancy_sources": [source_view(row) for row in saved_sources],
+                "saved_vacancy_trackers": [tracker_view(row) | {'saved_vacancy_id': row.saved_vacancy_id}
+                                             for row in tracker_rows],
+                "saved_vacancy_tracker_events": [event_view(row) for row in tracker_events],
                 "vacancy_matches": [match_view(row) for row in match_rows],
                 "vacancy_match_series": [{"fixture_id": row.fixture_id, "last_version": row.last_version}
                                          for row in match_series],

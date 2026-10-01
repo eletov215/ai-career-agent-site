@@ -1,0 +1,10 @@
+{
+  "package": "JOB-002",
+  "baseline": "a11ac07b09addd32f3a3e26cec4e4296dbe85ab6",
+  "schema_from": "20260922_0021",
+  "schema_to": "20261001_0022",
+  "provider_calls": 0,
+  "production_migration": "NOT_RUN",
+  "production_changes": "NOT_RUN",
+  "claims": {"IMPLEMENTED": true, "CI_PASS": false, "DEPLOYED": false, "SITE_QA_PASS": false, "COMPLETE": false}
+}

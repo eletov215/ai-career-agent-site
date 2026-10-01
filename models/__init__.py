@@ -4,6 +4,7 @@ from .accounts import HeadHunterAccount, SuperJobAccount
 from .auth import AuthSession, AuthToken
 from .base import Base
 from .saved_vacancy import SavedVacancy, SavedVacancySource
+from .application_tracker import SavedVacancyTracker, SavedVacancyTrackerEvent
 from .cover_letter import CoverLetter, CoverLetterVersion, CoverLetterProposal
 from .consent import AIConsent
 from .vacancy_match import VacancyMatchReport, VacancyMatchSeries
@@ -31,6 +32,8 @@ __all__ = [
     "AIConsent",
     "SavedVacancy",
     "SavedVacancySource",
+    "SavedVacancyTracker",
+    "SavedVacancyTrackerEvent",
     "VacancyMatchReport",
     "VacancyMatchSeries",
     "ResumeInterviewSession",

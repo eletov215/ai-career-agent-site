@@ -14,6 +14,7 @@ from repositories.ai import AIRepository
 from repositories.consent import ConsentRepository
 from repositories.cover_letters import CoverLetterRepository
 from repositories.saved_vacancies import SavedVacancyRepository
+from repositories.application_trackers import ApplicationTrackerRepository
 from repositories.vacancy_match import VacancyMatchRepository
 from repositories.resume_interview import ResumeInterviewRepository
 from repositories.resume_analysis import ResumeAnalysisRepository
@@ -40,6 +41,7 @@ class StorageServices:
     consents: ConsentRepository
     cover_letters: CoverLetterRepository
     saved_vacancies: SavedVacancyRepository
+    application_trackers: ApplicationTrackerRepository
     vacancy_matches: VacancyMatchRepository
     interviews: ResumeInterviewRepository
     analyses: ResumeAnalysisRepository
@@ -63,6 +65,7 @@ class StorageServices:
             consents=ConsentRepository(database),
             cover_letters=CoverLetterRepository(database),
             saved_vacancies=SavedVacancyRepository(database),
+            application_trackers=ApplicationTrackerRepository(database),
             vacancy_matches=VacancyMatchRepository(database),
             interviews=ResumeInterviewRepository(database),
             analyses=ResumeAnalysisRepository(database),
