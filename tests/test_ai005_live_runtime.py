@@ -193,6 +193,22 @@ def test_eight_fact_full_selection_builds_preview_without_provider_usage(live):
     assert not x.transport.calls and not events(x)
 
 
+def test_oversized_serialized_evidence_rejects_preview_without_provider_usage(live):
+    x=live;value=profile_payload();heavy='"' * 1400
+    value['summary']=heavy
+    value['employment'][0]['description']=heavy
+    value['achievements']=[
+        {'title':f'Evidence {index}', 'description':heavy} for index in range(2)]
+    x.e.profile.save(user_id=x.e.owner,payload=value,expected_version=1)
+    record=save(x.e,new(x.e,length='full'))
+    fact_ids=['profile.summary', 'profile.employment.0.description',
+              'profile.achievements.0.description', 'profile.achievements.1.description']
+    with pytest.raises(LetterError,match='^input_limit$'):
+        x.generator.preview(x.e.owner,record['id'],record['revision'],
+                            'en','full','professional',fact_ids)
+    assert not x.transport.calls and not events(x)
+
+
 @pytest.mark.parametrize('unsafe_fact',[
     '<b>Built APIs</b>',
     'I have long admired this company.',

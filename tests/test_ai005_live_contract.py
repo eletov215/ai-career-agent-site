@@ -216,6 +216,35 @@ def test_eight_fact_full_selection_that_cannot_fit_body_is_rejected():
         build_writing_contract(s,ids,'en','full','professional')
 
 
+def _json_heavy_facts(character, size):
+    return [
+        {'id':f'profile.achievements.{index}.description', 'text':character * size}
+        for index in range(4)
+    ]
+
+
+@pytest.mark.parametrize('character', ['"', '\\'])
+def test_serialized_evidence_that_cannot_fit_is_rejected_before_contract_build(character):
+    s=source();s['facts']=_json_heavy_facts(character, 1400)
+    ids=[fact['id'] for fact in s['facts']]
+    with pytest.raises(LetterError,match='^input_limit$'):
+        build_writing_contract(s,ids,'en','full','professional')
+
+
+@pytest.mark.parametrize('character', ['"', '\\'])
+def test_nearby_json_heavy_evidence_still_builds_and_validates(character):
+    s=source();s['facts']=_json_heavy_facts(character, 900)
+    ids=[fact['id'] for fact in s['facts']]
+    c=build_writing_contract(s,ids,'en','full','professional')
+    r=response(c)
+    r['paragraphs'][1:2]=[{
+        'kind':'candidate_fit', 'text':fact['text'],
+        'candidate_evidence':[{'id':fact['id'],'quote':fact['text']}],
+        'vacancy_evidence':[],
+    } for fact in c.projection['candidate_facts']]
+    assert validate_writing(json.dumps(r),c)['evidence']['selected_fact_ids'] == ids
+
+
 @pytest.mark.parametrize('unsafe_fact',['<b>Built APIs</b>','I have long admired this company.'])
 def test_selected_fact_rejected_when_verbatim_text_is_inherently_unsafe(unsafe_fact):
     s=source();s['facts'][0]['text']=unsafe_fact
@@ -465,6 +494,7 @@ def test_non_allowlisted_natural_framing_remains_rejected():
     ('en', 'subject', 'Application!!!'),
     ('en', 'closing', 'I would welcome the opportunity to discuss the position.'),
     ('ru', 'closing', 'Спасибо за рассмотрение моей кандидатуры.'),
+    ('ru', 'closing', 'Буду рад обсудить эту вакансию.'),
     ('ru', 'closing', 'Буду рада обсудить эту вакансию.'),
 ])
 def test_unadvertised_framing_variants_are_rejected(language, kind, altered):

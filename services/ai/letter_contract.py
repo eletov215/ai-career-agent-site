@@ -21,6 +21,7 @@ CONTRACT_VERSION = 'cover-letter-draft-v1'
 MAX_PROJECTED_BYTES = 24000
 MAX_PARAGRAPH_TEXT = 1800
 BODY_LIMITS = {'short':1800, 'full':6000}
+MAX_EVIDENCE_CHARS = 9000
 # Full letters may contain all eight product-supported facts, the required
 # opening/closing, and one optional motivation paragraph.
 MAX_PARAGRAPHS = {'short':6, 'full':11}
@@ -62,7 +63,7 @@ PROVIDER_FRAMING_TEMPLATES = {
         ),
         'closing': (
             'Спасибо за рассмотрение моего отклика.',
-            'Буду рад обсудить эту вакансию.',
+            'Предлагаю обсудить эту вакансию.',
         ),
         'subject': ('Отклик',),
     },
@@ -119,6 +120,32 @@ def _mandatory_framing_length(language: str) -> int:
     templates = PROVIDER_FRAMING_TEMPLATES[language]
     return (min(map(len, templates['opening']))
             + min(map(len, templates['closing'])))
+
+
+def _evidence_payload(selected_fact_ids: list[str], payload_hash: str,
+                      paragraph_evidence: list[dict], caveats: list[str]) -> dict:
+    """Build the exact persisted evidence structure from validated components."""
+    return {
+        'selected_fact_ids':selected_fact_ids,
+        'contract_version':CONTRACT_VERSION, 'payload_hash':payload_hash,
+        'paragraph_evidence':paragraph_evidence,
+        'caveats':caveats, 'semantic_grounding':'human_review_required',
+    }
+
+
+def _minimum_evidence(facts: list[dict], payload_hash: str) -> dict:
+    """Return the smallest evidence record a compliant grounded response can emit."""
+    paragraphs = [{'kind':'opening', 'candidate_evidence':[],
+                   'vacancy_evidence':['title']}]
+    paragraphs.extend({
+        'kind':'candidate_fit',
+        'candidate_evidence':[{'id':fact['id'], 'quote':_grounding_text(fact['text'])}],
+        'vacancy_evidence':[],
+    } for fact in facts)
+    paragraphs.append({'kind':'closing', 'candidate_evidence':[],
+                       'vacancy_evidence':[]})
+    return _evidence_payload([fact['id'] for fact in facts], payload_hash,
+                             paragraphs, [])
 
 
 @dataclass(frozen=True, slots=True)
@@ -198,6 +225,12 @@ def build_writing_contract(source: dict, fact_ids: list[str], language: str,
         # Verbatim facts matching visible-prose filters can never validate.
         raise LetterError('invalid_source')
     bound = digest(projection)
+    # Evidence persists every complete selected fact in canonical JSON. Escaping
+    # quotes and backslashes can make that record much larger than visible prose,
+    # so reject requests whose smallest compliant record already exceeds the
+    # unchanged evidence limit before any provider dispatch.
+    if len(canonical(_minimum_evidence(facts, bound))) > MAX_EVIDENCE_CHARS:
+        raise LetterError('input_limit')
     evidence = _object({'id':{'type':'string','enum':fact_ids},
                         'quote':{'type':'string','minLength':1,'maxLength':4000}})
     paragraph = _object({
@@ -349,14 +382,13 @@ def validate_writing(raw: str, contract: LetterContract) -> dict:
                 text(caveat,300)
             except LetterError:
                 _invalid('validation_caveat')
-        evidence = {
-            'selected_fact_ids':[f['id'] for f in projected['candidate_facts'] if f['id'] in used],
-            'contract_version':contract.version, 'payload_hash':contract.payload_hash,
-            'paragraph_evidence':[{'kind':p['kind'], 'candidate_evidence':p['candidate_evidence'],
-                                   'vacancy_evidence':p['vacancy_evidence']} for p in paragraphs],
-            'caveats':result['caveats'], 'semantic_grounding':'human_review_required',
-        }
-        if len(canonical(evidence)) > 9000:
+        evidence = _evidence_payload(
+            [f['id'] for f in projected['candidate_facts'] if f['id'] in used],
+            contract.payload_hash,
+            [{'kind':p['kind'], 'candidate_evidence':p['candidate_evidence'],
+              'vacancy_evidence':p['vacancy_evidence']} for p in paragraphs],
+            result['caveats'])
+        if len(canonical(evidence)) > MAX_EVIDENCE_CHARS:
             _invalid('validation_evidence_size')
         return {'content':content(subject,body,contract.language,contract.length,contract.tone),
                 'evidence':evidence}
