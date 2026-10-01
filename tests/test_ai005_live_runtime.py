@@ -42,11 +42,11 @@ class StubTransport:
         if self.error:raise self.error
         data=json.loads(payload['body']['messages'][1]['content'])
         fact=data['candidate_facts'][0]
-        body={'source_hash':data['source_hash'],'subject':'Application: Python Developer',
+        body={'source_hash':data['source_hash'],'subject':'Application',
               'paragraphs':[
-                {'kind':'opening','text':'I would like to apply for the Python Developer role.',
+                {'kind':'opening','text':'I would like to apply for this role.',
                  'candidate_evidence':[],'vacancy_evidence':['title']},
-                {'kind':'candidate_fit','text':'I built REST API tests in Python.',
+                {'kind':'candidate_fit','text':fact['text'],
                  'candidate_evidence':[{'id':fact['id'],'quote':fact['text']}],'vacancy_evidence':[]},
                 {'kind':'closing','text':'Thank you for considering my application.',
                  'candidate_evidence':[],'vacancy_evidence':[]},
@@ -88,7 +88,7 @@ def test_provider_path_saves_pending_proposal_and_accounting_atomically(live,mon
     monkeypatch.setattr('domain.cover_letter.compose',lambda *a,**k:(_ for _ in ()).throw(AssertionError('not a template')))
     result=run(x);assert result['status']=='proposal'
     p=result['proposal'];assert p['origin']=='alice_draft'
-    assert 'I built REST API tests' in p['content']['body']
+    assert 'Built REST API tests' in p['content']['body']
     current=x.e.svc.get(x.e.owner,x.record['id'])
     assert current['content']==x.record['content'] and current['last_version']==1
     assert len(current['proposals'])==1
@@ -171,6 +171,66 @@ def test_changes_before_dispatch_do_not_reserve_or_call(live,change):
     assert not x.transport.calls and not events(x)
 
 
+def test_impossible_selected_fact_is_rejected_during_preview_without_provider_call(live):
+    x=live;value=profile_payload();value['summary']='x'*1801
+    x.e.profile.save(user_id=x.e.owner,payload=value,expected_version=1)
+    record=save(x.e,new(x.e))
+    with pytest.raises(LetterError,match='^input_limit$'):
+        x.generator.preview(x.e.owner,record['id'],record['revision'],
+                            'en','full','professional',['profile.summary'])
+    assert not x.transport.calls and not events(x)
+
+
+def test_eight_fact_full_selection_builds_preview_without_provider_usage(live):
+    x=live;value=profile_payload()
+    value['skills']=[{'name':f'Safe skill {index}'} for index in range(8)]
+    x.e.profile.save(user_id=x.e.owner,payload=value,expected_version=1)
+    record=save(x.e,new(x.e,length='full'))
+    fact_ids=[f'profile.skills.{index}.name' for index in range(8)]
+    preview=x.generator.preview(x.e.owner,record['id'],record['revision'],
+                                'en','full','professional',fact_ids)
+    assert preview['review_token']
+    assert not x.transport.calls and not events(x)
+
+
+def test_oversized_serialized_evidence_rejects_preview_without_provider_usage(live):
+    x=live;value=profile_payload();heavy='"' * 1400
+    value['summary']=heavy
+    value['employment'][0]['description']=heavy
+    value['achievements']=[
+        {'title':f'Evidence {index}', 'description':heavy} for index in range(2)]
+    x.e.profile.save(user_id=x.e.owner,payload=value,expected_version=1)
+    record=save(x.e,new(x.e,length='full'))
+    fact_ids=['profile.summary', 'profile.employment.0.description',
+              'profile.achievements.0.description', 'profile.achievements.1.description']
+    with pytest.raises(LetterError,match='^input_limit$'):
+        x.generator.preview(x.e.owner,record['id'],record['revision'],
+                            'en','full','professional',fact_ids)
+    assert not x.transport.calls and not events(x)
+
+
+@pytest.mark.parametrize('unsafe_fact',[
+    '<b>Built APIs</b>',
+    'I have long admired this company.',
+    'I have long\tadmired this company.',
+    'I have long\nadmired this company.',
+    'I have long\u00a0admired this company.',
+    'I have long    admired this company.',
+    'Я давно\tслежу за компанией.',
+    'Я давно\nслежу за компанией.',
+    'Я давно\u00a0слежу за компанией.',
+    'Я давно    слежу за компанией.',
+])
+def test_unsafe_verbatim_fact_is_rejected_during_preview_without_usage(live,unsafe_fact):
+    x=live;value=profile_payload();value['summary']=unsafe_fact
+    x.e.profile.save(user_id=x.e.owner,payload=value,expected_version=1)
+    record=save(x.e,new(x.e))
+    with pytest.raises(LetterError,match='^invalid_source$'):
+        x.generator.preview(x.e.owner,record['id'],record['revision'],
+                            'en','short','professional',['profile.summary'])
+    assert not x.transport.calls and not events(x)
+
+
 @pytest.mark.parametrize('change',['source','letter','delete','gate','kill'])
 def test_changes_during_provider_suppress_delivery_without_success_charge(live,change):
     x=live
@@ -242,6 +302,19 @@ def test_unallowlisted_validator_error_stays_generic(live,monkeypatch):
     assert result['reason']=='feature_validation_failure'
     assert event.reason=='feature_validation_failure'
     assert 'private response detail' not in json.dumps(result)
+
+
+def test_candidate_claim_grounding_reason_is_internal_and_public_result_is_generic(live):
+    x=live
+    def invent(reply):
+        body=json.loads(reply['envelope']['choices'][0]['message']['content'])
+        body['paragraphs'][1]['text']='I design Kubernetes clusters.'
+        reply['envelope']['choices'][0]['message']['content']=json.dumps(body)
+    x.transport.mutate=invent
+    result=run(x);event=events(x)[0]
+    assert result['reason']=='feature_validation_failure'
+    assert event.reason=='validation_candidate_claim_grounding'
+    assert 'Kubernetes' not in json.dumps(result)
 
 
 def test_insertion_failure_keeps_reservation_and_no_orphan_proposal(live,monkeypatch):

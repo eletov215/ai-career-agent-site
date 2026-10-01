@@ -17,6 +17,7 @@ def test_site_qa_guard_rejects_changed_legal_source(tmp_path):
                                     'docs/evidence/ai-005-live-qa-001/change_boundary.json',
                                     'docs/evidence/ai-005-validation-reasons/change_boundary.json',
                                     'docs/evidence/ai-005-vacancy-evidence-prompt/change_boundary.json',
+                                    'docs/evidence/ai-006-grounding-hardening/change_boundary.json',
                                     'scripts/check_ai005_live_qa_boundary.py',
                                 'scripts/check_ai005_site_qa_package.py', 'domain/ai.py'}
     for rel in paths:
@@ -34,6 +35,7 @@ def test_provider_successor_is_narrow_and_requires_complete_evidence(tmp_path):
         'docs/evidence/ai-005-site-qa-no-logging/change_boundary.json',
         'docs/evidence/ai-005-live-qa-001/change_boundary.json', 'scripts/check_ai005_live_qa_boundary.py',
         'docs/evidence/ai-005-vacancy-evidence-prompt/change_boundary.json',
+        'docs/evidence/ai-006-grounding-hardening/change_boundary.json',
         'scripts/check_ai005_site_qa_package.py', 'domain/ai.py'}
     for rel in paths:
         dest=tmp_path/rel;dest.parent.mkdir(parents=True,exist_ok=True);shutil.copyfile(ROOT/rel,dest)

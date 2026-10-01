@@ -8,6 +8,7 @@ ROOT = Path(__file__).resolve().parents[1]
 EVIDENCE = 'docs/evidence/ai-005-live-qa-001/change_boundary.json'
 DIAGNOSTIC_EVIDENCE = 'docs/evidence/ai-005-validation-reasons/change_boundary.json'
 PROMPT_EVIDENCE = 'docs/evidence/ai-005-vacancy-evidence-prompt/change_boundary.json'
+GROUNDING_EVIDENCE = 'docs/evidence/ai-006-grounding-hardening/change_boundary.json'
 SOURCE_COMMIT = 'c1b8f216868e77faaa679001d5861a0fb0886523'
 SOURCE_TREE = 'efed1c142f252a714daebe3c976e44ee7439a507'
 CHANGES = {
@@ -95,9 +96,11 @@ def successor_hashes(root: Path = ROOT) -> dict[str, str]:
             or set(prompt_rows) != {'services/ai/letter_contract.py'}):
         raise ValueError('Invalid AI-005 vacancy evidence prompt successor scope')
     prompt_row = prompt_rows['services/ai/letter_contract.py']
+    grounding_successor = (root/GROUNDING_EVIDENCE).is_file()
     if (set(prompt_row) != {'previous_sha256', 'current_sha256'}
             or prompt_row['previous_sha256'] != effective['services/ai/letter_contract.py']
-            or not _matches(root/'services/ai/letter_contract.py', prompt_row['current_sha256'])):
+            or (not grounding_successor
+                and not _matches(root/'services/ai/letter_contract.py', prompt_row['current_sha256']))):
         raise ValueError('Invalid AI-005 vacancy evidence prompt hash transition')
     required_prompt = (
         'Every opening and motivation paragraph must include at least one vacancy_evidence field',
@@ -108,6 +111,24 @@ def successor_hashes(root: Path = ROOT) -> dict[str, str]:
     if not all(fragment in contract for fragment in required_prompt):
         raise ValueError('AI-005 vacancy evidence prompt boundary is incomplete')
     effective['services/ai/letter_contract.py'] = prompt_row['current_sha256']
+    if grounding_successor:
+        grounding = json.loads((root/GROUNDING_EVIDENCE).read_text())
+        grounding_rows = grounding.get('reviewed_runtime_changes', {})
+        row = grounding_rows.get('services/ai/letter_contract.py', {})
+        if (grounding.get('package') != 'AI-006-GROUNDING-HARDENING'
+                or grounding.get('release') != 'candidate-fit-grounding-successor'
+                or grounding.get('source_main_sha') != 'ba7288518a3dab13878f610bbd9f8f6f38d66019'
+                or grounding.get('provider_calls') != 0
+                or grounding.get('REAL_DATA_SUPPORTED') is not False
+                or grounding.get('real_data_alice') != 'CLOSED'
+                or grounding.get('legal_state') != 'DRAFT / NOT_ACTIVE'
+                or grounding.get('production_schema') != 'unchanged'
+                or set(grounding_rows) != {'services/ai/letter_contract.py'}
+                or set(row) != {'previous_sha256', 'current_sha256'}
+                or row['previous_sha256'] != effective['services/ai/letter_contract.py']
+                or not _matches(root/'services/ai/letter_contract.py', row['current_sha256'])):
+            raise ValueError('Invalid candidate-fit grounding successor')
+        effective['services/ai/letter_contract.py'] = row['current_sha256']
     return effective
 
 

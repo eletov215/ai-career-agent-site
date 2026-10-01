@@ -26,8 +26,10 @@ def copy_ai005_boundary(root,destination):
 
     if (root/'docs/evidence/ai-005-live-qa-001/change_boundary.json').is_file():
         from scripts.check_ai005_live_qa_boundary import (CHANGES as LIVE_CHANGES,
-            DIAGNOSTIC_EVIDENCE, EVIDENCE as LIVE_EVIDENCE, PROMPT_EVIDENCE)
+            DIAGNOSTIC_EVIDENCE, EVIDENCE as LIVE_EVIDENCE, GROUNDING_EVIDENCE,
+            PROMPT_EVIDENCE)
         for rel in LIVE_CHANGES | {LIVE_EVIDENCE, DIAGNOSTIC_EVIDENCE, PROMPT_EVIDENCE,
+                                   GROUNDING_EVIDENCE,
                                    'scripts/check_ai005_live_qa_boundary.py', 'domain/ai.py'}:
             target=destination/rel;target.parent.mkdir(parents=True,exist_ok=True)
             shutil.copy2(root/rel,target)
