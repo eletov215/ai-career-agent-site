@@ -25,6 +25,8 @@ jobs:
           python-version: '3.11'
       - name: Check every inherited gate and canonical status without runtime dependencies
         run: python -S -m unittest tests.test_legal001_canonical -v
+      - name: Check AI-006 additive package boundary
+        run: python -S scripts/check_ai006_package.py
       - name: Archive tracked source for reproducible review
         if: always()
         shell: bash

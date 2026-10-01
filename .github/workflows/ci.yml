@@ -419,12 +419,53 @@ jobs:
       - name: Run AI-BENCH-001 unit tests
         run: python -m unittest discover -s tests -p 'test_ai_bench_*.py' -v
 
+  ai-006:
+    name: AI-006 deterministic quality gate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install validation dependencies
+        run: |
+          python -m pip install -r requirements.txt
+          python -m pip install -r requirements-dev.txt
+
+      - name: Verify AI-006 package boundary
+        run: python scripts/check_ai006_package.py
+
+      - name: Run deterministic quality gate
+        run: python -m ai_quality --output-dir /tmp/ai006-quality
+
+      - name: Run AI-006 and inherited regression tests
+        run: >-
+          python -m pytest -q
+          tests/test_ai006_*.py
+          tests/test_ai_bench_*.py
+          tests/test_ai005_live_contract.py
+          tests/test_ai005_live_runtime.py
+
+      - name: Retain sanitized deterministic evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: ai-006-quality-${{ github.run_id }}
+          path: /tmp/ai006-quality/
+          if-no-files-found: error
+          retention-days: 14
+
   ai-bench-yandex-live:
     name: AI-BENCH-001 Live Yandex
     if: ${{ github.event_name == 'workflow_dispatch' && inputs.run_ai_bench_live == true }}
     needs:
       - tests
       - ai-bench-001
+      - ai-006
     runs-on: ubuntu-latest
     timeout-minutes: 45
     concurrency:
@@ -533,6 +574,7 @@ jobs:
     needs:
       - tests
       - ai-bench-001
+      - ai-006
     runs-on: ubuntu-latest
     timeout-minutes: 30
     concurrency:
@@ -616,4 +658,3 @@ jobs:
       - name: Verify Alice final machine safety gate
         if: always()
         run: python scripts/check_ai_bench_alice_final_result.py "$AI_BENCH_ALICE_FINAL_OUTPUT_DIR/run.json"
-
