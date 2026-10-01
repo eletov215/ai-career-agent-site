@@ -3,13 +3,14 @@ import json
 import shutil
 
 from scripts.check_ai005_live_qa_boundary import (CHANGES, DIAGNOSTIC_EVIDENCE, EVIDENCE,
-                                                  PROMPT_EVIDENCE, successor_hashes, validate)
+                                                  GROUNDING_EVIDENCE, PROMPT_EVIDENCE,
+                                                  successor_hashes, validate)
 
 ROOT = Path(__file__).resolve().parents[1]
 
 
 def _copy(tmp_path):
-    for relative in CHANGES | {EVIDENCE, DIAGNOSTIC_EVIDENCE, PROMPT_EVIDENCE,
+    for relative in CHANGES | {EVIDENCE, DIAGNOSTIC_EVIDENCE, PROMPT_EVIDENCE, GROUNDING_EVIDENCE,
                                'scripts/check_ai005_live_qa_boundary.py', 'domain/ai.py'}:
         target = tmp_path/relative
         target.parent.mkdir(parents=True, exist_ok=True)
@@ -62,5 +63,14 @@ def test_vacancy_evidence_prompt_successor_rejects_scope_tampering(tmp_path):
     evidence = tmp_path/PROMPT_EVIDENCE
     value = json.loads(evidence.read_text())
     value['paid_provider_calls'] = 1
+    evidence.write_text(json.dumps(value))
+    assert validate(tmp_path) == ['AI-005 live QA successor boundary is not verified']
+
+
+def test_grounding_successor_rejects_hash_tampering(tmp_path):
+    _copy(tmp_path)
+    evidence = tmp_path/GROUNDING_EVIDENCE
+    value = json.loads(evidence.read_text())
+    value['reviewed_runtime_changes']['services/ai/letter_contract.py']['previous_sha256'] = '0' * 64
     evidence.write_text(json.dumps(value))
     assert validate(tmp_path) == ['AI-005 live QA successor boundary is not verified']
