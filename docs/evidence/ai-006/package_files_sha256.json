@@ -5,7 +5,7 @@
     ".github/workflows/package-preflight.yml": "23e4a8974ed20088feef949c2997b6d02bda782b4519a3c2127fb864318f430b",
     "ai_quality/__init__.py": "00bb4b7165779696e601fb26cfa9883a0060c15300f071b874f75a7d7f3f943a",
     "ai_quality/__main__.py": "92c9e77364dae7027d8c5a8be369ef7509017c3b9317a5cd8c08225821382ce9",
-    "ai_quality/ai006.py": "fdbe499835b4631588669ec19fdb0eb6c1db7c43bdad3931fd1ed6b049e31902",
+    "ai_quality/ai006.py": "17ba431e5fa2bafad6fc7bcab126abe9fa7dc26865d24e35e3de7cded224f248",
     "docs/AI006_IMPLEMENTATION.md": "d3c4be54d186a10046866225f3de21b71a5c344c9a62af773ccc19e7a1f26df1",
     "docs/AI006_RUNBOOK.md": "e1ae9d886419752ce2d4a468f333eb865a1016a2634146ae36aa95e1c865df40",
     "docs/AI006_SCOPE.md": "081f2855fbb1de02b7ef6e084bda02f49ccb2c45716ec4f437358024b2ceefcc",
@@ -16,7 +16,7 @@
     "quality/ai006/human_review_rubric_v1.json": "b19422be4982a5128228d21a8ad02e8fb1c99b59ddb25cabe4ed96b01777993c",
     "scripts/check_ai006_package.py": "4ab750f7798525caa10c41ac7c9036109dd74a13e17c91e6b86ff06fd03cb9fa",
     "tests/test_ai006_package.py": "1f05487947044671c5c8dc39d75f4dd81c4add1f01b603d64c7996ab183f637e",
-    "tests/test_ai006_quality.py": "e30c8118d62fcac49adac5f56edd95ca766e50594f65208df1664dff4054adc4"
+    "tests/test_ai006_quality.py": "48e5f26c6083b9d9d25974e2fc4309419dc1e81aa826f40e9b3b4c56fb5c582d"
   },
   "package": "AI-006"
 }

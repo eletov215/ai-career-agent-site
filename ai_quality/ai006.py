@@ -100,6 +100,11 @@ def _structure_pass(response: dict[str, Any], length: str) -> bool:
             and (length != "full" or kinds.count("candidate_fit") >= 2))
 
 
+def _grounding_text(value: str) -> str:
+    """Use the production contract's whitespace-only grounding normalization."""
+    return " ".join(value.split())
+
+
 def _grounding_pass(response: dict[str, Any], contract) -> bool:
     facts = {row["id"]: row["text"] for row in contract.projection["candidate_facts"]}
     for paragraph in response.get("paragraphs", []):
@@ -109,10 +114,15 @@ def _grounding_pass(response: dict[str, Any], contract) -> bool:
         if paragraph.get("kind") in {"opening", "motivation"} and not paragraph.get("vacancy_evidence"):
             return False
         for reference in references:
-            if reference.get("id") not in facts or reference.get("quote") not in facts[reference["id"]]:
+            fact = facts.get(reference.get("id"))
+            if fact is None or _grounding_text(reference.get("quote", "")) != _grounding_text(fact):
                 return False
-        if paragraph.get("kind") == "candidate_fit" and paragraph.get("text") not in {r["quote"] for r in references}:
-            return False
+        if paragraph.get("kind") == "candidate_fit":
+            if len(references) != 1:
+                return False
+            fact = facts.get(references[0].get("id"))
+            if fact is None or _grounding_text(paragraph.get("text", "")) != _grounding_text(fact):
+                return False
     return True
 
 

@@ -65,6 +65,25 @@ def test_positive_grounding_failure_counts_as_unsupported_claim(monkeypatch, tmp
     assert result["status"] == "failed"
 
 
+def test_truncated_fact_fails_adapter_and_production_grounding(monkeypatch, tmp_path):
+    from ai_quality import ai006
+    suite = json.loads(ai006.SUITE_PATH.read_text())
+    candidate_fit = suite["positive_cases"][3]["expected"]["paragraphs"][1]
+    candidate_fit["text"] = "I maintain Python APIs"
+    candidate_fit["candidate_evidence"][0]["quote"] = "I maintain Python APIs"
+    changed = tmp_path / "suite.json"
+    changed.write_text(json.dumps(suite))
+    monkeypatch.setattr(ai006, "SUITE_PATH", changed)
+
+    result = run_gate()
+
+    case = result["positive_cases"][3]
+    assert case["grounding_pass"] is False
+    assert case["validation_reason"] == "validation_candidate_claim_grounding"
+    assert result["metrics"]["grounding_evidence_integrity"] < 1.0
+    assert result["status"] == "failed"
+
+
 def test_public_negative_results_only_contain_fixed_reasons():
     result = run_gate()
     allowlist = set(result["validator_reason_allowlist"])
