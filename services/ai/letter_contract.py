@@ -134,7 +134,7 @@ def _evidence_payload(selected_fact_ids: list[str], payload_hash: str,
 
 
 def _minimum_evidence(facts: list[dict], payload_hash: str) -> dict:
-    """Return the smallest evidence record a compliant grounded response can emit."""
+    """Return the exact normalized evidence record a compliant response emits."""
     paragraphs = [{'kind':'opening', 'candidate_evidence':[],
                    'vacancy_evidence':['title']}]
     paragraphs.extend({
@@ -258,8 +258,10 @@ def build_writing_contract(source: dict, fact_ids: list[str], language: str,
         'candidate_fit.text must copy the complete supporting candidate fact. '
         'Preserve every non-whitespace character and token in the same order. '
         'Whitespace runs (spaces, tabs, and newlines) may be collapsed to one normal space; '
-        'this whitespace-only normalization is the only permitted transformation. Do not '
-        'excerpt, omit or reorder words, translate, paraphrase, or semantically rewrite candidate facts. Do not '
+        'this whitespace-only normalization is the only permitted transformation. '
+        'The candidate_evidence.quote must use that exact normalized representation: remove leading and trailing '
+        'whitespace and replace every internal whitespace run with one normal space. '
+        'Do not excerpt, omit or reorder words, translate, paraphrase, or semantically rewrite candidate facts. Do not '
         'paraphrase candidate experience or infer skills, seniority, '
         'achievements, outcomes, or causal effects. Use a separate candidate_fit paragraph for each additional fact. '
         'Do not transform vacancy requirements into candidate skills. Do not invent skills, employers, '
@@ -327,7 +329,7 @@ def validate_writing(raw: str, contract: LetterContract) -> dict:
             if p['kind']=='candidate_fit' and not refs:
                 _invalid('validation_candidate_evidence_missing')
             if p['kind']=='candidate_fit' and (len(refs) != 1
-                    or _grounding_text(refs[0]['quote']) != _grounding_text(facts[refs[0]['id']])
+                    or refs[0]['quote'] != _grounding_text(facts[refs[0]['id']])
                     or _grounding_text(prose) != _grounding_text(refs[0]['quote'])):
                 _invalid('validation_candidate_claim_grounding')
             if p['kind']=='candidate_fit':

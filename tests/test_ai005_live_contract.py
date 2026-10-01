@@ -4,7 +4,8 @@ import json
 import pytest
 from domain.cover_letter import LetterError, SOURCE_VERSION
 from services.ai.letter_contract import (
-    PROVIDER_FRAMING_TEMPLATES, build_writing_contract, validate_writing,
+    MAX_EVIDENCE_CHARS, PROVIDER_FRAMING_TEMPLATES, build_writing_contract,
+    validate_writing,
 )
 from services.ai.letter_admission import synthetic_cases,SyntheticLetterAdmission,ClosedLetterAdmission
 
@@ -301,7 +302,33 @@ def test_candidate_fit_accepts_exact_quote_with_safe_whitespace_normalization(la
     normalized_variant='  \n '.join(quote.split())
     r['paragraphs'][1]['candidate_evidence'][0]['quote']=normalized_variant
     r['paragraphs'][1]['text']=normalized_variant
+    with pytest.raises(LetterError,match='^validation_candidate_claim_grounding$'):
+        validate_writing(json.dumps(r),c)
+    r['paragraphs'][1]['candidate_evidence'][0]['quote']=' '.join(quote.split())
     assert validate_writing(json.dumps(r),c)['content']['body']
+
+
+@pytest.mark.parametrize('whitespace', ['\n', '\t', '\u00a0'*3, ' '*3])
+def test_whitespace_heavy_fact_persists_only_exact_normalized_evidence(whitespace):
+    s=source();s['facts']=[];ids=[]
+    for index in range(4):
+        fact_id=f'profile.achievements.{index}.description';ids.append(fact_id)
+        s['facts'].append({'id':fact_id,'text':(f'x{whitespace}'*700).strip()})
+    c=build_writing_contract(s,ids,'en','full','professional')
+    normalized=[' '.join(fact['text'].split()) for fact in c.projection['candidate_facts']]
+    assert 'candidate_evidence.quote must use that exact normalized representation' in c.messages[0]['content']
+    r=response(c)
+    r['paragraphs'][1:2]=[{
+        'kind':'candidate_fit', 'text':quote,
+        'candidate_evidence':[{'id':fact_id,'quote':quote}], 'vacancy_evidence':[],
+    } for fact_id,quote in zip(ids,normalized)]
+    evidence=validate_writing(json.dumps(r),c)['evidence']
+    assert all(row['candidate_evidence'][0]['quote'] == quote
+               for row,quote in zip(evidence['paragraph_evidence'][1:-1],normalized))
+    raw=copy.deepcopy(evidence)
+    for row,fact in zip(raw['paragraph_evidence'][1:-1],c.projection['candidate_facts']):
+        row['candidate_evidence'][0]['quote']=fact['text']
+    assert len(json.dumps(raw,ensure_ascii=False,sort_keys=True,separators=(',',':'))) > MAX_EVIDENCE_CHARS
 
 
 def test_raw_over_limit_fact_prompt_authorizes_normalized_complete_rendering():
@@ -309,6 +336,7 @@ def test_raw_over_limit_fact_prompt_authorizes_normalized_complete_rendering():
     c=build_writing_contract(s,['profile.summary'],'en','short','professional')
     prompt=c.messages[0]['content']
     assert 'Whitespace runs (spaces, tabs, and newlines) may be collapsed to one normal space' in prompt
+    assert 'candidate_evidence.quote must use that exact normalized representation' in prompt
     r=response(c);normalized=' '.join(c.projection['candidate_facts'][0]['text'].split())
     r['paragraphs'][1]['text']=normalized
     r['paragraphs'][1]['candidate_evidence'][0]['quote']=normalized
