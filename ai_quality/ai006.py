@@ -156,7 +156,7 @@ def run_gate(output_dir: Path | None = None) -> dict[str, Any]:
     metrics = {"schema_pass_rate": sum(row["schema_pass"] for row in positives) / count if count else 0.0,
                "required_structural_coverage": sum(row["structure_pass"] for row in positives) / count if count else 0.0,
                "grounding_evidence_integrity": sum(row["grounding_pass"] for row in positives) / count if count else 0.0,
-               "unsupported_candidate_claims": sum(reason in {"validation_evidence_quote", "validation_candidate_evidence_missing", "validation_candidate_claim_location"} for reason in reasons),
+               "unsupported_candidate_claims": sum(reason in {"validation_evidence_quote", "validation_candidate_evidence_missing", "validation_candidate_claim_location", "validation_candidate_claim_grounding"} for reason in reasons),
                "unsupported_numbers": reasons.count("validation_numeric_claim"),
                "unsupported_outcomes": reasons.count("validation_outcome_claim"),
                "unsafe_internal_leakage": reasons.count("validation_unsafe_content"),

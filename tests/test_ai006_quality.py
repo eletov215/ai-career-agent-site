@@ -48,6 +48,23 @@ def test_positive_safety_metrics_are_derived_from_validation(monkeypatch, tmp_pa
     assert result["status"] == "failed"
 
 
+def test_positive_grounding_failure_counts_as_unsupported_claim(monkeypatch, tmp_path):
+    from ai_quality import ai006
+    suite = json.loads(ai006.SUITE_PATH.read_text())
+    suite["positive_cases"][3]["expected"]["paragraphs"][1]["text"] = (
+        "I design Kubernetes clusters."
+    )
+    changed = tmp_path / "suite.json"
+    changed.write_text(json.dumps(suite))
+    monkeypatch.setattr(ai006, "SUITE_PATH", changed)
+    result = run_gate()
+    case = result["positive_cases"][3]
+    assert case["validation_reason"] == "validation_candidate_claim_grounding"
+    assert result["metrics"]["unsupported_candidate_claims"] == 1
+    assert result["metrics"]["critical_validator_failures"] == 1
+    assert result["status"] == "failed"
+
+
 def test_public_negative_results_only_contain_fixed_reasons():
     result = run_gate()
     allowlist = set(result["validator_reason_allowlist"])
