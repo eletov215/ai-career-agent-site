@@ -5,6 +5,7 @@ from .auth import AuthSession, AuthToken
 from .base import Base
 from .saved_vacancy import SavedVacancy, SavedVacancySource
 from .application_tracker import SavedVacancyTracker, SavedVacancyTrackerEvent
+from .reminder import NotificationPreference, SavedVacancyReminder
 from .cover_letter import CoverLetter, CoverLetterVersion, CoverLetterProposal
 from .consent import AIConsent
 from .vacancy_match import VacancyMatchReport, VacancyMatchSeries
@@ -34,6 +35,8 @@ __all__ = [
     "SavedVacancySource",
     "SavedVacancyTracker",
     "SavedVacancyTrackerEvent",
+    "NotificationPreference",
+    "SavedVacancyReminder",
     "VacancyMatchReport",
     "VacancyMatchSeries",
     "ResumeInterviewSession",

@@ -33,7 +33,7 @@ def validate(root=ROOT):
         successor_hashes(root)
         for rel in REQUIRED:
             if not (root/rel).is_file(): errors.append("Missing: "+rel)
-        expected_head = "20261001_0022" if (root/"docs/evidence/job-002/change_boundary.json").is_file() else "20260922_0021"
+        expected_head = "20261002_0023" if (root/"docs/evidence/job-003/change_boundary.json").is_file() else "20261001_0022" if (root/"docs/evidence/job-002/change_boundary.json").is_file() else "20260922_0021"
         if f'CURRENT_REVISION = "{expected_head}"' not in (root/"database.py").read_text():
             errors.append("Unexpected schema head")
         migration=(root/"migrations/versions/20260922_0021_legal_consent.py").read_text()

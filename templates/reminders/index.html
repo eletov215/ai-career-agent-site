@@ -1,0 +1,6 @@
+{% extends 'base.html' %}{% block title %}Напоминания{% endblock %}
+{% block content %}<main class="section"><div class="container"><h1>Напоминания о вакансиях</h1>
+<p>Это календарные даты внутри сервиса. Мы не отправляем email, push или сообщения работодателям.</p>
+<form method="post" action="{{ url_for('reminders.preference') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="expected_revision" value="{{ preference.revision }}"><input type="hidden" name="enabled" value="{{ '0' if preference.in_app_reminders_enabled else '1' }}"><button class="btn btn-primary" type="submit">{{ 'Выключить напоминания' if preference.in_app_reminders_enabled else 'Включить напоминания' }}</button></form>
+{% if preference.in_app_reminders_enabled %}<h2>Ваши даты</h2>{% if reminders %}<ul>{% for reminder in reminders %}<li><strong>{{ reminder.label }}</strong>: <time datetime="{{ reminder.due_date }}">{{ reminder.due_date }}</time> — <a href="/saved-vacancies/{{ reminder.saved_vacancy_id }}/tracker">открыть вакансию и трекер</a></li>{% endfor %}</ul>{% else %}<p>Дат пока нет. Добавьте дату в трекере сохранённой вакансии.</p>{% endif %}{% else %}<p><strong>Напоминания выключены.</strong> Сохранённые даты не показываются как активные уведомления.</p>{% endif %}
+</div></main>{% endblock %}

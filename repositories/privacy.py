@@ -16,6 +16,8 @@ from repositories.resume_analysis import report_view
 from models.vacancy_match import VacancyMatchReport, VacancyMatchSeries
 from models.saved_vacancy import SavedVacancy, SavedVacancySource
 from models.application_tracker import SavedVacancyTracker, SavedVacancyTrackerEvent
+from models.reminder import NotificationPreference, SavedVacancyReminder
+from repositories.reminders import preference_view, reminder_view
 from repositories.application_trackers import tracker_view, event_view
 from models.cover_letter import CoverLetter, CoverLetterVersion, CoverLetterProposal
 from repositories.cover_letters import CoverLetterRepository
@@ -278,6 +280,12 @@ class PrivacyRepository(RepositoryBase):
                 SavedVacancyTrackerEvent.user_id == user.id).order_by(
                 SavedVacancyTrackerEvent.saved_vacancy_id,
                 SavedVacancyTrackerEvent.event_revision).limit(MAX_SAVED*100+1)).all()
+            reminder_preference = session.get(NotificationPreference, user.id)
+            reminder_rows = session.scalars(select(SavedVacancyReminder).where(
+                SavedVacancyReminder.user_id == user.id).order_by(
+                SavedVacancyReminder.due_date, SavedVacancyReminder.id).limit(MAX_SAVED+1)).all()
+            if len(reminder_rows) > MAX_SAVED or any(row.saved_vacancy_id not in saved_ids for row in reminder_rows):
+                raise PrivacySnapshotConflictError('reminder_owner_mismatch')
             tracker_ids = {row.saved_vacancy_id for row in tracker_rows}
             if (len(tracker_rows) > MAX_SAVED or len(tracker_events) > MAX_SAVED*100
                     or not tracker_ids <= saved_ids
@@ -297,6 +305,8 @@ class PrivacyRepository(RepositoryBase):
                 **letter_export,
                 "saved_vacancies": saved_exports,
                 "saved_vacancy_sources": [source_view(row) for row in saved_sources],
+                "notification_preference": preference_view(reminder_preference),
+                "saved_vacancy_reminders": [reminder_view(row) for row in reminder_rows],
                 "saved_vacancy_trackers": [tracker_view(row) | {'saved_vacancy_id': row.saved_vacancy_id}
                                              for row in tracker_rows],
                 "saved_vacancy_tracker_events": [event_view(row) for row in tracker_events],
@@ -542,6 +552,8 @@ class PrivacyRepository(RepositoryBase):
             "cover_letter_proposals": self._count(session, CoverLetterProposal, CoverLetterProposal.user_id == user_id),
             "saved_vacancies": self._count(session, SavedVacancy, SavedVacancy.user_id == user_id),
             "saved_vacancy_sources": self._count(session, SavedVacancySource, SavedVacancySource.user_id == user_id),
+            "notification_preferences": self._count(session, NotificationPreference, NotificationPreference.user_id == user_id),
+            "saved_vacancy_reminders": self._count(session, SavedVacancyReminder, SavedVacancyReminder.user_id == user_id),
             "saved_vacancy_trackers": self._count(session, SavedVacancyTracker, SavedVacancyTracker.user_id == user_id),
             "saved_vacancy_tracker_events": self._count(
                 session, SavedVacancyTrackerEvent, SavedVacancyTrackerEvent.user_id == user_id

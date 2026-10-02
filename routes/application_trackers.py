@@ -13,7 +13,7 @@ LABELS = {
 }
 
 
-def create_application_trackers_blueprint(service, saved_service):
+def create_application_trackers_blueprint(service, saved_service, reminder_service=None):
     bp = Blueprint('application_trackers', __name__)
 
     @bp.before_request
@@ -56,9 +56,12 @@ def create_application_trackers_blueprint(service, saved_service):
         except SavedVacancyError:
             raise TrackerError('not_found') from None
         tracker = service.get(g.current_user.id, saved_id)
+        reminder = reminder_service.for_saved(g.current_user.id, saved_id) if reminder_service else None
+        reminder_preference = reminder_service.preference(g.current_user.id) if reminder_service else None
         targets = TRANSITIONS[tracker['state']]
         return render_template('application_trackers/detail.html', record=record, tracker=tracker,
-                               states=STATES, labels=LABELS, targets=targets)
+                               states=STATES, labels=LABELS, targets=targets, reminder=reminder,
+                               reminder_preference=reminder_preference, reminder_feature=reminder_service is not None)
 
     @bp.post('/saved-vacancies/<uuid:saved_id>/tracker')
     @limiter.limit('60 per hour')

@@ -165,6 +165,7 @@ def test_external_worker_executes_queued_run_and_updates_cache(tmp_path):
             sync_runs=storage.sync_runs,
             provider_factory=lambda: provider,
             sleeper=lambda _seconds: None,
+            clock=lambda: 1_788_220_800,  # 2026-09-01T00:00:00Z
         )
         queued = service.enqueue(trigger="test")
         heartbeats = []

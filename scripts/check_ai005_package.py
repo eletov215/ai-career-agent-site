@@ -44,18 +44,26 @@ def load_boundary(root=ROOT):
     for rel,row in data['reviewed_runtime_changes'].items():
         if row['previous_sha256']!=base['files'].get(rel):
             raise ValueError('AI-005 changed source mismatch')
-        if rel in successor and successor[rel]['previous_sha256']!=row['current_sha256']:
+        if rel in successor and 'previous_sha256' in successor[rel] and successor[rel]['previous_sha256']!=row['current_sha256']:
             raise ValueError('AI-005 r2 predecessor mismatch')
         current=legal.get(rel,successor.get(rel,row)['current_sha256'])
         if not matches(root/rel,current):raise ValueError('AI-005 changed source mismatch')
         # Preserve the original predecessor for JOB-001 and older hash chains.
         effective[rel]={**row,'current_sha256':current}
     for rel,sha in data['new_runtime_sha256'].items():
-        if rel in successor and successor[rel]['previous_sha256']!=sha:
+        if rel in successor and 'previous_sha256' in successor[rel] and successor[rel]['previous_sha256']!=sha:
             raise ValueError('AI-005 r2 new predecessor mismatch')
         current=legal.get(rel,successor.get(rel,{}).get('current_sha256',sha))
         if not matches(root/rel,current):raise ValueError('AI-005 new runtime mismatch')
-    return {**successor,**effective}
+    job003 = {}
+    if (root/'docs/evidence/job-003/change_boundary.json').is_file():
+        from scripts.check_job003_package import successor_hashes as job003_hashes
+        job003 = job003_hashes(root)
+    combined = {**successor, **effective}
+    for rel, row in job003.items():
+        combined[rel] = ({**combined[rel], 'current_sha256': row['current_sha256']}
+                         if rel in combined else row)
+    return combined
 
 
 def validate(root=ROOT):
@@ -67,7 +75,7 @@ def validate(root=ROOT):
             if rel.startswith(('services/ai/','evals/','prompts/','schemas/','docs/policies/')) or rel in {
                 'domain/ai.py','config.py','render.yaml','requirements.txt','requirements-dev.txt','docs/LEGAL001_DEFERRED_DECISION.md'}:
                 if not matches(root/rel,sha):errors.append('Protected source changed: '+rel)
-        expected_head='20261001_0022' if (root/'docs/evidence/job-002/change_boundary.json').is_file() else '20260922_0021' if (root/'docs/evidence/legal-001/change_boundary.json').is_file() else '20260917_0020'
+        expected_head='20261002_0023' if (root/'docs/evidence/job-003/change_boundary.json').is_file() else '20261001_0022' if (root/'docs/evidence/job-002/change_boundary.json').is_file() else '20260922_0021' if (root/'docs/evidence/legal-001/change_boundary.json').is_file() else '20260917_0020'
         if f'CURRENT_REVISION = "{expected_head}"' not in (root/'database.py').read_text():errors.append('Unexpected schema head')
         migration=(root/'migrations/versions/20260917_0020_cover_letters.py').read_text()
         tables={node.args[0].value for node in ast.walk(ast.parse(migration)) if isinstance(node,ast.Call)

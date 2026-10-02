@@ -36,6 +36,8 @@ from routes.cover_letters import create_cover_letters_blueprint
 from routes.saved_vacancies import create_saved_vacancies_blueprint
 from routes.application_trackers import create_application_trackers_blueprint
 from services.application_trackers import ApplicationTrackerService
+from services.reminders import ReminderService
+from routes.reminders import create_reminders_blueprint
 from services.ai.service import AIService
 from routes.ai_status import create_ai_status_blueprint
 from services.vacancy_match import VacancyMatchService
@@ -135,8 +137,10 @@ AUTH_SERVICE = AuthService(STORAGE.auth, AUTH_EMAIL_SENDER, SETTINGS)
 app.register_blueprint(create_auth_blueprint(AUTH_SERVICE, SETTINGS))
 SAVED_VACANCY_SERVICE = SavedVacancyService(STORAGE.saved_vacancies, signing_key=SETTINGS.flask_secret_key)
 app.register_blueprint(create_saved_vacancies_blueprint(SAVED_VACANCY_SERVICE))
+REMINDER_SERVICE = ReminderService(STORAGE.reminders)
+app.register_blueprint(create_reminders_blueprint(REMINDER_SERVICE))
 APPLICATION_TRACKER_SERVICE = ApplicationTrackerService(STORAGE.application_trackers)
-app.register_blueprint(create_application_trackers_blueprint(APPLICATION_TRACKER_SERVICE, SAVED_VACANCY_SERVICE))
+app.register_blueprint(create_application_trackers_blueprint(APPLICATION_TRACKER_SERVICE, SAVED_VACANCY_SERVICE, REMINDER_SERVICE))
 # LEGAL-001 installs owner consent plus an independent reviewed-code legal gate.
 # The current policy is DRAFT and REAL_DATA_SUPPORTED remains false.
 CONSENT_SERVICE = ConsentService(STORAGE.consents)
@@ -966,6 +970,8 @@ def dashboard():
     )
     superjob_row = account(first_party_user.id)
     hh_row = hh_account(first_party_user.id)
+    reminder_preference = REMINDER_SERVICE.preference(first_party_user.id)
+    reminder_count = len(REMINDER_SERVICE.list(first_party_user.id)) if reminder_preference["in_app_reminders_enabled"] else 0
 
     auth_sessions = []
     for auth_session in AUTH_SERVICE.list_sessions(first_party_user.id):
@@ -1005,6 +1011,8 @@ def dashboard():
         auth_sessions=auth_sessions,
         resumes=resumes,
         error=error,
+        reminder_preference=reminder_preference,
+        reminder_count=reminder_count,
     )
 
 
