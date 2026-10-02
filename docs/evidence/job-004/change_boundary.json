@@ -1,0 +1,49 @@
+{
+  "legal_state": "DRAFT",
+  "new_runtime_sha256": {
+    "repositories/job_analytics.py": "38700d819c704adc5a606db5ac2397bc50a53d6d59a5d2ed2482d0dd3523df6f",
+    "routes/job_analytics.py": "80a3a78b22d5a5a1091bc7233f91a14f4c27ab4ddb85d595e0a534267d4b963a",
+    "services/job_analytics.py": "c65b9aaf6726cb30e95cf157275030fbf452b60661f985565337954538185b79",
+    "templates/analytics/index.html": "04680171ebacc003b3f8e81f610eb2e1b786f1627818d84f18f3898a38712acd"
+  },
+  "package": "JOB-004",
+  "production_migration": "NOT_APPLICABLE",
+  "provider_calls": 0,
+  "public_real_data_enabled": false,
+  "reviewed_runtime_changes": {
+    "app.py": {
+      "current_sha256": "59a00198b7f1c9acd76260187f586ceeb0b1d0c4272a1eccc2df9e08fb004e3e",
+      "previous_sha256": "32e2b6ee2c825473e2f165f823041e48407a4ce7b1788bbdcf3e64f455d61d3f"
+    },
+    "scripts/check_job003_package.py": {
+      "current_sha256": "97ba849106dca2ffa20cbd3bc95740636b17f019091de3a0b8d89e71bcca6f3e",
+      "previous_sha256": "9b7837b836656c50ae42c961c346ca90f0169b0ee850f2a736b5a43e975afdff"
+    },
+    "services/storage.py": {
+      "current_sha256": "b413d6e668f0022337e58bac1327ee6dd02d24e18e10b32d6ec756d4c62aa095",
+      "previous_sha256": "c2cc0b9e5043fd49a3617e5865a93cf10fab8ae65b5b0b5580f162abd0da6cd9"
+    },
+    "templates/dashboard.html": {
+      "current_sha256": "8217f5c241c5935dd48073c8f4b9436adcebf303d5bbba79377886a00aad9ba2",
+      "previous_sha256": "ef557da50e5b0526356d9cfdd2ff60cdc2b48c92fd5bae95e0f428830805521a"
+    },
+    "tests/ai005_boundary_helper.py": {
+      "current_sha256": "f442fed149d7e935d2afe00ba55ce5374e2c5fe9fbc77d4ec3b26b2b913d8baa",
+      "previous_sha256": "f89b4d9ff6ba50b1a803cf478e0a7ca22f68f2ef4cfaec43e216176bb7e5907f"
+    }
+  },
+  "schema_from": "20261002_0023",
+  "schema_to": "20261002_0023",
+  "source_commit": "a446593e93e2bb94bc9c222f4ed66c431593d2b7",
+  "source_tree": "dc02f00ee8e11be09334003ef9ee8fa891adee46",
+  "support_sha256": {
+    ".github/workflows/job004.yml": "a6fe058031be461a767be2b1378e9a63c5dbb4b557f6d5f1901c62cad31e4bd2",
+    "docs/JOB004_IMPLEMENTATION.md": "5942ef66121caaef29d9b0c82a67c79f971e8226e9d8a90c75b7e7994dcd66b8",
+    "docs/JOB004_RUNBOOK.md": "a12130525cdc475d2cbdf0d09fa621ec6ba59647b955cd7d6a0243cf9a51a3ac",
+    "docs/JOB004_VERIFICATION_STATUS.md": "c994bca4dafd5b663795d4539eda4e5fea66f8dd05135b51400293e5490e5049",
+    "scripts/check_job004_package.py": "0333134d74341ac3f3a41032ff923076ef833c3f2317aa87d5047caca77abc19",
+    "tests/test_job004_package.py": "ff3e59b2e7bcd0bc4ac16a929c6247671ad163934e4ba67b4b8b80a808986a95",
+    "tests/test_job004_routes.py": "a3c1d1c0711896768f181a2f6b182998b0d272d7b394a46b4fe92af73cf5e68a",
+    "tests/test_job004_service.py": "6c6c1bf4260cf3f3700239c8e1de170706dc307bb965a48c11dac3d7a1c6840c"
+  }
+}

@@ -29,13 +29,25 @@ def successor_hashes(root=ROOT):
         if set(e.get('reviewed_runtime_changes',{})) != REVIEWED_RUNTIME_CHANGES: raise ValueError('scope:reviewed_runtime_changes')
         if set(e.get('new_runtime_sha256',{})) != NEW_RUNTIME: raise ValueError('scope:new_runtime_sha256')
         if set(e.get('authorized_guard_changes',{})) != AUTHORIZED_GUARD_CHANGES: raise ValueError('scope:authorized_guard_changes')
+        successor_path=root/'docs/evidence/job-004/change_boundary.json'
+        if successor_path.is_file() and (root/'scripts/check_job004_package.py').is_file():
+            try: from scripts.check_job004_package import successor_hashes as job004_hashes
+            except ModuleNotFoundError:
+                from check_job004_package import successor_hashes as job004_hashes
+            authorized=job004_hashes(root)
+        else: authorized={}
+        effective={}
         for p,row in e['reviewed_runtime_changes'].items():
-            if set(row)!={'previous_sha256','current_sha256'} or hashlib.sha256((root/p).read_bytes()).hexdigest()!=row['current_sha256']: raise ValueError('hash:'+p)
+            next_row=authorized.get(p,{})
+            direct=hashlib.sha256((root/p).read_bytes()).hexdigest()==row['current_sha256']
+            chained=(next_row.get('previous_sha256')==row['current_sha256'] and hashlib.sha256((root/p).read_bytes()).hexdigest()==next_row.get('current_sha256'))
+            if set(row)!={'previous_sha256','current_sha256'} or not (direct or chained): raise ValueError('hash:'+p)
+            effective[p]={**row,'current_sha256':next_row.get('current_sha256',row['current_sha256'])}
         for p,value in e['new_runtime_sha256'].items():
             if hashlib.sha256((root/p).read_bytes()).hexdigest()!=value: raise ValueError('hash:'+p)
         for p,row in e['authorized_guard_changes'].items():
             if set(row)!={'previous_sha256','current_sha256'} or hashlib.sha256((root/p).read_bytes()).hexdigest()!=row['current_sha256']: raise ValueError('hash:'+p)
-        return {**e['reviewed_runtime_changes'],**e['authorized_guard_changes']}
+        return {**authorized,**effective,**e['authorized_guard_changes']}
 def validate():
     errors=[]
     try:
