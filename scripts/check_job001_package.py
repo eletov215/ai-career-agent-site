@@ -45,6 +45,14 @@ def load_boundary(root=ROOT):
     if (root/'docs/evidence/ai-005/change_boundary.json').is_file():
         from scripts.check_ai005_package import load_boundary as load_ai005
         successor = load_ai005(root)
+    job003_path = root/'docs/evidence/job-003/change_boundary.json'
+    if job003_path.is_file():
+        job003 = json.loads(job003_path.read_text())
+        for rel, row in job003.get('reviewed_runtime_changes', {}).items():
+            prior = successor.get(rel)
+            if prior and row['previous_sha256'] != prior['current_sha256']:
+                raise ValueError('JOB-003 predecessor mismatch')
+            successor[rel] = row
     effective = {}
     for rel, row in data['reviewed_runtime_changes'].items():
         if row['previous_sha256'] != base['files'].get(rel):
@@ -136,7 +144,7 @@ def validate(root=ROOT):
         for rel in REQUIRED:
             if not (root/rel).is_file():
                 errors.append('Missing: '+rel)
-        expected_head = '20261001_0022' if (root/'docs/evidence/job-002/change_boundary.json').is_file() else '20260922_0021' if (root/'docs/evidence/legal-001/change_boundary.json').is_file() else '20260917_0020' if (root/'docs/evidence/ai-005/change_boundary.json').is_file() else '20260917_0019'
+        expected_head = '20261002_0023' if (root/'docs/evidence/job-003/change_boundary.json').is_file() else '20261001_0022' if (root/'docs/evidence/job-002/change_boundary.json').is_file() else '20260922_0021' if (root/'docs/evidence/legal-001/change_boundary.json').is_file() else '20260917_0020' if (root/'docs/evidence/ai-005/change_boundary.json').is_file() else '20260917_0019'
         if f'CURRENT_REVISION = "{expected_head}"' not in (root/'database.py').read_text():
             errors.append('Expected schema 0019')
         source = (root/'migrations/versions/20260917_0019_saved_vacancies.py').read_text()

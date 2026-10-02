@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block title %}Кабинет — AI Career Agent{% endblock %}
 {% block content %}
-<main class="section account-page">
+<main class="section account-page"><section class="card spaced"><h2>Напоминания</h2>{% if reminder_preference.in_app_reminders_enabled %}<p>Активных календарных дат: <strong>{{ reminder_count }}</strong>.</p>{% else %}<p>Напоминания выключены.</p>{% endif %}<p><a href="{{ url_for('reminders.index') }}">Открыть напоминания</a></p></section>
   <div class="container">
     <div class="page-heading account-page__heading">
       <div>

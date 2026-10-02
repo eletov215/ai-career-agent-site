@@ -1,0 +1,24 @@
+name: JOB-003
+"on":
+  pull_request:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  in-app-reminders:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      APP_ENV: test
+      DATA_DIR: /tmp/ai-career-agent-job003
+      TRUDVSEM_SYNC_ENABLED: "0"
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+          cache: pip
+      - run: python -m pip install -r requirements.txt -r requirements-dev.txt
+      - run: python scripts/check_job003_package.py
+      - run: python -m pytest -q tests/test_job003_service.py tests/test_job003_migration.py tests/test_job002_service.py tests/test_job002_routes.py

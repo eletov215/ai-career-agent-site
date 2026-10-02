@@ -1,0 +1,73 @@
+{
+  "authorized_guard_changes": {
+    "scripts/check_job001_package.py": {
+      "current_sha256": "b7d93dca89d5f15b0de7cc25e481df2e99a9d6bf41be4f59a076599b2396bf98",
+      "previous_sha256": "633f1e9c59588884046aa0d8814d365939f6bbab210eebbb4ecd1466b2e0fed9"
+    },
+    "scripts/check_job002_package.py": {
+      "current_sha256": "c1efc80ceb643a7e6a8f0bdfe501a6517f745019d03ebf08e1a6c55295d2f6b9",
+      "previous_sha256": "a44955690d144419bcdf61f040721cf479af8a4f5c32b8abf95c516f3d9ca387"
+    }
+  },
+  "legal_state": "DRAFT",
+  "new_runtime_sha256": {
+    "domain/reminders.py": "8d834c9df78b3687957cbcd5adeeefdef44bab1b7a250046f8d3580cdf3d2f61",
+    "migrations/versions/20261002_0023_in_app_reminders.py": "7d42c60ba8e9f3b00e09d993add1ec91a7ccc728e1f84cace7b25c03b4d1c175",
+    "models/reminder.py": "e11beb35a8cdc0d2eb9bb27280e00e1ba585484e9314dfb5ad84dd2d3a2fde70",
+    "repositories/reminders.py": "f9ab4dfb472bb732d8fb85139a5def179341dc9a9b76e50bccf7cfd7c6519d07",
+    "routes/reminders.py": "067747c7ff9e402f4dce68780b0000e6bf60d6bc7bc135c2c478acaf55d4f31a",
+    "services/reminders.py": "0390511e13e92ea6bb3b148b547a17ba8dd041f0fd287f72960215bfd5b2a51c",
+    "templates/reminders/error.html": "7993cdc8231dec3f52161ec1a297d518a87a44077274530d569602ec971dfcaa",
+    "templates/reminders/index.html": "c09d1bbf29447989d020504ba020acbbf43a3153a67ce54e7668e6b25230b762"
+  },
+  "package": "JOB-003",
+  "production_migration": "NOT_RUN",
+  "provider_calls": 0,
+  "public_real_data_enabled": false,
+  "reviewed_runtime_changes": {
+    "app.py": {
+      "current_sha256": "32e2b6ee2c825473e2f165f823041e48407a4ce7b1788bbdcf3e64f455d61d3f",
+      "previous_sha256": "03fc3e410be4f71fbd720bcc41d59aa9911f1c41a4fdab670fe7f6593d72a233"
+    },
+    "database.py": {
+      "current_sha256": "467a7223a9efc8a75cc7fb1d83aa1382996d0f5e0cf1b0ae1510f17b8a5cdede",
+      "previous_sha256": "c856736c432f582035b5428e4ca3afce55cbe92f84f70688d153d06d88f91cc2"
+    },
+    "models/__init__.py": {
+      "current_sha256": "029c6e0225213fa1a1ca19fa8b08302d0532a56e14aea342b7533d4cc0a2c20e",
+      "previous_sha256": "236c0535b29b9443543ce7e83b89a6f73cbb8518bbe9c2a7938cbc3a8c3eccae"
+    },
+    "operations/backup.py": {
+      "current_sha256": "c01b814f52fe3220d08fcbe9ec6aefd58ccd4d17e03ccfd6a5907c71d0428cc4",
+      "previous_sha256": "7a2659ac3c4d5d6a5e3a5809eda245f4c0457682ecc20ab6c6595a9f7b520d1e"
+    },
+    "repositories/privacy.py": {
+      "current_sha256": "79e361d66186cc6d92ff5a03d2f0e885a63a900c7ecc7b73663579ce4b54ec46",
+      "previous_sha256": "91dd978d8250be740b4ccd04a24d319d8d5a1227c334df1c85cea5378bd4577c"
+    },
+    "routes/application_trackers.py": {
+      "current_sha256": "4cf42391094fabf5030b57f966dfb031ef71753860fca8d4f9df4ab446277aa7",
+      "previous_sha256": "4b2c78dbf07c143e515c3fc07bead713c3cbca521ddeae233d5e9b938e359ff7"
+    },
+    "services/privacy.py": {
+      "current_sha256": "e87455f07590c310a8d87b0e4f8ed663a3d4e3a8baa29d32d7a6bf444b0e6e6c",
+      "previous_sha256": "e52fd4ea36b40e98f8bd4998f07a8ad2d4bae0d4e7c27f90f22afbb55d994ed7"
+    },
+    "services/storage.py": {
+      "current_sha256": "c2cc0b9e5043fd49a3617e5865a93cf10fab8ae65b5b0b5580f162abd0da6cd9",
+      "previous_sha256": "2cfe3db81a027c9a70e03345417d838a01bf2c1735c179084ce62e5e78ed2a10"
+    },
+    "templates/application_trackers/detail.html": {
+      "current_sha256": "dddade2a51b1918c3d62238d6aa9bd5fe05cd96cea410ac7b05e51fd5fad602a",
+      "previous_sha256": "e2e09553f72975b27e44c0fe59bc36449f51492e7e214bae61ef283716926161"
+    },
+    "templates/dashboard.html": {
+      "current_sha256": "ef557da50e5b0526356d9cfdd2ff60cdc2b48c92fd5bae95e0f428830805521a",
+      "previous_sha256": "11e7a09ae77876a1e292236b123aa4cbf7e458731f05928b7cc63c7abe00fb74"
+    }
+  },
+  "schema_from": "20261001_0022",
+  "schema_to": "20261002_0023",
+  "source_commit": "8001efbd4c70144bdeab2bdf8e3f64b00bf9c179",
+  "source_tree": "1248fd93e4a488d6cab1ae757880432ccb2da35b"
+}

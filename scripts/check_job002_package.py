@@ -72,13 +72,26 @@ def successor_hashes(root: Path = ROOT) -> dict[str, dict[str, str]]:
         **evidence["reviewed_runtime_changes"],
         **evidence["authorized_guard_changes"],
     }
+    successor_path = root / "docs/evidence/job-003/change_boundary.json"
+    successor = json.loads(successor_path.read_text()) if successor_path.is_file() else {}
+    authorized = {**successor.get("reviewed_runtime_changes", {}),
+                  **successor.get("authorized_guard_changes", {})} if (
+        successor.get("package") == "JOB-003"
+        and successor.get("source_commit") == "8001efbd4c70144bdeab2bdf8e3f64b00bf9c179"
+        and successor.get("schema_from") == "20261001_0022"
+    ) else {}
     for rel, row in rows.items():
-        if set(row) != {"previous_sha256", "current_sha256"} or not _matches(
-            root / rel, row["current_sha256"]
-        ):
+        direct = _matches(root / rel, row["current_sha256"])
+        next_row = authorized.get(rel, {})
+        chained = (next_row.get("previous_sha256") == row["current_sha256"]
+                   and _matches(root / rel, next_row.get("current_sha256", "")))
+        if set(row) != {"previous_sha256", "current_sha256"} or not (direct or chained):
             raise ValueError("JOB-002 changed-file hash mismatch: " + rel)
     for rel, digest in evidence["new_runtime_sha256"].items():
-        if not _matches(root / rel, digest):
+        next_row = authorized.get(rel, {})
+        chained = (next_row.get("previous_sha256") == digest
+                   and _matches(root / rel, next_row.get("current_sha256", "")))
+        if not (_matches(root / rel, digest) or chained):
             raise ValueError("JOB-002 new-file hash mismatch: " + rel)
     return rows
 
@@ -88,7 +101,7 @@ def validate(root: Path = ROOT) -> list[str]:
     try:
         successor_hashes(root)
         checks = {
-            "database.py": 'CURRENT_REVISION = "20261001_0022"',
+            "database.py": 'CURRENT_REVISION = "20261002_0023"',
             "domain/ai.py": "REAL_DATA_SUPPORTED = False",
             "migrations/versions/20261001_0022_application_tracker.py":
                 "down_revision = '20260922_0021'",

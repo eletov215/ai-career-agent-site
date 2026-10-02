@@ -229,6 +229,8 @@ class PrivacyService:
             "ai_consents": len(snapshot.get("ai_consents", [])),
             "saved_vacancies": len(snapshot.get("saved_vacancies", [])),
             "saved_vacancy_sources": len(snapshot.get("saved_vacancy_sources", [])),
+            "notification_preferences": 1 if snapshot.get("notification_preference", {}).get("revision", 0) else 0,
+            "saved_vacancy_reminders": len(snapshot.get("saved_vacancy_reminders", [])),
             "saved_vacancy_trackers": len(snapshot.get("saved_vacancy_trackers", [])),
             "saved_vacancy_tracker_events": len(snapshot.get("saved_vacancy_tracker_events", [])),
             "vacancy_match_reports": len(snapshot.get("vacancy_matches", [])),
