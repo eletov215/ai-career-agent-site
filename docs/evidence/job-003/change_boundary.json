@@ -25,7 +25,7 @@
       "previous_sha256": "633f1e9c59588884046aa0d8814d365939f6bbab210eebbb4ecd1466b2e0fed9"
     },
     "scripts/check_job002_package.py": {
-      "current_sha256": "c701877051e27b1341686f3bd5c04c57118ae0e439decf18174e618102855119",
+      "current_sha256": "603f0ef5e9ac018c2a731bdd415951d40b585df65690392e35dd3793bd98963e",
       "previous_sha256": "a44955690d144419bcdf61f040721cf479af8a4f5c32b8abf95c516f3d9ca387"
     },
     "scripts/check_legal001_package.py": {

@@ -74,7 +74,12 @@ def successor_hashes(root: Path = ROOT) -> dict[str, dict[str, str]]:
     }
     successor_path = root / "docs/evidence/job-003/change_boundary.json"
     if successor_path.is_file():
-        from scripts.check_job003_package import successor_hashes as job003_hashes
+        try:
+            from scripts.check_job003_package import successor_hashes as job003_hashes
+        except ModuleNotFoundError as exc:
+            if exc.name != "scripts":
+                raise
+            from check_job003_package import successor_hashes as job003_hashes
         authorized = job003_hashes(root)
     else:
         authorized = {}
