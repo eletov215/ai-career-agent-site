@@ -159,7 +159,7 @@ def test_t05_postgresql_migration_history_cascade_and_destructive_downgrade():
         runtime = create_database(url)
         try:
             assert current_revision(runtime.engine) == "20260922_0021"
-            assert CURRENT_REVISION == "20261001_0022"
+            assert CURRENT_REVISION == "20261002_0023"
             inspector = inspect(runtime.engine)
             assert "ai_consents" in inspector.get_table_names()
             columns = {column["name"] for column in inspector.get_columns("ai_consents")}

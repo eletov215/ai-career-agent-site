@@ -45,14 +45,6 @@ def load_boundary(root=ROOT):
     if (root/'docs/evidence/ai-005/change_boundary.json').is_file():
         from scripts.check_ai005_package import load_boundary as load_ai005
         successor = load_ai005(root)
-    job003_path = root/'docs/evidence/job-003/change_boundary.json'
-    if job003_path.is_file():
-        job003 = json.loads(job003_path.read_text())
-        for rel, row in job003.get('reviewed_runtime_changes', {}).items():
-            prior = successor.get(rel)
-            if prior and row['previous_sha256'] != prior['current_sha256']:
-                raise ValueError('JOB-003 predecessor mismatch')
-            successor[rel] = row
     effective = {}
     for rel, row in data['reviewed_runtime_changes'].items():
         if row['previous_sha256'] != base['files'].get(rel):

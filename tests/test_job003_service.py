@@ -28,8 +28,18 @@ def test_default_opt_in_conflicts_and_persistence():
     assert s.set_preference('u','0','1',now=3)['in_app_reminders_enabled'] is False
 
 def test_date_crud_noop_conflict_order_and_labels():
-    s=ReminderService(Repo()); row=s.save('u','s','2026-10-02','0',now=1)
+    s=ReminderService(Repo())
+    with pytest.raises(ReminderError,match='preference_disabled'): s.save('u','s','2026-10-02','0',now=1)
+    s.set_preference('u','1','0',now=1)
+    row=s.save('u','s','2026-10-02','0',now=1)
     assert s.save('u','s','2026-10-02','1',now=2)['revision']==1
     with pytest.raises(ReminderError,match='stale_write'): s.save('u','s','2026-10-03','0',now=2)
     row=s.save('u','s','2026-10-03','1',now=3); assert s.list('u',date(2026,10,3))[0]['label']=='Сегодня'
     s.delete('u','s',row['revision']); assert s.list('u')==[]
+
+def test_disabled_existing_preference_rejects_reschedule_but_allows_delete():
+    repo=Repo();s=ReminderService(repo);s.set_preference('u','1','0',now=1)
+    row=s.save('u','s','2026-10-02','0',now=1)
+    s.set_preference('u','0','1',now=2)
+    with pytest.raises(ReminderError,match='preference_disabled'): s.save('u','s','2026-10-03',row['revision'],now=3)
+    s.delete('u','s',row['revision']); assert repo.r==[]

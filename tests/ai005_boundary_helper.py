@@ -12,6 +12,14 @@ def copy_job002_boundary(root, destination):
             JOB002_EVIDENCE, 'scripts/check_job002_package.py'}:
         target=destination/rel;target.parent.mkdir(parents=True,exist_ok=True)
         shutil.copy2(root/rel,target)
+    job003 = root/'docs/evidence/job-003/change_boundary.json'
+    if job003.is_file():
+        from scripts.check_job003_package import (AUTHORIZED_GUARD_CHANGES,
+            NEW_RUNTIME as JOB003_NEW, REVIEWED_RUNTIME_CHANGES)
+        for rel in REVIEWED_RUNTIME_CHANGES | AUTHORIZED_GUARD_CHANGES | JOB003_NEW | {
+                'docs/evidence/job-003/change_boundary.json'}:
+            target=destination/rel;target.parent.mkdir(parents=True,exist_ok=True)
+            shutil.copy2(root/rel,target)
 
 def copy_ai005_boundary(root,destination):
     if not (root/'docs/evidence/ai-005/change_boundary.json').is_file():return

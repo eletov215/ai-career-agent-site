@@ -66,11 +66,17 @@ class ReminderRepository(RepositoryBase):
 
     def list(self, user_id):
         with self.session() as session:
+            preference = session.get(NotificationPreference, user_id)
+            if preference is None or not preference.in_app_reminders_enabled:
+                return []
             rows = session.scalars(select(SavedVacancyReminder).where(SavedVacancyReminder.user_id == user_id).order_by(SavedVacancyReminder.due_date, SavedVacancyReminder.id)).all()
             return [reminder_view(row) for row in rows]
 
     def save(self, user_id, saved_id, due_date, expected_revision, *, now):
         with self._write(user_id) as session:
+            preference = session.scalar(select(NotificationPreference).where(NotificationPreference.user_id == user_id).with_for_update())
+            if preference is None or not preference.in_app_reminders_enabled:
+                raise ReminderError('preference_disabled')
             self._saved(session, user_id, saved_id, True)
             row = session.scalar(select(SavedVacancyReminder).where(SavedVacancyReminder.user_id == user_id, SavedVacancyReminder.saved_vacancy_id == saved_id).with_for_update())
             revision = row.revision if row else 0

@@ -1,12 +1,36 @@
 {
   "authorized_guard_changes": {
+    "scripts/check_ai001_package.py": {
+      "current_sha256": "ee69cc4b366ca771214aeb44fd3713e35447b371ebf033161478ca0e44d27fe7",
+      "previous_sha256": "317cd7aabf8f0e9290dcc9a0e8a8a533c0b1ed4dd5d645effb9bffa3de46c442"
+    },
+    "scripts/check_ai002_package.py": {
+      "current_sha256": "291a1241a1163819e1f3ef3c7b4c4e9e3dd8d6e17297dba06489f88e5c9a8171",
+      "previous_sha256": "4031e1d0c551442b1efff596f335a3e3dd3a0b637f038d00da8eb1269051631e"
+    },
+    "scripts/check_ai003_package.py": {
+      "current_sha256": "86e6fba68c541df4666b0b8487a651cf9f923cfeaa0408f798d1cf22953346c9",
+      "previous_sha256": "5d0d5b907c8d43750bcd7803935de2a26884cdfead3c51cd05c56d4abd332d87"
+    },
+    "scripts/check_ai004_package.py": {
+      "current_sha256": "5c8070558cc9308def01940f7df25d1e5e1787c42527109d39f84cc455835d35",
+      "previous_sha256": "079cd267832270916547726935dd13397a0f38465cba56ec29a23fef5847b48f"
+    },
+    "scripts/check_ai005_package.py": {
+      "current_sha256": "04f0a1960bb15d7bcf87f511f84b9f363203996189c8fd29e7c40052770ac90a",
+      "previous_sha256": "f099f8441f801d801e07b72acb148ca459cb6c5ff685e8fbdd77e90e8ae89771"
+    },
     "scripts/check_job001_package.py": {
-      "current_sha256": "b7d93dca89d5f15b0de7cc25e481df2e99a9d6bf41be4f59a076599b2396bf98",
+      "current_sha256": "20d77a0f5a4ea00decf590e336c19160b0358e0d1655bdf815e62c30bc679601",
       "previous_sha256": "633f1e9c59588884046aa0d8814d365939f6bbab210eebbb4ecd1466b2e0fed9"
     },
     "scripts/check_job002_package.py": {
-      "current_sha256": "c1efc80ceb643a7e6a8f0bdfe501a6517f745019d03ebf08e1a6c55295d2f6b9",
+      "current_sha256": "c701877051e27b1341686f3bd5c04c57118ae0e439decf18174e618102855119",
       "previous_sha256": "a44955690d144419bcdf61f040721cf479af8a4f5c32b8abf95c516f3d9ca387"
+    },
+    "scripts/check_legal001_package.py": {
+      "current_sha256": "6613b671309a6224d0dd616c2ace9c02007972e9d5c56dfe26df186c14c03aa1",
+      "previous_sha256": "a35fbfd612beaeed7010ea17842ad4725f1934f6c377d5b4b8e13c601a07167d"
     }
   },
   "legal_state": "DRAFT",
@@ -14,9 +38,9 @@
     "domain/reminders.py": "8d834c9df78b3687957cbcd5adeeefdef44bab1b7a250046f8d3580cdf3d2f61",
     "migrations/versions/20261002_0023_in_app_reminders.py": "7d42c60ba8e9f3b00e09d993add1ec91a7ccc728e1f84cace7b25c03b4d1c175",
     "models/reminder.py": "e11beb35a8cdc0d2eb9bb27280e00e1ba585484e9314dfb5ad84dd2d3a2fde70",
-    "repositories/reminders.py": "f9ab4dfb472bb732d8fb85139a5def179341dc9a9b76e50bccf7cfd7c6519d07",
-    "routes/reminders.py": "067747c7ff9e402f4dce68780b0000e6bf60d6bc7bc135c2c478acaf55d4f31a",
-    "services/reminders.py": "0390511e13e92ea6bb3b148b547a17ba8dd041f0fd287f72960215bfd5b2a51c",
+    "repositories/reminders.py": "b9feee39cc24439cac1e4b4518f0bcb032725b01c172b8e4dda00aeae51dbadb",
+    "routes/reminders.py": "de4e35affc28135fcb480daeacda5e5bee64ac1c7f0d0f4e28d874930fbc97ef",
+    "services/reminders.py": "99978d2973f9a20d37c402386af3dfc8f388dc904750abf3cf682fa2d67eceb7",
     "templates/reminders/error.html": "7993cdc8231dec3f52161ec1a297d518a87a44077274530d569602ec971dfcaa",
     "templates/reminders/index.html": "c09d1bbf29447989d020504ba020acbbf43a3153a67ce54e7668e6b25230b762"
   },
@@ -46,7 +70,7 @@
       "previous_sha256": "91dd978d8250be740b4ccd04a24d319d8d5a1227c334df1c85cea5378bd4577c"
     },
     "routes/application_trackers.py": {
-      "current_sha256": "4cf42391094fabf5030b57f966dfb031ef71753860fca8d4f9df4ab446277aa7",
+      "current_sha256": "dfd7043cce5a1180d975309f79d929bb2538b2f1f5e55d1271c19b9ceb30ca10",
       "previous_sha256": "4b2c78dbf07c143e515c3fc07bead713c3cbca521ddeae233d5e9b938e359ff7"
     },
     "services/privacy.py": {
@@ -58,7 +82,7 @@
       "previous_sha256": "2cfe3db81a027c9a70e03345417d838a01bf2c1735c179084ce62e5e78ed2a10"
     },
     "templates/application_trackers/detail.html": {
-      "current_sha256": "dddade2a51b1918c3d62238d6aa9bd5fe05cd96cea410ac7b05e51fd5fad602a",
+      "current_sha256": "56c3fc002a5b23f44c333d1dae5efca0d30ad9daf47dcac022859577f2bd033b",
       "previous_sha256": "e2e09553f72975b27e44c0fe59bc36449f51492e7e214bae61ef283716926161"
     },
     "templates/dashboard.html": {

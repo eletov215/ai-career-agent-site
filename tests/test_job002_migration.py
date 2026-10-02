@@ -15,7 +15,9 @@ def test_0021_to_0022_round_trip_without_backfill(tmp_path):
     event_constraints={item['name'] for item in inspect(db.engine).get_unique_constraints(
         'saved_vacancy_tracker_events')}
     assert 'uq_tracker_event_owner_saved_revision' in event_constraints
+    upgrade_database(url)
     command.check(alembic_config(url))
+    downgrade_database(url,'20261001_0022')
     downgrade_database(url,'20260922_0021')
     assert set(inspect(db.engine).get_table_names())==before
     db.dispose()

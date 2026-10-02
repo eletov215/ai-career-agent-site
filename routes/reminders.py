@@ -23,7 +23,7 @@ def create_reminders_blueprint(service):
     @bp.errorhandler(ReminderError)
     def reminder_error(error):
         code = str(error); status = 404 if code == 'not_found' else 409 if code == 'stale_write' else 400
-        messages = {'stale_write': 'Напоминание уже изменено в другой вкладке. Обновите страницу.', 'invalid_date': 'Укажите корректную календарную дату.', 'invalid_revision': 'Некорректная версия.', 'invalid_preference': 'Некорректная настройка.'}
+        messages = {'stale_write': 'Напоминание уже изменено в другой вкладке. Обновите страницу.', 'preference_disabled': 'Сначала включите напоминания в настройках.', 'invalid_date': 'Укажите корректную календарную дату.', 'invalid_revision': 'Некорректная версия.', 'invalid_preference': 'Некорректная настройка.'}
         return render_template('reminders/error.html', message=messages.get(code, 'Запрос отклонён.')), status
 
     @bp.errorhandler(SQLAlchemyError)

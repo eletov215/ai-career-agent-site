@@ -4,20 +4,42 @@ import hashlib, json
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1]
 EVIDENCE='docs/evidence/job-003/change_boundary.json'
+REVIEWED_RUNTIME_CHANGES={
+    'app.py','database.py','models/__init__.py','operations/backup.py',
+    'repositories/privacy.py','routes/application_trackers.py','services/privacy.py',
+    'services/storage.py','templates/application_trackers/detail.html','templates/dashboard.html',
+}
+NEW_RUNTIME={
+    'domain/reminders.py','migrations/versions/20261002_0023_in_app_reminders.py',
+    'models/reminder.py','repositories/reminders.py','routes/reminders.py',
+    'services/reminders.py','templates/reminders/error.html','templates/reminders/index.html',
+}
+AUTHORIZED_GUARD_CHANGES={
+    'scripts/check_ai001_package.py','scripts/check_ai002_package.py',
+    'scripts/check_ai003_package.py','scripts/check_ai004_package.py',
+    'scripts/check_ai005_package.py','scripts/check_job001_package.py',
+    'scripts/check_job002_package.py','scripts/check_legal001_package.py',
+}
 def digest(path): return hashlib.sha256((ROOT/path).read_bytes()).hexdigest()
+def successor_hashes(root=ROOT):
+        e=json.loads((root/EVIDENCE).read_text())
+        expected={'package':'JOB-003','source_commit':'8001efbd4c70144bdeab2bdf8e3f64b00bf9c179','source_tree':'1248fd93e4a488d6cab1ae757880432ccb2da35b','schema_from':'20261001_0022','schema_to':'20261002_0023','legal_state':'DRAFT','public_real_data_enabled':False,'provider_calls':0,'production_migration':'NOT_RUN'}
+        for k,v in expected.items():
+            if e.get(k)!=v: raise ValueError('evidence:'+k)
+        if set(e.get('reviewed_runtime_changes',{})) != REVIEWED_RUNTIME_CHANGES: raise ValueError('scope:reviewed_runtime_changes')
+        if set(e.get('new_runtime_sha256',{})) != NEW_RUNTIME: raise ValueError('scope:new_runtime_sha256')
+        if set(e.get('authorized_guard_changes',{})) != AUTHORIZED_GUARD_CHANGES: raise ValueError('scope:authorized_guard_changes')
+        for p,row in e['reviewed_runtime_changes'].items():
+            if set(row)!={'previous_sha256','current_sha256'} or hashlib.sha256((root/p).read_bytes()).hexdigest()!=row['current_sha256']: raise ValueError('hash:'+p)
+        for p,value in e['new_runtime_sha256'].items():
+            if hashlib.sha256((root/p).read_bytes()).hexdigest()!=value: raise ValueError('hash:'+p)
+        for p,row in e['authorized_guard_changes'].items():
+            if set(row)!={'previous_sha256','current_sha256'} or hashlib.sha256((root/p).read_bytes()).hexdigest()!=row['current_sha256']: raise ValueError('hash:'+p)
+        return {**e['reviewed_runtime_changes'],**e['authorized_guard_changes']}
 def validate():
     errors=[]
     try:
-        e=json.loads((ROOT/EVIDENCE).read_text())
-        expected={'package':'JOB-003','source_commit':'8001efbd4c70144bdeab2bdf8e3f64b00bf9c179','source_tree':'1248fd93e4a488d6cab1ae757880432ccb2da35b','schema_from':'20261001_0022','schema_to':'20261002_0023','legal_state':'DRAFT','public_real_data_enabled':False,'provider_calls':0,'production_migration':'NOT_RUN'}
-        for k,v in expected.items():
-            if e.get(k)!=v: errors.append('evidence:'+k)
-        for p,row in e['reviewed_runtime_changes'].items():
-            if set(row)!={'previous_sha256','current_sha256'} or digest(p)!=row['current_sha256']: errors.append('hash:'+p)
-        for p,value in e['new_runtime_sha256'].items():
-            if digest(p)!=value: errors.append('hash:'+p)
-        for p,row in e['authorized_guard_changes'].items():
-            if set(row)!={'previous_sha256','current_sha256'} or digest(p)!=row['current_sha256']: errors.append('hash:'+p)
+        successor_hashes(ROOT)
         checks={'database.py':'CURRENT_REVISION = "20261002_0023"','domain/ai.py':'REAL_DATA_SUPPORTED = False','services/legal_policy.py':'release_state="DRAFT"','migrations/versions/20261002_0023_in_app_reminders.py':"down_revision = '20261001_0022'"}
         for p,n in checks.items():
             if n not in (ROOT/p).read_text(): errors.append('boundary:'+p)
