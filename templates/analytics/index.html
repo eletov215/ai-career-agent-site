@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Аналитика поиска работы — AI Career Agent{% endblock %}
+{% block content %}
+<main class="section"><div class="container">
+  <div class="page-heading"><div><div class="muted">Личная история</div><h1 class="page-title">Аналитика поиска работы</h1></div><a class="btn btn-secondary" href="{{ url_for('dashboard') }}">В кабинет</a></div>
+  <section class="card spaced">
+    <form method="get" action="{{ url_for('job_analytics.index') }}">
+      <label>Период сохранения <select name="period">
+        {% for value, label in [('7','Последние 7 дней'),('30','Последние 30 дней'),('90','Последние 90 дней'),('all','Всё время')] %}<option value="{{ value }}" {{ 'selected' if report.period == value else '' }}>{{ label }}</option>{% endfor %}
+      </select></label>
+      <label>Источник <select name="source"><option value="">Все источники</option>{% for item in report.sources %}<option value="{{ item }}" {{ 'selected' if report.source == item else '' }}>{{ item }}</option>{% endfor %}</select></label>
+      <button class="btn btn-primary" type="submit">Показать</button>
+    </form>
+    <p class="muted">Когорта — вакансии, сохранённые в выбранный скользящий период по серверному времени. Вся последующая история этих вакансий учитывается независимо от даты события.</p>
+    <p class="muted">Вакансия с несколькими источниками может входить в несколько отфильтрованных представлений, поэтому итоги по источникам не нужно складывать.</p>
+  </section>
+  {% if report.saved_count == 0 %}
+    <section class="card spaced"><h2>В выбранной когорте пока нет сохранённых вакансий</h2><p>Проценты не рассчитываются без данных.</p><a class="btn btn-primary" href="{{ url_for('saved_vacancies.index') }}">Открыть сохранённые вакансии</a></section>
+  {% else %}
+    <section class="grid-2">
+      <article class="card spaced"><h2>Сохранено</h2><strong>{{ report.saved_count }}</strong></article>
+      <article class="card spaced"><h2>Начата подготовка</h2><strong>{{ report.preparing_ever_count }}</strong></article>
+      <article class="card spaced"><h2>Отклик отправлен (со слов пользователя)</h2><strong>{{ report.submitted_ever_count }}</strong></article>
+      <article class="card spaced"><h2>Процесс продолжается (со слов пользователя)</h2><strong>{{ report.in_process_ever_count }}</strong></article>
+      <article class="card spaced"><h2>Сейчас в активной воронке</h2><strong>{{ report.active_pipeline_count }}</strong></article>
+      <article class="card spaced"><h2>Сейчас закрыто</h2><strong>{{ report.closed_current_count }}</strong></article>
+    </section>
+    <section class="grid-2">
+      {% for title, item in [('Сохранено → отклик отправлен (со слов пользователя)', report.saved_to_submitted), ('Отклик → процесс продолжается (со слов пользователя)', report.submitted_to_in_process)] %}
+      <article class="card spaced"><h2>{{ title }}</h2><p><strong>{{ item.numerator }} из {{ item.denominator }}</strong></p>{% if item.percentage is not none %}<p>{{ item.percentage }}%</p>{% else %}<p>Процент: Н/Д</p>{% endif %}{% if item.caveat %}<p class="muted">{{ item.caveat }}</p>{% endif %}</article>
+      {% endfor %}
+    </section>
+    <section class="card spaced"><h2>Текущее распределение</h2><ul><li>Сохранено: {{ report.current_state_distribution.saved }}</li><li>Подготовка: {{ report.current_state_distribution.preparing }}</li><li>Отклик отправлен (со слов пользователя): {{ report.current_state_distribution.submitted_user_reported }}</li><li>Процесс продолжается (со слов пользователя): {{ report.current_state_distribution.in_process_user_reported }}</li><li>Закрыто: {{ report.current_state_distribution.closed }}</li></ul></section>
+  {% endif %}
+  <section class="card spaced"><p><strong>Важно:</strong> это описательная личная история со слов пользователя, а не подтверждённая работодателем статистика, оценка эффективности или прогноз найма.</p></section>
+</div></main>
+{% endblock %}

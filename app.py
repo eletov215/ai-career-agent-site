@@ -38,6 +38,8 @@ from routes.application_trackers import create_application_trackers_blueprint
 from services.application_trackers import ApplicationTrackerService
 from services.reminders import ReminderService
 from routes.reminders import create_reminders_blueprint
+from services.job_analytics import JobAnalyticsService
+from routes.job_analytics import create_job_analytics_blueprint
 from services.ai.service import AIService
 from routes.ai_status import create_ai_status_blueprint
 from services.vacancy_match import VacancyMatchService
@@ -139,6 +141,8 @@ SAVED_VACANCY_SERVICE = SavedVacancyService(STORAGE.saved_vacancies, signing_key
 app.register_blueprint(create_saved_vacancies_blueprint(SAVED_VACANCY_SERVICE))
 REMINDER_SERVICE = ReminderService(STORAGE.reminders)
 app.register_blueprint(create_reminders_blueprint(REMINDER_SERVICE))
+JOB_ANALYTICS_SERVICE = JobAnalyticsService(STORAGE.job_analytics)
+app.register_blueprint(create_job_analytics_blueprint(JOB_ANALYTICS_SERVICE))
 APPLICATION_TRACKER_SERVICE = ApplicationTrackerService(STORAGE.application_trackers)
 app.register_blueprint(create_application_trackers_blueprint(APPLICATION_TRACKER_SERVICE, SAVED_VACANCY_SERVICE, REMINDER_SERVICE))
 # LEGAL-001 installs owner consent plus an independent reviewed-code legal gate.

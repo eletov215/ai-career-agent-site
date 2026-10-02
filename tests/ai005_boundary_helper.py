@@ -20,6 +20,13 @@ def copy_job002_boundary(root, destination):
                 'docs/evidence/job-003/change_boundary.json'}:
             target=destination/rel;target.parent.mkdir(parents=True,exist_ok=True)
             shutil.copy2(root/rel,target)
+    job004 = root/'docs/evidence/job-004/change_boundary.json'
+    if job004.is_file():
+        from scripts.check_job004_package import NEW_RUNTIME as JOB004_NEW, REVIEWED_RUNTIME as JOB004_REVIEWED, SUPPORT as JOB004_SUPPORT
+        for rel in JOB004_REVIEWED | JOB004_NEW | JOB004_SUPPORT | {
+                'docs/evidence/job-004/change_boundary.json', 'scripts/check_job004_package.py'}:
+            target=destination/rel;target.parent.mkdir(parents=True,exist_ok=True)
+            shutil.copy2(root/rel,target)
 
 def copy_ai005_boundary(root,destination):
     if not (root/'docs/evidence/ai-005/change_boundary.json').is_file():return
