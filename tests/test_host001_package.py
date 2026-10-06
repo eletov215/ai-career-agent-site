@@ -79,10 +79,7 @@ class BackupExportTests(unittest.TestCase):
                 module.validate_encryption_envelope(backup)
 
     def test_exporter_authenticates_aes_gcm_before_upload(self):
-        try:
-            from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
-        except ModuleNotFoundError:
-            self.skipTest("cryptography is installed by the full project CI, not the stdlib-only HOST unit step")
+        from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 
         module = self._module()
         with tempfile.TemporaryDirectory() as tmp:
