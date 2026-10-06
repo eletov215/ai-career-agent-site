@@ -1,5 +1,24 @@
 # HOST-001 — verification status
 
+<!-- HOST001-STAGE-C-MERGED-20261006:START -->
+## Current successor evidence / 2026-10-06
+
+- Stage C preparation PR #75: MERGED.
+- Reviewed head: `101c17e65f403d9adbae42895a7373bee60ffb34`.
+- Merge/current main: `cc12b7de80b73f372aa185fadc1e49f58e9c2817`.
+- Exact-head checks: CI #517, HOST-001 #75, Package preflight #110, JOB-002 #37, JOB-003 #34, JOB-004 #28, AI-005 synthetic #91 — SUCCESS.
+- Final Codex review on reviewed head: no major issues.
+- Render auto-deploy: `dep-db2ekrbncjis73ciogcg` LIVE.
+- Stage C billable field execution: NOT_RUN / NOT_AUTHORIZED.
+- Yandex resources created: 0.
+- Production migration: NOT_RUN / NOT_AUTHORIZED.
+- REED-COMPAT-001: NEXT inside the future Russia field-test window.
+- Trudvsem Russia observation: NOT_RUN; diagnostic/non-blocking.
+- Production transactional email: PENDING pre-release gate, separate from accepted AUTH logic.
+
+The older Stage B/Stage C planning text below remains dated evidence and is not rewritten.
+<!-- HOST001-STAGE-C-MERGED-20261006:END -->
+
 | Поле | Статус |
 |---|---|
 | Package | HOST-001 / Issue #73 infrastructure track |
