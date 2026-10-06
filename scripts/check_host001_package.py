@@ -92,7 +92,7 @@ def validate(root: Path = ROOT) -> list[str]:
             'resource "yandex_storage_bucket" "field_test"',
             'resource "yandex_iam_service_account_static_access_key" "field_test_storage"',
             'output_to_lockbox {',
-            'role      = "storage.uploader"',
+            'role        = "storage.uploader"',
             'resource "yandex_mdb_postgresql_cluster" "field_test_restore"',
             'name                = "${var.project_name}-restore-drill"',
             'field_test_resources_enabled ? 1 : 0',
