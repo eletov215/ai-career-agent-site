@@ -236,7 +236,6 @@ resource "yandex_compute_instance" "app" {
   depends_on = [yandex_lockbox_secret_iam_member.runtime_payload]
 }
 
-
 # Stage C field-test resources are explicitly opt-in. They are synthetic-only,
 # bounded, and absent from the default launch plan.
 resource "yandex_resourcemanager_folder_iam_member" "field_test_storage_uploader" {
