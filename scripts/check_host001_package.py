@@ -249,7 +249,7 @@ def validate(root: Path = ROOT) -> list[str]:
         workflow = _read(".github/workflows/host001-yandex-cloud.yml")
         for marker in (
             "cryptography==48.0.1",
-            "fmt -check -recursive",
+            "fmt -check -diff -recursive",
             "init -backend=false",
             "terraform -chdir=infra/yandex-cloud validate",
             "check_host001_package.py",
