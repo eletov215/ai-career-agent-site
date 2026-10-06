@@ -1,14 +1,20 @@
 #!/usr/bin/env python3
-"""Upload an encrypted backup and manifest to S3-compatible presigned HTTPS URLs."""
+"""Upload an authenticated encrypted backup to S3-compatible presigned HTTPS URLs."""
 
 from __future__ import annotations
 
+import base64
 import hashlib
 import json
 import os
 import subprocess
 from pathlib import Path
 from urllib.parse import urlsplit
+
+
+_ENCRYPTION_MAGIC = b"ACAOPS1"
+_NONCE_SIZE = 12
+_TAG_SIZE = 16
 
 
 class ExportError(RuntimeError):
@@ -23,6 +29,13 @@ def _sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
+def _required_env(name: str) -> str:
+    value = (os.getenv(name) or "").strip()
+    if not value:
+        raise ExportError(f"{name} is required for backup export.")
+    return value
+
+
 def validate_presigned_url(value: str) -> str:
     parsed = urlsplit((value or "").strip())
     if parsed.scheme != "https" or not parsed.hostname:
@@ -32,7 +45,69 @@ def validate_presigned_url(value: str) -> str:
     return value.strip()
 
 
-def verify_encrypted_backup(backup: Path, manifest: Path) -> dict[str, object]:
+def _decode_encryption_key(value: str) -> bytes:
+    try:
+        key = base64.urlsafe_b64decode(value.encode("ascii"))
+    except (ValueError, TypeError, UnicodeEncodeError, base64.binascii.Error) as exc:
+        raise ExportError("BACKUP_ENCRYPTION_KEY must be URL-safe base64.") from exc
+    if len(key) != 32:
+        raise ExportError("BACKUP_ENCRYPTION_KEY must decode to exactly 32 bytes.")
+    return key
+
+
+def validate_encryption_envelope(backup: Path) -> None:
+    file_size = backup.stat().st_size
+    minimum = len(_ENCRYPTION_MAGIC) + _NONCE_SIZE + _TAG_SIZE
+    if file_size < minimum:
+        raise ExportError("Encrypted backup has an invalid or truncated envelope.")
+    with backup.open("rb") as handle:
+        magic = handle.read(len(_ENCRYPTION_MAGIC))
+    if magic != _ENCRYPTION_MAGIC:
+        raise ExportError("Backup does not contain the ACAOPS1 encrypted envelope.")
+
+
+def authenticate_encrypted_backup(backup: Path, encryption_key: str) -> None:
+    """Authenticate the AES-256-GCM envelope without persisting plaintext."""
+
+    validate_encryption_envelope(backup)
+    key = _decode_encryption_key(encryption_key)
+    try:
+        from cryptography.exceptions import InvalidTag
+        from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+    except ModuleNotFoundError as exc:
+        raise ExportError("cryptography is required to authenticate encrypted backups.") from exc
+
+    file_size = backup.stat().st_size
+    ciphertext_start = len(_ENCRYPTION_MAGIC) + _NONCE_SIZE
+    ciphertext_length = file_size - ciphertext_start - _TAG_SIZE
+
+    with backup.open("rb") as handle:
+        handle.seek(len(_ENCRYPTION_MAGIC))
+        nonce = handle.read(_NONCE_SIZE)
+        handle.seek(-_TAG_SIZE, os.SEEK_END)
+        tag = handle.read(_TAG_SIZE)
+        handle.seek(ciphertext_start)
+
+        decryptor = Cipher(algorithms.AES(key), modes.GCM(nonce, tag)).decryptor()
+        remaining = ciphertext_length
+        try:
+            while remaining > 0:
+                chunk = handle.read(min(1024 * 1024, remaining))
+                if not chunk:
+                    raise ExportError("Encrypted backup ended unexpectedly.")
+                decryptor.update(chunk)
+                remaining -= len(chunk)
+            decryptor.finalize()
+        except InvalidTag as exc:
+            raise ExportError("Backup AES-GCM authentication failed.") from exc
+
+
+def verify_encrypted_backup(
+    backup: Path,
+    manifest: Path,
+    *,
+    encryption_key: str,
+) -> dict[str, object]:
     backup = backup.resolve()
     manifest = manifest.resolve()
     if not backup.is_file() or not manifest.is_file():
@@ -49,6 +124,8 @@ def verify_encrypted_backup(backup: Path, manifest: Path) -> dict[str, object]:
         raise ExportError("Backup size does not match manifest.")
     if payload.get("sha256") != _sha256(backup):
         raise ExportError("Backup checksum does not match manifest.")
+
+    authenticate_encrypted_backup(backup, encryption_key)
     return payload
 
 
@@ -76,6 +153,8 @@ def _upload(path: Path, url: str) -> None:
 
 
 def _artifact_path(root: Path, name: str) -> Path:
+    if not name:
+        raise ExportError("Backup export filename must not be empty.")
     candidate = (root / name).resolve()
     try:
         candidate.relative_to(root.resolve())
@@ -86,12 +165,15 @@ def _artifact_path(root: Path, name: str) -> Path:
 
 def main() -> int:
     root = Path(os.getenv("BACKUP_DIR", "/var/backups/ai-career-agent")).resolve()
-    backup = _artifact_path(root, os.environ["BACKUP_EXPORT_FILE"])
-    manifest = _artifact_path(root, os.environ["BACKUP_EXPORT_MANIFEST"])
-    backup_url = validate_presigned_url(os.environ["BACKUP_S3_PRESIGNED_URL"])
-    manifest_url = validate_presigned_url(os.environ["BACKUP_S3_MANIFEST_PRESIGNED_URL"])
+    backup = _artifact_path(root, _required_env("BACKUP_EXPORT_FILE"))
+    manifest = _artifact_path(root, _required_env("BACKUP_EXPORT_MANIFEST"))
+    backup_url = validate_presigned_url(_required_env("BACKUP_S3_PRESIGNED_URL"))
+    manifest_url = validate_presigned_url(
+        _required_env("BACKUP_S3_MANIFEST_PRESIGNED_URL")
+    )
+    encryption_key = _required_env("BACKUP_ENCRYPTION_KEY")
 
-    verify_encrypted_backup(backup, manifest)
+    verify_encrypted_backup(backup, manifest, encryption_key=encryption_key)
     _upload(backup, backup_url)
     _upload(manifest, manifest_url)
     print(json.dumps({"ok": True, "backup": backup.name, "manifest": manifest.name}))
