@@ -42,13 +42,13 @@ Backup/restore clients must use:
 - `PGSSLROOTCERT=/etc/ssl/certs/yandex-cloud-ca.pem`;
 - `PGTARGETSESSIONATTRS=read-write`.
 
-The protected `DATABASE_URL` should carry the same parameters. A wrong/untrusted CA must fail closed; the real TLS drill remains NOT_RUN until a disposable TLS PostgreSQL target exists.
+The Yandex Lockbox launcher rejects `DATABASE_URL` unless it contains exactly `sslmode=verify-full`, `sslrootcert=/etc/ssl/certs/yandex-cloud-ca.pem` and `target_session_attrs=read-write`; a weaker URL therefore cannot override the ops environment. A wrong/untrusted CA must fail closed; the real TLS drill remains NOT_RUN until a disposable TLS PostgreSQL target exists.
 
 ## 5. Backup and off-VM copy
 
 Create encrypted backups with the existing OPS tooling. A Docker volume on the VM is temporary staging only, not an independent backup.
 
-The opt-in `backup-export` profile accepts only a backup whose manifest says `encrypted=true`, whose size/SHA-256 match, whose file has the `ACAOPS1` envelope, and whose AES-256-GCM tag authenticates with `BACKUP_ENCRYPTION_KEY` before upload. Export-only filenames/URLs are validated inside the exporter so an inactive profile does not require ephemeral credentials during normal Compose parsing. It uploads the backup and manifest to separate HTTPS presigned S3-compatible object URLs. URLs are credentials: keep them out of logs/issues and make them short-lived.
+The opt-in `backup-export` profile accepts only a backup whose manifest says `encrypted=true`, whose size/SHA-256 match, whose file has the `ACAOPS1` envelope, and whose AES-256-GCM tag authenticates with `BACKUP_ENCRYPTION_KEY` before upload. Export-only filenames/URLs are validated inside the exporter so an inactive profile does not require ephemeral credentials during normal Compose parsing. Backup and manifest presigned URLs must resolve to two distinct HTTPS object targets even if their signature queries differ. URLs are credentials: keep them out of logs/issues and make them short-lived.
 
 An actual independent restore drill into an isolated PostgreSQL 18 target is required before production migration.
 
