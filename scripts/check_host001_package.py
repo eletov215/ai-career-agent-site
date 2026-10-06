@@ -119,9 +119,9 @@ def validate(root: Path = ROOT) -> list[str]:
             "BACKUP_S3_PRESIGNED_URL",
             "BACKUP_S3_MANIFEST_PRESIGNED_URL",
         ):
-            if f"${{{export_name}:?}" in compose:
+            if "${" + export_name + ":?" in compose:
                 errors.append("Inactive backup-export profile must not require " + export_name + " during Compose interpolation")
-            if f"${{{export_name}:-}}" not in compose:
+            if "${" + export_name + ":-}" not in compose:
                 errors.append("Backup-export variable must be deferred to runtime validation: " + export_name)
 
         ops_docker = _read("infra/yandex-cloud/Dockerfile.ops")
