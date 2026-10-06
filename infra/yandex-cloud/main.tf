@@ -221,11 +221,11 @@ resource "yandex_compute_instance" "app" {
   metadata = {
     serial-port-enable = "0"
     user-data = templatefile("${path.module}/cloud-init.yaml.tftpl", {
-      admin_username                  = var.admin_username
-      ssh_public_key                  = var.ssh_public_key
-      lockbox_secret_id               = yandex_lockbox_secret.runtime.id
-      field_test_backup_secret_id     = var.field_test_resources_enabled ? yandex_lockbox_secret.field_test_storage[0].id : ""
-      field_test_backup_bucket        = var.field_test_resources_enabled ? yandex_storage_bucket.field_test[0].bucket : ""
+      admin_username              = var.admin_username
+      ssh_public_key              = var.ssh_public_key
+      lockbox_secret_id           = yandex_lockbox_secret.runtime.id
+      field_test_backup_secret_id = var.field_test_resources_enabled ? yandex_lockbox_secret.field_test_storage[0].id : ""
+      field_test_backup_bucket    = var.field_test_resources_enabled ? yandex_storage_bucket.field_test[0].bucket : ""
     })
   }
 
