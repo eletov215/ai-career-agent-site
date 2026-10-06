@@ -1,0 +1,257 @@
+# HOST-001 / Issue #73 Stage C — synthetic field-test plan
+
+| Поле | Значение |
+|---|---|
+| Дата | 6 октября 2026 |
+| Статус | PLAN_CANDIDATE / NO APPLY / OWNER APPROVAL REQUIRED |
+| Baseline main | `5e34579b06b80df739ed0f625bce2901f71e1bbe` |
+| Application schema | `20261002_0023` unchanged |
+| Stage B | MERGED via PR #74; exact-head CI/review passed |
+| Production migration | NOT_AUTHORIZED |
+| Yandex billable resources | NOT_CREATED |
+| Real-data Alice | CLOSED |
+| Legal policy | DRAFT / NOT_ACTIVE |
+
+## 1. Purpose
+
+Stage C prepares one short, synthetic, Russia-hosted field test for the Stage B infrastructure candidate. It is not MIG-001 and must not contain production/user data.
+
+This document does **not** authorize Terraform apply, resource creation, production SQL/dump/restore, Render/Neon configuration changes, domain cutover, email delivery, Alice/Yandex AI calls, legal activation or payment activation.
+
+## 2. Trudvsem decision
+
+The current Trudvsem source is non-blocking for Stage C.
+
+Production evidence after PR #74 showed repeated `opendata.trudvsem.ru` timeouts, but the same failure pattern existed before Stage B. One long timeout also caused PostgreSQL to terminate an idle transaction used by the advisory lock; the runtime supervisor restarted the worker and its heartbeat recovered.
+
+Owner direction for this stage:
+
+- do not spend implementation time fixing Trudvsem now;
+- keep current behavior unchanged;
+- during the future Russia-hosted synthetic field test, perform only a low-volume connectivity observation from the test VM;
+- if the source remains unstable from Russia, removal/disablement is a separate source/package decision;
+- do not make Stage C acceptance depend on Trudvsem success.
+
+No claim is made that foreign hosting is the cause of the current failures. The Russia-hosted check is intended to test that hypothesis.
+
+## 3. Read-only compatibility verification
+
+Verified against current public Yandex Cloud documentation and the pinned Terraform provider documentation on 2026-10-06:
+
+- Yandex Managed Service for PostgreSQL supports PostgreSQL 18.
+- A one-host PostgreSQL cluster is supported with `network-ssd`; the official example uses 20 GB.
+- Host class `s3-c2-m8` is documented as 2×100% vCPU / 8 GB RAM.
+- `ru-central1-d` is documented as the recommended zone for new projects.
+- Yandex documents PostgreSQL clusters with two or more hosts as automatically highly available. The initial single-host profile intentionally remains non-HA.
+- Repository pin `yandex-cloud/yandex = 0.229.0` documents PostgreSQL `18` as an allowed `yandex_mdb_postgresql_cluster.config.version`.
+
+Still NOT_RUN: account quota/availability check, credentialed Terraform plan/apply, actual resource creation and real account invoice estimate.
+
+Official references:
+
+- https://yandex.cloud/ru/docs/managed-postgresql/
+- https://yandex.cloud/ru/docs/managed-postgresql/operations/cluster-create
+- https://yandex.cloud/ru/docs/managed-postgresql/concepts/instance-types
+- https://yandex.cloud/ru/docs/managed-postgresql/concepts/
+- https://yandex.cloud/ru/docs/overview/concepts/geo-scope
+- https://github.com/yandex-cloud/terraform-provider-yandex/blob/v0.229.0/docs/resources/mdb_postgresql_cluster.md
+
+## 4. Proposed field-test resources
+
+Persistent launch candidate represented by Stage B:
+
+- one Yandex VPC network;
+- app subnet in `ru-central1-d`;
+- DB subnet/private access path;
+- security groups: public gateway 80/443, owner-approved SSH CIDR, PostgreSQL 6432 only from app security group;
+- one non-preemptible VM: `standard-v3`, 2 vCPU at 100%, 4 GB RAM, 40 GB `network-ssd`, Ubuntu 24.04;
+- one active/reserved public IPv4 for the app VM;
+- one private Managed PostgreSQL 18 cluster, profile `single`, one `s3-c2-m8` host, 20 GB `network-ssd`;
+- Yandex Lockbox secrets;
+- private Object Storage STANDARD bucket for encrypted backup artifacts.
+
+Temporary restore-drill resource:
+
+- preferably one second disposable single-host PostgreSQL 18 cluster using the smallest configuration compatible with the tested restore;
+- create it only for the restore window, then delete it;
+- if account quota or exact price makes this inappropriate, stop and return for owner approval instead of silently changing the drill topology.
+
+No load balancer, second app VM, replica DB host, Data Transfer, logical replication, public DB IP, production domain or production email provider is part of this field test.
+
+## 5. Cost model and approval gate
+
+Yandex pricing pages use 720 hours for monthly examples. Published components verified on 2026-10-06:
+
+| Component | Calculation | Monthly planning amount |
+|---|---:|---:|
+| VM compute, 2×100% vCPU + 4 GB RAM | 720 × (2×1.24 + 4×0.33) | 2,736.00 RUB |
+| PostgreSQL `s3-c2-m8` compute | 720 × (2×1.8792 + 8×0.5072) | 5,627.52 RUB |
+| Active public IPv4 | 720 × 0.26352 | 189.73 RUB |
+| Object Storage STANDARD, assumed 50 GiB | first 1 GiB free; 49×2.376 | 116.42 RUB |
+| Lockbox planning assumption | 5 total secret versions + 10k gets | 102.43 RUB |
+| **Verified subtotal** | excludes disks and several launch services | **8,772.11 RUB** |
+
+Not yet priced to an account-confirmed final quote: VM `network-ssd`, PostgreSQL `network-ssd`, logs/metrics, transactional email, domain, billable traffic and any temporary restore cluster overhead.
+
+The recurring owner budget remains **10,000–15,000 RUB/month excluding AI/provider usage**. Before any apply:
+
+1. obtain the actual account/console quote for the exact Terraform SKU;
+2. require the projected recurring launch total to remain <=15,000 RUB/month;
+3. if the quote exceeds 15,000 RUB/month, stop and revise the design with the owner;
+4. do not treat a billing alert as a technical hard cap.
+
+Recommended authorization ceiling for the short Stage C field test: **500 RUB total**. This is an owner-approval ceiling, not an automatic Yandex spending limiter. Before apply, if the console/plan estimate for the field-test window can exceed 500 RUB, stop and request a new approval.
+
+Target test window: up to 4 hours of primary resources, with the disposable restore cluster kept only as long as needed for the restore test. If the test cannot be completed within the approved window, stop rather than silently extending billable runtime.
+
+Pricing references:
+
+- https://yandex.cloud/ru/docs/compute/pricing
+- https://yandex.cloud/ru/docs/managed-postgresql/pricing
+- https://yandex.cloud/ru/docs/vpc/pricing
+- https://yandex.cloud/ru/docs/storage/pricing
+- https://yandex.cloud/ru/docs/lockbox/pricing
+
+## 6. Preconditions before a future apply
+
+All conditions below are required:
+
+1. explicit owner approval for Stage C billable field test and the approved spend ceiling;
+2. active Yandex Cloud billing account and selected Russia region/folder;
+3. account quota/availability check for VM, public IP and Managed PostgreSQL 18/`s3-c2-m8`;
+4. exact Terraform plan reviewed against the approved resource list;
+5. actual monthly launch quote <=15,000 RUB and field-test estimate within the approved test ceiling;
+6. owner-approved `admin_cidr`;
+7. protected Yandex credentials available outside Git/GitHub/chat;
+8. synthetic-only database/backup payload prepared;
+9. `REAL_DATA_SUPPORTED=False` and legal DRAFT unchanged;
+10. rollback/teardown commands reviewed before creation.
+
+## 7. Field-test sequence
+
+### 7.1 Provisioning boundary
+
+- Run a credentialed `terraform plan` first.
+- Confirm that the plan contains only the approved Stage C resources.
+- Do not continue if it proposes a second permanent DB host, public DB IP, unexpected IAM grants or unrelated resources.
+- Apply only after the owner approves the exact plan/cost.
+
+### 7.2 Controlled startup
+
+- Load secrets from Lockbox outside Terraform state.
+- Default/rehearsal startup must not run schema migration, Trudvsem sync or privacy cleanup automatically.
+- Run the migration service only as the explicit one-off target documented in HOST001_RUNBOOK.
+- Keep AI fail-closed.
+
+### 7.3 PostgreSQL 18 / TLS
+
+With synthetic data only:
+
+- confirm actual server major version 18;
+- verify successful `verify-full` connection using the Yandex CA;
+- verify a deliberately wrong/untrusted CA fails closed;
+- verify `target_session_attrs=read-write` reaches the writable host;
+- confirm schema stays `20261002_0023`.
+
+### 7.4 Encrypted backup and restore
+
+- create a logical PostgreSQL 18 backup using the Yandex-specific PG18 ops image;
+- encrypt it and verify manifest size/SHA-256/authentication;
+- export backup + manifest to private Object Storage;
+- verify the off-VM objects exist;
+- restore into the disposable isolated PostgreSQL 18 target;
+- verify schema revision, representative synthetic owner/JOB/legal structures, indexes/constraints/sequences and resume-asset bytes;
+- delete the disposable restore target after evidence capture.
+
+No production rows, credentials, OAuth tokens or personal data may enter the field test.
+
+### 7.5 Proxy/client-IP test
+
+Against the test VM/gateway:
+
+- send requests with forged `CF-Connecting-IP` and `X-Forwarded-For`;
+- confirm Caddy strips/rebuilds the trusted client identity as designed;
+- confirm the rate-limit identity cannot be selected by the client-supplied Cloudflare header.
+
+### 7.6 Trudvsem location observation
+
+This is diagnostic only and cannot block Stage C.
+
+If the owner-approved field test is already running:
+
+- issue at most three low-volume public API requests from the Russia VM with no user data;
+- record only status/latency/error type, not response payload;
+- compare with the repeated Render/Oregon timeout pattern;
+- do not modify production Trudvsem state from this test.
+
+Outcomes:
+- stable from Russia: keep source provisionally and reassess after migration;
+- still unstable: open a separate source-disable/removal decision;
+- ambiguous: leave source unchanged.
+
+### 7.7 Teardown
+
+Before the approved field-test window expires:
+
+- stop test services;
+- remove disposable restore cluster;
+- remove temporary app/DB field resources that are not explicitly approved for continued use;
+- remove unused static IP reservations;
+- remove synthetic backup objects and temporary secrets if they are no longer needed;
+- verify that no unexpected billable resource remains.
+
+Production Render/Neon remains untouched by Stage C.
+
+## 8. Acceptance evidence for Stage C field test
+
+A future Stage C execution can be marked PASS only with evidence for:
+
+- reviewed exact Terraform plan and resource list;
+- actual field-test cost/estimate within owner-approved ceiling;
+- PostgreSQL 18 running on the created managed host;
+- strict TLS success + wrong-CA failure;
+- read-write target selection;
+- controlled startup with no unintended writers;
+- encrypted backup exported off-VM and authenticated;
+- isolated PG18 restore successful;
+- proxy spoofing test blocked;
+- teardown verified;
+- no production data/config change;
+- Alice/Yandex AI calls 0;
+- email/employer sends 0.
+
+Trudvsem outcome is recorded separately and does not determine Stage C PASS.
+
+## 9. Stop conditions
+
+Stop before or during apply if any of the following occurs:
+
+- projected recurring launch cost >15,000 RUB/month;
+- projected field-test spend can exceed the approved ceiling;
+- PostgreSQL 18 or the selected host class is unavailable in the account;
+- Terraform plan contains resources outside the reviewed scope;
+- any connection points to production Neon or another production data source;
+- real user data appears in the test payload;
+- wrong-CA connection succeeds;
+- DB is assigned a public IP unexpectedly;
+- default/rehearsal startup launches external writers;
+- secrets appear in plan/logs/GitHub/chat.
+
+## 10. Explicit NOT_RUN after this planning PR
+
+Until separate owner approval:
+
+- Yandex quota/account SKU check: NOT_RUN;
+- credentialed Terraform plan: NOT_RUN;
+- Terraform apply/resource creation: NOT_RUN;
+- synthetic PG18 field test: NOT_RUN;
+- off-VM real Object Storage upload: NOT_RUN;
+- isolated managed PG18 restore: NOT_RUN;
+- Trudvsem Russia-VM observation: NOT_RUN;
+- DOMAIN-001: NOT_RUN;
+- MIG-001 production cutover: NOT_AUTHORIZED;
+- production SQL/dump/restore: NOT_RUN;
+- legal activation: NOT_RUN;
+- real-data Alice: CLOSED.
+
+This planning document does not make INFRA/HOST/OPS/MIG COMPLETE.
