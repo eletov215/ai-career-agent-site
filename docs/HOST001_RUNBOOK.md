@@ -48,7 +48,7 @@ The protected `DATABASE_URL` should carry the same parameters. A wrong/untrusted
 
 Create encrypted backups with the existing OPS tooling. A Docker volume on the VM is temporary staging only, not an independent backup.
 
-The opt-in `backup-export` profile accepts only a backup whose manifest says `encrypted=true` and whose size/SHA-256 match. It uploads the backup and manifest to separate HTTPS presigned S3-compatible object URLs. URLs are credentials: keep them out of logs/issues and make them short-lived.
+The opt-in `backup-export` profile accepts only a backup whose manifest says `encrypted=true`, whose size/SHA-256 match, whose file has the `ACAOPS1` envelope, and whose AES-256-GCM tag authenticates with `BACKUP_ENCRYPTION_KEY` before upload. Export-only filenames/URLs are validated inside the exporter so an inactive profile does not require ephemeral credentials during normal Compose parsing. It uploads the backup and manifest to separate HTTPS presigned S3-compatible object URLs. URLs are credentials: keep them out of logs/issues and make them short-lived.
 
 An actual independent restore drill into an isolated PostgreSQL 18 target is required before production migration.
 
