@@ -15,7 +15,7 @@ Offline code/PR preparation for the Russia launch topology: one application serv
 - Explicit `single` default host profile plus retained `two` profile with different-zone precondition.
 - Yandex-only non-root PostgreSQL 18 ops image; shared Render Dockerfile remains unchanged.
 - Compose migration and background writers are opt-in profiles so default rehearsal cannot automatically migrate, sync vacancies or run privacy cleanup.
-- Backup/restore libpq environment propagates `sslmode`, `sslrootcert` and `target_session_attrs`; Yandex ops sets verify-full, mounted CA and read-write primary selection.
+- Yandex ops supplies strict libpq `PGSSLMODE=verify-full`, mounted CA and `PGTARGETSESSIONATTRS=read-write` without changing inherited shared backup code.
 - Encrypted backup + manifest can be exported off-VM only through explicit HTTPS presigned S3-compatible URLs after manifest/size/SHA-256 checks.
 - Yandex Caddy strips client-supplied `CF-Connecting-IP` and rebuilds `X-Forwarded-For` from the observed peer.
 - Updated package guard/tests and operational successor records.
