@@ -150,10 +150,10 @@ def _upload(path: Path, url: str) -> None:
             timeout=1800,
             check=False,
         )
-    except subprocess.TimeoutExpired as exc:
-        raise ExportError("HTTPS backup export timed out.") from exc.__class__()
-    except OSError as exc:
-        raise ExportError("HTTPS backup export could not start.") from exc.__class__()
+    except subprocess.TimeoutExpired:
+        raise ExportError("HTTPS backup export timed out.") from None
+    except OSError:
+        raise ExportError("HTTPS backup export could not start.") from None
     if process.returncode != 0:
         raise ExportError(f"HTTPS backup export failed with code {process.returncode}.")
 
