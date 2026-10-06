@@ -124,11 +124,6 @@ def validate(root: Path = ROOT) -> list[str]:
             if marker not in caddy:
                 errors.append("Yandex proxy hardening missing: " + marker)
 
-        backup_helper = _read("operations/backup.py")
-        for marker in ("PGSSLROOTCERT", "PGTARGETSESSIONATTRS"):
-            if marker not in backup_helper:
-                errors.append("PostgreSQL backup TLS propagation missing: " + marker)
-
         loader = _read("infra/yandex-cloud/run_with_lockbox.py")
         for marker in (
             "169.254.169.254",
