@@ -70,6 +70,13 @@ class BackupExportTests(unittest.TestCase):
         with self.assertRaises(module.ExportError):
             module.validate_presigned_url("http://storage.example.test/object")
 
+    def test_exporter_rejects_duplicate_object_target_with_different_signatures(self):
+        module = self._module()
+        backup_url = "https://storage.example.test/bucket/same-object?signature=one"
+        manifest_url = "https://storage.example.test/bucket/same-object?signature=two"
+        with self.assertRaises(module.ExportError):
+            module.validate_distinct_object_targets(backup_url, manifest_url)
+
     def test_exporter_sanitizes_timeout_without_presigned_url(self):
         module = self._module()
         secret_url = "https://storage.example.test/object?signature=do-not-log"
@@ -160,6 +167,30 @@ class LockboxLoaderTests(unittest.TestCase):
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)
         return module
+
+    def test_yandex_database_url_requires_verify_full_ca_and_primary(self):
+        module = self._module()
+        module.validate_database_url(
+            "postgresql+psycopg://user:secret@db.example.test:6432/aca"
+            "?sslmode=verify-full"
+            "&sslrootcert=/etc/ssl/certs/yandex-cloud-ca.pem"
+            "&target_session_attrs=read-write"
+        )
+        for weak_url in (
+            "postgresql+psycopg://user:secret@db.example.test:6432/aca"
+            "?sslmode=require"
+            "&sslrootcert=/etc/ssl/certs/yandex-cloud-ca.pem"
+            "&target_session_attrs=read-write",
+            "postgresql+psycopg://user:secret@db.example.test:6432/aca"
+            "?sslmode=verify-full"
+            "&target_session_attrs=read-write",
+            "postgresql+psycopg://user:secret@db.example.test:6432/aca"
+            "?sslmode=verify-full"
+            "&sslrootcert=/etc/ssl/certs/yandex-cloud-ca.pem"
+            "&target_session_attrs=any",
+        ):
+            with self.assertRaises(module.SecretLoadError):
+                module.validate_database_url(weak_url)
 
     def test_loader_parses_allowlisted_environment_shape_without_printing(self):
         module = self._module()
