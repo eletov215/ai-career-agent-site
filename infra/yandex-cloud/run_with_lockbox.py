@@ -10,6 +10,7 @@ import argparse
 import json
 import os
 import re
+import urllib.parse
 import urllib.request
 
 _METADATA_URL = (
@@ -23,6 +24,31 @@ _MAX_VALUE = 65536
 
 class SecretLoadError(RuntimeError):
     pass
+
+
+def validate_database_url(value: str) -> None:
+    """Fail closed if the Yandex PostgreSQL URL can weaken TLS/primary selection."""
+
+    if not value:
+        raise SecretLoadError("database_url_missing")
+    try:
+        parsed = urllib.parse.urlsplit(value)
+        query = urllib.parse.parse_qs(parsed.query, keep_blank_values=True)
+    except ValueError as exc:
+        raise SecretLoadError("database_url_invalid") from exc
+
+    if not parsed.scheme.startswith("postgresql") or not parsed.hostname:
+        raise SecretLoadError("database_url_invalid")
+
+    required = {
+        "sslmode": "verify-full",
+        "sslrootcert": "/etc/ssl/certs/yandex-cloud-ca.pem",
+        "target_session_attrs": "read-write",
+    }
+    for name, expected in required.items():
+        values = query.get(name)
+        if values != [expected]:
+            raise SecretLoadError("database_url_security_parameters_invalid")
 
 
 def _json_get(url: str, *, headers: dict[str, str], timeout: float = 5.0) -> dict:
@@ -87,6 +113,7 @@ def main() -> int:
     values = load_secret_entries(args.secret_id)
     environment = dict(os.environ)
     environment.update(values)
+    validate_database_url(environment.get("DATABASE_URL", ""))
     os.execvpe(command[0], command, environment)
     return 0
 
