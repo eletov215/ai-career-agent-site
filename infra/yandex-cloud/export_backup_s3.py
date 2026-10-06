@@ -9,7 +9,7 @@ import json
 import os
 import subprocess
 from pathlib import Path
-from urllib.parse import urlsplit
+from urllib.parse import unquote, urlsplit
 
 
 _ENCRYPTION_MAGIC = b"ACAOPS1"
@@ -43,6 +43,21 @@ def validate_presigned_url(value: str) -> str:
     if parsed.username or parsed.password:
         raise ExportError("Credentials must not be embedded as URL userinfo.")
     return value.strip()
+
+
+def _object_target_identity(value: str) -> tuple[str, str, int, str]:
+    parsed = urlsplit(value)
+    return (
+        parsed.scheme.lower(),
+        (parsed.hostname or "").lower(),
+        parsed.port or 443,
+        unquote(parsed.path),
+    )
+
+
+def validate_distinct_object_targets(backup_url: str, manifest_url: str) -> None:
+    if _object_target_identity(backup_url) == _object_target_identity(manifest_url):
+        raise ExportError("Backup and manifest must use distinct object targets.")
 
 
 def _decode_encryption_key(value: str) -> bytes:
@@ -178,6 +193,7 @@ def main() -> int:
         _required_env("BACKUP_S3_MANIFEST_PRESIGNED_URL")
     )
     encryption_key = _required_env("BACKUP_ENCRYPTION_KEY")
+    validate_distinct_object_targets(backup_url, manifest_url)
 
     verify_encrypted_backup(backup, manifest, encryption_key=encryption_key)
     _upload(backup, backup_url)
