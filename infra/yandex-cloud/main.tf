@@ -240,10 +240,10 @@ resource "yandex_compute_instance" "app" {
 # Stage C field-test resources are explicitly opt-in. They are synthetic-only,
 # bounded, and absent from the default launch plan.
 resource "yandex_resourcemanager_folder_iam_member" "field_test_storage_uploader" {
-  count     = var.field_test_resources_enabled ? 1 : 0
-  folder_id = var.folder_id
-  role      = "storage.uploader"
-  member    = "serviceAccount:${yandex_iam_service_account.app.id}"
+  count       = var.field_test_resources_enabled ? 1 : 0
+  folder_id   = var.folder_id
+  role        = "storage.uploader"
+  member      = "serviceAccount:${yandex_iam_service_account.app.id}"
   sleep_after = 5
 }
 
