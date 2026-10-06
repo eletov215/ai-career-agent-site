@@ -64,7 +64,7 @@ or `terraform apply`.
    `sslrootcert=/etc/ssl/certs/yandex-cloud-ca.pem`.
 8. Do not add Alice real-data credentials and do not change
    `REAL_DATA_SUPPORTED=False` in HOST-001.
-9. Deploy the repository separately. Do **not** use a broad `--profile migration up` command. After loading the approved Lockbox secret, run only the migration service explicitly:
+9. Deploy the repository separately. Do not use a broad `--profile migration up` command. After loading the approved Lockbox secret, run only the migration service explicitly:
 
    ```bash
    python infra/yandex-cloud/run_with_lockbox.py -- \
