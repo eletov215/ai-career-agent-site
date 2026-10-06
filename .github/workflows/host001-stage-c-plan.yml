@@ -1,0 +1,194 @@
+name: HOST-001 Stage C credentialed plan (no apply)
+
+"on":
+  workflow_dispatch:
+    inputs:
+      acknowledgement:
+        description: "Type PLAN_ONLY_STAGE_C. This workflow never applies or destroys resources."
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: host001-stage-c-plan
+  cancel-in-progress: false
+
+jobs:
+  plan:
+    name: Credentialed Stage C Terraform plan only
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: stage-c-yandex
+
+    env:
+      YC_STAGE_C_SERVICE_ACCOUNT_KEY_JSON: ${{ secrets.YC_STAGE_C_SERVICE_ACCOUNT_KEY_JSON }}
+      TF_VAR_cloud_id: ${{ secrets.YC_STAGE_C_CLOUD_ID }}
+      TF_VAR_folder_id: ${{ secrets.YC_STAGE_C_FOLDER_ID }}
+      TF_VAR_admin_cidr: ${{ secrets.YC_STAGE_C_ADMIN_CIDR }}
+      TF_VAR_ssh_public_key: ${{ secrets.YC_STAGE_C_SSH_PUBLIC_KEY }}
+      TF_VAR_postgresql_app_password: ${{ secrets.YC_STAGE_C_POSTGRES_PASSWORD }}
+      TF_VAR_field_test_restore_password: ${{ secrets.YC_STAGE_C_RESTORE_PASSWORD }}
+
+      TF_VAR_app_zone: ru-central1-d
+      TF_VAR_db_secondary_zone: ru-central1-b
+      TF_VAR_postgresql_host_profile: single
+      TF_VAR_vm_cores: "2"
+      TF_VAR_vm_memory_gb: "4"
+      TF_VAR_vm_disk_gb: "40"
+      TF_VAR_postgresql_resource_preset_id: s3-c2-m8
+      TF_VAR_postgresql_disk_type_id: network-ssd
+      TF_VAR_postgresql_disk_size_gb: "20"
+      TF_VAR_postgresql_backup_retain_days: "7"
+      TF_VAR_field_test_resources_enabled: "true"
+      TF_VAR_foundation_deletion_protection: "false"
+      TF_VAR_field_test_restore_resource_preset_id: s3-c2-m8
+      TF_VAR_field_test_restore_disk_size_gb: "20"
+      TF_VAR_field_test_bucket_max_size_bytes: "1073741824"
+
+    steps:
+      - name: Enforce plan-only acknowledgement
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "${{ inputs.acknowledgement }}" = "PLAN_ONLY_STAGE_C" || {
+            echo "Refusing to run: acknowledgement must be PLAN_ONLY_STAGE_C."
+            exit 1
+          }
+
+      - uses: actions/checkout@v6
+
+      - name: Verify exact main execution boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REF" = "refs/heads/main"
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.11.4"
+
+      - name: Validate protected inputs without printing values
+        shell: bash
+        run: |
+          set -euo pipefail
+          required=(
+            YC_STAGE_C_SERVICE_ACCOUNT_KEY_JSON
+            TF_VAR_cloud_id
+            TF_VAR_folder_id
+            TF_VAR_admin_cidr
+            TF_VAR_ssh_public_key
+            TF_VAR_postgresql_app_password
+            TF_VAR_field_test_restore_password
+          )
+          for name in "${required[@]}"; do
+            test -n "${!name:-}" || {
+              echo "Missing protected Stage C input: $name"
+              exit 1
+            }
+          done
+          test "$TF_VAR_admin_cidr" != "0.0.0.0/0" || {
+            echo "Unsafe Stage C admin CIDR is forbidden."
+            exit 1
+          }
+          test "${#TF_VAR_postgresql_app_password}" -ge 16
+          test "${#TF_VAR_field_test_restore_password}" -ge 16
+
+      - name: Materialize Yandex service-account key outside repository
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+          key_file="$RUNNER_TEMP/yc-stage-c-key.json"
+          printf '%s' "$YC_STAGE_C_SERVICE_ACCOUNT_KEY_JSON" > "$key_file"
+          python - <<'PY'
+          import json, os
+          path = os.path.join(os.environ["RUNNER_TEMP"], "yc-stage-c-key.json")
+          data = json.load(open(path, encoding="utf-8"))
+          required = {"id", "service_account_id", "private_key"}
+          if not required.issubset(data):
+              raise SystemExit("Invalid Yandex service-account key structure")
+          PY
+          echo "YC_SERVICE_ACCOUNT_KEY_FILE=$key_file" >> "$GITHUB_ENV"
+
+      - name: Terraform init and validate
+        shell: bash
+        run: |
+          set -euo pipefail
+          terraform -chdir=infra/yandex-cloud init -backend=false -input=false
+          terraform -chdir=infra/yandex-cloud validate
+
+      - name: Credentialed Stage C plan
+        id: plan
+        shell: bash
+        run: |
+          set -euo pipefail
+          plan_file="$RUNNER_TEMP/stage-c.tfplan"
+          set +e
+          terraform -chdir=infra/yandex-cloud plan             -input=false             -lock=false             -no-color             -detailed-exitcode             -out="$plan_file"
+          code=$?
+          set -e
+          if [ "$code" -ne 0 ] && [ "$code" -ne 2 ]; then
+            echo "Terraform plan failed."
+            exit "$code"
+          fi
+          echo "plan_exit_code=$code" >> "$GITHUB_OUTPUT"
+
+      - name: Emit secret-free resource/action summary and reject destructive plan
+        shell: bash
+        run: |
+          set -euo pipefail
+          plan_file="$RUNNER_TEMP/stage-c.tfplan"
+          json_file="$RUNNER_TEMP/stage-c-plan.json"
+          terraform -chdir=infra/yandex-cloud show -json "$plan_file" > "$json_file"
+
+          jq -r '
+            .resource_changes[]?
+            | [.address, (.change.actions | join(","))]
+            | @tsv
+          ' "$json_file" | sort
+
+          jq -e '
+            all(
+              .resource_changes[]?;
+              all(.change.actions[]; . == "create" or . == "read" or . == "no-op")
+            )
+          ' "$json_file" >/dev/null || {
+            echo "Stage C plan contains a destructive or replacement action; refusing."
+            exit 1
+          }
+
+          jq -e '
+            [
+              .resource_changes[]?
+              | select(.address | test(
+                  "^(data\\.yandex_compute_image\\.ubuntu|yandex_vpc_network\\.main|yandex_vpc_subnet\\.(app|db_secondary)|yandex_vpc_security_group\\.(app|database)|yandex_vpc_address\\.app|yandex_iam_service_account\\.app|yandex_lockbox_secret\\.runtime|yandex_lockbox_secret_iam_member\\.runtime_payload|yandex_mdb_postgresql_cluster\\.main|yandex_mdb_postgresql_user\\.app|yandex_mdb_postgresql_database\\.app|yandex_compute_instance\\.app|yandex_resourcemanager_folder_iam_member\\.field_test_storage_uploader\\[0\\]|yandex_lockbox_secret\\.field_test_storage\\[0\\]|yandex_lockbox_secret_iam_member\\.field_test_storage_payload\\[0\\]|yandex_iam_service_account_static_access_key\\.field_test_storage\\[0\\]|yandex_storage_bucket\\.field_test\\[0\\]|yandex_mdb_postgresql_cluster\\.field_test_restore\\[0\\]|yandex_mdb_postgresql_user\\.field_test_restore\\[0\\]|yandex_mdb_postgresql_database\\.field_test_restore\\[0\\])$"
+                ) | not)
+            ] | length == 0
+          ' "$json_file" >/dev/null || {
+            echo "Stage C plan contains a resource outside the reviewed allowlist."
+            exit 1
+          }
+
+      - name: Record plan-only boundary
+        shell: bash
+        run: |
+          {
+            echo "### Stage C credentialed plan"
+            echo
+            echo "- Commit: `$GITHUB_SHA`"
+            echo "- Terraform: 1.11.4"
+            echo "- Profile: single PG18 + bounded Stage C extras"
+            echo "- Apply/destroy performed by this workflow: **NO**"
+            echo "- Production data/provider/email operations: **NO**"
+            echo "- Next gate: review plan resource list, account quota/SKU availability and <=500 RUB field-test estimate before any apply."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Remove local plan/key material
+        if: always()
+        shell: bash
+        run: |
+          rm -f             "$RUNNER_TEMP/yc-stage-c-key.json"             "$RUNNER_TEMP/stage-c.tfplan"             "$RUNNER_TEMP/stage-c-plan.json"
