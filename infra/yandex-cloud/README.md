@@ -1,6 +1,8 @@
 # HOST-001 — Yandex Cloud Russia foundation
 
-Status: **CANDIDATE / NO APPLY / NO PRODUCTION MIGRATION**.
+Status: **STAGE B IMPLEMENTED CANDIDATE / NO APPLY / NO PRODUCTION MIGRATION**.
+
+Stage B (6 October 2026) prepares the owner-approved low-cost launch profile in code only. It does not create cloud resources.
 
 This directory implements the owner decision of 24 September 2026: first launch
 in Russia, audience 18+, Yandex Cloud as the target production cloud. It creates
@@ -12,7 +14,7 @@ billable resources and is a separate owner-authorized operation.
 - Russia region only.
 - One initial application VM in `ru-central1-d`, Ubuntu 24.04 LTS, reserved
   public IPv4, inbound 80/443 and SSH only from `admin_cidr`.
-- Managed PostgreSQL 17 with two private hosts in two different Russia zones.
+- Managed PostgreSQL 18 with an explicit `single` launch profile and a retained `two`-host future profile. Both remain private; the two-host profile enforces different Russia zones.
 - Database port 6432 is reachable only from the application security group.
 - Runtime secret metadata is stored in Yandex Lockbox. Terraform creates the
   secret container but **no secret payload values**.
@@ -24,6 +26,8 @@ billable resources and is a separate owner-authorized operation.
 - The Yandex-specific Compose stack uses the managed database and keeps
   `AI_ENABLED=0`, `AI_KILL_SWITCH=1`, `AI_SYNTHETIC_ACCESS_ENABLED=0`.
 - One web worker/VM is intentional while rate limiting remains process-local.
+- Schema migration and background writers are opt-in Compose profiles; default/rehearsal startup does not mutate the database or run external synchronization/cleanup.
+- Yandex backup/restore tools use PostgreSQL 18 clients and strict libpq TLS/primary-selection environment. Encrypted backup artifacts can be exported off-VM only through an explicit HTTPS presigned-object workflow.
 
 ## Validation without cloud spend
 
@@ -60,8 +64,7 @@ or `terraform apply`.
    `sslrootcert=/etc/ssl/certs/yandex-cloud-ca.pem`.
 8. Do not add Alice real-data credentials and do not change
    `REAL_DATA_SUPPORTED=False` in HOST-001.
-9. Deploy the repository separately, then invoke Compose through:
-   `python infra/yandex-cloud/run_with_lockbox.py -- docker compose -f infra/yandex-cloud/compose.yaml up -d --build`.
+9. Deploy the repository separately. Run the `migration` profile only when an approved target database is ready; start normal web/gateway separately. Enable the `writers` profile only after restore/schema verification.
 10. Until DOMAIN-001, use only synthetic/owner-controlled smoke data. The
     default Caddy site is HTTP `:80`; commercial traffic requires DOMAIN-001
     TLS and reviewed public URLs.

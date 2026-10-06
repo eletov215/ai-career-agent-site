@@ -197,6 +197,20 @@ def test_postgres_connection_password_is_only_in_process_environment():
     assert "very-secret" not in json.dumps(safe_identity)
 
 
+def test_postgres_environment_propagates_strict_tls_and_primary_selection():
+    url = make_url(
+        "postgresql+psycopg://career:secret@db.example.test:6432/career"
+        "?sslmode=verify-full"
+        "&sslrootcert=%2Fetc%2Fssl%2Fcerts%2Fyandex-cloud-ca.pem"
+        "&target_session_attrs=read-write"
+    )
+    environment = _postgres_environment(url)
+
+    assert environment["PGSSLMODE"] == "verify-full"
+    assert environment["PGSSLROOTCERT"] == "/etc/ssl/certs/yandex-cloud-ca.pem"
+    assert environment["PGTARGETSESSIONATTRS"] == "read-write"
+
+
 def test_prune_backups_removes_only_expired_backup_artifacts(tmp_path):
     backup_dir = tmp_path / "backups"
     backup_dir.mkdir()

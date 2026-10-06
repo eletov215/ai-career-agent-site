@@ -1,0 +1,39 @@
+# syntax=docker/dockerfile:1.7
+FROM postgres:18-bookworm
+
+ARG APP_UID=10001
+ARG APP_GID=10001
+
+ENV PATH=/opt/venv/bin:${PATH} \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    DATA_DIR=/var/lib/ai-career-agent \
+    BACKUP_DIR=/var/backups/ai-career-agent
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+       ca-certificates \
+       curl \
+       python3 \
+       python3-pip \
+       python3-venv \
+       tini \
+    && rm -rf /var/lib/apt/lists/* \
+    && python3 -m venv /opt/venv \
+    && /opt/venv/bin/pip install --upgrade pip
+
+WORKDIR /app
+COPY requirements.txt /app/requirements.txt
+RUN /opt/venv/bin/pip install -r /app/requirements.txt
+
+COPY . /app
+
+RUN groupadd --gid "${APP_GID}" app \
+    && useradd --uid "${APP_UID}" --gid "${APP_GID}" --create-home --shell /usr/sbin/nologin app \
+    && mkdir -p "${DATA_DIR}" "${BACKUP_DIR}" \
+    && chown -R app:app /app "${DATA_DIR}" "${BACKUP_DIR}"
+
+USER app
+ENTRYPOINT ["/usr/bin/tini", "--"]
+CMD ["python", "scripts/verify_backup.py", "--help"]

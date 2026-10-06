@@ -4,6 +4,10 @@ x-app-build: &app-build
   context: ../..
   target: runtime
 
+x-ops-build: &ops-build
+  context: ../..
+  dockerfile: infra/yandex-cloud/Dockerfile.ops
+
 x-app-environment: &app-environment
   APP_ENV: production
   APP_VERSION: ${APP_VERSION:-host001-yandex}
@@ -93,6 +97,7 @@ services:
   migrate:
     build: *app-build
     image: ai-career-agent:${APP_IMAGE_TAG:-host001-yandex}
+    profiles: ["migration"]
     restart: "no"
     command: ["python", "scripts/manage_db.py", "upgrade"]
     environment: *app-environment
@@ -105,9 +110,6 @@ services:
     restart: unless-stopped
     command: ["gunicorn", "--config", "infra/gunicorn.conf.py", "app:app"]
     environment: *app-environment
-    depends_on:
-      migrate:
-        condition: service_completed_successfully
     volumes: *app-volumes
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health/ready', timeout=4).read()"]
@@ -120,14 +122,12 @@ services:
   sync-worker:
     build: *app-build
     image: ai-career-agent:${APP_IMAGE_TAG:-host001-yandex}
+    profiles: ["writers"]
     restart: unless-stopped
     command: ["python", "scripts/trudvsem_sync_worker.py"]
     environment:
       <<: *app-environment
       TRUDVSEM_SYNC_ENABLED: "1"
-    depends_on:
-      migrate:
-        condition: service_completed_successfully
     volumes: *app-volumes
     stop_grace_period: 30s
     networks: [backend]
@@ -135,14 +135,12 @@ services:
   privacy-worker:
     build: *app-build
     image: ai-career-agent:${APP_IMAGE_TAG:-host001-yandex}
+    profiles: ["writers"]
     restart: unless-stopped
     command: ["python", "scripts/privacy_cleanup_worker.py"]
     environment:
       <<: *app-environment
       PRIVACY_CLEANUP_ENABLED: "1"
-    depends_on:
-      migrate:
-        condition: service_completed_successfully
     volumes: *app-volumes
     stop_grace_period: 30s
     networks: [backend]
@@ -166,19 +164,35 @@ services:
     networks: [frontend]
 
   ops:
-    build:
-      context: ../..
-      target: ops
-    image: ai-career-agent-ops:${APP_IMAGE_TAG:-host001-yandex}
+    build: *ops-build
+    image: ai-career-agent-yandex-ops:${APP_IMAGE_TAG:-host001-yandex}
     profiles: ["ops"]
     environment:
       APP_ENV: production
       DATABASE_URL: ${DATABASE_URL:?Load DATABASE_URL from Lockbox}
       BACKUP_ENCRYPTION_KEY: ${BACKUP_ENCRYPTION_KEY:?Load BACKUP_ENCRYPTION_KEY from Lockbox}
       BACKUP_DIR: /var/backups/ai-career-agent
+      PGSSLMODE: verify-full
+      PGSSLROOTCERT: /etc/ssl/certs/yandex-cloud-ca.pem
+      PGTARGETSESSIONATTRS: read-write
     volumes:
       - backup-data:/var/backups/ai-career-agent
       - /etc/ai-career-agent/yandex-ca.pem:/etc/ssl/certs/yandex-cloud-ca.pem:ro
+    networks: [backend]
+
+  backup-export:
+    build: *ops-build
+    image: ai-career-agent-yandex-ops:${APP_IMAGE_TAG:-host001-yandex}
+    profiles: ["backup-export"]
+    command: ["python", "infra/yandex-cloud/export_backup_s3.py"]
+    environment:
+      BACKUP_EXPORT_FILE: ${BACKUP_EXPORT_FILE:?Encrypted backup filename is required}
+      BACKUP_EXPORT_MANIFEST: ${BACKUP_EXPORT_MANIFEST:?Backup manifest filename is required}
+      BACKUP_S3_PRESIGNED_URL: ${BACKUP_S3_PRESIGNED_URL:?HTTPS presigned backup URL is required}
+      BACKUP_S3_MANIFEST_PRESIGNED_URL: ${BACKUP_S3_MANIFEST_PRESIGNED_URL:?HTTPS presigned manifest URL is required}
+      BACKUP_DIR: /var/backups/ai-career-agent
+    volumes:
+      - backup-data:/var/backups/ai-career-agent:ro
     networks: [backend]
 
 volumes:

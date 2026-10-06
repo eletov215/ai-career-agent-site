@@ -8,9 +8,11 @@ admin_cidr = "203.0.113.10/32"
 # Public key only. Keep the private key outside this repository.
 ssh_public_key = "ssh-ed25519 CHANGE_ME_PUBLIC_KEY"
 
-# Russia-only launch topology.
-app_zone          = "ru-central1-d"
-db_secondary_zone = "ru-central1-b"
+# Russia-only launch topology. Stage B starts with one PostgreSQL host.
+# Switch to "two" only after a separate capacity/availability and cost approval.
+app_zone                = "ru-central1-d"
+db_secondary_zone       = "ru-central1-b"
+postgresql_host_profile = "single"
 
 # Keep the initial beta foundation small; review current Yandex Cloud pricing
 # before any terraform apply.

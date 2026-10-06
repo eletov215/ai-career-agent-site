@@ -11,6 +11,11 @@ output "postgresql_cluster_id" {
   value = yandex_mdb_postgresql_cluster.main.id
 }
 
+output "postgresql_host_profile" {
+  description = "Selected Managed PostgreSQL topology profile: single or two."
+  value       = var.postgresql_host_profile
+}
+
 output "postgresql_rw_fqdn" {
   description = "Managed PostgreSQL read-write FQDN. Use port 6432."
   value       = "c-${yandex_mdb_postgresql_cluster.main.id}.rw.mdb.yandexcloud.net"

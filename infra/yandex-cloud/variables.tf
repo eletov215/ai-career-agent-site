@@ -96,6 +96,17 @@ variable "ubuntu_image_family" {
   default     = "ubuntu-2404-lts"
 }
 
+variable "postgresql_host_profile" {
+  description = "Managed PostgreSQL topology: single for the approved launch budget, two for the future HA profile."
+  type        = string
+  default     = "single"
+
+  validation {
+    condition     = contains(["single", "two"], var.postgresql_host_profile)
+    error_message = "postgresql_host_profile must be either single or two."
+  }
+}
+
 variable "postgresql_resource_preset_id" {
   description = "Managed PostgreSQL host class. Change only after cost/capacity review."
   type        = string

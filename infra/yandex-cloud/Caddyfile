@@ -6,6 +6,11 @@
     encode zstd gzip
 
     reverse_proxy web:8000 {
+        # Yandex ingress is not Cloudflare. Drop any client-supplied Cloudflare
+        # identity and rebuild X-Forwarded-For from the actual TCP peer.
+        header_up -CF-Connecting-IP
+        header_up X-Forwarded-For {http.request.remote.host}
+
         health_uri /health/live
         health_interval 20s
         health_timeout 5s

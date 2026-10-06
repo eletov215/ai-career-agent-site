@@ -208,9 +208,14 @@ def _postgres_environment(url: URL) -> dict[str, str]:
         environment["PGPASSWORD"] = str(url.password)
     if url.database:
         environment["PGDATABASE"] = str(url.database)
-    sslmode = url.query.get("sslmode")
-    if sslmode:
-        environment["PGSSLMODE"] = str(sslmode)
+    for query_key, env_key in (
+        ("sslmode", "PGSSLMODE"),
+        ("sslrootcert", "PGSSLROOTCERT"),
+        ("target_session_attrs", "PGTARGETSESSIONATTRS"),
+    ):
+        value = url.query.get(query_key)
+        if value:
+            environment[env_key] = str(value)
     return environment
 
 
