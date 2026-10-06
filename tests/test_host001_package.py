@@ -40,8 +40,8 @@ class Host001PackageTests(unittest.TestCase):
             "BACKUP_S3_PRESIGNED_URL",
             "BACKUP_S3_MANIFEST_PRESIGNED_URL",
         ):
-            self.assertIn(f"${{{name}:-}}", compose)
-            self.assertNotIn(f"${{{name}:?", compose)
+            self.assertIn("${" + name + ":-}", compose)
+            self.assertNotIn("${" + name + ":?", compose)
 
 
 class BackupExportTests(unittest.TestCase):
