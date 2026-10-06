@@ -140,6 +140,10 @@ def validate(root: Path = ROOT) -> list[str]:
             "payload.lockbox.api.cloud.yandex.net",
             "os.execvpe",
             "Metadata-Flavor",
+            "validate_database_url",
+            "verify-full",
+            "sslrootcert",
+            "target_session_attrs",
         ):
             if marker not in loader:
                 errors.append("Lockbox runtime loader missing: " + marker)
@@ -157,6 +161,7 @@ def validate(root: Path = ROOT) -> list[str]:
             "BACKUP_ENCRYPTION_KEY",
             "authenticate_encrypted_backup",
             "TimeoutExpired",
+            "validate_distinct_object_targets",
         ):
             if marker not in exporter:
                 errors.append("Off-VM encrypted backup exporter missing: " + marker)
