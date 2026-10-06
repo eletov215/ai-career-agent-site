@@ -47,12 +47,29 @@ def validate_presigned_url(value: str) -> str:
 
 def _object_target_identity(value: str) -> tuple[str, str, int, str]:
     parsed = urlsplit(value)
-    return (
-        parsed.scheme.lower(),
-        (parsed.hostname or "").lower(),
-        parsed.port or 443,
-        unquote(parsed.path),
-    )
+    scheme = parsed.scheme.lower()
+    host = (parsed.hostname or "").lower()
+    port = parsed.port or 443
+    decoded_path = unquote(parsed.path)
+    yandex_suffix = ".storage.yandexcloud.net"
+
+    # Yandex Object Storage accepts both virtual-hosted and path-style aliases:
+    #   https://<bucket>.storage.yandexcloud.net/<key>
+    #   https://storage.yandexcloud.net/<bucket>/<key>
+    # Canonicalize both to the same bucket/key identity so two presigned URLs
+    # cannot accidentally overwrite the same remote object.
+    if host.endswith(yandex_suffix) and host != "storage.yandexcloud.net":
+        bucket = host[: -len(yandex_suffix)]
+        key = decoded_path.lstrip("/")
+        return ("yandex-object-storage", bucket, port, key)
+
+    if host == "storage.yandexcloud.net":
+        bucket_and_key = decoded_path.lstrip("/")
+        bucket, separator, key = bucket_and_key.partition("/")
+        if bucket and separator:
+            return ("yandex-object-storage", bucket.lower(), port, key)
+
+    return (scheme, host, port, decoded_path)
 
 
 def validate_distinct_object_targets(backup_url: str, manifest_url: str) -> None:
