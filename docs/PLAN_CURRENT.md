@@ -1,5 +1,44 @@
 # AI Career Agent - Единый план реализации и ведения разработки
 
+<!-- DOC001-SUCCESSOR-20261006:START -->
+## Текущий канонический successor / 6 октября 2026
+
+> Этот блок является актуальным successor-состоянием после JOB-004 и infrastructure PR #74/#75. Датированные acceptance-блоки ниже сохраняются без переписывания для historical evidence и package guards.
+
+| Поле | Текущее состояние |
+|---|---|
+| Current main | `cc12b7de80b73f372aa185fadc1e49f58e9c2817` |
+| Schema | `20261002_0023` |
+| JOB-004 | COMPLETE; production SITE QA accepted; migration NOT_APPLICABLE |
+| HOST/INFRA | Stage B + Stage C preparation merged; Yandex apply/resource creation NOT_RUN |
+| Current Render | `dep-db2ekrbncjis73ciogcg` LIVE on current main |
+| Stage C field test | NEXT / separate owner approval required; recommended test ceiling remains 500 RUB |
+| REED-COMPAT-001 | NEXT inside Russia-hosted field-test window; NOT_RUN |
+| Trudvsem | non-blocking diagnostic during Russia field test; foreign-hosting cause NOT_PROVEN |
+| DOMAIN-001 | PENDING before beta |
+| Production transactional email | P0 pre-release gate / PENDING; AUTH logic remains COMPLETE |
+| MIG-001 | NOT_AUTHORIZED / NOT_RUN |
+| SRC-001 | restored to explicit pre-release sequence; PLANNED after migration evidence |
+| Legal | TECHNICAL_ACCEPTED / LEGAL_PENDING; policy DRAFT / NOT_ACTIVE |
+| Real-data Alice | CLOSED; `REAL_DATA_SUPPORTED=False` |
+
+### Активная очередь
+
+1. Stage C — короткий synthetic field test в Yandex Cloud Russia после отдельного owner approval на billable resources.
+2. В том же окне — `REED-COMPAT-001` и ограниченное non-blocking наблюдение доступности Trudvsem из России.
+3. `DOMAIN-001` + production transactional email gate: project-owned sender/domain, SPF/DKIM/DMARC и полный verification/reset E2E.
+4. `MIG-001` — отдельный owner-gated перенос production с rollback/recovery evidence.
+5. `SRC-001` — подключение новых источников; Reed является первым конкретным кандидатом только если `REED-COMPAT-001` пройден.
+6. Legal activation / controlled real-data AI остаются отдельным gate и могут готовиться параллельно, но real-data AI не открывается автоматически инфраструктурой.
+7. `REL-001` — финальная предрелизная проверка MVP 1.0.
+
+### Email boundary
+
+`AUTH-001 COMPLETE` сохраняется как исторически принятая account/token/session/verification business logic. Это **не равно production email readiness**. Personal Gmail API остаётся staging-only. Владелец сообщил, что текущие verification messages больше не приходят; точная причина нынешнего сбоя этим docs-sync не объявляется доказанной. Репозиторий уже фиксирует риск истечения/отзыва Google Auth Platform Testing refresh token. До beta/commercial release обязателен production-grade domain sender и новый E2E.
+
+Актуальные successor-документы: `docs/PACKAGE_REGISTRY_CURRENT.md`, `docs/AUTH_PRODUCTION_EMAIL_GATE_20261006.md`, `docs/HOST001_STAGE_C_FIELD_TEST_PLAN_20261006.md`.
+<!-- DOC001-SUCCESSOR-20261006:END -->
+
 
 
 
