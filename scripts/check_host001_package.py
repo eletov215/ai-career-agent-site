@@ -162,9 +162,20 @@ def validate(root: Path = ROOT) -> list[str]:
             "authenticate_encrypted_backup",
             "TimeoutExpired",
             "validate_distinct_object_targets",
+            ".storage.yandexcloud.net",
+            "storage.yandexcloud.net",
         ):
             if marker not in exporter:
                 errors.append("Off-VM encrypted backup exporter missing: " + marker)
+
+        for document in (
+            _read("infra/yandex-cloud/README.md"),
+            _read("docs/HOST001_RUNBOOK.md"),
+        ):
+            if "run --rm --build migrate" not in document:
+                errors.append("HOST-001 migration instructions must target only the migrate service")
+            if "--profile migration up" in document and "Do not use" not in document:
+                errors.append("HOST-001 must not recommend broad migration-profile startup")
 
         stage_b = _read("docs/HOST001_STAGE_B_IMPLEMENTATION_20261006.md")
         for marker in ("PostgreSQL 18", "single", "two", "NOT_RUN", "20261002_0023"):
