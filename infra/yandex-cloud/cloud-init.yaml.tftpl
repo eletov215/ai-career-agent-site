@@ -27,6 +27,8 @@ write_files:
     permissions: "0600"
     content: |
       YC_LOCKBOX_SECRET_ID=${lockbox_secret_id}
+      YC_BACKUP_LOCKBOX_SECRET_ID=${field_test_backup_secret_id}
+      BACKUP_S3_BUCKET=${field_test_backup_bucket}
       ACA_REPO_DIR=/opt/ai-career-agent
 
 runcmd:

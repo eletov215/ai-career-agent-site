@@ -15,6 +15,7 @@ REQUIRED = (
     "infra/yandex-cloud/outputs.tf",
     "infra/yandex-cloud/cloud-init.yaml.tftpl",
     "infra/yandex-cloud/terraform.tfvars.example",
+    "infra/yandex-cloud/terraform.stage-c.tfvars.example",
     "infra/yandex-cloud/Caddyfile",
     "infra/yandex-cloud/compose.yaml",
     "infra/yandex-cloud/Dockerfile.ops",
@@ -25,6 +26,7 @@ REQUIRED = (
     "docs/HOST001_SCOPE.md",
     "docs/HOST001_IMPLEMENTATION.md",
     "docs/HOST001_STAGE_B_IMPLEMENTATION_20261006.md",
+    "docs/HOST001_STAGE_C_FIELD_TEST_PLAN_20261006.md",
     "docs/HOST001_RUNBOOK.md",
     "docs/HOST001_VERIFICATION_STATUS.md",
     ".github/workflows/host001-yandex-cloud.yml",
@@ -59,6 +61,10 @@ def validate(root: Path = ROOT) -> list[str]:
             'default     = "ru-central1-b"',
             'default     = "single"',
             'contains(["single", "two"], var.postgresql_host_profile)',
+            'variable "foundation_deletion_protection"',
+            'variable "field_test_resources_enabled"',
+            'variable "field_test_restore_password"',
+            'field_test_bucket_max_size_bytes',
             'var.admin_cidr != "0.0.0.0/0"',
             'sensitive   = true',
             'default     = "ubuntu-2404-lts"',
@@ -69,7 +75,7 @@ def validate(root: Path = ROOT) -> list[str]:
         main = _read("infra/yandex-cloud/main.tf")
         required_main = (
             'resource "yandex_vpc_address" "app"',
-            "deletion_protection = true",
+            "deletion_protection = var.foundation_deletion_protection",
             'resource "yandex_mdb_postgresql_cluster" "main"',
             "version                   = 18",
             'dynamic "host"',
@@ -83,6 +89,16 @@ def validate(root: Path = ROOT) -> list[str]:
             'role      = "lockbox.payloadViewer"',
             "service_account_id        = yandex_iam_service_account.app.id",
             "nat_ip_address     = yandex_vpc_address.app.external_ipv4_address[0].address",
+            'resource "yandex_storage_bucket" "field_test"',
+            'resource "yandex_iam_service_account_static_access_key" "field_test_storage"',
+            'output_to_lockbox {',
+            'role        = "storage.uploader"',
+            'resource "yandex_mdb_postgresql_cluster" "field_test_restore"',
+            'name                = "${var.project_name}-restore-drill"',
+            'field_test_resources_enabled ? 1 : 0',
+            'force_destroy         = true',
+            'deletion_protection = false',
+            '!var.field_test_resources_enabled || !var.foundation_deletion_protection',
         )
         for marker in required_main:
             if marker not in main:
@@ -118,6 +134,9 @@ def validate(root: Path = ROOT) -> list[str]:
             "BACKUP_EXPORT_MANIFEST",
             "BACKUP_S3_PRESIGNED_URL",
             "BACKUP_S3_MANIFEST_PRESIGNED_URL",
+            "BACKUP_S3_BUCKET",
+            "BACKUP_S3_ACCESS_KEY",
+            "BACKUP_S3_SECRET_KEY",
         ):
             if "${" + export_name + ":?" in compose:
                 errors.append("Inactive backup-export profile must not require " + export_name + " during Compose interpolation")
@@ -164,6 +183,10 @@ def validate(root: Path = ROOT) -> list[str]:
             "validate_distinct_object_targets",
             ".storage.yandexcloud.net",
             "storage.yandexcloud.net",
+            "AWS4-HMAC-SHA256",
+            "generate_presigned_put_url",
+            "BACKUP_S3_ACCESS_KEY",
+            "BACKUP_S3_SECRET_KEY",
         ):
             if marker not in exporter:
                 errors.append("Off-VM encrypted backup exporter missing: " + marker)
@@ -181,6 +204,28 @@ def validate(root: Path = ROOT) -> list[str]:
         for marker in ("PostgreSQL 18", "single", "two", "NOT_RUN", "20261002_0023"):
             if marker not in stage_b:
                 errors.append("HOST-001 Stage B successor record missing: " + marker)
+
+        stage_c = _read("docs/HOST001_STAGE_C_FIELD_TEST_PLAN_20261006.md")
+        for marker in (
+            "field_test_resources_enabled",
+            "foundation_deletion_protection=false",
+            "500 RUB",
+            "Object Storage",
+            "restore",
+            "Trudvsem",
+            "NOT_AUTHORIZED",
+        ):
+            if marker not in stage_c:
+                errors.append("HOST-001 Stage C plan missing: " + marker)
+
+        stage_c_tfvars = _read("infra/yandex-cloud/terraform.stage-c.tfvars.example")
+        for marker in (
+            "field_test_resources_enabled  = true",
+            "foundation_deletion_protection = false",
+            "TF_VAR_field_test_restore_password",
+        ):
+            if marker not in stage_c_tfvars:
+                errors.append("HOST-001 Stage C tfvars example missing: " + marker)
 
         decisions = _read("docs/LEGAL001_OWNER_DECISIONS_20260924.md")
         for marker in (
@@ -204,7 +249,7 @@ def validate(root: Path = ROOT) -> list[str]:
         workflow = _read(".github/workflows/host001-yandex-cloud.yml")
         for marker in (
             "cryptography==48.0.1",
-            "fmt -check -recursive",
+            "fmt -check -diff -recursive",
             "init -backend=false",
             "terraform -chdir=infra/yandex-cloud validate",
             "check_host001_package.py",

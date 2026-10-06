@@ -5,11 +5,14 @@ from __future__ import annotations
 
 import base64
 import hashlib
+import hmac
 import json
 import os
+import re
 import subprocess
+from datetime import datetime, timezone
 from pathlib import Path
-from urllib.parse import unquote, urlsplit
+from urllib.parse import quote, unquote, urlsplit
 
 
 _ENCRYPTION_MAGIC = b"ACAOPS1"
@@ -75,6 +78,151 @@ def _object_target_identity(value: str) -> tuple[str, str, int, str]:
 def validate_distinct_object_targets(backup_url: str, manifest_url: str) -> None:
     if _object_target_identity(backup_url) == _object_target_identity(manifest_url):
         raise ExportError("Backup and manifest must use distinct object targets.")
+
+
+def _aws_quote(value: str) -> str:
+    return quote(str(value), safe="-_.~")
+
+
+def _canonical_query(parameters: dict[str, str]) -> str:
+    return "&".join(
+        f"{_aws_quote(name)}={_aws_quote(value)}"
+        for name, value in sorted(parameters.items())
+    )
+
+
+def _sigv4_hmac(key: bytes, value: str) -> bytes:
+    return hmac.new(key, value.encode("utf-8"), hashlib.sha256).digest()
+
+
+def generate_presigned_put_url(
+    bucket: str,
+    object_key: str,
+    access_key: str,
+    secret_key: str,
+    *,
+    expires_seconds: int = 900,
+    now: datetime | None = None,
+) -> str:
+    """Generate a short-lived Yandex Object Storage PUT URL without logging credentials."""
+
+    bucket = (bucket or "").strip().lower()
+    object_key = (object_key or "").lstrip("/")
+    access_key = (access_key or "").strip()
+    secret_key = secret_key or ""
+
+    if (
+        not re.fullmatch(r"[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]", bucket)
+        or ".." in bucket
+    ):
+        raise ExportError("BACKUP_S3_BUCKET is invalid.")
+    if not object_key or len(object_key) > 1024 or "\x00" in object_key:
+        raise ExportError("Object Storage key is invalid.")
+    if not access_key or not secret_key:
+        raise ExportError("Object Storage access credentials are required.")
+    if expires_seconds < 60 or expires_seconds > 3600:
+        raise ExportError("Presigned upload lifetime must be between 60 and 3600 seconds.")
+
+    moment = now or datetime.now(timezone.utc)
+    if moment.tzinfo is None:
+        moment = moment.replace(tzinfo=timezone.utc)
+    moment = moment.astimezone(timezone.utc)
+
+    date_stamp = moment.strftime("%Y%m%d")
+    amz_date = moment.strftime("%Y%m%dT%H%M%SZ")
+    region = "ru-central1"
+    service = "s3"
+    host = "storage.yandexcloud.net"
+    canonical_uri = "/" + quote(
+        f"{bucket}/{object_key}",
+        safe="/-_.~",
+    )
+    credential_scope = f"{date_stamp}/{region}/{service}/aws4_request"
+    parameters = {
+        "X-Amz-Algorithm": "AWS4-HMAC-SHA256",
+        "X-Amz-Credential": f"{access_key}/{credential_scope}",
+        "X-Amz-Date": amz_date,
+        "X-Amz-Expires": str(expires_seconds),
+        "X-Amz-SignedHeaders": "host",
+    }
+    canonical_query = _canonical_query(parameters)
+    canonical_request = (
+        "PUT\n"
+        f"{canonical_uri}\n"
+        f"{canonical_query}\n"
+        f"host:{host}\n\n"
+        "host\n"
+        "UNSIGNED-PAYLOAD"
+    )
+    string_to_sign = (
+        "AWS4-HMAC-SHA256\n"
+        f"{amz_date}\n"
+        f"{credential_scope}\n"
+        f"{hashlib.sha256(canonical_request.encode('utf-8')).hexdigest()}"
+    )
+    signing_key = _sigv4_hmac(("AWS4" + secret_key).encode("utf-8"), date_stamp)
+    signing_key = _sigv4_hmac(signing_key, region)
+    signing_key = _sigv4_hmac(signing_key, service)
+    signing_key = _sigv4_hmac(signing_key, "aws4_request")
+    signature = hmac.new(
+        signing_key,
+        string_to_sign.encode("utf-8"),
+        hashlib.sha256,
+    ).hexdigest()
+    return (
+        f"https://{host}{canonical_uri}?"
+        f"{canonical_query}&X-Amz-Signature={signature}"
+    )
+
+
+def _object_key(prefix: str, filename: str) -> str:
+    prefix = (prefix or "").strip().strip("/")
+    if prefix:
+        if len(prefix) > 128 or "\x00" in prefix or any(
+            part in {"", ".", ".."} for part in prefix.split("/")
+        ):
+            raise ExportError("BACKUP_S3_OBJECT_PREFIX is invalid.")
+        return f"{prefix}/{filename}"
+    return filename
+
+
+def _resolve_upload_urls(backup: Path, manifest: Path) -> tuple[str, str]:
+    backup_url = (os.getenv("BACKUP_S3_PRESIGNED_URL") or "").strip()
+    manifest_url = (os.getenv("BACKUP_S3_MANIFEST_PRESIGNED_URL") or "").strip()
+    if bool(backup_url) != bool(manifest_url):
+        raise ExportError("Both presigned upload URLs must be provided together.")
+
+    if backup_url and manifest_url:
+        backup_url = validate_presigned_url(backup_url)
+        manifest_url = validate_presigned_url(manifest_url)
+        validate_distinct_object_targets(backup_url, manifest_url)
+        return backup_url, manifest_url
+
+    bucket = _required_env("BACKUP_S3_BUCKET")
+    access_key = _required_env("BACKUP_S3_ACCESS_KEY")
+    secret_key = _required_env("BACKUP_S3_SECRET_KEY")
+    prefix = os.getenv("BACKUP_S3_OBJECT_PREFIX", "field-test")
+    try:
+        expires_seconds = int(os.getenv("BACKUP_S3_PRESIGN_EXPIRES_SECONDS", "900"))
+    except ValueError as exc:
+        raise ExportError("BACKUP_S3_PRESIGN_EXPIRES_SECONDS must be an integer.") from exc
+
+    backup_url = generate_presigned_put_url(
+        bucket,
+        _object_key(prefix, backup.name),
+        access_key,
+        secret_key,
+        expires_seconds=expires_seconds,
+    )
+    manifest_url = generate_presigned_put_url(
+        bucket,
+        _object_key(prefix, manifest.name),
+        access_key,
+        secret_key,
+        expires_seconds=expires_seconds,
+    )
+    validate_distinct_object_targets(backup_url, manifest_url)
+    return backup_url, manifest_url
 
 
 def _decode_encryption_key(value: str) -> bytes:
@@ -205,12 +353,8 @@ def main() -> int:
     root = Path(os.getenv("BACKUP_DIR", "/var/backups/ai-career-agent")).resolve()
     backup = _artifact_path(root, _required_env("BACKUP_EXPORT_FILE"))
     manifest = _artifact_path(root, _required_env("BACKUP_EXPORT_MANIFEST"))
-    backup_url = validate_presigned_url(_required_env("BACKUP_S3_PRESIGNED_URL"))
-    manifest_url = validate_presigned_url(
-        _required_env("BACKUP_S3_MANIFEST_PRESIGNED_URL")
-    )
+    backup_url, manifest_url = _resolve_upload_urls(backup, manifest)
     encryption_key = _required_env("BACKUP_ENCRYPTION_KEY")
-    validate_distinct_object_targets(backup_url, manifest_url)
 
     verify_encrypted_backup(backup, manifest, encryption_key=encryption_key)
     _upload(backup, backup_url)
