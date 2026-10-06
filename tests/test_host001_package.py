@@ -70,6 +70,22 @@ class BackupExportTests(unittest.TestCase):
         with self.assertRaises(module.ExportError):
             module.validate_presigned_url("http://storage.example.test/object")
 
+    def test_exporter_sanitizes_timeout_without_presigned_url(self):
+        module = self._module()
+        secret_url = "https://storage.example.test/object?signature=do-not-log"
+        with mock.patch.object(
+            module.subprocess,
+            "run",
+            side_effect=module.subprocess.TimeoutExpired(
+                ["curl", "--upload-file", "/tmp/example", secret_url],
+                1800,
+            ),
+        ):
+            with self.assertRaises(module.ExportError) as caught:
+                module._upload(Path("/tmp/example"), secret_url)
+        self.assertNotIn(secret_url, str(caught.exception))
+        self.assertNotIn("signature=", str(caught.exception))
+
     def test_exporter_rejects_fake_enc_extension_without_encryption_envelope(self):
         module = self._module()
         with tempfile.TemporaryDirectory() as tmp:
