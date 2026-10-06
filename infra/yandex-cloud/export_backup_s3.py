@@ -130,24 +130,30 @@ def verify_encrypted_backup(
 
 
 def _upload(path: Path, url: str) -> None:
-    process = subprocess.run(
-        [
-            "curl",
-            "--fail",
-            "--silent",
-            "--show-error",
-            "--proto",
-            "=https",
-            "--tlsv1.2",
-            "--upload-file",
-            str(path),
-            url,
-        ],
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
-        timeout=1800,
-        check=False,
-    )
+    command = [
+        "curl",
+        "--fail",
+        "--silent",
+        "--show-error",
+        "--proto",
+        "=https",
+        "--tlsv1.2",
+        "--upload-file",
+        str(path),
+        url,
+    ]
+    try:
+        process = subprocess.run(
+            command,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            timeout=1800,
+            check=False,
+        )
+    except subprocess.TimeoutExpired as exc:
+        raise ExportError("HTTPS backup export timed out.") from exc.__class__()
+    except OSError as exc:
+        raise ExportError("HTTPS backup export could not start.") from exc.__class__()
     if process.returncode != 0:
         raise ExportError(f"HTTPS backup export failed with code {process.returncode}.")
 
