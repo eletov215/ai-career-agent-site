@@ -29,3 +29,23 @@ output "runtime_lockbox_secret_id" {
 output "deployment_boundary" {
   value = "HOST-001 foundation only: no data migration, no legal activation, no real-data Alice, no commercial launch."
 }
+
+
+output "field_test_resources_enabled" {
+  value = var.field_test_resources_enabled
+}
+
+output "field_test_backup_bucket" {
+  description = "Synthetic Stage C Object Storage bucket name; null when the field-test profile is disabled."
+  value       = var.field_test_resources_enabled ? yandex_storage_bucket.field_test[0].bucket : null
+}
+
+output "field_test_backup_lockbox_secret_id" {
+  description = "Lockbox secret containing temporary Object Storage access keys; values are never Terraform outputs."
+  value       = var.field_test_resources_enabled ? yandex_lockbox_secret.field_test_storage[0].id : null
+}
+
+output "field_test_restore_rw_fqdn" {
+  description = "Disposable Stage C PostgreSQL 18 restore target; null when disabled."
+  value       = var.field_test_resources_enabled ? "c-${yandex_mdb_postgresql_cluster.field_test_restore[0].id}.rw.mdb.yandexcloud.net" : null
+}

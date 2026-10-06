@@ -2,7 +2,7 @@
 
 | Поле | Значение |
 |---|---|
-| Версия | Stage B successor / 1.1 candidate |
+| Версия | Stage C successor / 1.2 candidate |
 | Дата | 6 октября 2026 |
 | Статус | IMPLEMENTED_CANDIDATE / APPLY_FORBIDDEN_WITHOUT_OWNER_AUTHORIZATION |
 | Accepted application schema | `20261002_0023` unchanged |
@@ -68,9 +68,26 @@ The Yandex Lockbox launcher rejects `DATABASE_URL` unless it contains exactly `s
 
 Create encrypted backups with the existing OPS tooling. A Docker volume on the VM is temporary staging only, not an independent backup.
 
-The opt-in `backup-export` profile accepts only a backup whose manifest says `encrypted=true`, whose size/SHA-256 match, whose file has the `ACAOPS1` envelope, and whose AES-256-GCM tag authenticates with `BACKUP_ENCRYPTION_KEY` before upload. Export-only filenames/URLs are validated inside the exporter so an inactive profile does not require ephemeral credentials during normal Compose parsing. Backup and manifest presigned URLs must resolve to two distinct HTTPS object targets even if their signature queries differ. URLs are credentials: keep them out of logs/issues and make them short-lived.
+The opt-in `backup-export` profile accepts only a backup whose manifest says `encrypted=true`, whose size/SHA-256 match, whose file has the `ACAOPS1` envelope, and whose AES-256-GCM tag authenticates with `BACKUP_ENCRYPTION_KEY` before upload. Backup and manifest presigned URLs must resolve to distinct HTTPS object targets even if their signature queries differ.
 
-An actual independent restore drill into an isolated PostgreSQL 18 target is required before production migration.
+Stage C now has a reviewed provisioning path for the required temporary storage resources:
+- `field_test_resources_enabled=true` creates a private, `force_destroy` Object Storage bucket capped at 1 GiB with a one-day lifecycle;
+- the VM service account receives `storage.uploader`;
+- a temporary service-account static key is written directly into a separate Lockbox secret through `output_to_lockbox`;
+- the key values are never Terraform outputs.
+
+For the Stage C path, load the application secret and then the backup-key secret before starting the exporter:
+
+```bash
+python infra/yandex-cloud/run_with_lockbox.py --secret-id "$YC_LOCKBOX_SECRET_ID" -- \
+  python infra/yandex-cloud/run_with_lockbox.py --secret-id "$YC_BACKUP_LOCKBOX_SECRET_ID" -- \
+  docker compose -f infra/yandex-cloud/compose.yaml --profile backup-export \
+    run --rm backup-export
+```
+
+The exporter creates short-lived Yandex Object Storage PUT presigned URLs in process when externally supplied URLs are absent. Do not print or persist the generated URLs, static secret key or `BACKUP_ENCRYPTION_KEY`.
+
+An actual independent restore drill into the Terraform-created disposable PostgreSQL 18 target is required before production migration.
 
 ## 6. Proxy / client IP
 
@@ -81,13 +98,18 @@ Verify this again during the field test with the actual ingress path.
 ## 7. Billable field test — separate approval required
 
 Only after owner approval:
-1. configure Yandex authentication in a protected environment;
-2. review exact Terraform plan, SKU/cost and Russia zones;
-3. apply the approved resources;
-4. populate Lockbox outside Terraform;
-5. perform synthetic health/TLS tests;
-6. create encrypted backup and export it off-VM;
-7. restore into an isolated disposable PostgreSQL 18 target and record measured duration/results.
+1. start from `terraform.stage-c.tfvars.example`, keep `field_test_resources_enabled=true` and `foundation_deletion_protection=false`, and supply both PostgreSQL passwords through protected `TF_VAR_...` environment values;
+2. configure Yandex authentication in a protected environment;
+3. review the exact Terraform plan, SKU/cost, Russia zones, temporary bucket/static-key Lockbox path and disposable restore cluster;
+4. apply only the approved plan;
+5. populate the application Lockbox secret outside Terraform; the field-test Object Storage key payload is created directly in its separate Lockbox secret by the provider;
+6. perform synthetic health/TLS and wrong-CA tests;
+7. create the encrypted backup, export it off-VM and restore into the isolated Terraform-created PostgreSQL 18 target;
+8. record measured duration/results and execute the reviewed teardown before the approved window expires.
+
+If **no continuation** is approved, destroy the entire field-test foundation while `foundation_deletion_protection=false`; this is why Stage C preconditions reject protected creation.
+
+If the owner separately approves retaining the foundation, first apply a reviewed plan with `field_test_resources_enabled=false` and `foundation_deletion_protection=true`. That removes the temporary bucket/key/restore cluster and turns protection back on for retained persistent resources.
 
 No real-data Alice call is part of this field test.
 

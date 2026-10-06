@@ -21,7 +21,7 @@
 | Disposable PG18 restore/TLS drill | NOT_RUN |
 | Field network test | NOT_RUN |
 | OPS-002 independent restore drill | NOT_RUN |
-| Stage C planning | CANDIDATE — docs-only PR required; no apply |
+| Stage C implementation prep | PR #75 CANDIDATE — bounded opt-in Terraform/export path; no apply |
 | Stage C billable field test | NOT_AUTHORIZED |
 | DOMAIN-001 | PENDING |
 | MIG-001 production cutover | NOT_AUTHORIZED |
@@ -53,11 +53,13 @@ Read-only research confirms:
 - `ru-central1-d` is recommended for new projects;
 - pinned Terraform provider `0.229.0` documents PostgreSQL 18 as an allowed cluster version.
 
-The next candidate document is `HOST001_STAGE_C_FIELD_TEST_PLAN_20261006.md`. It defines an owner-gated synthetic field test only. No Yandex resource is created by that planning change.
+PR #75 now carries both the dated Stage C plan and a bounded no-apply implementation path for the resources Codex review identified as missing: an opt-in private Object Storage bucket/static key stored through separate Lockbox, and an opt-in disposable PG18 restore cluster. The default Terraform profile still creates none of those Stage C extras.
+
+The Stage C profile also parameterizes foundation deletion protection. Field-test creation requires `foundation_deletion_protection=false`, while retained launch resources continue to default to protected mode. This prepares deterministic teardown without creating any Yandex resource in CI.
 
 ## Remaining evidence
 
-A separately approved Stage C execution must verify account-specific quota/SKU availability, exact cost, created PG18/TLS behavior, proxy behavior, controlled startup, backup export and isolated restore, followed by teardown evidence.
+A separately approved Stage C execution must verify account-specific quota/SKU availability, exact cost, created PG18/TLS behavior, proxy behavior, controlled startup, backup export and isolated restore, followed by teardown evidence. PR #75 CI/review must be re-established on its final head after these Stage C implementation changes.
 
 Production cutover, domain/email readiness, legal activation and real-data AI remain separate later gates.
 

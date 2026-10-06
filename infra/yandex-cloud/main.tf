@@ -91,7 +91,7 @@ resource "yandex_vpc_security_group" "database" {
 resource "yandex_vpc_address" "app" {
   folder_id           = var.folder_id
   name                = "${var.project_name}-public-ip"
-  deletion_protection = true
+  deletion_protection = var.foundation_deletion_protection
   labels              = local.common_labels
 
   external_ipv4_address {
@@ -109,7 +109,7 @@ resource "yandex_lockbox_secret" "runtime" {
   folder_id           = var.folder_id
   name                = "${var.project_name}-runtime"
   description         = "Runtime application secrets. Payload is intentionally created outside Terraform."
-  deletion_protection = true
+  deletion_protection = var.foundation_deletion_protection
   labels              = local.common_labels
 }
 
@@ -125,7 +125,7 @@ resource "yandex_mdb_postgresql_cluster" "main" {
   environment         = "PRODUCTION"
   network_id          = yandex_vpc_network.main.id
   security_group_ids  = [yandex_vpc_security_group.database.id]
-  deletion_protection = true
+  deletion_protection = var.foundation_deletion_protection
   labels              = local.common_labels
 
   config {
@@ -159,6 +159,14 @@ resource "yandex_mdb_postgresql_cluster" "main" {
       condition     = var.postgresql_host_profile == "single" || var.app_zone != var.db_secondary_zone
       error_message = "The two-host Managed PostgreSQL profile requires hosts in two different Russia availability zones."
     }
+    precondition {
+      condition     = !var.field_test_resources_enabled || !var.foundation_deletion_protection
+      error_message = "Stage C field-test creation requires foundation_deletion_protection=false so the approved short test can be torn down without a second protection-disabling apply."
+    }
+    precondition {
+      condition     = !var.field_test_resources_enabled || length(var.field_test_restore_password) >= 16
+      error_message = "Stage C field-test creation requires a synthetic restore password of at least 16 characters supplied outside source control."
+    }
   }
 }
 
@@ -168,7 +176,7 @@ resource "yandex_mdb_postgresql_user" "app" {
   password_wo         = var.postgresql_app_password
   password_wo_version = var.postgresql_password_version
   conn_limit          = 50
-  deletion_protection = true
+  deletion_protection = var.foundation_deletion_protection
 }
 
 resource "yandex_mdb_postgresql_database" "app" {
@@ -213,9 +221,11 @@ resource "yandex_compute_instance" "app" {
   metadata = {
     serial-port-enable = "0"
     user-data = templatefile("${path.module}/cloud-init.yaml.tftpl", {
-      admin_username    = var.admin_username
-      ssh_public_key    = var.ssh_public_key
-      lockbox_secret_id = yandex_lockbox_secret.runtime.id
+      admin_username                  = var.admin_username
+      ssh_public_key                  = var.ssh_public_key
+      lockbox_secret_id               = yandex_lockbox_secret.runtime.id
+      field_test_backup_secret_id     = var.field_test_resources_enabled ? yandex_lockbox_secret.field_test_storage[0].id : ""
+      field_test_backup_bucket        = var.field_test_resources_enabled ? yandex_storage_bucket.field_test[0].bucket : ""
     })
   }
 
@@ -224,4 +234,120 @@ resource "yandex_compute_instance" "app" {
   }
 
   depends_on = [yandex_lockbox_secret_iam_member.runtime_payload]
+}
+
+
+# Stage C field-test resources are explicitly opt-in. They are synthetic-only,
+# bounded, and absent from the default launch plan.
+resource "yandex_resourcemanager_folder_iam_member" "field_test_storage_uploader" {
+  count     = var.field_test_resources_enabled ? 1 : 0
+  folder_id = var.folder_id
+  role      = "storage.uploader"
+  member    = "serviceAccount:${yandex_iam_service_account.app.id}"
+  sleep_after = 5
+}
+
+resource "yandex_lockbox_secret" "field_test_storage" {
+  count               = var.field_test_resources_enabled ? 1 : 0
+  folder_id           = var.folder_id
+  name                = "${var.project_name}-field-test-storage"
+  description         = "Temporary Stage C Object Storage static access key; payload managed by Terraform provider output_to_lockbox."
+  deletion_protection = false
+  labels              = local.common_labels
+}
+
+resource "yandex_lockbox_secret_iam_member" "field_test_storage_payload" {
+  count     = var.field_test_resources_enabled ? 1 : 0
+  secret_id = yandex_lockbox_secret.field_test_storage[0].id
+  role      = "lockbox.payloadViewer"
+  member    = "serviceAccount:${yandex_iam_service_account.app.id}"
+}
+
+resource "yandex_iam_service_account_static_access_key" "field_test_storage" {
+  count              = var.field_test_resources_enabled ? 1 : 0
+  service_account_id = yandex_iam_service_account.app.id
+  description        = "Temporary Stage C access key for synthetic encrypted backup uploads."
+
+  output_to_lockbox {
+    secret_id            = yandex_lockbox_secret.field_test_storage[0].id
+    entry_for_access_key = "BACKUP_S3_ACCESS_KEY"
+    entry_for_secret_key = "BACKUP_S3_SECRET_KEY"
+  }
+
+  depends_on = [
+    yandex_resourcemanager_folder_iam_member.field_test_storage_uploader,
+    yandex_lockbox_secret_iam_member.field_test_storage_payload,
+  ]
+}
+
+resource "yandex_storage_bucket" "field_test" {
+  count                 = var.field_test_resources_enabled ? 1 : 0
+  folder_id             = var.folder_id
+  bucket_prefix         = var.field_test_bucket_prefix
+  default_storage_class = "STANDARD"
+  max_size              = var.field_test_bucket_max_size_bytes
+  force_destroy         = true
+
+  anonymous_access_flags {
+    read        = false
+    list        = false
+    config_read = false
+  }
+
+  lifecycle_rule {
+    id      = "stage-c-expire-synthetic-backups"
+    enabled = true
+
+    expiration {
+      days = 1
+    }
+
+    abort_incomplete_multipart_upload_days = 1
+  }
+}
+
+resource "yandex_mdb_postgresql_cluster" "field_test_restore" {
+  count               = var.field_test_resources_enabled ? 1 : 0
+  folder_id           = var.folder_id
+  name                = "${var.project_name}-restore-drill"
+  environment         = "PRODUCTION"
+  network_id          = yandex_vpc_network.main.id
+  security_group_ids  = [yandex_vpc_security_group.database.id]
+  deletion_protection = false
+  labels              = merge(local.common_labels, { purpose = "stage-c-restore-drill" })
+
+  config {
+    version = 18
+
+    resources {
+      resource_preset_id = var.field_test_restore_resource_preset_id
+      disk_type_id       = var.postgresql_disk_type_id
+      disk_size          = var.field_test_restore_disk_size_gb
+    }
+  }
+
+  host {
+    zone             = var.app_zone
+    subnet_id        = yandex_vpc_subnet.app.id
+    assign_public_ip = false
+  }
+}
+
+resource "yandex_mdb_postgresql_user" "field_test_restore" {
+  count               = var.field_test_resources_enabled ? 1 : 0
+  cluster_id          = yandex_mdb_postgresql_cluster.field_test_restore[0].id
+  name                = "aca_restore"
+  password_wo         = var.field_test_restore_password
+  password_wo_version = 1
+  conn_limit          = 10
+  deletion_protection = false
+}
+
+resource "yandex_mdb_postgresql_database" "field_test_restore" {
+  count      = var.field_test_resources_enabled ? 1 : 0
+  cluster_id = yandex_mdb_postgresql_cluster.field_test_restore[0].id
+  name       = "aca_restore"
+  owner      = yandex_mdb_postgresql_user.field_test_restore[0].name
+
+  depends_on = [yandex_mdb_postgresql_user.field_test_restore]
 }

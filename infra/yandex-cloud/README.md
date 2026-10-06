@@ -1,8 +1,8 @@
 # HOST-001 — Yandex Cloud Russia foundation
 
-Status: **STAGE B IMPLEMENTED CANDIDATE / NO APPLY / NO PRODUCTION MIGRATION**.
+Status: **STAGE C IMPLEMENTATION CANDIDATE / NO APPLY / NO PRODUCTION MIGRATION**.
 
-Stage B (6 October 2026) prepares the owner-approved low-cost launch profile in code only. It does not create cloud resources.
+Stage B is merged. Stage C adds an explicitly opt-in, bounded synthetic field-test provisioning path. Nothing in this directory authorizes resource creation; `terraform apply` remains separately owner-gated.
 
 This directory implements the owner decision of 24 September 2026: first launch
 in Russia, audience 18+, Yandex Cloud as the target production cloud. It creates
@@ -28,6 +28,8 @@ billable resources and is a separate owner-authorized operation.
 - One web worker/VM is intentional while rate limiting remains process-local.
 - Schema migration and background writers are opt-in Compose profiles; default/rehearsal startup does not mutate the database or run external synchronization/cleanup.
 - Yandex backup/restore tools use PostgreSQL 18 clients and strict libpq TLS/primary-selection environment. Encrypted backup artifacts can be exported off-VM only through an explicit HTTPS presigned-object workflow.
+- Stage C resources are absent by default. Setting `field_test_resources_enabled=true` adds one private disposable PostgreSQL 18 restore target plus a private, 1 GiB-bounded Object Storage bucket. A temporary Object Storage static key is written directly to a separate Lockbox secret via provider `output_to_lockbox`; the secret value is not exposed as a Terraform output.
+- Stage C field-test creation is rejected unless `foundation_deletion_protection=false`, so a short approved test cannot become undeletable because of the persistent-launch safety defaults.
 
 ## Validation without cloud spend
 
@@ -49,12 +51,9 @@ or `terraform apply`.
 1. Create/select a dedicated Yandex Cloud Russia cloud/folder and review current
    pricing.
 2. Set Yandex Cloud authentication outside Git and chat.
-3. Copy only non-secret values from `terraform.tfvars.example`.
-4. Set `TF_VAR_postgresql_app_password` through a protected local/CI secret
-   channel. The write-only PostgreSQL attribute requires Terraform 1.11+ and
-   avoids storing that password in Terraform state.
-5. Run `terraform plan`, review the exact billable resources, then request
-   owner authorization before apply.
+3. For the persistent launch candidate copy only non-secret values from `terraform.tfvars.example`. For the separately approved Stage C synthetic field test, start from `terraform.stage-c.tfvars.example`; it enables the temporary bucket/restore target and sets `foundation_deletion_protection=false` for deterministic teardown.
+4. Set `TF_VAR_postgresql_app_password` through a protected local/CI secret channel. For Stage C also set `TF_VAR_field_test_restore_password`. Both use write-only PostgreSQL password attributes and must never be committed.
+5. Run `terraform plan`, review the exact billable resources and the owner-approved spend ceiling, then request owner authorization before apply.
 6. After apply, add the Lockbox payload outside Terraform. At minimum the
    application needs `DATABASE_URL`, `FLASK_SECRET_KEY`,
    `TOKEN_ENCRYPTION_KEY`, provider/OAuth credentials required by current
@@ -107,3 +106,24 @@ or `terraform apply`.
 - PostgreSQL connection/security groups: https://yandex.cloud/en/docs/managed-postgresql/operations/connect/
 - Lockbox on VM: https://yandex.cloud/en/docs/compute/operations/vm-create/create-with-lockbox-secret
 - Ubuntu 24.04 LTS image family: https://yandex.cloud/en/marketplace/products/yc/ubuntu-24-04-lts
+
+
+## Stage C bounded field-test notes
+
+The default Terraform plan does not contain the temporary backup bucket or restore database. They appear only when `field_test_resources_enabled=true`.
+
+For a Stage C test, source the non-secret Terraform outputs/host environment and load the two Lockbox secrets in sequence before running the backup exporter. The first secret supplies the application database and encryption values; the second supplies the temporary Object Storage static key without printing it:
+
+```bash
+python infra/yandex-cloud/run_with_lockbox.py --secret-id "$YC_LOCKBOX_SECRET_ID" -- \
+  python infra/yandex-cloud/run_with_lockbox.py --secret-id "$YC_BACKUP_LOCKBOX_SECRET_ID" -- \
+  docker compose -f infra/yandex-cloud/compose.yaml --profile backup-export \
+    run --rm backup-export
+```
+
+`export_backup_s3.py` can still accept externally generated presigned URLs. For the reviewed Stage C path, when URLs are absent it generates short-lived Yandex Object Storage PUT URLs in process from `BACKUP_S3_ACCESS_KEY`/`BACKUP_S3_SECRET_KEY` and never prints those URLs or the secret key.
+
+Teardown has two explicit outcomes:
+
+- **No continuation approved:** keep `field_test_resources_enabled=true` and `foundation_deletion_protection=false`, then run a reviewed `terraform destroy` within the approved field-test window. Verify VM, public IP, PostgreSQL clusters, Lockbox secrets/static key and bucket are gone.
+- **Foundation continuation separately approved:** first apply a reviewed plan with `field_test_resources_enabled=false` and `foundation_deletion_protection=true`. This removes the temporary restore/bucket/key and protects the retained foundation. Continued operation is a new owner authorization, not an automatic result of the field test.

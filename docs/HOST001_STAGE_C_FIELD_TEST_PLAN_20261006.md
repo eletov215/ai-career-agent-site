@@ -3,7 +3,7 @@
 | Поле | Значение |
 |---|---|
 | Дата | 6 октября 2026 |
-| Статус | PLAN_CANDIDATE / NO APPLY / OWNER APPROVAL REQUIRED |
+| Статус | IMPLEMENTATION_CANDIDATE / NO APPLY / OWNER APPROVAL REQUIRED |
 | Baseline main | `5e34579b06b80df739ed0f625bce2901f71e1bbe` |
 | Application schema | `20261002_0023` unchanged |
 | Stage B | MERGED via PR #74; exact-head CI/review passed |
@@ -16,7 +16,9 @@
 
 Stage C prepares one short, synthetic, Russia-hosted field test for the Stage B infrastructure candidate. It is not MIG-001 and must not contain production/user data.
 
-This document does **not** authorize Terraform apply, resource creation, production SQL/dump/restore, Render/Neon configuration changes, domain cutover, email delivery, Alice/Yandex AI calls, legal activation or payment activation.
+The repository now includes the **no-apply provisioning path** required to review that future test: temporary resources are absent by default and appear only with `field_test_resources_enabled=true`. The Stage C profile requires `foundation_deletion_protection=false` so the short test can be torn down inside its approved billing window.
+
+This document and code path do **not** authorize Terraform apply, resource creation, production SQL/dump/restore, Render/Neon configuration changes, domain cutover, email delivery, Alice/Yandex AI calls, legal activation or payment activation.
 
 ## 2. Trudvsem decision
 
@@ -70,11 +72,15 @@ Persistent launch candidate represented by Stage B:
 - Yandex Lockbox secrets;
 - private Object Storage STANDARD bucket for encrypted backup artifacts.
 
-Temporary restore-drill resource:
+Temporary Stage C resources are now part of the reviewed Terraform path and remain disabled by default:
 
-- preferably one second disposable single-host PostgreSQL 18 cluster using the smallest configuration compatible with the tested restore;
-- create it only for the restore window, then delete it;
-- if account quota or exact price makes this inappropriate, stop and return for owner approval instead of silently changing the drill topology.
+- one private Object Storage STANDARD bucket with `max_size=1 GiB`, `force_destroy=true` and one-day synthetic-object lifecycle;
+- one `storage.uploader` grant for the VM service account;
+- one temporary service-account static access key written directly to a **separate** Lockbox secret through provider `output_to_lockbox`; the secret value is not a Terraform output;
+- one second private, disposable single-host PostgreSQL 18 cluster using `field_test_restore_resource_preset_id` (default `s3-c2-m8`) and 20 GB `network-ssd`;
+- one synthetic restore user/database with a write-only password supplied only through `TF_VAR_field_test_restore_password`.
+
+The exact non-secret profile is documented in `terraform.stage-c.tfvars.example`. If account quota or exact price makes the reviewed resources inappropriate, stop and return for owner approval instead of silently changing topology.
 
 No load balancer, second app VM, replica DB host, Data Transfer, logical replication, public DB IP, production domain or production email provider is part of this field test.
 
@@ -124,16 +130,21 @@ All conditions below are required:
 6. owner-approved `admin_cidr`;
 7. protected Yandex credentials available outside Git/GitHub/chat;
 8. synthetic-only database/backup payload prepared;
-9. `REAL_DATA_SUPPORTED=False` and legal DRAFT unchanged;
-10. rollback/teardown commands reviewed before creation.
+9. Stage C variables explicitly use `field_test_resources_enabled=true` and `foundation_deletion_protection=false`; a Terraform precondition rejects the temporary field-test profile if deletion protection would block teardown;
+10. both PostgreSQL passwords are supplied through protected environment variables rather than tfvars/Git;
+11. `REAL_DATA_SUPPORTED=False` and legal DRAFT unchanged;
+12. rollback/teardown commands reviewed before creation.
 
 ## 7. Field-test sequence
 
 ### 7.1 Provisioning boundary
 
+- Copy the non-secret Stage C profile from `terraform.stage-c.tfvars.example`.
+- Supply `TF_VAR_postgresql_app_password` and `TF_VAR_field_test_restore_password` only through a protected local environment.
 - Run a credentialed `terraform plan` first.
-- Confirm that the plan contains only the approved Stage C resources.
-- Do not continue if it proposes a second permanent DB host, public DB IP, unexpected IAM grants or unrelated resources.
+- Confirm that the plan contains the single-host foundation **plus** only these Stage C extras: private bounded backup bucket, `storage.uploader` binding, separate Lockbox/static key, and one private disposable PG18 restore cluster/user/database.
+- Confirm `foundation_deletion_protection=false` in the field-test plan. If deletion protection remains enabled, the repository precondition must stop the plan/apply.
+- Do not continue if the plan proposes a second permanent DB host, public DB IP, unexpected IAM grants or unrelated resources.
 - Apply only after the owner approves the exact plan/cost.
 
 ### 7.2 Controlled startup
@@ -157,7 +168,9 @@ With synthetic data only:
 
 - create a logical PostgreSQL 18 backup using the Yandex-specific PG18 ops image;
 - encrypt it and verify manifest size/SHA-256/authentication;
-- export backup + manifest to private Object Storage;
+- load the normal runtime Lockbox secret and the separate Stage C Object Storage Lockbox secret in sequence;
+- let the exporter generate short-lived Yandex Object Storage PUT presigned URLs in process when external URLs are not supplied; do not print or persist the URLs/keys;
+- export backup + manifest to the Terraform-created private Object Storage bucket;
 - verify the off-VM objects exist;
 - restore into the disposable isolated PostgreSQL 18 target;
 - verify schema revision, representative synthetic owner/JOB/legal structures, indexes/constraints/sequences and resume-asset bytes;
@@ -191,16 +204,27 @@ Outcomes:
 
 ### 7.7 Teardown
 
-Before the approved field-test window expires:
+The Stage C profile is intentionally created with `foundation_deletion_protection=false`. This prevents the current Stage B deletion-protection defaults from trapping billable test resources beyond the approved window.
+
+Before the approved field-test window expires choose exactly one reviewed outcome:
+
+**A. No continuation approved (default field-test outcome)**
 
 - stop test services;
-- remove disposable restore cluster;
-- remove temporary app/DB field resources that are not explicitly approved for continued use;
-- remove unused static IP reservations;
-- remove synthetic backup objects and temporary secrets if they are no longer needed;
-- verify that no unexpected billable resource remains.
+- keep `field_test_resources_enabled=true` and `foundation_deletion_protection=false`;
+- run and review `terraform plan -destroy`;
+- run the authorized `terraform destroy`;
+- verify the app VM, public IP, both PostgreSQL clusters, temporary static key/Lockbox secret and backup bucket are gone;
+- verify no unexpected billable resource remains.
 
-Production Render/Neon remains untouched by Stage C.
+**B. Foundation continuation separately approved**
+
+- set `field_test_resources_enabled=false`;
+- set `foundation_deletion_protection=true`;
+- review/apply that exact plan; it removes the temporary restore cluster, bucket and static access key while re-enabling protection on the retained foundation;
+- verify no temporary field-test resource remains.
+
+Do not improvise a third path or silently extend the test window. Production Render/Neon remains untouched by Stage C.
 
 ## 8. Acceptance evidence for Stage C field test
 

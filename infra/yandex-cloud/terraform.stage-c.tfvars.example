@@ -1,0 +1,36 @@
+# Stage C synthetic field-test profile. This file contains no credentials and does
+# not authorize terraform plan/apply. Copy values only after explicit owner approval.
+
+cloud_id  = "CHANGE_ME_CLOUD_ID"
+folder_id = "CHANGE_ME_FOLDER_ID"
+
+admin_cidr    = "203.0.113.10/32"
+ssh_public_key = "ssh-ed25519 CHANGE_ME_PUBLIC_KEY"
+
+app_zone                = "ru-central1-d"
+db_secondary_zone       = "ru-central1-b"
+postgresql_host_profile = "single"
+
+vm_cores     = 2
+vm_memory_gb = 4
+vm_disk_gb   = 40
+
+postgresql_resource_preset_id = "s3-c2-m8"
+postgresql_disk_type_id       = "network-ssd"
+postgresql_disk_size_gb       = 20
+postgresql_backup_retain_days = 7
+
+# Bounded Stage C-only resources. The precondition in main.tf rejects this
+# profile if deletion protection would prevent teardown.
+field_test_resources_enabled  = true
+foundation_deletion_protection = false
+
+field_test_restore_resource_preset_id = "s3-c2-m8"
+field_test_restore_disk_size_gb       = 20
+field_test_bucket_prefix              = "aca-field-backup-"
+field_test_bucket_max_size_bytes      = 1073741824
+
+# Supply both passwords only as protected environment variables:
+#   export TF_VAR_postgresql_app_password='...'
+#   export TF_VAR_field_test_restore_password='...'
+# Never put either password in tfvars, Git, chat, CI logs or Terraform outputs.

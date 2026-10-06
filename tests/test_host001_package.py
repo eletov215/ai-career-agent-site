@@ -5,6 +5,7 @@ import importlib.util
 import json
 import tempfile
 import unittest
+from datetime import datetime, timezone
 from pathlib import Path
 from unittest import mock
 
@@ -23,6 +24,33 @@ class Host001PackageTests(unittest.TestCase):
         self.assertIn('version                   = 18', main)
         self.assertIn('dynamic "host"', main)
         self.assertIn('var.postgresql_host_profile == "two"', main)
+
+    def test_stage_c_field_resources_are_opt_in_and_teardown_safe(self):
+        variables = (ROOT / "infra/yandex-cloud/variables.tf").read_text(encoding="utf-8")
+        main = (ROOT / "infra/yandex-cloud/main.tf").read_text(encoding="utf-8")
+        example = (ROOT / "infra/yandex-cloud/terraform.stage-c.tfvars.example").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn('variable "field_test_resources_enabled"', variables)
+        self.assertIn('variable "foundation_deletion_protection"', variables)
+        self.assertIn('resource "yandex_storage_bucket" "field_test"', main)
+        self.assertIn(
+            'resource "yandex_mdb_postgresql_cluster" "field_test_restore"',
+            main,
+        )
+        self.assertIn(
+            'resource "yandex_iam_service_account_static_access_key" "field_test_storage"',
+            main,
+        )
+        self.assertIn("output_to_lockbox {", main)
+        self.assertIn('role      = "storage.uploader"', main)
+        self.assertIn("force_destroy         = true", main)
+        self.assertIn(
+            "!var.field_test_resources_enabled || !var.foundation_deletion_protection",
+            main,
+        )
+        self.assertIn("field_test_resources_enabled  = true", example)
+        self.assertIn("foundation_deletion_protection = false", example)
 
     def test_yandex_proxy_rebuilds_trusted_client_header(self):
         caddy = (ROOT / "infra/yandex-cloud/Caddyfile").read_text(encoding="utf-8")
@@ -89,6 +117,51 @@ class BackupExportTests(unittest.TestCase):
         )
         with self.assertRaises(module.ExportError):
             module.validate_distinct_object_targets(backup_url, manifest_url)
+
+    def test_exporter_generates_short_lived_yandex_put_urls_without_secret(self):
+        module = self._module()
+        url = module.generate_presigned_put_url(
+            "aca-field-backup-example",
+            "field-test/sample.dump.enc",
+            "YCAJEXAMPLEACCESS",
+            "do-not-leak-secret",
+            expires_seconds=900,
+            now=datetime(2026, 10, 6, 10, 0, tzinfo=timezone.utc),
+        )
+        self.assertTrue(url.startswith("https://storage.yandexcloud.net/"))
+        self.assertIn("X-Amz-Algorithm=AWS4-HMAC-SHA256", url)
+        self.assertIn("X-Amz-Expires=900", url)
+        self.assertIn("X-Amz-Signature=", url)
+        self.assertNotIn("do-not-leak-secret", url)
+
+    def test_exporter_generates_distinct_backup_and_manifest_targets(self):
+        module = self._module()
+        with mock.patch.dict(
+            module.os.environ,
+            {
+                "BACKUP_S3_BUCKET": "aca-field-backup-example",
+                "BACKUP_S3_ACCESS_KEY": "YCAJEXAMPLEACCESS",
+                "BACKUP_S3_SECRET_KEY": "secret",
+                "BACKUP_S3_OBJECT_PREFIX": "field-test",
+            },
+            clear=False,
+        ):
+            with mock.patch.object(
+                module,
+                "generate_presigned_put_url",
+                side_effect=[
+                    "https://storage.yandexcloud.net/aca-field-backup-example/field-test/a?sig=1",
+                    "https://storage.yandexcloud.net/aca-field-backup-example/field-test/b?sig=2",
+                ],
+            ):
+                backup_url, manifest_url = module._resolve_upload_urls(
+                    Path("backup.dump.enc"),
+                    Path("backup.dump.enc.manifest.json"),
+                )
+        self.assertNotEqual(
+            module._object_target_identity(backup_url),
+            module._object_target_identity(manifest_url),
+        )
 
     def test_exporter_sanitizes_timeout_without_presigned_url(self):
         module = self._module()
