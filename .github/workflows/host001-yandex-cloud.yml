@@ -52,7 +52,7 @@ jobs:
         run: python -m unittest tests.test_host001_package -v
 
       - name: Terraform format
-        run: terraform -chdir=infra/yandex-cloud fmt -check -recursive
+        run: terraform -chdir=infra/yandex-cloud fmt -check -diff -recursive
 
       - name: Terraform init without backend
         run: terraform -chdir=infra/yandex-cloud init -backend=false
