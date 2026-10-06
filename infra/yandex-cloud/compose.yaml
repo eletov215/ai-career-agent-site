@@ -186,11 +186,12 @@ services:
     profiles: ["backup-export"]
     command: ["python", "infra/yandex-cloud/export_backup_s3.py"]
     environment:
-      BACKUP_EXPORT_FILE: ${BACKUP_EXPORT_FILE:?Encrypted backup filename is required}
-      BACKUP_EXPORT_MANIFEST: ${BACKUP_EXPORT_MANIFEST:?Backup manifest filename is required}
-      BACKUP_S3_PRESIGNED_URL: ${BACKUP_S3_PRESIGNED_URL:?HTTPS presigned backup URL is required}
-      BACKUP_S3_MANIFEST_PRESIGNED_URL: ${BACKUP_S3_MANIFEST_PRESIGNED_URL:?HTTPS presigned manifest URL is required}
+      BACKUP_EXPORT_FILE: ${BACKUP_EXPORT_FILE:-}
+      BACKUP_EXPORT_MANIFEST: ${BACKUP_EXPORT_MANIFEST:-}
+      BACKUP_S3_PRESIGNED_URL: ${BACKUP_S3_PRESIGNED_URL:-}
+      BACKUP_S3_MANIFEST_PRESIGNED_URL: ${BACKUP_S3_MANIFEST_PRESIGNED_URL:-}
       BACKUP_DIR: /var/backups/ai-career-agent
+      BACKUP_ENCRYPTION_KEY: ${BACKUP_ENCRYPTION_KEY:-}
     volumes:
       - backup-data:/var/backups/ai-career-agent:ro
     networks: [backend]
