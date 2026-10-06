@@ -43,7 +43,7 @@ class Host001PackageTests(unittest.TestCase):
             main,
         )
         self.assertIn("output_to_lockbox {", main)
-        self.assertIn('role      = "storage.uploader"', main)
+        self.assertIn('role        = "storage.uploader"', main)
         self.assertIn("force_destroy         = true", main)
         self.assertIn(
             "!var.field_test_resources_enabled || !var.foundation_deletion_protection",
