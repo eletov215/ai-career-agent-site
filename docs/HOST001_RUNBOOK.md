@@ -29,9 +29,29 @@ Default/rehearsal startup must not implicitly execute migrations or background w
 
 1. Load protected runtime values from Lockbox outside Terraform state.
 2. Start only the components required for synthetic verification.
-3. Run the Compose `migration` profile only after the target database has been restored/created and explicitly approved for migration.
-4. Enable the `writers` profile only after database revision/data checks pass.
-5. Keep AI fail-closed: `AI_ENABLED=0`, `AI_KILL_SWITCH=1`, `AI_SYNTHETIC_ACCESS_ENABLED=0`.
+3. After the target database has been restored/created and explicitly approved for migration, run the migration service as an explicit one-off target. Do not use a broad `--profile migration up` command because unprofiled services would also start:
+
+   ```bash
+   python infra/yandex-cloud/run_with_lockbox.py -- \
+     docker compose -f infra/yandex-cloud/compose.yaml run --rm --build migrate
+   ```
+
+4. After migration/restore verification, start only the normal web path:
+
+   ```bash
+   python infra/yandex-cloud/run_with_lockbox.py -- \
+     docker compose -f infra/yandex-cloud/compose.yaml up -d --build web gateway
+   ```
+
+5. Enable writers only after database revision/data checks pass:
+
+   ```bash
+   python infra/yandex-cloud/run_with_lockbox.py -- \
+     docker compose -f infra/yandex-cloud/compose.yaml --profile writers \
+     up -d --build sync-worker privacy-worker
+   ```
+
+6. Keep AI fail-closed: `AI_ENABLED=0`, `AI_KILL_SWITCH=1`, `AI_SYNTHETIC_ACCESS_ENABLED=0`.
 
 ## 4. PostgreSQL 18 / TLS
 
