@@ -17,11 +17,14 @@ REQUIRED = (
     "infra/yandex-cloud/terraform.tfvars.example",
     "infra/yandex-cloud/Caddyfile",
     "infra/yandex-cloud/compose.yaml",
+    "infra/yandex-cloud/Dockerfile.ops",
+    "infra/yandex-cloud/export_backup_s3.py",
     "infra/yandex-cloud/run_with_lockbox.py",
     "infra/yandex-cloud/README.md",
     "docs/LEGAL001_OWNER_DECISIONS_20260924.md",
     "docs/HOST001_SCOPE.md",
     "docs/HOST001_IMPLEMENTATION.md",
+    "docs/HOST001_STAGE_B_IMPLEMENTATION_20261006.md",
     "docs/HOST001_RUNBOOK.md",
     "docs/HOST001_VERIFICATION_STATUS.md",
     ".github/workflows/host001-yandex-cloud.yml",
@@ -54,6 +57,8 @@ def validate(root: Path = ROOT) -> list[str]:
         for marker in (
             'default     = "ru-central1-d"',
             'default     = "ru-central1-b"',
+            'default     = "single"',
+            'contains(["single", "two"], var.postgresql_host_profile)',
             'var.admin_cidr != "0.0.0.0/0"',
             'sensitive   = true',
             'default     = "ubuntu-2404-lts"',
@@ -66,7 +71,9 @@ def validate(root: Path = ROOT) -> list[str]:
             'resource "yandex_vpc_address" "app"',
             "deletion_protection = true",
             'resource "yandex_mdb_postgresql_cluster" "main"',
-            "version                   = 17",
+            "version                   = 18",
+            'dynamic "host"',
+            'var.postgresql_host_profile == "two"',
             "assign_public_ip = false",
             'port              = 6432',
             "security_group_id = yandex_vpc_security_group.app.id",
@@ -91,6 +98,12 @@ def validate(root: Path = ROOT) -> list[str]:
             'AI_ENABLED: "0"',
             'AI_KILL_SWITCH: "1"',
             'AI_SYNTHETIC_ACCESS_ENABLED: "0"',
+            'profiles: ["migration"]',
+            'profiles: ["writers"]',
+            'profiles: ["backup-export"]',
+            "PGSSLMODE: verify-full",
+            "PGSSLROOTCERT: /etc/ssl/certs/yandex-cloud-ca.pem",
+            "PGTARGETSESSIONATTRS: read-write",
             "yandex-cloud-ca.pem",
         ):
             if marker not in compose:
@@ -98,17 +111,76 @@ def validate(root: Path = ROOT) -> list[str]:
         if "postgres:17" in compose or "\n  db:" in compose:
             errors.append("Yandex Compose must use Managed PostgreSQL, not a local db service")
 
+        if "depends_on:\n      migrate:" in compose:
+            errors.append("Default Yandex services must not auto-run schema migration before restore verification")
+        for export_name in (
+            "BACKUP_EXPORT_FILE",
+            "BACKUP_EXPORT_MANIFEST",
+            "BACKUP_S3_PRESIGNED_URL",
+            "BACKUP_S3_MANIFEST_PRESIGNED_URL",
+        ):
+            if "${" + export_name + ":?" in compose:
+                errors.append("Inactive backup-export profile must not require " + export_name + " during Compose interpolation")
+            if "${" + export_name + ":-}" not in compose:
+                errors.append("Backup-export variable must be deferred to runtime validation: " + export_name)
+
+        ops_docker = _read("infra/yandex-cloud/Dockerfile.ops")
+        for marker in ("FROM postgres:18-bookworm", "USER app", "curl"):
+            if marker not in ops_docker:
+                errors.append("Yandex PG18 ops image missing: " + marker)
+
+        caddy = _read("infra/yandex-cloud/Caddyfile")
+        for marker in ("header_up -CF-Connecting-IP", "header_up X-Forwarded-For {http.request.remote.host}"):
+            if marker not in caddy:
+                errors.append("Yandex proxy hardening missing: " + marker)
+
         loader = _read("infra/yandex-cloud/run_with_lockbox.py")
         for marker in (
             "169.254.169.254",
             "payload.lockbox.api.cloud.yandex.net",
             "os.execvpe",
             "Metadata-Flavor",
+            "validate_database_url",
+            "verify-full",
+            "sslrootcert",
+            "target_session_attrs",
         ):
             if marker not in loader:
                 errors.append("Lockbox runtime loader missing: " + marker)
         if "print(" in loader:
             errors.append("Lockbox runtime loader must not print payload or environment")
+
+        exporter = _read("infra/yandex-cloud/export_backup_s3.py")
+        for marker in (
+            "https",
+            "encrypted",
+            "curl",
+            "sha256",
+            "ACAOPS1",
+            "AES-GCM",
+            "BACKUP_ENCRYPTION_KEY",
+            "authenticate_encrypted_backup",
+            "TimeoutExpired",
+            "validate_distinct_object_targets",
+            ".storage.yandexcloud.net",
+            "storage.yandexcloud.net",
+        ):
+            if marker not in exporter:
+                errors.append("Off-VM encrypted backup exporter missing: " + marker)
+
+        for document in (
+            _read("infra/yandex-cloud/README.md"),
+            _read("docs/HOST001_RUNBOOK.md"),
+        ):
+            if "run --rm --build migrate" not in document:
+                errors.append("HOST-001 migration instructions must target only the migrate service")
+            if "--profile migration up" in document and "Do not use" not in document:
+                errors.append("HOST-001 must not recommend broad migration-profile startup")
+
+        stage_b = _read("docs/HOST001_STAGE_B_IMPLEMENTATION_20261006.md")
+        for marker in ("PostgreSQL 18", "single", "two", "NOT_RUN", "20261002_0023"):
+            if marker not in stage_b:
+                errors.append("HOST-001 Stage B successor record missing: " + marker)
 
         decisions = _read("docs/LEGAL001_OWNER_DECISIONS_20260924.md")
         for marker in (
@@ -130,7 +202,13 @@ def validate(root: Path = ROOT) -> list[str]:
             errors.append("HOST-001 must not activate legal policy")
 
         workflow = _read(".github/workflows/host001-yandex-cloud.yml")
-        for marker in ("fmt -check -recursive", "init -backend=false", "terraform -chdir=infra/yandex-cloud validate", "check_host001_package.py"):
+        for marker in (
+            "cryptography==48.0.1",
+            "fmt -check -recursive",
+            "init -backend=false",
+            "terraform -chdir=infra/yandex-cloud validate",
+            "check_host001_package.py",
+        ):
             if marker not in workflow:
                 errors.append("HOST-001 workflow missing: " + marker)
         if re.search(r"(?m)^\s*terraform\s+apply\b", workflow):

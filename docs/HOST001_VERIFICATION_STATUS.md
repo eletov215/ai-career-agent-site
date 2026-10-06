@@ -2,40 +2,35 @@
 
 | Поле | Статус |
 |---|---|
-| Package | HOST-001 |
-| Candidate baseline | `b25c1491cc418e79917fcd21325f807315b9c559` |
-| Owner cloud decision | Yandex Cloud |
-| Initial market | Russia |
-| Minimum age | 18+ |
-| IaC implementation | IMPLEMENTED |
-| Terraform fmt/validate | PENDING_CI |
-| Package guard/tests | PENDING_CI |
+| Package | HOST-001 / Issue #73 Stage B successor |
+| Owner approval | Code + PR preparation only, 2026-10-06 |
+| Application schema | `20261002_0023` unchanged |
+| Launch DB profile | single private PostgreSQL 18 |
+| Future DB profile | two private PostgreSQL 18 hosts / separate approval |
+| Offline implementation | IMPLEMENTED_CANDIDATE |
+| GitHub exact-head CI | PENDING |
+| Terraform fmt/validate | PENDING_GITHUB_CI |
+| Package/unit guards | PENDING_GITHUB_CI |
 | Cloud resources created | NO |
 | Billable cloud actions | 0 |
+| Production configuration/data changes | 0 |
+| Disposable PG18 restore/TLS drill | NOT_RUN |
 | Field network test | NOT_RUN |
-| Managed PostgreSQL field test | NOT_RUN |
-| OPS-002 restore drill | NOT_RUN |
+| OPS-002 independent restore drill | NOT_RUN |
 | DOMAIN-001 | PENDING |
-| MIG-001 | PENDING |
-| Legal activation | PENDING |
+| MIG-001 production cutover | NOT_AUTHORIZED |
+| Legal activation | DRAFT / PENDING |
 | Real-data Alice | CLOSED |
 | Acceptance | NOT_YET |
 
-## 1. Candidate criteria
+## Candidate evidence
 
-The candidate must pass Terraform formatting/validation and package/unit guards
-without Yandex credentials. Guarding must prove Russia-only default zones,
-two-zone private PostgreSQL, SG-only 6432, restricted SSH, Lockbox/no-secret-state
-design and fail-closed AI defaults.
+Stage B prepares an explicit single-host launch profile while retaining a future two-host profile, PostgreSQL 18 client/server compatibility, strict backup TLS parameters, opt-in migration/writers, Yandex-specific proxy normalization and encrypted off-VM backup export.
 
-## 2. Field criteria
+The shared Render Dockerfile remains unchanged by this successor; the Yandex operations image is separate.
 
-A later billable field test must verify the exact created resources, network
-reachability, Managed PostgreSQL TLS/reconnect, app readiness, workers, backup
-and isolated restore. Results must be recorded from the actual Yandex environment.
+## Remaining evidence
 
-## 3. Separation from legal acceptance
+A future billable field test must verify created resources, exact SKU cost, TLS, proxy behavior, startup profiles, backup export and isolated PG18 restore. Production cutover, SITE QA and rollback evidence belong to later approved stages.
 
-HOST-001 can pass technically while LEGAL-001 remains LEGAL_PENDING. Operator
-identity, domain, final legal documents and policy activation remain independent
-gates. No infrastructure PASS enables real-data AI by itself.
+No offline test or GitHub CI result is legal approval, localization proof, production deployment evidence or real-data AI authorization.

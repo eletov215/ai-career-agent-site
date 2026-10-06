@@ -129,7 +129,7 @@ resource "yandex_mdb_postgresql_cluster" "main" {
   labels              = local.common_labels
 
   config {
-    version                   = 17
+    version                   = 18
     backup_retain_period_days = var.postgresql_backup_retain_days
 
     resources {
@@ -145,16 +145,19 @@ resource "yandex_mdb_postgresql_cluster" "main" {
     assign_public_ip = false
   }
 
-  host {
-    zone             = var.db_secondary_zone
-    subnet_id        = yandex_vpc_subnet.db_secondary.id
-    assign_public_ip = false
+  dynamic "host" {
+    for_each = var.postgresql_host_profile == "two" ? [1] : []
+    content {
+      zone             = var.db_secondary_zone
+      subnet_id        = yandex_vpc_subnet.db_secondary.id
+      assign_public_ip = false
+    }
   }
 
   lifecycle {
     precondition {
-      condition     = var.app_zone != var.db_secondary_zone
-      error_message = "Managed PostgreSQL hosts must be in two different Russia availability zones."
+      condition     = var.postgresql_host_profile == "single" || var.app_zone != var.db_secondary_zone
+      error_message = "The two-host Managed PostgreSQL profile requires hosts in two different Russia availability zones."
     }
   }
 }
