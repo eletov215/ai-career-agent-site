@@ -113,6 +113,16 @@ def validate(root: Path = ROOT) -> list[str]:
 
         if "depends_on:\n      migrate:" in compose:
             errors.append("Default Yandex services must not auto-run schema migration before restore verification")
+        for export_name in (
+            "BACKUP_EXPORT_FILE",
+            "BACKUP_EXPORT_MANIFEST",
+            "BACKUP_S3_PRESIGNED_URL",
+            "BACKUP_S3_MANIFEST_PRESIGNED_URL",
+        ):
+            if f"${{{export_name}:?}" in compose:
+                errors.append("Inactive backup-export profile must not require " + export_name + " during Compose interpolation")
+            if f"${{{export_name}:-}}" not in compose:
+                errors.append("Backup-export variable must be deferred to runtime validation: " + export_name)
 
         ops_docker = _read("infra/yandex-cloud/Dockerfile.ops")
         for marker in ("FROM postgres:18-bookworm", "USER app", "curl"):
@@ -137,7 +147,16 @@ def validate(root: Path = ROOT) -> list[str]:
             errors.append("Lockbox runtime loader must not print payload or environment")
 
         exporter = _read("infra/yandex-cloud/export_backup_s3.py")
-        for marker in ("https", "encrypted", "curl", "sha256"):
+        for marker in (
+            "https",
+            "encrypted",
+            "curl",
+            "sha256",
+            "ACAOPS1",
+            "AES-GCM",
+            "BACKUP_ENCRYPTION_KEY",
+            "authenticate_encrypted_backup",
+        ):
             if marker not in exporter:
                 errors.append("Off-VM encrypted backup exporter missing: " + marker)
 
