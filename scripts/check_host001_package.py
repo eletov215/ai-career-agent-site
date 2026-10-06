@@ -156,6 +156,7 @@ def validate(root: Path = ROOT) -> list[str]:
             "AES-GCM",
             "BACKUP_ENCRYPTION_KEY",
             "authenticate_encrypted_backup",
+            "TimeoutExpired",
         ):
             if marker not in exporter:
                 errors.append("Off-VM encrypted backup exporter missing: " + marker)
