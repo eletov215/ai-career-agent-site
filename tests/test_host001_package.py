@@ -77,6 +77,19 @@ class BackupExportTests(unittest.TestCase):
         with self.assertRaises(module.ExportError):
             module.validate_distinct_object_targets(backup_url, manifest_url)
 
+    def test_exporter_rejects_same_yandex_object_across_url_aliases(self):
+        module = self._module()
+        backup_url = (
+            "https://aca-backups.storage.yandexcloud.net/prod/backup.dump.enc"
+            "?X-Amz-Signature=one"
+        )
+        manifest_url = (
+            "https://storage.yandexcloud.net/aca-backups/prod/backup.dump.enc"
+            "?X-Amz-Signature=two"
+        )
+        with self.assertRaises(module.ExportError):
+            module.validate_distinct_object_targets(backup_url, manifest_url)
+
     def test_exporter_sanitizes_timeout_without_presigned_url(self):
         module = self._module()
         secret_url = "https://storage.example.test/object?signature=do-not-log"
