@@ -64,7 +64,27 @@ or `terraform apply`.
    `sslrootcert=/etc/ssl/certs/yandex-cloud-ca.pem`.
 8. Do not add Alice real-data credentials and do not change
    `REAL_DATA_SUPPORTED=False` in HOST-001.
-9. Deploy the repository separately. Run the `migration` profile only when an approved target database is ready; start normal web/gateway separately. Enable the `writers` profile only after restore/schema verification.
+9. Deploy the repository separately. Do **not** use a broad `--profile migration up` command. After loading the approved Lockbox secret, run only the migration service explicitly:
+
+   ```bash
+   python infra/yandex-cloud/run_with_lockbox.py -- \
+     docker compose -f infra/yandex-cloud/compose.yaml run --rm --build migrate
+   ```
+
+   After the migration/restore checks succeed, start only the normal web path:
+
+   ```bash
+   python infra/yandex-cloud/run_with_lockbox.py -- \
+     docker compose -f infra/yandex-cloud/compose.yaml up -d --build web gateway
+   ```
+
+   Enable background writers only after database revision/data checks pass:
+
+   ```bash
+   python infra/yandex-cloud/run_with_lockbox.py -- \
+     docker compose -f infra/yandex-cloud/compose.yaml --profile writers \
+     up -d --build sync-worker privacy-worker
+   ```
 10. Until DOMAIN-001, use only synthetic/owner-controlled smoke data. The
     default Caddy site is HTTP `:80`; commercial traffic requires DOMAIN-001
     TLS and reviewed public URLs.
