@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import base64
 import importlib.util
 import json
 import tempfile
@@ -33,6 +34,14 @@ class Host001PackageTests(unittest.TestCase):
         self.assertIn('profiles: ["migration"]', compose)
         self.assertGreaterEqual(compose.count('profiles: ["writers"]'), 2)
         self.assertNotIn("depends_on:\n      migrate:", compose)
+        for name in (
+            "BACKUP_EXPORT_FILE",
+            "BACKUP_EXPORT_MANIFEST",
+            "BACKUP_S3_PRESIGNED_URL",
+            "BACKUP_S3_MANIFEST_PRESIGNED_URL",
+        ):
+            self.assertIn(f"${{{name}:-}}", compose)
+            self.assertNotIn(f"${{{name}:?", compose)
 
 
 class BackupExportTests(unittest.TestCase):
@@ -45,32 +54,88 @@ class BackupExportTests(unittest.TestCase):
         spec.loader.exec_module(module)
         return module
 
+    @staticmethod
+    def _manifest(backup: Path) -> dict[str, object]:
+        import hashlib
+
+        return {
+            "encrypted": True,
+            "backup_file": backup.name,
+            "size_bytes": backup.stat().st_size,
+            "sha256": hashlib.sha256(backup.read_bytes()).hexdigest(),
+        }
+
     def test_exporter_rejects_non_https_presigned_url(self):
         module = self._module()
         with self.assertRaises(module.ExportError):
             module.validate_presigned_url("http://storage.example.test/object")
 
-    def test_exporter_requires_encrypted_matching_manifest(self):
+    def test_exporter_rejects_fake_enc_extension_without_encryption_envelope(self):
+        module = self._module()
+        with tempfile.TemporaryDirectory() as tmp:
+            backup = Path(tmp) / "sample.dump.enc"
+            backup.write_bytes(b"plaintext-renamed-as-encrypted")
+            with self.assertRaises(module.ExportError):
+                module.validate_encryption_envelope(backup)
+
+    def test_exporter_authenticates_aes_gcm_before_upload(self):
+        try:
+            from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+        except ModuleNotFoundError:
+            self.skipTest("cryptography is installed by the full project CI, not the stdlib-only HOST unit step")
+
         module = self._module()
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             backup = root / "sample.dump.enc"
-            backup.write_bytes(b"encrypted-bytes")
-            import hashlib
             manifest = root / "sample.dump.enc.manifest.json"
-            manifest.write_text(json.dumps({
-                "encrypted": True,
-                "backup_file": backup.name,
-                "size_bytes": backup.stat().st_size,
-                "sha256": hashlib.sha256(backup.read_bytes()).hexdigest(),
-            }), encoding="utf-8")
-            module.verify_encrypted_backup(backup, manifest)
+            key = b"K" * 32
+            nonce = b"N" * 12
+            encryptor = Cipher(algorithms.AES(key), modes.GCM(nonce)).encryptor()
+            ciphertext = encryptor.update(b"synthetic-postgres-dump") + encryptor.finalize()
+            backup.write_bytes(b"ACAOPS1" + nonce + ciphertext + encryptor.tag)
+            manifest.write_text(
+                json.dumps(self._manifest(backup)),
+                encoding="utf-8",
+            )
+            encoded_key = base64.urlsafe_b64encode(key).decode("ascii")
 
-            payload = json.loads(manifest.read_text(encoding="utf-8"))
+            module.verify_encrypted_backup(
+                backup,
+                manifest,
+                encryption_key=encoded_key,
+            )
+
+            tampered = bytearray(backup.read_bytes())
+            tampered[-1] ^= 1
+            backup.write_bytes(bytes(tampered))
+            manifest.write_text(
+                json.dumps(self._manifest(backup)),
+                encoding="utf-8",
+            )
+            with self.assertRaises(module.ExportError):
+                module.verify_encrypted_backup(
+                    backup,
+                    manifest,
+                    encryption_key=encoded_key,
+                )
+
+    def test_exporter_rejects_manifest_that_claims_plaintext(self):
+        module = self._module()
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            backup = root / "sample.dump.enc"
+            backup.write_bytes(b"ACAOPS1" + b"N" * 12 + b"C" + b"T" * 16)
+            manifest = root / "sample.dump.enc.manifest.json"
+            payload = self._manifest(backup)
             payload["encrypted"] = False
             manifest.write_text(json.dumps(payload), encoding="utf-8")
             with self.assertRaises(module.ExportError):
-                module.verify_encrypted_backup(backup, manifest)
+                module.verify_encrypted_backup(
+                    backup,
+                    manifest,
+                    encryption_key=base64.urlsafe_b64encode(b"K" * 32).decode("ascii"),
+                )
 
 
 class LockboxLoaderTests(unittest.TestCase):
