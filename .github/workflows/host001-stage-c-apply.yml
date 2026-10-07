@@ -18,7 +18,7 @@ permissions:
   actions: write
 
 concurrency:
-  group: host001-stage-c-bounded-apply
+  group: host001-stage-c-lifecycle
   cancel-in-progress: false
 
 jobs:
