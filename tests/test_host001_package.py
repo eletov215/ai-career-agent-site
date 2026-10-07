@@ -192,7 +192,12 @@ class Host001PackageTests(unittest.TestCase):
         self.assertIn("actions/runs/$SOURCE_RUN_ID", workflow)
         self.assertIn("Validate source apply run identity before checkout", workflow)
         self.assertIn('data.get("path") == ".github/workflows/host001-stage-c-apply.yml"', workflow)
+        self.assertIn("--connect-timeout 5 --max-time 10", workflow)
         self.assertIn("Source apply status lookup attempt", workflow)
+        self.assertIn("SOURCE_RUN_TERMINAL_CONFIRMED=1", workflow)
+        self.assertIn("Stale Terraform lock detected after the exact source apply run became terminal", workflow)
+        self.assertIn("force-unlock -force", workflow)
+        self.assertIn(r'"^(data\\.yandex_compute_image\\.ubuntu', workflow)
         self.assertIn("Field window shortened to preserve the 90-minute teardown reserve.", workflow)
         self.assertIn("ref: ${{ inputs.source_sha }}", workflow)
         self.assertIn("Initialize durable Yandex Object Storage backend", workflow)
@@ -277,6 +282,18 @@ class Host001PackageTests(unittest.TestCase):
             "missing lock timeout": original.replace(
                 "-lock-timeout=10m",
                 "-lock-timeout=0s",
+            ),
+            "unbounded monitor request": original.replace(
+                "--connect-timeout 5 --max-time 10",
+                "",
+            ),
+            "missing stale lock recovery": original.replace(
+                "force-unlock -force",
+                "force-unlock-disabled",
+            ),
+            "broken jq escaping": original.replace(
+                r'"^(data\\.yandex_compute_image\\.ubuntu',
+                r'"^(data\.yandex_compute_image\.ubuntu',
             ),
             "missing remote backend init": original.replace(
                 "Initialize durable Yandex Object Storage backend",
