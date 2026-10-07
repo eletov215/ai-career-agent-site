@@ -161,7 +161,9 @@ class Host001PackageTests(unittest.TestCase):
         self.assertIn("group: host001-stage-c-bounded-apply", workflow)
         self.assertIn('test "$STAGE_C_HOLD_MINUTES" -le 90', workflow)
         self.assertIn("Initialize durable Yandex Object Storage backend", workflow)
+        self.assertIn('TFSTATE_KEY="host001/stage-c-${GITHUB_RUN_ID}.tfstate"', workflow)
         self.assertIn('-backend-config="bucket=$TFSTATE_BUCKET"', workflow)
+        self.assertIn('-backend-config="key=$TFSTATE_KEY"', workflow)
         self.assertIn("host001-stage-c-teardown.yml/dispatches", workflow)
         self.assertIn("AUTO_TEARDOWN_STAGE_C_SYNTHETIC", workflow)
         self.assertNotIn("actions/upload-artifact", workflow)
@@ -177,7 +179,7 @@ class Host001PackageTests(unittest.TestCase):
         versions = (ROOT / "infra/yandex-cloud/versions.tf").read_text(encoding="utf-8")
         self.assertIn('backend "s3"', versions)
         self.assertIn('s3 = "https://storage.yandexcloud.net"', versions)
-        self.assertIn('key                         = "host001/stage-c.tfstate"', versions)
+        self.assertNotIn('key                         = "host001/stage-c.tfstate"', versions)
         self.assertIn("skip_region_validation      = true", versions)
         self.assertIn("skip_credentials_validation = true", versions)
         self.assertIn("skip_requesting_account_id  = true", versions)
@@ -191,6 +193,8 @@ class Host001PackageTests(unittest.TestCase):
         self.assertIn("AUTO_TEARDOWN_STAGE_C_SYNTHETIC", workflow)
         self.assertIn("group: host001-stage-c-recovery-teardown", workflow)
         self.assertIn("DESTROY_STAGE_C_SYNTHETIC_1000_RUB", workflow)
+        self.assertIn('TFSTATE_KEY="host001/stage-c-${SOURCE_RUN_ID}.tfstate"', workflow)
+        self.assertIn('-backend-config="key=$TFSTATE_KEY"', workflow)
         self.assertIn("actions/runs/$SOURCE_RUN_ID", workflow)
         self.assertIn("Validate source apply run identity before checkout", workflow)
         self.assertIn('(data.get("path") or "").split("@", 1)[0] == ".github/workflows/host001-stage-c-apply.yml"', workflow)
@@ -252,6 +256,10 @@ class Host001PackageTests(unittest.TestCase):
             "missing remote backend init": original.replace(
                 "Initialize durable Yandex Object Storage backend",
                 "Initialize local backend",
+            ),
+            "fixed global state key": original.replace(
+                'TFSTATE_KEY="host001/stage-c-${GITHUB_RUN_ID}.tfstate"',
+                'TFSTATE_KEY="host001/stage-c.tfstate"',
             ),
             "missing teardown dispatch": original.replace(
                 "host001-stage-c-teardown.yml/dispatches",
@@ -333,6 +341,10 @@ class Host001PackageTests(unittest.TestCase):
             "missing remote backend init": original.replace(
                 "Initialize durable Yandex Object Storage backend",
                 "Initialize local backend",
+            ),
+            "wrong source state key": original.replace(
+                'TFSTATE_KEY="host001/stage-c-${SOURCE_RUN_ID}.tfstate"',
+                'TFSTATE_KEY="host001/stage-c-stale.tfstate"',
             ),
             "direct destroy": original.replace(
                 "terraform -chdir=infra/yandex-cloud apply",
