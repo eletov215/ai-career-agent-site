@@ -45,14 +45,16 @@ STAGE_C_SECRET_BINDINGS = {
 
 
 def _stage_c_steps(workflow: str) -> dict[str, str]:
-    """Return named Stage C step blocks without requiring a YAML dependency."""
-    matches = list(re.finditer(r"(?m)^      - name: (.+)$", workflow))
-    return {
-        match.group(1): workflow[match.start() : matches[index + 1].start()]
-        if index + 1 < len(matches)
-        else workflow[match.start() :]
-        for index, match in enumerate(matches)
-    }
+    """Return named Stage C steps, bounded by every YAML step entry."""
+    boundaries = list(re.finditer(r"(?m)^      - (?=\S)", workflow))
+    steps: dict[str, str] = {}
+    for index, boundary in enumerate(boundaries):
+        end = boundaries[index + 1].start() if index + 1 < len(boundaries) else len(workflow)
+        block = workflow[boundary.start() : end]
+        name = re.match(r"      - name: (.+)$", block.splitlines()[0])
+        if name:
+            steps[name.group(1)] = block
+    return steps
 
 
 def _read(relative: str) -> str:
