@@ -376,7 +376,7 @@ def validate(root: Path = ROOT) -> list[str]:
             "environment: stage-c-yandex",
             "timeout-minutes: 235",
             "APPLY_STAGE_C_SYNTHETIC_1000_RUB_4H",
-            'test "$STAGE_C_HOLD_MINUTES" -le 180',
+            'test "$STAGE_C_HOLD_MINUTES" -le 150',
             'TF_VAR_field_test_resources_enabled: "true"',
             'TF_VAR_foundation_deletion_protection: "false"',
             "Fresh credentialed create-only plan passed.",
