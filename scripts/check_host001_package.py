@@ -49,32 +49,36 @@ STAGE_C_APPLY_SECRET_BINDINGS = {
     "YC_STAGE_C_SERVICE_ACCOUNT_KEY_JSON": (
         "Materialize Yandex service-account key outside repository",
     ),
+    "YC_STAGE_C_TFSTATE_BUCKET": (
+        "Initialize durable Yandex Object Storage backend",
+    ),
+    "YC_STAGE_C_TFSTATE_ACCESS_KEY": (
+        "Initialize durable Yandex Object Storage backend",
+        "Fresh reviewed Stage C plan",
+        "Apply reviewed Stage C plan",
+    ),
+    "YC_STAGE_C_TFSTATE_SECRET_KEY": (
+        "Initialize durable Yandex Object Storage backend",
+        "Fresh reviewed Stage C plan",
+        "Apply reviewed Stage C plan",
+    ),
     "YC_STAGE_C_CLOUD_ID": (
-        "Fresh reviewed plan and owner-authorized apply",
-        "Immediate local fallback teardown",
+        "Fresh reviewed Stage C plan",
     ),
     "YC_STAGE_C_FOLDER_ID": (
-        "Fresh reviewed plan and owner-authorized apply",
-        "Immediate local fallback teardown",
+        "Fresh reviewed Stage C plan",
     ),
     "YC_STAGE_C_ADMIN_CIDR": (
-        "Fresh reviewed plan and owner-authorized apply",
-        "Immediate local fallback teardown",
+        "Fresh reviewed Stage C plan",
     ),
     "YC_STAGE_C_SSH_PUBLIC_KEY": (
-        "Fresh reviewed plan and owner-authorized apply",
-        "Immediate local fallback teardown",
+        "Fresh reviewed Stage C plan",
     ),
     "YC_STAGE_C_POSTGRES_PASSWORD": (
-        "Fresh reviewed plan and owner-authorized apply",
-        "Immediate local fallback teardown",
+        "Fresh reviewed Stage C plan",
     ),
     "YC_STAGE_C_RESTORE_PASSWORD": (
-        "Fresh reviewed plan and owner-authorized apply",
-        "Immediate local fallback teardown",
-    ),
-    "YC_STAGE_C_TFSTATE_PASSPHRASE": (
-        "Encrypt durable recovery state",
+        "Fresh reviewed Stage C plan",
     ),
 }
 
@@ -82,26 +86,34 @@ STAGE_C_TEARDOWN_SECRET_BINDINGS = {
     "YC_STAGE_C_SERVICE_ACCOUNT_KEY_JSON": (
         "Materialize Yandex service-account key outside repository",
     ),
-    "YC_STAGE_C_TFSTATE_PASSPHRASE": (
-        "Decrypt durable recovery state",
+    "YC_STAGE_C_TFSTATE_BUCKET": (
+        "Initialize durable Yandex Object Storage backend",
+    ),
+    "YC_STAGE_C_TFSTATE_ACCESS_KEY": (
+        "Initialize durable Yandex Object Storage backend",
+        "Destroy reviewed Stage C resources from remote state",
+    ),
+    "YC_STAGE_C_TFSTATE_SECRET_KEY": (
+        "Initialize durable Yandex Object Storage backend",
+        "Destroy reviewed Stage C resources from remote state",
     ),
     "YC_STAGE_C_CLOUD_ID": (
-        "Destroy reviewed Stage C resources from recovery state",
+        "Destroy reviewed Stage C resources from remote state",
     ),
     "YC_STAGE_C_FOLDER_ID": (
-        "Destroy reviewed Stage C resources from recovery state",
+        "Destroy reviewed Stage C resources from remote state",
     ),
     "YC_STAGE_C_ADMIN_CIDR": (
-        "Destroy reviewed Stage C resources from recovery state",
+        "Destroy reviewed Stage C resources from remote state",
     ),
     "YC_STAGE_C_SSH_PUBLIC_KEY": (
-        "Destroy reviewed Stage C resources from recovery state",
+        "Destroy reviewed Stage C resources from remote state",
     ),
     "YC_STAGE_C_POSTGRES_PASSWORD": (
-        "Destroy reviewed Stage C resources from recovery state",
+        "Destroy reviewed Stage C resources from remote state",
     ),
     "YC_STAGE_C_RESTORE_PASSWORD": (
-        "Destroy reviewed Stage C resources from recovery state",
+        "Destroy reviewed Stage C resources from remote state",
     ),
 }
 
@@ -423,20 +435,8 @@ def validate(root: Path = ROOT) -> list[str]:
                 errors.append(
                     f"Stage C apply action {action} must use an immutable commit SHA"
                 )
-        if sum(action == "actions/upload-artifact" for action, _ in apply_actions) != 1:
-            errors.append("Stage C apply workflow must upload exactly one encrypted recovery artifact")
-        if any(action == "actions/download-artifact" for action, _ in apply_actions):
-            errors.append("Stage C apply workflow must not download recovery artifacts")
-
-        upload_step = _active_yaml(apply_steps.get("Upload encrypted recovery state", ""))
-        for marker in (
-            "actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02",
-            "name: host001-stage-c-state-${{ github.run_id }}",
-            "path: ${{ runner.temp }}/stage-c-tfstate.enc",
-            "retention-days: 1",
-        ):
-            if marker not in upload_step:
-                errors.append("Stage C encrypted recovery upload missing control: " + marker)
+        if any(action in {"actions/upload-artifact", "actions/download-artifact"} for action, _ in apply_actions):
+            errors.append("Stage C apply workflow must use remote state, not artifact-carried state")
 
         required_apply_markers = (
             "workflow_dispatch:",
@@ -448,14 +448,14 @@ def validate(root: Path = ROOT) -> list[str]:
             'test "$STAGE_C_HOLD_MINUTES" -le 120',
             'TF_VAR_field_test_resources_enabled: "true"',
             'TF_VAR_foundation_deletion_protection: "false"',
+            "Initialize durable Yandex Object Storage backend",
+            '-backend-config="bucket=$TFSTATE_BUCKET"',
             "Fresh credentialed create-only plan passed.",
-            "openssl enc -aes-256-cbc -salt -pbkdf2 -iter 200000",
-            "stage-c-tfstate.enc",
+            "Dispatch cancellation-surviving teardown before apply",
             "host001-stage-c-teardown.yml/dispatches",
             "AUTO_TEARDOWN_STAGE_C_SYNTHETIC",
-            "Immediate local fallback teardown",
-            "Separate cancellation-surviving teardown workflow: **dispatched**",
-            "Enforce final apply result",
+            "Apply reviewed Stage C plan",
+            "Remote Terraform state: **Yandex Object Storage backend active before apply**",
         )
         for marker in required_apply_markers:
             if marker not in stage_c_apply:
@@ -464,14 +464,30 @@ def validate(root: Path = ROOT) -> list[str]:
         if re.search(r"(?m)^\s+(?:push|pull_request|schedule):", active_stage_c_apply):
             errors.append("Stage C apply workflow must remain manual workflow_dispatch only")
         if re.search(r"(?m)^\s*terraform(?:\s+-chdir=\S+)?\s+destroy\b", active_stage_c_apply):
-            errors.append("Stage C apply workflow must use reviewed destroy-plan apply, not direct destroy")
+            errors.append("Stage C apply workflow must not contain direct destroy")
         apply_commands = re.findall(
             r"(?m)^\s*terraform -chdir=infra/yandex-cloud apply\b", active_stage_c_apply
         )
-        if len(apply_commands) != 2:
-            errors.append(
-                "Stage C apply workflow must contain one create apply and one local fallback destroy-plan apply"
-            )
+        if len(apply_commands) != 1:
+            errors.append("Stage C apply workflow must have exactly one reviewed create apply")
+
+        dispatch_pos = stage_c_apply.find("Dispatch cancellation-surviving teardown before apply")
+        apply_pos = stage_c_apply.find("Apply reviewed Stage C plan")
+        if dispatch_pos < 0 or apply_pos < 0 or dispatch_pos >= apply_pos:
+            errors.append("Stage C teardown dispatch must occur before Terraform apply")
+
+        versions = _read("infra/yandex-cloud/versions.tf")
+        for marker in (
+            'backend "s3"',
+            's3 = "https://storage.yandexcloud.net"',
+            'key                         = "host001/stage-c.tfstate"',
+            "skip_region_validation      = true",
+            "skip_credentials_validation = true",
+            "skip_requesting_account_id  = true",
+            "skip_s3_checksum            = true",
+        ):
+            if marker not in versions:
+                errors.append("Stage C remote state backend missing control: " + marker)
 
         stage_c_teardown = _read(".github/workflows/host001-stage-c-teardown.yml")
         teardown_job_env = stage_c_teardown.split("    env:\n", 1)[1].split("    steps:\n", 1)[0]
@@ -510,30 +526,23 @@ def validate(root: Path = ROOT) -> list[str]:
                 errors.append(
                     f"Stage C teardown action {action} must use an immutable commit SHA"
                 )
-        if sum(action == "actions/download-artifact" for action, _ in teardown_actions) != 1:
-            errors.append("Stage C teardown workflow must download exactly one recovery artifact")
-        if any(action == "actions/upload-artifact" for action, _ in teardown_actions):
-            errors.append("Stage C teardown workflow must not upload Terraform state artifacts")
-
-        download_step = _active_yaml(teardown_steps.get("Download encrypted recovery state", ""))
-        for marker in (
-            "actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093",
-            "name: host001-stage-c-state-${{ inputs.source_run_id }}",
-            "run-id: ${{ inputs.source_run_id }}",
-        ):
-            if marker not in download_step:
-                errors.append("Stage C recovery download missing control: " + marker)
+        if any(action in {"actions/upload-artifact", "actions/download-artifact"} for action, _ in teardown_actions):
+            errors.append("Stage C teardown workflow must recover from remote state, not artifacts")
 
         required_teardown_markers = (
             "workflow_dispatch:",
             "actions: read",
             "if: github.ref == 'refs/heads/main'",
             "environment: stage-c-yandex",
+            "timeout-minutes: 180",
             "AUTO_TEARDOWN_STAGE_C_SYNTHETIC",
             "DESTROY_STAGE_C_SYNTHETIC_1000_RUB",
-            'test "$DELAY_MINUTES" -le 120',
+            'test "$HOLD_MINUTES" -le 120',
             "ref: ${{ inputs.source_sha }}",
-            "openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000",
+            "Initialize durable Yandex Object Storage backend",
+            "actions/runs/$SOURCE_RUN_ID",
+            "Source apply concluded $conclusion; skipping field window and tearing down immediately.",
+            "Destroy reviewed Stage C resources from remote state",
             "terraform -chdir=infra/yandex-cloud plan",
             "-destroy",
             "Stage C teardown verified: no managed Terraform resources remain.",
