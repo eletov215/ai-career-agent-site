@@ -394,11 +394,17 @@ def validate(root: Path = ROOT) -> list[str]:
 
         if re.search(r"(?m)^\s+(?:push|pull_request|schedule):", active_stage_c_apply):
             errors.append("Stage C apply workflow must remain manual workflow_dispatch only")
-        if active_stage_c_apply.count("terraform -chdir=infra/yandex-cloud apply \\") != 2:
+        apply_commands = re.findall(
+            r"(?m)^\s*terraform -chdir=infra/yandex-cloud apply\b", active_stage_c_apply
+        )
+        destroy_commands = re.findall(
+            r"(?m)^\s*terraform -chdir=infra/yandex-cloud destroy\b", active_stage_c_apply
+        )
+        if len(apply_commands) != 2:
             errors.append(
                 "Stage C apply workflow must have exactly create-plan apply and destroy-plan apply"
             )
-        if active_stage_c_apply.count("terraform -chdir=infra/yandex-cloud destroy \\") != 1:
+        if len(destroy_commands) != 1:
             errors.append("Stage C apply workflow must have exactly one emergency destroy path")
 
 
