@@ -57,6 +57,11 @@ def _stage_c_steps(workflow: str) -> dict[str, str]:
     return steps
 
 
+def _active_yaml(workflow: str) -> str:
+    """Return YAML source with YAML comment text excluded."""
+    return "\n".join(line.split("#", 1)[0] for line in workflow.splitlines())
+
+
 def _read(relative: str) -> str:
     return (ROOT / relative).read_text(encoding="utf-8")
 
@@ -291,19 +296,30 @@ def validate(root: Path = ROOT) -> list[str]:
             errors.append("Stage C credentials must not be scoped at job level")
 
         stage_c_steps = _stage_c_steps(stage_c_workflow)
+        active_stage_c_workflow = _active_yaml(stage_c_workflow)
         for secret, expected_step in STAGE_C_SECRET_BINDINGS.items():
             binding = "${{ secrets." + secret + " }}"
-            if stage_c_workflow.count(binding) != 1:
+            active_step = _active_yaml(stage_c_steps.get(expected_step, ""))
+            if active_stage_c_workflow.count(binding) != 1:
                 errors.append(f"Stage C secret {secret} must be bound exactly once")
-            elif binding not in stage_c_steps.get(expected_step, ""):
+            elif binding not in active_step:
                 errors.append(f"Stage C secret {secret} is bound to the wrong step")
+            if (
+                not re.search(r"(?m)^        shell:\s*\S+", active_step)
+                or not re.search(r"(?m)^        run:\s*", active_step)
+                or re.search(r"(?m)^        uses:\s*", active_step)
+            ):
+                errors.append(f"Stage C secret {secret} must be bound to a trusted shell step")
 
-        for action, revision in re.findall(r"(?m)^\s*- uses: ([^@\s]+)@([^\s#]+)", stage_c_workflow):
+        actions = re.findall(
+            r"(?m)^\s+(?:-\s+)?uses:\s*([^@\s]+)@([^\s#]+)", active_stage_c_workflow
+        )
+        for action, revision in actions:
             if not re.fullmatch(r"[0-9a-f]{40}", revision):
                 errors.append(f"Stage C action {action} must use an immutable commit SHA")
         if re.search(r"(?m)^\s*(?:sudo\s+)?terraform(?:\s+-chdir=\S+)?\s+(?:apply|destroy)\b", stage_c_workflow):
             errors.append("Stage C workflow must never run terraform apply or destroy")
-        if re.search(r"(?m)^\s*- uses: actions/upload-artifact@", stage_c_workflow):
+        if any(action == "actions/upload-artifact" for action, _ in actions):
             errors.append("Stage C workflow must not upload artifacts")
         if 'echo "- Commit: \\`$GITHUB_SHA\\`"' not in stage_c_workflow:
             errors.append("Stage C summary must preserve escaped Markdown around the commit SHA")
