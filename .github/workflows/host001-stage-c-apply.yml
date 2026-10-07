@@ -8,9 +8,9 @@ name: HOST-001 Stage C bounded apply
         required: true
         type: string
       hold_minutes:
-        description: "Synthetic field-test window after a successful apply. Allowed 15-120 minutes."
+        description: "Synthetic field-test window after a successful apply. Allowed 15-90 minutes."
         required: true
-        default: "90"
+        default: "60"
         type: string
 
 permissions:
@@ -63,7 +63,7 @@ jobs:
             exit 1
           }
           test "$STAGE_C_HOLD_MINUTES" -ge 15
-          test "$STAGE_C_HOLD_MINUTES" -le 120
+          test "$STAGE_C_HOLD_MINUTES" -le 90
 
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
 
