@@ -153,41 +153,45 @@ class Host001PackageTests(unittest.TestCase):
                 if label == "named artifact upload":
                     self.assertIn("Stage C workflow must not upload artifacts", errors)
 
-    def test_stage_c_apply_workflow_persists_encrypted_recovery_before_teardown_handoff(self):
+    def test_stage_c_apply_uses_remote_state_and_dispatches_teardown_before_apply(self):
         workflow = (ROOT / ".github/workflows/host001-stage-c-apply.yml").read_text(
             encoding="utf-8"
         )
         self.assertIn("APPLY_STAGE_C_SYNTHETIC_1000_RUB_4H", workflow)
         self.assertIn('test "$STAGE_C_HOLD_MINUTES" -le 120', workflow)
-        self.assertIn(
-            "actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02",
-            workflow,
-        )
-        self.assertIn("stage-c-tfstate.enc", workflow)
-        self.assertIn("retention-days: 1", workflow)
+        self.assertIn("Initialize durable Yandex Object Storage backend", workflow)
+        self.assertIn('-backend-config="bucket=$TFSTATE_BUCKET"', workflow)
         self.assertIn("host001-stage-c-teardown.yml/dispatches", workflow)
         self.assertIn("AUTO_TEARDOWN_STAGE_C_SYNTHETIC", workflow)
-        self.assertIn("Immediate local fallback teardown", workflow)
+        self.assertNotIn("actions/upload-artifact", workflow)
+        self.assertNotIn("actions/download-artifact", workflow)
         self.assertNotIn("\n  push:", workflow)
         self.assertNotIn("\n  pull_request:", workflow)
 
-        upload_index = workflow.index("Upload encrypted recovery state")
-        dispatch_index = workflow.index("Dispatch cancellation-surviving teardown")
-        self.assertLess(upload_index, dispatch_index)
+        dispatch_index = workflow.index("Dispatch cancellation-surviving teardown before apply")
+        apply_index = workflow.index("Apply reviewed Stage C plan")
+        self.assertLess(dispatch_index, apply_index)
 
-    def test_stage_c_teardown_workflow_recovers_exact_apply_state_and_commit(self):
+    def test_stage_c_remote_backend_is_yandex_object_storage(self):
+        versions = (ROOT / "infra/yandex-cloud/versions.tf").read_text(encoding="utf-8")
+        self.assertIn('backend "s3"', versions)
+        self.assertIn('s3 = "https://storage.yandexcloud.net"', versions)
+        self.assertIn('key                         = "host001/stage-c.tfstate"', versions)
+        self.assertIn("skip_region_validation      = true", versions)
+        self.assertIn("skip_credentials_validation = true", versions)
+        self.assertIn("skip_requesting_account_id  = true", versions)
+        self.assertIn("skip_s3_checksum            = true", versions)
+
+    def test_stage_c_teardown_monitors_apply_and_uses_same_remote_state(self):
         workflow = (ROOT / ".github/workflows/host001-stage-c-teardown.yml").read_text(
             encoding="utf-8"
         )
         self.assertIn("AUTO_TEARDOWN_STAGE_C_SYNTHETIC", workflow)
         self.assertIn("DESTROY_STAGE_C_SYNTHETIC_1000_RUB", workflow)
-        self.assertIn(
-            "actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093",
-            workflow,
-        )
-        self.assertIn("run-id: ${{ inputs.source_run_id }}", workflow)
+        self.assertIn("actions/runs/$SOURCE_RUN_ID", workflow)
         self.assertIn("ref: ${{ inputs.source_sha }}", workflow)
-        self.assertIn("openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000", workflow)
+        self.assertIn("Initialize durable Yandex Object Storage backend", workflow)
+        self.assertIn("Source apply concluded $conclusion; skipping field window", workflow)
         self.assertIn("terraform -chdir=infra/yandex-cloud plan", workflow)
         self.assertIn("-destroy", workflow)
         self.assertIn(
@@ -195,10 +199,11 @@ class Host001PackageTests(unittest.TestCase):
             workflow,
         )
         self.assertNotIn("actions/upload-artifact", workflow)
+        self.assertNotIn("actions/download-artifact", workflow)
         self.assertNotIn("\n  push:", workflow)
         self.assertNotIn("\n  pull_request:", workflow)
 
-    def test_stage_c_apply_guard_rejects_recovery_boundary_regressions(self):
+    def test_stage_c_apply_guard_rejects_remote_recovery_regressions(self):
         apply_path = ROOT / ".github/workflows/host001-stage-c-apply.yml"
         original = apply_path.read_text(encoding="utf-8")
         mutations = {
@@ -210,17 +215,17 @@ class Host001PackageTests(unittest.TestCase):
                 'test "$STAGE_C_HOLD_MINUTES" -le 120',
                 'test "$STAGE_C_HOLD_MINUTES" -le 600',
             ),
-            "mutable upload action": original.replace(
-                "actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02",
-                "actions/upload-artifact@v4",
-            ),
-            "raw state artifact": original.replace(
-                "path: ${{ runner.temp }}/stage-c-tfstate.enc",
-                "path: infra/yandex-cloud/terraform.tfstate",
+            "missing remote backend init": original.replace(
+                "Initialize durable Yandex Object Storage backend",
+                "Initialize local backend",
             ),
             "missing teardown dispatch": original.replace(
                 "host001-stage-c-teardown.yml/dispatches",
                 "missing-teardown.yml/dispatches",
+            ),
+            "apply before teardown": original.replace(
+                "Dispatch cancellation-surviving teardown before apply",
+                "ZZZ teardown marker after apply",
             ),
         }
         for label, mutated in mutations.items():
@@ -239,21 +244,21 @@ class Host001PackageTests(unittest.TestCase):
                 errors = validate(root)
                 self.assertTrue(errors, label)
 
-    def test_stage_c_teardown_guard_rejects_recovery_boundary_regressions(self):
+    def test_stage_c_teardown_guard_rejects_remote_recovery_regressions(self):
         teardown_path = ROOT / ".github/workflows/host001-stage-c-teardown.yml"
         original = teardown_path.read_text(encoding="utf-8")
         mutations = {
-            "mutable download action": original.replace(
-                "actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093",
-                "actions/download-artifact@v4",
-            ),
-            "wrong recovery run": original.replace(
-                "run-id: ${{ inputs.source_run_id }}",
-                "run-id: 1",
-            ),
             "wrong recovery ref": original.replace(
                 "ref: ${{ inputs.source_sha }}",
                 "ref: main",
+            ),
+            "missing source run monitor": original.replace(
+                "actions/runs/$SOURCE_RUN_ID",
+                "actions/runs/1",
+            ),
+            "missing remote backend init": original.replace(
+                "Initialize durable Yandex Object Storage backend",
+                "Initialize local backend",
             ),
             "direct destroy": original.replace(
                 "terraform -chdir=infra/yandex-cloud apply",
