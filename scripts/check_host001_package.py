@@ -151,12 +151,6 @@ def validate(root: Path = ROOT) -> list[str]:
         if errors:
             return errors
 
-        if (
-            "group: host001-stage-c-lifecycle" not in stage_c_apply
-            or "group: host001-stage-c-lifecycle" not in stage_c_teardown
-        ):
-            errors.append("Stage C apply and teardown must share one lifecycle concurrency group")
-
         versions = _read("infra/yandex-cloud/versions.tf")
         if 'version = "= 0.229.0"' not in versions:
             errors.append("Yandex Terraform provider must be pinned to reviewed 0.229.0")
@@ -498,6 +492,12 @@ def validate(root: Path = ROOT) -> list[str]:
                 errors.append("Stage C remote state backend missing control: " + marker)
 
         stage_c_teardown = _read(".github/workflows/host001-stage-c-teardown.yml")
+        if (
+            "group: host001-stage-c-lifecycle" not in stage_c_apply
+            or "group: host001-stage-c-lifecycle" not in stage_c_teardown
+        ):
+            errors.append("Stage C apply and teardown must share one lifecycle concurrency group")
+
         teardown_job_env = stage_c_teardown.split("    env:\n", 1)[1].split("    steps:\n", 1)[0]
         if "secrets." in teardown_job_env:
             errors.append("Stage C teardown credentials must not be scoped at job level")
