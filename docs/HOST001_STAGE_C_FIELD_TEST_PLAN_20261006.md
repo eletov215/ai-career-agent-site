@@ -82,6 +82,8 @@ Temporary Stage C resources are now part of the reviewed Terraform path and rema
 
 The exact non-secret profile is documented in `terraform.stage-c.tfvars.example`. If account quota or exact price makes the reviewed resources inappropriate, stop and return for owner approval instead of silently changing topology.
 
+A control-plane prerequisite is intentionally outside the Terraform-managed resource graph: one dedicated private Object Storage bucket for remote Terraform state plus one static access key for the dedicated Stage C Terraform service account. The bucket stores only the Stage C state object (and any provider lock object), must have restricted access, and is removed manually after verified teardown and evidence capture. It is not application backup storage.
+
 No load balancer, second app VM, replica DB host, Data Transfer, logical replication, public DB IP, production domain or production email provider is part of this field test.
 
 ## 5. Cost model and approval gate
@@ -136,8 +138,9 @@ All conditions below are required:
 10. both PostgreSQL passwords are supplied through protected environment variables rather than tfvars/Git;
 11. `REAL_DATA_SUPPORTED=False` and legal DRAFT unchanged;
 12. rollback/teardown commands reviewed before creation;
-13. protected `YC_STAGE_C_TFSTATE_PASSPHRASE` is present in the `stage-c-yandex` GitHub Environment so Terraform recovery state can be encrypted before leaving the apply runner;
-14. the bounded apply uploads only encrypted recovery state with one-day retention and dispatches a separate teardown workflow before the apply run can complete successfully.
+13. a dedicated private Yandex Object Storage bucket exists for Terraform remote state, with restricted access and no production/user data; the owner-created bucket is outside the Stage C Terraform-managed resource graph and is included in the 1,000 RUB field-test ceiling;
+14. protected `YC_STAGE_C_TFSTATE_BUCKET`, `YC_STAGE_C_TFSTATE_ACCESS_KEY` and `YC_STAGE_C_TFSTATE_SECRET_KEY` values are present in the `stage-c-yandex` GitHub Environment; the static access key belongs to the dedicated Stage C Terraform service account;
+15. the apply workflow initializes that remote backend and dispatches the separate teardown workflow **before** the billable Terraform apply begins, so cancellation during apply leaves recoverable remote state and an already-running recovery path.
 
 Execution principal for the bounded apply: use the dedicated Stage C service account only in the selected folder. During apply/teardown it must have the temporary folder-scoped `editor` role for resource lifecycle plus `resource-manager.admin` for the reviewed IAM bindings. Do not grant cloud-wide `admin`. Revoke these write roles after teardown (or reduce the account back to read-only access).
 
@@ -152,7 +155,8 @@ Execution principal for the bounded apply: use the dedicated Stage C service acc
 - Confirm `foundation_deletion_protection=false` in the field-test plan. If deletion protection remains enabled, the repository precondition must stop the plan/apply.
 - Do not continue if the plan proposes a second permanent DB host, public DB IP, unexpected IAM grants or unrelated resources.
 - Apply only after the owner approves the exact plan/cost. That owner approval was recorded on 2026-10-07 with a 1,000 RUB total ceiling and <=4 hour boundary.
-- Immediately after Terraform creates state, encrypt the recovery state and persist only the encrypted artifact. The apply workflow must then dispatch the separate recovery-teardown workflow; if that handoff fails, perform the reviewed local fallback teardown instead of entering a live test window.
+- Initialize the dedicated Yandex Object Storage S3 backend before the fresh plan. The remote state key is fixed to `host001/stage-c.tfstate` and the bucket name/credentials come only from protected GitHub Environment secrets.
+- Dispatch the separate recovery-teardown workflow after the fresh create-only plan passes but **before** Terraform apply begins. The teardown workflow monitors the source apply run: after a successful apply it waits the approved synthetic field window; after failure/cancellation it skips the window and tears down tracked resources immediately.
 
 ### 7.2 Controlled startup
 
@@ -234,7 +238,7 @@ Before the approved field-test window expires choose exactly one reviewed outcom
 
 Do not improvise a third path or silently extend the test window. Production Render/Neon remains untouched by Stage C.
 
-Cancellation/recovery rule for the automated path: the apply run must first upload encrypted recovery state and dispatch the separate teardown workflow. The apply summary records the exact commit and apply run ID. If the teardown workflow is cancelled or otherwise fails after that handoff, rerun `HOST-001 Stage C recovery teardown` from `main` with acknowledgement `DESTROY_STAGE_C_SYNTHETIC_1000_RUB`, the recorded apply commit/run ID and `delay_minutes=0`. The recovery workflow downloads the one-day encrypted state artifact, checks out the exact apply commit, reviews a delete-only allowlisted destroy plan and applies that plan.
+Cancellation/recovery rule for the automated path: the dedicated Yandex Object Storage backend is initialized before apply and the separate teardown workflow is dispatched before apply. Terraform therefore writes changing state to the remote backend throughout resource creation. The apply summary records the exact commit and apply run ID. If the teardown workflow is cancelled or otherwise fails, rerun `HOST-001 Stage C recovery teardown` from `main` with acknowledgement `DESTROY_STAGE_C_SYNTHETIC_1000_RUB`, the recorded apply commit/run ID and `hold_minutes=0`. The recovery workflow checks out the exact apply commit, opens the same remote state backend, reviews a delete-only allowlisted destroy plan and applies that plan.
 
 ## 8. Acceptance evidence for Stage C field test
 
@@ -249,6 +253,7 @@ A future Stage C execution can be marked PASS only with evidence for:
 - encrypted backup exported off-VM and authenticated;
 - isolated PG18 restore successful;
 - proxy spoofing test blocked;
+- remote Terraform state remained recoverable through apply/teardown and the dedicated backend bucket/static key were removed after evidence capture;
 - teardown verified;
 - no production data/config change;
 - Alice/Yandex AI calls 0;
