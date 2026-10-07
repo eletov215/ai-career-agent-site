@@ -178,7 +178,7 @@ class Host001PackageTests(unittest.TestCase):
                 "APPLY_STAGE_C_UNBOUNDED",
             ),
             "oversized hold": original.replace(
-                'test "$STAGE_C_HOLD_MINUTES" -le 180',
+                'test "$STAGE_C_HOLD_MINUTES" -le 150',
                 'test "$STAGE_C_HOLD_MINUTES" -le 600',
             ),
             "job-scoped secret": original.replace(
@@ -200,8 +200,8 @@ class Host001PackageTests(unittest.TestCase):
                 "        uses: actions/upload-artifact@v4\n"
             ),
             "missing emergency destroy": original.replace(
-                "terraform -chdir=infra/yandex-cloud destroy \\\n",
-                "terraform -chdir=infra/yandex-cloud plan \\\n",
+                "terraform -chdir=infra/yandex-cloud destroy",
+                "terraform -chdir=infra/yandex-cloud plan",
                 1,
             ),
         }
