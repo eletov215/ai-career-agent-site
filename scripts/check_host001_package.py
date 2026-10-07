@@ -303,6 +303,8 @@ def validate(root: Path = ROOT) -> list[str]:
             errors.append("Stage C workflow must never run terraform apply or destroy")
         if re.search(r"(?m)^\s*- uses: actions/upload-artifact@", stage_c_workflow):
             errors.append("Stage C workflow must not upload artifacts")
+        if 'echo "- Commit: \\`$GITHUB_SHA\\`"' not in stage_c_workflow:
+            errors.append("Stage C summary must preserve escaped Markdown around the commit SHA")
 
         return errors
     finally:
