@@ -26,7 +26,7 @@ permissions:
   actions: read
 
 concurrency:
-  group: host001-stage-c-lifecycle
+  group: host001-stage-c-recovery-teardown
   cancel-in-progress: false
 
 jobs:
@@ -314,6 +314,8 @@ jobs:
         id: destroy
         shell: bash
         env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCE_RUN_ID: ${{ inputs.source_run_id }}
           AWS_ACCESS_KEY_ID: ${{ secrets.YC_STAGE_C_TFSTATE_ACCESS_KEY }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.YC_STAGE_C_TFSTATE_SECRET_KEY }}
           TF_VAR_cloud_id: ${{ secrets.YC_STAGE_C_CLOUD_ID }}
@@ -382,7 +384,41 @@ jobs:
             if grep -q "Error acquiring the state lock" "$destroy_log"; then
               lock_id="$(awk '/Lock Info:/ {in_lock=1; next} in_lock && $1 == "ID:" {print $2; exit}' "$destroy_log")"
               if [ -n "$lock_id" ] && [ "${SOURCE_RUN_TERMINAL_CONFIRMED:-0}" = "1" ] && [ "$stale_lock_recovered" -eq 0 ]; then
-                echo "Stale Terraform lock detected after the exact source apply run became terminal; performing one guarded force-unlock."
+                active_runs_file="$RUNNER_TEMP/stage-c-active-apply-runs.json"
+                rm -f "$active_runs_file"
+                if ! curl --fail-with-body --silent --show-error --connect-timeout 5 --max-time 10 \
+                  -H "Accept: application/vnd.github+json" \
+                  -H "Authorization: Bearer $GH_TOKEN" \
+                  -H "X-GitHub-Api-Version: 2022-11-28" \
+                  "https://api.github.com/repos/$GITHUB_REPOSITORY/actions/workflows/host001-stage-c-apply.yml/runs?event=workflow_dispatch&per_page=100" \
+                  -o "$active_runs_file"; then
+                  echo "Cannot prove the stale lock belongs to a terminal lifecycle; refusing force-unlock."
+                  exit 1
+                fi
+
+                python - "$active_runs_file" "$SOURCE_RUN_ID" <<'PY'
+          import json
+          import sys
+
+          path, source_run_id = sys.argv[1:]
+          with open(path, encoding="utf-8") as fh:
+              data = json.load(fh)
+
+          active = [
+              run
+              for run in data.get("workflow_runs", [])
+              if str(run.get("id")) != source_run_id
+              and run.get("status") != "completed"
+          ]
+          if active:
+              ids = ",".join(str(run.get("id")) for run in active)
+              raise SystemExit(
+                  "Another Stage C apply run is active or queued; refusing force-unlock: " + ids
+              )
+          PY
+                rm -f "$active_runs_file"
+
+                echo "Stale Terraform lock detected after the exact source apply run became terminal and no other apply run is active; performing one guarded force-unlock."
                 timeout --signal=INT --kill-after=10s 60s terraform -chdir=infra/yandex-cloud force-unlock -force "$lock_id" >"$RUNNER_TEMP/stage-c-force-unlock.stdout" 2>&1 || {
                   echo "Guarded Terraform force-unlock failed."
                   exit 1
@@ -492,4 +528,5 @@ jobs:
             "$RUNNER_TEMP/stage-c-destroy-plan.json" \
             "$RUNNER_TEMP/stage-c-destroy.stdout" \
             "$RUNNER_TEMP/stage-c-force-unlock.stdout" \
+            "$RUNNER_TEMP/stage-c-active-apply-runs.json" \
             infra/yandex-cloud/.terraform
