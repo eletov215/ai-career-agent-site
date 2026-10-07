@@ -12,11 +12,11 @@ name: HOST-001 Stage C recovery teardown
         required: true
         type: string
       source_run_id:
-        description: "GitHub Actions run ID that uploaded the encrypted Terraform recovery state."
+        description: "GitHub Actions run ID of the Stage C apply workflow."
         required: true
         type: string
-      delay_minutes:
-        description: "Delay before teardown. Automatic path uses 15-120; manual recovery may use 0."
+      hold_minutes:
+        description: "Successful-apply field window. Automatic path allows 15-120; manual recovery may use 0."
         required: true
         default: "0"
         type: string
@@ -31,7 +31,7 @@ concurrency:
 
 jobs:
   teardown:
-    name: Recover state and tear down reviewed Stage C resources
+    name: Recover remote state and tear down reviewed Stage C resources
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 180
@@ -61,7 +61,7 @@ jobs:
           STAGE_C_ACKNOWLEDGEMENT: ${{ inputs.acknowledgement }}
           SOURCE_SHA: ${{ inputs.source_sha }}
           SOURCE_RUN_ID: ${{ inputs.source_run_id }}
-          DELAY_MINUTES: ${{ inputs.delay_minutes }}
+          HOLD_MINUTES: ${{ inputs.hold_minutes }}
         run: |
           set -euo pipefail
           case "$STAGE_C_ACKNOWLEDGEMENT" in
@@ -79,14 +79,14 @@ jobs:
             echo "source_run_id must be numeric."
             exit 1
           }
-          [[ "$DELAY_MINUTES" =~ ^[0-9]+$ ]] || {
-            echo "delay_minutes must be an integer."
+          [[ "$HOLD_MINUTES" =~ ^[0-9]+$ ]] || {
+            echo "hold_minutes must be an integer."
             exit 1
           }
-          test "$DELAY_MINUTES" -ge 0
-          test "$DELAY_MINUTES" -le 120
-          if [ "$STAGE_C_ACKNOWLEDGEMENT" = "AUTO_TEARDOWN_STAGE_C_SYNTHETIC" ] && [ "$DELAY_MINUTES" -ne 0 ]; then
-            test "$DELAY_MINUTES" -ge 15
+          test "$HOLD_MINUTES" -ge 0
+          test "$HOLD_MINUTES" -le 120
+          if [ "$STAGE_C_ACKNOWLEDGEMENT" = "AUTO_TEARDOWN_STAGE_C_SYNTHETIC" ]; then
+            test "$HOLD_MINUTES" -ge 15
           fi
 
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
@@ -128,47 +128,67 @@ jobs:
           PY
           echo "YC_SERVICE_ACCOUNT_KEY_FILE=$key_file" >> "$GITHUB_ENV"
 
-      - name: Download encrypted recovery state
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
-        with:
-          name: host001-stage-c-state-${{ inputs.source_run_id }}
-          path: ${{ runner.temp }}/stage-c-recovery
-          github-token: ${{ github.token }}
-          run-id: ${{ inputs.source_run_id }}
-
-      - name: Decrypt durable recovery state
+      - name: Initialize durable Yandex Object Storage backend
         shell: bash
         env:
-          TFSTATE_PASSPHRASE: ${{ secrets.YC_STAGE_C_TFSTATE_PASSPHRASE }}
+          TFSTATE_BUCKET: ${{ secrets.YC_STAGE_C_TFSTATE_BUCKET }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.YC_STAGE_C_TFSTATE_ACCESS_KEY }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.YC_STAGE_C_TFSTATE_SECRET_KEY }}
         run: |
           set -euo pipefail
-          test -n "$TFSTATE_PASSPHRASE" || {
-            echo "Missing protected Stage C Terraform-state passphrase."
-            exit 1
-          }
-          encrypted="$RUNNER_TEMP/stage-c-recovery/stage-c-tfstate.enc"
-          test -s "$encrypted"
-          umask 077
-          openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 \
-            -in "$encrypted" \
-            -out infra/yandex-cloud/terraform.tfstate \
-            -pass env:TFSTATE_PASSPHRASE
-          test -s infra/yandex-cloud/terraform.tfstate
-
-      - name: Terraform init and validate recovery code
-        shell: bash
-        run: |
-          set -euo pipefail
-          terraform -chdir=infra/yandex-cloud init -backend=false -input=false
+          test -n "$TFSTATE_BUCKET"
+          test -n "$AWS_ACCESS_KEY_ID"
+          test -n "$AWS_SECRET_ACCESS_KEY"
+          terraform -chdir=infra/yandex-cloud init \
+            -reconfigure \
+            -input=false \
+            -backend-config="bucket=$TFSTATE_BUCKET"
           terraform -chdir=infra/yandex-cloud validate
 
-      - name: Wait bounded field-test window
+      - name: Wait for source apply result and bounded successful field window
         shell: bash
         env:
-          DELAY_MINUTES: ${{ inputs.delay_minutes }}
+          GH_TOKEN: ${{ github.token }}
+          STAGE_C_ACKNOWLEDGEMENT: ${{ inputs.acknowledgement }}
+          SOURCE_RUN_ID: ${{ inputs.source_run_id }}
+          HOLD_MINUTES: ${{ inputs.hold_minutes }}
         run: |
           set -euo pipefail
-          remaining=$((DELAY_MINUTES * 60))
+
+          if [ "$STAGE_C_ACKNOWLEDGEMENT" = "AUTO_TEARDOWN_STAGE_C_SYNTHETIC" ]; then
+            completed=0
+            conclusion=""
+            for _ in $(seq 1 120); do
+              run_json="$(
+                curl --fail-with-body --silent --show-error \
+                  -H "Accept: application/vnd.github+json" \
+                  -H "Authorization: Bearer $GH_TOKEN" \
+                  -H "X-GitHub-Api-Version: 2022-11-28" \
+                  "https://api.github.com/repos/$GITHUB_REPOSITORY/actions/runs/$SOURCE_RUN_ID"
+              )"
+              status="$(printf '%s' "$run_json" | python -c 'import json,sys; print(json.load(sys.stdin)["status"])')"
+              if [ "$status" = "completed" ]; then
+                conclusion="$(printf '%s' "$run_json" | python -c 'import json,sys; print(json.load(sys.stdin).get("conclusion") or "")')"
+                completed=1
+                break
+              fi
+              sleep 30
+            done
+            test "$completed" -eq 1 || {
+              echo "Source apply run did not complete within the recovery observation window."
+              exit 1
+            }
+
+            if [ "$conclusion" = "success" ]; then
+              remaining=$((HOLD_MINUTES * 60))
+            else
+              echo "Source apply concluded $conclusion; skipping field window and tearing down immediately."
+              remaining=0
+            fi
+          else
+            remaining=$((HOLD_MINUTES * 60))
+          fi
+
           while [ "$remaining" -gt 0 ]; do
             chunk=900
             if [ "$remaining" -lt "$chunk" ]; then
@@ -179,9 +199,12 @@ jobs:
             remaining=$((remaining - chunk))
           done
 
-      - name: Destroy reviewed Stage C resources from recovery state
+      - name: Destroy reviewed Stage C resources from remote state
+        id: destroy
         shell: bash
         env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.YC_STAGE_C_TFSTATE_ACCESS_KEY }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.YC_STAGE_C_TFSTATE_SECRET_KEY }}
           TF_VAR_cloud_id: ${{ secrets.YC_STAGE_C_CLOUD_ID }}
           TF_VAR_folder_id: ${{ secrets.YC_STAGE_C_FOLDER_ID }}
           TF_VAR_admin_cidr: ${{ secrets.YC_STAGE_C_ADMIN_CIDR }}
@@ -198,15 +221,20 @@ jobs:
           terraform -chdir=infra/yandex-cloud plan \
             -destroy \
             -input=false \
-            -lock=false \
             -no-color \
             -detailed-exitcode \
             -out="$destroy_plan" >"$destroy_log" 2>&1
           plan_code=$?
           set -e
+
+          if [ "$plan_code" -eq 0 ]; then
+            echo "No Stage C resources remain in remote Terraform state."
+            echo "had_changes=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
           if [ "$plan_code" -ne 2 ]; then
-            echo "Expected reviewed destroy changes were not produced."
-            exit 1
+            echo "Terraform destroy plan failed."
+            exit "$plan_code"
           fi
 
           terraform -chdir=infra/yandex-cloud show -json "$destroy_plan" > "$destroy_json"
@@ -242,15 +270,15 @@ jobs:
           terraform -chdir=infra/yandex-cloud apply \
             -auto-approve \
             -input=false \
-            -lock=false \
             -no-color \
             "$destroy_plan" >"$destroy_log" 2>&1
 
           managed_count="$(terraform -chdir=infra/yandex-cloud state list 2>/dev/null | grep -vc '^data\.' || true)"
           test "$managed_count" -eq 0 || {
-            echo "Managed resources remain in Terraform state after teardown."
+            echo "Managed resources remain in remote Terraform state after teardown."
             exit 1
           }
+          echo "had_changes=true" >> "$GITHUB_OUTPUT"
           echo "Stage C teardown verified: no managed Terraform resources remain."
 
       - name: Record verified teardown
@@ -259,15 +287,18 @@ jobs:
         env:
           SOURCE_RUN_ID: ${{ inputs.source_run_id }}
           SOURCE_SHA: ${{ inputs.source_sha }}
+          HAD_CHANGES: ${{ steps.destroy.outputs.had_changes }}
         run: |
           {
             echo "### HOST-001 Stage C recovery teardown"
             echo
             printf -- '- Apply run ID: `%s`\n' "$SOURCE_RUN_ID"
             printf -- '- Apply commit: `%s`\n' "$SOURCE_SHA"
+            echo "- Remote Terraform state backend: **Yandex Object Storage**"
             echo "- Terraform managed resources after teardown: **0**"
-            echo "- Reviewed destroy plan: **PASS**"
+            echo "- Destroy changes applied: **$HAD_CHANGES**"
             echo "- Production data / Render / Neon / MIG-001 / real-data AI / email: **NOT TOUCHED**"
+            echo "- Final manual cleanup: revoke the temporary backend static access key and delete the dedicated state bucket after evidence is captured."
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Remove local recovery material
@@ -275,10 +306,8 @@ jobs:
         shell: bash
         run: |
           rm -rf \
-            "$RUNNER_TEMP/stage-c-recovery" \
             "$RUNNER_TEMP/yc-stage-c-key.json" \
             "$RUNNER_TEMP/stage-c-destroy.tfplan" \
             "$RUNNER_TEMP/stage-c-destroy-plan.json" \
             "$RUNNER_TEMP/stage-c-destroy.stdout" \
-            infra/yandex-cloud/terraform.tfstate \
-            infra/yandex-cloud/terraform.tfstate.backup
+            infra/yandex-cloud/.terraform
