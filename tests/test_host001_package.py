@@ -158,7 +158,7 @@ class Host001PackageTests(unittest.TestCase):
             encoding="utf-8"
         )
         self.assertIn("APPLY_STAGE_C_SYNTHETIC_1000_RUB_4H", workflow)
-        self.assertIn('test "$STAGE_C_HOLD_MINUTES" -le 150', workflow)
+        self.assertIn('test "$STAGE_C_HOLD_MINUTES" -le 120', workflow)
         self.assertIn(
             "actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02",
             workflow,
@@ -207,7 +207,7 @@ class Host001PackageTests(unittest.TestCase):
                 "APPLY_STAGE_C_UNBOUNDED",
             ),
             "oversized hold": original.replace(
-                'test "$STAGE_C_HOLD_MINUTES" -le 150',
+                'test "$STAGE_C_HOLD_MINUTES" -le 120',
                 'test "$STAGE_C_HOLD_MINUTES" -le 600',
             ),
             "mutable upload action": original.replace(
