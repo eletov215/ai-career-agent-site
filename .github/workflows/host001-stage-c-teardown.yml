@@ -16,7 +16,7 @@ name: HOST-001 Stage C recovery teardown
         required: true
         type: string
       delay_minutes:
-        description: "Delay before teardown. Automatic path uses 15-150; manual recovery may use 0."
+        description: "Delay before teardown. Automatic path uses 15-120; manual recovery may use 0."
         required: true
         default: "0"
         type: string
@@ -34,7 +34,7 @@ jobs:
     name: Recover state and tear down reviewed Stage C resources
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
-    timeout-minutes: 205
+    timeout-minutes: 180
     environment: stage-c-yandex
 
     env:
@@ -84,7 +84,7 @@ jobs:
             exit 1
           }
           test "$DELAY_MINUTES" -ge 0
-          test "$DELAY_MINUTES" -le 150
+          test "$DELAY_MINUTES" -le 120
           if [ "$STAGE_C_ACKNOWLEDGEMENT" = "AUTO_TEARDOWN_STAGE_C_SYNTHETIC" ] && [ "$DELAY_MINUTES" -ne 0 ]; then
             test "$DELAY_MINUTES" -ge 15
           fi
