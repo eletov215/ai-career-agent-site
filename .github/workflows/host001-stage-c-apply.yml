@@ -8,7 +8,7 @@ name: HOST-001 Stage C bounded apply + automatic teardown
         required: true
         type: string
       hold_minutes:
-        description: "Synthetic field-test hold window after apply. Allowed 15-180 minutes."
+        description: "Synthetic field-test hold window after apply. Allowed 15-150 minutes."
         required: true
         default: "120"
         type: string
@@ -62,7 +62,7 @@ jobs:
             exit 1
           }
           test "$STAGE_C_HOLD_MINUTES" -ge 15
-          test "$STAGE_C_HOLD_MINUTES" -le 180
+          test "$STAGE_C_HOLD_MINUTES" -le 150
 
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
 
