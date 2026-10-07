@@ -295,7 +295,7 @@ class Host001PackageTests(unittest.TestCase):
             ),
             "missing absolute destroy deadline": original.replace(
                 "destroy_apply_deadline",
-                "destroy_apply_deadline_disabled",
+                "removed_deadline_marker",
             ),
             "missing lock timeout": original.replace(
                 "-lock-timeout=10m",
