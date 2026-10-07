@@ -186,7 +186,7 @@ jobs:
           {
             echo "### Stage C credentialed plan"
             echo
-            echo "- Commit: `$GITHUB_SHA`"
+            echo "- Commit: \`$GITHUB_SHA\`"
             echo "- Terraform: 1.11.4"
             echo "- Profile: single PG18 + bounded Stage C extras"
             echo "- Apply/destroy performed by this workflow: **NO**"
