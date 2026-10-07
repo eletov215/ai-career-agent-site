@@ -85,7 +85,7 @@ jobs:
           }
           test "$DELAY_MINUTES" -ge 0
           test "$DELAY_MINUTES" -le 150
-          if [ "$STAGE_C_ACKNOWLEDGEMENT" = "AUTO_TEARDOWN_STAGE_C_SYNTHETIC" ]; then
+          if [ "$STAGE_C_ACKNOWLEDGEMENT" = "AUTO_TEARDOWN_STAGE_C_SYNTHETIC" ] && [ "$DELAY_MINUTES" -ne 0 ]; then
             test "$DELAY_MINUTES" -ge 15
           fi
 
