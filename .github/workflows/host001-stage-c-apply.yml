@@ -112,10 +112,13 @@ jobs:
           test -n "$TFSTATE_BUCKET"
           test -n "$AWS_ACCESS_KEY_ID"
           test -n "$AWS_SECRET_ACCESS_KEY"
+          TFSTATE_KEY="host001/stage-c-${GITHUB_RUN_ID}.tfstate"
           terraform -chdir=infra/yandex-cloud init \
             -reconfigure \
             -input=false \
-            -backend-config="bucket=$TFSTATE_BUCKET"
+            -backend-config="bucket=$TFSTATE_BUCKET" \
+            -backend-config="key=$TFSTATE_KEY"
+          echo "TFSTATE_KEY=$TFSTATE_KEY" >> "$GITHUB_ENV"
           terraform -chdir=infra/yandex-cloud validate
 
       - name: Fresh reviewed Stage C plan
@@ -272,6 +275,7 @@ jobs:
             printf -- '- Commit: `%s`\n' "$GITHUB_SHA"
             printf -- '- Apply run ID: `%s`\n' "$GITHUB_RUN_ID"
             echo "- Owner ceiling: **1,000 RUB total / <=4 hours**"
+            printf -- '- Remote Terraform state key: `%s`\n' "$TFSTATE_KEY"
             echo "- Remote Terraform state: **Yandex Object Storage backend active before apply**"
             echo "- Separate teardown workflow: **dispatched before apply**"
             echo "- Synthetic-only resources: **LIVE**"
