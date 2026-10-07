@@ -441,7 +441,7 @@ def validate(root: Path = ROOT) -> list[str]:
         required_apply_markers = (
             "workflow_dispatch:",
             "actions: write",
-            "group: host001-stage-c-lifecycle",
+            "group: host001-stage-c-bounded-apply",
             "if: github.ref == 'refs/heads/main'",
             "environment: stage-c-yandex",
             "timeout-minutes: 50",
@@ -492,12 +492,6 @@ def validate(root: Path = ROOT) -> list[str]:
                 errors.append("Stage C remote state backend missing control: " + marker)
 
         stage_c_teardown = _read(".github/workflows/host001-stage-c-teardown.yml")
-        if (
-            "group: host001-stage-c-lifecycle" not in stage_c_apply
-            or "group: host001-stage-c-lifecycle" not in stage_c_teardown
-        ):
-            errors.append("Stage C apply and teardown must share one lifecycle concurrency group")
-
         teardown_job_env = stage_c_teardown.split("    env:\n", 1)[1].split("    steps:\n", 1)[0]
         if "secrets." in teardown_job_env:
             errors.append("Stage C teardown credentials must not be scoped at job level")
@@ -543,7 +537,7 @@ def validate(root: Path = ROOT) -> list[str]:
             "if: github.ref == 'refs/heads/main'",
             "environment: stage-c-yandex",
             "timeout-minutes: 225",
-            "group: host001-stage-c-lifecycle",
+            "group: host001-stage-c-recovery-teardown",
             "AUTO_TEARDOWN_STAGE_C_SYNTHETIC",
             "DESTROY_STAGE_C_SYNTHETIC_1000_RUB",
             'test "$HOLD_MINUTES" -le 90',
@@ -558,6 +552,8 @@ def validate(root: Path = ROOT) -> list[str]:
             "Field window shortened to preserve the 90-minute teardown reserve.",
             "Source apply concluded $conclusion; skipping field window and tearing down immediately.",
             "Stale Terraform lock detected after the exact source apply run became terminal",
+            "actions/workflows/host001-stage-c-apply.yml/runs?event=workflow_dispatch",
+            "Another Stage C apply run is active or queued; refusing force-unlock",
             "force-unlock -force",
             "destroy_plan_deadline",
             "destroy_apply_deadline",
