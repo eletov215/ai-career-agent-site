@@ -158,13 +158,13 @@ class Host001PackageTests(unittest.TestCase):
             encoding="utf-8"
         )
         self.assertIn("APPLY_STAGE_C_SYNTHETIC_1000_RUB_4H", workflow)
-        self.assertIn("group: host001-stage-c-lifecycle", workflow)
+        self.assertIn("group: host001-stage-c-bounded-apply", workflow)
         self.assertIn('test "$STAGE_C_HOLD_MINUTES" -le 90', workflow)
         self.assertIn("Initialize durable Yandex Object Storage backend", workflow)
         self.assertIn('-backend-config="bucket=$TFSTATE_BUCKET"', workflow)
         self.assertIn("host001-stage-c-teardown.yml/dispatches", workflow)
         self.assertIn("AUTO_TEARDOWN_STAGE_C_SYNTHETIC", workflow)
-        self.assertIn("group: host001-stage-c-lifecycle", workflow)
+        self.assertIn("group: host001-stage-c-recovery-teardown", workflow)
         self.assertNotIn("actions/upload-artifact", workflow)
         self.assertNotIn("actions/download-artifact", workflow)
         self.assertNotIn("\n  push:", workflow)
@@ -198,6 +198,8 @@ class Host001PackageTests(unittest.TestCase):
         self.assertIn("Source apply status lookup attempt", workflow)
         self.assertIn("SOURCE_RUN_TERMINAL_CONFIRMED=1", workflow)
         self.assertIn("Stale Terraform lock detected after the exact source apply run became terminal", workflow)
+        self.assertIn("actions/workflows/host001-stage-c-apply.yml/runs?event=workflow_dispatch", workflow)
+        self.assertIn("Another Stage C apply run is active or queued; refusing force-unlock", workflow)
         self.assertIn("force-unlock -force", workflow)
         self.assertIn("destroy_plan_deadline", workflow)
         self.assertIn("destroy_apply_deadline", workflow)
@@ -236,9 +238,9 @@ class Host001PackageTests(unittest.TestCase):
                 'test "$STAGE_C_HOLD_MINUTES" -le 90',
                 'test "$STAGE_C_HOLD_MINUTES" -le 600',
             ),
-            "wrong lifecycle concurrency": original.replace(
-                "group: host001-stage-c-lifecycle",
+            "wrong apply lifecycle concurrency": original.replace(
                 "group: host001-stage-c-bounded-apply",
+                "group: host001-stage-c-unreviewed",
             ),
             "missing remote backend init": original.replace(
                 "Initialize durable Yandex Object Storage backend",
@@ -290,8 +292,8 @@ class Host001PackageTests(unittest.TestCase):
                 'test "$HOLD_MINUTES" -le 600',
             ),
             "wrong teardown lifecycle concurrency": original.replace(
-                "group: host001-stage-c-lifecycle",
                 "group: host001-stage-c-recovery-teardown",
+                "group: host001-stage-c-unreviewed-teardown",
             ),
             "missing absolute destroy deadline": original.replace(
                 "destroy_apply_deadline",
@@ -308,6 +310,10 @@ class Host001PackageTests(unittest.TestCase):
             "missing stale lock recovery": original.replace(
                 "force-unlock -force",
                 "force-unlock-disabled",
+            ),
+            "missing active apply proof": original.replace(
+                "actions/workflows/host001-stage-c-apply.yml/runs?event=workflow_dispatch",
+                "actions/workflows/unrelated.yml/runs?event=workflow_dispatch",
             ),
             "broken jq escaping": original.replace(
                 r'"^(data\\.yandex_compute_image\\.ubuntu',
