@@ -3,7 +3,7 @@
 | Поле | Значение |
 |---|---|
 | Дата | 6 октября 2026 |
-| Статус | IMPLEMENTATION_CANDIDATE / NO APPLY / OWNER APPROVAL REQUIRED |
+| Статус | OWNER_AUTHORIZED / APPLY NOT_RUN / REVIEWED BOUNDED EXECUTION PATH |
 | Baseline main | `5e34579b06b80df739ed0f625bce2901f71e1bbe` |
 | Application schema | `20261002_0023` unchanged |
 | Stage B | MERGED via PR #74; exact-head CI/review passed |
@@ -18,7 +18,7 @@ Stage C prepares one short, synthetic, Russia-hosted field test for the Stage B 
 
 The repository now includes the **no-apply provisioning path** required to review that future test: temporary resources are absent by default and appear only with `field_test_resources_enabled=true`. The Stage C profile requires `foundation_deletion_protection=false` so the short test can be torn down inside its approved billing window.
 
-This document and code path do **not** authorize Terraform apply, resource creation, production SQL/dump/restore, Render/Neon configuration changes, domain cutover, email delivery, Alice/Yandex AI calls, legal activation or payment activation.
+Owner authorization recorded on 2026-10-07 permits only the bounded Stage C synthetic Terraform apply up to **1,000 RUB total / <=4 hours**. It does **not** authorize production SQL/dump/restore, Render/Neon configuration changes, MIG-001, domain cutover, email delivery, real-data Alice/Yandex AI calls, legal activation or payment activation.
 
 ## 2. Trudvsem decision
 
@@ -47,7 +47,7 @@ Verified against current public Yandex Cloud documentation and the pinned Terraf
 - Yandex documents PostgreSQL clusters with two or more hosts as automatically highly available. The initial single-host profile intentionally remains non-HA.
 - Repository pin `yandex-cloud/yandex = 0.229.0` documents PostgreSQL `18` as an allowed `yandex_mdb_postgresql_cluster.config.version`.
 
-Still NOT_RUN: account quota/availability check, credentialed Terraform plan/apply, actual resource creation and real account invoice estimate.
+Execution evidence as of 2026-10-07: account quota checks PASS for Compute, Managed Databases and VPC/public IP; credentialed Terraform plan PASS on main `085c6f4f44083427b3e8ab6ed37e646061a076a6`; Terraform apply/resource creation remains NOT_RUN.
 
 Official references:
 
@@ -133,7 +133,9 @@ All conditions below are required:
 9. Stage C variables explicitly use `field_test_resources_enabled=true` and `foundation_deletion_protection=false`; a Terraform precondition rejects the temporary field-test profile if deletion protection would block teardown;
 10. both PostgreSQL passwords are supplied through protected environment variables rather than tfvars/Git;
 11. `REAL_DATA_SUPPORTED=False` and legal DRAFT unchanged;
-12. rollback/teardown commands reviewed before creation.
+12. rollback/teardown commands reviewed before creation;
+13. protected `YC_STAGE_C_TFSTATE_PASSPHRASE` is present in the `stage-c-yandex` GitHub Environment so Terraform recovery state can be encrypted before leaving the apply runner;
+14. the bounded apply uploads only encrypted recovery state with one-day retention and dispatches a separate teardown workflow before the apply run can complete successfully.
 
 Execution principal for the bounded apply: use the dedicated Stage C service account only in the selected folder. During apply/teardown it must have the temporary folder-scoped `editor` role for resource lifecycle plus `resource-manager.admin` for the reviewed IAM bindings. Do not grant cloud-wide `admin`. Revoke these write roles after teardown (or reduce the account back to read-only access).
 
@@ -147,7 +149,8 @@ Execution principal for the bounded apply: use the dedicated Stage C service acc
 - Confirm that the plan contains the single-host foundation **plus** only these Stage C extras: private bounded backup bucket, `storage.uploader` binding, separate Lockbox/static key, and one private disposable PG18 restore cluster/user/database.
 - Confirm `foundation_deletion_protection=false` in the field-test plan. If deletion protection remains enabled, the repository precondition must stop the plan/apply.
 - Do not continue if the plan proposes a second permanent DB host, public DB IP, unexpected IAM grants or unrelated resources.
-- Apply only after the owner approves the exact plan/cost.
+- Apply only after the owner approves the exact plan/cost. That owner approval was recorded on 2026-10-07 with a 1,000 RUB total ceiling and <=4 hour boundary.
+- Immediately after Terraform creates state, encrypt the recovery state and persist only the encrypted artifact. The apply workflow must then dispatch the separate recovery-teardown workflow; if that handoff fails, perform the reviewed local fallback teardown instead of entering a live test window.
 
 ### 7.2 Controlled startup
 
@@ -214,8 +217,9 @@ Before the approved field-test window expires choose exactly one reviewed outcom
 
 - stop test services;
 - keep `field_test_resources_enabled=true` and `foundation_deletion_protection=false`;
+- recover the encrypted Terraform state from the apply run;
 - run and review `terraform plan -destroy`;
-- run the authorized `terraform destroy`;
+- apply that reviewed destroy plan in the dedicated teardown workflow;
 - verify the app VM, public IP, both PostgreSQL clusters, temporary static key/Lockbox secret and backup bucket are gone;
 - verify no unexpected billable resource remains.
 
@@ -265,9 +269,9 @@ Stop before or during apply if any of the following occurs:
 
 ## 10. Explicit NOT_RUN after this planning PR
 
-Until separate owner approval:
+Current execution status:
 
-- Yandex quota/account SKU check: NOT_RUN;
+- Yandex quota/account check: PASS on 2026-10-07 for the reviewed Compute, Managed Databases and VPC/public-IP requirements;
 - credentialed Terraform plan: PASS on main `085c6f4f44083427b3e8ab6ed37e646061a076a6` via bounded plan-only workflow run #4;
 - Terraform apply/resource creation: OWNER_AUTHORIZED on 2026-10-07 up to 1,000 RUB total / <=4 hours; NOT_RUN until the bounded apply workflow is reviewed and dispatched;
 - synthetic PG18 field test: NOT_RUN;
