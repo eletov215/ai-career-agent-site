@@ -445,7 +445,7 @@ def validate(root: Path = ROOT) -> list[str]:
             "environment: stage-c-yandex",
             "timeout-minutes: 50",
             "APPLY_STAGE_C_SYNTHETIC_1000_RUB_4H",
-            'test "$STAGE_C_HOLD_MINUTES" -le 120',
+            'test "$STAGE_C_HOLD_MINUTES" -le 90',
             'TF_VAR_field_test_resources_enabled: "true"',
             'TF_VAR_foundation_deletion_protection: "false"',
             "Initialize durable Yandex Object Storage backend",
@@ -485,6 +485,7 @@ def validate(root: Path = ROOT) -> list[str]:
             "skip_credentials_validation = true",
             "skip_requesting_account_id  = true",
             "skip_s3_checksum            = true",
+            "use_lockfile                = true",
         ):
             if marker not in versions:
                 errors.append("Stage C remote state backend missing control: " + marker)
@@ -534,14 +535,19 @@ def validate(root: Path = ROOT) -> list[str]:
             "actions: read",
             "if: github.ref == 'refs/heads/main'",
             "environment: stage-c-yandex",
-            "timeout-minutes: 180",
+            "timeout-minutes: 225",
             "AUTO_TEARDOWN_STAGE_C_SYNTHETIC",
             "DESTROY_STAGE_C_SYNTHETIC_1000_RUB",
-            'test "$HOLD_MINUTES" -le 120',
+            'test "$HOLD_MINUTES" -le 90',
             "ref: ${{ inputs.source_sha }}",
             "Initialize durable Yandex Object Storage backend",
             "actions/runs/$SOURCE_RUN_ID",
+            "Validate source apply run identity before checkout",
+            'data.get("path") == ".github/workflows/host001-stage-c-apply.yml"',
+            "Source apply status lookup attempt",
+            "Field window shortened to preserve the 90-minute teardown reserve.",
             "Source apply concluded $conclusion; skipping field window and tearing down immediately.",
+            "-lock-timeout=10m",
             "Destroy reviewed Stage C resources from remote state",
             "terraform -chdir=infra/yandex-cloud plan",
             "-destroy",
@@ -560,6 +566,21 @@ def validate(root: Path = ROOT) -> list[str]:
         )
         if len(teardown_apply_commands) != 1:
             errors.append("Stage C teardown workflow must have exactly one reviewed destroy-plan apply")
+
+        source_validation_pos = stage_c_teardown.find(
+            "Validate source apply run identity before checkout"
+        )
+        checkout_pos = stage_c_teardown.find(
+            "      - uses: actions/checkout@"
+        )
+        if (
+            source_validation_pos < 0
+            or checkout_pos < 0
+            or source_validation_pos >= checkout_pos
+        ):
+            errors.append(
+                "Stage C teardown must validate the source apply run before checkout"
+            )
 
         return errors
     finally:
