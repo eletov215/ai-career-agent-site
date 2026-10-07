@@ -234,6 +234,8 @@ Before the approved field-test window expires choose exactly one reviewed outcom
 
 Do not improvise a third path or silently extend the test window. Production Render/Neon remains untouched by Stage C.
 
+Cancellation/recovery rule for the automated path: the apply run must first upload encrypted recovery state and dispatch the separate teardown workflow. The apply summary records the exact commit and apply run ID. If the teardown workflow is cancelled or otherwise fails after that handoff, rerun `HOST-001 Stage C recovery teardown` from `main` with acknowledgement `DESTROY_STAGE_C_SYNTHETIC_1000_RUB`, the recorded apply commit/run ID and `delay_minutes=0`. The recovery workflow downloads the one-day encrypted state artifact, checks out the exact apply commit, reviews a delete-only allowlisted destroy plan and applies that plan.
+
 ## 8. Acceptance evidence for Stage C field test
 
 A future Stage C execution can be marked PASS only with evidence for:
