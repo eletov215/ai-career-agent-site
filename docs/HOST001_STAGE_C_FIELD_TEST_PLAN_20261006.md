@@ -135,6 +135,8 @@ All conditions below are required:
 11. `REAL_DATA_SUPPORTED=False` and legal DRAFT unchanged;
 12. rollback/teardown commands reviewed before creation.
 
+Execution principal for the bounded apply: use the dedicated Stage C service account only in the selected folder. During apply/teardown it must have the temporary folder-scoped `editor` role for resource lifecycle plus `resource-manager.admin` for the reviewed IAM bindings. Do not grant cloud-wide `admin`. Revoke these write roles after teardown (or reduce the account back to read-only access).
+
 ## 7. Field-test sequence
 
 ### 7.1 Provisioning boundary
