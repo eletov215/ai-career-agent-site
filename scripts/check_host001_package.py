@@ -87,7 +87,72 @@ def validate(root: Path = ROOT) -> list[str]:
             if not (ROOT / relative).is_file():
                 errors.append("missing required HOST-001 file: " + relative)
         if errors:
-            return errors
+            stage_c_apply = _read(".github/workflows/host001-stage-c-apply.yml")
+        apply_job_env = stage_c_apply.split("    env:\n", 1)[1].split("    steps:\n", 1)[0]
+        if "secrets." in apply_job_env:
+            errors.append("Stage C apply credentials must not be scoped at job level")
+
+        apply_steps = _stage_c_steps(stage_c_apply)
+        active_stage_c_apply = _active_yaml(stage_c_apply)
+        for secret, expected_step in STAGE_C_APPLY_SECRET_BINDINGS.items():
+            binding = "${{ secrets." + secret + " }}"
+            active_step = _active_yaml(apply_steps.get(expected_step, ""))
+            if active_stage_c_apply.count(binding) != 1:
+                errors.append(f"Stage C apply secret {secret} must be bound exactly once")
+            elif binding not in active_step:
+                errors.append(f"Stage C apply secret {secret} is bound to the wrong step")
+            if (
+                not re.search(r"(?m)^        shell:\s*\S+", active_step)
+                or not re.search(r"(?m)^        run:\s*", active_step)
+                or re.search(r"(?m)^        uses:\s*", active_step)
+            ):
+                errors.append(
+                    f"Stage C apply secret {secret} must be bound to a trusted shell step"
+                )
+
+        apply_actions = re.findall(
+            r"(?m)^\s+(?:-\s+)?uses:\s*([^@\s]+)@([^\s#]+)", active_stage_c_apply
+        )
+        for action, revision in apply_actions:
+            if not re.fullmatch(r"[0-9a-f]{40}", revision):
+                errors.append(
+                    f"Stage C apply action {action} must use an immutable commit SHA"
+                )
+        if any(action == "actions/upload-artifact" for action, _ in apply_actions):
+            errors.append("Stage C apply workflow must not upload Terraform state/artifacts")
+
+        required_apply_markers = (
+            "workflow_dispatch:",
+            "if: github.ref == 'refs/heads/main'",
+            "environment: stage-c-yandex",
+            "timeout-minutes: 235",
+            "APPLY_STAGE_C_SYNTHETIC_1000_RUB_4H",
+            'test "$STAGE_C_HOLD_MINUTES" -le 180',
+            'TF_VAR_field_test_resources_enabled: "true"',
+            'TF_VAR_foundation_deletion_protection: "false"',
+            "Fresh credentialed create-only plan passed.",
+            "trap cleanup EXIT",
+            "Emergency cleanup: attempting Terraform destroy",
+            "terraform -chdir=infra/yandex-cloud destroy",
+            "Hold window ended. Building reviewed destroy plan.",
+            "Stage C teardown verified: no managed Terraform resources remain.",
+            "Owner ceiling: **1,000 RUB total / <=4 hours**",
+            "No Terraform state artifact was uploaded.",
+        )
+        for marker in required_apply_markers:
+            if marker not in stage_c_apply:
+                errors.append("Stage C apply workflow missing control: " + marker)
+
+        if re.search(r"(?m)^\s+(?:push|pull_request|schedule):", active_stage_c_apply):
+            errors.append("Stage C apply workflow must remain manual workflow_dispatch only")
+        if active_stage_c_apply.count("terraform -chdir=infra/yandex-cloud apply \\") != 2:
+            errors.append(
+                "Stage C apply workflow must have exactly create-plan apply and destroy-plan apply"
+            )
+        if active_stage_c_apply.count("terraform -chdir=infra/yandex-cloud destroy \\") != 1:
+            errors.append("Stage C apply workflow must have exactly one emergency destroy path")
+
+        return errors
 
         versions = _read("infra/yandex-cloud/versions.tf")
         if 'version = "= 0.229.0"' not in versions:
