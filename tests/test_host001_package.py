@@ -164,7 +164,6 @@ class Host001PackageTests(unittest.TestCase):
         self.assertIn('-backend-config="bucket=$TFSTATE_BUCKET"', workflow)
         self.assertIn("host001-stage-c-teardown.yml/dispatches", workflow)
         self.assertIn("AUTO_TEARDOWN_STAGE_C_SYNTHETIC", workflow)
-        self.assertIn("group: host001-stage-c-recovery-teardown", workflow)
         self.assertNotIn("actions/upload-artifact", workflow)
         self.assertNotIn("actions/download-artifact", workflow)
         self.assertNotIn("\n  push:", workflow)
@@ -190,6 +189,7 @@ class Host001PackageTests(unittest.TestCase):
             encoding="utf-8"
         )
         self.assertIn("AUTO_TEARDOWN_STAGE_C_SYNTHETIC", workflow)
+        self.assertIn("group: host001-stage-c-recovery-teardown", workflow)
         self.assertIn("DESTROY_STAGE_C_SYNTHETIC_1000_RUB", workflow)
         self.assertIn("actions/runs/$SOURCE_RUN_ID", workflow)
         self.assertIn("Validate source apply run identity before checkout", workflow)
