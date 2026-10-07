@@ -121,6 +121,17 @@ jobs:
           echo "TFSTATE_KEY=$TFSTATE_KEY" >> "$GITHUB_ENV"
           terraform -chdir=infra/yandex-cloud validate
 
+      - name: Refuse overlapping Stage C lifecycle from durable remote state
+        shell: bash
+        env:
+          TFSTATE_BUCKET: ${{ secrets.YC_STAGE_C_TFSTATE_BUCKET }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.YC_STAGE_C_TFSTATE_ACCESS_KEY }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.YC_STAGE_C_TFSTATE_SECRET_KEY }}
+        run: |
+          set -euo pipefail
+          test -n "$TFSTATE_BUCKET"
+          python infra/yandex-cloud/stage_c_state_guard.py --bucket "$TFSTATE_BUCKET"
+
       - name: Fresh reviewed Stage C plan
         id: plan
         shell: bash
