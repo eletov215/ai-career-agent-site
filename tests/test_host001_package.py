@@ -406,6 +406,52 @@ class Host001PackageTests(unittest.TestCase):
         self.assertNotIn("print(access_key", guard)
         self.assertNotIn("print(secret_key", guard)
 
+    def test_stage_c_state_guard_fails_closed_on_live_managed_state(self):
+        path = ROOT / "infra/yandex-cloud/stage_c_state_guard.py"
+        spec = importlib.util.spec_from_file_location("host001_stage_c_state_guard", path)
+        self.assertIsNotNone(spec)
+        self.assertIsNotNone(spec.loader)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+
+        with (
+            mock.patch.object(
+                module,
+                "list_state_keys",
+                return_value=["host001/stage-c-123.tfstate"],
+            ),
+            mock.patch.object(module, "managed_resource_count", return_value=2),
+        ):
+            with self.assertRaises(module.GuardError):
+                module.check_no_live_state("aca-stage-c-tfstate-test")
+
+    def test_stage_c_state_guard_ignores_data_only_state(self):
+        path = ROOT / "infra/yandex-cloud/stage_c_state_guard.py"
+        spec = importlib.util.spec_from_file_location("host001_stage_c_state_guard_data", path)
+        self.assertIsNotNone(spec)
+        self.assertIsNotNone(spec.loader)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+
+        state = {
+            "resources": [
+                {"mode": "data", "instances": [{"attributes": {"id": "x"}}]},
+                {"mode": "managed", "instances": []},
+            ]
+        }
+        with mock.patch.object(
+            module,
+            "_request",
+            return_value=(200, json.dumps(state).encode("utf-8")),
+        ):
+            self.assertEqual(
+                0,
+                module.managed_resource_count(
+                    "aca-stage-c-tfstate-test",
+                    "host001/stage-c-123.tfstate",
+                ),
+            )
+
     def test_yandex_proxy_rebuilds_trusted_client_header(self):
         caddy = (ROOT / "infra/yandex-cloud/Caddyfile").read_text(encoding="utf-8")
         self.assertIn("header_up -CF-Connecting-IP", caddy)
