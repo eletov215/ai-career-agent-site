@@ -8,7 +8,7 @@
 | Application schema | `20261002_0023` unchanged |
 | Stage B | MERGED via PR #74; exact-head CI/review passed |
 | Production migration | NOT_AUTHORIZED |
-| Yandex billable resources | NOT_CREATED |
+| Yandex billable resources | NOT_CREATED; owner-authorized Stage C apply pending execution |
 | Real-data Alice | CLOSED |
 | Legal policy | DRAFT / NOT_ACTIVE |
 
@@ -106,7 +106,7 @@ The recurring owner budget remains **10,000–15,000 RUB/month excluding AI/prov
 3. if the quote exceeds 15,000 RUB/month, stop and revise the design with the owner;
 4. do not treat a billing alert as a technical hard cap.
 
-Recommended authorization ceiling for the short Stage C field test: **500 RUB total**. This is an owner-approval ceiling, not an automatic Yandex spending limiter. Before apply, if the console/plan estimate for the field-test window can exceed 500 RUB, stop and request a new approval.
+Owner authorization update (2026-10-07): the Stage C field-test ceiling is **1,000 RUB total**, doubled from the earlier 500 RUB planning recommendation. This is an owner-approval ceiling, not an automatic Yandex spending limiter. Before or during apply, if the account-specific estimate can exceed 1,000 RUB, stop and request a new approval.
 
 Target test window: up to 4 hours of primary resources, with the disposable restore cluster kept only as long as needed for the restore test. If the test cannot be completed within the approved window, stop rather than silently extending billable runtime.
 
@@ -266,8 +266,8 @@ Stop before or during apply if any of the following occurs:
 Until separate owner approval:
 
 - Yandex quota/account SKU check: NOT_RUN;
-- credentialed Terraform plan: NOT_RUN;
-- Terraform apply/resource creation: NOT_RUN;
+- credentialed Terraform plan: PASS on main `085c6f4f44083427b3e8ab6ed37e646061a076a6` via bounded plan-only workflow run #4;
+- Terraform apply/resource creation: OWNER_AUTHORIZED on 2026-10-07 up to 1,000 RUB total / <=4 hours; NOT_RUN until the bounded apply workflow is reviewed and dispatched;
 - synthetic PG18 field test: NOT_RUN;
 - off-VM real Object Storage upload: NOT_RUN;
 - isolated managed PG18 restore: NOT_RUN;
