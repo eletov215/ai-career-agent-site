@@ -103,7 +103,7 @@ jobs:
           rm -f "$run_file"
 
           for attempt in $(seq 1 5); do
-            if curl --fail-with-body --silent --show-error               -H "Accept: application/vnd.github+json"               -H "Authorization: Bearer $GH_TOKEN"               -H "X-GitHub-Api-Version: 2022-11-28"               "https://api.github.com/repos/$GITHUB_REPOSITORY/actions/runs/$SOURCE_RUN_ID"               -o "$run_file"; then
+            if curl --fail-with-body --silent --show-error --connect-timeout 5 --max-time 10               -H "Accept: application/vnd.github+json"               -H "Authorization: Bearer $GH_TOKEN"               -H "X-GitHub-Api-Version: 2022-11-28"               "https://api.github.com/repos/$GITHUB_REPOSITORY/actions/runs/$SOURCE_RUN_ID"               -o "$run_file"; then
               if test -s "$run_file"; then
                 break
               fi
@@ -147,7 +147,9 @@ jobs:
           PY
           )"
 
+          source_initial_status="$(python -c 'import json,sys; print(json.load(open(sys.argv[1], encoding="utf-8")).get("status") or "")' "$run_file")"
           echo "SOURCE_APPLY_RUN_STARTED_AT=$source_started" >> "$GITHUB_ENV"
+          echo "SOURCE_APPLY_RUN_INITIAL_STATUS=$source_initial_status" >> "$GITHUB_ENV"
           rm -f "$run_file"
 
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
@@ -211,6 +213,7 @@ jobs:
           SOURCE_RUN_ID: ${{ inputs.source_run_id }}
           HOLD_MINUTES: ${{ inputs.hold_minutes }}
           SOURCE_RUN_STARTED_AT: ${{ env.SOURCE_APPLY_RUN_STARTED_AT }}
+          SOURCE_RUN_INITIAL_STATUS: ${{ env.SOURCE_APPLY_RUN_INITIAL_STATUS }}
         run: |
           set -euo pipefail
 
@@ -222,7 +225,7 @@ jobs:
 
             for attempt in $(seq 1 120); do
               rm -f "$run_file"
-              if ! curl --fail-with-body --silent --show-error                 -H "Accept: application/vnd.github+json"                 -H "Authorization: Bearer $GH_TOKEN"                 -H "X-GitHub-Api-Version: 2022-11-28"                 "https://api.github.com/repos/$GITHUB_REPOSITORY/actions/runs/$SOURCE_RUN_ID"                 -o "$run_file"; then
+              if ! curl --fail-with-body --silent --show-error --connect-timeout 5 --max-time 10                 -H "Accept: application/vnd.github+json"                 -H "Authorization: Bearer $GH_TOKEN"                 -H "X-GitHub-Api-Version: 2022-11-28"                 "https://api.github.com/repos/$GITHUB_REPOSITORY/actions/runs/$SOURCE_RUN_ID"                 -o "$run_file"; then
                 echo "Source apply status lookup attempt $attempt failed; retrying."
                 sleep 30
                 continue
@@ -250,6 +253,7 @@ jobs:
               conclusion="$(printf '%s' "$parsed" | cut -d '|' -f 2-)"
               if [ "$status" = "completed" ]; then
                 completed=1
+                echo "SOURCE_RUN_TERMINAL_CONFIRMED=1" >> "$GITHUB_ENV"
                 break
               fi
               sleep 30
@@ -289,8 +293,13 @@ jobs:
             else
               echo "Unable to confirm source completion after retries; failing safe to immediate teardown."
             fi
+          else
+            test "$SOURCE_RUN_INITIAL_STATUS" = "completed" || {
+              echo "Manual recovery requires the source Stage C apply run to be completed."
+              exit 1
+            }
+            echo "SOURCE_RUN_TERMINAL_CONFIRMED=1" >> "$GITHUB_ENV"
           fi
-
           while [ "$remaining" -gt 0 ]; do
             chunk=900
             if [ "$remaining" -lt "$chunk" ]; then
@@ -320,19 +329,39 @@ jobs:
           destroy_log="$RUNNER_TEMP/stage-c-destroy.stdout"
 
           plan_code=1
+          stale_lock_recovered=0
           for attempt in $(seq 1 3); do
             set +e
-            terraform -chdir=infra/yandex-cloud plan               -destroy               -input=false               -lock-timeout=10m               -no-color               -detailed-exitcode               -out="$destroy_plan" >"$destroy_log" 2>&1
+            terraform -chdir=infra/yandex-cloud plan \
+              -destroy \
+              -input=false \
+              -lock-timeout=2m \
+              -no-color \
+              -detailed-exitcode \
+              -out="$destroy_plan" >"$destroy_log" 2>&1
             plan_code=$?
             set -e
 
             if [ "$plan_code" -eq 0 ] || [ "$plan_code" -eq 2 ]; then
               break
             fi
-            echo "Terraform destroy plan attempt $attempt failed; retrying."
+
+            if grep -q "Error acquiring the state lock" "$destroy_log"; then
+              lock_id="$(awk '/Lock Info:/ {in_lock=1; next} in_lock && $1 == "ID:" {print $2; exit}' "$destroy_log")"
+              if [ -n "$lock_id" ] && [ "${SOURCE_RUN_TERMINAL_CONFIRMED:-0}" = "1" ] && [ "$stale_lock_recovered" -eq 0 ]; then
+                echo "Stale Terraform lock detected after the exact source apply run became terminal; performing one guarded force-unlock."
+                terraform -chdir=infra/yandex-cloud force-unlock -force "$lock_id" >"$RUNNER_TEMP/stage-c-force-unlock.stdout" 2>&1 || {
+                  echo "Guarded Terraform force-unlock failed."
+                  exit 1
+                }
+                stale_lock_recovered=1
+                continue
+              fi
+            fi
+
+            echo "Terraform destroy plan attempt $attempt failed; retrying without bypassing an unverified lock."
             sleep 30
           done
-
           if [ "$plan_code" -eq 0 ]; then
             echo "No Stage C resources remain in remote Terraform state."
             echo "had_changes=false" >> "$GITHUB_OUTPUT"
@@ -365,7 +394,7 @@ jobs:
             [
               .resource_changes[]?
               | select(.address | test(
-                  "^(data\.yandex_compute_image\.ubuntu|yandex_vpc_network\.main|yandex_vpc_subnet\.(app|db_secondary)|yandex_vpc_security_group\.(app|database)|yandex_vpc_address\.app|yandex_iam_service_account\.app|yandex_lockbox_secret\.runtime|yandex_lockbox_secret_iam_member\.runtime_payload|yandex_mdb_postgresql_cluster\.main|yandex_mdb_postgresql_user\.app|yandex_mdb_postgresql_database\.app|yandex_compute_instance\.app|yandex_resourcemanager_folder_iam_member\.field_test_storage_uploader\[0\]|yandex_lockbox_secret\.field_test_storage\[0\]|yandex_lockbox_secret_iam_member\.field_test_storage_payload\[0\]|yandex_iam_service_account_static_access_key\.field_test_storage\[0\]|yandex_storage_bucket\.field_test\[0\]|yandex_mdb_postgresql_cluster\.field_test_restore\[0\]|yandex_mdb_postgresql_user\.field_test_restore\[0\]|yandex_mdb_postgresql_database\.field_test_restore\[0\])$"
+                  "^(data\\.yandex_compute_image\\.ubuntu|yandex_vpc_network\\.main|yandex_vpc_subnet\\.(app|db_secondary)|yandex_vpc_security_group\\.(app|database)|yandex_vpc_address\\.app|yandex_iam_service_account\\.app|yandex_lockbox_secret\\.runtime|yandex_lockbox_secret_iam_member\\.runtime_payload|yandex_mdb_postgresql_cluster\\.main|yandex_mdb_postgresql_user\\.app|yandex_mdb_postgresql_database\\.app|yandex_compute_instance\\.app|yandex_resourcemanager_folder_iam_member\\.field_test_storage_uploader\\[0\\]|yandex_lockbox_secret\\.field_test_storage\\[0\\]|yandex_lockbox_secret_iam_member\\.field_test_storage_payload\\[0\\]|yandex_iam_service_account_static_access_key\\.field_test_storage\\[0\\]|yandex_storage_bucket\\.field_test\\[0\\]|yandex_mdb_postgresql_cluster\\.field_test_restore\\[0\\]|yandex_mdb_postgresql_user\\.field_test_restore\\[0\\]|yandex_mdb_postgresql_database\\.field_test_restore\\[0\\])$"
                 ) | not)
             ] | length == 0
           ' "$destroy_json" >/dev/null || {
@@ -408,4 +437,12 @@ jobs:
         if: always()
         shell: bash
         run: |
-          rm -rf             "$RUNNER_TEMP/yc-stage-c-key.json"             "$RUNNER_TEMP/source-apply-run.json"             "$RUNNER_TEMP/source-apply-run-poll.json"             "$RUNNER_TEMP/stage-c-destroy.tfplan"             "$RUNNER_TEMP/stage-c-destroy-plan.json"             "$RUNNER_TEMP/stage-c-destroy.stdout"             infra/yandex-cloud/.terraform
+          rm -rf \
+            "$RUNNER_TEMP/yc-stage-c-key.json" \
+            "$RUNNER_TEMP/source-apply-run.json" \
+            "$RUNNER_TEMP/source-apply-run-poll.json" \
+            "$RUNNER_TEMP/stage-c-destroy.tfplan" \
+            "$RUNNER_TEMP/stage-c-destroy-plan.json" \
+            "$RUNNER_TEMP/stage-c-destroy.stdout" \
+            "$RUNNER_TEMP/stage-c-force-unlock.stdout" \
+            infra/yandex-cloud/.terraform
