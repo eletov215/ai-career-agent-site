@@ -32,6 +32,7 @@ REQUIRED = (
     ".github/workflows/host001-yandex-cloud.yml",
     ".github/workflows/host001-stage-c-plan.yml",
     ".github/workflows/host001-stage-c-apply.yml",
+    ".github/workflows/host001-stage-c-teardown.yml",
 )
 
 STAGE_C_SECRET_BINDINGS = {
@@ -45,15 +46,64 @@ STAGE_C_SECRET_BINDINGS = {
 }
 
 STAGE_C_APPLY_SECRET_BINDINGS = {
-    "YC_STAGE_C_SERVICE_ACCOUNT_KEY_JSON": "Materialize Yandex service-account key outside repository",
-    "YC_STAGE_C_CLOUD_ID": "Controlled Stage C lifecycle",
-    "YC_STAGE_C_FOLDER_ID": "Controlled Stage C lifecycle",
-    "YC_STAGE_C_ADMIN_CIDR": "Controlled Stage C lifecycle",
-    "YC_STAGE_C_SSH_PUBLIC_KEY": "Controlled Stage C lifecycle",
-    "YC_STAGE_C_POSTGRES_PASSWORD": "Controlled Stage C lifecycle",
-    "YC_STAGE_C_RESTORE_PASSWORD": "Controlled Stage C lifecycle",
+    "YC_STAGE_C_SERVICE_ACCOUNT_KEY_JSON": (
+        "Materialize Yandex service-account key outside repository",
+    ),
+    "YC_STAGE_C_CLOUD_ID": (
+        "Fresh reviewed plan and owner-authorized apply",
+        "Immediate local fallback teardown",
+    ),
+    "YC_STAGE_C_FOLDER_ID": (
+        "Fresh reviewed plan and owner-authorized apply",
+        "Immediate local fallback teardown",
+    ),
+    "YC_STAGE_C_ADMIN_CIDR": (
+        "Fresh reviewed plan and owner-authorized apply",
+        "Immediate local fallback teardown",
+    ),
+    "YC_STAGE_C_SSH_PUBLIC_KEY": (
+        "Fresh reviewed plan and owner-authorized apply",
+        "Immediate local fallback teardown",
+    ),
+    "YC_STAGE_C_POSTGRES_PASSWORD": (
+        "Fresh reviewed plan and owner-authorized apply",
+        "Immediate local fallback teardown",
+    ),
+    "YC_STAGE_C_RESTORE_PASSWORD": (
+        "Fresh reviewed plan and owner-authorized apply",
+        "Immediate local fallback teardown",
+    ),
+    "YC_STAGE_C_TFSTATE_PASSPHRASE": (
+        "Encrypt durable recovery state",
+    ),
 }
 
+STAGE_C_TEARDOWN_SECRET_BINDINGS = {
+    "YC_STAGE_C_SERVICE_ACCOUNT_KEY_JSON": (
+        "Materialize Yandex service-account key outside repository",
+    ),
+    "YC_STAGE_C_TFSTATE_PASSPHRASE": (
+        "Decrypt durable recovery state",
+    ),
+    "YC_STAGE_C_CLOUD_ID": (
+        "Destroy reviewed Stage C resources from recovery state",
+    ),
+    "YC_STAGE_C_FOLDER_ID": (
+        "Destroy reviewed Stage C resources from recovery state",
+    ),
+    "YC_STAGE_C_ADMIN_CIDR": (
+        "Destroy reviewed Stage C resources from recovery state",
+    ),
+    "YC_STAGE_C_SSH_PUBLIC_KEY": (
+        "Destroy reviewed Stage C resources from recovery state",
+    ),
+    "YC_STAGE_C_POSTGRES_PASSWORD": (
+        "Destroy reviewed Stage C resources from recovery state",
+    ),
+    "YC_STAGE_C_RESTORE_PASSWORD": (
+        "Destroy reviewed Stage C resources from recovery state",
+    ),
+}
 
 def _stage_c_steps(workflow: str) -> dict[str, str]:
     """Return named Stage C steps, bounded by every YAML step entry."""
@@ -343,21 +393,27 @@ def validate(root: Path = ROOT) -> list[str]:
 
         apply_steps = _stage_c_steps(stage_c_apply)
         active_stage_c_apply = _active_yaml(stage_c_apply)
-        for secret, expected_step in STAGE_C_APPLY_SECRET_BINDINGS.items():
+        for secret, expected_steps in STAGE_C_APPLY_SECRET_BINDINGS.items():
             binding = "${{ secrets." + secret + " }}"
-            active_step = _active_yaml(apply_steps.get(expected_step, ""))
-            if active_stage_c_apply.count(binding) != 1:
-                errors.append(f"Stage C apply secret {secret} must be bound exactly once")
-            elif binding not in active_step:
-                errors.append(f"Stage C apply secret {secret} is bound to the wrong step")
-            if (
-                not re.search(r"(?m)^        shell:\s*\S+", active_step)
-                or not re.search(r"(?m)^        run:\s*", active_step)
-                or re.search(r"(?m)^        uses:\s*", active_step)
-            ):
+            if active_stage_c_apply.count(binding) != len(expected_steps):
                 errors.append(
-                    f"Stage C apply secret {secret} must be bound to a trusted shell step"
+                    f"Stage C apply secret {secret} must be bound exactly {len(expected_steps)} time(s)"
                 )
+                continue
+            for expected_step in expected_steps:
+                active_step = _active_yaml(apply_steps.get(expected_step, ""))
+                if binding not in active_step:
+                    errors.append(
+                        f"Stage C apply secret {secret} is missing from {expected_step}"
+                    )
+                if (
+                    not re.search(r"(?m)^        shell:\s*\S+", active_step)
+                    or not re.search(r"(?m)^        run:\s*", active_step)
+                    or re.search(r"(?m)^        uses:\s*", active_step)
+                ):
+                    errors.append(
+                        f"Stage C apply secret {secret} must be bound only to trusted shell steps"
+                    )
 
         apply_actions = re.findall(
             r"(?m)^\s+(?:-\s+)?uses:\s*([^@\s]+)@([^\s#]+)", active_stage_c_apply
@@ -367,26 +423,39 @@ def validate(root: Path = ROOT) -> list[str]:
                 errors.append(
                     f"Stage C apply action {action} must use an immutable commit SHA"
                 )
-        if any(action == "actions/upload-artifact" for action, _ in apply_actions):
-            errors.append("Stage C apply workflow must not upload Terraform state/artifacts")
+        if sum(action == "actions/upload-artifact" for action, _ in apply_actions) != 1:
+            errors.append("Stage C apply workflow must upload exactly one encrypted recovery artifact")
+        if any(action == "actions/download-artifact" for action, _ in apply_actions):
+            errors.append("Stage C apply workflow must not download recovery artifacts")
+
+        upload_step = _active_yaml(apply_steps.get("Upload encrypted recovery state", ""))
+        for marker in (
+            "actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02",
+            "name: host001-stage-c-state-${{ github.run_id }}",
+            "path: ${{ runner.temp }}/stage-c-tfstate.enc",
+            "retention-days: 1",
+        ):
+            if marker not in upload_step:
+                errors.append("Stage C encrypted recovery upload missing control: " + marker)
 
         required_apply_markers = (
             "workflow_dispatch:",
+            "actions: write",
             "if: github.ref == 'refs/heads/main'",
             "environment: stage-c-yandex",
-            "timeout-minutes: 235",
+            "timeout-minutes: 55",
             "APPLY_STAGE_C_SYNTHETIC_1000_RUB_4H",
             'test "$STAGE_C_HOLD_MINUTES" -le 150',
             'TF_VAR_field_test_resources_enabled: "true"',
             'TF_VAR_foundation_deletion_protection: "false"',
             "Fresh credentialed create-only plan passed.",
-            "trap cleanup EXIT",
-            "Emergency cleanup: attempting Terraform destroy",
-            "terraform -chdir=infra/yandex-cloud destroy",
-            "Hold window ended. Building reviewed destroy plan.",
-            "Stage C teardown verified: no managed Terraform resources remain.",
-            "Owner ceiling: **1,000 RUB total / <=4 hours**",
-            "No Terraform state artifact was uploaded.",
+            "openssl enc -aes-256-cbc -salt -pbkdf2 -iter 200000",
+            "stage-c-tfstate.enc",
+            "host001-stage-c-teardown.yml/dispatches",
+            "AUTO_TEARDOWN_STAGE_C_SYNTHETIC",
+            "Immediate local fallback teardown",
+            "Separate cancellation-surviving teardown workflow: **dispatched**",
+            "Enforce final apply result",
         )
         for marker in required_apply_markers:
             if marker not in stage_c_apply:
@@ -394,19 +463,94 @@ def validate(root: Path = ROOT) -> list[str]:
 
         if re.search(r"(?m)^\s+(?:push|pull_request|schedule):", active_stage_c_apply):
             errors.append("Stage C apply workflow must remain manual workflow_dispatch only")
+        if re.search(r"(?m)^\s*terraform(?:\s+-chdir=\S+)?\s+destroy\b", active_stage_c_apply):
+            errors.append("Stage C apply workflow must use reviewed destroy-plan apply, not direct destroy")
         apply_commands = re.findall(
             r"(?m)^\s*terraform -chdir=infra/yandex-cloud apply\b", active_stage_c_apply
         )
-        destroy_commands = re.findall(
-            r"(?m)^\s*terraform -chdir=infra/yandex-cloud destroy\b", active_stage_c_apply
-        )
         if len(apply_commands) != 2:
             errors.append(
-                "Stage C apply workflow must have exactly create-plan apply and destroy-plan apply"
+                "Stage C apply workflow must contain one create apply and one local fallback destroy-plan apply"
             )
-        if len(destroy_commands) != 1:
-            errors.append("Stage C apply workflow must have exactly one emergency destroy path")
 
+        stage_c_teardown = _read(".github/workflows/host001-stage-c-teardown.yml")
+        teardown_job_env = stage_c_teardown.split("    env:\n", 1)[1].split("    steps:\n", 1)[0]
+        if "secrets." in teardown_job_env:
+            errors.append("Stage C teardown credentials must not be scoped at job level")
+
+        teardown_steps = _stage_c_steps(stage_c_teardown)
+        active_stage_c_teardown = _active_yaml(stage_c_teardown)
+        for secret, expected_steps in STAGE_C_TEARDOWN_SECRET_BINDINGS.items():
+            binding = "${{ secrets." + secret + " }}"
+            if active_stage_c_teardown.count(binding) != len(expected_steps):
+                errors.append(
+                    f"Stage C teardown secret {secret} must be bound exactly {len(expected_steps)} time(s)"
+                )
+                continue
+            for expected_step in expected_steps:
+                active_step = _active_yaml(teardown_steps.get(expected_step, ""))
+                if binding not in active_step:
+                    errors.append(
+                        f"Stage C teardown secret {secret} is missing from {expected_step}"
+                    )
+                if (
+                    not re.search(r"(?m)^        shell:\s*\S+", active_step)
+                    or not re.search(r"(?m)^        run:\s*", active_step)
+                    or re.search(r"(?m)^        uses:\s*", active_step)
+                ):
+                    errors.append(
+                        f"Stage C teardown secret {secret} must be bound only to trusted shell steps"
+                    )
+
+        teardown_actions = re.findall(
+            r"(?m)^\s+(?:-\s+)?uses:\s*([^@\s]+)@([^\s#]+)", active_stage_c_teardown
+        )
+        for action, revision in teardown_actions:
+            if not re.fullmatch(r"[0-9a-f]{40}", revision):
+                errors.append(
+                    f"Stage C teardown action {action} must use an immutable commit SHA"
+                )
+        if sum(action == "actions/download-artifact" for action, _ in teardown_actions) != 1:
+            errors.append("Stage C teardown workflow must download exactly one recovery artifact")
+        if any(action == "actions/upload-artifact" for action, _ in teardown_actions):
+            errors.append("Stage C teardown workflow must not upload Terraform state artifacts")
+
+        download_step = _active_yaml(teardown_steps.get("Download encrypted recovery state", ""))
+        for marker in (
+            "actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093",
+            "name: host001-stage-c-state-${{ inputs.source_run_id }}",
+            "run-id: ${{ inputs.source_run_id }}",
+        ):
+            if marker not in download_step:
+                errors.append("Stage C recovery download missing control: " + marker)
+
+        required_teardown_markers = (
+            "workflow_dispatch:",
+            "actions: read",
+            "if: github.ref == 'refs/heads/main'",
+            "environment: stage-c-yandex",
+            "AUTO_TEARDOWN_STAGE_C_SYNTHETIC",
+            "DESTROY_STAGE_C_SYNTHETIC_1000_RUB",
+            'test "$DELAY_MINUTES" -le 150',
+            "ref: ${{ inputs.source_sha }}",
+            "openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000",
+            "terraform -chdir=infra/yandex-cloud plan",
+            "-destroy",
+            "Stage C teardown verified: no managed Terraform resources remain.",
+        )
+        for marker in required_teardown_markers:
+            if marker not in stage_c_teardown:
+                errors.append("Stage C teardown workflow missing control: " + marker)
+
+        if re.search(r"(?m)^\s+(?:push|pull_request|schedule):", active_stage_c_teardown):
+            errors.append("Stage C teardown workflow must remain manual workflow_dispatch only")
+        if re.search(r"(?m)^\s*terraform(?:\s+-chdir=\S+)?\s+destroy\b", active_stage_c_teardown):
+            errors.append("Stage C teardown workflow must use reviewed destroy-plan apply")
+        teardown_apply_commands = re.findall(
+            r"(?m)^\s*terraform -chdir=infra/yandex-cloud apply\b", active_stage_c_teardown
+        )
+        if len(teardown_apply_commands) != 1:
+            errors.append("Stage C teardown workflow must have exactly one reviewed destroy-plan apply")
 
         return errors
     finally:
