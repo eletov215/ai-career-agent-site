@@ -160,7 +160,7 @@ class Host001PackageTests(unittest.TestCase):
         job_env = workflow.split("    env:\n", 1)[1].split("    steps:\n", 1)[0]
         self.assertNotIn("secrets.", job_env)
         self.assertIn("APPLY_STAGE_C_SYNTHETIC_1000_RUB_4H", workflow)
-        self.assertIn('test "$STAGE_C_HOLD_MINUTES" -le 180', workflow)
+        self.assertIn('test "$STAGE_C_HOLD_MINUTES" -le 150', workflow)
         self.assertIn("trap cleanup EXIT", workflow)
         self.assertIn("terraform -chdir=infra/yandex-cloud destroy", workflow)
         self.assertIn("Stage C teardown verified: no managed Terraform resources remain.", workflow)
