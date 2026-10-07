@@ -30,7 +30,36 @@ REQUIRED = (
     "docs/HOST001_RUNBOOK.md",
     "docs/HOST001_VERIFICATION_STATUS.md",
     ".github/workflows/host001-yandex-cloud.yml",
+    ".github/workflows/host001-stage-c-plan.yml",
 )
+
+STAGE_C_SECRET_BINDINGS = {
+    "YC_STAGE_C_SERVICE_ACCOUNT_KEY_JSON": "Materialize Yandex service-account key outside repository",
+    "YC_STAGE_C_CLOUD_ID": "Credentialed Stage C plan",
+    "YC_STAGE_C_FOLDER_ID": "Credentialed Stage C plan",
+    "YC_STAGE_C_ADMIN_CIDR": "Credentialed Stage C plan",
+    "YC_STAGE_C_SSH_PUBLIC_KEY": "Credentialed Stage C plan",
+    "YC_STAGE_C_POSTGRES_PASSWORD": "Credentialed Stage C plan",
+    "YC_STAGE_C_RESTORE_PASSWORD": "Credentialed Stage C plan",
+}
+
+
+def _stage_c_steps(workflow: str) -> dict[str, str]:
+    """Return named Stage C steps, bounded by every YAML step entry."""
+    boundaries = list(re.finditer(r"(?m)^      - (?=\S)", workflow))
+    steps: dict[str, str] = {}
+    for index, boundary in enumerate(boundaries):
+        end = boundaries[index + 1].start() if index + 1 < len(boundaries) else len(workflow)
+        block = workflow[boundary.start() : end]
+        name = re.match(r"      - name: (.+)$", block.splitlines()[0])
+        if name:
+            steps[name.group(1)] = block
+    return steps
+
+
+def _active_yaml(workflow: str) -> str:
+    """Return YAML source with YAML comment text excluded."""
+    return "\n".join(line.split("#", 1)[0] for line in workflow.splitlines())
 
 
 def _read(relative: str) -> str:
@@ -260,6 +289,40 @@ def validate(root: Path = ROOT) -> list[str]:
             errors.append("HOST-001 CI must never terraform apply")
         if "YC_TOKEN" in workflow or "TF_VAR_postgresql_app_password" in workflow:
             errors.append("HOST-001 validation CI must not require cloud/provider secrets")
+
+        stage_c_workflow = _read(".github/workflows/host001-stage-c-plan.yml")
+        job_env = stage_c_workflow.split("    env:\n", 1)[1].split("    steps:\n", 1)[0]
+        if "secrets." in job_env:
+            errors.append("Stage C credentials must not be scoped at job level")
+
+        stage_c_steps = _stage_c_steps(stage_c_workflow)
+        active_stage_c_workflow = _active_yaml(stage_c_workflow)
+        for secret, expected_step in STAGE_C_SECRET_BINDINGS.items():
+            binding = "${{ secrets." + secret + " }}"
+            active_step = _active_yaml(stage_c_steps.get(expected_step, ""))
+            if active_stage_c_workflow.count(binding) != 1:
+                errors.append(f"Stage C secret {secret} must be bound exactly once")
+            elif binding not in active_step:
+                errors.append(f"Stage C secret {secret} is bound to the wrong step")
+            if (
+                not re.search(r"(?m)^        shell:\s*\S+", active_step)
+                or not re.search(r"(?m)^        run:\s*", active_step)
+                or re.search(r"(?m)^        uses:\s*", active_step)
+            ):
+                errors.append(f"Stage C secret {secret} must be bound to a trusted shell step")
+
+        actions = re.findall(
+            r"(?m)^\s+(?:-\s+)?uses:\s*([^@\s]+)@([^\s#]+)", active_stage_c_workflow
+        )
+        for action, revision in actions:
+            if not re.fullmatch(r"[0-9a-f]{40}", revision):
+                errors.append(f"Stage C action {action} must use an immutable commit SHA")
+        if re.search(r"(?m)^\s*(?:sudo\s+)?terraform(?:\s+-chdir=\S+)?\s+(?:apply|destroy)\b", stage_c_workflow):
+            errors.append("Stage C workflow must never run terraform apply or destroy")
+        if any(action == "actions/upload-artifact" for action, _ in actions):
+            errors.append("Stage C workflow must not upload artifacts")
+        if 'echo "- Commit: \\`$GITHUB_SHA\\`"' not in stage_c_workflow:
+            errors.append("Stage C summary must preserve escaped Markdown around the commit SHA")
 
         return errors
     finally:

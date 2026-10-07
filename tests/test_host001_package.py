@@ -52,6 +52,107 @@ class Host001PackageTests(unittest.TestCase):
         self.assertIn("field_test_resources_enabled  = true", example)
         self.assertIn("foundation_deletion_protection = false", example)
 
+    def test_stage_c_workflow_keeps_credentials_step_scoped_and_actions_pinned(self):
+        workflow = (ROOT / ".github/workflows/host001-stage-c-plan.yml").read_text(
+            encoding="utf-8"
+        )
+        job_env = workflow.split("    env:\n", 1)[1].split("    steps:\n", 1)[0]
+        self.assertNotIn("secrets.", job_env)
+        self.assertIn("actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803", workflow)
+        self.assertIn(
+            "hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd",
+            workflow,
+        )
+
+    def test_stage_c_guard_rejects_security_boundary_regressions(self):
+        workflow_path = ROOT / ".github/workflows/host001-stage-c-plan.yml"
+        original = workflow_path.read_text(encoding="utf-8")
+        cloud_binding = "          TF_VAR_cloud_id: ${{ secrets.YC_STAGE_C_CLOUD_ID }}\n"
+        plan_shell = "      - name: Credentialed Stage C plan\n        id: plan\n        shell: bash\n"
+        summary_step = (
+            "      - name: Emit secret-free resource/action summary and reject destructive plan\n"
+        )
+        mutations = {
+            "job-scoped secret": original.replace(
+                "    env:\n", "    env:\n      LEAK: ${{ secrets.YC_STAGE_C_CLOUD_ID }}\n", 1
+            ),
+            "duplicate secret": original.replace(
+                cloud_binding, cloud_binding + "          DUPLICATE: ${{ secrets.YC_STAGE_C_CLOUD_ID }}\n", 1
+            ),
+            "commented required secret": original.replace(
+                cloud_binding, "          # " + cloud_binding.lstrip(), 1
+            ),
+            "unnamed action wrong-step secret": original.replace(cloud_binding, "", 1).replace(
+                summary_step,
+                "      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803\n"
+                "        env:\n"
+                "          MOVED_CLOUD_ID: ${{ secrets.YC_STAGE_C_CLOUD_ID }}\n\n"
+                + summary_step,
+                1,
+            ),
+            "mutable action": original.replace(
+                "actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803",
+                "actions/checkout@v6",
+            ),
+            "named mutable action": original.replace(
+                "      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6",
+                "      - name: Checkout\n        uses: actions/checkout@v6",
+            ),
+            "named artifact upload": original + (
+                "\n      - name: Upload plan\n"
+                "        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08\n"
+            ),
+            "secret-bearing named action": original.replace(
+                plan_shell,
+                "      - name: Credentialed Stage C plan\n"
+                "        id: plan\n"
+                "        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803\n",
+                1,
+            ),
+            "terraform apply": original + "\n      terraform apply\n",
+            "terraform destroy": original + "\n      terraform destroy\n",
+            "artifact upload": original + "\n      - uses: actions/upload-artifact@v4\n",
+            "unescaped summary SHA": original.replace(
+                'echo "- Commit: \\`$GITHUB_SHA\\`"',
+                'echo "- Commit: `$GITHUB_SHA`"',
+            ),
+        }
+        for label, mutated in mutations.items():
+            with self.subTest(label=label), tempfile.TemporaryDirectory() as tmp:
+                root = Path(tmp)
+                for path in ROOT.iterdir():
+                    if path.name != ".git":
+                        (root / path.name).symlink_to(path, target_is_directory=path.is_dir())
+                local_workflows = root / ".github" / "workflows"
+                (root / ".github").unlink()
+                local_workflows.mkdir(parents=True)
+                for path in (ROOT / ".github" / "workflows").iterdir():
+                    (local_workflows / path.name).symlink_to(path)
+                (local_workflows / workflow_path.name).unlink()
+                (local_workflows / workflow_path.name).write_text(mutated, encoding="utf-8")
+                errors = validate(root)
+                self.assertTrue(errors, label)
+                if label == "unnamed action wrong-step secret":
+                    self.assertIn(
+                        "Stage C secret YC_STAGE_C_CLOUD_ID is bound to the wrong step",
+                        errors,
+                    )
+                if label == "commented required secret":
+                    self.assertIn(
+                        "Stage C secret YC_STAGE_C_CLOUD_ID must be bound exactly once", errors
+                    )
+                if label == "secret-bearing named action":
+                    self.assertIn(
+                        "Stage C secret YC_STAGE_C_CLOUD_ID must be bound to a trusted shell step",
+                        errors,
+                    )
+                if label == "named mutable action":
+                    self.assertIn(
+                        "Stage C action actions/checkout must use an immutable commit SHA", errors
+                    )
+                if label == "named artifact upload":
+                    self.assertIn("Stage C workflow must not upload artifacts", errors)
+
     def test_yandex_proxy_rebuilds_trusted_client_header(self):
         caddy = (ROOT / "infra/yandex-cloud/Caddyfile").read_text(encoding="utf-8")
         self.assertIn("header_up -CF-Connecting-IP", caddy)
