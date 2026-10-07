@@ -195,14 +195,22 @@ jobs:
         shell: bash
         env:
           TFSTATE_BUCKET: ${{ secrets.YC_STAGE_C_TFSTATE_BUCKET }}
+          SOURCE_RUN_ID: ${{ inputs.source_run_id }}
           AWS_ACCESS_KEY_ID: ${{ secrets.YC_STAGE_C_TFSTATE_ACCESS_KEY }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.YC_STAGE_C_TFSTATE_SECRET_KEY }}
         run: |
           set -euo pipefail
           test -n "$TFSTATE_BUCKET"
+          test -n "$SOURCE_RUN_ID"
           test -n "$AWS_ACCESS_KEY_ID"
           test -n "$AWS_SECRET_ACCESS_KEY"
-          terraform -chdir=infra/yandex-cloud init             -reconfigure             -input=false             -backend-config="bucket=$TFSTATE_BUCKET"
+          TFSTATE_KEY="host001/stage-c-${SOURCE_RUN_ID}.tfstate"
+          terraform -chdir=infra/yandex-cloud init \
+            -reconfigure \
+            -input=false \
+            -backend-config="bucket=$TFSTATE_BUCKET" \
+            -backend-config="key=$TFSTATE_KEY"
+          echo "TFSTATE_KEY=$TFSTATE_KEY" >> "$GITHUB_ENV"
           terraform -chdir=infra/yandex-cloud validate
 
       - name: Wait for source apply result and bounded successful field window
@@ -530,6 +538,7 @@ jobs:
             echo
             printf -- '- Apply run ID: `%s`\n' "$SOURCE_RUN_ID"
             printf -- '- Apply commit: `%s`\n' "$SOURCE_SHA"
+            printf -- '- Remote Terraform state key: `%s`\n' "$TFSTATE_KEY"
             echo "- Remote Terraform state backend: **Yandex Object Storage with lockfile**"
             if [ "$DEADLINE_MODE" = "manual-recovery" ]; then
               echo "- Destroy provider deadline: **<=90 minutes from explicit manual recovery start**"
