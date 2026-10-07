@@ -203,6 +203,13 @@ class Host001PackageTests(unittest.TestCase):
         self.assertIn("force-unlock -force", workflow)
         self.assertIn("destroy_plan_deadline", workflow)
         self.assertIn("destroy_apply_deadline", workflow)
+        self.assertIn('STAGE_C_ACKNOWLEDGEMENT: ${{ inputs.acknowledgement }}', workflow)
+        self.assertIn('if [ "$STAGE_C_ACKNOWLEDGEMENT" = "DESTROY_STAGE_C_SYNTHETIC_1000_RUB" ]; then', workflow)
+        self.assertIn("manual_recovery_started", workflow)
+        self.assertIn('deadline_mode="manual-recovery"', workflow)
+        self.assertIn("Manual recovery destroy-plan deadline reached", workflow)
+        self.assertIn("Manual recovery destroy deadline reached before destroy apply.", workflow)
+        self.assertIn("Destroy provider deadline: **<=90 minutes from explicit manual recovery start**", workflow)
         self.assertIn("Absolute Stage C destroy deadline reached before destroy apply.", workflow)
         self.assertIn("timeout --signal=INT --kill-after=30s", workflow)
         self.assertIn(r'"^(data\\.yandex_compute_image\\.ubuntu', workflow)
@@ -298,6 +305,10 @@ class Host001PackageTests(unittest.TestCase):
             "missing absolute destroy deadline": original.replace(
                 "destroy_apply_deadline",
                 "removed_deadline_marker",
+            ),
+            "manual recovery incorrectly source-deadline-bound": original.replace(
+                'deadline_mode="manual-recovery"',
+                'deadline_mode="automatic-owner-window"',
             ),
             "missing lock timeout": original.replace(
                 "-lock-timeout=10m",
