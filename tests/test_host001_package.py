@@ -91,6 +91,10 @@ class Host001PackageTests(unittest.TestCase):
             "terraform apply": original + "\n      terraform apply\n",
             "terraform destroy": original + "\n      terraform destroy\n",
             "artifact upload": original + "\n      - uses: actions/upload-artifact@v4\n",
+            "unescaped summary SHA": original.replace(
+                'echo "- Commit: \\`$GITHUB_SHA\\`"',
+                'echo "- Commit: `$GITHUB_SHA`"',
+            ),
         }
         for label, mutated in mutations.items():
             with self.subTest(label=label), tempfile.TemporaryDirectory() as tmp:
