@@ -158,7 +158,7 @@ class Host001PackageTests(unittest.TestCase):
             encoding="utf-8"
         )
         self.assertIn("APPLY_STAGE_C_SYNTHETIC_1000_RUB_4H", workflow)
-        self.assertIn('test "$STAGE_C_HOLD_MINUTES" -le 120', workflow)
+        self.assertIn('test "$STAGE_C_HOLD_MINUTES" -le 90', workflow)
         self.assertIn("Initialize durable Yandex Object Storage backend", workflow)
         self.assertIn('-backend-config="bucket=$TFSTATE_BUCKET"', workflow)
         self.assertIn("host001-stage-c-teardown.yml/dispatches", workflow)
@@ -181,6 +181,7 @@ class Host001PackageTests(unittest.TestCase):
         self.assertIn("skip_credentials_validation = true", versions)
         self.assertIn("skip_requesting_account_id  = true", versions)
         self.assertIn("skip_s3_checksum            = true", versions)
+        self.assertIn("use_lockfile                = true", versions)
 
     def test_stage_c_teardown_monitors_apply_and_uses_same_remote_state(self):
         workflow = (ROOT / ".github/workflows/host001-stage-c-teardown.yml").read_text(
@@ -189,9 +190,14 @@ class Host001PackageTests(unittest.TestCase):
         self.assertIn("AUTO_TEARDOWN_STAGE_C_SYNTHETIC", workflow)
         self.assertIn("DESTROY_STAGE_C_SYNTHETIC_1000_RUB", workflow)
         self.assertIn("actions/runs/$SOURCE_RUN_ID", workflow)
+        self.assertIn("Validate source apply run identity before checkout", workflow)
+        self.assertIn('data.get("path") == ".github/workflows/host001-stage-c-apply.yml"', workflow)
+        self.assertIn("Source apply status lookup attempt", workflow)
+        self.assertIn("Field window shortened to preserve the 90-minute teardown reserve.", workflow)
         self.assertIn("ref: ${{ inputs.source_sha }}", workflow)
         self.assertIn("Initialize durable Yandex Object Storage backend", workflow)
         self.assertIn("Source apply concluded $conclusion; skipping field window", workflow)
+        self.assertIn("-lock-timeout=10m", workflow)
         self.assertIn("terraform -chdir=infra/yandex-cloud plan", workflow)
         self.assertIn("-destroy", workflow)
         self.assertIn(
@@ -203,6 +209,10 @@ class Host001PackageTests(unittest.TestCase):
         self.assertNotIn("\n  push:", workflow)
         self.assertNotIn("\n  pull_request:", workflow)
 
+        validate_index = workflow.index("Validate source apply run identity before checkout")
+        checkout_index = workflow.index("      - uses: actions/checkout@")
+        self.assertLess(validate_index, checkout_index)
+
     def test_stage_c_apply_guard_rejects_remote_recovery_regressions(self):
         apply_path = ROOT / ".github/workflows/host001-stage-c-apply.yml"
         original = apply_path.read_text(encoding="utf-8")
@@ -212,7 +222,7 @@ class Host001PackageTests(unittest.TestCase):
                 "APPLY_STAGE_C_UNBOUNDED",
             ),
             "oversized hold": original.replace(
-                'test "$STAGE_C_HOLD_MINUTES" -le 120',
+                'test "$STAGE_C_HOLD_MINUTES" -le 90',
                 'test "$STAGE_C_HOLD_MINUTES" -le 600',
             ),
             "missing remote backend init": original.replace(
@@ -255,6 +265,18 @@ class Host001PackageTests(unittest.TestCase):
             "missing source run monitor": original.replace(
                 "actions/runs/$SOURCE_RUN_ID",
                 "actions/runs/1",
+            ),
+            "missing source identity validation": original.replace(
+                "Validate source apply run identity before checkout",
+                "Validate untrusted source after checkout",
+            ),
+            "oversized teardown hold": original.replace(
+                'test "$HOLD_MINUTES" -le 90',
+                'test "$HOLD_MINUTES" -le 600',
+            ),
+            "missing lock timeout": original.replace(
+                "-lock-timeout=10m",
+                "-lock-timeout=0s",
             ),
             "missing remote backend init": original.replace(
                 "Initialize durable Yandex Object Storage backend",
