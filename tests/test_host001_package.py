@@ -153,6 +153,74 @@ class Host001PackageTests(unittest.TestCase):
                 if label == "named artifact upload":
                     self.assertIn("Stage C workflow must not upload artifacts", errors)
 
+    def test_stage_c_apply_workflow_is_manual_bounded_and_auto_tears_down(self):
+        workflow = (ROOT / ".github/workflows/host001-stage-c-apply.yml").read_text(
+            encoding="utf-8"
+        )
+        job_env = workflow.split("    env:\n", 1)[1].split("    steps:\n", 1)[0]
+        self.assertNotIn("secrets.", job_env)
+        self.assertIn("APPLY_STAGE_C_SYNTHETIC_1000_RUB_4H", workflow)
+        self.assertIn('test "$STAGE_C_HOLD_MINUTES" -le 180', workflow)
+        self.assertIn("trap cleanup EXIT", workflow)
+        self.assertIn("terraform -chdir=infra/yandex-cloud destroy", workflow)
+        self.assertIn("Stage C teardown verified: no managed Terraform resources remain.", workflow)
+        self.assertNotIn("actions/upload-artifact", workflow)
+        self.assertNotIn("\n  push:", workflow)
+        self.assertNotIn("\n  pull_request:", workflow)
+
+    def test_stage_c_apply_guard_rejects_boundary_regressions(self):
+        workflow_path = ROOT / ".github/workflows/host001-stage-c-apply.yml"
+        original = workflow_path.read_text(encoding="utf-8")
+        cloud_binding = "          TF_VAR_cloud_id: ${{ secrets.YC_STAGE_C_CLOUD_ID }}\n"
+        mutations = {
+            "wrong acknowledgement": original.replace(
+                "APPLY_STAGE_C_SYNTHETIC_1000_RUB_4H",
+                "APPLY_STAGE_C_UNBOUNDED",
+            ),
+            "oversized hold": original.replace(
+                'test "$STAGE_C_HOLD_MINUTES" -le 180',
+                'test "$STAGE_C_HOLD_MINUTES" -le 600',
+            ),
+            "job-scoped secret": original.replace(
+                "    env:\n",
+                "    env:\n      LEAK: ${{ secrets.YC_STAGE_C_CLOUD_ID }}\n",
+                1,
+            ),
+            "duplicate cloud secret": original.replace(
+                cloud_binding,
+                cloud_binding + "          DUPLICATE: ${{ secrets.YC_STAGE_C_CLOUD_ID }}\n",
+                1,
+            ),
+            "mutable checkout": original.replace(
+                "actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803",
+                "actions/checkout@v6",
+            ),
+            "artifact upload": original + (
+                "\n      - name: Upload state\n"
+                "        uses: actions/upload-artifact@v4\n"
+            ),
+            "missing emergency destroy": original.replace(
+                "terraform -chdir=infra/yandex-cloud destroy \\\n",
+                "terraform -chdir=infra/yandex-cloud plan \\\n",
+                1,
+            ),
+        }
+        for label, mutated in mutations.items():
+            with self.subTest(label=label), tempfile.TemporaryDirectory() as tmp:
+                root = Path(tmp)
+                for path in ROOT.iterdir():
+                    if path.name != ".git":
+                        (root / path.name).symlink_to(path, target_is_directory=path.is_dir())
+                local_workflows = root / ".github" / "workflows"
+                (root / ".github").unlink()
+                local_workflows.mkdir(parents=True)
+                for path in (ROOT / ".github" / "workflows").iterdir():
+                    (local_workflows / path.name).symlink_to(path)
+                (local_workflows / workflow_path.name).unlink()
+                (local_workflows / workflow_path.name).write_text(mutated, encoding="utf-8")
+                errors = validate(root)
+                self.assertTrue(errors, label)
+
     def test_yandex_proxy_rebuilds_trusted_client_header(self):
         caddy = (ROOT / "infra/yandex-cloud/Caddyfile").read_text(encoding="utf-8")
         self.assertIn("header_up -CF-Connecting-IP", caddy)
