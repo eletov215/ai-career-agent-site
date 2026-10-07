@@ -7,6 +7,19 @@ terraform {
       version = "= 0.229.0"
     }
   }
+
+  backend "s3" {
+    endpoints = {
+      s3 = "https://storage.yandexcloud.net"
+    }
+    region                      = "ru-central1"
+    key                         = "host001/stage-c.tfstate"
+    skip_region_validation      = true
+    skip_credentials_validation = true
+    skip_requesting_account_id  = true
+    skip_s3_checksum            = true
+    use_lockfile                = true
+  }
 }
 
 provider "yandex" {

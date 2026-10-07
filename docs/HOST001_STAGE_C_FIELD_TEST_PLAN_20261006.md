@@ -3,12 +3,12 @@
 | Поле | Значение |
 |---|---|
 | Дата | 6 октября 2026 |
-| Статус | IMPLEMENTATION_CANDIDATE / NO APPLY / OWNER APPROVAL REQUIRED |
+| Статус | OWNER_AUTHORIZED / APPLY NOT_RUN / REVIEWED BOUNDED EXECUTION PATH |
 | Baseline main | `5e34579b06b80df739ed0f625bce2901f71e1bbe` |
 | Application schema | `20261002_0023` unchanged |
 | Stage B | MERGED via PR #74; exact-head CI/review passed |
 | Production migration | NOT_AUTHORIZED |
-| Yandex billable resources | NOT_CREATED |
+| Yandex billable resources | NOT_CREATED; owner-authorized Stage C apply pending execution |
 | Real-data Alice | CLOSED |
 | Legal policy | DRAFT / NOT_ACTIVE |
 
@@ -18,7 +18,7 @@ Stage C prepares one short, synthetic, Russia-hosted field test for the Stage B 
 
 The repository now includes the **no-apply provisioning path** required to review that future test: temporary resources are absent by default and appear only with `field_test_resources_enabled=true`. The Stage C profile requires `foundation_deletion_protection=false` so the short test can be torn down inside its approved billing window.
 
-This document and code path do **not** authorize Terraform apply, resource creation, production SQL/dump/restore, Render/Neon configuration changes, domain cutover, email delivery, Alice/Yandex AI calls, legal activation or payment activation.
+Owner authorization recorded on 2026-10-07 permits only the bounded Stage C synthetic Terraform apply up to **1,000 RUB total / <=4 hours**. It does **not** authorize production SQL/dump/restore, Render/Neon configuration changes, MIG-001, domain cutover, email delivery, real-data Alice/Yandex AI calls, legal activation or payment activation.
 
 ## 2. Trudvsem decision
 
@@ -47,7 +47,7 @@ Verified against current public Yandex Cloud documentation and the pinned Terraf
 - Yandex documents PostgreSQL clusters with two or more hosts as automatically highly available. The initial single-host profile intentionally remains non-HA.
 - Repository pin `yandex-cloud/yandex = 0.229.0` documents PostgreSQL `18` as an allowed `yandex_mdb_postgresql_cluster.config.version`.
 
-Still NOT_RUN: account quota/availability check, credentialed Terraform plan/apply, actual resource creation and real account invoice estimate.
+Execution evidence as of 2026-10-07: account quota checks PASS for Compute, Managed Databases and VPC/public IP; credentialed Terraform plan PASS on main `085c6f4f44083427b3e8ab6ed37e646061a076a6`; Terraform apply/resource creation remains NOT_RUN.
 
 Official references:
 
@@ -82,6 +82,8 @@ Temporary Stage C resources are now part of the reviewed Terraform path and rema
 
 The exact non-secret profile is documented in `terraform.stage-c.tfvars.example`. If account quota or exact price makes the reviewed resources inappropriate, stop and return for owner approval instead of silently changing topology.
 
+A control-plane prerequisite is intentionally outside the Terraform-managed resource graph: one dedicated private Object Storage bucket for remote Terraform state plus one static access key for the dedicated Stage C Terraform service account. The bucket stores only the Stage C state object (and any provider lock object), must have restricted access, and is removed manually after verified teardown and evidence capture. It is not application backup storage.
+
 No load balancer, second app VM, replica DB host, Data Transfer, logical replication, public DB IP, production domain or production email provider is part of this field test.
 
 ## 5. Cost model and approval gate
@@ -106,9 +108,11 @@ The recurring owner budget remains **10,000–15,000 RUB/month excluding AI/prov
 3. if the quote exceeds 15,000 RUB/month, stop and revise the design with the owner;
 4. do not treat a billing alert as a technical hard cap.
 
-Recommended authorization ceiling for the short Stage C field test: **500 RUB total**. This is an owner-approval ceiling, not an automatic Yandex spending limiter. Before apply, if the console/plan estimate for the field-test window can exceed 500 RUB, stop and request a new approval.
+Owner authorization update (2026-10-07): the Stage C field-test ceiling is **1,000 RUB total**, doubled from the earlier 500 RUB planning recommendation. This is an owner-approval ceiling, not an automatic Yandex spending limiter. Before or during apply, if the account-specific estimate can exceed 1,000 RUB, stop and request a new approval.
 
 Target test window: up to 4 hours of primary resources, with the disposable restore cluster kept only as long as needed for the restore test. If the test cannot be completed within the approved window, stop rather than silently extending billable runtime.
+
+The automated execution path is intentionally tighter than the owner ceiling: the apply workflow allows a 15–90 minute synthetic hold (default 60). The recovery workflow caps the hold against an absolute destroy-start deadline 150 minutes after the source apply run begins. Destroy planning is source-time-bounded, and the provider destroy apply is forcibly stopped no later than +225 minutes, leaving a 15-minute owner-boundary reserve inside the <=4 hour resource-lifetime ceiling.
 
 Pricing references:
 
@@ -133,7 +137,12 @@ All conditions below are required:
 9. Stage C variables explicitly use `field_test_resources_enabled=true` and `foundation_deletion_protection=false`; a Terraform precondition rejects the temporary field-test profile if deletion protection would block teardown;
 10. both PostgreSQL passwords are supplied through protected environment variables rather than tfvars/Git;
 11. `REAL_DATA_SUPPORTED=False` and legal DRAFT unchanged;
-12. rollback/teardown commands reviewed before creation.
+12. rollback/teardown commands reviewed before creation;
+13. a dedicated private Yandex Object Storage bucket exists for Terraform remote state, with restricted access and no production/user data; the owner-created bucket is outside the Stage C Terraform-managed resource graph and is included in the 1,000 RUB field-test ceiling;
+14. protected `YC_STAGE_C_TFSTATE_BUCKET`, `YC_STAGE_C_TFSTATE_ACCESS_KEY` and `YC_STAGE_C_TFSTATE_SECRET_KEY` values are present in the `stage-c-yandex` GitHub Environment; the static access key belongs to the dedicated Stage C Terraform service account;
+15. the apply workflow initializes that remote backend with S3 lockfile state locking and dispatches the separate teardown workflow **before** the billable Terraform apply begins. Apply runs and recovery runs use separate non-cancelling concurrency groups so a new apply cannot replace the already-dispatched recovery run. The Terraform state lock remains the serialization boundary for provider operations; cancellation during apply leaves recoverable remote state and an independent recovery path.
+
+Execution principal for the bounded apply: use the dedicated Stage C service account only in the selected folder. During apply/teardown it must have the temporary folder-scoped `editor` role for resource lifecycle plus `resource-manager.admin` for the reviewed IAM bindings. Do not grant cloud-wide `admin`. Revoke these write roles after teardown (or reduce the account back to read-only access).
 
 ## 7. Field-test sequence
 
@@ -145,7 +154,9 @@ All conditions below are required:
 - Confirm that the plan contains the single-host foundation **plus** only these Stage C extras: private bounded backup bucket, `storage.uploader` binding, separate Lockbox/static key, and one private disposable PG18 restore cluster/user/database.
 - Confirm `foundation_deletion_protection=false` in the field-test plan. If deletion protection remains enabled, the repository precondition must stop the plan/apply.
 - Do not continue if the plan proposes a second permanent DB host, public DB IP, unexpected IAM grants or unrelated resources.
-- Apply only after the owner approves the exact plan/cost.
+- Apply only after the owner approves the exact plan/cost. That owner approval was recorded on 2026-10-07 with a 1,000 RUB total ceiling and <=4 hour boundary.
+- Initialize the dedicated Yandex Object Storage S3 backend before the fresh plan. The remote state key is fixed to `host001/stage-c.tfstate` and the bucket name/credentials come only from protected GitHub Environment secrets.
+- Dispatch the separate recovery-teardown workflow after the fresh create-only plan passes but **before** Terraform apply begins. Apply and teardown use separate non-cancelling concurrency groups so the automatic recovery cannot be displaced by a later apply dispatch. Before checkout or protected credentials are used, teardown validates that `source_run_id` is the reviewed Stage C apply workflow on `main`, accepts either the bare or ref-qualified workflow path, and requires `head_sha` to match `source_sha`. Monitoring requests have explicit connection/transfer deadlines and retry transient GitHub API failures. After a successful apply it waits only within the bounded synthetic field window and absolute teardown reserve; after failure/cancellation it skips the window and tears down tracked resources immediately. If a hard-cancelled apply leaves the S3 state lock behind, teardown may perform exactly one guarded `terraform force-unlock` only after the exact source apply run is confirmed terminal **and** a fresh GitHub Actions query proves that no other Stage C apply run is active or queued, then re-plan the reviewed destroy.
 
 ### 7.2 Controlled startup
 
@@ -212,8 +223,9 @@ Before the approved field-test window expires choose exactly one reviewed outcom
 
 - stop test services;
 - keep `field_test_resources_enabled=true` and `foundation_deletion_protection=false`;
+- recover the encrypted Terraform state from the apply run;
 - run and review `terraform plan -destroy`;
-- run the authorized `terraform destroy`;
+- apply that reviewed destroy plan in the dedicated teardown workflow;
 - verify the app VM, public IP, both PostgreSQL clusters, temporary static key/Lockbox secret and backup bucket are gone;
 - verify no unexpected billable resource remains.
 
@@ -225,6 +237,8 @@ Before the approved field-test window expires choose exactly one reviewed outcom
 - verify no temporary field-test resource remains.
 
 Do not improvise a third path or silently extend the test window. Production Render/Neon remains untouched by Stage C.
+
+Cancellation/recovery rule for the automated path: the dedicated Yandex Object Storage backend is initialized with `use_lockfile=true` before apply and the separate teardown workflow is dispatched before apply. Apply and teardown use separate non-cancelling GitHub Actions concurrency groups so the recovery dispatch is not a pending member of the apply queue; Terraform's remote state lock serializes provider operations. Before any guarded stale-lock removal, recovery proves the exact source run is terminal and queries the apply workflow to confirm that no other apply run is active or queued. The recovery job validates the exact source run before checkout, bounds every GitHub API request, and enforces source-derived destroy deadlines: plan work must begin within the reserved window and provider deletion is bounded to end attempts by +225 minutes from source apply start. The apply summary records the exact commit and apply run ID. If the teardown workflow is cancelled or otherwise fails, rerun `HOST-001 Stage C recovery teardown` from `main` with acknowledgement `DESTROY_STAGE_C_SYNTHETIC_1000_RUB`, the recorded apply commit/run ID and `hold_minutes=0`. The recovery workflow checks out the exact apply commit, opens the same remote state backend, reviews a delete-only allowlisted destroy plan and applies that plan.
 
 ## 8. Acceptance evidence for Stage C field test
 
@@ -239,6 +253,7 @@ A future Stage C execution can be marked PASS only with evidence for:
 - encrypted backup exported off-VM and authenticated;
 - isolated PG18 restore successful;
 - proxy spoofing test blocked;
+- remote Terraform state remained recoverable through apply/teardown and the dedicated backend bucket/static key were removed after evidence capture;
 - teardown verified;
 - no production data/config change;
 - Alice/Yandex AI calls 0;
@@ -263,11 +278,11 @@ Stop before or during apply if any of the following occurs:
 
 ## 10. Explicit NOT_RUN after this planning PR
 
-Until separate owner approval:
+Current execution status:
 
-- Yandex quota/account SKU check: NOT_RUN;
-- credentialed Terraform plan: NOT_RUN;
-- Terraform apply/resource creation: NOT_RUN;
+- Yandex quota/account check: PASS on 2026-10-07 for the reviewed Compute, Managed Databases and VPC/public-IP requirements;
+- credentialed Terraform plan: PASS on main `085c6f4f44083427b3e8ab6ed37e646061a076a6` via bounded plan-only workflow run #4;
+- Terraform apply/resource creation: OWNER_AUTHORIZED on 2026-10-07 up to 1,000 RUB total / <=4 hours; NOT_RUN until the bounded apply workflow is reviewed and dispatched;
 - synthetic PG18 field test: NOT_RUN;
 - off-VM real Object Storage upload: NOT_RUN;
 - isolated managed PG18 restore: NOT_RUN;
