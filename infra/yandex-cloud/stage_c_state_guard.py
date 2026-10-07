@@ -203,10 +203,7 @@ def check_no_live_state(bucket: str) -> None:
 
     if live:
         details = ", ".join(f"{key} ({count} managed)" for key, count in live)
-        raise GuardError(
-            "Refusing a new Stage C apply because durable Terraform state still "
-            f"owns resources: {details}"
-        )
+        raise GuardError(f"Refusing a new Stage C apply because durable Terraform state still owns resources: {details}")
 
     print("Stage C durable-state overlap guard: no managed resources found.")
 
