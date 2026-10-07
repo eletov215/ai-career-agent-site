@@ -110,6 +110,8 @@ Owner authorization update (2026-10-07): the Stage C field-test ceiling is **1,0
 
 Target test window: up to 4 hours of primary resources, with the disposable restore cluster kept only as long as needed for the restore test. If the test cannot be completed within the approved window, stop rather than silently extending billable runtime.
 
+The automated execution path is intentionally tighter than the owner ceiling: the apply workflow allows a 15–120 minute synthetic hold (default 90), with job timeouts chosen to reserve creation and teardown margin inside the <=4 hour resource-lifetime boundary.
+
 Pricing references:
 
 - https://yandex.cloud/ru/docs/compute/pricing
