@@ -164,6 +164,8 @@ class Host001PackageTests(unittest.TestCase):
         self.assertIn('TFSTATE_KEY="host001/stage-c-${GITHUB_RUN_ID}.tfstate"', workflow)
         self.assertIn('-backend-config="bucket=$TFSTATE_BUCKET"', workflow)
         self.assertIn('-backend-config="key=$TFSTATE_KEY"', workflow)
+        self.assertIn("Refuse overlapping Stage C lifecycle from durable remote state", workflow)
+        self.assertIn("stage_c_state_guard.py --bucket", workflow)
         self.assertIn("host001-stage-c-teardown.yml/dispatches", workflow)
         self.assertIn("AUTO_TEARDOWN_STAGE_C_SYNTHETIC", workflow)
         self.assertNotIn("actions/upload-artifact", workflow)
@@ -209,7 +211,12 @@ class Host001PackageTests(unittest.TestCase):
         self.assertIn("destroy_apply_deadline", workflow)
         self.assertIn('STAGE_C_ACKNOWLEDGEMENT: ${{ inputs.acknowledgement }}', workflow)
         self.assertIn('if [ "$STAGE_C_ACKNOWLEDGEMENT" = "DESTROY_STAGE_C_SYNTHETIC_1000_RUB" ]; then', workflow)
-        self.assertIn("manual_recovery_started", workflow)
+        self.assertIn('echo "MANUAL_RECOVERY_STARTED_EPOCH=$(date -u +%s)" >> "$GITHUB_ENV"', workflow)
+        self.assertIn('MANUAL_RECOVERY_STARTED_EPOCH: ${{ env.MANUAL_RECOVERY_STARTED_EPOCH }}', workflow)
+        self.assertIn('TFSTATE_KEY="host001/stage-c.tfstate"', workflow)
+        self.assertIn('TFSTATE_KEY="host001/stage-c-${SOURCE_RUN_ID}.tfstate"', workflow)
+        self.assertIn("Manual recovery setup deadline reached before Terraform init.", workflow)
+        self.assertIn("Manual recovery setup deadline reached before Terraform validate.", workflow)
         self.assertIn('deadline_mode="manual-recovery"', workflow)
         self.assertIn("Manual recovery destroy-plan deadline reached", workflow)
         self.assertIn("Manual recovery destroy deadline reached before destroy apply.", workflow)
@@ -233,8 +240,10 @@ class Host001PackageTests(unittest.TestCase):
         self.assertNotIn("\n  push:", workflow)
         self.assertNotIn("\n  pull_request:", workflow)
 
+        admission_clock_index = workflow.index('echo "MANUAL_RECOVERY_STARTED_EPOCH=$(date -u +%s)" >> "$GITHUB_ENV"')
         validate_index = workflow.index("Validate source apply run identity before checkout")
         checkout_index = workflow.index("      - uses: actions/checkout@")
+        self.assertLess(admission_clock_index, validate_index)
         self.assertLess(validate_index, checkout_index)
 
     def test_stage_c_apply_guard_rejects_remote_recovery_regressions(self):
@@ -260,6 +269,10 @@ class Host001PackageTests(unittest.TestCase):
             "fixed global state key": original.replace(
                 'TFSTATE_KEY="host001/stage-c-${GITHUB_RUN_ID}.tfstate"',
                 'TFSTATE_KEY="host001/stage-c.tfstate"',
+            ),
+            "missing durable overlap guard": original.replace(
+                "Refuse overlapping Stage C lifecycle from durable remote state",
+                "Allow overlapping Stage C lifecycle",
             ),
             "missing teardown dispatch": original.replace(
                 "host001-stage-c-teardown.yml/dispatches",
@@ -318,6 +331,14 @@ class Host001PackageTests(unittest.TestCase):
                 'deadline_mode="manual-recovery"',
                 'deadline_mode="automatic-owner-window"',
             ),
+            "missing manual admission clock": original.replace(
+                'echo "MANUAL_RECOVERY_STARTED_EPOCH=$(date -u +%s)" >> "$GITHUB_ENV"',
+                'echo "MANUAL_RECOVERY_STARTED_EPOCH=" >> "$GITHUB_ENV"',
+            ),
+            "missing guarded legacy state key": original.replace(
+                'TFSTATE_KEY="host001/stage-c.tfstate"',
+                'TFSTATE_KEY="host001/stage-c-legacy-disabled.tfstate"',
+            ),
             "missing lock timeout": original.replace(
                 "-lock-timeout=10m",
                 "-lock-timeout=0s",
@@ -367,6 +388,23 @@ class Host001PackageTests(unittest.TestCase):
                 (local_workflows / teardown_path.name).write_text(mutated, encoding="utf-8")
                 errors = validate(root)
                 self.assertTrue(errors, label)
+
+    def test_stage_c_state_guard_detects_managed_remote_state(self):
+        guard = (ROOT / "infra/yandex-cloud/stage_c_state_guard.py").read_text(
+            encoding="utf-8"
+        )
+        for marker in (
+            'PREFIX = "host001/stage-c"',
+            '("list-type", "2")',
+            'key.endswith(".tfstate")',
+            'resource.get("mode", "managed") != "managed"',
+            "Refusing a new Stage C apply because durable Terraform state still owns resources",
+            "AWS_ACCESS_KEY_ID",
+            "AWS_SECRET_ACCESS_KEY",
+        ):
+            self.assertIn(marker, guard)
+        self.assertNotIn("print(access_key", guard)
+        self.assertNotIn("print(secret_key", guard)
 
     def test_yandex_proxy_rebuilds_trusted_client_header(self):
         caddy = (ROOT / "infra/yandex-cloud/Caddyfile").read_text(encoding="utf-8")
