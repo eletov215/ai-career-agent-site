@@ -364,6 +364,7 @@ jobs:
             echo "### HOST-001 Stage C bounded apply"
             echo
             printf -- '- Commit: `%s`\n' "$GITHUB_SHA"
+            printf -- '- Apply run ID: `%s`\n' "$GITHUB_RUN_ID"
             echo "- Owner ceiling: **1,000 RUB total / <=4 hours**"
             echo "- Synthetic-only resources: **LIVE**"
             printf -- '- Public IPv4: `%s`\n' "$PUBLIC_IP"
