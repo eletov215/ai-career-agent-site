@@ -1,31 +1,32 @@
-name: HOST-001 Stage C bounded apply + automatic teardown
+name: HOST-001 Stage C bounded apply
 
 "on":
   workflow_dispatch:
     inputs:
       acknowledgement:
-        description: "Type APPLY_STAGE_C_SYNTHETIC_1000_RUB_4H. Creates billable synthetic-only resources and tears them down automatically."
+        description: "Type APPLY_STAGE_C_SYNTHETIC_1000_RUB_4H. Creates only the reviewed synthetic Stage C resources."
         required: true
         type: string
       hold_minutes:
-        description: "Synthetic field-test hold window after apply. Allowed 15-150 minutes."
+        description: "Automatic teardown delay after recovery state is durable. Allowed 15-150 minutes."
         required: true
         default: "120"
         type: string
 
 permissions:
   contents: read
+  actions: write
 
 concurrency:
   group: host001-stage-c-bounded-apply
   cancel-in-progress: false
 
 jobs:
-  apply_and_teardown:
-    name: Bounded Stage C apply and deterministic teardown
+  apply:
+    name: Bounded Stage C apply and recovery handoff
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
-    timeout-minutes: 235
+    timeout-minutes: 55
     environment: stage-c-yandex
 
     env:
@@ -107,10 +108,11 @@ jobs:
           terraform -chdir=infra/yandex-cloud init -backend=false -input=false
           terraform -chdir=infra/yandex-cloud validate
 
-      - name: Controlled Stage C lifecycle
+      - name: Fresh reviewed plan and owner-authorized apply
+        id: apply
+        continue-on-error: true
         shell: bash
         env:
-          STAGE_C_HOLD_MINUTES: ${{ inputs.hold_minutes }}
           TF_VAR_cloud_id: ${{ secrets.YC_STAGE_C_CLOUD_ID }}
           TF_VAR_folder_id: ${{ secrets.YC_STAGE_C_FOLDER_ID }}
           TF_VAR_admin_cidr: ${{ secrets.YC_STAGE_C_ADMIN_CIDR }}
@@ -119,37 +121,10 @@ jobs:
           TF_VAR_field_test_restore_password: ${{ secrets.YC_STAGE_C_RESTORE_PASSWORD }}
         run: |
           set -euo pipefail
-
           plan_file="$RUNNER_TEMP/stage-c-apply.tfplan"
           plan_json="$RUNNER_TEMP/stage-c-apply-plan.json"
           plan_log="$RUNNER_TEMP/stage-c-apply-plan.stdout"
           apply_log="$RUNNER_TEMP/stage-c-apply.stdout"
-          destroy_plan="$RUNNER_TEMP/stage-c-destroy.tfplan"
-          destroy_json="$RUNNER_TEMP/stage-c-destroy-plan.json"
-          destroy_log="$RUNNER_TEMP/stage-c-destroy.stdout"
-          apply_started=0
-          teardown_complete=0
-
-          cleanup() {
-            status=$?
-            trap - EXIT INT TERM
-            set +e
-            if [ "$apply_started" -eq 1 ] && [ "$teardown_complete" -eq 0 ]; then
-              echo "Emergency cleanup: attempting Terraform destroy before runner exit."
-              terraform -chdir=infra/yandex-cloud destroy                 -auto-approve                 -input=false                 -lock=false                 -no-color >"$destroy_log" 2>&1
-              destroy_status=$?
-              if [ "$destroy_status" -ne 0 ]; then
-                echo "EMERGENCY TEARDOWN FAILED. Inspect Yandex Cloud immediately for HOST-001 resources."
-                status=1
-              else
-                echo "Emergency teardown completed."
-              fi
-            fi
-            rm -f               "$plan_file"               "$plan_json"               "$plan_log"               "$apply_log"               "$destroy_plan"               "$destroy_json"               "$destroy_log"               "$RUNNER_TEMP/yc-stage-c-key.json"
-            exit "$status"
-          }
-          trap cleanup EXIT
-          trap 'exit 130' INT TERM
 
           required=(
             TF_VAR_cloud_id
@@ -170,11 +145,17 @@ jobs:
           test "${#TF_VAR_field_test_restore_password}" -ge 16
 
           set +e
-          terraform -chdir=infra/yandex-cloud plan             -input=false             -lock=false             -no-color             -detailed-exitcode             -out="$plan_file" >"$plan_log" 2>&1
+          terraform -chdir=infra/yandex-cloud plan \
+            -input=false \
+            -lock=false \
+            -no-color \
+            -detailed-exitcode \
+            -out="$plan_file" >"$plan_log" 2>&1
           plan_code=$?
           set -e
           if [ "$plan_code" -ne 2 ]; then
             echo "Refusing apply: fresh Stage C plan must contain reviewed create changes (exit 2)."
+            echo "state_present=false" >> "$GITHUB_OUTPUT"
             exit 1
           fi
 
@@ -193,6 +174,7 @@ jobs:
             )
           ' "$plan_json" >/dev/null || {
             echo "Refusing apply: plan contains a destructive or replacement action."
+            echo "state_present=false" >> "$GITHUB_OUTPUT"
             exit 1
           }
 
@@ -205,85 +187,147 @@ jobs:
             ] | length == 0
           ' "$plan_json" >/dev/null || {
             echo "Refusing apply: plan contains a resource outside the reviewed Stage C allowlist."
+            echo "state_present=false" >> "$GITHUB_OUTPUT"
             exit 1
           }
 
           echo "Fresh credentialed create-only plan passed. Starting owner-authorized Stage C apply."
-          apply_started=1
           set +e
-          terraform -chdir=infra/yandex-cloud apply             -auto-approve             -input=false             -lock=false             -no-color             "$plan_file" >"$apply_log" 2>&1
+          terraform -chdir=infra/yandex-cloud apply \
+            -auto-approve \
+            -input=false \
+            -lock=false \
+            -no-color \
+            "$plan_file" >"$apply_log" 2>&1
           apply_code=$?
           set -e
+
+          if [ -s infra/yandex-cloud/terraform.tfstate ]; then
+            echo "state_present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "state_present=false" >> "$GITHUB_OUTPUT"
+          fi
+          echo "apply_code=$apply_code" >> "$GITHUB_OUTPUT"
+
           if [ "$apply_code" -ne 0 ]; then
-            echo "Terraform apply failed. Apply output is withheld from logs; emergency teardown will run."
+            echo "Terraform apply failed. Output is withheld; durable recovery will be attempted if state exists."
             exit "$apply_code"
           fi
 
-          public_ip="$(terraform -chdir=infra/yandex-cloud output -raw app_public_ipv4)"
-          pg_fqdn="$(terraform -chdir=infra/yandex-cloud output -raw postgresql_rw_fqdn)"
-          runtime_secret="$(terraform -chdir=infra/yandex-cloud output -raw runtime_lockbox_secret_id)"
-          backup_bucket="$(terraform -chdir=infra/yandex-cloud output -raw field_test_backup_bucket)"
-          backup_secret="$(terraform -chdir=infra/yandex-cloud output -raw field_test_backup_lockbox_secret_id)"
-          restore_fqdn="$(terraform -chdir=infra/yandex-cloud output -raw field_test_restore_rw_fqdn)"
+          echo "public_ip=$(terraform -chdir=infra/yandex-cloud output -raw app_public_ipv4)" >> "$GITHUB_OUTPUT"
+          echo "pg_fqdn=$(terraform -chdir=infra/yandex-cloud output -raw postgresql_rw_fqdn)" >> "$GITHUB_OUTPUT"
+          echo "runtime_secret=$(terraform -chdir=infra/yandex-cloud output -raw runtime_lockbox_secret_id)" >> "$GITHUB_OUTPUT"
+          echo "backup_bucket=$(terraform -chdir=infra/yandex-cloud output -raw field_test_backup_bucket)" >> "$GITHUB_OUTPUT"
+          echo "backup_secret=$(terraform -chdir=infra/yandex-cloud output -raw field_test_backup_lockbox_secret_id)" >> "$GITHUB_OUTPUT"
+          echo "restore_fqdn=$(terraform -chdir=infra/yandex-cloud output -raw field_test_restore_rw_fqdn)" >> "$GITHUB_OUTPUT"
 
-          echo "STAGE C RESOURCES ARE LIVE."
-          echo "Public IPv4: $public_ip"
-          echo "PostgreSQL RW FQDN: $pg_fqdn"
-          echo "Runtime Lockbox secret ID: $runtime_secret"
-          echo "Field-test backup bucket: $backup_bucket"
-          echo "Field-test backup Lockbox secret ID: $backup_secret"
-          echo "Restore PostgreSQL RW FQDN: $restore_fqdn"
-          echo "Automatic teardown starts after $STAGE_C_HOLD_MINUTES hold minutes."
-
-          {
-            echo "### HOST-001 Stage C bounded apply"
-            echo
-            echo "- Commit: `$GITHUB_SHA`"
-            echo "- Owner ceiling: **1,000 RUB total / <=4 hours**"
-            echo "- Synthetic-only resources: **LIVE during this workflow only**"
-            echo "- Public IPv4: `$public_ip`"
-            echo "- PostgreSQL RW FQDN: `$pg_fqdn`"
-            echo "- Runtime Lockbox secret ID: `$runtime_secret`"
-            echo "- Backup bucket: `$backup_bucket`"
-            echo "- Backup Lockbox secret ID: `$backup_secret`"
-            echo "- Restore PostgreSQL RW FQDN: `$restore_fqdn`"
-            echo "- Production data / Render / Neon / MIG-001 / real-data AI / email: **FORBIDDEN**"
-            echo "- Automatic teardown hold: **$STAGE_C_HOLD_MINUTES minutes**"
-          } >> "$GITHUB_STEP_SUMMARY"
-
-          remaining=$((STAGE_C_HOLD_MINUTES * 60))
-          while [ "$remaining" -gt 0 ]; do
-            chunk=900
-            if [ "$remaining" -lt "$chunk" ]; then
-              chunk="$remaining"
-            fi
-            echo "Stage C synthetic field window: $(( (remaining + 59) / 60 )) minute(s) remaining."
-            sleep "$chunk"
-            remaining=$((remaining - chunk))
-          done
-
-          echo "Hold window ended. Building reviewed destroy plan."
-          set +e
-          terraform -chdir=infra/yandex-cloud plan             -destroy             -input=false             -lock=false             -no-color             -detailed-exitcode             -out="$destroy_plan" >"$destroy_log" 2>&1
-          destroy_plan_code=$?
-          set -e
-          if [ "$destroy_plan_code" -ne 2 ]; then
-            echo "Expected destroy changes were not produced; emergency teardown will run."
+      - name: Encrypt durable recovery state
+        id: encrypt_state
+        if: always() && steps.apply.outputs.state_present == 'true'
+        shell: bash
+        env:
+          TFSTATE_PASSPHRASE: ${{ secrets.YC_STAGE_C_TFSTATE_PASSPHRASE }}
+        run: |
+          set -euo pipefail
+          test -n "$TFSTATE_PASSPHRASE" || {
+            echo "Missing protected Stage C Terraform-state passphrase."
             exit 1
+          }
+          test -s infra/yandex-cloud/terraform.tfstate
+          umask 077
+          openssl enc -aes-256-cbc -salt -pbkdf2 -iter 200000 \
+            -in infra/yandex-cloud/terraform.tfstate \
+            -out "$RUNNER_TEMP/stage-c-tfstate.enc" \
+            -pass env:TFSTATE_PASSPHRASE
+          test -s "$RUNNER_TEMP/stage-c-tfstate.enc"
+
+      - name: Upload encrypted recovery state
+        id: upload_state
+        if: always() && steps.apply.outputs.state_present == 'true' && steps.encrypt_state.outcome == 'success'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: host001-stage-c-state-${{ github.run_id }}
+          path: ${{ runner.temp }}/stage-c-tfstate.enc
+          if-no-files-found: error
+          retention-days: 1
+          compression-level: 0
+
+      - name: Dispatch cancellation-surviving teardown
+        id: dispatch_teardown
+        if: always() && steps.apply.outputs.state_present == 'true' && steps.upload_state.outcome == 'success'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          APPLY_OUTCOME: ${{ steps.apply.outcome }}
+          REQUESTED_HOLD_MINUTES: ${{ inputs.hold_minutes }}
+        run: |
+          set -euo pipefail
+          if [ "$APPLY_OUTCOME" = "success" ]; then
+            delay="$REQUESTED_HOLD_MINUTES"
+          else
+            delay="0"
           fi
+          payload="$(
+            python - "$GITHUB_SHA" "$GITHUB_RUN_ID" "$delay" <<'PY'
+          import json, sys
+          sha, run_id, delay = sys.argv[1:]
+          print(json.dumps({
+              "ref": "main",
+              "inputs": {
+                  "acknowledgement": "AUTO_TEARDOWN_STAGE_C_SYNTHETIC",
+                  "source_sha": sha,
+                  "source_run_id": run_id,
+                  "delay_minutes": delay,
+              },
+          }))
+          PY
+          )"
+          curl --fail-with-body --silent --show-error \
+            -X POST \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "https://api.github.com/repos/$GITHUB_REPOSITORY/actions/workflows/host001-stage-c-teardown.yml/dispatches" \
+            -d "$payload"
+          echo "teardown_delay_minutes=$delay" >> "$GITHUB_OUTPUT"
+
+      - name: Immediate local fallback teardown
+        id: fallback_teardown
+        if: always() && steps.apply.outputs.state_present == 'true' && steps.dispatch_teardown.outcome != 'success'
+        shell: bash
+        env:
+          TF_VAR_cloud_id: ${{ secrets.YC_STAGE_C_CLOUD_ID }}
+          TF_VAR_folder_id: ${{ secrets.YC_STAGE_C_FOLDER_ID }}
+          TF_VAR_admin_cidr: ${{ secrets.YC_STAGE_C_ADMIN_CIDR }}
+          TF_VAR_ssh_public_key: ${{ secrets.YC_STAGE_C_SSH_PUBLIC_KEY }}
+          TF_VAR_postgresql_app_password: ${{ secrets.YC_STAGE_C_POSTGRES_PASSWORD }}
+          TF_VAR_field_test_restore_password: ${{ secrets.YC_STAGE_C_RESTORE_PASSWORD }}
+        run: |
+          set -euo pipefail
+          destroy_plan="$RUNNER_TEMP/stage-c-fallback-destroy.tfplan"
+          destroy_json="$RUNNER_TEMP/stage-c-fallback-destroy.json"
+          destroy_log="$RUNNER_TEMP/stage-c-fallback-destroy.stdout"
+
+          echo "Durable teardown handoff failed; performing immediate local fallback teardown."
+          set +e
+          terraform -chdir=infra/yandex-cloud plan \
+            -destroy \
+            -input=false \
+            -lock=false \
+            -no-color \
+            -detailed-exitcode \
+            -out="$destroy_plan" >"$destroy_log" 2>&1
+          plan_code=$?
+          set -e
+          test "$plan_code" -eq 2
 
           terraform -chdir=infra/yandex-cloud show -json "$destroy_plan" > "$destroy_json"
-
           jq -e '
             all(
               .resource_changes[]?;
               all(.change.actions[]; . == "delete" or . == "read" or . == "no-op")
             )
-          ' "$destroy_json" >/dev/null || {
-            echo "Destroy plan contains an unexpected non-delete action; emergency teardown will run."
-            exit 1
-          }
-
+          ' "$destroy_json" >/dev/null
           jq -e '
             [
               .resource_changes[]?
@@ -291,45 +335,82 @@ jobs:
                   "^(data\\.yandex_compute_image\\.ubuntu|yandex_vpc_network\\.main|yandex_vpc_subnet\\.(app|db_secondary)|yandex_vpc_security_group\\.(app|database)|yandex_vpc_address\\.app|yandex_iam_service_account\\.app|yandex_lockbox_secret\\.runtime|yandex_lockbox_secret_iam_member\\.runtime_payload|yandex_mdb_postgresql_cluster\\.main|yandex_mdb_postgresql_user\\.app|yandex_mdb_postgresql_database\\.app|yandex_compute_instance\\.app|yandex_resourcemanager_folder_iam_member\\.field_test_storage_uploader\\[0\\]|yandex_lockbox_secret\\.field_test_storage\\[0\\]|yandex_lockbox_secret_iam_member\\.field_test_storage_payload\\[0\\]|yandex_iam_service_account_static_access_key\\.field_test_storage\\[0\\]|yandex_storage_bucket\\.field_test\\[0\\]|yandex_mdb_postgresql_cluster\\.field_test_restore\\[0\\]|yandex_mdb_postgresql_user\\.field_test_restore\\[0\\]|yandex_mdb_postgresql_database\\.field_test_restore\\[0\\])$"
                 ) | not)
             ] | length == 0
-          ' "$destroy_json" >/dev/null || {
-            echo "Destroy plan contains a resource outside the reviewed Stage C allowlist."
-            exit 1
-          }
+          ' "$destroy_json" >/dev/null
 
-          set +e
-          terraform -chdir=infra/yandex-cloud apply             -auto-approve             -input=false             -lock=false             -no-color             "$destroy_plan" >"$destroy_log" 2>&1
-          destroy_code=$?
-          set -e
-          if [ "$destroy_code" -ne 0 ]; then
-            echo "Normal teardown failed; emergency teardown will run."
-            exit "$destroy_code"
-          fi
+          terraform -chdir=infra/yandex-cloud apply \
+            -auto-approve \
+            -input=false \
+            -lock=false \
+            -no-color \
+            "$destroy_plan" >"$destroy_log" 2>&1
 
           managed_count="$(terraform -chdir=infra/yandex-cloud state list 2>/dev/null | grep -vc '^data\.' || true)"
-          test "$managed_count" -eq 0 || {
-            echo "Managed resources remain in Terraform state after teardown."
-            exit 1
-          }
+          test "$managed_count" -eq 0
+          echo "Immediate local fallback teardown completed."
 
-          teardown_complete=1
-          apply_started=0
-          echo "Stage C teardown verified: no managed Terraform resources remain."
-
-      - name: Record completed bounded lifecycle
-        if: success()
+      - name: Record Stage C handoff
+        if: always() && steps.apply.outcome == 'success' && steps.dispatch_teardown.outcome == 'success'
         shell: bash
+        env:
+          PUBLIC_IP: ${{ steps.apply.outputs.public_ip }}
+          PG_FQDN: ${{ steps.apply.outputs.pg_fqdn }}
+          RUNTIME_SECRET: ${{ steps.apply.outputs.runtime_secret }}
+          BACKUP_BUCKET: ${{ steps.apply.outputs.backup_bucket }}
+          BACKUP_SECRET: ${{ steps.apply.outputs.backup_secret }}
+          RESTORE_FQDN: ${{ steps.apply.outputs.restore_fqdn }}
+          TEARDOWN_DELAY: ${{ steps.dispatch_teardown.outputs.teardown_delay_minutes }}
         run: |
           {
+            echo "### HOST-001 Stage C bounded apply"
             echo
-            echo "### Teardown result"
-            echo
-            echo "- Terraform managed resources after bounded lifecycle: **0**"
-            echo "- Apply/destroy boundary: **completed in the same ephemeral runner**"
-            echo "- No Terraform state artifact was uploaded."
+            printf -- '- Commit: `%s`\n' "$GITHUB_SHA"
+            echo "- Owner ceiling: **1,000 RUB total / <=4 hours**"
+            echo "- Synthetic-only resources: **LIVE**"
+            printf -- '- Public IPv4: `%s`\n' "$PUBLIC_IP"
+            printf -- '- PostgreSQL RW FQDN: `%s`\n' "$PG_FQDN"
+            printf -- '- Runtime Lockbox secret ID: `%s`\n' "$RUNTIME_SECRET"
+            printf -- '- Backup bucket: `%s`\n' "$BACKUP_BUCKET"
+            printf -- '- Backup Lockbox secret ID: `%s`\n' "$BACKUP_SECRET"
+            printf -- '- Restore PostgreSQL RW FQDN: `%s`\n' "$RESTORE_FQDN"
+            echo "- Production data / Render / Neon / MIG-001 / real-data AI / email: **FORBIDDEN**"
+            echo "- Encrypted Terraform recovery state: **uploaded with 1-day retention**"
+            echo "- Separate cancellation-surviving teardown workflow: **dispatched**"
+            echo "- Automatic teardown delay: **$TEARDOWN_DELAY minutes**"
           } >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Remove service-account key material
+      - name: Enforce final apply result
+        if: always()
+        shell: bash
+        env:
+          APPLY_OUTCOME: ${{ steps.apply.outcome }}
+          STATE_PRESENT: ${{ steps.apply.outputs.state_present }}
+          DISPATCH_OUTCOME: ${{ steps.dispatch_teardown.outcome }}
+          FALLBACK_OUTCOME: ${{ steps.fallback_teardown.outcome }}
+        run: |
+          set -euo pipefail
+          if [ "$APPLY_OUTCOME" = "success" ] && [ "$STATE_PRESENT" = "true" ] && [ "$DISPATCH_OUTCOME" = "success" ]; then
+            exit 0
+          fi
+          if [ "$STATE_PRESENT" = "true" ] && [ "$DISPATCH_OUTCOME" != "success" ] && [ "$FALLBACK_OUTCOME" = "success" ]; then
+            echo "Stage C apply did not complete a durable handoff; resources were torn down locally."
+            exit 1
+          fi
+          echo "Stage C apply/handoff failed. Inspect Yandex Cloud and the recovery artifact immediately."
+          exit 1
+
+      - name: Remove local key/state material
         if: always()
         shell: bash
         run: |
-          rm -f "$RUNNER_TEMP/yc-stage-c-key.json"
+          rm -f \
+            "$RUNNER_TEMP/yc-stage-c-key.json" \
+            "$RUNNER_TEMP/stage-c-tfstate.enc" \
+            "$RUNNER_TEMP/stage-c-apply.tfplan" \
+            "$RUNNER_TEMP/stage-c-apply-plan.json" \
+            "$RUNNER_TEMP/stage-c-apply-plan.stdout" \
+            "$RUNNER_TEMP/stage-c-apply.stdout" \
+            "$RUNNER_TEMP/stage-c-fallback-destroy.tfplan" \
+            "$RUNNER_TEMP/stage-c-fallback-destroy.json" \
+            "$RUNNER_TEMP/stage-c-fallback-destroy.stdout" \
+            infra/yandex-cloud/terraform.tfstate \
+            infra/yandex-cloud/terraform.tfstate.backup
