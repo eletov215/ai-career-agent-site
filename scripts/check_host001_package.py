@@ -151,6 +151,12 @@ def validate(root: Path = ROOT) -> list[str]:
         if errors:
             return errors
 
+        if (
+            "group: host001-stage-c-lifecycle" not in stage_c_apply
+            or "group: host001-stage-c-lifecycle" not in stage_c_teardown
+        ):
+            errors.append("Stage C apply and teardown must share one lifecycle concurrency group")
+
         versions = _read("infra/yandex-cloud/versions.tf")
         if 'version = "= 0.229.0"' not in versions:
             errors.append("Yandex Terraform provider must be pinned to reviewed 0.229.0")
@@ -441,6 +447,7 @@ def validate(root: Path = ROOT) -> list[str]:
         required_apply_markers = (
             "workflow_dispatch:",
             "actions: write",
+            "group: host001-stage-c-lifecycle",
             "if: github.ref == 'refs/heads/main'",
             "environment: stage-c-yandex",
             "timeout-minutes: 50",
@@ -536,6 +543,7 @@ def validate(root: Path = ROOT) -> list[str]:
             "if: github.ref == 'refs/heads/main'",
             "environment: stage-c-yandex",
             "timeout-minutes: 225",
+            "group: host001-stage-c-lifecycle",
             "AUTO_TEARDOWN_STAGE_C_SYNTHETIC",
             "DESTROY_STAGE_C_SYNTHETIC_1000_RUB",
             'test "$HOLD_MINUTES" -le 90',
@@ -543,7 +551,7 @@ def validate(root: Path = ROOT) -> list[str]:
             "Initialize durable Yandex Object Storage backend",
             "actions/runs/$SOURCE_RUN_ID",
             "Validate source apply run identity before checkout",
-            'data.get("path") == ".github/workflows/host001-stage-c-apply.yml"',
+            '(data.get("path") or "").split("@", 1)[0] == ".github/workflows/host001-stage-c-apply.yml"',
             "--connect-timeout 5 --max-time 10",
             "Source apply status lookup attempt",
             "SOURCE_RUN_TERMINAL_CONFIRMED=1",
@@ -551,6 +559,11 @@ def validate(root: Path = ROOT) -> list[str]:
             "Source apply concluded $conclusion; skipping field window and tearing down immediately.",
             "Stale Terraform lock detected after the exact source apply run became terminal",
             "force-unlock -force",
+            "destroy_plan_deadline",
+            "destroy_apply_deadline",
+            "Absolute Stage C destroy-plan deadline reached",
+            "Absolute Stage C destroy deadline reached before destroy apply.",
+            "timeout --signal=INT --kill-after=30s",
             "-lock-timeout=10m",
             "Destroy reviewed Stage C resources from remote state",
             "terraform -chdir=infra/yandex-cloud plan",
