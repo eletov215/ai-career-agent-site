@@ -68,6 +68,7 @@ class Host001PackageTests(unittest.TestCase):
         workflow_path = ROOT / ".github/workflows/host001-stage-c-plan.yml"
         original = workflow_path.read_text(encoding="utf-8")
         cloud_binding = "          TF_VAR_cloud_id: ${{ secrets.YC_STAGE_C_CLOUD_ID }}\n"
+        plan_shell = "      - name: Credentialed Stage C plan\n        id: plan\n        shell: bash\n"
         summary_step = (
             "      - name: Emit secret-free resource/action summary and reject destructive plan\n"
         )
@@ -76,7 +77,10 @@ class Host001PackageTests(unittest.TestCase):
                 "    env:\n", "    env:\n      LEAK: ${{ secrets.YC_STAGE_C_CLOUD_ID }}\n", 1
             ),
             "duplicate secret": original.replace(
-                "    steps:\n", "    steps:\n      # ${{ secrets.YC_STAGE_C_CLOUD_ID }}\n", 1
+                cloud_binding, cloud_binding + "          DUPLICATE: ${{ secrets.YC_STAGE_C_CLOUD_ID }}\n", 1
+            ),
+            "commented required secret": original.replace(
+                cloud_binding, "          # " + cloud_binding.lstrip(), 1
             ),
             "unnamed action wrong-step secret": original.replace(cloud_binding, "", 1).replace(
                 summary_step,
@@ -89,6 +93,21 @@ class Host001PackageTests(unittest.TestCase):
             "mutable action": original.replace(
                 "actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803",
                 "actions/checkout@v6",
+            ),
+            "named mutable action": original.replace(
+                "      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6",
+                "      - name: Checkout\n        uses: actions/checkout@v6",
+            ),
+            "named artifact upload": original + (
+                "\n      - name: Upload plan\n"
+                "        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08\n"
+            ),
+            "secret-bearing named action": original.replace(
+                plan_shell,
+                "      - name: Credentialed Stage C plan\n"
+                "        id: plan\n"
+                "        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803\n",
+                1,
             ),
             "terraform apply": original + "\n      terraform apply\n",
             "terraform destroy": original + "\n      terraform destroy\n",
@@ -118,6 +137,21 @@ class Host001PackageTests(unittest.TestCase):
                         "Stage C secret YC_STAGE_C_CLOUD_ID is bound to the wrong step",
                         errors,
                     )
+                if label == "commented required secret":
+                    self.assertIn(
+                        "Stage C secret YC_STAGE_C_CLOUD_ID must be bound exactly once", errors
+                    )
+                if label == "secret-bearing named action":
+                    self.assertIn(
+                        "Stage C secret YC_STAGE_C_CLOUD_ID must be bound to a trusted shell step",
+                        errors,
+                    )
+                if label == "named mutable action":
+                    self.assertIn(
+                        "Stage C action actions/checkout must use an immutable commit SHA", errors
+                    )
+                if label == "named artifact upload":
+                    self.assertIn("Stage C workflow must not upload artifacts", errors)
 
     def test_yandex_proxy_rebuilds_trusted_client_header(self):
         caddy = (ROOT / "infra/yandex-cloud/Caddyfile").read_text(encoding="utf-8")
