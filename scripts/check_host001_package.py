@@ -544,9 +544,13 @@ def validate(root: Path = ROOT) -> list[str]:
             "actions/runs/$SOURCE_RUN_ID",
             "Validate source apply run identity before checkout",
             'data.get("path") == ".github/workflows/host001-stage-c-apply.yml"',
+            "--connect-timeout 5 --max-time 10",
             "Source apply status lookup attempt",
+            "SOURCE_RUN_TERMINAL_CONFIRMED=1",
             "Field window shortened to preserve the 90-minute teardown reserve.",
             "Source apply concluded $conclusion; skipping field window and tearing down immediately.",
+            "Stale Terraform lock detected after the exact source apply run became terminal",
+            "force-unlock -force",
             "-lock-timeout=10m",
             "Destroy reviewed Stage C resources from remote state",
             "terraform -chdir=infra/yandex-cloud plan",
@@ -566,6 +570,9 @@ def validate(root: Path = ROOT) -> list[str]:
         )
         if len(teardown_apply_commands) != 1:
             errors.append("Stage C teardown workflow must have exactly one reviewed destroy-plan apply")
+
+        if '"^(data\\\\.yandex_compute_image\\\\.ubuntu' not in stage_c_teardown:
+            errors.append("Stage C teardown allowlist regex must preserve jq-safe escaping")
 
         source_validation_pos = stage_c_teardown.find(
             "Validate source apply run identity before checkout"
