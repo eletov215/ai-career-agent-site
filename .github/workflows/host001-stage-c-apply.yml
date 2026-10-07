@@ -8,9 +8,9 @@ name: HOST-001 Stage C bounded apply
         required: true
         type: string
       hold_minutes:
-        description: "Automatic teardown delay after recovery state is durable. Allowed 15-150 minutes."
+        description: "Automatic teardown delay after recovery state is durable. Allowed 15-120 minutes."
         required: true
-        default: "120"
+        default: "90"
         type: string
 
 permissions:
@@ -26,7 +26,7 @@ jobs:
     name: Bounded Stage C apply and recovery handoff
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
-    timeout-minutes: 55
+    timeout-minutes: 50
     environment: stage-c-yandex
 
     env:
@@ -63,7 +63,7 @@ jobs:
             exit 1
           }
           test "$STAGE_C_HOLD_MINUTES" -ge 15
-          test "$STAGE_C_HOLD_MINUTES" -le 150
+          test "$STAGE_C_HOLD_MINUTES" -le 120
 
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
 
