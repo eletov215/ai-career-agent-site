@@ -31,6 +31,7 @@ REQUIRED = (
     "docs/HOST001_VERIFICATION_STATUS.md",
     ".github/workflows/host001-yandex-cloud.yml",
     ".github/workflows/host001-stage-c-plan.yml",
+    ".github/workflows/host001-stage-c-apply.yml",
 )
 
 STAGE_C_SECRET_BINDINGS = {
@@ -41,6 +42,16 @@ STAGE_C_SECRET_BINDINGS = {
     "YC_STAGE_C_SSH_PUBLIC_KEY": "Credentialed Stage C plan",
     "YC_STAGE_C_POSTGRES_PASSWORD": "Credentialed Stage C plan",
     "YC_STAGE_C_RESTORE_PASSWORD": "Credentialed Stage C plan",
+}
+
+STAGE_C_APPLY_SECRET_BINDINGS = {
+    "YC_STAGE_C_SERVICE_ACCOUNT_KEY_JSON": "Materialize Yandex service-account key outside repository",
+    "YC_STAGE_C_CLOUD_ID": "Controlled Stage C lifecycle",
+    "YC_STAGE_C_FOLDER_ID": "Controlled Stage C lifecycle",
+    "YC_STAGE_C_ADMIN_CIDR": "Controlled Stage C lifecycle",
+    "YC_STAGE_C_SSH_PUBLIC_KEY": "Controlled Stage C lifecycle",
+    "YC_STAGE_C_POSTGRES_PASSWORD": "Controlled Stage C lifecycle",
+    "YC_STAGE_C_RESTORE_PASSWORD": "Controlled Stage C lifecycle",
 }
 
 
@@ -238,7 +249,8 @@ def validate(root: Path = ROOT) -> list[str]:
         for marker in (
             "field_test_resources_enabled",
             "foundation_deletion_protection=false",
-            "500 RUB",
+            "1,000 RUB",
+            "OWNER_AUTHORIZED",
             "Object Storage",
             "restore",
             "Trudvsem",
