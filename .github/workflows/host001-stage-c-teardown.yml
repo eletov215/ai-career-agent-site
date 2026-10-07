@@ -101,13 +101,9 @@ jobs:
           set -euo pipefail
           run_file="$RUNNER_TEMP/source-apply-run.json"
           rm -f "$run_file"
+
           for attempt in $(seq 1 5); do
-            if curl --fail-with-body --silent --show-error \
-              -H "Accept: application/vnd.github+json" \
-              -H "Authorization: Bearer $GH_TOKEN" \
-              -H "X-GitHub-Api-Version: 2022-11-28" \
-              "https://api.github.com/repos/$GITHUB_REPOSITORY/actions/runs/$SOURCE_RUN_ID" \
-              -o "$run_file"; then
+            if curl --fail-with-body --silent --show-error               -H "Accept: application/vnd.github+json"               -H "Authorization: Bearer $GH_TOKEN"               -H "X-GitHub-Api-Version: 2022-11-28"               "https://api.github.com/repos/$GITHUB_REPOSITORY/actions/runs/$SOURCE_RUN_ID"               -o "$run_file"; then
               if test -s "$run_file"; then
                 break
               fi
@@ -116,6 +112,7 @@ jobs:
             rm -f "$run_file"
             sleep 3
           done
+
           test -s "$run_file" || {
             echo "Unable to validate source apply run identity."
             exit 1
@@ -123,7 +120,8 @@ jobs:
 
           source_started="$(
             python - "$run_file" "$SOURCE_SHA" "$SOURCE_RUN_ID" "$GITHUB_REPOSITORY" <<'PY'
-          import json, sys
+          import json
+          import sys
 
           path, expected_sha, expected_run_id, expected_repo = sys.argv[1:]
           with open(path, encoding="utf-8") as fh:
@@ -138,13 +136,17 @@ jobs:
               data.get("repository", {}).get("full_name") == expected_repo,
           )
           if not all(checks):
-              raise SystemExit("Source run identity does not match the reviewed Stage C apply workflow on main")
+              raise SystemExit(
+                  "Source run identity does not match the reviewed Stage C apply workflow on main"
+              )
+
           started = data.get("run_started_at") or data.get("created_at")
           if not started:
               raise SystemExit("Source run has no start timestamp")
           print(started)
           PY
           )"
+
           echo "SOURCE_APPLY_RUN_STARTED_AT=$source_started" >> "$GITHUB_ENV"
           rm -f "$run_file"
 
@@ -198,10 +200,7 @@ jobs:
           test -n "$TFSTATE_BUCKET"
           test -n "$AWS_ACCESS_KEY_ID"
           test -n "$AWS_SECRET_ACCESS_KEY"
-          terraform -chdir=infra/yandex-cloud init \
-            -reconfigure \
-            -input=false \
-            -backend-config="bucket=$TFSTATE_BUCKET"
+          terraform -chdir=infra/yandex-cloud init             -reconfigure             -input=false             -backend-config="bucket=$TFSTATE_BUCKET"
           terraform -chdir=infra/yandex-cloud validate
 
       - name: Wait for source apply result and bounded successful field window
@@ -220,14 +219,10 @@ jobs:
             completed=0
             conclusion=""
             run_file="$RUNNER_TEMP/source-apply-run-poll.json"
+
             for attempt in $(seq 1 120); do
               rm -f "$run_file"
-              if ! curl --fail-with-body --silent --show-error \
-                -H "Accept: application/vnd.github+json" \
-                -H "Authorization: Bearer $GH_TOKEN" \
-                -H "X-GitHub-Api-Version: 2022-11-28" \
-                "https://api.github.com/repos/$GITHUB_REPOSITORY/actions/runs/$SOURCE_RUN_ID" \
-                -o "$run_file"; then
+              if ! curl --fail-with-body --silent --show-error                 -H "Accept: application/vnd.github+json"                 -H "Authorization: Bearer $GH_TOKEN"                 -H "X-GitHub-Api-Version: 2022-11-28"                 "https://api.github.com/repos/$GITHUB_REPOSITORY/actions/runs/$SOURCE_RUN_ID"                 -o "$run_file"; then
                 echo "Source apply status lookup attempt $attempt failed; retrying."
                 sleep 30
                 continue
@@ -235,11 +230,13 @@ jobs:
 
               if ! parsed="$(
                 python - "$run_file" <<'PY'
-          import json, sys
+          import json
+          import sys
+
           try:
               with open(sys.argv[1], encoding="utf-8") as fh:
                   data = json.load(fh)
-              print((data.get("status") or "") + "\t" + (data.get("conclusion") or ""))
+              print((data.get("status") or "") + "|" + (data.get("conclusion") or ""))
           except Exception:
               raise SystemExit(1)
           PY
@@ -249,243 +246,15 @@ jobs:
                 continue
               fi
 
-              status="${parsed%%
-      - name: Destroy reviewed Stage C resources from remote state
-        id: destroy
-        shell: bash
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.YC_STAGE_C_TFSTATE_ACCESS_KEY }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.YC_STAGE_C_TFSTATE_SECRET_KEY }}
-          TF_VAR_cloud_id: ${{ secrets.YC_STAGE_C_CLOUD_ID }}
-          TF_VAR_folder_id: ${{ secrets.YC_STAGE_C_FOLDER_ID }}
-          TF_VAR_admin_cidr: ${{ secrets.YC_STAGE_C_ADMIN_CIDR }}
-          TF_VAR_ssh_public_key: ${{ secrets.YC_STAGE_C_SSH_PUBLIC_KEY }}
-          TF_VAR_postgresql_app_password: ${{ secrets.YC_STAGE_C_POSTGRES_PASSWORD }}
-          TF_VAR_field_test_restore_password: ${{ secrets.YC_STAGE_C_RESTORE_PASSWORD }}
-        run: |
-          set -euo pipefail
-          destroy_plan="$RUNNER_TEMP/stage-c-destroy.tfplan"
-          destroy_json="$RUNNER_TEMP/stage-c-destroy-plan.json"
-          destroy_log="$RUNNER_TEMP/stage-c-destroy.stdout"
-
-          set +e
-          terraform -chdir=infra/yandex-cloud plan \
-            -destroy \
-            -input=false \
-            -lock-timeout=10m \
-            -no-color \
-            -detailed-exitcode \
-            -out="$destroy_plan" >"$destroy_log" 2>&1
-          plan_code=$?
-          set -e
-
-          if [ "$plan_code" -eq 0 ]; then
-            echo "No Stage C resources remain in remote Terraform state."
-            echo "had_changes=false" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-          if [ "$plan_code" -ne 2 ]; then
-            echo "Terraform destroy plan failed."
-            exit "$plan_code"
-          fi
-
-          terraform -chdir=infra/yandex-cloud show -json "$destroy_plan" > "$destroy_json"
-
-          jq -r '
-            .resource_changes[]?
-            | [.address, (.change.actions | join(","))]
-            | @tsv
-          ' "$destroy_json" | sort
-
-          jq -e '
-            all(
-              .resource_changes[]?;
-              all(.change.actions[]; . == "delete" or . == "read" or . == "no-op")
-            )
-          ' "$destroy_json" >/dev/null || {
-            echo "Destroy plan contains an unexpected non-delete action."
-            exit 1
-          }
-
-          jq -e '
-            [
-              .resource_changes[]?
-              | select(.address | test(
-                  "^(data\\.yandex_compute_image\\.ubuntu|yandex_vpc_network\\.main|yandex_vpc_subnet\\.(app|db_secondary)|yandex_vpc_security_group\\.(app|database)|yandex_vpc_address\\.app|yandex_iam_service_account\\.app|yandex_lockbox_secret\\.runtime|yandex_lockbox_secret_iam_member\\.runtime_payload|yandex_mdb_postgresql_cluster\\.main|yandex_mdb_postgresql_user\\.app|yandex_mdb_postgresql_database\\.app|yandex_compute_instance\\.app|yandex_resourcemanager_folder_iam_member\\.field_test_storage_uploader\\[0\\]|yandex_lockbox_secret\\.field_test_storage\\[0\\]|yandex_lockbox_secret_iam_member\\.field_test_storage_payload\\[0\\]|yandex_iam_service_account_static_access_key\\.field_test_storage\\[0\\]|yandex_storage_bucket\\.field_test\\[0\\]|yandex_mdb_postgresql_cluster\\.field_test_restore\\[0\\]|yandex_mdb_postgresql_user\\.field_test_restore\\[0\\]|yandex_mdb_postgresql_database\\.field_test_restore\\[0\\])$"
-                ) | not)
-            ] | length == 0
-          ' "$destroy_json" >/dev/null || {
-            echo "Destroy plan contains a resource outside the reviewed Stage C allowlist."
-            exit 1
-          }
-
-          terraform -chdir=infra/yandex-cloud apply \
-            -auto-approve \
-            -input=false \
-            -no-color \
-            "$destroy_plan" >"$destroy_log" 2>&1
-
-          managed_count="$(terraform -chdir=infra/yandex-cloud state list 2>/dev/null | grep -vc '^data\.' || true)"
-          test "$managed_count" -eq 0 || {
-            echo "Managed resources remain in remote Terraform state after teardown."
-            exit 1
-          }
-          echo "had_changes=true" >> "$GITHUB_OUTPUT"
-          echo "Stage C teardown verified: no managed Terraform resources remain."
-
-      - name: Record verified teardown
-        if: success()
-        shell: bash
-        env:
-          SOURCE_RUN_ID: ${{ inputs.source_run_id }}
-          SOURCE_SHA: ${{ inputs.source_sha }}
-          HAD_CHANGES: ${{ steps.destroy.outputs.had_changes }}
-        run: |
-          {
-            echo "### HOST-001 Stage C recovery teardown"
-            echo
-            printf -- '- Apply run ID: `%s`\n' "$SOURCE_RUN_ID"
-            printf -- '- Apply commit: `%s`\n' "$SOURCE_SHA"
-            echo "- Remote Terraform state backend: **Yandex Object Storage**"
-            echo "- Terraform managed resources after teardown: **0**"
-            echo "- Destroy changes applied: **$HAD_CHANGES**"
-            echo "- Production data / Render / Neon / MIG-001 / real-data AI / email: **NOT TOUCHED**"
-            echo "- Final manual cleanup: revoke the temporary backend static access key and delete the dedicated state bucket after evidence is captured."
-          } >> "$GITHUB_STEP_SUMMARY"
-
-      - name: Remove local recovery material
-        if: always()
-        shell: bash
-        run: |
-          rm -rf \
-            "$RUNNER_TEMP/yc-stage-c-key.json" \
-            "$RUNNER_TEMP/stage-c-destroy.tfplan" \
-            "$RUNNER_TEMP/stage-c-destroy-plan.json" \
-            "$RUNNER_TEMP/stage-c-destroy.stdout" \
-            "$RUNNER_TEMP/source-apply-run.json" \
-            "$RUNNER_TEMP/source-apply-run-poll.json" \
-            infra/yandex-cloud/.terraform
-\t'*}"
-              conclusion="${parsed#*
-      - name: Destroy reviewed Stage C resources from remote state
-        id: destroy
-        shell: bash
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.YC_STAGE_C_TFSTATE_ACCESS_KEY }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.YC_STAGE_C_TFSTATE_SECRET_KEY }}
-          TF_VAR_cloud_id: ${{ secrets.YC_STAGE_C_CLOUD_ID }}
-          TF_VAR_folder_id: ${{ secrets.YC_STAGE_C_FOLDER_ID }}
-          TF_VAR_admin_cidr: ${{ secrets.YC_STAGE_C_ADMIN_CIDR }}
-          TF_VAR_ssh_public_key: ${{ secrets.YC_STAGE_C_SSH_PUBLIC_KEY }}
-          TF_VAR_postgresql_app_password: ${{ secrets.YC_STAGE_C_POSTGRES_PASSWORD }}
-          TF_VAR_field_test_restore_password: ${{ secrets.YC_STAGE_C_RESTORE_PASSWORD }}
-        run: |
-          set -euo pipefail
-          destroy_plan="$RUNNER_TEMP/stage-c-destroy.tfplan"
-          destroy_json="$RUNNER_TEMP/stage-c-destroy-plan.json"
-          destroy_log="$RUNNER_TEMP/stage-c-destroy.stdout"
-
-          set +e
-          terraform -chdir=infra/yandex-cloud plan \
-            -destroy \
-            -input=false \
-            -no-color \
-            -detailed-exitcode \
-            -out="$destroy_plan" >"$destroy_log" 2>&1
-          plan_code=$?
-          set -e
-
-          if [ "$plan_code" -eq 0 ]; then
-            echo "No Stage C resources remain in remote Terraform state."
-            echo "had_changes=false" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-          if [ "$plan_code" -ne 2 ]; then
-            echo "Terraform destroy plan failed."
-            exit "$plan_code"
-          fi
-
-          terraform -chdir=infra/yandex-cloud show -json "$destroy_plan" > "$destroy_json"
-
-          jq -r '
-            .resource_changes[]?
-            | [.address, (.change.actions | join(","))]
-            | @tsv
-          ' "$destroy_json" | sort
-
-          jq -e '
-            all(
-              .resource_changes[]?;
-              all(.change.actions[]; . == "delete" or . == "read" or . == "no-op")
-            )
-          ' "$destroy_json" >/dev/null || {
-            echo "Destroy plan contains an unexpected non-delete action."
-            exit 1
-          }
-
-          jq -e '
-            [
-              .resource_changes[]?
-              | select(.address | test(
-                  "^(data\\.yandex_compute_image\\.ubuntu|yandex_vpc_network\\.main|yandex_vpc_subnet\\.(app|db_secondary)|yandex_vpc_security_group\\.(app|database)|yandex_vpc_address\\.app|yandex_iam_service_account\\.app|yandex_lockbox_secret\\.runtime|yandex_lockbox_secret_iam_member\\.runtime_payload|yandex_mdb_postgresql_cluster\\.main|yandex_mdb_postgresql_user\\.app|yandex_mdb_postgresql_database\\.app|yandex_compute_instance\\.app|yandex_resourcemanager_folder_iam_member\\.field_test_storage_uploader\\[0\\]|yandex_lockbox_secret\\.field_test_storage\\[0\\]|yandex_lockbox_secret_iam_member\\.field_test_storage_payload\\[0\\]|yandex_iam_service_account_static_access_key\\.field_test_storage\\[0\\]|yandex_storage_bucket\\.field_test\\[0\\]|yandex_mdb_postgresql_cluster\\.field_test_restore\\[0\\]|yandex_mdb_postgresql_user\\.field_test_restore\\[0\\]|yandex_mdb_postgresql_database\\.field_test_restore\\[0\\])$"
-                ) | not)
-            ] | length == 0
-          ' "$destroy_json" >/dev/null || {
-            echo "Destroy plan contains a resource outside the reviewed Stage C allowlist."
-            exit 1
-          }
-
-          terraform -chdir=infra/yandex-cloud apply \
-            -auto-approve \
-            -input=false \
-            -no-color \
-            "$destroy_plan" >"$destroy_log" 2>&1
-
-          managed_count="$(terraform -chdir=infra/yandex-cloud state list 2>/dev/null | grep -vc '^data\.' || true)"
-          test "$managed_count" -eq 0 || {
-            echo "Managed resources remain in remote Terraform state after teardown."
-            exit 1
-          }
-          echo "had_changes=true" >> "$GITHUB_OUTPUT"
-          echo "Stage C teardown verified: no managed Terraform resources remain."
-
-      - name: Record verified teardown
-        if: success()
-        shell: bash
-        env:
-          SOURCE_RUN_ID: ${{ inputs.source_run_id }}
-          SOURCE_SHA: ${{ inputs.source_sha }}
-          HAD_CHANGES: ${{ steps.destroy.outputs.had_changes }}
-        run: |
-          {
-            echo "### HOST-001 Stage C recovery teardown"
-            echo
-            printf -- '- Apply run ID: `%s`\n' "$SOURCE_RUN_ID"
-            printf -- '- Apply commit: `%s`\n' "$SOURCE_SHA"
-            echo "- Remote Terraform state backend: **Yandex Object Storage**"
-            echo "- Terraform managed resources after teardown: **0**"
-            echo "- Destroy changes applied: **$HAD_CHANGES**"
-            echo "- Production data / Render / Neon / MIG-001 / real-data AI / email: **NOT TOUCHED**"
-            echo "- Final manual cleanup: revoke the temporary backend static access key and delete the dedicated state bucket after evidence is captured."
-          } >> "$GITHUB_STEP_SUMMARY"
-
-      - name: Remove local recovery material
-        if: always()
-        shell: bash
-        run: |
-          rm -rf \
-            "$RUNNER_TEMP/yc-stage-c-key.json" \
-            "$RUNNER_TEMP/stage-c-destroy.tfplan" \
-            "$RUNNER_TEMP/stage-c-destroy-plan.json" \
-            "$RUNNER_TEMP/stage-c-destroy.stdout" \
-            infra/yandex-cloud/.terraform
-\t'}"
+              status="$(printf '%s' "$parsed" | cut -d '|' -f 1)"
+              conclusion="$(printf '%s' "$parsed" | cut -d '|' -f 2-)"
               if [ "$status" = "completed" ]; then
                 completed=1
                 break
               fi
               sleep 30
             done
+
             rm -f "$run_file"
 
             if [ "$completed" -eq 1 ]; then
@@ -493,12 +262,12 @@ jobs:
                 requested_seconds=$((HOLD_MINUTES * 60))
                 destroy_start_deadline="$(
                   python - "$SOURCE_RUN_STARTED_AT" <<'PY'
-          from datetime import datetime, timezone
+          from datetime import datetime
           import sys
 
           started = datetime.fromisoformat(sys.argv[1].replace("Z", "+00:00"))
-          # Start teardown no later than 150 minutes after the source run began,
-          # reserving 90 minutes inside the owner-approved four-hour boundary.
+          # Begin teardown by +150 minutes, reserving 90 minutes
+          # inside the owner-approved four-hour resource-lifetime boundary.
           print(int(started.timestamp()) + 150 * 60)
           PY
                 )"
@@ -507,6 +276,7 @@ jobs:
                 if [ "$available_seconds" -lt 0 ]; then
                   available_seconds=0
                 fi
+
                 if [ "$requested_seconds" -gt "$available_seconds" ]; then
                   echo "Field window shortened to preserve the 90-minute teardown reserve."
                   remaining="$available_seconds"
@@ -549,15 +319,19 @@ jobs:
           destroy_json="$RUNNER_TEMP/stage-c-destroy-plan.json"
           destroy_log="$RUNNER_TEMP/stage-c-destroy.stdout"
 
-          set +e
-          terraform -chdir=infra/yandex-cloud plan \
-            -destroy \
-            -input=false \
-            -no-color \
-            -detailed-exitcode \
-            -out="$destroy_plan" >"$destroy_log" 2>&1
-          plan_code=$?
-          set -e
+          plan_code=1
+          for attempt in $(seq 1 3); do
+            set +e
+            terraform -chdir=infra/yandex-cloud plan               -destroy               -input=false               -lock-timeout=10m               -no-color               -detailed-exitcode               -out="$destroy_plan" >"$destroy_log" 2>&1
+            plan_code=$?
+            set -e
+
+            if [ "$plan_code" -eq 0 ] || [ "$plan_code" -eq 2 ]; then
+              break
+            fi
+            echo "Terraform destroy plan attempt $attempt failed; retrying."
+            sleep 30
+          done
 
           if [ "$plan_code" -eq 0 ]; then
             echo "No Stage C resources remain in remote Terraform state."
@@ -565,7 +339,7 @@ jobs:
             exit 0
           fi
           if [ "$plan_code" -ne 2 ]; then
-            echo "Terraform destroy plan failed."
+            echo "Terraform destroy plan failed after retries."
             exit "$plan_code"
           fi
 
@@ -591,7 +365,7 @@ jobs:
             [
               .resource_changes[]?
               | select(.address | test(
-                  "^(data\\.yandex_compute_image\\.ubuntu|yandex_vpc_network\\.main|yandex_vpc_subnet\\.(app|db_secondary)|yandex_vpc_security_group\\.(app|database)|yandex_vpc_address\\.app|yandex_iam_service_account\\.app|yandex_lockbox_secret\\.runtime|yandex_lockbox_secret_iam_member\\.runtime_payload|yandex_mdb_postgresql_cluster\\.main|yandex_mdb_postgresql_user\\.app|yandex_mdb_postgresql_database\\.app|yandex_compute_instance\\.app|yandex_resourcemanager_folder_iam_member\\.field_test_storage_uploader\\[0\\]|yandex_lockbox_secret\\.field_test_storage\\[0\\]|yandex_lockbox_secret_iam_member\\.field_test_storage_payload\\[0\\]|yandex_iam_service_account_static_access_key\\.field_test_storage\\[0\\]|yandex_storage_bucket\\.field_test\\[0\\]|yandex_mdb_postgresql_cluster\\.field_test_restore\\[0\\]|yandex_mdb_postgresql_user\\.field_test_restore\\[0\\]|yandex_mdb_postgresql_database\\.field_test_restore\\[0\\])$"
+                  "^(data\.yandex_compute_image\.ubuntu|yandex_vpc_network\.main|yandex_vpc_subnet\.(app|db_secondary)|yandex_vpc_security_group\.(app|database)|yandex_vpc_address\.app|yandex_iam_service_account\.app|yandex_lockbox_secret\.runtime|yandex_lockbox_secret_iam_member\.runtime_payload|yandex_mdb_postgresql_cluster\.main|yandex_mdb_postgresql_user\.app|yandex_mdb_postgresql_database\.app|yandex_compute_instance\.app|yandex_resourcemanager_folder_iam_member\.field_test_storage_uploader\[0\]|yandex_lockbox_secret\.field_test_storage\[0\]|yandex_lockbox_secret_iam_member\.field_test_storage_payload\[0\]|yandex_iam_service_account_static_access_key\.field_test_storage\[0\]|yandex_storage_bucket\.field_test\[0\]|yandex_mdb_postgresql_cluster\.field_test_restore\[0\]|yandex_mdb_postgresql_user\.field_test_restore\[0\]|yandex_mdb_postgresql_database\.field_test_restore\[0\])$"
                 ) | not)
             ] | length == 0
           ' "$destroy_json" >/dev/null || {
@@ -599,17 +373,14 @@ jobs:
             exit 1
           }
 
-          terraform -chdir=infra/yandex-cloud apply \
-            -auto-approve \
-            -input=false \
-            -no-color \
-            "$destroy_plan" >"$destroy_log" 2>&1
+          terraform -chdir=infra/yandex-cloud apply             -auto-approve             -input=false             -lock-timeout=10m             -no-color             "$destroy_plan" >"$destroy_log" 2>&1
 
           managed_count="$(terraform -chdir=infra/yandex-cloud state list 2>/dev/null | grep -vc '^data\.' || true)"
           test "$managed_count" -eq 0 || {
             echo "Managed resources remain in remote Terraform state after teardown."
             exit 1
           }
+
           echo "had_changes=true" >> "$GITHUB_OUTPUT"
           echo "Stage C teardown verified: no managed Terraform resources remain."
 
@@ -626,7 +397,7 @@ jobs:
             echo
             printf -- '- Apply run ID: `%s`\n' "$SOURCE_RUN_ID"
             printf -- '- Apply commit: `%s`\n' "$SOURCE_SHA"
-            echo "- Remote Terraform state backend: **Yandex Object Storage**"
+            echo "- Remote Terraform state backend: **Yandex Object Storage with lockfile**"
             echo "- Terraform managed resources after teardown: **0**"
             echo "- Destroy changes applied: **$HAD_CHANGES**"
             echo "- Production data / Render / Neon / MIG-001 / real-data AI / email: **NOT TOUCHED**"
@@ -637,9 +408,4 @@ jobs:
         if: always()
         shell: bash
         run: |
-          rm -rf \
-            "$RUNNER_TEMP/yc-stage-c-key.json" \
-            "$RUNNER_TEMP/stage-c-destroy.tfplan" \
-            "$RUNNER_TEMP/stage-c-destroy-plan.json" \
-            "$RUNNER_TEMP/stage-c-destroy.stdout" \
-            infra/yandex-cloud/.terraform
+          rm -rf             "$RUNNER_TEMP/yc-stage-c-key.json"             "$RUNNER_TEMP/source-apply-run.json"             "$RUNNER_TEMP/source-apply-run-poll.json"             "$RUNNER_TEMP/stage-c-destroy.tfplan"             "$RUNNER_TEMP/stage-c-destroy-plan.json"             "$RUNNER_TEMP/stage-c-destroy.stdout"             infra/yandex-cloud/.terraform
