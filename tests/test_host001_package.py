@@ -68,9 +68,8 @@ class Host001PackageTests(unittest.TestCase):
         workflow_path = ROOT / ".github/workflows/host001-stage-c-plan.yml"
         original = workflow_path.read_text(encoding="utf-8")
         cloud_binding = "          TF_VAR_cloud_id: ${{ secrets.YC_STAGE_C_CLOUD_ID }}\n"
-        key_binding = (
-            "          YC_STAGE_C_SERVICE_ACCOUNT_KEY_JSON: "
-            "${{ secrets.YC_STAGE_C_SERVICE_ACCOUNT_KEY_JSON }}\n"
+        summary_step = (
+            "      - name: Emit secret-free resource/action summary and reject destructive plan\n"
         )
         mutations = {
             "job-scoped secret": original.replace(
@@ -79,9 +78,12 @@ class Host001PackageTests(unittest.TestCase):
             "duplicate secret": original.replace(
                 "    steps:\n", "    steps:\n      # ${{ secrets.YC_STAGE_C_CLOUD_ID }}\n", 1
             ),
-            "wrong-step secret": original.replace(cloud_binding, "", 1).replace(
-                key_binding,
-                key_binding + "          MOVED_CLOUD_ID: ${{ secrets.YC_STAGE_C_CLOUD_ID }}\n",
+            "unnamed action wrong-step secret": original.replace(cloud_binding, "", 1).replace(
+                summary_step,
+                "      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803\n"
+                "        env:\n"
+                "          MOVED_CLOUD_ID: ${{ secrets.YC_STAGE_C_CLOUD_ID }}\n\n"
+                + summary_step,
                 1,
             ),
             "mutable action": original.replace(
@@ -109,7 +111,13 @@ class Host001PackageTests(unittest.TestCase):
                     (local_workflows / path.name).symlink_to(path)
                 (local_workflows / workflow_path.name).unlink()
                 (local_workflows / workflow_path.name).write_text(mutated, encoding="utf-8")
-                self.assertTrue(validate(root), label)
+                errors = validate(root)
+                self.assertTrue(errors, label)
+                if label == "unnamed action wrong-step secret":
+                    self.assertIn(
+                        "Stage C secret YC_STAGE_C_CLOUD_ID is bound to the wrong step",
+                        errors,
+                    )
 
     def test_yandex_proxy_rebuilds_trusted_client_header(self):
         caddy = (ROOT / "infra/yandex-cloud/Caddyfile").read_text(encoding="utf-8")
