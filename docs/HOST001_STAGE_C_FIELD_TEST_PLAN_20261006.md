@@ -124,6 +124,10 @@ Pricing references:
 
 ## 6. Preconditions before a future apply
 
+The live operator order is fixed in `HOST001_STAGE_C_OPERATOR_CHECKLIST_20261008.md`. Do not start the bounded apply unless its zero-spend readiness section is complete; in particular, the operator must retain both PostgreSQL password values because GitHub cannot reveal environment secret values after saving them.
+
+
+
 All conditions below are required:
 
 1. explicit owner approval for Stage C billable field test and the approved spend ceiling;
