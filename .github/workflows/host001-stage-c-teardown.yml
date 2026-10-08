@@ -26,7 +26,7 @@ permissions:
   actions: read
 
 concurrency:
-  group: host001-stage-c-recovery-teardown
+  group: host001-stage-c-recovery-teardown-${{ inputs.source_run_id }}
   cancel-in-progress: false
 
 jobs:
@@ -209,11 +209,10 @@ jobs:
           test -n "$AWS_SECRET_ACCESS_KEY"
 
           if grep -Eq '^[[:space:]]*key[[:space:]]*=[[:space:]]*"host001/stage-c\.tfstate"[[:space:]]*$' infra/yandex-cloud/versions.tf; then
-            TFSTATE_KEY="host001/stage-c.tfstate"
-            echo "Using guarded legacy Stage C state key for the validated source revision."
-          else
-            TFSTATE_KEY="host001/stage-c-${SOURCE_RUN_ID}.tfstate"
+            echo "Legacy fixed-key source revisions are not automatically recoverable because the shared state object has no source-run ownership proof."
+            exit 1
           fi
+          TFSTATE_KEY="host001/stage-c-${SOURCE_RUN_ID}.tfstate"
 
           if [ "$STAGE_C_ACKNOWLEDGEMENT" = "DESTROY_STAGE_C_SYNTHETIC_1000_RUB" ]; then
             test -n "$MANUAL_RECOVERY_STARTED_EPOCH"
