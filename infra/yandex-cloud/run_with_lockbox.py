@@ -20,6 +20,10 @@ _METADATA_URL = (
 _PAYLOAD_URL = "https://payload.lockbox.api.cloud.yandex.net/lockbox/v1/secrets/{secret_id}/payload"
 _KEY_RE = re.compile(r"^[A-Z][A-Z0-9_]{1,63}$")
 _MAX_VALUE = 65536
+_EXTERNAL_IDENTITY_KEYS = {
+    "STAGE_C_EXPECTED_PRIMARY_PG_FQDN",
+    "STAGE_C_EXPECTED_RESTORE_PG_FQDN",
+}
 
 
 class SecretLoadError(RuntimeError):
@@ -108,6 +112,8 @@ def load_secret_entries(secret_id: str) -> dict[str, str]:
         value = item.get("textValue")
         if not isinstance(key, str) or not _KEY_RE.fullmatch(key):
             raise SecretLoadError("secret_key_invalid")
+        if key in _EXTERNAL_IDENTITY_KEYS:
+            raise SecretLoadError("secret_key_reserved_for_external_identity")
         if not isinstance(value, str) or len(value) > _MAX_VALUE or "\x00" in value:
             raise SecretLoadError("secret_value_invalid")
         if key in result:
