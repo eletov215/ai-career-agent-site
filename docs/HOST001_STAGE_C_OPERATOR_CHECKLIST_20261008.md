@@ -212,14 +212,13 @@ The VM image installs `git` through cloud-init specifically so this checkout can
 On the VM, from `/opt/ai-career-agent`:
 
 ```bash
-python infra/yandex-cloud/run_with_lockbox.py --   python -c 'import os; required=("DATABASE_URL","RESTORE_DATABASE_URL","FLASK_SECRET_KEY","TOKEN_ENCRYPTION_KEY","SUPERJOB_CLIENT_ID","SUPERJOB_CLIENT_SECRET","SUPERJOB_REDIRECT_URI","HH_CLIENT_ID","HH_CLIENT_SECRET","HH_REDIRECT_URI","HH_USER_AGENT","SYNC_SECRET","TRUSTED_HOSTS","BACKUP_ENCRYPTION_KEY","AUTH_EMAIL_BACKEND"); missing=[k for k in required if not os.environ.get(k)]; print({"runtime_secret_loaded": not missing, "missing": missing})'
+python infra/yandex-cloud/run_with_lockbox.py --   python -c 'import json,os; required=("DATABASE_URL","RESTORE_DATABASE_URL","FLASK_SECRET_KEY","TOKEN_ENCRYPTION_KEY","SUPERJOB_CLIENT_ID","SUPERJOB_CLIENT_SECRET","SUPERJOB_REDIRECT_URI","HH_CLIENT_ID","HH_CLIENT_SECRET","HH_REDIRECT_URI","HH_USER_AGENT","SYNC_SECRET","TRUSTED_HOSTS","BACKUP_ENCRYPTION_KEY","AUTH_EMAIL_BACKEND"); missing=[k for k in required if not os.environ.get(k)]; print(json.dumps({"runtime_secret_loaded": not missing, "missing": missing}))'
 ```
 
 Expected result:
 
 ```text
-runtime_secret_loaded: true
-missing: []
+{"runtime_secret_loaded": true, "missing": []}
 ```
 
 No secret values may be printed.
