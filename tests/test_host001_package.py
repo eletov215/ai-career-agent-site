@@ -75,6 +75,9 @@ class Host001PackageTests(unittest.TestCase):
         self.assertNotIn("api.hh.ru", fixture)
         self.assertNotIn("api.superjob.ru", fixture)
         self.assertIn("DESTROY_STAGE_C_SYNTHETIC_1000_RUB", operator)
+        self.assertIn("STAGE_C_EXPECTED_PRIMARY_PG_FQDN", operator)
+        self.assertIn("STAGE_C_EXPECTED_RESTORE_PG_FQDN", operator)
+        self.assertIn("guard-restore", operator)
         self.assertIn(
             "TRUSTED_HOSTS=<PUBLIC_IP_FROM_APPLY_SUMMARY>,127.0.0.1,localhost",
             operator,
@@ -82,20 +85,30 @@ class Host001PackageTests(unittest.TestCase):
 
         _require_reviewed_target(
             "postgresql+psycopg://ai_career_agent:x@c-test.rw.mdb.yandexcloud.net:6432/ai_career_agent",
+            expected_host="c-test.rw.mdb.yandexcloud.net",
             restore=False,
         )
         _require_reviewed_target(
             "postgresql+psycopg://aca_restore:x@c-test.rw.mdb.yandexcloud.net:6432/aca_restore",
+            expected_host="c-test.rw.mdb.yandexcloud.net",
             restore=True,
         )
         with self.assertRaises(FixtureError):
             _require_reviewed_target(
                 "postgresql+psycopg://ai_career_agent:x@db.example.com:6432/ai_career_agent",
+                expected_host="c-test.rw.mdb.yandexcloud.net",
                 restore=False,
             )
         with self.assertRaises(FixtureError):
             _require_reviewed_target(
                 "postgresql+psycopg://ai_career_agent:x@c-test.rw.mdb.yandexcloud.net:6432/other",
+                expected_host="c-test.rw.mdb.yandexcloud.net",
+                restore=False,
+            )
+        with self.assertRaises(FixtureError):
+            _require_reviewed_target(
+                "postgresql+psycopg://ai_career_agent:x@c-other.rw.mdb.yandexcloud.net:6432/ai_career_agent",
+                expected_host="c-test.rw.mdb.yandexcloud.net",
                 restore=False,
             )
 
