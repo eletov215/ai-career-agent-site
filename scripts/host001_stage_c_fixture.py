@@ -21,13 +21,9 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import urlsplit
 
-from sqlalchemy import inspect, text
-
 ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
-
-from database import CURRENT_REVISION, create_database, current_revision  # noqa: E402
 
 
 ACK = "HOST001_STAGE_C_SYNTHETIC_ONLY"
@@ -93,6 +89,8 @@ def _database_url(name: str) -> str:
 
 
 def _schema_signature(engine) -> dict[str, Any]:
+    from sqlalchemy import inspect
+
     inspector = inspect(engine)
     existing = set(inspector.get_table_names())
     missing = [name for name in SELECTED_TABLES if name not in existing]
@@ -126,6 +124,8 @@ def _schema_signature(engine) -> dict[str, Any]:
 
 
 def _sequence_signature(engine) -> list[dict[str, Any]]:
+    from sqlalchemy import text
+
     with engine.connect() as connection:
         rows = connection.execute(
             text(
@@ -142,6 +142,8 @@ def _sequence_signature(engine) -> list[dict[str, Any]]:
 
 
 def _fixture_counts(engine) -> dict[str, int]:
+    from sqlalchemy import text
+
     counts: dict[str, int] = {}
     with engine.connect() as connection:
         for table in SELECTED_TABLES:
@@ -171,6 +173,8 @@ def _fixture_state() -> tuple[str, str]:
 
 
 def _assert_fixture_rows(engine) -> None:
+    from sqlalchemy import text
+
     with engine.connect() as connection:
         owner = connection.execute(
             text("SELECT email,status FROM users WHERE id=:id"),
@@ -241,6 +245,8 @@ def _assert_fixture_rows(engine) -> None:
 
 
 def seed(database_url: str, evidence_path: Path) -> dict[str, Any]:
+    from database import CURRENT_REVISION, create_database, current_revision
+
     _require_reviewed_target(database_url, restore=False)
     runtime = create_database(database_url)
     try:
@@ -478,6 +484,8 @@ def seed(database_url: str, evidence_path: Path) -> dict[str, Any]:
 
 
 def verify(database_url: str, evidence_path: Path) -> dict[str, Any]:
+    from database import CURRENT_REVISION, create_database, current_revision
+
     _require_reviewed_target(database_url, restore=True)
     if not evidence_path.is_file():
         raise FixtureError("fixture_evidence_missing")
