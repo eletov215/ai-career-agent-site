@@ -393,7 +393,7 @@ In Yandex Cloud Console, confirm only that the private backup bucket contains th
 Restore the encrypted local Stage C artifact into the dedicated `aca_restore` database:
 
 ```bash
-python infra/yandex-cloud/run_with_lockbox.py --   docker compose -f infra/yandex-cloud/compose.yaml --profile ops   run --rm ops   python scripts/restore_database.py   --backup /var/backups/ai-career-agent/host001-stage-c.dump.enc   --manifest /var/backups/ai-career-agent/host001-stage-c.dump.enc.manifest.json   --clean   --allow-production
+python infra/yandex-cloud/run_with_lockbox.py --   docker compose -f infra/yandex-cloud/compose.yaml --profile ops   run --rm -e RESTORE_DATABASE_URL ops   python scripts/restore_database.py   --backup /var/backups/ai-career-agent/host001-stage-c.dump.enc   --manifest /var/backups/ai-career-agent/host001-stage-c.dump.enc.manifest.json   --clean   --allow-production
 ```
 
 `--allow-production` here is allowed only because `RESTORE_DATABASE_URL` is the Terraform-created disposable Stage C database `aca_restore`. Never reuse this command against a persistent or production database.
