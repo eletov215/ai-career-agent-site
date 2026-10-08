@@ -97,6 +97,9 @@ Verify this again during the field test with the actual ingress path.
 
 ## 7. Billable field test — separate approval required
 
+Execution must follow `docs/HOST001_STAGE_C_OPERATOR_CHECKLIST_20261008.md`. The checklist fixes the exact order, stop conditions, synthetic-only runtime payload, backup/restore drill, evidence capture and recovery path for the approved Stage C window.
+
+
 Only after owner approval:
 1. start from `terraform.stage-c.tfvars.example`, keep `field_test_resources_enabled=true` and `foundation_deletion_protection=false`, and supply both PostgreSQL passwords through protected `TF_VAR_...` environment values;
 2. configure Yandex authentication in a protected environment;
