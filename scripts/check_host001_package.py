@@ -374,8 +374,8 @@ def validate(root: Path = ROOT) -> list[str]:
 
         main_tf = _read("infra/yandex-cloud/main.tf")
         for marker in (
-            'primary_pg_rw_fqdn             = "c-${yandex_mdb_postgresql_cluster.main.id}.rw.mdb.yandexcloud.net"',
-            'field_test_restore_rw_fqdn     = var.field_test_resources_enabled ? "c-${yandex_mdb_postgresql_cluster.field_test_restore[0].id}.rw.mdb.yandexcloud.net" : ""',
+            'primary_pg_rw_fqdn          = "c-${yandex_mdb_postgresql_cluster.main.id}.rw.mdb.yandexcloud.net"',
+            'field_test_restore_rw_fqdn  = var.field_test_resources_enabled ? "c-${yandex_mdb_postgresql_cluster.field_test_restore[0].id}.rw.mdb.yandexcloud.net" : ""',
         ):
             if marker not in main_tf:
                 errors.append("Stage C exact database host identity missing: " + marker)
