@@ -159,6 +159,24 @@ class Host001PackageTests(unittest.TestCase):
                 if label == "named artifact upload":
                     self.assertIn("Stage C workflow must not upload artifacts", errors)
 
+    def test_stage_c_operator_checklist_has_restore_and_fixture_controls(self):
+        checklist = (
+            ROOT / "docs/HOST001_STAGE_C_OPERATOR_CHECKLIST_20261008.md"
+        ).read_text(encoding="utf-8")
+        fixture = (ROOT / "scripts/host001_stage_c_fixture.py").read_text(
+            encoding="utf-8"
+        )
+
+        self.assertIn("postgresql+psycopg://ai_career_agent:", checklist)
+        self.assertIn("postgresql+psycopg://aca_restore:", checklist)
+        self.assertIn("-e RESTORE_DATABASE_URL", checklist)
+        self.assertIn("-e APP_ENV=development", checklist)
+        self.assertIn("SEED_STAGE_C_SYNTHETIC_ONLY", checklist)
+        self.assertIn("--expected-report", checklist)
+        self.assertIn("200,200,200,200,200,429", checklist)
+        self.assertIn("Refusing to seed Stage C fixture into a database that already has users.", fixture)
+        self.assertIn("Restore verification mismatch: sequences.", fixture)
+
     def test_stage_c_apply_uses_remote_state_and_dispatches_teardown_before_apply(self):
         workflow = (ROOT / ".github/workflows/host001-stage-c-apply.yml").read_text(
             encoding="utf-8"
