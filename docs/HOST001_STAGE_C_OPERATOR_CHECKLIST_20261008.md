@@ -75,6 +75,7 @@ On the VM:
 ```bash
 sudo -i
 set -euo pipefail
+cloud-init status --wait
 test -s /etc/ai-career-agent/yandex-ca.pem
 source /etc/ai-career-agent/host.env
 test -n "$YC_LOCKBOX_SECRET_ID"
@@ -86,6 +87,10 @@ Prepare the exact reviewed repository revision:
 
 ```bash
 cd /opt/ai-career-agent
+if ! command -v git >/dev/null 2>&1; then
+  apt-get update
+  apt-get install -y git
+fi
 if [ ! -d .git ]; then
   git clone https://github.com/eletov215/ai-career-agent-site.git .
 fi
@@ -285,6 +290,8 @@ Run restore against `RESTORE_DATABASE_URL` from the runtime Lockbox payload:
 ```bash
 python infra/yandex-cloud/run_with_lockbox.py --   docker compose -f infra/yandex-cloud/compose.yaml --profile ops   run --rm ops python scripts/restore_database.py     --backup /var/backups/ai-career-agent/stage-c-synthetic.dump.enc     --manifest /var/backups/ai-career-agent/stage-c-synthetic.dump.enc.manifest.json
 ```
+
+The `APP_ENV=development` override applies only to the one-off restore helper so its production-restore interlock recognizes the target as disposable. It does not change the web/gateway runtime, which remains `APP_ENV=production`.
 
 PASS requires:
 
