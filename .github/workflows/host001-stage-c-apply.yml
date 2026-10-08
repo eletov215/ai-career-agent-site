@@ -136,6 +136,7 @@ jobs:
         id: plan
         shell: bash
         env:
+          TFSTATE_BUCKET: ${{ secrets.YC_STAGE_C_TFSTATE_BUCKET }}
           AWS_ACCESS_KEY_ID: ${{ secrets.YC_STAGE_C_TFSTATE_ACCESS_KEY }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.YC_STAGE_C_TFSTATE_SECRET_KEY }}
           TF_VAR_cloud_id: ${{ secrets.YC_STAGE_C_CLOUD_ID }}
@@ -177,7 +178,61 @@ jobs:
           plan_code=$?
           set -e
           if [ "$plan_code" -ne 2 ]; then
-            echo "Refusing apply: fresh Stage C plan must contain reviewed create changes (exit 2)."
+            echo "Refusing apply: fresh Stage C plan must contain reviewed create changes (exit 2); actual exit code: $plan_code."
+            if [ -f "$plan_log" ]; then
+              echo "Sanitized Stage C apply plan diagnostic:"
+              python - "$plan_log" <<'PY'
+          import os
+          import re
+          import sys
+
+          path = sys.argv[1]
+          text = open(path, encoding="utf-8", errors="replace").read()
+          for name in (
+              "TFSTATE_BUCKET",
+              "AWS_ACCESS_KEY_ID",
+              "AWS_SECRET_ACCESS_KEY",
+              "TFSTATE_KEY",
+              "TF_VAR_cloud_id",
+              "TF_VAR_folder_id",
+              "TF_VAR_admin_cidr",
+              "TF_VAR_ssh_public_key",
+              "TF_VAR_postgresql_app_password",
+              "TF_VAR_field_test_restore_password",
+          ):
+              value = os.environ.get(name) or ""
+              if value:
+                  text = text.replace(value, f"<redacted:{name}>")
+
+          selected = []
+          pattern = re.compile(
+              r"(Error:|Error message:|StatusCode:|RequestID:|api error|"
+              r"permission|denied|forbidden|quota|state lock|lock file|"
+              r"backend|InvalidArgument|PreconditionFailed|No changes)",
+              re.IGNORECASE,
+          )
+          for line in text.splitlines():
+              lowered = line.lower()
+              if any(
+                  token in lowered
+                  for token in (
+                      "private_key",
+                      "secret_key",
+                      "password",
+                      "authorization:",
+                      "x-amz-security-token",
+                  )
+              ):
+                  continue
+              if pattern.search(line):
+                  selected.append(line)
+
+          if not selected:
+              selected = ["Terraform plan failed without a safe classified diagnostic line."]
+          for line in selected[-40:]:
+              print(line[:1200])
+          PY
+            fi
             exit 1
           fi
 
