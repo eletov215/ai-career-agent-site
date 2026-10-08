@@ -198,6 +198,10 @@ git --version
 export YC_LOCKBOX_SECRET_ID="$(sudo sed -n 's/^YC_LOCKBOX_SECRET_ID=//p' /etc/ai-career-agent/host.env)"
 export YC_BACKUP_LOCKBOX_SECRET_ID="$(sudo sed -n 's/^YC_BACKUP_LOCKBOX_SECRET_ID=//p' /etc/ai-career-agent/host.env)"
 export BACKUP_S3_BUCKET="$(sudo sed -n 's/^BACKUP_S3_BUCKET=//p' /etc/ai-career-agent/host.env)"
+export STAGE_C_EXPECTED_PRIMARY_PG_FQDN="$(sudo sed -n 's/^PRIMARY_PG_RW_FQDN=//p' /etc/ai-career-agent/host.env)"
+export STAGE_C_EXPECTED_RESTORE_PG_FQDN="$(sudo sed -n 's/^RESTORE_PG_RW_FQDN=//p' /etc/ai-career-agent/host.env)"
+test -n "$STAGE_C_EXPECTED_PRIMARY_PG_FQDN"
+test -n "$STAGE_C_EXPECTED_RESTORE_PG_FQDN"
 
 cd /opt/ai-career-agent
 git clone https://github.com/eletov215/ai-career-agent-site.git .
@@ -282,12 +286,12 @@ Expected:
 
 The repository contains `scripts/host001_stage_c_fixture.py`.
 
-It is gated by the exact acknowledgement `HOST001_STAGE_C_SYNTHETIC_ONLY`, accepts only the reviewed Yandex RW hostname pattern, uses only `.invalid` / synthetic rows, and does not call providers.
+It is gated by the exact acknowledgement `HOST001_STAGE_C_SYNTHETIC_ONLY`, requires the database URL host to equal the exact Terraform-derived FQDN stored by cloud-init, uses only `.invalid` / synthetic rows, and does not call providers.
 
 Seed the primary database and write secret-free baseline evidence into the backup volume:
 
 ```bash
-python infra/yandex-cloud/run_with_lockbox.py --   docker compose -f infra/yandex-cloud/compose.yaml --profile ops   run --rm --build ops   python scripts/host001_stage_c_fixture.py seed   --ack HOST001_STAGE_C_SYNTHETIC_ONLY   --evidence /var/backups/ai-career-agent/host001-stage-c-fixture.json
+python infra/yandex-cloud/run_with_lockbox.py --   docker compose -f infra/yandex-cloud/compose.yaml --profile ops   run --rm --build -e STAGE_C_EXPECTED_PRIMARY_PG_FQDN ops   python scripts/host001_stage_c_fixture.py seed   --ack HOST001_STAGE_C_SYNTHETIC_ONLY   --evidence /var/backups/ai-career-agent/host001-stage-c-fixture.json
 ```
 
 The fixture covers:
@@ -392,15 +396,15 @@ In Yandex Cloud Console, confirm only that the private backup bucket contains th
 Restore the encrypted local Stage C artifact into the dedicated `aca_restore` database:
 
 ```bash
-python infra/yandex-cloud/run_with_lockbox.py --   docker compose -f infra/yandex-cloud/compose.yaml --profile ops   run --rm -e RESTORE_DATABASE_URL ops   python scripts/restore_database.py   --backup /var/backups/ai-career-agent/host001-stage-c.dump.enc   --manifest /var/backups/ai-career-agent/host001-stage-c.dump.enc.manifest.json   --clean   --allow-production
+python infra/yandex-cloud/run_with_lockbox.py --   docker compose -f infra/yandex-cloud/compose.yaml --profile ops   run --rm -e RESTORE_DATABASE_URL -e STAGE_C_EXPECTED_RESTORE_PG_FQDN ops   sh -lc 'python scripts/host001_stage_c_fixture.py guard-restore --ack HOST001_STAGE_C_SYNTHETIC_ONLY && python scripts/restore_database.py --backup /var/backups/ai-career-agent/host001-stage-c.dump.enc --manifest /var/backups/ai-career-agent/host001-stage-c.dump.enc.manifest.json --clean --allow-production'
 ```
 
-`--allow-production` here is allowed only because `RESTORE_DATABASE_URL` is the Terraform-created disposable Stage C database `aca_restore`. Never reuse this command against a persistent or production database.
+`--allow-production` here is reached only after `guard-restore` proves that `RESTORE_DATABASE_URL` matches the exact Terraform-derived disposable Stage C restore FQDN plus the reviewed `aca_restore` user/database. Never reuse this command against a persistent or production database.
 
 Then verify the representative synthetic fixture, byte-for-byte asset preservation, schema signature and sequence signature:
 
 ```bash
-python infra/yandex-cloud/run_with_lockbox.py --   docker compose -f infra/yandex-cloud/compose.yaml --profile ops   run --rm   -e RESTORE_DATABASE_URL   ops   python scripts/host001_stage_c_fixture.py verify   --ack HOST001_STAGE_C_SYNTHETIC_ONLY   --evidence /var/backups/ai-career-agent/host001-stage-c-fixture.json
+python infra/yandex-cloud/run_with_lockbox.py --   docker compose -f infra/yandex-cloud/compose.yaml --profile ops   run --rm -e RESTORE_DATABASE_URL -e STAGE_C_EXPECTED_RESTORE_PG_FQDN ops   python scripts/host001_stage_c_fixture.py verify   --ack HOST001_STAGE_C_SYNTHETIC_ONLY   --evidence /var/backups/ai-career-agent/host001-stage-c-fixture.json
 ```
 
 Acceptance includes:
