@@ -252,6 +252,11 @@ def seed_fixture(runtime: DatabaseRuntime) -> None:
                 updated_at=_TIMESTAMP,
             )
         )
+        # These fixture mappers intentionally do not define all ORM
+        # relationships. Flush each FK parent layer explicitly so SQLite and
+        # PostgreSQL observe the same deterministic insertion order.
+        session.flush()
+
         session.add(
             ResumeDraft(
                 id=_DRAFT_ID,
@@ -298,6 +303,27 @@ def seed_fixture(runtime: DatabaseRuntime) -> None:
             )
         )
         session.add(
+            AIConsent(
+                id=_CONSENT_ID,
+                user_id=_USER_ID,
+                consent_type="ai_processing",
+                scope="stage_c_synthetic",
+                policy_version="stage-c-synthetic-v1",
+                policy_hash=policy_hash,
+                provider="none",
+                purpose="restore_verification",
+                status="withdrawn",
+                cycle=1,
+                revision=2,
+                accepted_at=_TIMESTAMP,
+                withdrawn_at=_TIMESTAMP + 1,
+                created_at=_TIMESTAMP,
+                updated_at=_TIMESTAMP + 1,
+            )
+        )
+        session.flush()
+
+        session.add(
             SavedVacancySource(
                 id=_SOURCE_ID,
                 saved_vacancy_id=_SAVED_ID,
@@ -319,6 +345,8 @@ def seed_fixture(runtime: DatabaseRuntime) -> None:
                 updated_at=_TIMESTAMP + 1,
             )
         )
+        session.flush()
+
         session.add(
             SavedVacancyTrackerEvent(
                 id=_EVENT_ID,
@@ -328,25 +356,6 @@ def seed_fixture(runtime: DatabaseRuntime) -> None:
                 to_state="preparing",
                 event_revision=1,
                 created_at=_TIMESTAMP + 1,
-            )
-        )
-        session.add(
-            AIConsent(
-                id=_CONSENT_ID,
-                user_id=_USER_ID,
-                consent_type="ai_processing",
-                scope="stage_c_synthetic",
-                policy_version="stage-c-synthetic-v1",
-                policy_hash=policy_hash,
-                provider="none",
-                purpose="restore_verification",
-                status="withdrawn",
-                cycle=1,
-                revision=2,
-                accepted_at=_TIMESTAMP,
-                withdrawn_at=_TIMESTAMP + 1,
-                created_at=_TIMESTAMP,
-                updated_at=_TIMESTAMP + 1,
             )
         )
         session.commit()
