@@ -63,20 +63,40 @@ def _sha256_text(value: str) -> str:
     return _sha256_bytes(value.encode("utf-8"))
 
 
-def _require_reviewed_target(database_url: str, *, restore: bool) -> None:
+def _expected_host(name: str) -> str:
+    value = (os.environ.get(name) or "").strip().lower().rstrip(".")
+    if not value:
+        raise FixtureError(f"{name}_missing")
+    if not value.endswith(".rw.mdb.yandexcloud.net"):
+        raise FixtureError(f"{name}_invalid")
+    return value
+
+
+def _require_reviewed_target(
+    database_url: str,
+    *,
+    expected_host: str,
+    restore: bool,
+) -> None:
     try:
         parsed = urlsplit(database_url)
     except ValueError as exc:
         raise FixtureError("database_url_invalid") from exc
-    host = (parsed.hostname or "").lower()
+    host = (parsed.hostname or "").lower().rstrip(".")
     database = parsed.path.lstrip("/")
     username = parsed.username or ""
     expected_database = "aca_restore" if restore else "ai_career_agent"
     expected_username = "aca_restore" if restore else "ai_career_agent"
+    normalized_expected_host = (expected_host or "").strip().lower().rstrip(".")
     if not parsed.scheme.startswith("postgresql"):
         raise FixtureError("postgresql_required")
-    if not host.endswith(".rw.mdb.yandexcloud.net"):
-        raise FixtureError("reviewed_yandex_rw_host_required")
+    if (
+        not normalized_expected_host
+        or not normalized_expected_host.endswith(".rw.mdb.yandexcloud.net")
+    ):
+        raise FixtureError("expected_stage_c_host_invalid")
+    if host != normalized_expected_host:
+        raise FixtureError("exact_stage_c_host_required")
     if database != expected_database or username != expected_username:
         raise FixtureError("reviewed_stage_c_database_identity_required")
 
@@ -247,7 +267,11 @@ def _assert_fixture_rows(engine) -> None:
 def seed(database_url: str, evidence_path: Path) -> dict[str, Any]:
     from database import CURRENT_REVISION, create_database, current_revision
 
-    _require_reviewed_target(database_url, restore=False)
+    _require_reviewed_target(
+        database_url,
+        expected_host=_expected_host("STAGE_C_EXPECTED_PRIMARY_PG_FQDN"),
+        restore=False,
+    )
     runtime = create_database(database_url)
     try:
         revision = current_revision(runtime.engine)
@@ -486,7 +510,11 @@ def seed(database_url: str, evidence_path: Path) -> dict[str, Any]:
 def verify(database_url: str, evidence_path: Path) -> dict[str, Any]:
     from database import CURRENT_REVISION, create_database, current_revision
 
-    _require_reviewed_target(database_url, restore=True)
+    _require_reviewed_target(
+        database_url,
+        expected_host=_expected_host("STAGE_C_EXPECTED_RESTORE_PG_FQDN"),
+        restore=True,
+    )
     if not evidence_path.is_file():
         raise FixtureError("fixture_evidence_missing")
     evidence = json.loads(evidence_path.read_text(encoding="utf-8"))
@@ -521,7 +549,7 @@ def verify(database_url: str, evidence_path: Path) -> dict[str, Any]:
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("mode", choices=("seed", "verify"))
+    parser.add_argument("mode", choices=("seed", "guard-restore", "verify"))
     parser.add_argument("--ack", required=True)
     parser.add_argument(
         "--evidence",
@@ -539,6 +567,17 @@ def main() -> int:
                 _database_url("DATABASE_URL"),
                 Path(args.evidence).expanduser().resolve(),
             )
+        elif args.mode == "guard-restore":
+            _require_reviewed_target(
+                _database_url("RESTORE_DATABASE_URL"),
+                expected_host=_expected_host("STAGE_C_EXPECTED_RESTORE_PG_FQDN"),
+                restore=True,
+            )
+            result = {
+                "ok": True,
+                "mode": "guard-restore",
+                "target_bound": True,
+            }
         else:
             result = verify(
                 _database_url("RESTORE_DATABASE_URL"),
