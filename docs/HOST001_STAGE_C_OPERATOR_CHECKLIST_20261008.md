@@ -160,7 +160,7 @@ Set:
 
 ```text
 AUTH_EMAIL_BACKEND=disabled
-TRUSTED_HOSTS=<PUBLIC_IP_FROM_APPLY_SUMMARY>
+TRUSTED_HOSTS=<PUBLIC_IP_FROM_APPLY_SUMMARY>,127.0.0.1,localhost
 ```
 
 Build the primary URL using the operator-held `YC_STAGE_C_POSTGRES_PASSWORD`:
