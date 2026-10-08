@@ -110,6 +110,8 @@ or `terraform apply`.
 
 ## Stage C bounded field-test notes
 
+Use `docs/HOST001_STAGE_C_OPERATOR_CHECKLIST_20261008.md` as the exact live execution order. It keeps the paid window focused on the reviewed synthetic TLS/migration/fixture/backup/restore/proxy checks and the automatic teardown boundary.
+
 The default Terraform plan does not contain the temporary backup bucket or restore database. They appear only when `field_test_resources_enabled=true`.
 
 For a Stage C test, source the non-secret Terraform outputs/host environment and load the two Lockbox secrets in sequence before running the backup exporter. The first secret supplies the application database and encryption values; the second supplies the temporary Object Storage static key without printing it:
