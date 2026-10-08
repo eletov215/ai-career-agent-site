@@ -252,3 +252,4 @@ jobs:
             "$RUNNER_TEMP/stage-c.tfplan" \
             "$RUNNER_TEMP/stage-c-plan.json" \
             "$RUNNER_TEMP/stage-c-plan.stdout"
+          rm -rf infra/yandex-cloud/.terraform
