@@ -113,12 +113,12 @@ def _schema_signature(engine) -> dict[str, Any]:
                 if item.get("name")
             ),
             "foreign_keys": sorted(
-                (
+                [
                     str(item.get("name") or ""),
-                    tuple(item.get("constrained_columns") or ()),
+                    list(item.get("constrained_columns") or ()),
                     str(item.get("referred_table") or ""),
-                    tuple(item.get("referred_columns") or ()),
-                )
+                    list(item.get("referred_columns") or ()),
+                ]
                 for item in inspector.get_foreign_keys(table)
             ),
         }
@@ -168,6 +168,76 @@ def _fixture_state() -> tuple[str, str]:
         separators=(",", ":"),
     )
     return state, _sha256_text(state)
+
+
+def _assert_fixture_rows(engine) -> None:
+    with engine.connect() as connection:
+        owner = connection.execute(
+            text("SELECT email,status FROM users WHERE id=:id"),
+            {"id": USER_ID},
+        ).one_or_none()
+        vacancy = connection.execute(
+            text(
+                "SELECT title,company,note,revision "
+                "FROM saved_vacancies WHERE id=:id"
+            ),
+            {"id": VACANCY_ID},
+        ).one_or_none()
+        source = connection.execute(
+            text(
+                "SELECT source,external_id "
+                "FROM saved_vacancy_sources WHERE id=:id"
+            ),
+            {"id": VACANCY_SOURCE_ID},
+        ).one_or_none()
+        consent = connection.execute(
+            text(
+                "SELECT status,cycle,revision,provider,purpose "
+                "FROM ai_consents WHERE id=:id"
+            ),
+            {"id": CONSENT_ID},
+        ).one_or_none()
+        asset = connection.execute(
+            text(
+                "SELECT byte_size,sha256,data "
+                "FROM resume_assets WHERE id=:id"
+            ),
+            {"id": ASSET_ID},
+        ).one_or_none()
+
+    owner_tuple = tuple(owner) if owner is not None else None
+    vacancy_tuple = tuple(vacancy) if vacancy is not None else None
+    source_tuple = tuple(source) if source is not None else None
+    consent_tuple = tuple(consent) if consent is not None else None
+
+    if owner_tuple != (FIXTURE_EMAIL, "active"):
+        raise FixtureError("restored_owner_fixture_mismatch")
+    if vacancy_tuple != (
+        "Synthetic Stage C vacancy",
+        "Synthetic Co",
+        "synthetic-only",
+        1,
+    ):
+        raise FixtureError("restored_job_fixture_mismatch")
+    if source_tuple != ("hh", "host001-stage-c-synthetic-vacancy"):
+        raise FixtureError("restored_job_source_fixture_mismatch")
+    if consent_tuple != (
+        "withdrawn",
+        1,
+        2,
+        "alice",
+        "synthetic_restore_fixture",
+    ):
+        raise FixtureError("restored_legal_fixture_mismatch")
+
+    expected_hash = _sha256_bytes(ASSET_BYTES)
+    if (
+        asset is None
+        or int(asset[0]) != len(ASSET_BYTES)
+        or asset[1] != expected_hash
+        or bytes(asset[2]) != ASSET_BYTES
+    ):
+        raise FixtureError("restored_resume_asset_bytes_mismatch")
 
 
 def seed(database_url: str, evidence_path: Path) -> dict[str, Any]:
@@ -377,6 +447,8 @@ def seed(database_url: str, evidence_path: Path) -> dict[str, Any]:
                     },
                 )
 
+        _assert_fixture_rows(runtime.engine)
+
         evidence = {
             "fixture_version": FIXTURE_VERSION,
             "database_revision": revision,
@@ -422,55 +494,8 @@ def verify(database_url: str, evidence_path: Path) -> dict[str, Any]:
         if _sequence_signature(runtime.engine) != evidence.get("sequence_signature"):
             raise FixtureError("restored_sequence_signature_mismatch")
 
-        with runtime.engine.connect() as connection:
-            owner = connection.execute(
-                text(
-                    "SELECT email,status FROM users WHERE id=:id"
-                ),
-                {"id": USER_ID},
-            ).one_or_none()
-            vacancy = connection.execute(
-                text(
-                    "SELECT title,company,note,revision FROM saved_vacancies WHERE id=:id"
-                ),
-                {"id": VACANCY_ID},
-            ).one_or_none()
-            source = connection.execute(
-                text(
-                    "SELECT source,external_id FROM saved_vacancy_sources WHERE id=:id"
-                ),
-                {"id": VACANCY_SOURCE_ID},
-            ).one_or_none()
-            consent = connection.execute(
-                text(
-                    "SELECT status,cycle,revision,provider,purpose "
-                    "FROM ai_consents WHERE id=:id"
-                ),
-                {"id": CONSENT_ID},
-            ).one_or_none()
-            asset = connection.execute(
-                text(
-                    "SELECT byte_size,sha256,data FROM resume_assets WHERE id=:id"
-                ),
-                {"id": ASSET_ID},
-            ).one_or_none()
-
-        if owner != (FIXTURE_EMAIL, "active"):
-            raise FixtureError("restored_owner_fixture_mismatch")
-        if vacancy != ("Synthetic Stage C vacancy", "Synthetic Co", "synthetic-only", 1):
-            raise FixtureError("restored_job_fixture_mismatch")
-        if source != ("hh", "host001-stage-c-synthetic-vacancy"):
-            raise FixtureError("restored_job_source_fixture_mismatch")
-        if consent != ("withdrawn", 1, 2, "alice", "synthetic_restore_fixture"):
-            raise FixtureError("restored_legal_fixture_mismatch")
+        _assert_fixture_rows(runtime.engine)
         expected_hash = _sha256_bytes(ASSET_BYTES)
-        if (
-            asset is None
-            or int(asset[0]) != len(ASSET_BYTES)
-            or asset[1] != expected_hash
-            or bytes(asset[2]) != ASSET_BYTES
-        ):
-            raise FixtureError("restored_resume_asset_bytes_mismatch")
 
         return {
             "ok": True,
