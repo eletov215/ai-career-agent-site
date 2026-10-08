@@ -747,6 +747,36 @@ class LockboxLoaderTests(unittest.TestCase):
         ):
             with self.assertRaises(module.SecretLoadError):
                 module.validate_database_url(weak_url)
+        stage_c_url = (
+            "postgresql+psycopg://ai_career_agent:secret@"
+            "c-stage.rw.mdb.yandexcloud.net:6432/ai_career_agent"
+            "?sslmode=verify-full"
+            "&sslrootcert=/etc/ssl/certs/yandex-cloud-ca.pem"
+            "&target_session_attrs=read-write"
+        )
+        module.validate_database_url(
+            stage_c_url,
+            expected_stage_c_host="c-stage.rw.mdb.yandexcloud.net",
+        )
+        for wrong_url, expected_host in (
+            (
+                stage_c_url.replace("c-stage.", "c-other."),
+                "c-stage.rw.mdb.yandexcloud.net",
+            ),
+            (
+                stage_c_url.replace("/ai_career_agent?", "/other?"),
+                "c-stage.rw.mdb.yandexcloud.net",
+            ),
+            (
+                stage_c_url.replace("ai_career_agent:secret@", "other:secret@"),
+                "c-stage.rw.mdb.yandexcloud.net",
+            ),
+        ):
+            with self.assertRaises(module.SecretLoadError):
+                module.validate_database_url(
+                    wrong_url,
+                    expected_stage_c_host=expected_host,
+                )
 
     def test_loader_parses_allowlisted_environment_shape_without_printing(self):
         module = self._module()
