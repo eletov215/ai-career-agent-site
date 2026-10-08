@@ -56,6 +56,7 @@ STAGE_C_APPLY_SECRET_BINDINGS = {
     "YC_STAGE_C_TFSTATE_BUCKET": (
         "Initialize durable Yandex Object Storage backend",
         "Refuse overlapping Stage C lifecycle from durable remote state",
+        "Fresh reviewed Stage C plan",
     ),
     "YC_STAGE_C_TFSTATE_ACCESS_KEY": (
         "Initialize durable Yandex Object Storage backend",
@@ -478,6 +479,8 @@ def validate(root: Path = ROOT) -> list[str]:
             'echo "TFSTATE_KEY=$TFSTATE_KEY" >> "$GITHUB_ENV"',
             "Refuse overlapping Stage C lifecycle from durable remote state",
             "stage_c_state_guard.py --bucket",
+            "Sanitized Stage C apply plan diagnostic:",
+            "actual exit code: $plan_code",
             "Fresh credentialed create-only plan passed.",
             "Dispatch cancellation-surviving teardown before apply",
             "host001-stage-c-teardown.yml/dispatches",
