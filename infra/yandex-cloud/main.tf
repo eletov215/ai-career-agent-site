@@ -223,9 +223,11 @@ resource "yandex_compute_instance" "app" {
     user-data = templatefile("${path.module}/cloud-init.yaml.tftpl", {
       admin_username              = var.admin_username
       ssh_public_key              = var.ssh_public_key
-      lockbox_secret_id           = yandex_lockbox_secret.runtime.id
-      field_test_backup_secret_id = var.field_test_resources_enabled ? yandex_lockbox_secret.field_test_storage[0].id : ""
-      field_test_backup_bucket    = var.field_test_resources_enabled ? yandex_storage_bucket.field_test[0].bucket : ""
+      lockbox_secret_id              = yandex_lockbox_secret.runtime.id
+      field_test_backup_secret_id    = var.field_test_resources_enabled ? yandex_lockbox_secret.field_test_storage[0].id : ""
+      field_test_backup_bucket       = var.field_test_resources_enabled ? yandex_storage_bucket.field_test[0].bucket : ""
+      primary_pg_rw_fqdn             = "c-${yandex_mdb_postgresql_cluster.main.id}.rw.mdb.yandexcloud.net"
+      field_test_restore_rw_fqdn     = var.field_test_resources_enabled ? "c-${yandex_mdb_postgresql_cluster.field_test_restore[0].id}.rw.mdb.yandexcloud.net" : ""
     })
   }
 
