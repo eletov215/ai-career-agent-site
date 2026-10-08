@@ -273,19 +273,6 @@ def seed_fixture(runtime: DatabaseRuntime) -> None:
             )
         )
         session.add(
-            ResumeAsset(
-                id=_ASSET_ID,
-                draft_id=_DRAFT_ID,
-                user_id=_USER_ID,
-                kind="photo",
-                content_type="image/png",
-                byte_size=len(_ASSET_BYTES),
-                sha256=_sha256_bytes(_ASSET_BYTES),
-                data=_ASSET_BYTES,
-                created_at=_TIMESTAMP,
-            )
-        )
-        session.add(
             SavedVacancy(
                 id=_SAVED_ID,
                 user_id=_USER_ID,
@@ -323,6 +310,19 @@ def seed_fixture(runtime: DatabaseRuntime) -> None:
         )
         session.flush()
 
+        session.add(
+            ResumeAsset(
+                id=_ASSET_ID,
+                draft_id=_DRAFT_ID,
+                user_id=_USER_ID,
+                kind="photo",
+                content_type="image/png",
+                byte_size=len(_ASSET_BYTES),
+                sha256=_sha256_bytes(_ASSET_BYTES),
+                data=_ASSET_BYTES,
+                created_at=_TIMESTAMP,
+            )
+        )
         session.add(
             SavedVacancySource(
                 id=_SOURCE_ID,
