@@ -13,7 +13,6 @@ terraform {
       s3 = "https://storage.yandexcloud.net"
     }
     region                      = "ru-central1"
-    key                         = "host001/stage-c.tfstate"
     skip_region_validation      = true
     skip_credentials_validation = true
     skip_requesting_account_id  = true

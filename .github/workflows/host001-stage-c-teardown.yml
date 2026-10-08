@@ -26,7 +26,7 @@ permissions:
   actions: read
 
 concurrency:
-  group: host001-stage-c-recovery-teardown
+  group: host001-stage-c-recovery-teardown-${{ inputs.source_run_id }}
   cancel-in-progress: false
 
 jobs:
@@ -89,6 +89,7 @@ jobs:
             test "$HOLD_MINUTES" -ge 15
           else
             test "$HOLD_MINUTES" -eq 0
+            echo "MANUAL_RECOVERY_STARTED_EPOCH=$(date -u +%s)" >> "$GITHUB_ENV"
           fi
 
       - name: Validate source apply run identity before checkout
@@ -194,16 +195,65 @@ jobs:
       - name: Initialize durable Yandex Object Storage backend
         shell: bash
         env:
+          STAGE_C_ACKNOWLEDGEMENT: ${{ inputs.acknowledgement }}
+          MANUAL_RECOVERY_STARTED_EPOCH: ${{ env.MANUAL_RECOVERY_STARTED_EPOCH }}
           TFSTATE_BUCKET: ${{ secrets.YC_STAGE_C_TFSTATE_BUCKET }}
+          SOURCE_RUN_ID: ${{ inputs.source_run_id }}
           AWS_ACCESS_KEY_ID: ${{ secrets.YC_STAGE_C_TFSTATE_ACCESS_KEY }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.YC_STAGE_C_TFSTATE_SECRET_KEY }}
         run: |
           set -euo pipefail
           test -n "$TFSTATE_BUCKET"
+          test -n "$SOURCE_RUN_ID"
           test -n "$AWS_ACCESS_KEY_ID"
           test -n "$AWS_SECRET_ACCESS_KEY"
-          terraform -chdir=infra/yandex-cloud init             -reconfigure             -input=false             -backend-config="bucket=$TFSTATE_BUCKET"
-          terraform -chdir=infra/yandex-cloud validate
+
+          if grep -Eq '^[[:space:]]*key[[:space:]]*=[[:space:]]*"host001/stage-c\.tfstate"[[:space:]]*$' infra/yandex-cloud/versions.tf; then
+            echo "Legacy fixed-key source revisions are not automatically recoverable because the shared state object has no source-run ownership proof."
+            exit 1
+          fi
+          TFSTATE_KEY="host001/stage-c-${SOURCE_RUN_ID}.tfstate"
+
+          if [ "$STAGE_C_ACKNOWLEDGEMENT" = "DESTROY_STAGE_C_SYNTHETIC_1000_RUB" ]; then
+            test -n "$MANUAL_RECOVERY_STARTED_EPOCH"
+            setup_deadline=$((MANUAL_RECOVERY_STARTED_EPOCH + 20 * 60))
+            now_epoch="$(date -u +%s)"
+            init_budget=$((setup_deadline - now_epoch))
+            test "$init_budget" -gt 0 || {
+              echo "Manual recovery setup deadline reached before Terraform init."
+              exit 1
+            }
+            if [ "$init_budget" -gt 600 ]; then
+              init_budget=600
+            fi
+          else
+            init_budget=600
+          fi
+
+          timeout --signal=INT --kill-after=30s "${init_budget}s" \
+            terraform -chdir=infra/yandex-cloud init \
+              -reconfigure \
+              -input=false \
+              -backend-config="bucket=$TFSTATE_BUCKET" \
+              -backend-config="key=$TFSTATE_KEY"
+          echo "TFSTATE_KEY=$TFSTATE_KEY" >> "$GITHUB_ENV"
+
+          if [ "$STAGE_C_ACKNOWLEDGEMENT" = "DESTROY_STAGE_C_SYNTHETIC_1000_RUB" ]; then
+            now_epoch="$(date -u +%s)"
+            validate_budget=$((setup_deadline - now_epoch))
+            test "$validate_budget" -gt 0 || {
+              echo "Manual recovery setup deadline reached before Terraform validate."
+              exit 1
+            }
+            if [ "$validate_budget" -gt 120 ]; then
+              validate_budget=120
+            fi
+          else
+            validate_budget=120
+          fi
+
+          timeout --signal=INT --kill-after=30s "${validate_budget}s" \
+            terraform -chdir=infra/yandex-cloud validate
 
       - name: Wait for source apply result and bounded successful field window
         shell: bash
@@ -315,6 +365,8 @@ jobs:
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
+          STAGE_C_ACKNOWLEDGEMENT: ${{ inputs.acknowledgement }}
+          MANUAL_RECOVERY_STARTED_EPOCH: ${{ env.MANUAL_RECOVERY_STARTED_EPOCH }}
           SOURCE_RUN_ID: ${{ inputs.source_run_id }}
           AWS_ACCESS_KEY_ID: ${{ secrets.YC_STAGE_C_TFSTATE_ACCESS_KEY }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.YC_STAGE_C_TFSTATE_SECRET_KEY }}
@@ -330,17 +382,23 @@ jobs:
           destroy_json="$RUNNER_TEMP/stage-c-destroy-plan.json"
           destroy_log="$RUNNER_TEMP/stage-c-destroy.stdout"
 
-          destroy_plan_deadline="$(
-            python - "$SOURCE_RUN_STARTED_AT" <<'PY'
+          if [ "$STAGE_C_ACKNOWLEDGEMENT" = "DESTROY_STAGE_C_SYNTHETIC_1000_RUB" ]; then
+            test -n "$MANUAL_RECOVERY_STARTED_EPOCH"
+            destroy_plan_deadline=$((MANUAL_RECOVERY_STARTED_EPOCH + 20 * 60))
+            destroy_apply_deadline=$((MANUAL_RECOVERY_STARTED_EPOCH + 90 * 60))
+            deadline_mode="manual-recovery"
+          else
+            destroy_plan_deadline="$(
+              python - "$SOURCE_RUN_STARTED_AT" <<'PY'
           from datetime import datetime
           import sys
 
           started = datetime.fromisoformat(sys.argv[1].replace("Z", "+00:00"))
           print(int(started.timestamp()) + 170 * 60)
           PY
-          )"
-          destroy_apply_deadline="$(
-            python - "$SOURCE_RUN_STARTED_AT" <<'PY'
+            )"
+            destroy_apply_deadline="$(
+              python - "$SOURCE_RUN_STARTED_AT" <<'PY'
           from datetime import datetime
           import sys
 
@@ -349,7 +407,10 @@ jobs:
           # inside the owner-approved four-hour resource-lifetime boundary.
           print(int(started.timestamp()) + 225 * 60)
           PY
-          )"
+            )"
+            deadline_mode="automatic-owner-window"
+          fi
+          echo "deadline_mode=$deadline_mode" >> "$GITHUB_OUTPUT"
 
           plan_code=1
           stale_lock_recovered=0
@@ -357,7 +418,11 @@ jobs:
             now_epoch="$(date -u +%s)"
             plan_budget=$((destroy_plan_deadline - now_epoch))
             test "$plan_budget" -gt 0 || {
-              echo "Absolute Stage C destroy-plan deadline reached; refusing to extend the lifecycle window."
+              if [ "$deadline_mode" = "manual-recovery" ]; then
+                echo "Manual recovery destroy-plan deadline reached; refusing to leave an unbounded cleanup command running."
+              else
+                echo "Absolute Stage C destroy-plan deadline reached; refusing to extend the lifecycle window."
+              fi
               exit 1
             }
             attempt_budget="$plan_budget"
@@ -474,7 +539,11 @@ jobs:
           now_epoch="$(date -u +%s)"
           apply_budget=$((destroy_apply_deadline - now_epoch))
           test "$apply_budget" -gt 0 || {
-            echo "Absolute Stage C destroy deadline reached before destroy apply."
+            if [ "$deadline_mode" = "manual-recovery" ]; then
+              echo "Manual recovery destroy deadline reached before destroy apply."
+            else
+              echo "Absolute Stage C destroy deadline reached before destroy apply."
+            fi
             exit 1
           }
 
@@ -502,14 +571,21 @@ jobs:
           SOURCE_RUN_ID: ${{ inputs.source_run_id }}
           SOURCE_SHA: ${{ inputs.source_sha }}
           HAD_CHANGES: ${{ steps.destroy.outputs.had_changes }}
+          DEADLINE_MODE: ${{ steps.destroy.outputs.deadline_mode }}
+          TFSTATE_KEY: ${{ env.TFSTATE_KEY }}
         run: |
           {
             echo "### HOST-001 Stage C recovery teardown"
             echo
             printf -- '- Apply run ID: `%s`\n' "$SOURCE_RUN_ID"
             printf -- '- Apply commit: `%s`\n' "$SOURCE_SHA"
+            printf -- '- Remote Terraform state key: `%s`\n' "$TFSTATE_KEY"
             echo "- Remote Terraform state backend: **Yandex Object Storage with lockfile**"
-            echo "- Destroy provider deadline: **<=225 minutes from source apply start (15-minute owner-boundary reserve)**"
+            if [ "$DEADLINE_MODE" = "manual-recovery" ]; then
+              echo "- Destroy provider deadline: **<=90 minutes from explicit manual recovery start**"
+            else
+              echo "- Destroy provider deadline: **<=225 minutes from source apply start (15-minute owner-boundary reserve)**"
+            fi
             echo "- Terraform managed resources after teardown: **0**"
             echo "- Destroy changes applied: **$HAD_CHANGES**"
             echo "- Production data / Render / Neon / MIG-001 / real-data AI / email: **NOT TOUCHED**"

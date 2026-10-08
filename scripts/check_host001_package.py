@@ -20,6 +20,7 @@ REQUIRED = (
     "infra/yandex-cloud/compose.yaml",
     "infra/yandex-cloud/Dockerfile.ops",
     "infra/yandex-cloud/export_backup_s3.py",
+    "infra/yandex-cloud/stage_c_state_guard.py",
     "infra/yandex-cloud/run_with_lockbox.py",
     "infra/yandex-cloud/README.md",
     "docs/LEGAL001_OWNER_DECISIONS_20260924.md",
@@ -51,14 +52,17 @@ STAGE_C_APPLY_SECRET_BINDINGS = {
     ),
     "YC_STAGE_C_TFSTATE_BUCKET": (
         "Initialize durable Yandex Object Storage backend",
+        "Refuse overlapping Stage C lifecycle from durable remote state",
     ),
     "YC_STAGE_C_TFSTATE_ACCESS_KEY": (
         "Initialize durable Yandex Object Storage backend",
+        "Refuse overlapping Stage C lifecycle from durable remote state",
         "Fresh reviewed Stage C plan",
         "Apply reviewed Stage C plan",
     ),
     "YC_STAGE_C_TFSTATE_SECRET_KEY": (
         "Initialize durable Yandex Object Storage backend",
+        "Refuse overlapping Stage C lifecycle from durable remote state",
         "Fresh reviewed Stage C plan",
         "Apply reviewed Stage C plan",
     ),
@@ -450,7 +454,12 @@ def validate(root: Path = ROOT) -> list[str]:
             'TF_VAR_field_test_resources_enabled: "true"',
             'TF_VAR_foundation_deletion_protection: "false"',
             "Initialize durable Yandex Object Storage backend",
+            'TFSTATE_KEY="host001/stage-c-${GITHUB_RUN_ID}.tfstate"',
             '-backend-config="bucket=$TFSTATE_BUCKET"',
+            '-backend-config="key=$TFSTATE_KEY"',
+            'echo "TFSTATE_KEY=$TFSTATE_KEY" >> "$GITHUB_ENV"',
+            "Refuse overlapping Stage C lifecycle from durable remote state",
+            "stage_c_state_guard.py --bucket",
             "Fresh credentialed create-only plan passed.",
             "Dispatch cancellation-surviving teardown before apply",
             "host001-stage-c-teardown.yml/dispatches",
@@ -481,7 +490,6 @@ def validate(root: Path = ROOT) -> list[str]:
         for marker in (
             'backend "s3"',
             's3 = "https://storage.yandexcloud.net"',
-            'key                         = "host001/stage-c.tfstate"',
             "skip_region_validation      = true",
             "skip_credentials_validation = true",
             "skip_requesting_account_id  = true",
@@ -490,6 +498,8 @@ def validate(root: Path = ROOT) -> list[str]:
         ):
             if marker not in versions:
                 errors.append("Stage C remote state backend missing control: " + marker)
+        if re.search(r'(?m)^\s*key\s*=\s*"host001/stage-c\.tfstate"\s*$', versions):
+            errors.append("Stage C remote state key must be supplied per apply run")
 
         stage_c_teardown = _read(".github/workflows/host001-stage-c-teardown.yml")
         teardown_job_env = stage_c_teardown.split("    env:\n", 1)[1].split("    steps:\n", 1)[0]
@@ -537,12 +547,19 @@ def validate(root: Path = ROOT) -> list[str]:
             "if: github.ref == 'refs/heads/main'",
             "environment: stage-c-yandex",
             "timeout-minutes: 225",
-            "group: host001-stage-c-recovery-teardown",
+            'group: host001-stage-c-recovery-teardown-${{ inputs.source_run_id }}',
             "AUTO_TEARDOWN_STAGE_C_SYNTHETIC",
             "DESTROY_STAGE_C_SYNTHETIC_1000_RUB",
             'test "$HOLD_MINUTES" -le 90',
             "ref: ${{ inputs.source_sha }}",
             "Initialize durable Yandex Object Storage backend",
+            'echo "MANUAL_RECOVERY_STARTED_EPOCH=$(date -u +%s)" >> "$GITHUB_ENV"',
+            'grep -Eq',
+            "Legacy fixed-key source revisions are not automatically recoverable",
+            'TFSTATE_KEY="host001/stage-c-${SOURCE_RUN_ID}.tfstate"',
+            "Manual recovery setup deadline reached before Terraform init.",
+            "Manual recovery setup deadline reached before Terraform validate.",
+            'MANUAL_RECOVERY_STARTED_EPOCH: ${{ env.MANUAL_RECOVERY_STARTED_EPOCH }}',
             "actions/runs/$SOURCE_RUN_ID",
             "Validate source apply run identity before checkout",
             '(data.get("path") or "").split("@", 1)[0] == ".github/workflows/host001-stage-c-apply.yml"',
@@ -557,6 +574,13 @@ def validate(root: Path = ROOT) -> list[str]:
             "force-unlock -force",
             "destroy_plan_deadline",
             "destroy_apply_deadline",
+            'STAGE_C_ACKNOWLEDGEMENT: ${{ inputs.acknowledgement }}',
+            'if [ "$STAGE_C_ACKNOWLEDGEMENT" = "DESTROY_STAGE_C_SYNTHETIC_1000_RUB" ]; then',
+            "MANUAL_RECOVERY_STARTED_EPOCH",
+            'deadline_mode="manual-recovery"',
+            "Manual recovery destroy-plan deadline reached",
+            "Manual recovery destroy deadline reached before destroy apply.",
+            "Destroy provider deadline: **<=90 minutes from explicit manual recovery start**",
             "Absolute Stage C destroy-plan deadline reached",
             "Absolute Stage C destroy deadline reached before destroy apply.",
             "timeout --signal=INT --kill-after=30s",
