@@ -63,6 +63,12 @@ class Host001PackageTests(unittest.TestCase):
             "hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd",
             workflow,
         )
+        self.assertIn('TFSTATE_KEY="host001/plan-only-${GITHUB_RUN_ID}.tfstate"', workflow)
+        self.assertIn('-backend-config="bucket=$TFSTATE_BUCKET"', workflow)
+        self.assertIn('-backend-config="key=$TFSTATE_KEY"', workflow)
+        self.assertIn("-lock-timeout=30s", workflow)
+        self.assertIn("Sanitized diagnostic excerpt", workflow)
+        self.assertNotIn("init -backend=false", workflow)
 
     def test_stage_c_guard_rejects_security_boundary_regressions(self):
         workflow_path = ROOT / ".github/workflows/host001-stage-c-plan.yml"

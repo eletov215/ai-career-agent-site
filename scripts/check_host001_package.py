@@ -38,6 +38,9 @@ REQUIRED = (
 
 STAGE_C_SECRET_BINDINGS = {
     "YC_STAGE_C_SERVICE_ACCOUNT_KEY_JSON": "Materialize Yandex service-account key outside repository",
+    "YC_STAGE_C_TFSTATE_BUCKET": "Credentialed Stage C plan",
+    "YC_STAGE_C_TFSTATE_ACCESS_KEY": "Credentialed Stage C plan",
+    "YC_STAGE_C_TFSTATE_SECRET_KEY": "Credentialed Stage C plan",
     "YC_STAGE_C_CLOUD_ID": "Credentialed Stage C plan",
     "YC_STAGE_C_FOLDER_ID": "Credentialed Stage C plan",
     "YC_STAGE_C_ADMIN_CIDR": "Credentialed Stage C plan",
@@ -401,6 +404,21 @@ def validate(root: Path = ROOT) -> list[str]:
             errors.append("Stage C workflow must not upload artifacts")
         if 'echo "- Commit: \\`$GITHUB_SHA\\`"' not in stage_c_workflow:
             errors.append("Stage C summary must preserve escaped Markdown around the commit SHA")
+        for marker in (
+            'TFSTATE_KEY="host001/plan-only-${GITHUB_RUN_ID}.tfstate"',
+            '-backend-config="bucket=$TFSTATE_BUCKET"',
+            '-backend-config="key=$TFSTATE_KEY"',
+            "-lock-timeout=30s",
+            "Sanitized diagnostic excerpt",
+            "rm -rf infra/yandex-cloud/.terraform",
+        ):
+            if marker not in stage_c_workflow:
+                errors.append(
+                    "Stage C plan-only workflow missing remote-backend diagnostic control: " + marker
+                )
+        if "init -backend=false" in stage_c_workflow:
+            errors.append("Stage C plan-only workflow must initialize the real remote backend")
+
 
         stage_c_apply = _read(".github/workflows/host001-stage-c-apply.yml")
         apply_job_env = stage_c_apply.split("    env:\n", 1)[1].split("    steps:\n", 1)[0]

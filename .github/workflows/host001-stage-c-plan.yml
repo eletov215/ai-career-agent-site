@@ -88,17 +88,13 @@ jobs:
           PY
           echo "YC_SERVICE_ACCOUNT_KEY_FILE=$key_file" >> "$GITHUB_ENV"
 
-      - name: Terraform init and validate
-        shell: bash
-        run: |
-          set -euo pipefail
-          terraform -chdir=infra/yandex-cloud init -backend=false -input=false
-          terraform -chdir=infra/yandex-cloud validate
-
       - name: Credentialed Stage C plan
         id: plan
         shell: bash
         env:
+          TFSTATE_BUCKET: ${{ secrets.YC_STAGE_C_TFSTATE_BUCKET }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.YC_STAGE_C_TFSTATE_ACCESS_KEY }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.YC_STAGE_C_TFSTATE_SECRET_KEY }}
           TF_VAR_cloud_id: ${{ secrets.YC_STAGE_C_CLOUD_ID }}
           TF_VAR_folder_id: ${{ secrets.YC_STAGE_C_FOLDER_ID }}
           TF_VAR_admin_cidr: ${{ secrets.YC_STAGE_C_ADMIN_CIDR }}
@@ -108,6 +104,9 @@ jobs:
         run: |
           set -euo pipefail
           required=(
+            TFSTATE_BUCKET
+            AWS_ACCESS_KEY_ID
+            AWS_SECRET_ACCESS_KEY
             TF_VAR_cloud_id
             TF_VAR_folder_id
             TF_VAR_admin_cidr
@@ -127,19 +126,68 @@ jobs:
           }
           test "${#TF_VAR_postgresql_app_password}" -ge 16
           test "${#TF_VAR_field_test_restore_password}" -ge 16
+
+          TFSTATE_KEY="host001/plan-only-${GITHUB_RUN_ID}.tfstate"
+          terraform -chdir=infra/yandex-cloud init \
+            -reconfigure \
+            -input=false \
+            -backend-config="bucket=$TFSTATE_BUCKET" \
+            -backend-config="key=$TFSTATE_KEY"
+          terraform -chdir=infra/yandex-cloud validate
+
           plan_file="$RUNNER_TEMP/stage-c.tfplan"
           plan_log="$RUNNER_TEMP/stage-c-plan.stdout"
           set +e
           terraform -chdir=infra/yandex-cloud plan \
             -input=false \
-            -lock=false \
+            -lock-timeout=30s \
             -no-color \
             -detailed-exitcode \
             -out="$plan_file" >"$plan_log" 2>&1
           code=$?
           set -e
           if [ "$code" -ne 0 ] && [ "$code" -ne 2 ]; then
-            echo "Terraform plan failed."
+            echo "Terraform plan failed. Sanitized diagnostic excerpt:"
+            python - "$plan_log" <<'PY'
+          import os
+          import re
+          import sys
+
+          path = sys.argv[1]
+          text = open(path, encoding="utf-8", errors="replace").read()
+          for name in (
+              "AWS_ACCESS_KEY_ID",
+              "AWS_SECRET_ACCESS_KEY",
+              "TF_VAR_cloud_id",
+              "TF_VAR_folder_id",
+              "TF_VAR_admin_cidr",
+              "TF_VAR_ssh_public_key",
+              "TF_VAR_postgresql_app_password",
+              "TF_VAR_field_test_restore_password",
+          ):
+              value = os.environ.get(name) or ""
+              if value:
+                  text = text.replace(value, f"<redacted:{name}>")
+
+          selected = []
+          pattern = re.compile(
+              r"(Error:|Error message:|StatusCode:|RequestID:|api error|"
+              r"permission|denied|forbidden|quota|state lock|lock file|"
+              r"backend|InvalidArgument|PreconditionFailed)",
+              re.IGNORECASE,
+          )
+          for line in text.splitlines():
+              lowered = line.lower()
+              if any(token in lowered for token in ("private_key", "secret_key", "password", "authorization:")):
+                  continue
+              if pattern.search(line):
+                  selected.append(line)
+
+          if not selected:
+              selected = ["Terraform plan failed without a safe classified diagnostic line."]
+          for line in selected[-40:]:
+              print(line[:1200])
+          PY
             exit "$code"
           fi
           echo "plan_exit_code=$code" >> "$GITHUB_OUTPUT"
@@ -189,6 +237,7 @@ jobs:
             echo "- Commit: \`$GITHUB_SHA\`"
             echo "- Terraform: 1.11.4"
             echo "- Profile: single PG18 + bounded Stage C extras"
+            echo "- Remote state backend: **Yandex Object Storage / isolated plan-only key**"
             echo "- Apply/destroy performed by this workflow: **NO**"
             echo "- Production data/provider/email operations: **NO**"
             echo "- Next gate: review plan resource list, account quota/SKU availability and <=500 RUB field-test estimate before any apply."
@@ -203,3 +252,4 @@ jobs:
             "$RUNNER_TEMP/stage-c.tfplan" \
             "$RUNNER_TEMP/stage-c-plan.json" \
             "$RUNNER_TEMP/stage-c-plan.stdout"
+          rm -rf infra/yandex-cloud/.terraform
