@@ -288,7 +288,7 @@ It is gated by the exact acknowledgement `HOST001_STAGE_C_SYNTHETIC_ONLY`, accep
 Seed the primary database and write secret-free baseline evidence into the backup volume:
 
 ```bash
-python infra/yandex-cloud/run_with_lockbox.py --   docker compose -f infra/yandex-cloud/compose.yaml --profile ops   run --rm --build   -e RESTORE_DATABASE_URL   -e STAGE_C_SYNTHETIC_FIXTURE_ACK=HOST001_STAGE_C_SYNTHETIC_ONLY   ops   python scripts/host001_stage_c_fixture.py seed   --ack HOST001_STAGE_C_SYNTHETIC_ONLY   --evidence /var/backups/ai-career-agent/host001-stage-c-fixture.json
+python infra/yandex-cloud/run_with_lockbox.py --   docker compose -f infra/yandex-cloud/compose.yaml --profile ops   run --rm --build ops   python scripts/host001_stage_c_fixture.py seed   --ack HOST001_STAGE_C_SYNTHETIC_ONLY   --evidence /var/backups/ai-career-agent/host001-stage-c-fixture.json
 ```
 
 The fixture covers:
