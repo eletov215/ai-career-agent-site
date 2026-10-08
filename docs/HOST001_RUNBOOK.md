@@ -97,7 +97,8 @@ Verify this again during the field test with the actual ingress path.
 
 ## 7. Billable field test — separate approval required
 
-Only after owner approval:
+Only after owner approval. Execute the live window from `HOST001_STAGE_C_OPERATOR_CHECKLIST_20261008.md`; it is the exact operator order for secrets, SSH, TLS, migration, synthetic fixture, backup/restore evidence and teardown.
+
 1. start from `terraform.stage-c.tfvars.example`, keep `field_test_resources_enabled=true` and `foundation_deletion_protection=false`, and supply both PostgreSQL passwords through protected `TF_VAR_...` environment values;
 2. configure Yandex authentication in a protected environment;
 3. review the exact Terraform plan, SKU/cost, Russia zones, temporary bucket/static-key Lockbox path and disposable restore cluster;

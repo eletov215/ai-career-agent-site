@@ -17,6 +17,7 @@ packages:
   - ca-certificates
   - curl
   - jq
+  - git
   - docker.io
   - docker-compose-v2
   - python3
@@ -29,6 +30,8 @@ write_files:
       YC_LOCKBOX_SECRET_ID=${lockbox_secret_id}
       YC_BACKUP_LOCKBOX_SECRET_ID=${field_test_backup_secret_id}
       BACKUP_S3_BUCKET=${field_test_backup_bucket}
+      PRIMARY_PG_RW_FQDN=${primary_pg_rw_fqdn}
+      RESTORE_PG_RW_FQDN=${field_test_restore_rw_fqdn}
       ACA_REPO_DIR=/opt/ai-career-agent
 
 runcmd:

@@ -20,14 +20,22 @@ _METADATA_URL = (
 _PAYLOAD_URL = "https://payload.lockbox.api.cloud.yandex.net/lockbox/v1/secrets/{secret_id}/payload"
 _KEY_RE = re.compile(r"^[A-Z][A-Z0-9_]{1,63}$")
 _MAX_VALUE = 65536
+_EXTERNAL_IDENTITY_KEYS = {
+    "STAGE_C_EXPECTED_PRIMARY_PG_FQDN",
+    "STAGE_C_EXPECTED_RESTORE_PG_FQDN",
+}
 
 
 class SecretLoadError(RuntimeError):
     pass
 
 
-def validate_database_url(value: str) -> None:
-    """Fail closed if the Yandex PostgreSQL URL can weaken TLS/primary selection."""
+def validate_database_url(
+    value: str,
+    *,
+    expected_stage_c_host: str | None = None,
+) -> None:
+    """Fail closed on weak Yandex PostgreSQL URLs and optional Stage C misbinding."""
 
     if not value:
         raise SecretLoadError("database_url_missing")
@@ -49,6 +57,18 @@ def validate_database_url(value: str) -> None:
         values = query.get(name)
         if values != [expected]:
             raise SecretLoadError("database_url_security_parameters_invalid")
+
+    if expected_stage_c_host is not None:
+        expected_host = expected_stage_c_host.strip().lower().rstrip(".")
+        actual_host = parsed.hostname.lower().rstrip(".")
+        if (
+            not expected_host
+            or not expected_host.endswith(".rw.mdb.yandexcloud.net")
+            or actual_host != expected_host
+            or (parsed.username or "") != "ai_career_agent"
+            or parsed.path.lstrip("/") != "ai_career_agent"
+        ):
+            raise SecretLoadError("stage_c_database_identity_mismatch")
 
 
 def _json_get(url: str, *, headers: dict[str, str], timeout: float = 5.0) -> dict:
@@ -92,6 +112,8 @@ def load_secret_entries(secret_id: str) -> dict[str, str]:
         value = item.get("textValue")
         if not isinstance(key, str) or not _KEY_RE.fullmatch(key):
             raise SecretLoadError("secret_key_invalid")
+        if key in _EXTERNAL_IDENTITY_KEYS:
+            raise SecretLoadError("secret_key_reserved_for_external_identity")
         if not isinstance(value, str) or len(value) > _MAX_VALUE or "\x00" in value:
             raise SecretLoadError("secret_value_invalid")
         if key in result:
@@ -110,10 +132,16 @@ def main() -> int:
         command = command[1:]
     if not command:
         parser.error("command is required after --")
+    expected_stage_c_host = (
+        os.environ.get("STAGE_C_EXPECTED_PRIMARY_PG_FQDN") or ""
+    ).strip()
     values = load_secret_entries(args.secret_id)
     environment = dict(os.environ)
     environment.update(values)
-    validate_database_url(environment.get("DATABASE_URL", ""))
+    validate_database_url(
+        environment.get("DATABASE_URL", ""),
+        expected_stage_c_host=expected_stage_c_host or None,
+    )
     os.execvpe(command[0], command, environment)
     return 0
 

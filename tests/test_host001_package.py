@@ -10,6 +10,8 @@ from pathlib import Path
 from unittest import mock
 
 from scripts.check_host001_package import ROOT, validate
+from scripts.host001_stage_c_fixture import ACK as STAGE_C_FIXTURE_ACK
+from scripts.host001_stage_c_fixture import FixtureError, _require_reviewed_target
 
 
 class Host001PackageTests(unittest.TestCase):
@@ -51,6 +53,64 @@ class Host001PackageTests(unittest.TestCase):
         )
         self.assertIn("field_test_resources_enabled  = true", example)
         self.assertIn("foundation_deletion_protection = false", example)
+
+    def test_stage_c_operator_fixture_is_narrow_and_target_gated(self):
+        cloud_init = (ROOT / "infra/yandex-cloud/cloud-init.yaml.tftpl").read_text(
+            encoding="utf-8"
+        )
+        operator = (
+            ROOT / "docs/HOST001_STAGE_C_OPERATOR_CHECKLIST_20261008.md"
+        ).read_text(encoding="utf-8")
+        fixture = (ROOT / "scripts/host001_stage_c_fixture.py").read_text(
+            encoding="utf-8"
+        )
+
+        self.assertIn("  - git", cloud_init)
+        self.assertEqual("HOST001_STAGE_C_SYNTHETIC_ONLY", STAGE_C_FIXTURE_ACK)
+        self.assertIn("host001-stage-c@example.invalid", fixture)
+        self.assertIn("restored_resume_asset_bytes_mismatch", fixture)
+        self.assertIn("restored_schema_signature_mismatch", fixture)
+        self.assertIn("restored_sequence_signature_mismatch", fixture)
+        self.assertNotIn("opendata.trudvsem.ru", fixture)
+        self.assertNotIn("api.hh.ru", fixture)
+        self.assertNotIn("api.superjob.ru", fixture)
+        self.assertIn("DESTROY_STAGE_C_SYNTHETIC_1000_RUB", operator)
+        self.assertIn("STAGE_C_EXPECTED_PRIMARY_PG_FQDN", operator)
+        self.assertIn("STAGE_C_EXPECTED_RESTORE_PG_FQDN", operator)
+        self.assertIn("guard-restore", operator)
+        self.assertIn(
+            "TRUSTED_HOSTS=<PUBLIC_IP_FROM_APPLY_SUMMARY>,127.0.0.1,localhost",
+            operator,
+        )
+
+        _require_reviewed_target(
+            "postgresql+psycopg://ai_career_agent:x@c-test.rw.mdb.yandexcloud.net:6432/ai_career_agent",
+            expected_host="c-test.rw.mdb.yandexcloud.net",
+            restore=False,
+        )
+        _require_reviewed_target(
+            "postgresql+psycopg://aca_restore:x@c-test.rw.mdb.yandexcloud.net:6432/aca_restore",
+            expected_host="c-test.rw.mdb.yandexcloud.net",
+            restore=True,
+        )
+        with self.assertRaises(FixtureError):
+            _require_reviewed_target(
+                "postgresql+psycopg://ai_career_agent:x@db.example.com:6432/ai_career_agent",
+                expected_host="c-test.rw.mdb.yandexcloud.net",
+                restore=False,
+            )
+        with self.assertRaises(FixtureError):
+            _require_reviewed_target(
+                "postgresql+psycopg://ai_career_agent:x@c-test.rw.mdb.yandexcloud.net:6432/other",
+                expected_host="c-test.rw.mdb.yandexcloud.net",
+                restore=False,
+            )
+        with self.assertRaises(FixtureError):
+            _require_reviewed_target(
+                "postgresql+psycopg://ai_career_agent:x@c-other.rw.mdb.yandexcloud.net:6432/ai_career_agent",
+                expected_host="c-test.rw.mdb.yandexcloud.net",
+                restore=False,
+            )
 
     def test_stage_c_workflow_keeps_credentials_step_scoped_and_actions_pinned(self):
         workflow = (ROOT / ".github/workflows/host001-stage-c-plan.yml").read_text(
@@ -687,6 +747,36 @@ class LockboxLoaderTests(unittest.TestCase):
         ):
             with self.assertRaises(module.SecretLoadError):
                 module.validate_database_url(weak_url)
+        stage_c_url = (
+            "postgresql+psycopg://ai_career_agent:secret@"
+            "c-stage.rw.mdb.yandexcloud.net:6432/ai_career_agent"
+            "?sslmode=verify-full"
+            "&sslrootcert=/etc/ssl/certs/yandex-cloud-ca.pem"
+            "&target_session_attrs=read-write"
+        )
+        module.validate_database_url(
+            stage_c_url,
+            expected_stage_c_host="c-stage.rw.mdb.yandexcloud.net",
+        )
+        for wrong_url, expected_host in (
+            (
+                stage_c_url.replace("c-stage.", "c-other."),
+                "c-stage.rw.mdb.yandexcloud.net",
+            ),
+            (
+                stage_c_url.replace("/ai_career_agent?", "/other?"),
+                "c-stage.rw.mdb.yandexcloud.net",
+            ),
+            (
+                stage_c_url.replace("ai_career_agent:secret@", "other:secret@"),
+                "c-stage.rw.mdb.yandexcloud.net",
+            ),
+        ):
+            with self.assertRaises(module.SecretLoadError):
+                module.validate_database_url(
+                    wrong_url,
+                    expected_stage_c_host=expected_host,
+                )
 
     def test_loader_parses_allowlisted_environment_shape_without_printing(self):
         module = self._module()

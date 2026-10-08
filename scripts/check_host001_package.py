@@ -22,12 +22,14 @@ REQUIRED = (
     "infra/yandex-cloud/export_backup_s3.py",
     "infra/yandex-cloud/stage_c_state_guard.py",
     "infra/yandex-cloud/run_with_lockbox.py",
+    "scripts/host001_stage_c_fixture.py",
     "infra/yandex-cloud/README.md",
     "docs/LEGAL001_OWNER_DECISIONS_20260924.md",
     "docs/HOST001_SCOPE.md",
     "docs/HOST001_IMPLEMENTATION.md",
     "docs/HOST001_STAGE_B_IMPLEMENTATION_20261006.md",
     "docs/HOST001_STAGE_C_FIELD_TEST_PLAN_20261006.md",
+    "docs/HOST001_STAGE_C_OPERATOR_CHECKLIST_20261008.md",
     "docs/HOST001_RUNBOOK.md",
     "docs/HOST001_VERIFICATION_STATUS.md",
     ".github/workflows/host001-yandex-cloud.yml",
@@ -263,6 +265,18 @@ def validate(root: Path = ROOT) -> list[str]:
             if marker not in caddy:
                 errors.append("Yandex proxy hardening missing: " + marker)
 
+        cloud_init = _read("infra/yandex-cloud/cloud-init.yaml.tftpl")
+        for marker in (
+            "  - git",
+            "docker-compose-v2",
+            "YC_LOCKBOX_SECRET_ID=",
+            "BACKUP_S3_BUCKET=",
+            "PRIMARY_PG_RW_FQDN=",
+            "RESTORE_PG_RW_FQDN=",
+        ):
+            if marker not in cloud_init:
+                errors.append("Stage C cloud-init operator prerequisite missing: " + marker)
+
         loader = _read("infra/yandex-cloud/run_with_lockbox.py")
         for marker in (
             "169.254.169.254",
@@ -270,6 +284,9 @@ def validate(root: Path = ROOT) -> list[str]:
             "os.execvpe",
             "Metadata-Flavor",
             "validate_database_url",
+            "STAGE_C_EXPECTED_PRIMARY_PG_FQDN",
+            "stage_c_database_identity_mismatch",
+            "ai_career_agent",
             "verify-full",
             "sslrootcert",
             "target_session_attrs",
@@ -301,6 +318,49 @@ def validate(root: Path = ROOT) -> list[str]:
             if marker not in exporter:
                 errors.append("Off-VM encrypted backup exporter missing: " + marker)
 
+        fixture = _read("scripts/host001_stage_c_fixture.py")
+        for marker in (
+            'ACK = "HOST001_STAGE_C_SYNTHETIC_ONLY"',
+            ".rw.mdb.yandexcloud.net",
+            'FIXTURE_EMAIL = "host001-stage-c@example.invalid"',
+            "exact_stage_c_host_required",
+            "STAGE_C_EXPECTED_PRIMARY_PG_FQDN",
+            "STAGE_C_EXPECTED_RESTORE_PG_FQDN",
+            "guard-restore",
+            "restored_resume_asset_bytes_mismatch",
+            "restored_schema_signature_mismatch",
+            "restored_sequence_signature_mismatch",
+            "RESTORE_DATABASE_URL",
+        ):
+            if marker not in fixture:
+                errors.append("Stage C synthetic fixture missing control: " + marker)
+        for forbidden in (
+            "requests.",
+            "urllib.request.urlopen",
+            "opendata.trudvsem.ru",
+            "api.hh.ru",
+            "api.superjob.ru",
+        ):
+            if forbidden in fixture:
+                errors.append("Stage C synthetic fixture must not call external providers: " + forbidden)
+
+        operator = _read("docs/HOST001_STAGE_C_OPERATOR_CHECKLIST_20261008.md")
+        for marker in (
+            "YC_STAGE_C_POSTGRES_PASSWORD",
+            "YC_STAGE_C_RESTORE_PASSWORD",
+            "HOST001_STAGE_C_SYNTHETIC_ONLY",
+            "STAGE_C_EXPECTED_PRIMARY_PG_FQDN",
+            "STAGE_C_EXPECTED_RESTORE_PG_FQDN",
+            "guard-restore",
+            "TRUSTED_HOSTS=<PUBLIC_IP_FROM_APPLY_SUMMARY>,127.0.0.1,localhost",
+            "--allow-production",
+            "DESTROY_STAGE_C_SYNTHETIC_1000_RUB",
+            "managed resources",
+            "real provider credentials",
+        ):
+            if marker not in operator:
+                errors.append("Stage C operator checklist missing: " + marker)
+
         for document in (
             _read("infra/yandex-cloud/README.md"),
             _read("docs/HOST001_RUNBOOK.md"),
@@ -314,6 +374,14 @@ def validate(root: Path = ROOT) -> list[str]:
         for marker in ("PostgreSQL 18", "single", "two", "NOT_RUN", "20261002_0023"):
             if marker not in stage_b:
                 errors.append("HOST-001 Stage B successor record missing: " + marker)
+
+        main_tf = _read("infra/yandex-cloud/main.tf")
+        for marker in (
+            'primary_pg_rw_fqdn          = "c-${yandex_mdb_postgresql_cluster.main.id}.rw.mdb.yandexcloud.net"',
+            'field_test_restore_rw_fqdn  = var.field_test_resources_enabled ? "c-${yandex_mdb_postgresql_cluster.field_test_restore[0].id}.rw.mdb.yandexcloud.net" : ""',
+        ):
+            if marker not in main_tf:
+                errors.append("Stage C exact database host identity missing: " + marker)
 
         stage_c = _read("docs/HOST001_STAGE_C_FIELD_TEST_PLAN_20261006.md")
         for marker in (
