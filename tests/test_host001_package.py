@@ -193,7 +193,7 @@ class Host001PackageTests(unittest.TestCase):
             encoding="utf-8"
         )
         self.assertIn("AUTO_TEARDOWN_STAGE_C_SYNTHETIC", workflow)
-        self.assertIn("group: host001-stage-c-recovery-teardown", workflow)
+        self.assertIn('group: host001-stage-c-recovery-teardown-${{ inputs.source_run_id }}', workflow)
         self.assertIn("DESTROY_STAGE_C_SYNTHETIC_1000_RUB", workflow)
         self.assertIn('TFSTATE_KEY="host001/stage-c-${SOURCE_RUN_ID}.tfstate"', workflow)
         self.assertIn('-backend-config="key=$TFSTATE_KEY"', workflow)
@@ -213,7 +213,8 @@ class Host001PackageTests(unittest.TestCase):
         self.assertIn('if [ "$STAGE_C_ACKNOWLEDGEMENT" = "DESTROY_STAGE_C_SYNTHETIC_1000_RUB" ]; then', workflow)
         self.assertIn('echo "MANUAL_RECOVERY_STARTED_EPOCH=$(date -u +%s)" >> "$GITHUB_ENV"', workflow)
         self.assertIn('MANUAL_RECOVERY_STARTED_EPOCH: ${{ env.MANUAL_RECOVERY_STARTED_EPOCH }}', workflow)
-        self.assertIn('TFSTATE_KEY="host001/stage-c.tfstate"', workflow)
+        self.assertNotIn('TFSTATE_KEY="host001/stage-c.tfstate"', workflow)
+        self.assertIn("Legacy fixed-key source revisions are not automatically recoverable", workflow)
         self.assertIn('TFSTATE_KEY="host001/stage-c-${SOURCE_RUN_ID}.tfstate"', workflow)
         self.assertIn("Manual recovery setup deadline reached before Terraform init.", workflow)
         self.assertIn("Manual recovery setup deadline reached before Terraform validate.", workflow)
@@ -320,8 +321,8 @@ class Host001PackageTests(unittest.TestCase):
                 'test "$HOLD_MINUTES" -le 600',
             ),
             "wrong teardown lifecycle concurrency": original.replace(
+                'group: host001-stage-c-recovery-teardown-${{ inputs.source_run_id }}',
                 "group: host001-stage-c-recovery-teardown",
-                "group: host001-stage-c-unreviewed-teardown",
             ),
             "missing absolute destroy deadline": original.replace(
                 "destroy_apply_deadline",
@@ -335,9 +336,9 @@ class Host001PackageTests(unittest.TestCase):
                 'echo "MANUAL_RECOVERY_STARTED_EPOCH=$(date -u +%s)" >> "$GITHUB_ENV"',
                 'echo "MANUAL_RECOVERY_STARTED_EPOCH=" >> "$GITHUB_ENV"',
             ),
-            "missing guarded legacy state key": original.replace(
+            "legacy fixed state incorrectly enabled": original.replace(
+                "Legacy fixed-key source revisions are not automatically recoverable because the shared state object has no source-run ownership proof.",
                 'TFSTATE_KEY="host001/stage-c.tfstate"',
-                'TFSTATE_KEY="host001/stage-c-legacy-disabled.tfstate"',
             ),
             "missing lock timeout": original.replace(
                 "-lock-timeout=10m",
