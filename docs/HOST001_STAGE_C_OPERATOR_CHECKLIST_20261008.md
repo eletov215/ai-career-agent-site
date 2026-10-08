@@ -203,6 +203,8 @@ export STAGE_C_EXPECTED_RESTORE_PG_FQDN="$(sudo sed -n 's/^RESTORE_PG_RW_FQDN=//
 test -n "$STAGE_C_EXPECTED_PRIMARY_PG_FQDN"
 test -n "$STAGE_C_EXPECTED_RESTORE_PG_FQDN"
 
+Every subsequent `run_with_lockbox.py` invocation now compares `DATABASE_URL` to `STAGE_C_EXPECTED_PRIMARY_PG_FQDN` and the reviewed `ai_career_agent` user/database before executing its command. This protects migration, web startup, health, backup and other primary-database commands from an accidentally pasted production URL.
+
 cd /opt/ai-career-agent
 git clone https://github.com/eletov215/ai-career-agent-site.git .
 git checkout --detach <EXACT_COMMIT_FROM_APPLY_SUMMARY>
