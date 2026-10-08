@@ -157,13 +157,13 @@ Use those outputs respectively for `FLASK_SECRET_KEY`, `TOKEN_ENCRYPTION_KEY`, `
 Construct the primary URL using the exact password stored for `YC_STAGE_C_POSTGRES_PASSWORD`:
 
 ```text
-postgresql://ai_career_agent:<URL_ENCODED_PASSWORD>@<PRIMARY_PG_FQDN>:6432/ai_career_agent?sslmode=verify-full&sslrootcert=/etc/ssl/certs/yandex-cloud-ca.pem&target_session_attrs=read-write
+postgresql+psycopg://ai_career_agent:<URL_ENCODED_PASSWORD>@<PRIMARY_PG_FQDN>:6432/ai_career_agent?sslmode=verify-full&sslrootcert=/etc/ssl/certs/yandex-cloud-ca.pem&target_session_attrs=read-write
 ```
 
 Construct the isolated restore URL using `YC_STAGE_C_RESTORE_PASSWORD`:
 
 ```text
-postgresql://aca_restore:<URL_ENCODED_PASSWORD>@<RESTORE_PG_FQDN>:6432/aca_restore?sslmode=verify-full&sslrootcert=/etc/ssl/certs/yandex-cloud-ca.pem&target_session_attrs=read-write
+postgresql+psycopg://aca_restore:<URL_ENCODED_PASSWORD>@<RESTORE_PG_FQDN>:6432/aca_restore?sslmode=verify-full&sslrootcert=/etc/ssl/certs/yandex-cloud-ca.pem&target_session_attrs=read-write
 ```
 
 A password containing `+`, `/`, `=`, `@`, `:`, `?`, `#` or other reserved URL characters must be percent-encoded before it is placed in either URL.
@@ -176,7 +176,12 @@ On the VM:
 cd /opt/ai-career-agent
 source /etc/ai-career-agent/host.env
 
-python infra/yandex-cloud/run_with_lockbox.py --   docker compose -f infra/yandex-cloud/compose.yaml --profile ops   run --rm ops sh -lc 'psql "$DATABASE_URL" -Atc "SHOW server_version;"'
+python infra/yandex-cloud/run_with_lockbox.py -- \
+  docker compose -f infra/yandex-cloud/compose.yaml --profile ops \
+  run --rm ops sh -lc '
+    libpq_url="${DATABASE_URL/postgresql+psycopg:/postgresql:}"
+    psql "$libpq_url" -Atc "SHOW server_version;"
+  '
 ```
 
 PASS requires PostgreSQL major version 18.
@@ -184,7 +189,12 @@ PASS requires PostgreSQL major version 18.
 Verify the target is writable:
 
 ```bash
-python infra/yandex-cloud/run_with_lockbox.py --   docker compose -f infra/yandex-cloud/compose.yaml --profile ops   run --rm ops sh -lc 'psql "$DATABASE_URL" -Atc "SELECT pg_is_in_recovery();"'
+python infra/yandex-cloud/run_with_lockbox.py -- \
+  docker compose -f infra/yandex-cloud/compose.yaml --profile ops \
+  run --rm ops sh -lc '
+    libpq_url="${DATABASE_URL/postgresql+psycopg:/postgresql:}"
+    psql "$libpq_url" -Atc "SELECT pg_is_in_recovery();"
+  '
 ```
 
 PASS requires `f`.
@@ -192,14 +202,16 @@ PASS requires `f`.
 Wrong-CA drill must fail closed. Do not print the database URL:
 
 ```bash
-python infra/yandex-cloud/run_with_lockbox.py --   docker compose -f infra/yandex-cloud/compose.yaml --profile ops   run --rm ops sh -lc '
+python infra/yandex-cloud/run_with_lockbox.py -- \
+  docker compose -f infra/yandex-cloud/compose.yaml --profile ops \
+  run --rm ops sh -lc '
     bad_url="$(python - <<'"'"'PY'"'"'
 import os
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 u = urlsplit(os.environ["DATABASE_URL"])
 q = dict(parse_qsl(u.query, keep_blank_values=True))
 q["sslrootcert"] = "/tmp/stage-c-bad-ca.pem"
-print(urlunsplit((u.scheme, u.netloc, u.path, urlencode(q), u.fragment)))
+print(urlunsplit(("postgresql", u.netloc, u.path, urlencode(q), u.fragment)))
 PY
 )"
     printf "not-a-ca\n" >/tmp/stage-c-bad-ca.pem
@@ -222,7 +234,12 @@ python infra/yandex-cloud/run_with_lockbox.py --   docker compose -f infra/yande
 Then verify:
 
 ```bash
-python infra/yandex-cloud/run_with_lockbox.py --   docker compose -f infra/yandex-cloud/compose.yaml --profile ops   run --rm ops sh -lc 'psql "$DATABASE_URL" -Atc "SELECT version_num FROM alembic_version;"'
+python infra/yandex-cloud/run_with_lockbox.py -- \
+  docker compose -f infra/yandex-cloud/compose.yaml --profile ops \
+  run --rm ops sh -lc '
+    libpq_url="${DATABASE_URL/postgresql+psycopg:/postgresql:}"
+    psql "$libpq_url" -Atc "SELECT version_num FROM alembic_version;"
+  '
 ```
 
 PASS requires:
@@ -232,6 +249,18 @@ PASS requires:
 ```
 
 Do not start `sync-worker` or `privacy-worker` during Stage C.
+
+Before creating the backup, seed the deterministic synthetic fixture. The helper refuses to seed a database that already contains unrelated users and keeps legal consent withdrawn/provider=`none`.
+
+```bash
+python infra/yandex-cloud/run_with_lockbox.py -- \
+  docker compose -f infra/yandex-cloud/compose.yaml --profile ops \
+  run --rm ops python scripts/host001_stage_c_fixture.py seed \
+    --acknowledgement SEED_STAGE_C_SYNTHETIC_ONLY \
+    --report /var/backups/ai-career-agent/stage-c-source-report.json
+```
+
+PASS requires `ok=true`. Preserve the secret-free source report in the backup volume; it contains the deterministic fixture digest, resume-asset SHA-256, representative schema-object digest and PostgreSQL sequence state used by the restore verification.
 
 ## 8. Start only web + gateway
 
@@ -288,7 +317,14 @@ Verify the two objects exist from the Yandex Object Storage console. Do not open
 Run restore against `RESTORE_DATABASE_URL` from the runtime Lockbox payload:
 
 ```bash
-python infra/yandex-cloud/run_with_lockbox.py --   docker compose -f infra/yandex-cloud/compose.yaml --profile ops   run --rm ops python scripts/restore_database.py     --backup /var/backups/ai-career-agent/stage-c-synthetic.dump.enc     --manifest /var/backups/ai-career-agent/stage-c-synthetic.dump.enc.manifest.json
+python infra/yandex-cloud/run_with_lockbox.py -- \
+  docker compose -f infra/yandex-cloud/compose.yaml --profile ops \
+  run --rm \
+    -e RESTORE_DATABASE_URL \
+    -e APP_ENV=development \
+    ops python scripts/restore_database.py \
+      --backup /var/backups/ai-career-agent/stage-c-synthetic.dump.enc \
+      --manifest /var/backups/ai-career-agent/stage-c-synthetic.dump.enc.manifest.json
 ```
 
 The `APP_ENV=development` override applies only to the one-off restore helper so its production-restore interlock recognizes the target as disposable. It does not change the web/gateway runtime, which remains `APP_ENV=production`.
@@ -300,23 +336,39 @@ PASS requires:
 - revision `20261002_0023`;
 - source and restored inventory counts equal.
 
+Then verify representative owner/JOB/legal rows, exact resume-asset bytes, named indexes/constraints and PostgreSQL sequence state against the pre-backup source report:
+
+```bash
+python infra/yandex-cloud/run_with_lockbox.py -- \
+  docker compose -f infra/yandex-cloud/compose.yaml --profile ops \
+  run --rm \
+    -e RESTORE_DATABASE_URL \
+    ops python scripts/host001_stage_c_fixture.py verify \
+      --database-env RESTORE_DATABASE_URL \
+      --expected-report /var/backups/ai-career-agent/stage-c-source-report.json
+```
+
+PASS requires `ok=true` and no restore-verification mismatch.
+
 The restore database is disposable and synthetic-only. Never point `RESTORE_DATABASE_URL` at Render, Neon or any production database.
 
 ## 12. Proxy / client-IP smoke
 
-Issue only synthetic GET requests:
+Use the existing app-facing rate-limit probe exactly once. Vary both forged headers on every request:
 
 ```bash
-curl -fsS --max-time 10   -H 'CF-Connecting-IP: 203.0.113.10'   -H 'X-Forwarded-For: 203.0.113.11'   "http://<PUBLIC_IP>/health/live"
+for i in 1 2 3 4 5 6; do
+  code="$(curl -o /dev/null -sS --max-time 10 -w '%{http_code}' \
+    -H "CF-Connecting-IP: 203.0.113.$i" \
+    -H "X-Forwarded-For: 198.51.100.$i" \
+    "http://<PUBLIC_IP>/api/security/rate-limit-probe")"
+  printf 'attempt=%s status=%s\n' "$i" "$code"
+done
 ```
 
-Then inspect only the gateway's recent synthetic access log:
+PASS requires statuses `200,200,200,200,200,429`. Because every forged `CF-Connecting-IP` and `X-Forwarded-For` value differs, reaching the single five-request limiter bucket is app-facing evidence that Caddy removed the client-supplied Cloudflare identity and rebuilt `X-Forwarded-For` from the stable network peer. Six `200` responses are a FAIL.
 
-```bash
-docker compose -f infra/yandex-cloud/compose.yaml logs --since=2m gateway
-```
-
-This check is supporting evidence only. Do not turn on debug diagnostics or weaken proxy/security settings to make the IP visible.
+Do not repeat the probe during the same minute, enable debug diagnostics or weaken proxy/security settings.
 
 ## 13. Trudvsem observation — non-blocking
 
