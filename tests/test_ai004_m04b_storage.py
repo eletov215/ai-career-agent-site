@@ -198,12 +198,21 @@ def seed_ledger(db, source, claim_id, *, now=NOW):
             (f"user:{source['owner']}:action:vacancy_match:{month}",
              source["owner"], month),
         ):
-            if s.get(AIBudgetBucket, bucket_id) is None:
+            bucket = s.get(AIBudgetBucket, bucket_id)
+            if bucket is None:
                 s.add(AIBudgetBucket(
                     id=bucket_id, user_id=user_id, period=period,
                     spent_microrub=100 if "action" not in bucket_id else 0,
                     requests=1, successes=0,
                 ))
+            else:
+                # Each synthetic ledger reservation consumes its share of
+                # shared daily/monthly global buckets before settle(-100).
+                # Without this, a second tenant causes a false-negative CHECK
+                # violation instead of exercising the restore path.
+                if "action" not in bucket_id:
+                    bucket.spent_microrub += 100
+                bucket.requests += 1
     return event_id
 
 
