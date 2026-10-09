@@ -36,7 +36,9 @@ def validate(root=ROOT):
     errors=[]
     try:
         successor_hashes(root)
-        if 'CURRENT_REVISION = "20261002_0023"' not in (root/'database.py').read_text(): errors.append('revision')
+        from scripts.ai004_m04b_successor import expected_schema_head
+        approved_head = expected_schema_head(root, "20261002_0023")
+        if f'CURRENT_REVISION = "{approved_head}"' not in (root/'database.py').read_text(): errors.append('revision')
         if 'REAL_DATA_SUPPORTED = False' not in (root/'domain/ai.py').read_text(): errors.append('real_data')
         if 'release_state="DRAFT"' not in (root/'services/legal_policy.py').read_text(): errors.append('legal')
         if any((root/'migrations/versions').glob('*job004*')): errors.append('migration')
