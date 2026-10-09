@@ -137,6 +137,8 @@ def validate(root=ROOT):
             if not (root/rel).is_file():
                 errors.append('Missing: '+rel)
         expected_head = '20261002_0023' if (root/'docs/evidence/job-003/change_boundary.json').is_file() else '20261001_0022' if (root/'docs/evidence/job-002/change_boundary.json').is_file() else '20260922_0021' if (root/'docs/evidence/legal-001/change_boundary.json').is_file() else '20260917_0020' if (root/'docs/evidence/ai-005/change_boundary.json').is_file() else '20260917_0019'
+        from scripts.ai004_m04b_successor import expected_schema_head
+        expected_head = expected_schema_head(root, expected_head)
         if f'CURRENT_REVISION = "{expected_head}"' not in (root/'database.py').read_text():
             errors.append('Expected schema 0019')
         source = (root/'migrations/versions/20260917_0019_saved_vacancies.py').read_text()
