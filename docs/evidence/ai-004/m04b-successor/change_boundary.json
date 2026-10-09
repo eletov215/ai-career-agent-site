@@ -98,7 +98,7 @@
     "migrations/versions/20261009_0024_user_matching_cache.py": "461d5a2deb4153f8054574f068f6e92760b27c21407d0510465fddc415adb086",
     "models/user_match.py": "317541f3dd00d0cd1925f3b520e9155314ad2e103396cac893987190fc9a6018",
     "repositories/user_match.py": "0339d297b2cb6e8d368c5be7222aec4becbf2730b860fa08b6c7d40cd95559b6",
-    "scripts/ai004_m04b_successor.py": "660fedc61234428c8b2918989ef6ad2fb09efe57a986b7b197805d6833c0f713",
+    "scripts/ai004_m04b_successor.py": "445425ccff5663a841ac2e1e788691a13c370bf54f2736677e1eccc242e0b2df",
     "tests/test_ai004_m04b_migration.py": "9d9fc4646380c4670828e7c607f6954655b9465466338f1fe6f10f01c457f3b2",
     "tests/test_ai004_m04b_pg18_restore.py": "564d40428cd71ef2e2b3260823bf4f3de33ac9ce31d527b62cf8fd3deda12464",
     "tests/test_ai004_m04b_restore.py": "a6c3162785de5de6a98b5c65525c0ef62e6370da93178a5c5c4d02546391b5eb",
