@@ -7,7 +7,11 @@ name: HOST-001 Yandex Cloud foundation
       - "docs/HOST001_*.md"
       - "docs/LEGAL001_OWNER_DECISIONS_20260924.md"
       - "scripts/check_host001_package.py"
+      - "scripts/host001_stage_c_revision_gate.py"
       - "tests/test_host001_package.py"
+      - "tests/test_host001_stage_c_revision_gate.py"
+      - "database.py"
+      - "migrations/versions/**"
       - ".github/workflows/host001-yandex-cloud.yml"
       - "domain/ai.py"
       - "services/legal_policy.py"
@@ -17,7 +21,11 @@ name: HOST-001 Yandex Cloud foundation
       - "docs/HOST001_*.md"
       - "docs/LEGAL001_OWNER_DECISIONS_20260924.md"
       - "scripts/check_host001_package.py"
+      - "scripts/host001_stage_c_revision_gate.py"
       - "tests/test_host001_package.py"
+      - "tests/test_host001_stage_c_revision_gate.py"
+      - "database.py"
+      - "migrations/versions/**"
       - ".github/workflows/host001-yandex-cloud.yml"
       - "domain/ai.py"
       - "services/legal_policy.py"
@@ -50,6 +58,9 @@ jobs:
 
       - name: HOST-001 unit tests
         run: python -m unittest tests.test_host001_package -v
+
+      - name: Offline Stage C Alembic revision gate
+        run: python -m unittest tests.test_host001_stage_c_revision_gate -v
 
       - name: Terraform format
         run: terraform -chdir=infra/yandex-cloud fmt -check -diff -recursive
