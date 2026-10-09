@@ -9,6 +9,7 @@ from .reminder import NotificationPreference, SavedVacancyReminder
 from .cover_letter import CoverLetter, CoverLetterVersion, CoverLetterProposal
 from .consent import AIConsent
 from .vacancy_match import VacancyMatchReport, VacancyMatchSeries
+from .user_match import UserMatchReport, UserMatchCache
 from .resume_interview import ResumeInterviewSession, ResumeInterviewEvent
 from .resume_analysis import ResumeAnalysisReport, ResumeAnalysisDecision, ResumeAnalysisReviewEvent
 from .oauth_connection import OAuthConnection
@@ -39,6 +40,8 @@ __all__ = [
     "SavedVacancyReminder",
     "VacancyMatchReport",
     "VacancyMatchSeries",
+    "UserMatchReport",
+    "UserMatchCache",
     "ResumeInterviewSession",
     "ResumeInterviewEvent",
     "AuthSession",
