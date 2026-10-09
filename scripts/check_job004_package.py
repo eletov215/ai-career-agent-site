@@ -3,6 +3,14 @@
 import hashlib, json
 from pathlib import Path
 
+# Executable as python scripts/check_*.py and as an imported test package.
+try:
+    from scripts.ai004_m04b_successor import approved_sha256, expected_schema_head
+except ModuleNotFoundError as exc:
+    if exc.name != "scripts":
+        raise
+    from ai004_m04b_successor import approved_sha256, expected_schema_head
+
 ROOT=Path(__file__).resolve().parents[1]
 EVIDENCE='docs/evidence/job-004/change_boundary.json'
 REVIEWED_RUNTIME={'app.py','services/storage.py','templates/dashboard.html','scripts/check_job003_package.py',
@@ -24,7 +32,6 @@ def successor_hashes(root=ROOT):
         if evidence.get(key)!=value: raise ValueError('evidence:'+key)
     for section,paths in [('reviewed_runtime_changes',REVIEWED_RUNTIME),('new_runtime_sha256',NEW_RUNTIME),('support_sha256',SUPPORT)]:
         if set(evidence.get(section,{}))!=paths: raise ValueError('scope:'+section)
-    from scripts.ai004_m04b_successor import approved_sha256
     effective = {}
     for path,row in evidence['reviewed_runtime_changes'].items():
         if set(row)!={'previous_sha256','current_sha256'}:
@@ -43,7 +50,6 @@ def validate(root=ROOT):
     errors=[]
     try:
         successor_hashes(root)
-        from scripts.ai004_m04b_successor import expected_schema_head
         approved_head = expected_schema_head(root, "20261002_0023")
         if f'CURRENT_REVISION = "{approved_head}"' not in (root/'database.py').read_text(): errors.append('revision')
         if 'REAL_DATA_SUPPORTED = False' not in (root/'domain/ai.py').read_text(): errors.append('real_data')
