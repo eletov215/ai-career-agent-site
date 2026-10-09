@@ -222,3 +222,34 @@ def test_host001_rejects_missing_matching_backup_inventory_and_digest(package_co
     stage_c.write_text(stage_c.read_text().replace('        "user_match_reports",\n',''))
     with pytest.raises(StageCRevisionGateError, match="schema digest omits"):
         check_revision_chain(root)
+
+
+def test_pg18_populated_restore_cannot_silently_leave_dedicated_ci():
+    """Dedicated PG18 job MUST enable and execute the exact restoration test.
+
+    General Python CI uses PostgreSQL 17 and deliberately does not carry the
+    explicit PG18 gate. No permission to contact a remote DB is introduced.
+    """
+    path = ROOT / "tests/test_ai004_m04b_pg18_restore.py"
+    source = path.read_text(encoding="utf-8")
+    workflow = (ROOT / ".github/workflows/ai004-m04b-candidate.yml").read_text(
+        encoding="utf-8"
+    )
+    assert source.count('os.environ.get("M04B_PG18_RESTORE_ENABLED") != "1"') == 1
+    assert workflow.count('M04B_PG18_RESTORE_ENABLED: "1"') == 1
+    assert (
+        'python -c "import os; assert os.environ.get(\'M04B_PG18_RESTORE_ENABLED\') == \'1\'"'
+        in workflow
+    )
+    assert (
+        "python -m pytest -q tests/test_ai004_m04b_pg18_restore.py"
+        in workflow
+    )
+    for mandatory_guard in (
+        'os.environ.get("GITHUB_ACTIONS") != "true"',
+        'parsed.host in ("localhost", "127.0.0.1")',
+        'parsed.username == "candidate"',
+        'parsed.database == "ai004_m04b_test"',
+        'pytest.fail("m04b_pg18_client_missing")',
+    ):
+        assert mandatory_guard in source
