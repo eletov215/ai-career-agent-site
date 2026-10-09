@@ -16,6 +16,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 REVISION_PATTERN = re.compile(r"[0-9]{8}_[0-9]{4}")
 COMMIT_PATTERN = re.compile(r"[0-9a-f]{40}")
+# Optional AI004-M04B schema must not silently bypass the Stage C backup/restore schema digest.
+MATCHING_TABLES = frozenset({"user_match_reports", "user_match_cache"})
 
 
 class StageCRevisionGateError(RuntimeError):
@@ -57,6 +59,102 @@ def _static_assignment(path: Path, variable: str) -> object:
             f"{path.name}: expected exactly one {variable} assignment."
         )
     return values[0]
+
+
+
+def _created_matching_tables(migrations_dir: Path) -> frozenset[str]:
+    """Discover M04B creation by AST without executing migration code."""
+    found: set[str] = set()
+    for path in sorted(migrations_dir.glob("*.py")):
+        if path.name == "__init__.py":
+            continue
+        try:
+            syntax = ast.parse(path.read_text(encoding="utf-8"), filename=path.name)
+        except (OSError, SyntaxError) as exc:
+            raise StageCRevisionGateError(
+                f"Cannot inspect matching tables in migration {path.name}."
+            ) from exc
+        for node in ast.walk(syntax):
+            if not (
+                isinstance(node, ast.Call)
+                and isinstance(node.func, ast.Attribute)
+                and node.func.attr == "create_table"
+                and isinstance(node.func.value, ast.Name)
+                and node.func.value.id == "op"
+                and node.args
+                and isinstance(node.args[0], ast.Constant)
+                and isinstance(node.args[0].value, str)
+            ):
+                continue
+            if node.args[0].value in MATCHING_TABLES:
+                found.add(node.args[0].value)
+    return frozenset(found)
+
+
+def _stage_c_schema_digest_tables(fixture: Path) -> frozenset[str]:
+    """Read the fixture's explicitly reviewed table list, never import it."""
+    try:
+        syntax = ast.parse(fixture.read_text(encoding="utf-8"), filename=fixture.name)
+    except (OSError, SyntaxError) as exc:
+        raise StageCRevisionGateError("Cannot inspect the Stage C fixture schema list.") from exc
+    functions = [
+        node for node in syntax.body
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+        and node.name == "_schema_report"
+    ]
+    if len(functions) != 1:
+        raise StageCRevisionGateError("Stage C must define exactly one _schema_report.")
+    found: list[object] = []
+    for node in ast.walk(functions[0]):
+        if not (
+            isinstance(node, ast.Assign)
+            and any(
+                isinstance(target, ast.Name) and target.id == "selected_tables"
+                for target in node.targets
+            )
+        ):
+            continue
+        try:
+            found.append(ast.literal_eval(node.value))
+        except (ValueError, TypeError, SyntaxError, RecursionError) as exc:
+            raise StageCRevisionGateError(
+                "Stage C schema digest table allowlist must remain a static literal."
+            ) from exc
+    if len(found) != 1 or not isinstance(found[0], (tuple, list)):
+        raise StageCRevisionGateError(
+            "Stage C must have one static selected_tables schema digest list."
+        )
+    tables = found[0]
+    if any(not isinstance(table, str) for table in tables):
+        raise StageCRevisionGateError("Stage C schema digest tables must be strings.")
+    return frozenset(tables)
+
+
+def _check_matching_schema_coverage(root: Path, migrations_dir: Path) -> str:
+    """Require new M04B tables in backup inventory and restore schema digest."""
+    created = _created_matching_tables(migrations_dir)
+    if not created:
+        return "NOT_PRESENT"
+    if created != MATCHING_TABLES:
+        raise StageCRevisionGateError(
+            "Partial AI004-M04B matching migration is not safe for Stage C."
+        )
+    inventory = _static_assignment(root / "operations" / "backup.py", "_INVENTORY_TABLES")
+    if not isinstance(inventory, (tuple, list)) or not MATCHING_TABLES.issubset(
+        set(inventory)
+    ):
+        raise StageCRevisionGateError(
+            "Stage C requires both M04B tables in the encrypted backup inventory."
+        )
+    selected = _stage_c_schema_digest_tables(
+        root / "scripts" / "host001_stage_c_fixture.py"
+    )
+    if not MATCHING_TABLES.issubset(selected):
+        raise StageCRevisionGateError(
+            "Stage C schema digest omits M04B matching tables; review synthetic restore coverage."
+        )
+    # Schema/inventory coverage is NOT evidence of populated matching-row restore.
+    return "SCHEMA_INVENTORY_ONLY"
 
 
 def check_revision_chain(root: Path = ROOT) -> dict[str, object]:
@@ -127,11 +225,14 @@ def check_revision_chain(root: Path = ROOT) -> dict[str, object]:
             "Stage C synthetic fixture must use the runtime revision dynamically."
         )
 
+    matching_schema_coverage = _check_matching_schema_coverage(root, migrations_dir)
+
     return {
         "revision": heads[0],
         "migration_count": len(entries),
         "unique_head": True,
         "fixture_uses_runtime_revision": True,
+        "matching_schema_coverage": matching_schema_coverage,
     }
 
 
