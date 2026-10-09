@@ -160,11 +160,18 @@ def seed_ledger(db, source, claim_id, *, now=NOW):
     month = day[:7]
     policy = {**DEFAULT_POLICY, "enabled": True, "kill_switch": False}
     with db.session() as s, s.begin():
-        if s.get(AIRuntimePolicy, 1) is None:
+        # The initial migration may seed a disabled policy; ONLY disposable
+        # synthetic tests switch it on to exercise the ledger callback.
+        runtime_policy = s.get(AIRuntimePolicy, 1)
+        if runtime_policy is None:
             s.add(AIRuntimePolicy(
                 id=1, version=1, policy_json=json.dumps(policy),
                 updated_at=now,
             ))
+        else:
+            runtime_policy.policy_json = json.dumps(policy)
+            runtime_policy.updated_at = now
+        if s.get(AIProviderState, PROVIDER) is None:
             s.add(AIProviderState(
                 provider=PROVIDER, failures=0, open_until=0,
                 probe_request_id=None, probe_until=0,
