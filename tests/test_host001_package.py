@@ -63,6 +63,7 @@ class Host001PackageTests(unittest.TestCase):
             "hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd",
             workflow,
         )
+        self.assertIn("terraform_wrapper: false", workflow)
         self.assertIn('TFSTATE_KEY="host001/plan-only-${GITHUB_RUN_ID}.tfstate"', workflow)
         self.assertIn('-backend-config="bucket=$TFSTATE_BUCKET"', workflow)
         self.assertIn('-backend-config="key=$TFSTATE_KEY"', workflow)
@@ -192,6 +193,7 @@ class Host001PackageTests(unittest.TestCase):
         self.assertIn("stage_c_state_guard.py --bucket", workflow)
         self.assertIn("Sanitized Stage C apply plan diagnostic:", workflow)
         self.assertIn("actual exit code: $plan_code", workflow)
+        self.assertIn("terraform_wrapper: false", workflow)
         self.assertIn('"TFSTATE_BUCKET"', workflow)
         self.assertIn("host001-stage-c-teardown.yml/dispatches", workflow)
         self.assertIn("AUTO_TEARDOWN_STAGE_C_SYNTHETIC", workflow)
@@ -251,6 +253,7 @@ class Host001PackageTests(unittest.TestCase):
         self.assertIn("Destroy provider deadline: **<=90 minutes from explicit manual recovery start**", workflow)
         self.assertIn("Absolute Stage C destroy deadline reached before destroy apply.", workflow)
         self.assertIn("timeout --signal=INT --kill-after=30s", workflow)
+        self.assertIn("terraform_wrapper: false", workflow)
         self.assertIn(r'"^(data\\.yandex_compute_image\\.ubuntu', workflow)
         self.assertIn("Field window shortened to preserve the 90-minute teardown reserve.", workflow)
         self.assertIn("ref: ${{ inputs.source_sha }}", workflow)
