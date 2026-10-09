@@ -14,6 +14,11 @@ from models.consent import AIConsent
 from models.resume_analysis import ResumeAnalysisReport, ResumeAnalysisDecision, ResumeAnalysisReviewEvent
 from repositories.resume_analysis import report_view
 from models.vacancy_match import VacancyMatchReport, VacancyMatchSeries
+from models.user_match import UserMatchReport, UserMatchCache
+from repositories.user_match import (
+    MAX_USER_MATCH_REPORTS, MAX_USER_MATCH_CLAIMS,
+    report_export_view, cache_export_view, UserMatchStorageError,
+)
 from models.saved_vacancy import SavedVacancy, SavedVacancySource
 from models.application_tracker import SavedVacancyTracker, SavedVacancyTrackerEvent
 from models.reminder import NotificationPreference, SavedVacancyReminder
@@ -273,6 +278,43 @@ class PrivacyRepository(RepositoryBase):
             saved_ids = {row.id for row in saved_rows}
             if any(source.saved_vacancy_id not in saved_ids for source in saved_sources):
                 raise PrivacySnapshotConflictError('saved_vacancy_owner_mismatch')
+            # M04B: export the dynamic user-owned results, separate from accepted
+            # synthetic vacancy_match_* fixture records. Keep strict bounds and
+            # reject any broken ownership/source relationship before exporting.
+            user_match_reports = session.scalars(select(UserMatchReport).where(
+                UserMatchReport.user_id == user.id
+            ).order_by(UserMatchReport.created_at, UserMatchReport.id)
+                .limit(MAX_USER_MATCH_REPORTS + 1)).all()
+            user_match_cache = session.scalars(select(UserMatchCache).where(
+                UserMatchCache.user_id == user.id
+            ).order_by(UserMatchCache.created_at, UserMatchCache.id)
+                .limit(MAX_USER_MATCH_CLAIMS + 1)).all()
+            if (len(user_match_reports) > MAX_USER_MATCH_REPORTS
+                    or len(user_match_cache) > MAX_USER_MATCH_CLAIMS):
+                raise PrivacySnapshotConflictError('user_match_export_limit')
+            resume_version_ids = {row.id for row in versions}
+            def owned_match_source(row):
+                return (row.source_kind == 'saved'
+                        and row.saved_vacancy_id in saved_ids
+                        and row.resume_version_id in resume_version_ids)
+            if (any(not owned_match_source(row) for row in user_match_reports)
+                    or any(not owned_match_source(row) for row in user_match_cache)):
+                raise PrivacySnapshotConflictError('user_match_owner_mismatch')
+            report_by_id = {row.id: row for row in user_match_reports}
+            if any(
+                (row.state == 'ready' and (
+                    row.report_id not in report_by_id
+                    or row.source_hash != report_by_id[row.report_id].source_hash
+                    or row.saved_vacancy_id != report_by_id[row.report_id].saved_vacancy_id
+                    or row.resume_version_id != report_by_id[row.report_id].resume_version_id
+                )) or (row.state != 'ready' and row.report_id is not None)
+                for row in user_match_cache
+            ):
+                raise PrivacySnapshotConflictError('user_match_cache_mismatch')
+            try:
+                dynamic_match_export = [report_export_view(row) for row in user_match_reports]
+            except UserMatchStorageError:
+                raise PrivacySnapshotConflictError('user_match_integrity') from None
             tracker_rows = session.scalars(select(SavedVacancyTracker).where(
                 SavedVacancyTracker.user_id == user.id).order_by(
                 SavedVacancyTracker.created_at, SavedVacancyTracker.saved_vacancy_id).limit(MAX_SAVED+1)).all()
@@ -311,6 +353,8 @@ class PrivacyRepository(RepositoryBase):
                                              for row in tracker_rows],
                 "saved_vacancy_tracker_events": [event_view(row) for row in tracker_events],
                 "vacancy_matches": [match_view(row) for row in match_rows],
+                "user_match_reports": dynamic_match_export,
+                "user_match_cache": [cache_export_view(row) for row in user_match_cache],
                 "vacancy_match_series": [{"fixture_id": row.fixture_id, "last_version": row.last_version}
                                          for row in match_series],
                 "resume_interviews": interview_export,
@@ -559,6 +603,8 @@ class PrivacyRepository(RepositoryBase):
                 session, SavedVacancyTrackerEvent, SavedVacancyTrackerEvent.user_id == user_id
             ),
             "vacancy_match_reports": self._count(session, VacancyMatchReport, VacancyMatchReport.user_id == user_id),
+            "user_match_reports": self._count(session, UserMatchReport, UserMatchReport.user_id == user_id),
+            "user_match_cache": self._count(session, UserMatchCache, UserMatchCache.user_id == user_id),
             "vacancy_match_series": self._count(session, VacancyMatchSeries, VacancyMatchSeries.user_id == user_id),
             "resume_interview_sessions": self._count(session, ResumeInterviewSession, ResumeInterviewSession.user_id == user_id),
             "resume_analysis_reports": self._count(session, ResumeAnalysisReport, ResumeAnalysisReport.user_id == user_id),
