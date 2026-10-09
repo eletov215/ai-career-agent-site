@@ -42,6 +42,8 @@ PREDECESSOR_HASHES = {
     "scripts/host001_stage_c_fixture.py": "f609623abb53a4847312da8303ae7f7edd99cb48fd809173122c5be7ddb6edd2",
     "tests/test_priv001_migration.py": "76e5a41f427400feba1b58b1cd61741a307bbd15daa9dd83a435fd6820b44c9d",
     "tests/test_legal001_postgresql.py": "753882d46bf39457af9b92d431644b4eb6ab95aac57e9adecfb8ce71da107445",
+    "tests/test_job003_migration.py": "5d3993671559e54e179d61f1e4817592fe702129f33c90f2e96b5c1eb9280013",
+    "tests/ai005_boundary_helper.py": "f442fed149d7e935d2afe00ba55ce5374e2c5fe9fbc77d4ec3b26b2b913d8baa",
 }
 
 NEW_FILES = frozenset({
