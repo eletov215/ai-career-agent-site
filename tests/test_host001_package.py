@@ -10,6 +10,7 @@ from pathlib import Path
 from unittest import mock
 
 from scripts.check_host001_package import ROOT, validate
+from scripts.host001_stage_c_plan_hardening import validate_plan_only_hardening
 
 
 class Host001PackageTests(unittest.TestCase):
@@ -159,6 +160,165 @@ class Host001PackageTests(unittest.TestCase):
                     )
                 if label == "named artifact upload":
                     self.assertIn("Stage C workflow must not upload artifacts", errors)
+
+    def test_issue80_plan_hardening_accepts_reviewed_plan_only_workflow(self):
+        workflow = (ROOT / ".github/workflows/host001-stage-c-plan.yml").read_text(
+            encoding="utf-8"
+        )
+        self.assertEqual([], validate_plan_only_hardening(workflow))
+
+    def test_issue80_plan_hardening_rejects_chained_and_continued_commands(self):
+        workflow = (ROOT / ".github/workflows/host001-stage-c-plan.yml").read_text(
+            encoding="utf-8"
+        )
+        original = "terraform -chdir=infra/yandex-cloud validate"
+        mutations = {
+            "semicolon chaining": original + "; terraform apply",
+            "double-ampersand chaining": original + " && terraform destroy",
+            "backslash-continued command": (
+                original + "\n"
+                "          terraform \\\n"
+                "            -chdir=infra/yandex-cloud \\\n"
+                "            apply"
+            ),
+            "backslash-continued destroy": (
+                original + "\n"
+                "          terraform -chdir=infra/yandex-cloud \\\n"
+                "            destroy"
+            ),
+            "new unreviewed terraform op": original + "\n          terraform output",
+            "quoted hash does not hide following apply": (
+                original + '\n          echo "#"; terraform apply'
+            ),
+        }
+        self.assertIn(original, workflow)
+        for title, replacement in mutations.items():
+            with self.subTest(title=title):
+                edited = workflow.replace(original, replacement, 1)
+                reasons = validate_plan_only_hardening(edited)
+                self.assertTrue(
+                    any("unreviewed Terraform operation" in reason for reason in reasons),
+                    (title, reasons),
+                )
+
+    def test_issue80_plan_hardening_rejects_anonymous_unreviewed_steps(self):
+        workflow = (ROOT / ".github/workflows/host001-stage-c-plan.yml").read_text(
+            encoding="utf-8"
+        )
+        variations = (
+            workflow + "\n      - run: terraform apply\n",
+            workflow + "\n      - run: |\n          terraform destroy\n",
+        )
+        for mutated in variations:
+            with self.subTest(mutated_tail=mutated[-65:]):
+                reasons = validate_plan_only_hardening(mutated)
+                self.assertIn(
+                    "Unreviewed Stage C unnamed step is forbidden.",
+                    reasons,
+                )
+
+    def test_issue80_plan_hardening_rejects_raw_plan_log_output(self):
+        workflow = (ROOT / ".github/workflows/host001-stage-c-plan.yml").read_text(
+            encoding="utf-8"
+        )
+        redirect = '-out="$plan_file" >"$plan_log" 2>&1'
+        self.assertEqual(workflow.count(redirect), 1)
+        mutations = {
+            "unredirected plan output": (
+                redirect,
+                '-out="$plan_file"',
+                "stdout/stderr redirection",
+            ),
+            "pipe to tee": (
+                redirect,
+                '-out="$plan_file" 2>&1 | tee "$plan_log"',
+                "stdout/stderr redirection",
+            ),
+            "different private log": (
+                redirect,
+                '-out="$plan_file" >"$RUNNER_TEMP/new-log" 2>&1',
+                "stdout/stderr redirection",
+            ),
+            "shell debug xtrace": (
+                "          set +e\n",
+                "          set -x\n          set +e\n",
+                "Bash xtrace",
+            ),
+            "print entire local plan log": (
+                "          code=$?\n",
+                '          cat "$plan_log"\n          code=$?\n',
+                "unredacted plan logs",
+            ),
+        }
+        for title, (before, after, expected) in mutations.items():
+            with self.subTest(title=title):
+                self.assertIn(before, workflow)
+                reasons = validate_plan_only_hardening(workflow.replace(before, after, 1))
+                self.assertTrue(
+                    any(expected in reason for reason in reasons),
+                    (title, reasons),
+                )
+
+    def test_issue80_plan_hardening_validates_every_uses_reference(self):
+        workflow = (ROOT / ".github/workflows/host001-stage-c-plan.yml").read_text(
+            encoding="utf-8"
+        )
+        pinned = "actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803"
+        self.assertIn(pinned, workflow)
+        mutations = {
+            "mutable version": workflow.replace(pinned, "actions/checkout@v6", 1),
+            "mutable container": workflow + "\n      - uses: docker://alpine:latest\n",
+            "local action": workflow + "\n      - uses: ./unreviewed-local-action\n",
+            "unexpected pinned action": (
+                workflow + "\n      - uses: unknown/action@" + "a" * 40 + "\n"
+            ),
+            "expression action": (
+                workflow + "\n      - uses: " + chr(36) + "{{ github.event.action }}\n"
+            ),
+        }
+        for title, edited in mutations.items():
+            with self.subTest(title=title):
+                reasons = validate_plan_only_hardening(edited)
+                self.assertTrue(
+                    any("action" in reason for reason in reasons),
+                    (title, reasons),
+                )
+
+    def test_issue80_plan_hardening_enforces_secret_env_keys_and_ownership(self):
+        workflow = (ROOT / ".github/workflows/host001-stage-c-plan.yml").read_text(
+            encoding="utf-8"
+        )
+        cloud_key = "          TF_VAR_cloud_id:"
+        folder_key = "          TF_VAR_folder_id:"
+        self.assertEqual(workflow.count(cloud_key), 1)
+        self.assertEqual(workflow.count(folder_key), 1)
+        wrong_key = workflow.replace(cloud_key, "          MOVED_CLOUD_ID:", 1)
+        wrong_step = workflow.replace(
+            "      - name: Credentialed Stage C plan",
+            "      - name: Renamed unreviewed step",
+            1,
+        )
+        swapped = workflow.replace(cloud_key, "          TEMP_KEY:", 1).replace(
+            folder_key, cloud_key, 1
+        ).replace("          TEMP_KEY:", folder_key, 1)
+        unexpected = workflow.replace(
+            cloud_key,
+            cloud_key + " " + chr(36)
+            + "{{ secrets.STAGE_C_UNREVIEWED }}\n          UNUSED:",
+            1,
+        )
+        for title, edited in {
+            "wrong environment key": wrong_key,
+            "wrong trusted step": wrong_step,
+            "swapped environment key": swapped,
+            "unexpected secret": unexpected,
+        }.items():
+            with self.subTest(title=title):
+                reasons = validate_plan_only_hardening(edited)
+                self.assertTrue(
+                    any("secret" in reason for reason in reasons),
+                    (title, reasons),
+                )
 
     def test_stage_c_operator_checklist_has_restore_and_fixture_controls(self):
         checklist = (
