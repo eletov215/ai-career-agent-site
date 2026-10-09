@@ -187,6 +187,9 @@ class Host001PackageTests(unittest.TestCase):
                 "            destroy"
             ),
             "new unreviewed terraform op": original + "\n          terraform output",
+            "quoted hash does not hide following apply": (
+                original + '\n          echo "#"; terraform apply'
+            ),
         }
         self.assertIn(original, workflow)
         for title, replacement in mutations.items():
