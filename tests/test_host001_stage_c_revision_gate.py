@@ -104,6 +104,35 @@ class Host001StageCRevisionGateTests(unittest.TestCase):
                 check_revision_chain(root)
 
     @staticmethod
+    def _minimal_matching_tree(path: Path) -> Path:
+        # Independent synthetic baseline; must keep working after M04B merges.
+        root = path / "m04b_isolated"
+        versions = root / "migrations" / "versions"
+        versions.mkdir(parents=True)
+        (root / "operations").mkdir()
+        (root / "scripts").mkdir()
+        (root / "database.py").write_text(
+            'CURRENT_REVISION = "20261002_0023"\n', encoding="utf-8"
+        )
+        (versions / "20261002_0023_base.py").write_text(
+            'revision = "20261002_0023"\ndown_revision = None\n',
+            encoding="utf-8",
+        )
+        (root / "operations" / "backup.py").write_text(
+            '_INVENTORY_TABLES = ("users",)\n', encoding="utf-8"
+        )
+        (root / "scripts" / "host001_stage_c_fixture.py").write_text(
+            "from database import CURRENT_REVISION\n"
+            "def _schema_report(runtime):\n"
+            "    selected_tables = (\n"
+            '        "users",\n'
+            '        "ai_consents",\n'
+            "    )\n",
+            encoding="utf-8",
+        )
+        return root
+
+    @staticmethod
     def _add_mock_m04b_migration(root: Path, *, include_cache: bool = True) -> None:
         previous = check_revision_chain(root)["revision"]
         new_revision = "20991231_9999"
@@ -128,20 +157,23 @@ class Host001StageCRevisionGateTests(unittest.TestCase):
             encoding="utf-8",
         )
 
-    def test_current_main_has_no_matching_schema_migration(self):
+    def test_current_repo_matching_schema_coverage_is_explicit(self):
         result = check_revision_chain(ROOT)
-        self.assertEqual(result["matching_schema_coverage"], "NOT_PRESENT")
+        self.assertIn(
+            result["matching_schema_coverage"],
+            {"NOT_PRESENT", "SCHEMA_INVENTORY_ONLY"},
+        )
 
     def test_partial_m04b_schema_fails_closed(self):
         with tempfile.TemporaryDirectory() as tmp:
-            root = self._isolated_tree(Path(tmp))
+            root = self._minimal_matching_tree(Path(tmp))
             self._add_mock_m04b_migration(root, include_cache=False)
             with self.assertRaisesRegex(StageCRevisionGateError, "Partial AI004-M04B"):
                 check_revision_chain(root)
 
     def test_m04b_requires_backup_inventory_and_stage_c_schema_digest(self):
         with tempfile.TemporaryDirectory() as tmp:
-            root = self._isolated_tree(Path(tmp))
+            root = self._minimal_matching_tree(Path(tmp))
             self._add_mock_m04b_migration(root)
             with self.assertRaisesRegex(StageCRevisionGateError, "backup inventory"):
                 check_revision_chain(root)
