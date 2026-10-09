@@ -198,6 +198,22 @@ class Host001PackageTests(unittest.TestCase):
                     (title, reasons),
                 )
 
+    def test_issue80_plan_hardening_rejects_anonymous_unreviewed_steps(self):
+        workflow = (ROOT / ".github/workflows/host001-stage-c-plan.yml").read_text(
+            encoding="utf-8"
+        )
+        variations = (
+            workflow + "\n      - run: terraform apply\n",
+            workflow + "\n      - run: |\n          terraform destroy\n",
+        )
+        for mutated in variations:
+            with self.subTest(mutated_tail=mutated[-65:]):
+                reasons = validate_plan_only_hardening(mutated)
+                self.assertIn(
+                    "Unreviewed Stage C unnamed step is forbidden.",
+                    reasons,
+                )
+
     def test_issue80_plan_hardening_rejects_raw_plan_log_output(self):
         workflow = (ROOT / ".github/workflows/host001-stage-c-plan.yml").read_text(
             encoding="utf-8"
