@@ -74,6 +74,9 @@ def seed(db, owner=None, *, suffix="a"):
             password_changed_at=NOW, last_login_at=NOW,
             created_at=NOW, updated_at=NOW,
         ))
+        # SQLAlchemy has no direct User relationship to every feature model;
+        # flush the parent explicitly before FK-bound synthetic fixture rows.
+        s.flush()
         s.add(ResumeDraft(
             id=draft_id, user_id=owner,
             schema_version=1, revision=1,
@@ -82,6 +85,7 @@ def seed(db, owner=None, *, suffix="a"):
             completion_percent=100, profile_version=None,
             created_at=NOW, updated_at=NOW,
         ))
+        s.flush()
         s.add(ResumeVersion(
             id=version_id, draft_id=draft_id, schema_version=1,
             version=1, draft_revision=1,
