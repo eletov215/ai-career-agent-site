@@ -74,3 +74,15 @@ HOST-001 CI запускает этот test на изменениях `database
 **Стоп-условия:** отсутствует один required check; возникла новая Alembic revision без согласованного schema/fixture плана; `main` изменился после frozen-review; нечёткое ownership ресурсов; бюджеты/квоты/деадлайны не доказаны; секреты попали в журнал; Terraform managed resources от старого run ещё живы.
 
 Текущий `HOST-001`: **CODE_GUARD_PASS / LIVE_FIELD_TEST_FAILED / TEARDOWN_VERIFIED / BILLING_PRELIMINARY / NEW_APPLY_NOT_AUTHORIZED**.
+
+
+## 5. HOST-001 ↔ AI004-M04B — проверка совместимости схемы (9 октября)
+
+- Отдельная работа AI004-M04-B находится в [Draft PR #98](https://github.com/eletov215/ai-career-agent-site/pull/98), **не объединена**. Его ветка предлагает additive revision \`20261009_0024\` и таблицы \`user_match_reports\` / \`user_match_cache\`. Эта миграция не является HOST-001/MIG-001.
+- Изолированные тесты PR #98 проходят, но общий CI его исходного head FAILED: исторические package/hash guards ожидают неизменённый \`database.py\`, а отдельные тесты всё ещё фиксируют \`20261002_0023\`. Нельзя отключать эти проверки или переписывать историческую приёмку; необходим согласованный successor-переход схемы и подтверждённые тесты.
+- В ветке HOST-001 сохраняется условный офлайн-контроль: до наличия M04-B миграции \`matching_schema_coverage=NOT_PRESENT\`. При обнаружении создания новых таблиц в Alembic он требует **обе** таблицы в \`operations/backup.py\` inventory и в явном списке проверяемых объектов \`scripts/host001_stage_c_fixture.py::_schema_report\`. Пропуск, частичная схема или недостающий backup inventory — fail closed.
+- Даже после добавления таблиц в schema digest статус **\`SCHEMA_INVENTORY_ONLY\`**: это не подтверждение сохранности реальных или синтетических записей, owner isolation, HMAC, privacy/delete и resume/saved-vacancy cascade после PG18 backup/restore. Для M04B-inclusive Stage C нужны отдельные утверждённые synthetic data/restore сценарии без live provider calls.
+- Сценарий Stage C на frozen main 0023 не должен выдавать результаты как проверку M04-B 0024. Следующий новый baseline и объём теста согласуются только после полной интеграционной приёмки M04-B; повторный billed Yandex apply по-прежнему требует нового разрешения владельца.
+- **Deployment stop:** \`render.yaml\` автоматически запускает \`scripts/manage_db.py upgrade\` при развёртывании из \`main\`; поэтому merge миграционного PR #98 потенциально меняет Neon production DB и не разрешён одним лишь зелёным CI.
+
+Интеграция обсуждена в [комментарии к PR #98](https://github.com/eletov215/ai-career-agent-site/pull/98#issuecomment-6081296872). Эта синхронизация не изменяет M04-B branch, Alembic, production, Terraform, Yandex Cloud state или сервисные секреты.
