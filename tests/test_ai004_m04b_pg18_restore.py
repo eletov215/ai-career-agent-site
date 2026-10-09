@@ -57,8 +57,10 @@ def _read(db, source):
     )
 
 
-@pytest.mark.skipif(not os.environ.get("POSTGRES_TEST_URL"),
-                    reason="Disposable PostgreSQL 18 CI service required")
+@pytest.mark.skipif(
+    os.environ.get("M04B_PG18_RESTORE_ENABLED") != "1",
+    reason="Populated-row PostgreSQL 18 restore runs in the mandatory isolated M04B CI job",
+)
 def test_disposable_pg18_encrypted_restore_preserves_rows_hmac_and_owner(tmp_path):
     source_url = _url()
     source_str = source_url.render_as_string(hide_password=False)
