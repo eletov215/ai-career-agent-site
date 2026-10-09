@@ -14,8 +14,8 @@ from pathlib import Path
 
 SCHEMA_FROM = "20261002_0023"
 SCHEMA_TO = "20261009_0024"
-SOURCE_COMMIT = "f4eb6aed7dcdfb07807b23fcb3928356a1fffb81"
-SOURCE_TREE = "3716f12352a5786b46ecf5555b6efacd3af9e078"
+SOURCE_COMMIT = "1613f3ced4959465fbe549873014b41151027e07"
+SOURCE_TREE = "dffd938005c8c568250818d8674d9485ef792a95"
 MANIFEST_PATH = "docs/evidence/ai-004/m04b-successor/change_boundary.json"
 MIGRATION = "migrations/versions/20261009_0024_user_matching_cache.py"
 MATCHING_TABLES = frozenset(("user_match_reports", "user_match_cache"))
@@ -76,7 +76,7 @@ PRESERVED_FILES = frozenset({
     ".github/workflows/host001-yandex-cloud.yml",
 })
 PRESERVED_SHA256 = {
-    ".github/workflows/host001-yandex-cloud.yml": "37336266a8f3731fd17453a4dd2a549560ab86ba35a6b05e402eb9779eab8be1",
+    ".github/workflows/host001-yandex-cloud.yml": "f7ed4757b2d57f5a85c74495d07e37d1fd90da24c1df1d12c011967f314eb29b",
     "docs/evidence/ai-004/change_boundary.json": "4a7afe4474275599ec1d06ead2fc37c5097dd6335963c40a7dfef20864e68626",
     "docs/evidence/job-002/change_boundary.json": "de1bc9616a892bc453af905924c63fb7e011bd6974ef17a9856cc028b64ac517",
     "docs/evidence/job-003/change_boundary.json": "2ba0897c4de4588802256a27f870cf6e8579afa52fbc3b3b3fdff6c5dd3da928",
