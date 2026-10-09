@@ -245,6 +245,14 @@ def _mutated_payload(name):
         rows[-1]["requirement_id"] = "req-999"
     elif name == "stale_source_hash":
         body["source_hash"] = "0" * 64
+    elif name == "tampered_input_hash":
+        # Simulate a response bound to a different resume projection. It may
+        # contain a *valid* hash for another input but cannot replay on this
+        # version of the user-owned resume.
+        changed = copy.deepcopy(case)
+        changed["resume_answers"]["skills"] = "unrelated synthetic skill"
+        body["source_hash"] = _contract(changed).source_hash
+        assert body["source_hash"] != contract.source_hash
     elif name == "unverified_with_evidence":
         rows[2]["candidate_evidence"] = [{"id": "resume.skills", "quote": "Python"}]
     elif name == "no_matching_evidence":
