@@ -74,6 +74,12 @@ jobs:
           test "$GITHUB_REF" = "refs/heads/main"
           test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
 
+      - name: Verify synthetic-only Stage C application schema before credentials
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/host001_stage_c_apply_gate.py --expected-sha "$GITHUB_SHA"
+
       - uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # v3.1.2
         with:
           terraform_version: "1.11.4"
