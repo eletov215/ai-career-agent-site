@@ -36,18 +36,30 @@ def successor_hashes(root=ROOT):
                 from check_job004_package import successor_hashes as job004_hashes
             authorized=job004_hashes(root)
         else: authorized={}
+        from scripts.ai004_m04b_successor import approved_sha256
         effective={}
         for p,row in e['reviewed_runtime_changes'].items():
             next_row=authorized.get(p,{})
-            direct=hashlib.sha256((root/p).read_bytes()).hexdigest()==row['current_sha256']
-            chained=(next_row.get('previous_sha256')==row['current_sha256'] and hashlib.sha256((root/p).read_bytes()).hexdigest()==next_row.get('current_sha256'))
-            if set(row)!={'previous_sha256','current_sha256'} or not (direct or chained): raise ValueError('hash:'+p)
-            effective[p]={**row,'current_sha256':next_row.get('current_sha256',row['current_sha256'])}
+            if set(row)!={'previous_sha256','current_sha256'}:
+                raise ValueError('scope:'+p)
+            if next_row and next_row.get('previous_sha256') != row['current_sha256']:
+                raise ValueError('successor_parent:'+p)
+            predecessor = next_row.get('current_sha256',row['current_sha256'])
+            verified = approved_sha256(root,p,predecessor)
+            if hashlib.sha256((root/p).read_bytes()).hexdigest()!=verified:
+                raise ValueError('hash:'+p)
+            effective[p]={**row,'current_sha256':verified}
         for p,value in e['new_runtime_sha256'].items():
             if hashlib.sha256((root/p).read_bytes()).hexdigest()!=value: raise ValueError('hash:'+p)
+        guards={}
         for p,row in e['authorized_guard_changes'].items():
-            if set(row)!={'previous_sha256','current_sha256'} or hashlib.sha256((root/p).read_bytes()).hexdigest()!=row['current_sha256']: raise ValueError('hash:'+p)
-        return {**authorized,**effective,**e['authorized_guard_changes']}
+            if set(row)!={'previous_sha256','current_sha256'}:
+                raise ValueError('guard_scope:'+p)
+            verified=approved_sha256(root,p,row['current_sha256'])
+            if hashlib.sha256((root/p).read_bytes()).hexdigest()!=verified:
+                raise ValueError('hash:'+p)
+            guards[p]={**row,'current_sha256':verified}
+        return {**authorized,**effective,**guards}
 def validate():
     errors=[]
     try:
