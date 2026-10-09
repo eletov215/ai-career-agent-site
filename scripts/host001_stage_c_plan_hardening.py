@@ -66,6 +66,10 @@ def _steps(workflow: str) -> dict[str, str]:
             if match.group(1) in output:
                 raise ValueError("Duplicate Stage C step name.")
             output[match.group(1)] = block
+        elif not re.match(r"      - uses: [^\\n]+", block):
+            # An anonymous run (including inline Bash) bypasses named-step
+            # inspection. Only the reviewed standalone uses: steps are allowed.
+            raise ValueError("Unreviewed Stage C unnamed step is forbidden.")
     return output
 
 
