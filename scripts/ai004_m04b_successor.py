@@ -14,8 +14,8 @@ from pathlib import Path
 
 SCHEMA_FROM = "20261002_0023"
 SCHEMA_TO = "20261009_0024"
-SOURCE_COMMIT = "1613f3ced4959465fbe549873014b41151027e07"
-SOURCE_TREE = "dffd938005c8c568250818d8674d9485ef792a95"
+SOURCE_COMMIT = "a0166cdcb9087b3e5525ad6748e23d5ec0604913"
+SOURCE_TREE = "4c5343f5c70a0ea945e87b1786e878757174855d"
 MANIFEST_PATH = "docs/evidence/ai-004/m04b-successor/change_boundary.json"
 MIGRATION = "migrations/versions/20261009_0024_user_matching_cache.py"
 MATCHING_TABLES = frozenset(("user_match_reports", "user_match_cache"))
@@ -44,6 +44,7 @@ PREDECESSOR_HASHES = {
     "tests/test_legal001_postgresql.py": "753882d46bf39457af9b92d431644b4eb6ab95aac57e9adecfb8ce71da107445",
     "tests/test_job003_migration.py": "5d3993671559e54e179d61f1e4817592fe702129f33c90f2e96b5c1eb9280013",
     "tests/ai005_boundary_helper.py": "f442fed149d7e935d2afe00ba55ce5374e2c5fe9fbc77d4ec3b26b2b913d8baa",
+    "tests/test_host001_stage_c_apply_gate.py": "3bc4f5b6fa0a0e836fd1092f029df205f35a7393d6a5d6ddf6a8d5f25a2fc4b6",
 }
 
 NEW_FILES = frozenset({
@@ -74,9 +75,19 @@ PRESERVED_FILES = frozenset({
     "scripts/host001_stage_c_revision_gate.py",
     "tests/test_host001_stage_c_revision_gate.py",
     ".github/workflows/host001-yandex-cloud.yml",
+    ".github/workflows/host001-stage-c-apply.yml",
+    "scripts/host001_stage_c_apply_gate.py",
+    "scripts/check_host001_package.py",
+    "tests/test_host001_package.py",
+    "docs/HOST001_STAGE_C_PREAPPLY_SCHEMA_GATE_20261009.md",
 })
 PRESERVED_SHA256 = {
-    ".github/workflows/host001-yandex-cloud.yml": "f7ed4757b2d57f5a85c74495d07e37d1fd90da24c1df1d12c011967f314eb29b",
+    ".github/workflows/host001-yandex-cloud.yml": "3fedd28efd7a32cac33143c509d59066f6715c033634d069e0108205961f4dc9",
+    ".github/workflows/host001-stage-c-apply.yml": "cef3c8e6b5dc045cff47572a81e28f30daaec9e007a8427db0c6fc3d1508bc01",
+    "scripts/host001_stage_c_apply_gate.py": "9c926266d9b2b1bb44a48f9134b564c67c5f267d9bad398ea4a123a0aab0177f",
+    "scripts/check_host001_package.py": "272c8797ad528c1234fceb097f4fad25ab6c0c87740cb5c62676bfcbd9510e3b",
+    "tests/test_host001_package.py": "fc3341df6625735e76f3bcc4832bb6b171e74b0c8c0e3081d7746c095aaf49e1",
+    "docs/HOST001_STAGE_C_PREAPPLY_SCHEMA_GATE_20261009.md": "f293b25719ad401d859e5780f5458b63dbab3e66f900ad17b55d2d626dc51039",
     "docs/evidence/ai-004/change_boundary.json": "4a7afe4474275599ec1d06ead2fc37c5097dd6335963c40a7dfef20864e68626",
     "docs/evidence/job-002/change_boundary.json": "de1bc9616a892bc453af905924c63fb7e011bd6974ef17a9856cc028b64ac517",
     "docs/evidence/job-003/change_boundary.json": "2ba0897c4de4588802256a27f870cf6e8579afa52fbc3b3b3fdff6c5dd3da928",
