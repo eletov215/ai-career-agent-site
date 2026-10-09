@@ -48,6 +48,7 @@ _INVENTORY_TABLES = (
     "source_health_states",
     "resume_interview_sessions", "resume_interview_events",
     "vacancy_match_series", "vacancy_match_reports",
+    "user_match_reports", "user_match_cache",
     "saved_vacancies", "saved_vacancy_sources",
     "saved_vacancy_trackers", "saved_vacancy_tracker_events",
     "notification_preferences", "saved_vacancy_reminders",
