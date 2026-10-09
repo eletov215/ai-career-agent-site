@@ -11,6 +11,7 @@ from unittest import mock
 from scripts.host001_stage_c_revision_gate import (
     ROOT,
     StageCRevisionGateError,
+    _static_assignment,
     check_checkout_sha,
     check_revision_chain,
 )
@@ -69,19 +70,7 @@ class Host001StageCRevisionGateTests(unittest.TestCase):
                 for p in (root / "migrations" / "versions").glob("*.py")
                 if p.name.startswith(root_head + "_")
             )
-            text = revision_path.read_text(encoding="utf-8")
-            import ast
-
-            tree = ast.parse(text)
-            old_parent = next(
-                ast.literal_eval(node.value)
-                for node in tree.body
-                if isinstance(node, ast.Assign)
-                and any(
-                    isinstance(target, ast.Name) and target.id == "down_revision"
-                    for target in node.targets
-                )
-            )
+            old_parent = _static_assignment(revision_path, "down_revision")
             (root / "migrations" / "versions" / f"{new}_fork.py").write_text(
                 f"revision = '{new}'\ndown_revision = '{old_parent}'\n",
                 encoding="utf-8",
