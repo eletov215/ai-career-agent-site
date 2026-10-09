@@ -62,6 +62,9 @@ jobs:
       - name: Offline Stage C Alembic revision gate
         run: python -m unittest tests.test_host001_stage_c_revision_gate -v
 
+      - name: Verify exact offline Stage C checkout contract
+        run: python scripts/host001_stage_c_revision_gate.py --expected-sha "$GITHUB_SHA"
+
       - name: Terraform format
         run: terraform -chdir=infra/yandex-cloud fmt -check -diff -recursive
 
