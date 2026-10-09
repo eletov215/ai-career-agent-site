@@ -18,6 +18,47 @@ permissions:
   contents: read
 
 jobs:
+  integrity-and-sqlite:
+    name: M04B successor SHA and SQLite (Docker-free)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      APP_ENV: test
+      DATA_DIR: /tmp/aca-m04b-sqlite-only
+      PYTHONDONTWRITEBYTECODE: "1"
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+      - name: Install pinned Python test dependencies
+        run: pip install -r requirements-dev.txt
+      - name: Verify M04B exact successor and history without network dispatch
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          from scripts.ai004_m04b_successor import validate_successor
+          data = validate_successor(Path.cwd())
+          assert data["schema_from"] == "20261002_0023"
+          assert data["schema_to"] == "20261009_0024"
+          assert data["public_real_data_enabled"] is False
+          assert data["production_migration"] == "NOT_RUN"
+          assert data["provider_calls"] == 0
+          PY
+      - name: Test exact SHA tampering, isolated SQLite and historical guards
+        run: >-
+          python -m pytest -q
+          tests/test_ai004_m04b_successor.py
+          tests/test_ai004_m04b_migration.py
+          tests/test_ai004_m04b_storage.py
+          tests/test_ai004_m04b_restore.py
+          tests/test_job003_migration.py
+          tests/test_priv001_migration.py
+          tests/test_ai005_site_qa_package.py
+          tests/test_job002_package.py
+          tests/test_job003_package.py
+          tests/test_job004_package.py
+          tests/test_legal001_package.py
   disposable-db-only:
     name: M04B SQLite and isolated PostgreSQL tests
     runs-on: ubuntu-latest
