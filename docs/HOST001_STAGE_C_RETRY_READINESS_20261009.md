@@ -51,7 +51,8 @@
 
 ```bash
 python -m unittest tests.test_host001_stage_c_revision_gate -v
-python scripts/host001_stage_c_revision_gate.py --expected-sha <REVIEWED_MAIN_SHA>
+REVIEWED_MAIN_SHA='PASTE_40_CHARACTER_SHA_FROM_GITHUB_MAIN'
+python scripts/host001_stage_c_revision_gate.py --expected-sha "$REVIEWED_MAIN_SHA"
 ```
 
 `<REVIEWED_MAIN_SHA>` необходимо взять из GitHub main *после* завершения параллельных PR и required CI, а не подставлять автоматически `$(git rev-parse HEAD)`: иначе проверка git-pin теряет смысл. Эта команда выполняется в checkout выбранного SHA. Она **не** доказывает, что схема production или Yandex DB уже мигрирована.
