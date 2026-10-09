@@ -24,6 +24,9 @@ MATCHING_TABLES = frozenset(("user_match_reports", "user_match_cache"))
 # replaceable by the new manifest. Existing JOB-002/003/004 guards also attest
 # the overlapping accepted predecessors.
 PREDECESSOR_HASHES = {
+    # Only the unprivileged PR-only CI workflow may attest an expected denial.
+    # The manual Stage C apply workflow and Python preflight stay protected.
+    ".github/workflows/host001-yandex-cloud.yml": "3fedd28efd7a32cac33143c509d59066f6715c033634d069e0108205961f4dc9",
     "database.py": "467a7223a9efc8a75cc7fb1d83aa1382996d0f5e0cf1b0ae1510f17b8a5cdede",
     "models/__init__.py": "029c6e0225213fa1a1ca19fa8b08302d0532a56e14aea342b7533d4cc0a2c20e",
     "operations/backup.py": "c01b814f52fe3220d08fcbe9ec6aefd58ccd4d17e03ccfd6a5907c71d0428cc4",
@@ -76,7 +79,6 @@ PRESERVED_FILES = frozenset({
     "render.yaml",
     "scripts/host001_stage_c_revision_gate.py",
     "tests/test_host001_stage_c_revision_gate.py",
-    ".github/workflows/host001-yandex-cloud.yml",
     ".github/workflows/host001-stage-c-apply.yml",
     "scripts/host001_stage_c_apply_gate.py",
     "scripts/check_host001_package.py",
@@ -84,7 +86,6 @@ PRESERVED_FILES = frozenset({
     "docs/HOST001_STAGE_C_PREAPPLY_SCHEMA_GATE_20261009.md",
 })
 PRESERVED_SHA256 = {
-    ".github/workflows/host001-yandex-cloud.yml": "3fedd28efd7a32cac33143c509d59066f6715c033634d069e0108205961f4dc9",
     ".github/workflows/host001-stage-c-apply.yml": "cef3c8e6b5dc045cff47572a81e28f30daaec9e007a8427db0c6fc3d1508bc01",
     "scripts/host001_stage_c_apply_gate.py": "9c926266d9b2b1bb44a48f9134b564c67c5f267d9bad398ea4a123a0aab0177f",
     "scripts/check_host001_package.py": "272c8797ad528c1234fceb097f4fad25ab6c0c87740cb5c62676bfcbd9510e3b",
