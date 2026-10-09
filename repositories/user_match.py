@@ -76,6 +76,7 @@ def report_export_view(row: UserMatchReport) -> dict[str, Any]:
         "vacancy_hash": row.vacancy_hash,
         "classification_version": row.classification_version,
         "scoring_version": row.scoring_version,
+        "result_hash": row.result_hash,
         "result": report,
         "created_at": row.created_at,
     }
@@ -183,6 +184,20 @@ class UserMatchRepository(RepositoryBase):
     def _cache_view(row: UserMatchCache) -> dict[str, Any]:
         return cache_export_view(row)
 
+    @staticmethod
+    def _check_cache_link(row: UserMatchCache, *, user_id: str,
+                          resume_version_id: str, saved_vacancy_id: str,
+                          address: MatchCacheAddress, identity: str) -> None:
+        """Defend against a cache row pointing at another source or owner."""
+        if (row.user_id != user_id or row.source_kind != "saved"
+                or row.resume_version_id != resume_version_id
+                or row.saved_vacancy_id != saved_vacancy_id
+                or row.vacancy_identity_hash != identity
+                or row.cache_key_hash != address.cache_key_hash
+                or row.request_hash != address.request_hash
+                or row.source_hash != address.source_hash):
+            raise UserMatchStorageError("invalid_saved_report")
+
     def _report_checked(
         self, session, row: UserMatchCache,
         contract: ClassificationContract, address: MatchCacheAddress,
@@ -238,6 +253,11 @@ class UserMatchRepository(RepositoryBase):
                 UserMatchCache.cache_key_hash == address.cache_key_hash,
             ))
             if row is not None:
+                self._check_cache_link(
+                    row, user_id=user_id, resume_version_id=resume_version_id,
+                    saved_vacancy_id=saved_vacancy_id,
+                    address=address, identity=identity,
+                )
                 if row.state == "ready":
                     self._report_checked(session, row, contract, address)
                 response = self._cache_view(row)
@@ -274,7 +294,7 @@ class UserMatchRepository(RepositoryBase):
             raise UserMatchStorageError("invalid_request")
         with self.session() as session:
             self._owner(session, user_id)
-            contract, address, _ = self._source(
+            contract, address, identity = self._source(
                 session, user_id, resume_version_id, saved_vacancy_id,
             )
             row = session.scalar(select(UserMatchCache).where(
@@ -283,6 +303,11 @@ class UserMatchRepository(RepositoryBase):
             ))
             if row is None:
                 return None
+            self._check_cache_link(
+                row, user_id=user_id, resume_version_id=resume_version_id,
+                saved_vacancy_id=saved_vacancy_id,
+                address=address, identity=identity,
+            )
             view = self._cache_view(row)
             if row.state == "ready":
                 view["report"] = self._report_checked(session, row, contract, address)
