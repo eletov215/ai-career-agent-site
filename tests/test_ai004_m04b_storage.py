@@ -50,7 +50,7 @@ def seed(db, owner=None, *, suffix="a"):
     src = {
         "title": "Backend engineer", "company": "Synthetic employer",
         "location": "", "description": "A role",
-        "requirements": "Python\nPrefer SQL",
+        "requirements": "Python; Nice to have SQL",
         "work_format": "remote", "employment_code": "full",
         "experience_code": "unknown",
         "salary_from": None, "salary_to": None,
