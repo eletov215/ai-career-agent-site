@@ -177,8 +177,8 @@ jobs:
             -out="$plan_file" >"$plan_log" 2>&1
           plan_code=$?
           set -e
-          if [ "$plan_code" -ne 2 ]; then
-            echo "Refusing apply: fresh Stage C plan must contain reviewed create changes (exit 2); actual exit code: $plan_code."
+          if [ "$plan_code" -ne 0 ] && [ "$plan_code" -ne 2 ]; then
+            echo "Refusing apply: Terraform plan failed; actual exit code: $plan_code."
             if [ -f "$plan_log" ]; then
               echo "Sanitized Stage C apply plan diagnostic:"
               python - "$plan_log" <<'PY'
@@ -237,6 +237,16 @@ jobs:
           fi
 
           terraform -chdir=infra/yandex-cloud show -json "$plan_file" > "$plan_json"
+
+          jq -e '
+            [
+              .resource_changes[]?
+              | select(any(.change.actions[]; . == "create"))
+            ] | length > 0
+          ' "$plan_json" >/dev/null || {
+            echo "Refusing apply: reviewed plan contains no create actions."
+            exit 1
+          }
 
           jq -r '
             .resource_changes[]?
