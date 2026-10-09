@@ -1,5 +1,21 @@
 # AI Career Agent - Единый план реализации и ведения разработки
 
+<!-- HOST001-INCIDENT-20261009:START -->
+## HOST-001 Stage C — актуальный статус на 9 октября 2026
+
+> Этот новый блок дополняет прежний successor от 6 октября; исторические записи `NOT_RUN` ниже относятся к более ранней дате и не описывают итог сегодняшних запусков.
+
+- **FIELD TEST: FAILED / NOT_ACCEPTED.** Credentialed plan-only #8 SUCCESS; bounded apply #5 FAILED после успешной регистрации автоматического teardown. Тесты созданного сайта, PG18/TLS, backup/restore и Russia-source остаются NOT_RUN.
+- **TEARDOWN: VERIFIED IN TERRAFORM STATE.** Автоматический teardown #7 FAILED до `terraform destroy` из-за необъявленной `SOURCE_RUN_STARTED_AT`; ручной recovery #8 SUCCESS, удаление выполнено, managed resources в Terraform state: **0**.
+- **Код исправлен:** PR [#92](https://github.com/eletov215/ai-career-agent-site/pull/92) MERGED; commit `2dc5c715953eefd166e71a9079df727e6bce80ab`, PR-head CI #644 SUCCESS. Исправлены передача времени и безопасная классификация ошибок apply. Это ещё не повторный успешный live-тест.
+- **Проверка Yandex Console:** по предоставленным оператором скриншотам списки VM, PostgreSQL и VPC-сетей пусты; отдельная проверка публичных IP не завершена. Хранилище Terraform state оставлено для recovery; показанные 0 ₽ в Billing предварительны.
+- **Запреты не изменились:** Render/Neon production, MIG-001, реальные данные, Alice provider calls и отправка email не затрагивались; `REAL_DATA_SUPPORTED=False`.
+- **Следующее действие:** закрыть остаточные resource/billing checks и разобраться в первичной причине apply; повторный платный запуск только после отдельного подтверждения бюджета и безопасного плана, без автоматического переноса ранее выданного разрешения.
+
+Доказательства и границы: [HOST001_STAGE_C_INCIDENT_20261009.md](HOST001_STAGE_C_INCIDENT_20261009.md).
+<!-- HOST001-INCIDENT-20261009:END -->
+
+
 <!-- DOC001-SUCCESSOR-20261006:START -->
 ## Текущий канонический successor / 6 октября 2026
 
