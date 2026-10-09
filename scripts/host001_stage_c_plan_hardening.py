@@ -50,8 +50,12 @@ _TERRAFORM = re.compile(r"(?<![\w./-])terraform[ \t]+([^\r\n;|&]*)")
 
 
 def _active_source(source: str) -> str:
-    # Matches the existing package guard convention: YAML comments are not active.
-    return "\n".join(line.split("#", 1)[0] for line in source.splitlines())
+    # Drop only whole-line comments. A # inside a quoted shell argument must
+    # not hide executable commands that follow on the same line.
+    return "\n".join(
+        "" if line.lstrip().startswith("#") else line
+        for line in source.splitlines()
+    )
 
 
 def _steps(workflow: str) -> dict[str, str]:
