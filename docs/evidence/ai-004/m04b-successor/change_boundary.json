@@ -1,7 +1,7 @@
 {
   "package": "AI004-M04B-SCHEMA-SUCCESSOR",
-  "source_commit": "f4eb6aed7dcdfb07807b23fcb3928356a1fffb81",
-  "source_tree": "3716f12352a5786b46ecf5555b6efacd3af9e078",
+  "source_commit": "1613f3ced4959465fbe549873014b41151027e07",
+  "source_tree": "dffd938005c8c568250818d8674d9485ef792a95",
   "schema_from": "20261002_0023",
   "schema_to": "20261009_0024",
   "legal_state": "DRAFT",
@@ -98,7 +98,7 @@
     "migrations/versions/20261009_0024_user_matching_cache.py": "461d5a2deb4153f8054574f068f6e92760b27c21407d0510465fddc415adb086",
     "models/user_match.py": "317541f3dd00d0cd1925f3b520e9155314ad2e103396cac893987190fc9a6018",
     "repositories/user_match.py": "0339d297b2cb6e8d368c5be7222aec4becbf2730b860fa08b6c7d40cd95559b6",
-    "scripts/ai004_m04b_successor.py": "445425ccff5663a841ac2e1e788691a13c370bf54f2736677e1eccc242e0b2df",
+    "scripts/ai004_m04b_successor.py": "4abc60f58097d46089d4b187c0aa698406c4c66fefef9b1f20f534b909c30e65",
     "tests/test_ai004_m04b_migration.py": "9d9fc4646380c4670828e7c607f6954655b9465466338f1fe6f10f01c457f3b2",
     "tests/test_ai004_m04b_pg18_restore.py": "564d40428cd71ef2e2b3260823bf4f3de33ac9ce31d527b62cf8fd3deda12464",
     "tests/test_ai004_m04b_restore.py": "a6c3162785de5de6a98b5c65525c0ef62e6370da93178a5c5c4d02546391b5eb",
@@ -106,7 +106,7 @@
     "tests/test_ai004_m04b_successor.py": "9da6fc30b6e2b9e5d868182daa9e106e5a528d61821e9b12d70460ce77f6eea3"
   },
   "preserved_sha256": {
-    ".github/workflows/host001-yandex-cloud.yml": "37336266a8f3731fd17453a4dd2a549560ab86ba35a6b05e402eb9779eab8be1",
+    ".github/workflows/host001-yandex-cloud.yml": "f7ed4757b2d57f5a85c74495d07e37d1fd90da24c1df1d12c011967f314eb29b",
     "docs/evidence/ai-004/change_boundary.json": "4a7afe4474275599ec1d06ead2fc37c5097dd6335963c40a7dfef20864e68626",
     "docs/evidence/job-002/change_boundary.json": "de1bc9616a892bc453af905924c63fb7e011bd6974ef17a9856cc028b64ac517",
     "docs/evidence/job-003/change_boundary.json": "2ba0897c4de4588802256a27f870cf6e8579afa52fbc3b3b3fdff6c5dd3da928",
