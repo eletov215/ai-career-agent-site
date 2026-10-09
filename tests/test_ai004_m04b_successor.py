@@ -55,7 +55,7 @@ def test_successor_preserves_exact_0023_parent_and_approved_0024_head():
     assert set(manifest["reviewed_runtime_changes"]) == set(PREDECESSOR_HASHES)
     assert set(manifest["new_runtime_sha256"]) == NEW_FILES
     assert set(manifest["preserved_sha256"]) == PRESERVED_FILES
-    assert len(manifest["reviewed_runtime_changes"]) == 21
+    assert len(manifest["reviewed_runtime_changes"]) == 22
     assert len(manifest["new_runtime_sha256"]) >= 11
 
 
@@ -151,6 +151,7 @@ def test_manifest_mutations_fail_closed(package_copy, change):
     "scripts/host001_stage_c_apply_gate.py",
     ".github/workflows/host001-stage-c-apply.yml",
     "tests/test_host001_stage_c_apply_gate.py",
+    "tests/test_ai005_site_qa_package.py",
 ])
 def test_edited_legacy_guard_policy_migration_or_evidence_is_detected(package_copy, relative):
     path = package_copy / relative
