@@ -105,17 +105,17 @@
     }
   },
   "new_runtime_sha256": {
-    ".github/workflows/ai004-m04b-candidate.yml": "344f32c98df86424e4a4709e23ef3104ac98442272f8d1da36f82fd3f2629f62",
+    ".github/workflows/ai004-m04b-candidate.yml": "a91c2027f6c07758d82cfb132ff023c81ce519dd8c63b3f96df2f2129c331add",
     "docs/AI004_M04B_SCHEMA_SUCCESSOR_PROPOSAL_20261009.md": "4d8d87cfb47d7fe38c92223bb53fd7405336c7c693223ecf28945eb689ad1b8b",
     "migrations/versions/20261009_0024_user_matching_cache.py": "461d5a2deb4153f8054574f068f6e92760b27c21407d0510465fddc415adb086",
     "models/user_match.py": "317541f3dd00d0cd1925f3b520e9155314ad2e103396cac893987190fc9a6018",
     "repositories/user_match.py": "0339d297b2cb6e8d368c5be7222aec4becbf2730b860fa08b6c7d40cd95559b6",
     "scripts/ai004_m04b_successor.py": "858fc726b1aa6ac9cc236a605468e410c9a5333986b82d53e61233e738a57671",
     "tests/test_ai004_m04b_migration.py": "9d9fc4646380c4670828e7c607f6954655b9465466338f1fe6f10f01c457f3b2",
-    "tests/test_ai004_m04b_pg18_restore.py": "564d40428cd71ef2e2b3260823bf4f3de33ac9ce31d527b62cf8fd3deda12464",
+    "tests/test_ai004_m04b_pg18_restore.py": "222bb91e51eeced0df1feaea81b3bc6629bdd228799ccd1e7cdd0514f5bcee33",
     "tests/test_ai004_m04b_restore.py": "a6c3162785de5de6a98b5c65525c0ef62e6370da93178a5c5c4d02546391b5eb",
     "tests/test_ai004_m04b_storage.py": "2f134f79d310f90ae55ebc3fc80d33f5dcfdca67b2467c7bac35e32025bc2866",
-    "tests/test_ai004_m04b_successor.py": "cc1c2cf262e05bb99efdb4fe6dea8f2c8de855927089e88c325d5562f238bb2b"
+    "tests/test_ai004_m04b_successor.py": "5df4df45ba98ba81d22caa9b7dce15c9ef743864b194e798c91148e135c2d9b7"
   },
   "preserved_sha256": {
     ".github/workflows/host001-yandex-cloud.yml": "3fedd28efd7a32cac33143c509d59066f6715c033634d069e0108205961f4dc9",
