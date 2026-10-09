@@ -1,0 +1,113 @@
+{
+  "package": "AI004-M04B-SCHEMA-SUCCESSOR",
+  "source_commit": "f4eb6aed7dcdfb07807b23fcb3928356a1fffb81",
+  "source_tree": "3716f12352a5786b46ecf5555b6efacd3af9e078",
+  "schema_from": "20261002_0023",
+  "schema_to": "20261009_0024",
+  "legal_state": "DRAFT",
+  "public_real_data_enabled": false,
+  "provider_calls": 0,
+  "production_migration": "NOT_RUN",
+  "deployment": "NOT_RUN",
+  "scope": "draft-disposable-ci-only",
+  "reviewed_runtime_changes": {
+    "database.py": {
+      "previous_sha256": "467a7223a9efc8a75cc7fb1d83aa1382996d0f5e0cf1b0ae1510f17b8a5cdede",
+      "current_sha256": "c827fab661fef4bcaa13c6e034771ba5513d06b2dc1756d1d025effedb860b44"
+    },
+    "models/__init__.py": {
+      "previous_sha256": "029c6e0225213fa1a1ca19fa8b08302d0532a56e14aea342b7533d4cc0a2c20e",
+      "current_sha256": "28b3824a70ff9becb192de3af8a5400234a687e160d4008474431fe08445e498"
+    },
+    "operations/backup.py": {
+      "previous_sha256": "c01b814f52fe3220d08fcbe9ec6aefd58ccd4d17e03ccfd6a5907c71d0428cc4",
+      "current_sha256": "6ee5fd44f0c7dde68c04cebe6e6b26d0a7c26b15057af3c4218052cf31851574"
+    },
+    "repositories/privacy.py": {
+      "previous_sha256": "79e361d66186cc6d92ff5a03d2f0e885a63a900c7ecc7b73663579ce4b54ec46",
+      "current_sha256": "23ea369d0b23d781a03710e1a147a84ce868cfd735da5ce90a412f06a827ccad"
+    },
+    "scripts/check_ai001_package.py": {
+      "previous_sha256": "ee69cc4b366ca771214aeb44fd3713e35447b371ebf033161478ca0e44d27fe7",
+      "current_sha256": "97dbcd26ab1241aed1c09bb5d5bfb10f91c90d6fb5608314ce39ff3ac9fd10fc"
+    },
+    "scripts/check_ai002_package.py": {
+      "previous_sha256": "291a1241a1163819e1f3ef3c7b4c4e9e3dd8d6e17297dba06489f88e5c9a8171",
+      "current_sha256": "353eecc00489a61c3b7c84adbc0f55075362558654caa84dc34c709b8bba8730"
+    },
+    "scripts/check_ai003_package.py": {
+      "previous_sha256": "86e6fba68c541df4666b0b8487a651cf9f923cfeaa0408f798d1cf22953346c9",
+      "current_sha256": "1984559529a9a930f2d54634211af0e9a0bdbf6bf0599d86f13dc87f7c16335d"
+    },
+    "scripts/check_ai004_package.py": {
+      "previous_sha256": "5c8070558cc9308def01940f7df25d1e5e1787c42527109d39f84cc455835d35",
+      "current_sha256": "9c89feb2cdc92efd74c88792f535de4af0a531c8cc273c0cc63583e2fec803db"
+    },
+    "scripts/check_ai005_package.py": {
+      "previous_sha256": "04f0a1960bb15d7bcf87f511f84b9f363203996189c8fd29e7c40052770ac90a",
+      "current_sha256": "312f95a661261012128d9d18fb07a065dbfa66e3da7c4dbedb7fafe1ef8cdea9"
+    },
+    "scripts/check_job001_package.py": {
+      "previous_sha256": "20d77a0f5a4ea00decf590e336c19160b0358e0d1655bdf815e62c30bc679601",
+      "current_sha256": "f50e1efd0e2994597cae71212fd143fdaaefe262dee871e545f8eba5a568c94d"
+    },
+    "scripts/check_job002_package.py": {
+      "previous_sha256": "603f0ef5e9ac018c2a731bdd415951d40b585df65690392e35dd3793bd98963e",
+      "current_sha256": "83dd51758dd30706bd389c4d4b781ed75754bb5ce4157f3295703a027ac3ab9d"
+    },
+    "scripts/check_job003_package.py": {
+      "previous_sha256": "97ba849106dca2ffa20cbd3bc95740636b17f019091de3a0b8d89e71bcca6f3e",
+      "current_sha256": "e643fa8a598d9fb96faabebeb290f18df36546c0cd026491a08e87de09f44416"
+    },
+    "scripts/check_job004_package.py": {
+      "previous_sha256": "0333134d74341ac3f3a41032ff923076ef833c3f2317aa87d5047caca77abc19",
+      "current_sha256": "6dac9e77a5d53249a391d32918526be79c0b5f6ce54362871c90f2ea1419cd0f"
+    },
+    "scripts/check_legal001_package.py": {
+      "previous_sha256": "6613b671309a6224d0dd616c2ace9c02007972e9d5c56dfe26df186c14c03aa1",
+      "current_sha256": "c0394640fce4308efe74c139d3dfb20547197020bfa72d42fc36fb85bb01bbad"
+    },
+    "scripts/host001_stage_c_fixture.py": {
+      "previous_sha256": "f609623abb53a4847312da8303ae7f7edd99cb48fd809173122c5be7ddb6edd2",
+      "current_sha256": "486edf1942df5fb487ccb5b93df839f42f884f4a16e95281485e62ce1a8937ee"
+    },
+    "services/privacy.py": {
+      "previous_sha256": "e87455f07590c310a8d87b0e4f8ed663a3d4e3a8baa29d32d7a6bf444b0e6e6c",
+      "current_sha256": "fc0815fdd4c102736a215f4fcd9b4ccdedd2638f7c8534aa20247e30ba04772a"
+    },
+    "tests/test_legal001_postgresql.py": {
+      "previous_sha256": "753882d46bf39457af9b92d431644b4eb6ab95aac57e9adecfb8ce71da107445",
+      "current_sha256": "d4ee64518d97a592cb904dde639118726aa0adc0ca5d68ef3200684e4bc49e21"
+    },
+    "tests/test_priv001_migration.py": {
+      "previous_sha256": "76e5a41f427400feba1b58b1cd61741a307bbd15daa9dd83a435fd6820b44c9d",
+      "current_sha256": "001fa4d943c5f62312b73000e570b1414ba5c2f75725a7f60e9deeb2f317be68"
+    }
+  },
+  "new_runtime_sha256": {
+    ".github/workflows/ai004-m04b-candidate.yml": "217413559fb8c6cb517a3e83be5044661e94e578c464ba6ad86c40f6a2f74fa3",
+    "docs/AI004_M04B_SCHEMA_SUCCESSOR_PROPOSAL_20261009.md": "4d8d87cfb47d7fe38c92223bb53fd7405336c7c693223ecf28945eb689ad1b8b",
+    "migrations/versions/20261009_0024_user_matching_cache.py": "461d5a2deb4153f8054574f068f6e92760b27c21407d0510465fddc415adb086",
+    "models/user_match.py": "317541f3dd00d0cd1925f3b520e9155314ad2e103396cac893987190fc9a6018",
+    "repositories/user_match.py": "0339d297b2cb6e8d368c5be7222aec4becbf2730b860fa08b6c7d40cd95559b6",
+    "scripts/ai004_m04b_successor.py": "9489f6918ee009c0c88f30ee8c1696815f52a200cb8850c1ec1dc8a1a55823fa",
+    "tests/test_ai004_m04b_migration.py": "9d9fc4646380c4670828e7c607f6954655b9465466338f1fe6f10f01c457f3b2",
+    "tests/test_ai004_m04b_pg18_restore.py": "564d40428cd71ef2e2b3260823bf4f3de33ac9ce31d527b62cf8fd3deda12464",
+    "tests/test_ai004_m04b_restore.py": "a6c3162785de5de6a98b5c65525c0ef62e6370da93178a5c5c4d02546391b5eb",
+    "tests/test_ai004_m04b_storage.py": "2f134f79d310f90ae55ebc3fc80d33f5dcfdca67b2467c7bac35e32025bc2866",
+    "tests/test_ai004_m04b_successor.py": "ce6281cdb51f7d9cc7811c9f74ff147d4d9fdb1310ece315e8a6553686af87ff"
+  },
+  "preserved_sha256": {
+    ".github/workflows/host001-yandex-cloud.yml": "37336266a8f3731fd17453a4dd2a549560ab86ba35a6b05e402eb9779eab8be1",
+    "docs/evidence/ai-004/change_boundary.json": "4a7afe4474275599ec1d06ead2fc37c5097dd6335963c40a7dfef20864e68626",
+    "docs/evidence/job-002/change_boundary.json": "de1bc9616a892bc453af905924c63fb7e011bd6974ef17a9856cc028b64ac517",
+    "docs/evidence/job-003/change_boundary.json": "2ba0897c4de4588802256a27f870cf6e8579afa52fbc3b3b3fdff6c5dd3da928",
+    "docs/evidence/job-004/change_boundary.json": "530545f335126925018cbc0acd21dfdaccf183dcf3cba3da0d25e2deb8a65d77",
+    "docs/evidence/legal-001/change_boundary.json": "6ff430dc4216c534c1bad1ce11e45ea98fb44edc94dca06557b338d798f78d94",
+    "domain/ai.py": "d1b427bf73b8797a03f1254a83ec015c79121204c7198409151372d933fbd3aa",
+    "render.yaml": "f61662adb273597df027195c2d28922c841b0f18fc6904e68258e46cb7cc0c37",
+    "scripts/host001_stage_c_revision_gate.py": "abecb6c3a092472fa6a2c6be91737eba7315b24ca0d3ddc8263e2d47a3483466",
+    "services/legal_policy.py": "b2ffbc0fb59954053b1c01008c360b41bccf78d902c8b00193202aee94218a2e",
+    "tests/test_host001_stage_c_revision_gate.py": "1c3ef968ac9a868dce24edb47abda2462367d8945dcc95402b5d7431963c831b"
+  }
+}
