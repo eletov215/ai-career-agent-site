@@ -77,11 +77,19 @@
     },
     "tests/test_legal001_postgresql.py": {
       "previous_sha256": "753882d46bf39457af9b92d431644b4eb6ab95aac57e9adecfb8ce71da107445",
-      "current_sha256": "d4ee64518d97a592cb904dde639118726aa0adc0ca5d68ef3200684e4bc49e21"
+      "current_sha256": "f21e47c64dbab3b180f00cdf964fe595fc5ac47135d8d73267c5bb27eb679e84"
     },
     "tests/test_priv001_migration.py": {
       "previous_sha256": "76e5a41f427400feba1b58b1cd61741a307bbd15daa9dd83a435fd6820b44c9d",
       "current_sha256": "001fa4d943c5f62312b73000e570b1414ba5c2f75725a7f60e9deeb2f317be68"
+    },
+    "tests/test_job003_migration.py": {
+      "previous_sha256": "5d3993671559e54e179d61f1e4817592fe702129f33c90f2e96b5c1eb9280013",
+      "current_sha256": "c7945c6e46bc337022961bc2afd388ef680818be470a45ada24fe776b35020a8"
+    },
+    "tests/ai005_boundary_helper.py": {
+      "previous_sha256": "f442fed149d7e935d2afe00ba55ce5374e2c5fe9fbc77d4ec3b26b2b913d8baa",
+      "current_sha256": "fa3af46c7395644ed030f9d89303c1001f0088c785090c61c94ced647a690e18"
     }
   },
   "new_runtime_sha256": {
@@ -90,12 +98,12 @@
     "migrations/versions/20261009_0024_user_matching_cache.py": "461d5a2deb4153f8054574f068f6e92760b27c21407d0510465fddc415adb086",
     "models/user_match.py": "317541f3dd00d0cd1925f3b520e9155314ad2e103396cac893987190fc9a6018",
     "repositories/user_match.py": "0339d297b2cb6e8d368c5be7222aec4becbf2730b860fa08b6c7d40cd95559b6",
-    "scripts/ai004_m04b_successor.py": "9489f6918ee009c0c88f30ee8c1696815f52a200cb8850c1ec1dc8a1a55823fa",
+    "scripts/ai004_m04b_successor.py": "660fedc61234428c8b2918989ef6ad2fb09efe57a986b7b197805d6833c0f713",
     "tests/test_ai004_m04b_migration.py": "9d9fc4646380c4670828e7c607f6954655b9465466338f1fe6f10f01c457f3b2",
     "tests/test_ai004_m04b_pg18_restore.py": "564d40428cd71ef2e2b3260823bf4f3de33ac9ce31d527b62cf8fd3deda12464",
     "tests/test_ai004_m04b_restore.py": "a6c3162785de5de6a98b5c65525c0ef62e6370da93178a5c5c4d02546391b5eb",
     "tests/test_ai004_m04b_storage.py": "2f134f79d310f90ae55ebc3fc80d33f5dcfdca67b2467c7bac35e32025bc2866",
-    "tests/test_ai004_m04b_successor.py": "ce6281cdb51f7d9cc7811c9f74ff147d4d9fdb1310ece315e8a6553686af87ff"
+    "tests/test_ai004_m04b_successor.py": "9da6fc30b6e2b9e5d868182daa9e106e5a528d61821e9b12d70460ce77f6eea3"
   },
   "preserved_sha256": {
     ".github/workflows/host001-yandex-cloud.yml": "37336266a8f3731fd17453a4dd2a549560ab86ba35a6b05e402eb9779eab8be1",
