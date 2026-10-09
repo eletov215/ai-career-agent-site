@@ -8,11 +8,14 @@ name: HOST-001 Yandex Cloud foundation
       - "docs/LEGAL001_OWNER_DECISIONS_20260924.md"
       - "scripts/check_host001_package.py"
       - "scripts/host001_stage_c_revision_gate.py"
+      - "scripts/host001_stage_c_apply_gate.py"
       - "tests/test_host001_package.py"
       - "tests/test_host001_stage_c_revision_gate.py"
+      - "tests/test_host001_stage_c_apply_gate.py"
       - "database.py"
       - "migrations/versions/**"
       - ".github/workflows/host001-yandex-cloud.yml"
+      - ".github/workflows/host001-stage-c-apply.yml"
       - "domain/ai.py"
       - "services/legal_policy.py"
   pull_request:
@@ -22,11 +25,14 @@ name: HOST-001 Yandex Cloud foundation
       - "docs/LEGAL001_OWNER_DECISIONS_20260924.md"
       - "scripts/check_host001_package.py"
       - "scripts/host001_stage_c_revision_gate.py"
+      - "scripts/host001_stage_c_apply_gate.py"
       - "tests/test_host001_package.py"
       - "tests/test_host001_stage_c_revision_gate.py"
+      - "tests/test_host001_stage_c_apply_gate.py"
       - "database.py"
       - "migrations/versions/**"
       - ".github/workflows/host001-yandex-cloud.yml"
+      - ".github/workflows/host001-stage-c-apply.yml"
       - "domain/ai.py"
       - "services/legal_policy.py"
 
@@ -64,6 +70,9 @@ jobs:
 
       - name: Verify exact offline Stage C checkout contract
         run: python scripts/host001_stage_c_revision_gate.py --expected-sha "$GITHUB_SHA"
+
+      - name: Stage C paid-apply release boundary regression tests (offline)
+        run: python -m unittest tests.test_host001_stage_c_apply_gate -v
 
       - name: Terraform format
         run: terraform -chdir=infra/yandex-cloud fmt -check -diff -recursive
