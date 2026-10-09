@@ -6,7 +6,10 @@ import json
 import re
 from pathlib import Path
 
-from scripts.host001_stage_c_plan_hardening import validate_plan_only_hardening
+if __package__:
+    from .host001_stage_c_plan_hardening import validate_plan_only_hardening
+else:
+    from host001_stage_c_plan_hardening import validate_plan_only_hardening
 
 ROOT = Path(__file__).resolve().parents[1]
 
