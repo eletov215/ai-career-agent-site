@@ -46,8 +46,18 @@ jobs:
           python-version: "3.11"
       - name: Install pinned dependencies
         run: pip install -r requirements.txt pytest
+      - name: Validate exact M04B successor hashes and safety metadata
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          from scripts.ai004_m04b_successor import validate_successor
+          x = validate_successor(Path.cwd())
+          assert x["production_migration"] == "NOT_RUN"
+          assert x["provider_calls"] == 0
+          print("M04B successor: SHA256 and static safety gate PASS")
+          PY
       - name: Verify M04B migration and owner-scoped storage using synthetic fixtures only
-        run: python -m pytest -q tests/test_ai004_m04b_migration.py tests/test_ai004_m04b_storage.py tests/test_ai004_m04b_restore.py
+        run: python -m pytest -q tests/test_ai004_m04b_migration.py tests/test_ai004_m04b_storage.py tests/test_ai004_m04b_restore.py tests/test_ai004_m04b_successor.py
       - name: Historical AI004, privacy, backup and JOB001 regression suite
         run: >-
           python -m pytest -q
