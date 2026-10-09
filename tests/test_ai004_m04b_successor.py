@@ -55,7 +55,7 @@ def test_successor_preserves_exact_0023_parent_and_approved_0024_head():
     assert set(manifest["reviewed_runtime_changes"]) == set(PREDECESSOR_HASHES)
     assert set(manifest["new_runtime_sha256"]) == NEW_FILES
     assert set(manifest["preserved_sha256"]) == PRESERVED_FILES
-    assert len(manifest["reviewed_runtime_changes"]) == 23
+    assert len(manifest["reviewed_runtime_changes"]) == 24
     assert len(manifest["new_runtime_sha256"]) >= 11
 
 
@@ -149,6 +149,7 @@ def test_manifest_mutations_fail_closed(package_copy, change):
     "docs/evidence/job-003/change_boundary.json",
     "scripts/host001_stage_c_revision_gate.py",
     "scripts/host001_stage_c_apply_gate.py",
+    ".github/workflows/host001-yandex-cloud.yml",
     ".github/workflows/host001-stage-c-apply.yml",
     "tests/test_host001_stage_c_apply_gate.py",
     "tests/test_ai005_site_qa_package.py",
@@ -253,3 +254,63 @@ def test_pg18_populated_restore_cannot_silently_leave_dedicated_ci():
         'pytest.fail("m04b_pg18_client_missing")',
     ):
         assert mandatory_guard in source
+
+
+def test_host001_ci_expected_denial_is_only_for_exact_draft_pr_98():
+    """CI verifies a *negative* privileged apply result, never permits apply.
+
+    The non-draft / push / other-PR path must still run the original command.
+    The independently accepted manual apply workflow remains pinned immutable.
+    """
+    source = (ROOT / ".github/workflows/host001-yandex-cloud.yml").read_text(
+        encoding="utf-8"
+    )
+    ordinary = (
+        "github.event_name != 'pull_request' || "
+        "github.event.pull_request.number != 98 || "
+        "github.event.pull_request.draft != true || "
+        "github.head_ref != 'feature/ai004-m04b-persistent-cache' || "
+        "github.event.pull_request.head.repo.full_name != "
+        "'eletov215/ai-career-agent-site'"
+    )
+    draft = (
+        "github.event_name == 'pull_request' && "
+        "github.event.pull_request.number == 98 && "
+        "github.event.pull_request.draft == true && "
+        "github.head_ref == 'feature/ai004-m04b-persistent-cache' && "
+        "github.event.pull_request.head.repo.full_name == "
+        "'eletov215/ai-career-agent-site'"
+    )
+    assert source.count("if: ${{ " + ordinary + " }}") == 1
+    assert source.count("if: ${{ " + draft + " }}") == 1
+    assert source.count(
+        'python scripts/host001_stage_c_apply_gate.py --expected-sha "$GITHUB_SHA"'
+    ) == 2
+    assert source.count(
+        "      - name: Verify exact Stage C manual apply preflight (offline only)"
+    ) == 1
+    assert source.count(
+        "      - name: Assert M04B 0024 Stage C apply is DENIED (Draft PR 98 only)"
+    ) == 1
+    assert 'if [ "$rc" -ne 1 ]; then' in source
+    assert '"authorizes_paid_apply": False' in source
+    assert '"cloud_calls": 0' in source
+    assert '"database_changes": 0' in source
+    assert 'if actual != expected:' in source
+    assert "verify_apply_workflow_binding(workflow)" in source
+    assert "HOST-001 PASS: privileged Stage C apply remains DENIED for 0024" in source
+
+    from scripts import host001_stage_c_apply_gate as gate
+    actual = check_revision_chain(ROOT)
+    assert actual["revision"] == SCHEMA_TO
+    assert actual["matching_schema_coverage"] == "SCHEMA_INVENTORY_ONLY"
+    assert gate.APPROVED_STAGE_C_REVISION == SCHEMA_FROM
+    with pytest.raises(StageCRevisionGateError, match="not been reviewed"):
+        gate.verify_accepted_fixture(actual)
+    privileged = (
+        ROOT / ".github/workflows/host001-stage-c-apply.yml"
+    ).read_text(encoding="utf-8")
+    gate.verify_apply_workflow_binding(privileged)
+    assert (
+        ROOT / "scripts/host001_stage_c_apply_gate.py"
+    ).is_file()
