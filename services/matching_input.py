@@ -14,6 +14,8 @@ import math
 from collections.abc import Mapping
 from typing import Any
 
+from domain.resume_draft import ResumeVersionRecord
+
 VERSION = "ai004-input-v1"
 _RESUME_KEYS = ("role", "experience", "achievements", "skills", "education")
 _VACANCY_KEYS = ("title", "company", "description", "requirements",
@@ -46,12 +48,14 @@ def _text(value: Any, limit: int) -> str:
     return value.strip()
 
 
-def project_resume_version(version: Mapping[str, Any]) -> dict[str, Any]:
+def project_resume_version(version: ResumeVersionRecord | Mapping[str, Any]) -> dict[str, Any]:
     """Project a previously owner-verified, immutable PROF-003 version.
 
     A draft ID or PDF is not proof of ownership. Route/repository integration
     MUST obtain the version with an owner-qualified query before this call.
     """
+    if isinstance(version, ResumeVersionRecord):
+        version = {"snapshot_json": version.snapshot_json}
     if not isinstance(version, Mapping):
         raise MatchInputError("invalid_source")
     snapshot = version.get("snapshot")
