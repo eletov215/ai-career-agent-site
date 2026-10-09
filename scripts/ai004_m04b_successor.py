@@ -192,7 +192,7 @@ def validate_successor(root: Path) -> dict:
         for relative, expected in preserved.items():
             if (expected != PRESERVED_SHA256[relative]
                     or _digest(root / relative) != expected):
-                raise M04BSuccessorError("historical_evidence_changed")
+                raise M04BSuccessorError("historical_evidence_changed:" + relative)
         if (_literal(root / MIGRATION, "revision") != SCHEMA_TO
                 or _literal(root / MIGRATION, "down_revision") != SCHEMA_FROM
                 or _schema_tables(root / MIGRATION) != MATCHING_TABLES
