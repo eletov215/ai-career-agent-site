@@ -48,6 +48,7 @@ jobs:
         run: pip install -r requirements.txt pytest
       - name: Validate exact M04B successor hashes and safety metadata
         run: |
+          sha256sum .github/workflows/host001-yandex-cloud.yml
           python - <<'PY'
           from pathlib import Path
           from scripts.ai004_m04b_successor import validate_successor
