@@ -105,8 +105,10 @@ def validate(root: Path = ROOT) -> list[str]:
     errors = [f"missing:{path}" for path in sorted(REQUIRED) if not (root / path).is_file()]
     try:
         successor_hashes(root)
+        from scripts.ai004_m04b_successor import expected_schema_head
+        approved_head = expected_schema_head(root, "20261002_0023")
         checks = {
-            "database.py": 'CURRENT_REVISION = "20261002_0023"',
+            "database.py": f'CURRENT_REVISION = "{approved_head}"',
             "domain/ai.py": "REAL_DATA_SUPPORTED = False",
             "migrations/versions/20261001_0022_application_tracker.py":
                 "down_revision = '20260922_0021'",
