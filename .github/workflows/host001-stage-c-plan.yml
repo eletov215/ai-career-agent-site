@@ -240,7 +240,7 @@ jobs:
             echo "- Remote state backend: **Yandex Object Storage / isolated plan-only key**"
             echo "- Apply/destroy performed by this workflow: **NO**"
             echo "- Production data/provider/email operations: **NO**"
-            echo "- Next gate: review plan resource list, account quota/SKU availability and <=500 RUB field-test estimate before any apply."
+            echo "- Next gate: review plan resource list, account quota/SKU availability and <=1,000 RUB owner-approved field-test ceiling before any apply."
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Remove local plan/key material

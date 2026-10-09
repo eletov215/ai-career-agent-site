@@ -47,7 +47,7 @@ Verified against current public Yandex Cloud documentation and the pinned Terraf
 - Yandex documents PostgreSQL clusters with two or more hosts as automatically highly available. The initial single-host profile intentionally remains non-HA.
 - Repository pin `yandex-cloud/yandex = 0.229.0` documents PostgreSQL `18` as an allowed `yandex_mdb_postgresql_cluster.config.version`.
 
-Execution evidence as of 2026-10-07: account quota checks PASS for Compute, Managed Databases and VPC/public IP; credentialed Terraform plan PASS on main `085c6f4f44083427b3e8ab6ed37e646061a076a6`; Terraform apply/resource creation remains NOT_RUN.
+Execution evidence through 2026-10-08: account quota checks PASS for Compute, Managed Databases and VPC/public IP; the remote-backend credentialed plan PASS on main `5baea91da5fc7a121312a82f3e55d677a9d269cb` (plan-only run #6); bounded apply runs #1 and #2 both stopped at the fresh-plan gate before teardown dispatch or Terraform apply, so no Stage C Terraform-managed billable resources were created. PR #84 added sanitized diagnostics to the bounded-apply plan gate. Live synthetic infrastructure creation and field-test evidence remain NOT_RUN.
 
 Official references:
 
@@ -123,6 +123,9 @@ Pricing references:
 - https://yandex.cloud/ru/docs/lockbox/pricing
 
 ## 6. Preconditions before a future apply
+
+The live execution order is frozen in `docs/HOST001_STAGE_C_OPERATOR_CHECKLIST_20261008.md`. Do not improvise alternate startup, backup/restore or teardown steps during the billed window.
+
 
 All conditions below are required:
 
