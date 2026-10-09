@@ -174,7 +174,7 @@ def test_unknown_or_short_secret_never_creates_valid_fingerprint(bad):
 
 @pytest.mark.parametrize("key_fields", [
     {"owner": "not-a-uuid"},
-    {"owner": OWNER_1.upper()},
+    {"owner": "AAAAAAAA-AAAA-AAAA-AAAA-AAAAAAAAAAAA"},
     {"version": "not-a-uuid"},
     {"identity": "bad"},
     {"identity": "G" * 64},
