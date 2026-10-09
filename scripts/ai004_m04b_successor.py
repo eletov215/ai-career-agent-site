@@ -73,7 +73,19 @@ PRESERVED_FILES = frozenset({
     "tests/test_host001_stage_c_revision_gate.py",
     ".github/workflows/host001-yandex-cloud.yml",
 })
-PRESERVED_SHA256 = {}  # Filled once from the exact reviewed 0023 source.
+PRESERVED_SHA256 = {
+    ".github/workflows/host001-yandex-cloud.yml": "37336266a8f3731fd17453a4dd2a549560ab86ba35a6b05e402eb9779eab8be1",
+    "docs/evidence/ai-004/change_boundary.json": "4a7afe4474275599ec1d06ead2fc37c5097dd6335963c40a7dfef20864e68626",
+    "docs/evidence/job-002/change_boundary.json": "de1bc9616a892bc453af905924c63fb7e011bd6974ef17a9856cc028b64ac517",
+    "docs/evidence/job-003/change_boundary.json": "2ba0897c4de4588802256a27f870cf6e8579afa52fbc3b3b3fdff6c5dd3da928",
+    "docs/evidence/job-004/change_boundary.json": "530545f335126925018cbc0acd21dfdaccf183dcf3cba3da0d25e2deb8a65d77",
+    "docs/evidence/legal-001/change_boundary.json": "6ff430dc4216c534c1bad1ce11e45ea98fb44edc94dca06557b338d798f78d94",
+    "domain/ai.py": "d1b427bf73b8797a03f1254a83ec015c79121204c7198409151372d933fbd3aa",
+    "render.yaml": "f61662adb273597df027195c2d28922c841b0f18fc6904e68258e46cb7cc0c37",
+    "scripts/host001_stage_c_revision_gate.py": "abecb6c3a092472fa6a2c6be91737eba7315b24ca0d3ddc8263e2d47a3483466",
+    "services/legal_policy.py": "b2ffbc0fb59954053b1c01008c360b41bccf78d902c8b00193202aee94218a2e",
+    "tests/test_host001_stage_c_revision_gate.py": "1c3ef968ac9a868dce24edb47abda2462367d8945dcc95402b5d7431963c831b"
+}
 
 _SHA = re.compile(r"[0-9a-f]{64}\Z")
 
