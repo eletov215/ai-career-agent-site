@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
 from collections.abc import Mapping
 from typing import Any
 
@@ -83,7 +84,7 @@ def project_saved_vacancy(saved: Mapping[str, Any]) -> dict[str, Any]:
     if not isinstance(saved, Mapping) or not isinstance(saved.get("snapshot"), dict):
         raise MatchInputError("invalid_source")
     source = saved["snapshot"]
-    if source.get("snapshot_version") != "job001-snapshot-v1":
+    if source.get("snapshot_version") != "saved-vacancy-v1":
         # Version is validated again by the owner-qualified repository reader.
         raise MatchInputError("invalid_source")
     fields = {}
@@ -91,7 +92,7 @@ def project_saved_vacancy(saved: Mapping[str, Any]) -> dict[str, Any]:
         value = source.get(key)
         if key in ("salary_from", "salary_to"):
             if value is not None and (type(value) not in (int, float)
-                                      or value < 0 or value > 1e12):
+                                      or not math.isfinite(value) or value < 0 or value > 1e12):
                 raise MatchInputError("invalid_source")
             fields[key] = value
         else:
