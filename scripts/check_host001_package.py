@@ -412,6 +412,7 @@ def validate(root: Path = ROOT) -> list[str]:
             '-backend-config="bucket=$TFSTATE_BUCKET"',
             '-backend-config="key=$TFSTATE_KEY"',
             "-lock-timeout=30s",
+            "terraform_wrapper: false",
             "Sanitized diagnostic excerpt",
             "rm -rf infra/yandex-cloud/.terraform",
         ):
@@ -483,6 +484,7 @@ def validate(root: Path = ROOT) -> list[str]:
             "stage_c_state_guard.py --bucket",
             "Sanitized Stage C apply plan diagnostic:",
             "actual exit code: $plan_code",
+            "terraform_wrapper: false",
             "Fresh credentialed create-only plan passed.",
             "Dispatch cancellation-surviving teardown before apply",
             "host001-stage-c-teardown.yml/dispatches",
@@ -608,6 +610,7 @@ def validate(root: Path = ROOT) -> list[str]:
             "Absolute Stage C destroy deadline reached before destroy apply.",
             "timeout --signal=INT --kill-after=30s",
             "-lock-timeout=10m",
+            "terraform_wrapper: false",
             "Destroy reviewed Stage C resources from remote state",
             "terraform -chdir=infra/yandex-cloud plan",
             "-destroy",
