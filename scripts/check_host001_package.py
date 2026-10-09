@@ -26,6 +26,7 @@ REQUIRED = (
     "infra/yandex-cloud/stage_c_apply_diagnostics.py",
     "infra/yandex-cloud/run_with_lockbox.py",
     "scripts/host001_stage_c_fixture.py",
+    "scripts/host001_stage_c_plan_hardening.py",
     "infra/yandex-cloud/README.md",
     "docs/LEGAL001_OWNER_DECISIONS_20260924.md",
     "docs/HOST001_SCOPE.md",
