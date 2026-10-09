@@ -6,6 +6,8 @@ import json
 import re
 from pathlib import Path
 
+from scripts.host001_stage_c_plan_hardening import validate_plan_only_hardening
+
 ROOT = Path(__file__).resolve().parents[1]
 
 REQUIRED = (
@@ -376,6 +378,7 @@ def validate(root: Path = ROOT) -> list[str]:
             errors.append("HOST-001 validation CI must not require cloud/provider secrets")
 
         stage_c_workflow = _read(".github/workflows/host001-stage-c-plan.yml")
+        errors.extend(validate_plan_only_hardening(stage_c_workflow))
         job_env = stage_c_workflow.split("    env:\n", 1)[1].split("    steps:\n", 1)[0]
         if "secrets." in job_env:
             errors.append("Stage C credentials must not be scoped at job level")
