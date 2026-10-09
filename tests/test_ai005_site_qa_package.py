@@ -1,6 +1,9 @@
 """Dependency-free assertions do not substitute for route/runtime QA."""
 from pathlib import Path
 import shutil
+import pytest
+
+from scripts.ai004_m04b_successor import M04BSuccessorError, validate_successor
 
 from scripts.check_ai005_site_qa_package import PROTECTED, RUNTIME, validate
 
@@ -26,7 +29,12 @@ def test_site_qa_guard_rejects_changed_legal_source(tmp_path):
     copy_job002_boundary(ROOT, tmp_path)
     assert validate(tmp_path)==[]
     p=tmp_path/'domain/ai.py';p.write_text(p.read_text().replace('REAL_DATA_SUPPORTED = False','REAL_DATA_SUPPORTED = True'))
-    assert any('Protected predecessor changed: domain/ai.py' in e for e in validate(tmp_path))
+    # The versioned successor now catches any edit to the immutable legal
+    # activation flag BEFORE the inherited AI-005 SITE-QA package validates
+    # the old protected predecessor. Both guards must still reject the edit.
+    with pytest.raises(M04BSuccessorError, match=r"^historical_evidence_changed:domain/ai\\.py$"):
+        validate_successor(tmp_path)
+    assert validate(tmp_path) != []
 
 
 def test_provider_successor_is_narrow_and_requires_complete_evidence(tmp_path):
