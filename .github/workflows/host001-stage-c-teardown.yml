@@ -369,6 +369,7 @@ jobs:
           STAGE_C_ACKNOWLEDGEMENT: ${{ inputs.acknowledgement }}
           MANUAL_RECOVERY_STARTED_EPOCH: ${{ env.MANUAL_RECOVERY_STARTED_EPOCH }}
           SOURCE_RUN_ID: ${{ inputs.source_run_id }}
+          SOURCE_RUN_STARTED_AT: ${{ env.SOURCE_APPLY_RUN_STARTED_AT }}
           AWS_ACCESS_KEY_ID: ${{ secrets.YC_STAGE_C_TFSTATE_ACCESS_KEY }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.YC_STAGE_C_TFSTATE_SECRET_KEY }}
           TF_VAR_cloud_id: ${{ secrets.YC_STAGE_C_CLOUD_ID }}
@@ -389,6 +390,10 @@ jobs:
             destroy_apply_deadline=$((MANUAL_RECOVERY_STARTED_EPOCH + 90 * 60))
             deadline_mode="manual-recovery"
           else
+            test -n "${SOURCE_RUN_STARTED_AT:-}" || {
+              echo "Missing validated source apply start timestamp; refusing automatic destroy deadline calculation."
+              exit 1
+            }
             destroy_plan_deadline="$(
               python - "$SOURCE_RUN_STARTED_AT" <<'PY'
           from datetime import datetime
