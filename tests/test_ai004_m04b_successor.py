@@ -55,7 +55,7 @@ def test_successor_preserves_exact_0023_parent_and_approved_0024_head():
     assert set(manifest["reviewed_runtime_changes"]) == set(PREDECESSOR_HASHES)
     assert set(manifest["new_runtime_sha256"]) == NEW_FILES
     assert set(manifest["preserved_sha256"]) == PRESERVED_FILES
-    assert len(manifest["reviewed_runtime_changes"]) == 20
+    assert len(manifest["reviewed_runtime_changes"]) == 21
     assert len(manifest["new_runtime_sha256"]) >= 11
 
 
@@ -148,6 +148,9 @@ def test_manifest_mutations_fail_closed(package_copy, change):
     "domain/ai.py",
     "docs/evidence/job-003/change_boundary.json",
     "scripts/host001_stage_c_revision_gate.py",
+    "scripts/host001_stage_c_apply_gate.py",
+    ".github/workflows/host001-stage-c-apply.yml",
+    "tests/test_host001_stage_c_apply_gate.py",
 ])
 def test_edited_legacy_guard_policy_migration_or_evidence_is_detected(package_copy, relative):
     path = package_copy / relative
@@ -174,6 +177,11 @@ def test_host001_static_gate_reports_scoped_schema_only_after_successor():
     assert snapshot["revision"] == SCHEMA_TO
     assert snapshot["unique_head"] is True
     assert snapshot["matching_schema_coverage"] == "SCHEMA_INVENTORY_ONLY"
+    # A successful offline schema-inventory check does NOT release HOST-001
+    # Stage C real paid/cloud apply. The original gate remains byte-locked.
+    from scripts.host001_stage_c_apply_gate import verify_accepted_fixture
+    with pytest.raises(StageCRevisionGateError, match="not been reviewed"):
+        verify_accepted_fixture(snapshot)
     assert MATCHING_TABLES <= set(
         # The static Stage C table list must be reviewed independently,
         # not derived dynamically from a migration or the manifest.
