@@ -20,11 +20,15 @@ class Host001StageCApplyGateTests(unittest.TestCase):
             ROOT / ".github" / "workflows" / "host001-stage-c-apply.yml"
         ).read_text(encoding="utf-8")
 
-    def test_live_source_fixture_remains_0023_before_successor(self):
+    def test_proposed_0024_successor_still_cannot_authorize_paid_stage_c_apply(self):
+        # M04B has synthetic table/record recovery evidence; HOST-001 owner
+        # field recovery and privileged cloud apply remain NOT ACCEPTED.
+        # Keep the production apply gate unchanged and fail-closed.
         snapshot = check_revision_chain(ROOT)
-        accepted = gate.verify_accepted_fixture(snapshot)
-        self.assertEqual(accepted["revision"], "20261002_0023")
-        self.assertEqual(accepted["matching_schema_coverage"], "NOT_PRESENT")
+        self.assertEqual(snapshot["revision"], "20261009_0024")
+        self.assertEqual(snapshot["matching_schema_coverage"], "SCHEMA_INVENTORY_ONLY")
+        with self.assertRaisesRegex(StageCRevisionGateError, "not been reviewed"):
+            gate.verify_accepted_fixture(snapshot)
 
     def test_matching_successor_is_not_live_stage_c_acceptance(self):
         for revision, coverage in (
