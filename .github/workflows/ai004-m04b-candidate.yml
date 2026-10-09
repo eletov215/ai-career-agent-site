@@ -124,8 +124,11 @@ jobs:
           chmod 700 "$RUNNER_TEMP/ai004-pg18/pg_dump" "$RUNNER_TEMP/ai004-pg18/pg_restore"
       - name: PostgreSQL 18 encrypted backup/restore with populated synthetic matching data
         env:
+          M04B_PG18_RESTORE_ENABLED: "1"
           PG_DUMP_BIN: ${{ runner.temp }}/ai004-pg18/pg_dump
           PG_RESTORE_BIN: ${{ runner.temp }}/ai004-pg18/pg_restore
-        run: python -m pytest -q tests/test_ai004_m04b_pg18_restore.py
+        run: |
+          python -c "import os; assert os.environ.get('M04B_PG18_RESTORE_ENABLED') == '1'"
+          python -m pytest -q tests/test_ai004_m04b_pg18_restore.py
       - name: Assert no real-data AI release
         run: python -c "from domain.ai import REAL_DATA_SUPPORTED; assert REAL_DATA_SUPPORTED is False"
