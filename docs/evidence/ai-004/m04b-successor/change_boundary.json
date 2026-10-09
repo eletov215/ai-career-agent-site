@@ -53,15 +53,15 @@
     },
     "scripts/check_job002_package.py": {
       "previous_sha256": "603f0ef5e9ac018c2a731bdd415951d40b585df65690392e35dd3793bd98963e",
-      "current_sha256": "83dd51758dd30706bd389c4d4b781ed75754bb5ce4157f3295703a027ac3ab9d"
+      "current_sha256": "6806a1218aaeb2eb7341e8622c9cc1cea45e8951afaba4e459396e64ea086c44"
     },
     "scripts/check_job003_package.py": {
       "previous_sha256": "97ba849106dca2ffa20cbd3bc95740636b17f019091de3a0b8d89e71bcca6f3e",
-      "current_sha256": "e643fa8a598d9fb96faabebeb290f18df36546c0cd026491a08e87de09f44416"
+      "current_sha256": "2932ed3735f4925a2256558cbfe5624b5c2a3712c96086a229e6007be3204f61"
     },
     "scripts/check_job004_package.py": {
       "previous_sha256": "0333134d74341ac3f3a41032ff923076ef833c3f2317aa87d5047caca77abc19",
-      "current_sha256": "6dac9e77a5d53249a391d32918526be79c0b5f6ce54362871c90f2ea1419cd0f"
+      "current_sha256": "911e92367a6e697952564c291ea64cadf39ca9264fcba5827c71fb7daa1dfdaf"
     },
     "scripts/check_legal001_package.py": {
       "previous_sha256": "6613b671309a6224d0dd616c2ace9c02007972e9d5c56dfe26df186c14c03aa1",
