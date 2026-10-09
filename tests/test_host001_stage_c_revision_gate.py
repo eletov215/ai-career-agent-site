@@ -33,6 +33,11 @@ class Host001StageCRevisionGateTests(unittest.TestCase):
             ignore=shutil.ignore_patterns("__pycache__"),
         )
         shutil.copyfile(ROOT / "database.py", root / "database.py")
+        (root / "operations").mkdir()
+        shutil.copyfile(
+            ROOT / "operations" / "backup.py",
+            root / "operations" / "backup.py",
+        )
         (root / "scripts").mkdir()
         shutil.copyfile(
             ROOT / "scripts" / "host001_stage_c_fixture.py",
@@ -97,6 +102,74 @@ class Host001StageCRevisionGateTests(unittest.TestCase):
             )
             with self.assertRaisesRegex(StageCRevisionGateError, "dynamically"):
                 check_revision_chain(root)
+
+    @staticmethod
+    def _add_mock_m04b_migration(root: Path, *, include_cache: bool = True) -> None:
+        previous = check_revision_chain(root)["revision"]
+        new_revision = "20991231_9999"
+        create_cache = '    op.create_table("user_match_cache")\n' if include_cache else ""
+        new_migration = (
+            f'revision = "{new_revision}"\n'
+            f'down_revision = "{previous}"\n'
+            "from alembic import op\n"
+            "def upgrade():\n"
+            '    op.create_table("user_match_reports")\n'
+            f"{create_cache}"
+        )
+        (root / "migrations" / "versions" / f"{new_revision}_m04b.py").write_text(
+            new_migration, encoding="utf-8"
+        )
+        db_file = root / "database.py"
+        db_file.write_text(
+            db_file.read_text(encoding="utf-8").replace(
+                f'CURRENT_REVISION = "{previous}"',
+                f'CURRENT_REVISION = "{new_revision}"',
+            ),
+            encoding="utf-8",
+        )
+
+    def test_current_main_has_no_matching_schema_migration(self):
+        result = check_revision_chain(ROOT)
+        self.assertEqual(result["matching_schema_coverage"], "NOT_PRESENT")
+
+    def test_partial_m04b_schema_fails_closed(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = self._isolated_tree(Path(tmp))
+            self._add_mock_m04b_migration(root, include_cache=False)
+            with self.assertRaisesRegex(StageCRevisionGateError, "Partial AI004-M04B"):
+                check_revision_chain(root)
+
+    def test_m04b_requires_backup_inventory_and_stage_c_schema_digest(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = self._isolated_tree(Path(tmp))
+            self._add_mock_m04b_migration(root)
+            with self.assertRaisesRegex(StageCRevisionGateError, "backup inventory"):
+                check_revision_chain(root)
+
+            # Simulate M04B's existing backup inventory, without modifying
+            # any accepted fixture or the production database.
+            (root / "operations" / "backup.py").write_text(
+                '_INVENTORY_TABLES = ("user_match_reports", "user_match_cache")\n',
+                encoding="utf-8",
+            )
+            with self.assertRaisesRegex(StageCRevisionGateError, "schema digest omits"):
+                check_revision_chain(root)
+
+            fixture = root / "scripts" / "host001_stage_c_fixture.py"
+            before = fixture.read_text(encoding="utf-8")
+            anchor = '        "ai_consents",\n    )'
+            self.assertIn(anchor, before)
+            fixture.write_text(
+                before.replace(
+                    anchor,
+                    '        "ai_consents",\n'
+                    '        "user_match_reports",\n'
+                    '        "user_match_cache",\n    )',
+                ),
+                encoding="utf-8",
+            )
+            result = check_revision_chain(root)
+            self.assertEqual(result["matching_schema_coverage"], "SCHEMA_INVENTORY_ONLY")
 
     def test_checkout_sha_must_match_reviewed_exact_commit(self):
         sha = "a" * 40
