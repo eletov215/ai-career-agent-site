@@ -109,7 +109,7 @@ def validate_plan_only_hardening(workflow: str) -> list[str]:
     # 2. Enforce exact secret-to-env mapping; presence in a trusted step alone
     # does not prove that Terraform receives the intended credential.
     referenced = _SECRET_REF.findall(active)
-    if Counter(referenced) != Counter(EXPECTED_SECRET_ENV):
+    if Counter(referenced) != Counter(EXPECTED_SECRET_ENV.keys()):
         errors.append("Stage C contains missing, duplicated or unexpected secrets.")
     if re.search(r"\bsecrets[ \t]*\[", active):
         errors.append("Stage C contains an unreviewed indexed secrets expression.")
