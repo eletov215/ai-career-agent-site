@@ -32,8 +32,9 @@ def test_site_qa_guard_rejects_changed_legal_source(tmp_path):
     # The versioned successor now catches any edit to the immutable legal
     # activation flag BEFORE the inherited AI-005 SITE-QA package validates
     # the old protected predecessor. Both guards must still reject the edit.
-    with pytest.raises(M04BSuccessorError, match=r"^historical_evidence_changed:domain/ai\\.py$"):
+    with pytest.raises(M04BSuccessorError) as rejection:
         validate_successor(tmp_path)
+    assert str(rejection.value) == "historical_evidence_changed:domain/ai.py"
     assert validate(tmp_path) != []
 
 
