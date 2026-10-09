@@ -1,0 +1,193 @@
+{
+  "version": "ai004-m03-synthetic-quality-v1",
+  "synthetic": true,
+  "purpose": "Deterministic evidence-only matching quality cases; no provider or real data",
+  "cases": [
+    {
+      "id": "ru-positive-and-unknown",
+      "language": "ru",
+      "resume_answers": {
+        "role": "Python-разработчик",
+        "skills": "Python, PostgreSQL.",
+        "experience": "Разрабатывал API."
+      },
+      "vacancy": {
+        "title": "Python backend",
+        "requirements": "- Python\n- PostgreSQL\n- Желательно Kubernetes"
+      },
+      "classifications": [
+        {
+          "requirement_id": "req-001",
+          "status": "matched",
+          "candidate_evidence": [
+            {
+              "id": "resume.skills",
+              "quote": "Python"
+            }
+          ]
+        },
+        {
+          "requirement_id": "req-002",
+          "status": "matched",
+          "candidate_evidence": [
+            {
+              "id": "resume.skills",
+              "quote": "PostgreSQL"
+            }
+          ]
+        },
+        {
+          "requirement_id": "req-003",
+          "status": "unverified",
+          "candidate_evidence": []
+        }
+      ],
+      "expected": {
+        "score_percent": 80,
+        "verdict": "strong",
+        "unverified_weight": 1,
+        "mismatch_weight": 0,
+        "mandatory_unresolved_ids": []
+      }
+    },
+    {
+      "id": "en-explicit-negative",
+      "language": "en",
+      "resume_answers": {
+        "role": "Backend engineer",
+        "skills": "Python and Docker",
+        "experience": "No Kubernetes experience"
+      },
+      "vacancy": {
+        "title": "Backend engineer",
+        "requirements": "- Python\n- Kubernetes\n- Nice to have Docker"
+      },
+      "classifications": [
+        {
+          "requirement_id": "req-001",
+          "status": "matched",
+          "candidate_evidence": [
+            {
+              "id": "resume.skills",
+              "quote": "Python"
+            }
+          ]
+        },
+        {
+          "requirement_id": "req-002",
+          "status": "mismatch",
+          "candidate_evidence": [
+            {
+              "id": "resume.experience",
+              "quote": "No Kubernetes experience"
+            }
+          ]
+        },
+        {
+          "requirement_id": "req-003",
+          "status": "matched",
+          "candidate_evidence": [
+            {
+              "id": "resume.skills",
+              "quote": "Docker"
+            }
+          ]
+        }
+      ],
+      "expected": {
+        "score_percent": 60,
+        "verdict": "partial",
+        "unverified_weight": 0,
+        "mismatch_weight": 2,
+        "mandatory_unresolved_ids": [
+          "req-002"
+        ]
+      }
+    },
+    {
+      "id": "en-all-unknown",
+      "language": "en",
+      "resume_answers": {
+        "role": "Illustrator",
+        "skills": "Blender"
+      },
+      "vacancy": {
+        "title": "Software engineer",
+        "requirements": "Go\nKubernetes"
+      },
+      "classifications": [
+        {
+          "requirement_id": "req-001",
+          "status": "unverified",
+          "candidate_evidence": []
+        },
+        {
+          "requirement_id": "req-002",
+          "status": "unverified",
+          "candidate_evidence": []
+        }
+      ],
+      "expected": {
+        "score_percent": 0,
+        "verdict": "weak",
+        "unverified_weight": 4,
+        "mismatch_weight": 0,
+        "mandatory_unresolved_ids": [
+          "req-001",
+          "req-002"
+        ]
+      }
+    },
+    {
+      "id": "ru-quantified-match",
+      "language": "ru",
+      "resume_answers": {
+        "role": "Python-разработчик",
+        "experience": "Python 5 лет"
+      },
+      "vacancy": {
+        "title": "Python backend",
+        "requirements": "Опыт Python от 5 лет"
+      },
+      "classifications": [
+        {
+          "requirement_id": "req-001",
+          "status": "matched",
+          "candidate_evidence": [
+            {
+              "id": "resume.experience",
+              "quote": "Python 5 лет"
+            }
+          ]
+        }
+      ],
+      "expected": {
+        "score_percent": 100,
+        "verdict": "strong",
+        "unverified_weight": 0,
+        "mismatch_weight": 0,
+        "mandatory_unresolved_ids": []
+      }
+    }
+  ],
+  "mutation_ids": [
+    "provider_percent",
+    "provider_verdict",
+    "unsupported_quote",
+    "wrong_evidence_id",
+    "missing_requirement",
+    "repeated_requirement",
+    "invented_requirement",
+    "stale_source_hash",
+    "unverified_with_evidence",
+    "no_matching_evidence",
+    "unsupported_explicit_mismatch",
+    "unsupported_numeric_years",
+    "negated_matched_support",
+    "duplicated_json_keys",
+    "tampered_input_hash",
+    "provider_importance",
+    "provider_weight",
+    "extra_provider_prose"
+  ]
+}
