@@ -311,11 +311,19 @@ jobs:
           plan_file="$RUNNER_TEMP/stage-c-apply.tfplan"
           apply_log="$RUNNER_TEMP/stage-c-apply.stdout"
           test -s "$plan_file"
+          set +e
           terraform -chdir=infra/yandex-cloud apply \
             -auto-approve \
             -input=false \
             -no-color \
             "$plan_file" >"$apply_log" 2>&1
+          apply_code=$?
+          set -e
+          if [ "$apply_code" -ne 0 ]; then
+            echo "Stage C Terraform apply failed (exit $apply_code). Safe classified diagnostic:"
+            python infra/yandex-cloud/stage_c_apply_diagnostics.py "$apply_log"
+            exit "$apply_code"
+          fi
 
           echo "public_ip=$(terraform -chdir=infra/yandex-cloud output -raw app_public_ipv4)" >> "$GITHUB_OUTPUT"
           echo "pg_fqdn=$(terraform -chdir=infra/yandex-cloud output -raw postgresql_rw_fqdn)" >> "$GITHUB_OUTPUT"

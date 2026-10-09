@@ -197,6 +197,8 @@ class Host001PackageTests(unittest.TestCase):
         self.assertIn('"TFSTATE_BUCKET"', workflow)
         self.assertIn("host001-stage-c-teardown.yml/dispatches", workflow)
         self.assertIn("AUTO_TEARDOWN_STAGE_C_SYNTHETIC", workflow)
+        self.assertIn('stage_c_apply_diagnostics.py "$apply_log"', workflow)
+        self.assertIn('exit "$apply_code"', workflow)
         self.assertNotIn("actions/upload-artifact", workflow)
         self.assertNotIn("actions/download-artifact", workflow)
         self.assertNotIn("\n  push:", workflow)
@@ -242,6 +244,11 @@ class Host001PackageTests(unittest.TestCase):
         self.assertIn('if [ "$STAGE_C_ACKNOWLEDGEMENT" = "DESTROY_STAGE_C_SYNTHETIC_1000_RUB" ]; then', workflow)
         self.assertIn('echo "MANUAL_RECOVERY_STARTED_EPOCH=$(date -u +%s)" >> "$GITHUB_ENV"', workflow)
         self.assertIn('MANUAL_RECOVERY_STARTED_EPOCH: ${{ env.MANUAL_RECOVERY_STARTED_EPOCH }}', workflow)
+        destroy_step = workflow.split(
+            "      - name: Destroy reviewed Stage C resources from remote state\n", 1
+        )[1].split("      - name: Record verified teardown\n", 1)[0]
+        self.assertIn('SOURCE_RUN_STARTED_AT: ${{ env.SOURCE_APPLY_RUN_STARTED_AT }}', destroy_step)
+        self.assertIn('test -n "${SOURCE_RUN_STARTED_AT:-}"', destroy_step)
         self.assertNotIn('TFSTATE_KEY="host001/stage-c.tfstate"', workflow)
         self.assertIn("Legacy fixed-key source revisions are not automatically recoverable", workflow)
         self.assertIn('TFSTATE_KEY="host001/stage-c-${SOURCE_RUN_ID}.tfstate"', workflow)
@@ -309,6 +316,10 @@ class Host001PackageTests(unittest.TestCase):
                 "host001-stage-c-teardown.yml/dispatches",
                 "missing-teardown.yml/dispatches",
             ),
+            "missing safe apply diagnostics": original.replace(
+                'python infra/yandex-cloud/stage_c_apply_diagnostics.py "$apply_log"',
+                'echo "unclassified failure"',
+            ),
             "apply before teardown": original.replace(
                 "Dispatch cancellation-surviving teardown before apply",
                 "ZZZ teardown marker after apply",
@@ -357,6 +368,13 @@ class Host001PackageTests(unittest.TestCase):
             "missing absolute destroy deadline": original.replace(
                 "destroy_apply_deadline",
                 "removed_deadline_marker",
+            ),
+            "missing automatic source timestamp binding": original.replace(
+                '          MANUAL_RECOVERY_STARTED_EPOCH: ${{ env.MANUAL_RECOVERY_STARTED_EPOCH }}\n'
+                '          SOURCE_RUN_ID: ${{ inputs.source_run_id }}\n'
+                '          SOURCE_RUN_STARTED_AT: ${{ env.SOURCE_APPLY_RUN_STARTED_AT }}\n',
+                '          MANUAL_RECOVERY_STARTED_EPOCH: ${{ env.MANUAL_RECOVERY_STARTED_EPOCH }}\n'
+                '          SOURCE_RUN_ID: ${{ inputs.source_run_id }}\n',
             ),
             "manual recovery incorrectly source-deadline-bound": original.replace(
                 'deadline_mode="manual-recovery"',

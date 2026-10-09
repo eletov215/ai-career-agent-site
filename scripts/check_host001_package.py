@@ -21,6 +21,7 @@ REQUIRED = (
     "infra/yandex-cloud/Dockerfile.ops",
     "infra/yandex-cloud/export_backup_s3.py",
     "infra/yandex-cloud/stage_c_state_guard.py",
+    "infra/yandex-cloud/stage_c_apply_diagnostics.py",
     "infra/yandex-cloud/run_with_lockbox.py",
     "scripts/host001_stage_c_fixture.py",
     "infra/yandex-cloud/README.md",
@@ -490,6 +491,9 @@ def validate(root: Path = ROOT) -> list[str]:
             "host001-stage-c-teardown.yml/dispatches",
             "AUTO_TEARDOWN_STAGE_C_SYNTHETIC",
             "Apply reviewed Stage C plan",
+            'stage_c_apply_diagnostics.py "$apply_log"',
+            'apply_code=$?',
+            'exit "$apply_code"',
             "Remote Terraform state: **Yandex Object Storage backend active before apply**",
         )
         for marker in required_apply_markers:
@@ -505,6 +509,18 @@ def validate(root: Path = ROOT) -> list[str]:
         )
         if len(apply_commands) != 1:
             errors.append("Stage C apply workflow must have exactly one reviewed create apply")
+
+        apply_step = _active_yaml(apply_steps.get("Apply reviewed Stage C plan", ""))
+        if (
+            'stage_c_apply_diagnostics.py "$apply_log"' not in apply_step
+            or 'exit "$apply_code"' not in apply_step
+        ):
+            errors.append("Stage C apply failure must print safe classified diagnostics before exiting")
+
+        diagnostic_source = _read("infra/yandex-cloud/stage_c_apply_diagnostics.py")
+        for marker in ("REVIEWED_RESOURCES", "ERROR_CLASSES", "Raw provider output withheld"):
+            if marker not in diagnostic_source:
+                errors.append("Stage C apply diagnostics missing fail-closed control: " + marker)
 
         dispatch_pos = stage_c_apply.find("Dispatch cancellation-surviving teardown before apply")
         apply_pos = stage_c_apply.find("Apply reviewed Stage C plan")
@@ -619,6 +635,17 @@ def validate(root: Path = ROOT) -> list[str]:
         for marker in required_teardown_markers:
             if marker not in stage_c_teardown:
                 errors.append("Stage C teardown workflow missing control: " + marker)
+
+        destroy_step = _active_yaml(
+            teardown_steps.get("Destroy reviewed Stage C resources from remote state", "")
+        )
+        if (
+            'SOURCE_RUN_STARTED_AT: ${{ env.SOURCE_APPLY_RUN_STARTED_AT }}' not in destroy_step
+            or 'test -n "${SOURCE_RUN_STARTED_AT:-}"' not in destroy_step
+        ):
+            errors.append(
+                "Stage C automatic teardown destroy step must receive the validated source start time"
+            )
 
         if re.search(r"(?m)^\s+(?:push|pull_request|schedule):", active_stage_c_teardown):
             errors.append("Stage C teardown workflow must remain manual workflow_dispatch only")
