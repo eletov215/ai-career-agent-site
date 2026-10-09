@@ -74,6 +74,9 @@ jobs:
       - name: Stage C paid-apply release boundary regression tests (offline)
         run: python -m unittest tests.test_host001_stage_c_apply_gate -v
 
+      - name: Verify exact Stage C manual apply preflight (offline only)
+        run: python scripts/host001_stage_c_apply_gate.py --expected-sha "$GITHUB_SHA"
+
       - name: Terraform format
         run: terraform -chdir=infra/yandex-cloud fmt -check -diff -recursive
 
