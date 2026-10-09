@@ -2,6 +2,14 @@
 """Fail-closed JOB-003 successor and safety boundary."""
 import hashlib, json
 from pathlib import Path
+
+# Executable as python scripts/check_*.py and as an imported test package.
+try:
+    from scripts.ai004_m04b_successor import approved_sha256, expected_schema_head
+except ModuleNotFoundError as exc:
+    if exc.name != "scripts":
+        raise
+    from ai004_m04b_successor import approved_sha256, expected_schema_head
 ROOT=Path(__file__).resolve().parents[1]
 EVIDENCE='docs/evidence/job-003/change_boundary.json'
 REVIEWED_RUNTIME_CHANGES={
@@ -36,7 +44,6 @@ def successor_hashes(root=ROOT):
                 from check_job004_package import successor_hashes as job004_hashes
             authorized=job004_hashes(root)
         else: authorized={}
-        from scripts.ai004_m04b_successor import approved_sha256
         effective={}
         for p,row in e['reviewed_runtime_changes'].items():
             next_row=authorized.get(p,{})
@@ -64,7 +71,6 @@ def validate():
     errors=[]
     try:
         successor_hashes(ROOT)
-        from scripts.ai004_m04b_successor import expected_schema_head
         approved_head = expected_schema_head(ROOT, "20261002_0023")
         checks={'database.py':f'CURRENT_REVISION = "{approved_head}"','domain/ai.py':'REAL_DATA_SUPPORTED = False','services/legal_policy.py':'release_state="DRAFT"','migrations/versions/20261002_0023_in_app_reminders.py':"down_revision = '20261001_0022'"}
         for p,n in checks.items():
