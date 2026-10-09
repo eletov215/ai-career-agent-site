@@ -82,6 +82,10 @@ def _schema_report(runtime: DatabaseRuntime) -> dict[str, object]:
         "saved_vacancy_trackers",
         "saved_vacancy_tracker_events",
         "ai_consents",
+        # AI004-M04B: schema-only Stage C digest coverage, populated-row
+        # verification is independently tested in disposable PG18 restore QA.
+        "user_match_reports",
+        "user_match_cache",
     )
     objects: list[str] = []
     by_table: dict[str, dict[str, list[str]]] = {}
@@ -157,6 +161,36 @@ def _schema_report(runtime: DatabaseRuntime) -> dict[str, object]:
                     "ck_ai_consents_versions",
                     "ck_ai_consents_status",
                     "ck_ai_consents_withdrawal",
+                },
+            },
+            "user_match_reports": {
+                "indexes": {"idx_user_match_report_owner_created"},
+                "unique_constraints": {
+                    "uq_user_match_report_id_owner",
+                    "uq_user_match_report_owner_key",
+                    "uq_user_match_report_owner_usage",
+                },
+                "check_constraints": {
+                    "ck_user_match_report_source_kind",
+                    "ck_user_match_report_source_link",
+                },
+                "foreign_keys": {"fk_user_match_report_owned_vacancy"},
+            },
+            "user_match_cache": {
+                "indexes": {
+                    "idx_user_match_cache_owner_updated",
+                    "idx_user_match_cache_state_lease",
+                },
+                "unique_constraints": {"uq_user_match_cache_owner_key"},
+                "check_constraints": {
+                    "ck_user_match_cache_state",
+                    "ck_user_match_cache_ready_report",
+                    "ck_user_match_cache_source_link",
+                    "ck_user_match_cache_lease",
+                },
+                "foreign_keys": {
+                    "fk_user_match_cache_owned_vacancy",
+                    "fk_user_match_cache_owned_report",
                 },
             },
         }
