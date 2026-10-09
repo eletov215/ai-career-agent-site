@@ -234,6 +234,8 @@ class PrivacyService:
             "saved_vacancy_trackers": len(snapshot.get("saved_vacancy_trackers", [])),
             "saved_vacancy_tracker_events": len(snapshot.get("saved_vacancy_tracker_events", [])),
             "vacancy_match_reports": len(snapshot.get("vacancy_matches", [])),
+            "user_match_reports": len(snapshot.get("user_match_reports", [])),
+            "user_match_cache": len(snapshot.get("user_match_cache", [])),
             "vacancy_match_series": len(snapshot.get("vacancy_match_series", [])),
             "auth_sessions": len(snapshot["authentication"]["sessions"]),
             "auth_tokens": len(snapshot["authentication"]["one_time_tokens"]),
