@@ -45,6 +45,7 @@ PREDECESSOR_HASHES = {
     "tests/test_job003_migration.py": "5d3993671559e54e179d61f1e4817592fe702129f33c90f2e96b5c1eb9280013",
     "tests/ai005_boundary_helper.py": "f442fed149d7e935d2afe00ba55ce5374e2c5fe9fbc77d4ec3b26b2b913d8baa",
     "tests/test_ai005_site_qa_package.py": "7458770dbedd357b35c15f620134346aff5ecc3592b32bfdfd60b27ef084938a",
+    "tests/test_legal001_migration.py": "0c765b7ed4ed12f42db882634d088932dd4a569fe73d41ad3d36f438ae96a90c",
     "tests/test_host001_stage_c_apply_gate.py": "3bc4f5b6fa0a0e836fd1092f029df205f35a7393d6a5d6ddf6a8d5f25a2fc4b6",
 }
 
