@@ -52,7 +52,9 @@ def validate():
     errors=[]
     try:
         successor_hashes(ROOT)
-        checks={'database.py':'CURRENT_REVISION = "20261002_0023"','domain/ai.py':'REAL_DATA_SUPPORTED = False','services/legal_policy.py':'release_state="DRAFT"','migrations/versions/20261002_0023_in_app_reminders.py':"down_revision = '20261001_0022'"}
+        from scripts.ai004_m04b_successor import expected_schema_head
+        approved_head = expected_schema_head(ROOT, "20261002_0023")
+        checks={'database.py':f'CURRENT_REVISION = "{approved_head}"','domain/ai.py':'REAL_DATA_SUPPORTED = False','services/legal_policy.py':'release_state="DRAFT"','migrations/versions/20261002_0023_in_app_reminders.py':"down_revision = '20261001_0022'"}
         for p,n in checks.items():
             if n not in (ROOT/p).read_text(): errors.append('boundary:'+p)
         forbidden=('requests.','email_delivery','provider_operation','smtplib','httpx')
