@@ -102,6 +102,10 @@
     "tests/test_legal001_migration.py": {
       "previous_sha256": "0c765b7ed4ed12f42db882634d088932dd4a569fe73d41ad3d36f438ae96a90c",
       "current_sha256": "3e0eae92cb33323f8d4396e2fb987e103a1f74a13f9955b1aee27e5a30a8b357"
+    },
+    ".github/workflows/host001-yandex-cloud.yml": {
+      "previous_sha256": "3fedd28efd7a32cac33143c509d59066f6715c033634d069e0108205961f4dc9",
+      "current_sha256": "f06542693fa87de7bcd8c6506eb08cc5403f7197e1d64db2e6637fa6464a1b8e"
     }
   },
   "new_runtime_sha256": {
@@ -110,15 +114,14 @@
     "migrations/versions/20261009_0024_user_matching_cache.py": "461d5a2deb4153f8054574f068f6e92760b27c21407d0510465fddc415adb086",
     "models/user_match.py": "317541f3dd00d0cd1925f3b520e9155314ad2e103396cac893987190fc9a6018",
     "repositories/user_match.py": "0339d297b2cb6e8d368c5be7222aec4becbf2730b860fa08b6c7d40cd95559b6",
-    "scripts/ai004_m04b_successor.py": "858fc726b1aa6ac9cc236a605468e410c9a5333986b82d53e61233e738a57671",
+    "scripts/ai004_m04b_successor.py": "f2b1d106004e4bc7593cb694a8a6feffffabd746518ef9e3826b013eda3306ad",
     "tests/test_ai004_m04b_migration.py": "9d9fc4646380c4670828e7c607f6954655b9465466338f1fe6f10f01c457f3b2",
     "tests/test_ai004_m04b_pg18_restore.py": "222bb91e51eeced0df1feaea81b3bc6629bdd228799ccd1e7cdd0514f5bcee33",
     "tests/test_ai004_m04b_restore.py": "a6c3162785de5de6a98b5c65525c0ef62e6370da93178a5c5c4d02546391b5eb",
     "tests/test_ai004_m04b_storage.py": "2f134f79d310f90ae55ebc3fc80d33f5dcfdca67b2467c7bac35e32025bc2866",
-    "tests/test_ai004_m04b_successor.py": "5df4df45ba98ba81d22caa9b7dce15c9ef743864b194e798c91148e135c2d9b7"
+    "tests/test_ai004_m04b_successor.py": "f7dd29da6ad1967e67c3559214417b6a83607ffb63e3e0d378b73fe80e4c2ac0"
   },
   "preserved_sha256": {
-    ".github/workflows/host001-yandex-cloud.yml": "3fedd28efd7a32cac33143c509d59066f6715c033634d069e0108205961f4dc9",
     "docs/evidence/ai-004/change_boundary.json": "4a7afe4474275599ec1d06ead2fc37c5097dd6335963c40a7dfef20864e68626",
     "docs/evidence/job-002/change_boundary.json": "de1bc9616a892bc453af905924c63fb7e011bd6974ef17a9856cc028b64ac517",
     "docs/evidence/job-003/change_boundary.json": "2ba0897c4de4588802256a27f870cf6e8579afa52fbc3b3b3fdff6c5dd3da928",
