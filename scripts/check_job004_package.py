@@ -24,13 +24,20 @@ def successor_hashes(root=ROOT):
         if evidence.get(key)!=value: raise ValueError('evidence:'+key)
     for section,paths in [('reviewed_runtime_changes',REVIEWED_RUNTIME),('new_runtime_sha256',NEW_RUNTIME),('support_sha256',SUPPORT)]:
         if set(evidence.get(section,{}))!=paths: raise ValueError('scope:'+section)
+    from scripts.ai004_m04b_successor import approved_sha256
+    effective = {}
     for path,row in evidence['reviewed_runtime_changes'].items():
-        if set(row)!={'previous_sha256','current_sha256'} or digest(root,path)!=row['current_sha256']:
+        if set(row)!={'previous_sha256','current_sha256'}:
+            raise ValueError('scope:'+path)
+        verified = approved_sha256(root, path, row['current_sha256'])
+        if digest(root,path) != verified:
             raise ValueError('hash:'+path)
+        effective[path] = {**row, 'current_sha256': verified}
     for section in ('new_runtime_sha256','support_sha256'):
         for path,value in evidence[section].items():
-            if digest(root,path)!=value: raise ValueError('hash:'+path)
-    return evidence['reviewed_runtime_changes']
+            verified = approved_sha256(root,path,value)
+            if digest(root,path)!=verified: raise ValueError('hash:'+path)
+    return effective
 
 def validate(root=ROOT):
     errors=[]
