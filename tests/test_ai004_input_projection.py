@@ -3,6 +3,8 @@ import copy
 import json
 import pytest
 
+from domain.resume_draft import ResumeVersionRecord
+
 from services.matching_input import (
     MatchInputError, project_resume_version, project_saved_vacancy,
 )
@@ -36,6 +38,18 @@ def test_resume_projection_excludes_sensitive_and_unrelated_fields():
     assert [row["id"] for row in result["facts"]] == [
         "resume.role", "resume.experience", "resume.skills",
     ]
+
+
+def test_existing_prof003_immutable_record_projects_without_adapter():
+    # ResumeDraftService.get_version returns this dataclass, not a dict.
+    record = ResumeVersionRecord(
+        id="00000000-0000-0000-0000-000000000001",
+        draft_id="00000000-0000-0000-0000-000000000002",
+        schema_version=1, version=2, draft_revision=3,
+        snapshot_json=resume()["snapshot_json"], content_hash="0" * 64,
+        reason="checkpoint", restored_from_version=None, created_at=100,
+    )
+    assert project_resume_version(record) == project_resume_version(resume())
 
 
 def test_vacancy_projection_ignores_notes_and_urls():
