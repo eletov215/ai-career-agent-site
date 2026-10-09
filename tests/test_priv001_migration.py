@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
 import time
 import uuid
 
 from sqlalchemy import inspect, text
 
+from scripts.ai004_m04b_successor import expected_schema_head
 from database import (
     CURRENT_REVISION,
     create_database,
@@ -30,7 +32,11 @@ def test_priv001_0013_adds_identifier_free_privacy_audit(tmp_path):
     try:
         inspector = inspect(runtime.engine)
         assert current_revision(runtime.engine) == "20260813_0013"
-        assert CURRENT_REVISION == "20261002_0023"
+        # This historical migration still verifies its original schema. A new
+        # 0024 head is acceptable ONLY via the separately reviewed successor.
+        assert CURRENT_REVISION == expected_schema_head(
+            Path(__file__).resolve().parents[1], "20261002_0023",
+        )
         assert "privacy_audit_events" in inspector.get_table_names()
         resume_asset_indexes = {item["name"] for item in inspector.get_indexes("resume_assets")}
         assert "idx_resume_assets_created" in resume_asset_indexes
