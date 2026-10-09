@@ -54,6 +54,7 @@ jobs:
           tests/test_ai004_m04b_restore.py
           tests/test_job003_migration.py
           tests/test_priv001_migration.py
+          tests/test_legal001_migration.py
           tests/test_ai005_site_qa_package.py
           tests/test_job002_package.py
           tests/test_job003_package.py
