@@ -98,6 +98,10 @@
     "tests/test_ai005_site_qa_package.py": {
       "previous_sha256": "7458770dbedd357b35c15f620134346aff5ecc3592b32bfdfd60b27ef084938a",
       "current_sha256": "e9f8883aaa784a9c83f400dd6f830367f6b1c19c7fd299521f0fec30f2f95a32"
+    },
+    "tests/test_legal001_migration.py": {
+      "previous_sha256": "0c765b7ed4ed12f42db882634d088932dd4a569fe73d41ad3d36f438ae96a90c",
+      "current_sha256": "3e0eae92cb33323f8d4396e2fb987e103a1f74a13f9955b1aee27e5a30a8b357"
     }
   },
   "new_runtime_sha256": {
@@ -106,12 +110,12 @@
     "migrations/versions/20261009_0024_user_matching_cache.py": "461d5a2deb4153f8054574f068f6e92760b27c21407d0510465fddc415adb086",
     "models/user_match.py": "317541f3dd00d0cd1925f3b520e9155314ad2e103396cac893987190fc9a6018",
     "repositories/user_match.py": "0339d297b2cb6e8d368c5be7222aec4becbf2730b860fa08b6c7d40cd95559b6",
-    "scripts/ai004_m04b_successor.py": "a421bce728ca12ac2283d61478e2269c087759ced9c635d5933625a82022bb02",
+    "scripts/ai004_m04b_successor.py": "858fc726b1aa6ac9cc236a605468e410c9a5333986b82d53e61233e738a57671",
     "tests/test_ai004_m04b_migration.py": "9d9fc4646380c4670828e7c607f6954655b9465466338f1fe6f10f01c457f3b2",
     "tests/test_ai004_m04b_pg18_restore.py": "564d40428cd71ef2e2b3260823bf4f3de33ac9ce31d527b62cf8fd3deda12464",
     "tests/test_ai004_m04b_restore.py": "a6c3162785de5de6a98b5c65525c0ef62e6370da93178a5c5c4d02546391b5eb",
     "tests/test_ai004_m04b_storage.py": "2f134f79d310f90ae55ebc3fc80d33f5dcfdca67b2467c7bac35e32025bc2866",
-    "tests/test_ai004_m04b_successor.py": "af4480e7230af85b4988c92c14b6dd7ed4bc5144684a6703294829f2cb6bd692"
+    "tests/test_ai004_m04b_successor.py": "cc1c2cf262e05bb99efdb4fe6dea8f2c8de855927089e88c325d5562f238bb2b"
   },
   "preserved_sha256": {
     ".github/workflows/host001-yandex-cloud.yml": "3fedd28efd7a32cac33143c509d59066f6715c033634d069e0108205961f4dc9",
