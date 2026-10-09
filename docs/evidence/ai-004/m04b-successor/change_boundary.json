@@ -93,7 +93,7 @@
     }
   },
   "new_runtime_sha256": {
-    ".github/workflows/ai004-m04b-candidate.yml": "217413559fb8c6cb517a3e83be5044661e94e578c464ba6ad86c40f6a2f74fa3",
+    ".github/workflows/ai004-m04b-candidate.yml": "873f6ce3c93664eaae0f9e8f70ed775c98057b1c4ed5d84ce16c680258b5fe16",
     "docs/AI004_M04B_SCHEMA_SUCCESSOR_PROPOSAL_20261009.md": "4d8d87cfb47d7fe38c92223bb53fd7405336c7c693223ecf28945eb689ad1b8b",
     "migrations/versions/20261009_0024_user_matching_cache.py": "461d5a2deb4153f8054574f068f6e92760b27c21407d0510465fddc415adb086",
     "models/user_match.py": "317541f3dd00d0cd1925f3b520e9155314ad2e103396cac893987190fc9a6018",
