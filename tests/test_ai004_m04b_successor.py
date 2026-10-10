@@ -256,61 +256,131 @@ def test_pg18_populated_restore_cannot_silently_leave_dedicated_ci():
         assert mandatory_guard in source
 
 
-def test_host001_ci_expected_denial_is_only_for_exact_draft_pr_98():
-    """CI verifies a *negative* privileged apply result, never permits apply.
-
-    The non-draft / push / other-PR path must still run the original command.
-    The independently accepted manual apply workflow remains pinned immutable.
-    """
+def test_host001_ci_release_gate_is_required_for_ready_pr_and_main():
+    """Moving Draft -> Ready or merging cannot drop the negative apply guard."""
     source = (ROOT / ".github/workflows/host001-yandex-cloud.yml").read_text(
         encoding="utf-8"
     )
-    ordinary = (
-        "github.event_name != 'pull_request' || "
-        "github.event.pull_request.number != 98 || "
-        "github.event.pull_request.draft != true || "
-        "github.head_ref != 'feature/ai004-m04b-persistent-cache' || "
-        "github.event.pull_request.head.repo.full_name != "
-        "'eletov215/ai-career-agent-site'"
-    )
-    draft = (
-        "github.event_name == 'pull_request' && "
-        "github.event.pull_request.number == 98 && "
-        "github.event.pull_request.draft == true && "
-        "github.head_ref == 'feature/ai004-m04b-persistent-cache' && "
-        "github.event.pull_request.head.repo.full_name == "
-        "'eletov215/ai-career-agent-site'"
-    )
-    assert source.count("if: ${{ " + ordinary + " }}") == 1
-    assert source.count("if: ${{ " + draft + " }}") == 1
+    assert "types: [opened, synchronize, reopened, ready_for_review, converted_to_draft]" in source
     assert source.count(
-        'python scripts/host001_stage_c_apply_gate.py --expected-sha "$GITHUB_SHA"'
-    ) == 2
-    assert source.count(
-        "      - name: Verify exact Stage C manual apply preflight (offline only)"
+        'python scripts/host001_stage_c_ci_gate.py --expected-sha "$GITHUB_SHA"'
     ) == 1
     assert source.count(
-        "      - name: Assert M04B 0024 Stage C apply is DENIED (Draft PR 98 only)"
+        "      - name: Verify HOST-001 offline CI and deny unapproved Stage C apply"
     ) == 1
-    assert 'if [ "$rc" -ne 1 ]; then' in source
-    assert '"authorizes_paid_apply": False' in source
-    assert '"cloud_calls": 0' in source
-    assert '"database_changes": 0' in source
-    assert 'if actual != expected:' in source
-    assert "verify_apply_workflow_binding(workflow)" in source
-    assert "HOST-001 PASS: privileged Stage C apply remains DENIED for 0024" in source
+    assert '      - "scripts/host001_stage_c_ci_gate.py"' in source
+    assert '      - "docs/evidence/ai-004/m04b-successor/**"' in source
+    assert "github.event.pull_request.draft" not in source
+    assert "continue-on-error" not in source
+    assert "|| true" not in source
 
     from scripts import host001_stage_c_apply_gate as gate
-    actual = check_revision_chain(ROOT)
-    assert actual["revision"] == SCHEMA_TO
-    assert actual["matching_schema_coverage"] == "SCHEMA_INVENTORY_ONLY"
+    from scripts import host001_stage_c_ci_gate as ci
+    snapshot = check_revision_chain(ROOT)
+    assert snapshot["revision"] == SCHEMA_TO
+    assert snapshot["matching_schema_coverage"] == "SCHEMA_INVENTORY_ONLY"
     assert gate.APPROVED_STAGE_C_REVISION == SCHEMA_FROM
+    assert ci.DENIAL_REASON == (
+        "Stage C synthetic data/restore acceptance has not been reviewed "
+        "for the new Alembic revision. No paid apply."
+    )
     with pytest.raises(StageCRevisionGateError, match="not been reviewed"):
-        gate.verify_accepted_fixture(actual)
+        gate.verify_accepted_fixture(snapshot)
     privileged = (
         ROOT / ".github/workflows/host001-stage-c-apply.yml"
     ).read_text(encoding="utf-8")
     gate.verify_apply_workflow_binding(privileged)
-    assert (
-        ROOT / "scripts/host001_stage_c_apply_gate.py"
-    ).is_file()
+
+
+def test_host001_ci_accepts_only_exact_denied_0024_result(monkeypatch):
+    from scripts import host001_stage_c_ci_gate as ci
+    expected_sha = "a" * 40
+    monkeypatch.setattr(ci, "check_checkout_sha", lambda root, sha: sha)
+    expected = {
+        "package": "HOST-001",
+        "gate": "synthetic-apply-preflight",
+        "ok": False,
+        "reason": ci.DENIAL_REASON,
+        "cloud_calls": 0,
+        "database_changes": 0,
+        "authorizes_paid_apply": False,
+    }
+    monkeypatch.setattr(ci, "_run_privileged_preflight", lambda root, sha: (1, expected))
+    result = ci.attest(ROOT, expected_sha)
+    assert result["revision"] == SCHEMA_TO
+    assert result["stage_c_status"] == "M04B_SUCCESSOR_ATTESTED_PRIVILEGED_APPLY_DENIED"
+    assert result["authorizes_paid_apply"] is False
+
+    from scripts.host001_stage_c_ci_gate import StageCOfflineCIGateError
+    for code, output in (
+        (0, expected),
+        (2, expected),
+        (1, {**expected, "ok": True}),
+        (1, {**expected, "reason": "Some other reason"}),
+        (1, {**expected, "authorizes_paid_apply": True}),
+        (1, {**expected, "cloud_calls": 1}),
+        (1, {**expected, "database_changes": 1}),
+        (1, {**expected, "unexpected": "field"}),
+    ):
+        monkeypatch.setattr(
+            ci, "_run_privileged_preflight",
+            lambda root, sha, rc=code, body=output: (rc, body),
+        )
+        with pytest.raises(StageCOfflineCIGateError, match="unexpected_privileged_preflight_result"):
+            ci.attest(ROOT, expected_sha)
+
+
+def test_host001_ci_keeps_historical_0023_success_and_rejects_unknown_heads(monkeypatch):
+    from scripts import host001_stage_c_ci_gate as ci
+    from scripts.host001_stage_c_ci_gate import StageCOfflineCIGateError
+    expected_sha = "b" * 40
+    monkeypatch.setattr(ci, "check_checkout_sha", lambda root, sha: sha)
+    original = check_revision_chain(ROOT)
+
+    legacy = {
+        **original, "revision": SCHEMA_FROM,
+        "matching_schema_coverage": "NOT_PRESENT",
+    }
+    monkeypatch.setattr(ci, "check_revision_chain", lambda root: legacy)
+    healthy = {
+        "package": "HOST-001",
+        "gate": "synthetic-apply-preflight",
+        "ok": True,
+        "revision": SCHEMA_FROM,
+        "matching_schema_coverage": "NOT_PRESENT",
+        "fixture_release_contract": "APPROVED_LEGACY_SYNTHETIC_ONLY",
+        "source_commit": expected_sha,
+        "cloud_calls": 0,
+        "database_changes": 0,
+        "authorizes_paid_apply": False,
+    }
+    monkeypatch.setattr(ci, "_run_privileged_preflight", lambda root, sha: (0, healthy))
+    assert ci.attest(ROOT, expected_sha)["revision"] == SCHEMA_FROM
+    monkeypatch.setattr(ci, "_run_privileged_preflight", lambda root, sha: (1, healthy))
+    with pytest.raises(StageCOfflineCIGateError, match="unexpected_privileged_preflight_result"):
+        ci.attest(ROOT, expected_sha)
+
+    unknown = {**original, "revision": "20261011_0025"}
+    monkeypatch.setattr(ci, "check_revision_chain", lambda root: unknown)
+    monkeypatch.setattr(
+        ci, "_run_privileged_preflight",
+        lambda root, sha: pytest.fail("unknown head must not execute preflight"),
+    )
+    with pytest.raises(StageCOfflineCIGateError, match="unreviewed_schema_head"):
+        ci.attest(ROOT, expected_sha)
+
+
+def test_host001_ci_rejects_invalid_or_missing_successor_manifest(monkeypatch):
+    from scripts import host001_stage_c_ci_gate as ci
+    from scripts.host001_stage_c_ci_gate import StageCOfflineCIGateError
+    monkeypatch.setattr(ci, "check_checkout_sha", lambda root, sha: sha)
+    monkeypatch.setattr(
+        ci, "validate_successor",
+        lambda root: (_ for _ in ()).throw(M04BSuccessorError("missing")),
+    )
+    monkeypatch.setattr(
+        ci, "_run_privileged_preflight",
+        lambda root, sha: pytest.fail("unattested 0024 cannot reach preflight"),
+    )
+    with pytest.raises(M04BSuccessorError, match="missing"):
+        ci.attest(ROOT, "c" * 40)
