@@ -9,6 +9,7 @@ from __future__ import annotations
 import base64
 import hashlib
 import json
+import stat
 
 import pytest
 from sqlalchemy import delete, func, select
@@ -152,3 +153,52 @@ def test_encrypted_restore_preserves_owned_signed_results_and_cascades(tmp_path)
             )) == 2
     finally:
         restored_db.dispose()
+
+
+def test_encrypted_backup_plaintext_staging_is_private_and_removed(tmp_path, monkeypatch):
+    """Unencrypted intermediate data must never be created mode 0644."""
+    from operations import backup as backup_ops
+
+    source_url = f"sqlite:///{tmp_path / 'private-backup-source.db'}"
+    upgrade_database(source_url)
+    observed_modes = []
+    original = backup_ops._backup_sqlite
+
+    def inspected_backup(url, staging_path):
+        observed_modes.append(stat.S_IMODE(staging_path.stat().st_mode))
+        assert staging_path.parent == tmp_path / "staging"
+        return original(url, staging_path)
+
+    monkeypatch.setattr(backup_ops, "_backup_sqlite", inspected_backup)
+    artifact = backup_database(
+        source_url, tmp_path / "staging",
+        output_name="safe-stage",
+        environment="test", encryption_key=KEY,
+    )
+    assert observed_modes == [0o600]
+    assert stat.S_IMODE(artifact.manifest_path.stat().st_mode) == 0o600
+    assert stat.S_IMODE(artifact.backup_path.stat().st_mode) == 0o600
+    assert not list((tmp_path / "staging").glob("*.tmp"))
+    assert validate_backup(artifact.backup_path) == artifact.manifest
+
+
+def test_backup_staging_cleanup_on_failure(tmp_path, monkeypatch):
+    """An interrupted dump must not leave an unencrypted temp file."""
+    from operations import backup as backup_ops
+
+    source_url = f"sqlite:///{tmp_path / 'failure-source.db'}"
+    upgrade_database(source_url)
+
+    def interrupted_backup(url, staging_path):
+        assert stat.S_IMODE(staging_path.stat().st_mode) == 0o600
+        staging_path.write_bytes(b"synthetic private payload")
+        raise backup_ops.BackupError("synthetic backup interruption")
+
+    monkeypatch.setattr(backup_ops, "_backup_sqlite", interrupted_backup)
+    with pytest.raises(backup_ops.BackupError, match="synthetic backup interruption"):
+        backup_database(
+            source_url, tmp_path / "fail-staging",
+            output_name="failed", environment="test", encryption_key=KEY,
+        )
+    assert not list((tmp_path / "fail-staging").glob("*.tmp"))
+    assert not list((tmp_path / "fail-staging").glob("*.enc"))
