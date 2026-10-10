@@ -24,8 +24,9 @@ MATCHING_TABLES = frozenset(("user_match_reports", "user_match_cache"))
 # replaceable by the new manifest. Existing JOB-002/003/004 guards also attest
 # the overlapping accepted predecessors.
 PREDECESSOR_HASHES = {
-    # Only the unprivileged PR-only CI workflow may attest an expected denial.
-    # The manual Stage C apply workflow and Python preflight stay protected.
+    # Only the unprivileged CI workflow may attest an expected denial for the
+    # exact 0024 successor on Draft, Ready and future main. Privileged Stage C
+    # apply and preflight are immutable and remain restricted to accepted 0023.
     ".github/workflows/host001-yandex-cloud.yml": "3fedd28efd7a32cac33143c509d59066f6715c033634d069e0108205961f4dc9",
     "database.py": "467a7223a9efc8a75cc7fb1d83aa1382996d0f5e0cf1b0ae1510f17b8a5cdede",
     "models/__init__.py": "029c6e0225213fa1a1ca19fa8b08302d0532a56e14aea342b7533d4cc0a2c20e",
@@ -59,6 +60,8 @@ NEW_FILES = frozenset({
     "models/user_match.py",
     "repositories/user_match.py",
     "scripts/ai004_m04b_successor.py",
+    "scripts/host001_stage_c_ci_gate.py",
+    "docs/AI004_M04B_RELEASE_READINESS_RUNBOOK_20261010.md",
     "tests/test_ai004_m04b_migration.py",
     "tests/test_ai004_m04b_storage.py",
     "tests/test_ai004_m04b_restore.py",
