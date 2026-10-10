@@ -7,6 +7,7 @@ import os
 import time
 import uuid
 import zipfile
+from dataclasses import replace
 from concurrent.futures import ThreadPoolExecutor
 from io import BytesIO
 
@@ -31,7 +32,7 @@ from repositories.user_match import (
 from services.ai.policy import DEFAULT_POLICY
 from services.matching_validation import validate_classification
 from services.matching_contract import CLASSIFICATION_VERSION
-from services.privacy import PrivacyService
+from services.privacy import PrivacyService, PrivacyOwnershipIntegrityError
 
 SECRET = b"m04b-disposable-tests-hmac-not-a-production-secret-00001"
 NOW = 1_780_000_000
@@ -370,7 +371,10 @@ def test_account_export_counts_and_owner_delete_cascade(env, tmp_path):
     storage = repo(db)
     pending = claim(storage, first)
     settle(db, first, pending["id"], validated(db, first))
-    service = PrivacyService(PrivacyRepository(db), _settings(tmp_path))
+    service = PrivacyService(
+        PrivacyRepository(db),
+        replace(_settings(tmp_path), flask_secret_key=SECRET.decode("utf-8")),
+    )
     artifact = service.export_user_data(
         first["owner"], expected_password_hash="safe-fake-password-hash",
         now=NOW + 30,
@@ -397,6 +401,68 @@ def test_account_export_counts_and_owner_delete_cascade(env, tmp_path):
         assert s.scalar(select(func.count()).select_from(UserMatchCache).where(
             UserMatchCache.user_id == first["owner"],
         )) == 0
+
+
+def test_privacy_export_rejects_signed_report_tampering_with_recomputed_sha(env, tmp_path):
+    db, first, second = env
+    pending = claim(repo(db), first)
+    settle(db, first, pending["id"], validated(db, first))
+    settings = replace(_settings(tmp_path), flask_secret_key=SECRET.decode("utf-8"))
+    privacy = PrivacyService(PrivacyRepository(db), settings)
+    artifact = privacy.export_user_data(
+        first["owner"], expected_password_hash="safe-fake-password-hash",
+        now=NOW + 30,
+    )
+    with zipfile.ZipFile(BytesIO(artifact.content)) as archive:
+        exported = json.loads(archive.read("data.json"))
+    assert len(exported["user_match_reports"]) == 1
+    assert exported["user_match_reports"][0]["result"]["summary"]["score_percent"] == 100
+
+    # An attacker with DB-write access can alter JSON and public SHA-256,
+    # but must not be able to make privacy ZIP export a forged AI result.
+    with db.session() as session, session.begin():
+        report = session.scalar(select(UserMatchReport).where(
+            UserMatchReport.user_id == first["owner"],
+        ))
+        changed = json.loads(report.result_json)
+        changed["requirements"][0]["candidate_evidence"][0]["quote"] = "fabricated"
+        report.result_json = json.dumps(
+            changed, ensure_ascii=False, sort_keys=True, separators=(",", ":"),
+        )
+        report.result_hash = hashlib.sha256(report.result_json.encode()).hexdigest()
+    with pytest.raises(PrivacyOwnershipIntegrityError, match="Экспорт остановлен"):
+        privacy.export_user_data(
+            first["owner"], expected_password_hash="safe-fake-password-hash",
+            now=NOW + 31,
+        )
+    # The other account remains exportable and no cross-tenant report is leaked.
+    other_export = privacy.export_user_data(
+        second["owner"], expected_password_hash="safe-fake-password-hash",
+        now=NOW + 31,
+    )
+    with zipfile.ZipFile(BytesIO(other_export.content)) as archive:
+        other_data = json.loads(archive.read("data.json"))
+    assert other_data["user_match_reports"] == []
+
+
+def test_privacy_export_denies_wrong_or_missing_report_hmac_key(env, tmp_path):
+    db, first, _ = env
+    pending = claim(repo(db), first)
+    settle(db, first, pending["id"], validated(db, first))
+    wrong_settings = _settings(tmp_path)
+    privacy = PrivacyService(PrivacyRepository(db), wrong_settings)
+    with pytest.raises(PrivacyOwnershipIntegrityError, match="Экспорт остановлен"):
+        privacy.export_user_data(
+            first["owner"], expected_password_hash="safe-fake-password-hash",
+            now=NOW + 30,
+        )
+    # Direct repository callers must not skip signature checks by omitting key.
+    from repositories.privacy import PrivacySnapshotConflictError
+    with pytest.raises(PrivacySnapshotConflictError) as exc:
+        PrivacyRepository(db).export_snapshot(
+            first["owner"], expected_password_hash="safe-fake-password-hash",
+        )
+    assert exc.value.reason == "user_match_integrity"
 
 
 def test_saved_vacancy_delete_purges_derived_cache_and_report(env):
