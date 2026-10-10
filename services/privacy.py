@@ -200,6 +200,7 @@ class PrivacyService:
             exported = self.repository.export_snapshot(
                 user_id,
                 expected_password_hash=expected_password_hash,
+                matching_hmac_key=self.settings.flask_secret_key.encode("utf-8"),
             )
         except PrivacySnapshotConflictError as exc:
             if exc.reason == "password_changed":
