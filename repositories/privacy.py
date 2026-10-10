@@ -19,6 +19,7 @@ from repositories.user_match import (
     MAX_USER_MATCH_REPORTS, MAX_USER_MATCH_CLAIMS,
     report_export_view, cache_export_view, UserMatchStorageError,
 )
+from services.matching_cache_keys import MatchCacheAddress, verify_sealed_result
 from models.saved_vacancy import SavedVacancy, SavedVacancySource
 from models.application_tracker import SavedVacancyTracker, SavedVacancyTrackerEvent
 from models.reminder import NotificationPreference, SavedVacancyReminder
@@ -132,6 +133,7 @@ class PrivacyRepository(RepositoryBase):
         user_id: str,
         *,
         expected_password_hash: str,
+        matching_hmac_key: bytes | None = None,
     ) -> tuple[dict[str, Any], list[PrivacyAssetExport]] | None:
         """Return one consistent, owner-locked export snapshot."""
 
@@ -311,8 +313,48 @@ class PrivacyRepository(RepositoryBase):
                 for row in user_match_cache
             ):
                 raise PrivacySnapshotConflictError('user_match_cache_mismatch')
+            # A matching report contains sensitive sourced quotations. Plain
+            # SHA-256 proves accidental integrity, but is NOT authentication:
+            # the signer key must be checked before privacy ZIP construction.
+            # Older accounts with no M04B reports do not require this key.
+            if user_match_reports and (
+                type(matching_hmac_key) is not bytes or len(matching_hmac_key) < 32
+            ):
+                raise PrivacySnapshotConflictError('user_match_integrity')
+            ready_claims = {
+                row.report_id: row
+                for row in user_match_cache
+                if row.state == 'ready' and row.report_id is not None
+            }
             try:
-                dynamic_match_export = [report_export_view(row) for row in user_match_reports]
+                dynamic_match_export = []
+                for row in user_match_reports:
+                    claim = ready_claims.get(row.id)
+                    if (
+                        claim is None
+                        or claim.user_id != row.user_id
+                        or claim.cache_key_hash != row.cache_key_hash
+                        or claim.source_hash != row.source_hash
+                        or claim.resume_version_id != row.resume_version_id
+                        or claim.saved_vacancy_id != row.saved_vacancy_id
+                    ):
+                        raise UserMatchStorageError('invalid_saved_report')
+                    view = report_export_view(row)
+                    address = MatchCacheAddress(
+                        cache_key_hash=claim.cache_key_hash,
+                        request_hash=claim.request_hash,
+                        source_hash=claim.source_hash,
+                        resume_hash=row.resume_hash,
+                        vacancy_hash=row.vacancy_hash,
+                    )
+                    if not verify_sealed_result(
+                        secret=matching_hmac_key,
+                        address=address,
+                        report=view['result'],
+                        signature=row.result_seal,
+                    ):
+                        raise UserMatchStorageError('invalid_saved_report')
+                    dynamic_match_export.append(view)
             except UserMatchStorageError:
                 raise PrivacySnapshotConflictError('user_match_integrity') from None
             tracker_rows = session.scalars(select(SavedVacancyTracker).where(
