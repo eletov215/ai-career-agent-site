@@ -33,6 +33,7 @@ from services.ai.policy import DEFAULT_POLICY
 from services.matching_validation import validate_classification
 from services.matching_contract import CLASSIFICATION_VERSION
 from services.privacy import PrivacyService, PrivacyOwnershipIntegrityError
+from tests.test_privacy_service import _settings
 
 SECRET = b"m04b-disposable-tests-hmac-not-a-production-secret-00001"
 NOW = 1_780_000_000
