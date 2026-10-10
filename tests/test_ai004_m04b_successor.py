@@ -56,7 +56,7 @@ def test_successor_preserves_exact_0023_parent_and_approved_0024_head():
     assert set(manifest["new_runtime_sha256"]) == NEW_FILES
     assert set(manifest["preserved_sha256"]) == PRESERVED_FILES
     assert len(manifest["reviewed_runtime_changes"]) == 24
-    assert len(manifest["new_runtime_sha256"]) >= 11
+    assert len(manifest["new_runtime_sha256"]) == 13
 
 
 def test_runtime_exact_sha_transition_is_allowed_only_after_manifest_verification():
@@ -144,6 +144,8 @@ def test_manifest_mutations_fail_closed(package_copy, change):
     "tests/ai005_boundary_helper.py",
     MIGRATION,
     "models/user_match.py",
+    "scripts/host001_stage_c_ci_gate.py",
+    "docs/AI004_M04B_RELEASE_READINESS_RUNBOOK_20261010.md",
     "render.yaml",
     "domain/ai.py",
     "docs/evidence/job-003/change_boundary.json",
