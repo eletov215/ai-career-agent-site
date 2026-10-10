@@ -48,6 +48,7 @@ _INVENTORY_TABLES = (
     "source_health_states",
     "resume_interview_sessions", "resume_interview_events",
     "vacancy_match_series", "vacancy_match_reports",
+    "user_match_reports", "user_match_cache",
     "saved_vacancies", "saved_vacancy_sources",
     "saved_vacancy_trackers", "saved_vacancy_tracker_events",
     "notification_preferences", "saved_vacancy_reminders",
@@ -370,7 +371,14 @@ def backup_database(
         raise BackupError(f"Backup уже существует: {final_path.name}.")
 
     revision, table_counts = _database_inventory(database_url)
-    plain_path = destination_dir / ("." + base_name + ".tmp")
+    # Never create a plaintext dump through open("wb") with the process umask:
+    # on permissive umasks that can expose unencrypted user records. mkstemp
+    # atomically reserves a 0600 file and refuses symlink/name races.
+    fd, temporary_name = tempfile.mkstemp(
+        prefix="." + base_name + "-", suffix=".tmp", dir=destination_dir,
+    )
+    os.close(fd)
+    plain_path = Path(temporary_name)
     try:
         if backend == "postgresql":
             _run_pg_dump(url, plain_path, pg_dump_bin=pg_dump_bin)
@@ -401,11 +409,14 @@ def backup_database(
         "sha256": _sha256(final_path),
     }
     manifest_path = final_path.with_name(final_path.name + ".manifest.json")
-    manifest_path.write_text(
-        json.dumps(manifest, ensure_ascii=False, indent=2, sort_keys=True),
-        encoding="utf-8",
+    manifest_descriptor = os.open(
+        manifest_path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600,
     )
-    _secure_permissions(manifest_path)
+    try:
+        with os.fdopen(manifest_descriptor, "w", encoding="utf-8") as handle:
+            json.dump(manifest, handle, ensure_ascii=False, indent=2, sort_keys=True)
+    finally:
+        _secure_permissions(manifest_path)
     return BackupResult(final_path, manifest_path, manifest)
 
 

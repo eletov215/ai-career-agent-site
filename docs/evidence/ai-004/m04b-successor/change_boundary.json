@@ -1,0 +1,143 @@
+{
+  "package": "AI004-M04B-SCHEMA-SUCCESSOR",
+  "source_commit": "a0166cdcb9087b3e5525ad6748e23d5ec0604913",
+  "source_tree": "4c5343f5c70a0ea945e87b1786e878757174855d",
+  "schema_from": "20261002_0023",
+  "schema_to": "20261009_0024",
+  "legal_state": "DRAFT",
+  "public_real_data_enabled": false,
+  "provider_calls": 0,
+  "production_migration": "NOT_RUN",
+  "deployment": "NOT_RUN",
+  "scope": "draft-disposable-ci-only",
+  "reviewed_runtime_changes": {
+    "database.py": {
+      "previous_sha256": "467a7223a9efc8a75cc7fb1d83aa1382996d0f5e0cf1b0ae1510f17b8a5cdede",
+      "current_sha256": "c827fab661fef4bcaa13c6e034771ba5513d06b2dc1756d1d025effedb860b44"
+    },
+    "models/__init__.py": {
+      "previous_sha256": "029c6e0225213fa1a1ca19fa8b08302d0532a56e14aea342b7533d4cc0a2c20e",
+      "current_sha256": "28b3824a70ff9becb192de3af8a5400234a687e160d4008474431fe08445e498"
+    },
+    "operations/backup.py": {
+      "previous_sha256": "c01b814f52fe3220d08fcbe9ec6aefd58ccd4d17e03ccfd6a5907c71d0428cc4",
+      "current_sha256": "d5f0e72479dbc68e2bad2c3d49e510f4a5926ee17a291afe0dce3540f8e0f966"
+    },
+    "repositories/privacy.py": {
+      "previous_sha256": "79e361d66186cc6d92ff5a03d2f0e885a63a900c7ecc7b73663579ce4b54ec46",
+      "current_sha256": "a498c1ba2d5336afb92f23f5092a3f1201a01b665d57d1c9f8440edcf95075c9"
+    },
+    "scripts/check_ai001_package.py": {
+      "previous_sha256": "ee69cc4b366ca771214aeb44fd3713e35447b371ebf033161478ca0e44d27fe7",
+      "current_sha256": "97dbcd26ab1241aed1c09bb5d5bfb10f91c90d6fb5608314ce39ff3ac9fd10fc"
+    },
+    "scripts/check_ai002_package.py": {
+      "previous_sha256": "291a1241a1163819e1f3ef3c7b4c4e9e3dd8d6e17297dba06489f88e5c9a8171",
+      "current_sha256": "353eecc00489a61c3b7c84adbc0f55075362558654caa84dc34c709b8bba8730"
+    },
+    "scripts/check_ai003_package.py": {
+      "previous_sha256": "86e6fba68c541df4666b0b8487a651cf9f923cfeaa0408f798d1cf22953346c9",
+      "current_sha256": "1984559529a9a930f2d54634211af0e9a0bdbf6bf0599d86f13dc87f7c16335d"
+    },
+    "scripts/check_ai004_package.py": {
+      "previous_sha256": "5c8070558cc9308def01940f7df25d1e5e1787c42527109d39f84cc455835d35",
+      "current_sha256": "9c89feb2cdc92efd74c88792f535de4af0a531c8cc273c0cc63583e2fec803db"
+    },
+    "scripts/check_ai005_package.py": {
+      "previous_sha256": "04f0a1960bb15d7bcf87f511f84b9f363203996189c8fd29e7c40052770ac90a",
+      "current_sha256": "312f95a661261012128d9d18fb07a065dbfa66e3da7c4dbedb7fafe1ef8cdea9"
+    },
+    "scripts/check_job001_package.py": {
+      "previous_sha256": "20d77a0f5a4ea00decf590e336c19160b0358e0d1655bdf815e62c30bc679601",
+      "current_sha256": "f50e1efd0e2994597cae71212fd143fdaaefe262dee871e545f8eba5a568c94d"
+    },
+    "scripts/check_job002_package.py": {
+      "previous_sha256": "603f0ef5e9ac018c2a731bdd415951d40b585df65690392e35dd3793bd98963e",
+      "current_sha256": "6806a1218aaeb2eb7341e8622c9cc1cea45e8951afaba4e459396e64ea086c44"
+    },
+    "scripts/check_job003_package.py": {
+      "previous_sha256": "97ba849106dca2ffa20cbd3bc95740636b17f019091de3a0b8d89e71bcca6f3e",
+      "current_sha256": "2932ed3735f4925a2256558cbfe5624b5c2a3712c96086a229e6007be3204f61"
+    },
+    "scripts/check_job004_package.py": {
+      "previous_sha256": "0333134d74341ac3f3a41032ff923076ef833c3f2317aa87d5047caca77abc19",
+      "current_sha256": "911e92367a6e697952564c291ea64cadf39ca9264fcba5827c71fb7daa1dfdaf"
+    },
+    "scripts/check_legal001_package.py": {
+      "previous_sha256": "6613b671309a6224d0dd616c2ace9c02007972e9d5c56dfe26df186c14c03aa1",
+      "current_sha256": "c0394640fce4308efe74c139d3dfb20547197020bfa72d42fc36fb85bb01bbad"
+    },
+    "scripts/host001_stage_c_fixture.py": {
+      "previous_sha256": "f609623abb53a4847312da8303ae7f7edd99cb48fd809173122c5be7ddb6edd2",
+      "current_sha256": "486edf1942df5fb487ccb5b93df839f42f884f4a16e95281485e62ce1a8937ee"
+    },
+    "services/privacy.py": {
+      "previous_sha256": "e87455f07590c310a8d87b0e4f8ed663a3d4e3a8baa29d32d7a6bf444b0e6e6c",
+      "current_sha256": "eef1aa357887185ee7df98f0c669b5ea42af37541d0de3a7092fb299a883a06d"
+    },
+    "tests/test_legal001_postgresql.py": {
+      "previous_sha256": "753882d46bf39457af9b92d431644b4eb6ab95aac57e9adecfb8ce71da107445",
+      "current_sha256": "f21e47c64dbab3b180f00cdf964fe595fc5ac47135d8d73267c5bb27eb679e84"
+    },
+    "tests/test_priv001_migration.py": {
+      "previous_sha256": "76e5a41f427400feba1b58b1cd61741a307bbd15daa9dd83a435fd6820b44c9d",
+      "current_sha256": "001fa4d943c5f62312b73000e570b1414ba5c2f75725a7f60e9deeb2f317be68"
+    },
+    "tests/test_job003_migration.py": {
+      "previous_sha256": "5d3993671559e54e179d61f1e4817592fe702129f33c90f2e96b5c1eb9280013",
+      "current_sha256": "c7945c6e46bc337022961bc2afd388ef680818be470a45ada24fe776b35020a8"
+    },
+    "tests/ai005_boundary_helper.py": {
+      "previous_sha256": "f442fed149d7e935d2afe00ba55ce5374e2c5fe9fbc77d4ec3b26b2b913d8baa",
+      "current_sha256": "fa3af46c7395644ed030f9d89303c1001f0088c785090c61c94ced647a690e18"
+    },
+    "tests/test_host001_stage_c_apply_gate.py": {
+      "previous_sha256": "3bc4f5b6fa0a0e836fd1092f029df205f35a7393d6a5d6ddf6a8d5f25a2fc4b6",
+      "current_sha256": "3cc0ea5fb5f9b44de45578eaeb96456b322de4e75d025749ce5cc128a2562251"
+    },
+    "tests/test_ai005_site_qa_package.py": {
+      "previous_sha256": "7458770dbedd357b35c15f620134346aff5ecc3592b32bfdfd60b27ef084938a",
+      "current_sha256": "e9f8883aaa784a9c83f400dd6f830367f6b1c19c7fd299521f0fec30f2f95a32"
+    },
+    "tests/test_legal001_migration.py": {
+      "previous_sha256": "0c765b7ed4ed12f42db882634d088932dd4a569fe73d41ad3d36f438ae96a90c",
+      "current_sha256": "3e0eae92cb33323f8d4396e2fb987e103a1f74a13f9955b1aee27e5a30a8b357"
+    },
+    ".github/workflows/host001-yandex-cloud.yml": {
+      "previous_sha256": "3fedd28efd7a32cac33143c509d59066f6715c033634d069e0108205961f4dc9",
+      "current_sha256": "6439049508ff94311058e47e56ac22ba0793f78083f5d6a812eefadaada63bf8"
+    }
+  },
+  "new_runtime_sha256": {
+    ".github/workflows/ai004-m04b-candidate.yml": "a91c2027f6c07758d82cfb132ff023c81ce519dd8c63b3f96df2f2129c331add",
+    "docs/AI004_M04B_SCHEMA_SUCCESSOR_PROPOSAL_20261009.md": "4d8d87cfb47d7fe38c92223bb53fd7405336c7c693223ecf28945eb689ad1b8b",
+    "migrations/versions/20261009_0024_user_matching_cache.py": "461d5a2deb4153f8054574f068f6e92760b27c21407d0510465fddc415adb086",
+    "models/user_match.py": "317541f3dd00d0cd1925f3b520e9155314ad2e103396cac893987190fc9a6018",
+    "repositories/user_match.py": "0339d297b2cb6e8d368c5be7222aec4becbf2730b860fa08b6c7d40cd95559b6",
+    "scripts/ai004_m04b_successor.py": "00808d9a1125b7aabaa4945123fb53240ac4a24eea371f37ab20bcdac5308153",
+    "tests/test_ai004_m04b_migration.py": "9d9fc4646380c4670828e7c607f6954655b9465466338f1fe6f10f01c457f3b2",
+    "tests/test_ai004_m04b_pg18_restore.py": "29a74d38d54a65ded67367bb9f3d963818b17df00f3f325086a7accdf4fd28bf",
+    "tests/test_ai004_m04b_restore.py": "cc52878951bc5862b39c2150ebf3f8149f8534e6a3a860b8d37b61001f3edfbb",
+    "tests/test_ai004_m04b_storage.py": "fdb486afa5fa2172b56f759a94db6d476e508c6b260b4902d8078a6483450a0c",
+    "tests/test_ai004_m04b_successor.py": "c33240d467ff276ce0381e8246350f16253a66a0f38a979a54b0b2cc04c772b5",
+    "scripts/host001_stage_c_ci_gate.py": "2c1431cb6b7b741ab2a1e5481e490138a9a1d2a41f64c41278be46790ccdae1a",
+    "docs/AI004_M04B_RELEASE_READINESS_RUNBOOK_20261010.md": "6762ad31a451869b636a03b629f5c44f3506e11f3ac815b3ea6f4cf83c88e3e6"
+  },
+  "preserved_sha256": {
+    "docs/evidence/ai-004/change_boundary.json": "4a7afe4474275599ec1d06ead2fc37c5097dd6335963c40a7dfef20864e68626",
+    "docs/evidence/job-002/change_boundary.json": "de1bc9616a892bc453af905924c63fb7e011bd6974ef17a9856cc028b64ac517",
+    "docs/evidence/job-003/change_boundary.json": "2ba0897c4de4588802256a27f870cf6e8579afa52fbc3b3b3fdff6c5dd3da928",
+    "docs/evidence/job-004/change_boundary.json": "530545f335126925018cbc0acd21dfdaccf183dcf3cba3da0d25e2deb8a65d77",
+    "docs/evidence/legal-001/change_boundary.json": "6ff430dc4216c534c1bad1ce11e45ea98fb44edc94dca06557b338d798f78d94",
+    "domain/ai.py": "d1b427bf73b8797a03f1254a83ec015c79121204c7198409151372d933fbd3aa",
+    "render.yaml": "f61662adb273597df027195c2d28922c841b0f18fc6904e68258e46cb7cc0c37",
+    "scripts/host001_stage_c_revision_gate.py": "abecb6c3a092472fa6a2c6be91737eba7315b24ca0d3ddc8263e2d47a3483466",
+    "services/legal_policy.py": "b2ffbc0fb59954053b1c01008c360b41bccf78d902c8b00193202aee94218a2e",
+    "tests/test_host001_stage_c_revision_gate.py": "1c3ef968ac9a868dce24edb47abda2462367d8945dcc95402b5d7431963c831b",
+    ".github/workflows/host001-stage-c-apply.yml": "cef3c8e6b5dc045cff47572a81e28f30daaec9e007a8427db0c6fc3d1508bc01",
+    "scripts/host001_stage_c_apply_gate.py": "9c926266d9b2b1bb44a48f9134b564c67c5f267d9bad398ea4a123a0aab0177f",
+    "scripts/check_host001_package.py": "272c8797ad528c1234fceb097f4fad25ab6c0c87740cb5c62676bfcbd9510e3b",
+    "tests/test_host001_package.py": "fc3341df6625735e76f3bcc4832bb6b171e74b0c8c0e3081d7746c095aaf49e1",
+    "docs/HOST001_STAGE_C_PREAPPLY_SCHEMA_GATE_20261009.md": "f293b25719ad401d859e5780f5458b63dbab3e66f900ad17b55d2d626dc51039"
+  }
+}

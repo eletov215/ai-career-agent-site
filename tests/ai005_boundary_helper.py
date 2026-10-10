@@ -27,6 +27,21 @@ def copy_job002_boundary(root, destination):
                 'docs/evidence/job-004/change_boundary.json', 'scripts/check_job004_package.py'}:
             target=destination/rel;target.parent.mkdir(parents=True,exist_ok=True)
             shutil.copy2(root/rel,target)
+    # The later M04B candidate is a separate successor: negative tests of
+    # older packages must copy the entire attested 0024 boundary, not a partial
+    # mix of 0024 guards with accepted 0023 files. A missing manifest retains
+    # the old 0023 fixture unchanged.
+    from scripts.ai004_m04b_successor import (
+        MANIFEST_PATH, NEW_FILES, PREDECESSOR_HASHES, PRESERVED_FILES,
+        successor_exists,
+    )
+    if successor_exists(root):
+        for relative in (
+            set(PREDECESSOR_HASHES) | NEW_FILES | PRESERVED_FILES | {MANIFEST_PATH}
+        ):
+            destination_path = destination / relative
+            destination_path.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(root / relative, destination_path)
 
 def copy_ai005_boundary(root,destination):
     if not (root/'docs/evidence/ai-005/change_boundary.json').is_file():return

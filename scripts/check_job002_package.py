@@ -7,6 +7,14 @@ import hashlib
 import json
 from pathlib import Path
 
+# Executable as python scripts/check_*.py and as an imported test package.
+try:
+    from scripts.ai004_m04b_successor import expected_schema_head
+except ModuleNotFoundError as exc:
+    if exc.name != "scripts":
+        raise
+    from ai004_m04b_successor import expected_schema_head
+
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE_COMMIT = "a11ac07b09addd32f3a3e26cec4e4296dbe85ab6"
 SOURCE_TREE = "52eb37b839d42df8b5c9e8192c5716c1dbf523af"
@@ -105,8 +113,9 @@ def validate(root: Path = ROOT) -> list[str]:
     errors = [f"missing:{path}" for path in sorted(REQUIRED) if not (root / path).is_file()]
     try:
         successor_hashes(root)
+        approved_head = expected_schema_head(root, "20261002_0023")
         checks = {
-            "database.py": 'CURRENT_REVISION = "20261002_0023"',
+            "database.py": f'CURRENT_REVISION = "{approved_head}"',
             "domain/ai.py": "REAL_DATA_SUPPORTED = False",
             "migrations/versions/20261001_0022_application_tracker.py":
                 "down_revision = '20260922_0021'",

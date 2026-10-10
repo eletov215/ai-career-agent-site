@@ -9,6 +9,9 @@ name: HOST-001 Yandex Cloud foundation
       - "scripts/check_host001_package.py"
       - "scripts/host001_stage_c_revision_gate.py"
       - "scripts/host001_stage_c_apply_gate.py"
+      - "scripts/host001_stage_c_ci_gate.py"
+      - "scripts/ai004_m04b_successor.py"
+      - "docs/evidence/ai-004/m04b-successor/**"
       - "scripts/host001_stage_c_plan_hardening.py"
       - "tests/test_host001_package.py"
       - "tests/test_host001_stage_c_revision_gate.py"
@@ -22,6 +25,7 @@ name: HOST-001 Yandex Cloud foundation
       - "domain/ai.py"
       - "services/legal_policy.py"
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review, converted_to_draft]
     paths:
       - "infra/yandex-cloud/**"
       - "docs/HOST001_*.md"
@@ -29,6 +33,9 @@ name: HOST-001 Yandex Cloud foundation
       - "scripts/check_host001_package.py"
       - "scripts/host001_stage_c_revision_gate.py"
       - "scripts/host001_stage_c_apply_gate.py"
+      - "scripts/host001_stage_c_ci_gate.py"
+      - "scripts/ai004_m04b_successor.py"
+      - "docs/evidence/ai-004/m04b-successor/**"
       - "scripts/host001_stage_c_plan_hardening.py"
       - "tests/test_host001_package.py"
       - "tests/test_host001_stage_c_revision_gate.py"
@@ -80,8 +87,11 @@ jobs:
       - name: Stage C paid-apply release boundary regression tests (offline)
         run: python -m unittest tests.test_host001_stage_c_apply_gate -v
 
-      - name: Verify exact Stage C manual apply preflight (offline only)
-        run: python scripts/host001_stage_c_apply_gate.py --expected-sha "$GITHUB_SHA"
+      # PR and post-merge main both must prove the real credential-free apply
+      # preflight is DENIED for reviewed schema 0024. The privileged Stage C
+      # workflow remains pinned to approved schema 0023, unchanged.
+      - name: Verify HOST-001 offline CI and deny unapproved Stage C apply
+        run: python scripts/host001_stage_c_ci_gate.py --expected-sha "$GITHUB_SHA"
 
       - name: Terraform format
         run: terraform -chdir=infra/yandex-cloud fmt -check -diff -recursive

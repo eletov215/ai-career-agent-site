@@ -2,6 +2,14 @@
 """Fail-closed JOB-003 successor and safety boundary."""
 import hashlib, json
 from pathlib import Path
+
+# Executable as python scripts/check_*.py and as an imported test package.
+try:
+    from scripts.ai004_m04b_successor import approved_sha256, expected_schema_head
+except ModuleNotFoundError as exc:
+    if exc.name != "scripts":
+        raise
+    from ai004_m04b_successor import approved_sha256, expected_schema_head
 ROOT=Path(__file__).resolve().parents[1]
 EVIDENCE='docs/evidence/job-003/change_boundary.json'
 REVIEWED_RUNTIME_CHANGES={
@@ -39,20 +47,32 @@ def successor_hashes(root=ROOT):
         effective={}
         for p,row in e['reviewed_runtime_changes'].items():
             next_row=authorized.get(p,{})
-            direct=hashlib.sha256((root/p).read_bytes()).hexdigest()==row['current_sha256']
-            chained=(next_row.get('previous_sha256')==row['current_sha256'] and hashlib.sha256((root/p).read_bytes()).hexdigest()==next_row.get('current_sha256'))
-            if set(row)!={'previous_sha256','current_sha256'} or not (direct or chained): raise ValueError('hash:'+p)
-            effective[p]={**row,'current_sha256':next_row.get('current_sha256',row['current_sha256'])}
+            if set(row)!={'previous_sha256','current_sha256'}:
+                raise ValueError('scope:'+p)
+            if next_row and next_row.get('previous_sha256') != row['current_sha256']:
+                raise ValueError('successor_parent:'+p)
+            predecessor = next_row.get('current_sha256',row['current_sha256'])
+            verified = approved_sha256(root,p,predecessor)
+            if hashlib.sha256((root/p).read_bytes()).hexdigest()!=verified:
+                raise ValueError('hash:'+p)
+            effective[p]={**row,'current_sha256':verified}
         for p,value in e['new_runtime_sha256'].items():
             if hashlib.sha256((root/p).read_bytes()).hexdigest()!=value: raise ValueError('hash:'+p)
+        guards={}
         for p,row in e['authorized_guard_changes'].items():
-            if set(row)!={'previous_sha256','current_sha256'} or hashlib.sha256((root/p).read_bytes()).hexdigest()!=row['current_sha256']: raise ValueError('hash:'+p)
-        return {**authorized,**effective,**e['authorized_guard_changes']}
+            if set(row)!={'previous_sha256','current_sha256'}:
+                raise ValueError('guard_scope:'+p)
+            verified=approved_sha256(root,p,row['current_sha256'])
+            if hashlib.sha256((root/p).read_bytes()).hexdigest()!=verified:
+                raise ValueError('hash:'+p)
+            guards[p]={**row,'current_sha256':verified}
+        return {**authorized,**effective,**guards}
 def validate():
     errors=[]
     try:
         successor_hashes(ROOT)
-        checks={'database.py':'CURRENT_REVISION = "20261002_0023"','domain/ai.py':'REAL_DATA_SUPPORTED = False','services/legal_policy.py':'release_state="DRAFT"','migrations/versions/20261002_0023_in_app_reminders.py':"down_revision = '20261001_0022'"}
+        approved_head = expected_schema_head(ROOT, "20261002_0023")
+        checks={'database.py':f'CURRENT_REVISION = "{approved_head}"','domain/ai.py':'REAL_DATA_SUPPORTED = False','services/legal_policy.py':'release_state="DRAFT"','migrations/versions/20261002_0023_in_app_reminders.py':"down_revision = '20261001_0022'"}
         for p,n in checks.items():
             if n not in (ROOT/p).read_text(): errors.append('boundary:'+p)
         forbidden=('requests.','email_delivery','provider_operation','smtplib','httpx')

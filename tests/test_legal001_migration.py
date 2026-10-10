@@ -1,5 +1,7 @@
 """LEGAL-001 additive migration and cascade metadata."""
 from uuid import uuid4
+from pathlib import Path
+from scripts.ai004_m04b_successor import expected_schema_head
 from sqlalchemy import inspect, text
 from database import CURRENT_REVISION, create_database, current_revision, downgrade_database, upgrade_database
 from models import User
@@ -13,7 +15,11 @@ def test_0020_to_0021_round_trip_and_owner_cascade(tmp_path):
             s.add(User(id=owner,status="active",email_verified_at=1,created_at=1,updated_at=1))
         upgrade_database(url,"20260922_0021")
         assert current_revision(db.engine)=="20260922_0021"
-        assert CURRENT_REVISION=="20261002_0023"
+        # Keep the original LEGAL-001 0021 migration/cascade assertion.
+        # Only the later application HEAD advances via reviewed 0024 evidence.
+        assert CURRENT_REVISION==expected_schema_head(
+            Path(__file__).resolve().parents[1], "20261002_0023"
+        )
         inspector=inspect(db.engine)
         assert "ai_consents" in inspector.get_table_names()
         columns={c["name"] for c in inspector.get_columns("ai_consents")}

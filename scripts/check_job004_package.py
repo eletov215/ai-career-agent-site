@@ -3,6 +3,14 @@
 import hashlib, json
 from pathlib import Path
 
+# Executable as python scripts/check_*.py and as an imported test package.
+try:
+    from scripts.ai004_m04b_successor import approved_sha256, expected_schema_head
+except ModuleNotFoundError as exc:
+    if exc.name != "scripts":
+        raise
+    from ai004_m04b_successor import approved_sha256, expected_schema_head
+
 ROOT=Path(__file__).resolve().parents[1]
 EVIDENCE='docs/evidence/job-004/change_boundary.json'
 REVIEWED_RUNTIME={'app.py','services/storage.py','templates/dashboard.html','scripts/check_job003_package.py',
@@ -24,19 +32,26 @@ def successor_hashes(root=ROOT):
         if evidence.get(key)!=value: raise ValueError('evidence:'+key)
     for section,paths in [('reviewed_runtime_changes',REVIEWED_RUNTIME),('new_runtime_sha256',NEW_RUNTIME),('support_sha256',SUPPORT)]:
         if set(evidence.get(section,{}))!=paths: raise ValueError('scope:'+section)
+    effective = {}
     for path,row in evidence['reviewed_runtime_changes'].items():
-        if set(row)!={'previous_sha256','current_sha256'} or digest(root,path)!=row['current_sha256']:
+        if set(row)!={'previous_sha256','current_sha256'}:
+            raise ValueError('scope:'+path)
+        verified = approved_sha256(root, path, row['current_sha256'])
+        if digest(root,path) != verified:
             raise ValueError('hash:'+path)
+        effective[path] = {**row, 'current_sha256': verified}
     for section in ('new_runtime_sha256','support_sha256'):
         for path,value in evidence[section].items():
-            if digest(root,path)!=value: raise ValueError('hash:'+path)
-    return evidence['reviewed_runtime_changes']
+            verified = approved_sha256(root,path,value)
+            if digest(root,path)!=verified: raise ValueError('hash:'+path)
+    return effective
 
 def validate(root=ROOT):
     errors=[]
     try:
         successor_hashes(root)
-        if 'CURRENT_REVISION = "20261002_0023"' not in (root/'database.py').read_text(): errors.append('revision')
+        approved_head = expected_schema_head(root, "20261002_0023")
+        if f'CURRENT_REVISION = "{approved_head}"' not in (root/'database.py').read_text(): errors.append('revision')
         if 'REAL_DATA_SUPPORTED = False' not in (root/'domain/ai.py').read_text(): errors.append('real_data')
         if 'release_state="DRAFT"' not in (root/'services/legal_policy.py').read_text(): errors.append('legal')
         if any((root/'migrations/versions').glob('*job004*')): errors.append('migration')
