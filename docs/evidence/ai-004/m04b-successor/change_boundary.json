@@ -118,7 +118,7 @@
     "tests/test_ai004_m04b_migration.py": "9d9fc4646380c4670828e7c607f6954655b9465466338f1fe6f10f01c457f3b2",
     "tests/test_ai004_m04b_pg18_restore.py": "29a74d38d54a65ded67367bb9f3d963818b17df00f3f325086a7accdf4fd28bf",
     "tests/test_ai004_m04b_restore.py": "cc52878951bc5862b39c2150ebf3f8149f8534e6a3a860b8d37b61001f3edfbb",
-    "tests/test_ai004_m04b_storage.py": "42857402b993556372eb3d13eb814956486d697addb2190783a56ce336b12b4e",
+    "tests/test_ai004_m04b_storage.py": "fdb486afa5fa2172b56f759a94db6d476e508c6b260b4902d8078a6483450a0c",
     "tests/test_ai004_m04b_successor.py": "c33240d467ff276ce0381e8246350f16253a66a0f38a979a54b0b2cc04c772b5",
     "scripts/host001_stage_c_ci_gate.py": "2c1431cb6b7b741ab2a1e5481e490138a9a1d2a41f64c41278be46790ccdae1a",
     "docs/AI004_M04B_RELEASE_READINESS_RUNBOOK_20261010.md": "6762ad31a451869b636a03b629f5c44f3506e11f3ac815b3ea6f4cf83c88e3e6"
