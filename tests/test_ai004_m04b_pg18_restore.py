@@ -10,6 +10,7 @@ import base64
 import hashlib
 import json
 import os
+from dataclasses import replace
 
 import pytest
 from sqlalchemy import create_engine, delete, func, select, text
@@ -23,7 +24,7 @@ from repositories.privacy import PrivacyRepository
 from repositories.user_match import UserMatchStorageError
 from services.privacy import PrivacyService
 from tests.test_ai004_m04b_storage import (
-    NOW, claim, repo, seed, settle, validated,
+    NOW, SECRET, claim, repo, seed, settle, validated,
 )
 from tests.test_privacy_service import _settings
 
@@ -129,7 +130,7 @@ def test_disposable_pg18_encrypted_restore_preserves_rows_hmac_and_owner(tmp_pat
             )
 
         # User-specific privacy ZIP must not leak the other tenant's reports.
-        privacy = PrivacyService(PrivacyRepository(restored), _settings(tmp_path))
+        privacy = PrivacyService(PrivacyRepository(restored), replace(_settings(tmp_path), flask_secret_key=SECRET.decode("utf-8")))
         artifact = privacy.export_user_data(
             owner_a["owner"],
             expected_password_hash="safe-fake-password-hash",
