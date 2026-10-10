@@ -21,11 +21,11 @@
     },
     "operations/backup.py": {
       "previous_sha256": "c01b814f52fe3220d08fcbe9ec6aefd58ccd4d17e03ccfd6a5907c71d0428cc4",
-      "current_sha256": "6ee5fd44f0c7dde68c04cebe6e6b26d0a7c26b15057af3c4218052cf31851574"
+      "current_sha256": "d5f0e72479dbc68e2bad2c3d49e510f4a5926ee17a291afe0dce3540f8e0f966"
     },
     "repositories/privacy.py": {
       "previous_sha256": "79e361d66186cc6d92ff5a03d2f0e885a63a900c7ecc7b73663579ce4b54ec46",
-      "current_sha256": "23ea369d0b23d781a03710e1a147a84ce868cfd735da5ce90a412f06a827ccad"
+      "current_sha256": "a498c1ba2d5336afb92f23f5092a3f1201a01b665d57d1c9f8440edcf95075c9"
     },
     "scripts/check_ai001_package.py": {
       "previous_sha256": "ee69cc4b366ca771214aeb44fd3713e35447b371ebf033161478ca0e44d27fe7",
@@ -73,7 +73,7 @@
     },
     "services/privacy.py": {
       "previous_sha256": "e87455f07590c310a8d87b0e4f8ed663a3d4e3a8baa29d32d7a6bf444b0e6e6c",
-      "current_sha256": "fc0815fdd4c102736a215f4fcd9b4ccdedd2638f7c8534aa20247e30ba04772a"
+      "current_sha256": "eef1aa357887185ee7df98f0c669b5ea42af37541d0de3a7092fb299a883a06d"
     },
     "tests/test_legal001_postgresql.py": {
       "previous_sha256": "753882d46bf39457af9b92d431644b4eb6ab95aac57e9adecfb8ce71da107445",
@@ -105,7 +105,7 @@
     },
     ".github/workflows/host001-yandex-cloud.yml": {
       "previous_sha256": "3fedd28efd7a32cac33143c509d59066f6715c033634d069e0108205961f4dc9",
-      "current_sha256": "f06542693fa87de7bcd8c6506eb08cc5403f7197e1d64db2e6637fa6464a1b8e"
+      "current_sha256": "6439049508ff94311058e47e56ac22ba0793f78083f5d6a812eefadaada63bf8"
     }
   },
   "new_runtime_sha256": {
@@ -114,12 +114,14 @@
     "migrations/versions/20261009_0024_user_matching_cache.py": "461d5a2deb4153f8054574f068f6e92760b27c21407d0510465fddc415adb086",
     "models/user_match.py": "317541f3dd00d0cd1925f3b520e9155314ad2e103396cac893987190fc9a6018",
     "repositories/user_match.py": "0339d297b2cb6e8d368c5be7222aec4becbf2730b860fa08b6c7d40cd95559b6",
-    "scripts/ai004_m04b_successor.py": "f2b1d106004e4bc7593cb694a8a6feffffabd746518ef9e3826b013eda3306ad",
+    "scripts/ai004_m04b_successor.py": "00808d9a1125b7aabaa4945123fb53240ac4a24eea371f37ab20bcdac5308153",
     "tests/test_ai004_m04b_migration.py": "9d9fc4646380c4670828e7c607f6954655b9465466338f1fe6f10f01c457f3b2",
-    "tests/test_ai004_m04b_pg18_restore.py": "222bb91e51eeced0df1feaea81b3bc6629bdd228799ccd1e7cdd0514f5bcee33",
-    "tests/test_ai004_m04b_restore.py": "a6c3162785de5de6a98b5c65525c0ef62e6370da93178a5c5c4d02546391b5eb",
-    "tests/test_ai004_m04b_storage.py": "2f134f79d310f90ae55ebc3fc80d33f5dcfdca67b2467c7bac35e32025bc2866",
-    "tests/test_ai004_m04b_successor.py": "f7dd29da6ad1967e67c3559214417b6a83607ffb63e3e0d378b73fe80e4c2ac0"
+    "tests/test_ai004_m04b_pg18_restore.py": "29a74d38d54a65ded67367bb9f3d963818b17df00f3f325086a7accdf4fd28bf",
+    "tests/test_ai004_m04b_restore.py": "cc52878951bc5862b39c2150ebf3f8149f8534e6a3a860b8d37b61001f3edfbb",
+    "tests/test_ai004_m04b_storage.py": "42857402b993556372eb3d13eb814956486d697addb2190783a56ce336b12b4e",
+    "tests/test_ai004_m04b_successor.py": "c33240d467ff276ce0381e8246350f16253a66a0f38a979a54b0b2cc04c772b5",
+    "scripts/host001_stage_c_ci_gate.py": "2c1431cb6b7b741ab2a1e5481e490138a9a1d2a41f64c41278be46790ccdae1a",
+    "docs/AI004_M04B_RELEASE_READINESS_RUNBOOK_20261010.md": "6762ad31a451869b636a03b629f5c44f3506e11f3ac815b3ea6f4cf83c88e3e6"
   },
   "preserved_sha256": {
     "docs/evidence/ai-004/change_boundary.json": "4a7afe4474275599ec1d06ead2fc37c5097dd6335963c40a7dfef20864e68626",
