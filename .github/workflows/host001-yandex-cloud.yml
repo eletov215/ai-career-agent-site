@@ -9,6 +9,9 @@ name: HOST-001 Yandex Cloud foundation
       - "scripts/check_host001_package.py"
       - "scripts/host001_stage_c_revision_gate.py"
       - "scripts/host001_stage_c_apply_gate.py"
+      - "scripts/host001_stage_c_ci_gate.py"
+      - "scripts/ai004_m04b_successor.py"
+      - "docs/evidence/ai-004/m04b-successor/**"
       - "scripts/host001_stage_c_plan_hardening.py"
       - "tests/test_host001_package.py"
       - "tests/test_host001_stage_c_revision_gate.py"
@@ -22,6 +25,7 @@ name: HOST-001 Yandex Cloud foundation
       - "domain/ai.py"
       - "services/legal_policy.py"
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review, converted_to_draft]
     paths:
       - "infra/yandex-cloud/**"
       - "docs/HOST001_*.md"
@@ -29,6 +33,9 @@ name: HOST-001 Yandex Cloud foundation
       - "scripts/check_host001_package.py"
       - "scripts/host001_stage_c_revision_gate.py"
       - "scripts/host001_stage_c_apply_gate.py"
+      - "scripts/host001_stage_c_ci_gate.py"
+      - "scripts/ai004_m04b_successor.py"
+      - "docs/evidence/ai-004/m04b-successor/**"
       - "scripts/host001_stage_c_plan_hardening.py"
       - "tests/test_host001_package.py"
       - "tests/test_host001_stage_c_revision_gate.py"
@@ -80,69 +87,11 @@ jobs:
       - name: Stage C paid-apply release boundary regression tests (offline)
         run: python -m unittest tests.test_host001_stage_c_apply_gate -v
 
-      # This is the *only* Draft-PR candidate exception. The real manual
-      # Stage C apply workflow and its preflight script stay byte-for-byte
-      # unchanged and continue refusing revision 0024.
-      - name: Verify exact Stage C manual apply preflight (offline only)
-        if: ${{ github.event_name != 'pull_request' || github.event.pull_request.number != 98 || github.event.pull_request.draft != true || github.head_ref != 'feature/ai004-m04b-persistent-cache' || github.event.pull_request.head.repo.full_name != 'eletov215/ai-career-agent-site' }}
-        run: python scripts/host001_stage_c_apply_gate.py --expected-sha "$GITHUB_SHA"
-
-      - name: Assert M04B 0024 Stage C apply is DENIED (Draft PR 98 only)
-        if: ${{ github.event_name == 'pull_request' && github.event.pull_request.number == 98 && github.event.pull_request.draft == true && github.head_ref == 'feature/ai004-m04b-persistent-cache' && github.event.pull_request.head.repo.full_name == 'eletov215/ai-career-agent-site' }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          gate_output="$(mktemp)"
-          trap 'rm -f "$gate_output"' EXIT
-          rc=0
-          python scripts/host001_stage_c_apply_gate.py --expected-sha "$GITHUB_SHA" >"$gate_output" || rc=$?
-          if [ "$rc" -ne 1 ]; then
-            echo "HOST-001 Stage C candidate expected an exact exit code 1 (DENIED), got $rc"
-            cat "$gate_output"
-            exit 1
-          fi
-          python - "$gate_output" <<'PY'
-          import json
-          import sys
-          from pathlib import Path
-
-          from scripts.ai004_m04b_successor import validate_successor
-          from scripts.host001_stage_c_revision_gate import check_revision_chain
-          from scripts.host001_stage_c_apply_gate import verify_apply_workflow_binding
-
-          root = Path.cwd()
-          successor = validate_successor(root)
-          snapshot = check_revision_chain(root)
-          assert successor["schema_from"] == "20261002_0023"
-          assert successor["schema_to"] == "20261009_0024"
-          assert snapshot["revision"] == "20261009_0024"
-          assert snapshot["unique_head"] is True
-          assert snapshot["matching_schema_coverage"] == "SCHEMA_INVENTORY_ONLY"
-          assert successor["public_real_data_enabled"] is False
-          assert successor["production_migration"] == "NOT_RUN"
-          assert successor["provider_calls"] == 0
-
-          # Privileged apply must still run its own unchanged credential-free
-          # rejection *before* any Yandex credentials or Terraform apply.
-          workflow = (root / ".github/workflows/host001-stage-c-apply.yml").read_text()
-          verify_apply_workflow_binding(workflow)
-          expected = {
-              "package": "HOST-001",
-              "gate": "synthetic-apply-preflight",
-              "ok": False,
-              "reason": (
-                  "Stage C synthetic data/restore acceptance has not been reviewed "
-                  "for the new Alembic revision. No paid apply."
-              ),
-              "cloud_calls": 0,
-              "database_changes": 0,
-              "authorizes_paid_apply": False,
-          }
-          actual = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
-          if actual != expected:
-              raise SystemExit("HOST-001 did not refuse the exact unaccepted 0024 schema")
-          print("HOST-001 PASS: privileged Stage C apply remains DENIED for 0024")
-          PY
+      # PR and post-merge main both must prove the real credential-free apply
+      # preflight is DENIED for reviewed schema 0024. The privileged Stage C
+      # workflow remains pinned to approved schema 0023, unchanged.
+      - name: Verify HOST-001 offline CI and deny unapproved Stage C apply
+        run: python scripts/host001_stage_c_ci_gate.py --expected-sha "$GITHUB_SHA"
 
       - name: Terraform format
         run: terraform -chdir=infra/yandex-cloud fmt -check -diff -recursive
